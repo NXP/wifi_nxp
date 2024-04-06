@@ -8408,7 +8408,7 @@ int wifi_cau_temperature_write_to_firmware()
 #if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
 int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type)
 {
-    int ret = -WM_FAIL;
+    int ret;
     mlan_ds_misc_cfg misc;
     mlan_ioctl_req req;
 
@@ -8427,33 +8427,13 @@ int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_t
 
     if (bss_type == MLAN_BSS_TYPE_UAP)
     {
-        int ret;
-        mlan_ds_misc_cfg misc;
-        mlan_ioctl_req req;
-
-        (void)memset(&misc, 0x00, sizeof(mlan_ds_misc_cfg));
-        (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
-
-        misc.param.ind_rst_cfg.ir_mode  = indrst_cfg->ir_mode;
-        misc.param.ind_rst_cfg.gpio_pin = indrst_cfg->gpio_pin;
-
-        misc.sub_command       = (t_u32)MLAN_OID_MISC_IND_RST_CFG;
-        wm_wifi.cmd_resp_ioctl = &req;
-        req.pbuf               = (t_u8 *)&misc;
-        req.buf_len            = sizeof(mlan_ds_misc_cfg);
-        req.req_id             = (t_u32)MLAN_IOCTL_MISC_CFG;
-        req.action             = MLAN_ACT_SET;
-
-        if (bss_type == MLAN_BSS_TYPE_UAP)
-        {
-            req.bss_index = (t_u32)MLAN_BSS_TYPE_UAP;
-            ret           = (int)wlan_ops_uap_ioctl(mlan_adap, &req);
-        }
-        else
-        {
-            req.bss_index = (t_u32)MLAN_BSS_TYPE_STA;
-            ret           = (int)wlan_ops_sta_ioctl(mlan_adap, &req);
-        }
+        req.bss_index = (t_u32)MLAN_BSS_TYPE_UAP;
+        ret           = (int)wlan_ops_uap_ioctl(mlan_adap, &req);
+    }
+    else
+    {
+        req.bss_index = (t_u32)MLAN_BSS_TYPE_STA;
+        ret           = (int)wlan_ops_sta_ioctl(mlan_adap, &req);
     }
 
     wm_wifi.cmd_resp_ioctl = NULL;

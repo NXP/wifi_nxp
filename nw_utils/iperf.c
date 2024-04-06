@@ -43,7 +43,6 @@ static struct iperf_test_context ctx;
 OSA_TIMER_HANDLE_DEFINE(ptimer);
 static ip_addr_t server_address;
 static ip_addr_t bind_address;
-static bool multicast;
 #ifdef CONFIG_IPV6
 static bool ipv6;
 #endif
@@ -604,8 +603,11 @@ static void iperf_test_start(void *arg)
 #endif
 #endif
 #endif
-
-    (void)OSA_TimerActivate((osa_timer_handle_t)ptimer);
+    if ((ctx->server_mode == false) ||
+        ((ctx->server_mode == true) && ((ctx->client_type == LWIPERF_REVERSE) || (ctx->client_type == LWIPERF_DUAL))))
+    {
+        (void)OSA_TimerActivate((osa_timer_handle_t)ptimer);
+    }
 
     if (ctx->server_mode)
     {
@@ -624,22 +626,6 @@ static void iperf_test_start(void *arg)
         }
         else
         {
-            if (multicast)
-            {
-#ifdef CONFIG_IPV6
-                wifi_get_ipv4_multicast_mac(ntohl(bind_address.u_addr.ip4.addr), mcast_mac);
-#else
-                wifi_get_ipv4_multicast_mac(ntohl(bind_address.addr), mcast_mac);
-#endif
-                if (wifi_add_mcast_filter(mcast_mac) != WM_SUCCESS)
-                {
-                    (void)PRINTF("IPERF session init failed\r\n");
-                    lwiperf_abort(ctx->iperf_session);
-                    ctx->iperf_session = NULL;
-                    return;
-                }
-                mcast_mac_valid = true;
-            }
 #ifdef CONFIG_IPV6
             if (ipv6)
             {
@@ -687,16 +673,6 @@ static void iperf_test_start(void *arg)
         }
         else
         {
-            if (IP_IS_V4(&server_address) && ip_addr_ismulticast(&server_address))
-            {
-#ifdef CONFIG_IPV6
-                wifi_get_ipv4_multicast_mac(ntohl(server_address.u_addr.ip4.addr), mcast_mac);
-#else
-                wifi_get_ipv4_multicast_mac(ntohl(server_address.addr), mcast_mac);
-#endif
-                (void)wifi_add_mcast_filter(mcast_mac);
-                mcast_mac_valid = true;
-            }
 #ifdef CONFIG_IPV6
             if (ipv6)
             {
@@ -982,7 +958,6 @@ static void cmd_iperf(int argc, char **argv)
 #ifdef CONFIG_WMM
     qos = 0;
 #endif
-    multicast = false;
 #ifdef CONFIG_IPV6
     ipv6 = false;
 #endif
@@ -1215,8 +1190,6 @@ static void cmd_iperf(int argc, char **argv)
 #ifdef CONFIG_IPV6
         }
 #endif
-        if (ip_addr_ismulticast(&bind_address))
-            multicast = true;
     }
 
     if (((info.abort == 0U) && (info.server == 0U) && (info.client == 0U)) ||

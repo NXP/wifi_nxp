@@ -382,13 +382,14 @@ static void process_data_packet(const t_u8 *rcvdata,
     mlan_bss_type recv_interface = (mlan_bss_type)(rxpd->bss_type);
     u16_t header_type;
 
+#ifndef CONFIG_WPA_SUPP
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
     wlan_mgmt_pkt *pmgmt_pkt_hdr      = MNULL;
     wlan_802_11_header *pieee_pkt_hdr = MNULL;
     t_u16 sub_type                    = 0;
     t_u8 category                     = 0;
 #endif
-
+#endif
     t_u8 *payload = NULL;
 #if !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
     t_u16 payload_len = (t_u16)0U;
@@ -412,8 +413,9 @@ static void process_data_packet(const t_u8 *rcvdata,
         g_data_snr_last = rxpd->snr;
     }
 
-#if defined(CONFIG_WPA_SUPP) || defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
-    if (rxpd->rx_pkt_type == PKT_TYPE_MGMT_FRAME)
+#ifndef CONFIG_WPA_SUPP
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
+    if ((rxpd->rx_pkt_type == PKT_TYPE_MGMT_FRAME) && (recv_interface == MLAN_BSS_TYPE_STA))
     {
         pmgmt_pkt_hdr = (wlan_mgmt_pkt *)(void *)((t_u8 *)rxpd + rxpd->rx_pkt_offset);
         pieee_pkt_hdr = (wlan_802_11_header *)(void *)&pmgmt_pkt_hdr->wlan_header;
@@ -421,7 +423,7 @@ static void process_data_packet(const t_u8 *rcvdata,
         sub_type = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
         // coverity[overrun-local:SUPPRESS]
         category = *((t_u8 *)pieee_pkt_hdr + sizeof(wlan_802_11_header));
-        if ((sub_type == (t_u16)SUBTYPE_ACTION) && (recv_interface == MLAN_BSS_TYPE_STA))
+        if (sub_type == (t_u16)SUBTYPE_ACTION)
         {
             if (category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC &&
                 category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_WNM &&
@@ -436,6 +438,7 @@ static void process_data_packet(const t_u8 *rcvdata,
 #endif
     }
     else
+#endif
 #endif
     {
 #if !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
@@ -475,13 +478,13 @@ static void process_data_packet(const t_u8 *rcvdata,
         LINK_STATS_INC(link.drop);
         return;
     }
-
     if (rxpd->rx_pkt_type == PKT_TYPE_MGMT_FRAME)
     {
 #if defined(CONFIG_TX_RX_ZERO_COPY) || defined(FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
         /* Skip interface header */
         pbuf_header(p, -(s16_t)(sizeof(mlan_buffer) + INTF_HEADER_LEN));
 #endif
+#ifndef CONFIG_WPA_SUPP
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
         if ((sub_type == (t_u16)SUBTYPE_ACTION) && (recv_interface == MLAN_BSS_TYPE_STA))
         {
@@ -493,7 +496,7 @@ static void process_data_packet(const t_u8 *rcvdata,
             return;
         }
 #endif
-
+#endif
 #ifdef CONFIG_WPA_SUPP
         wifi_is_wpa_supplicant_input(recv_interface, p->payload, p->tot_len);
 #endif
@@ -530,7 +533,6 @@ static void process_data_packet(const t_u8 *rcvdata,
         }
 #endif
     }
-
 #if defined(CONFIG_TX_RX_ZERO_COPY) || defined(FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
     /* Directly use rxpd from pbuf */
     rxpd = (RxPD *)(void *)((t_u8 *)p->payload + INTF_HEADER_LEN);
