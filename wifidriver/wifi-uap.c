@@ -4359,6 +4359,36 @@ static mlan_status wifi_uap_sta_info(mlan_private *priv, t_u16 action, mlan_ds_s
     return MLAN_STATUS_SUCCESS;
 }
 
+/**
+ *  @brief uap remove sta
+ *
+ *  @param priv             A pointer to moal_private structure
+ *  @param addr             A pointer to mac address
+ *
+ *  @return                 MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+static mlan_status wifi_uap_sta_remove(mlan_private *priv, const uint8_t *addr)
+{
+    int ret;
+    mlan_deauth_param data_buf;
+
+    ENTER();
+
+    (void)memset(&data_buf, 0x00, sizeof(data_buf));
+
+    memcpy((void *)data_buf.mac_addr, (const void *)addr, sizeof(data_buf.mac_addr));
+    data_buf.reason_code = WLAN_REASON_UNSPECIFIED;
+
+    ret = wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_STA_DEAUTH, 0, 0, NULL, &data_buf,
+                                        MLAN_BSS_TYPE_UAP, NULL);
+    if (ret != WM_SUCCESS)
+    {
+        return MLAN_STATUS_FAILURE;
+    }
+
+    return MLAN_STATUS_SUCCESS;
+}
+
 int wifi_nxp_sta_add(nxp_wifi_sta_info_t *params)
 {
     mlan_private *priv         = (mlan_private *)mlan_adap->priv[1];
@@ -4519,6 +4549,14 @@ int wifi_nxp_sta_remove(const uint8_t *addr)
         goto done;
     }
 
+    if (MLAN_STATUS_SUCCESS != wifi_uap_sta_remove(priv, addr))
+    {
+        wuap_e("uAP remove station failed");
+        ret = -WM_FAIL;
+        goto done;
+    }
+
+#if 0
     sta_info = OSA_MemoryAllocate(sizeof(mlan_ds_sta_info));
     if (!sta_info)
     {
@@ -4539,10 +4577,13 @@ int wifi_nxp_sta_remove(const uint8_t *addr)
         ret = -WM_FAIL;
         goto done;
     }
+#endif
 
 done:
+#if 0
     if (sta_info)
         OSA_MemoryFree(sta_info);
+#endif
 
     LEAVE();
     return ret;
