@@ -9540,6 +9540,12 @@ int wlan_remove_network(const char *name)
             {
                 return WLAN_ERROR_STATE;
             }
+
+            if (wlan.networks[i].security.sae_groups)
+            {
+                OSA_MemoryFree(wlan.networks[i].security.sae_groups);
+                wlan.networks[i].security.sae_groups = NULL;
+            }
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
 #ifdef CONFIG_WIFI_USB_FILE_ACCESS
             if (wlan.networks[i].role == WLAN_BSS_ROLE_STA)
