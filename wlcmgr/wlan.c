@@ -1095,8 +1095,8 @@ int wlan_get_wakeup_reason(uint16_t *hs_wakeup_reason)
 
 #endif
 
-#ifdef RW610
 #ifdef CONFIG_HOST_SLEEP
+#ifdef RW610
 status_t wlan_hs_send_event(int id, void *data)
 {
     struct wlan_message msg;
