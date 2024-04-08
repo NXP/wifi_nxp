@@ -1255,7 +1255,7 @@ static void test_wlan_add(int argc, char **argv)
 #ifdef CONFIG_WPA_SUPP
                 if (string_equal(argv[arg], "sg") != false)
                 {
-                    network.security.sae_groups = strdup(argv[arg + 1]);
+                    network.security.sae_groups = string_dup(argv[arg + 1]);
                     arg += 2;
                 }
 #endif

@@ -263,3 +263,12 @@ int cli_getopt(int argc, char **argv, const char *fmt)
     }
     return (int)c[0];
 }
+
+/* allocate a copy of a string */
+char *string_dup(const char *s)
+{
+    char *snew = (char *)OSA_MemoryAllocate(strlen(s) + 1);
+    if (snew)
+        strcpy(snew, s);
+    return snew;
+}
