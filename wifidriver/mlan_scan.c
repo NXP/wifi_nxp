@@ -4962,6 +4962,13 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
 
                 if (idx2 == NELEMENTS(pmpriv->filter_ssid))
                 {
+#ifdef CONFIG_WPA_SUPP
+                    if (bss_new_entry->ies != NULL)
+                    {
+                        OSA_MemoryFree(bss_new_entry->ies);
+                        bss_new_entry->ies = NULL;
+                    }
+#endif
                     continue;
                 }
             }
