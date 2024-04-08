@@ -5401,7 +5401,17 @@ int wifi_net_monitor_cfg(wifi_net_monitor_t *monitor)
 #endif
 
 #ifdef CONFIG_TSP
-int wifi_tsp_cfg(const t_u16 action, t_u16 *enable, t_u32 *back_off, t_u32 *highThreshold, t_u32 *lowThreshold)
+int wifi_tsp_cfg(const t_u16 action,
+                       t_u16 *enable,
+                       t_u32 *back_off,
+                       t_u32 *highThreshold,
+                       t_u32 *lowThreshold,
+                       t_u32 *dutycycstep,
+                       t_u32 *dutycycmin,
+                       int *highthrtemp,
+                       int *lowthrtemp,
+                       int *currCAUTemp,
+                       int *currRFUTemp)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -5415,12 +5425,20 @@ int wifi_tsp_cfg(const t_u16 action, t_u16 *enable, t_u32 *back_off, t_u32 *high
     (void)memcpy(&tsp_cfg->powerMgmtBackoff, back_off, sizeof(t_u32));
     (void)memcpy(&tsp_cfg->highPwrBOThrshld, highThreshold, sizeof(t_u32));
     (void)memcpy(&tsp_cfg->lowPwrBOThrshld, lowThreshold, sizeof(t_u32));
+    (void)memcpy(&tsp_cfg->dutycycstep, dutycycstep, sizeof(t_u32));
+    (void)memcpy(&tsp_cfg->dutycycmin, dutycycmin, sizeof(t_u32));
+    (void)memcpy(&tsp_cfg->highthrtemp, highthrtemp, sizeof(t_s32));
+    (void)memcpy(&tsp_cfg->lowthrtemp, lowthrtemp, sizeof(t_s32));
 
     tsp_cfg->action                 = wlan_cpu_to_le16(action);
     tsp_cfg->thermalPowerMgmtenable = wlan_cpu_to_le16(tsp_cfg->thermalPowerMgmtenable);
     tsp_cfg->powerMgmtBackoff       = wlan_cpu_to_le16(tsp_cfg->powerMgmtBackoff);
     tsp_cfg->highPwrBOThrshld       = wlan_cpu_to_le16(tsp_cfg->highPwrBOThrshld);
     tsp_cfg->lowPwrBOThrshld        = wlan_cpu_to_le16(tsp_cfg->lowPwrBOThrshld);
+    tsp_cfg->dutycycstep            = wlan_cpu_to_le16(tsp_cfg->dutycycstep);
+    tsp_cfg->dutycycmin             = wlan_cpu_to_le16(tsp_cfg->dutycycmin);
+    tsp_cfg->highthrtemp            = wlan_cpu_to_le16(tsp_cfg->highthrtemp);
+    tsp_cfg->lowthrtemp             = wlan_cpu_to_le16(tsp_cfg->lowthrtemp);
 
     cmd->size = wlan_cpu_to_le16(cmd->size);
 
@@ -5433,6 +5451,12 @@ int wifi_tsp_cfg(const t_u16 action, t_u16 *enable, t_u32 *back_off, t_u32 *high
         tsp_get_cfg.powerMgmtBackoff       = back_off;
         tsp_get_cfg.highPwrBOThrshld       = highThreshold;
         tsp_get_cfg.lowPwrBOThrshld        = lowThreshold;
+        tsp_get_cfg.dutycycstep            = dutycycstep;
+        tsp_get_cfg.dutycycmin             = dutycycmin;
+        tsp_get_cfg.highthrtemp            = highthrtemp;
+        tsp_get_cfg.lowthrtemp             = lowthrtemp;
+        tsp_get_cfg.currCAUTemp            = currCAUTemp;
+        tsp_get_cfg.currRFUTemp            = currRFUTemp;
 
         return wifi_wait_for_cmdresp(&tsp_get_cfg);
     }

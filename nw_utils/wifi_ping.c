@@ -522,7 +522,7 @@ end:
     (void)PRINTF("Incorrect usage\r\n");
     display_ping_usage();
 }
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -1050,7 +1050,7 @@ static struct cli_command ping_cli[] = {
 #else
     {"ping", "[-s <packet_size>] [-c <packet_count>] [-W <timeout in sec>] <ipv4 address>", cmd_ping},
 #endif
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 #ifdef CONFIG_IPV6
     {"wlan-ping", "[-s <packet_size>] [-c <packet_count>] [-W <timeout in sec>] <ipv4/ipv6 address>", cmd_ping},
 #else

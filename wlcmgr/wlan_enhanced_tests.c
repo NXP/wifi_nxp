@@ -722,7 +722,7 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
             /*Do Nothing*/
         }
     }
-#endif
+
     if (argc >= 6)
     {
         errno                               = 0;
@@ -730,6 +730,14 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
         if (errno != 0)
             (void)PRINTF("Error during strtoul errno:%d", errno);
     }
+    else
+    {
+        errno                               = 0;
+        ds_rate.param.rate_cfg.rate_setting = 0xffff;
+        if (errno != 0)
+            (void)PRINTF("Error during strtoul errno:%d", errno);
+    }
+#endif
 #ifdef CONFIG_AUTO_NULL_TX
 #if defined(CONFIG_11AC) || defined(CONFIG_11AX)
     if(argc == 7)
@@ -747,13 +755,6 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
         }
     }
 #endif
-    else
-    {
-        errno                               = 0;
-        ds_rate.param.rate_cfg.rate_setting = 0xffff;
-        if (errno != 0)
-            (void)PRINTF("Error during strtoul errno:%d", errno);
-    }
 
     if ((ds_rate.param.rate_cfg.rate_format != MLAN_RATE_FORMAT_AUTO)
 #if defined(CONFIG_11AX)

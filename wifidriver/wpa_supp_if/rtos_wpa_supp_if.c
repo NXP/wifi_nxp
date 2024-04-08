@@ -14,7 +14,7 @@
 #include "wifi.h"
 #include <wm_net.h>
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #include "fsl_debug_console.h"
 #endif
 
@@ -523,7 +523,7 @@ void *wifi_nxp_wpa_supp_dev_init(void *supp_drv_if_ctx,
 
     const struct netif *iface = NULL;
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
     iface = net_if_get_binding(iface_name);
 #else
     LOCK_TCPIP_CORE();
@@ -618,6 +618,7 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
     const t_u8 *bssid                      = NULL;
     wifi_scan_channel_list_t *chan_list    = NULL;
     t_u8 channels[WIFI_SCAN_MAX_NUM_CHAN]  = {0};
+    mlan_scan_type scan_type               = MLAN_SCAN_TYPE_ACTIVE;
 
     if (!if_priv || !params)
     {
@@ -667,6 +668,15 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
         }
     }
 
+    /*
+     * no ssids means passive scan
+     * refer to woal_cfg80211_scan
+     */
+    if (!params->num_ssids)
+    {
+        scan_type = MLAN_SCAN_TYPE_PASSIVE;
+    }
+
     bssid = params->bssid;
 
     if (num_chans != 0)
@@ -679,7 +689,7 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
             for (i = 0; i < num_chans; i++)
             {
                 chan_list[i].chan_number = channels[i];
-                chan_list[i].scan_type   = MLAN_SCAN_TYPE_ACTIVE;
+                chan_list[i].scan_type   = scan_type;
                 chan_list[i].scan_time   = 100;
             }
         }
@@ -1966,7 +1976,7 @@ void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
 
     const struct netif *iface = NULL;
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
     iface = net_if_get_binding(iface_name);
 #else
     LOCK_TCPIP_CORE();

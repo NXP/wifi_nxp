@@ -19,7 +19,7 @@ Change log:
 #include <wmerrno.h>
 #include <wm_os.h>
 #include "fsl_common.h"
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #ifndef RW610
 #include "sdmmc_config.h"
 #endif
@@ -31,7 +31,7 @@ Change log:
         Global Variables
 ********************************************************/
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #define BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE 32
 #endif
 

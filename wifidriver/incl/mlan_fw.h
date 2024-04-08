@@ -6947,6 +6947,18 @@ typedef MLAN_PACK_START struct _HostCmd_DS_TSP_CFG
     t_u32 highPwrBOThrshld;
     /** low Threshold*/
     t_u32 lowPwrBOThrshld;
+    /** DUTY_CYC_STEP */
+    t_u32 dutycycstep;
+    /** DUTY_CYC_MIN */
+    t_u32 dutycycmin;
+    /** HIGH_THRESHOLD_TEMP*/
+    int highthrtemp;
+    /** LOW_THRESHOLD_TEMP*/
+    int lowthrtemp;
+    /** CAU TSEN temperature */
+    int currCAUTemp;
+    /** RFU temperature */
+    int currRFUTemp;
 } MLAN_PACK_END HostCmd_DS_TSP_CFG;
 
 typedef MLAN_PACK_START struct _TSP_CFG
@@ -6959,6 +6971,18 @@ typedef MLAN_PACK_START struct _TSP_CFG
     t_u32 *highPwrBOThrshld;
     /** low Threshold*/
     t_u32 *lowPwrBOThrshld;
+    /** DUTY_CYC_STEP */
+    t_u32 *dutycycstep;
+    /** DUTY_CYC_MIN */
+    t_u32 *dutycycmin;
+    /** HIGH_THRESHOLD_TEMP*/
+    int *highthrtemp;
+    /** LOW_THRESHOLD_TEMP*/
+    int *lowthrtemp;
+    /** CAU TSEN temperature */
+    int *currCAUTemp;
+    /** RFU temperature */
+    int *currRFUTemp;
 } MLAN_PACK_END TSP_CFG;
 #endif
 

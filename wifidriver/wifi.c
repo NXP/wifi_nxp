@@ -154,7 +154,7 @@ static os_thread_stack_define(wifi_powersave_stack, CONFIG_WIFI_POWERSAVE_STACK_
 #define CONFIG_WIFI_TX_STACK_SIZE 2048
 #endif
 static os_thread_stack_define(wifi_tx_stack, CONFIG_WIFI_TX_STACK_SIZE);
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 static os_queue_pool_define(g_tx_data_queue_data, sizeof(struct bus_message) * MAX_EVENTS);
 #endif
 #endif
@@ -343,7 +343,7 @@ void wifi_dump_firmware_info()
     int tries;
     t_u8 data[8], i;
     uint32_t resp;
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     wifi_d("==== DEBUG MODE OUTPUT START: %d ====", os_get_timestamp());
 #endif
     if (wm_wifi.wifi_usb_file_open_cb != NULL)
@@ -360,7 +360,7 @@ void wifi_dump_firmware_info()
         wifi_e("File open callback is not registered");
         goto done;
     }
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     wifi_d("Start ITCM output %d, please wait...", os_get_timestamp());
 #endif
     reg_start = DEBUG_DUMP_START_REG;
@@ -464,7 +464,7 @@ void wifi_dump_firmware_info()
                         wifi_e("File opening failed");
                         goto done;
                     }
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
                     wifi_d("Start DTCM output %d, please wait...", os_get_timestamp());
 #endif
                 }
@@ -497,7 +497,7 @@ void wifi_dump_firmware_info()
                         wifi_e("File opening failed");
                         goto done;
                     }
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
                     wifi_d("Start SQRAM output %u.%06u, please wait...", os_get_timestamp());
 #endif
                 }
@@ -533,7 +533,7 @@ void wifi_dump_firmware_info()
     wifi_d("The output ITCM/DTCM/SQRAM have been saved to files successfully!");
     /* end dump fw memory */
 done:
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     wifi_d("==== DEBUG MODE OUTPUT END: %d ====\n", os_get_timestamp());
 #endif
 
@@ -755,7 +755,7 @@ void wifi_dump_firmware_info()
     dbg_dump_start_reg = DEBUG_DUMP_START_REG;
     dbg_dump_end_reg = DEBUG_DUMP_END_REG;
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     wifi_d("==== DEBUG MODE OUTPUT START: %d.%06u ====", os_get_timestamp());
 #endif
     /* read the number of the memories which will dump */
@@ -801,7 +801,7 @@ void wifi_dump_firmware_info()
     }
 
     doneflag = pmem_type_mapping_tbl->done_flag;
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     wifi_d("Start %s output %d, please wait...", pmem_type_mapping_tbl->mem_name, os_get_timestamp());
 #endif
     do
@@ -858,7 +858,7 @@ void wifi_dump_firmware_info()
         }
     } while (1);
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     wifi_d("==== DEBUG MODE OUTPUT END: %d ====\n", os_get_timestamp());
 #endif
     /* end dump fw memory */
@@ -1949,7 +1949,7 @@ static int wifi_core_init(void)
     /* Take the tx buf lock immediately so that we can later block on */
     os_semaphore_get(&txbuf_sem, OS_WAIT_FOREVER);
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
     wm_wifi.tx_data_queue_data = g_tx_data_queue_data;
     ret = os_queue_create(&wm_wifi.tx_data, "tx_data", sizeof(struct bus_message), &wm_wifi.tx_data_queue_data);
     if (ret != WM_SUCCESS)
@@ -2078,7 +2078,7 @@ static void wifi_core_deinit(void)
     }
 
 #ifdef CONFIG_WMM
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
     if (wm_wifi.tx_data != NULL)
     {
         (void)os_queue_delete(&wm_wifi.tx_data);
@@ -3634,7 +3634,7 @@ static void notify_wifi_driver_tx_event(uint16_t event)
         return;
     }
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
     /* TODO: use zephyr event and regroup */
     struct bus_message msg;
 
@@ -3731,7 +3731,7 @@ static void wifi_driver_tx(void *data)
     int i;
     mlan_private *pmpriv    = NULL;
     mlan_adapter *pmadapter = NULL;
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
     struct bus_message msg;
 #endif
 
@@ -3751,7 +3751,7 @@ static void wifi_driver_tx(void *data)
         taskNotification = 0U;
         event = interface = 0xFF;
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
         /* TODO: use zephyr event and regroup */
         (void)os_queue_recv(&wm_wifi.tx_data, &msg, OS_WAIT_FOREVER);
         event     = msg.event;
@@ -3861,6 +3861,11 @@ static void wifi_driver_tx(void *data)
                         {
                             pmadapter->tx_lock_flag = MTRUE;
                         }
+                        else
+                        {
+                            os_semaphore_put(&uapsd_sem);
+                            pmadapter->tx_lock_flag = MFALSE;
+                        }
                     }
                     else
                     {
@@ -3884,7 +3889,7 @@ static void wifi_driver_tx(void *data)
 }
 #endif /* CONFIG_WMM */
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #ifdef CONFIG_11AX
 #ifdef CONFIG_TCP_ACK_ENH
 #define ETH_PROTO_IP     0x0800U
@@ -4032,7 +4037,7 @@ int wifi_low_level_output(const t_u8 interface,
 
     /** Tx control */
     t_u32 tx_control = 0;
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[interface];
 #endif
 
@@ -4040,7 +4045,7 @@ int wifi_low_level_output(const t_u8 interface,
 
     // wakelock_get(WL_ID_LL_OUTPUT);
     /* Following condition is added to check if device is not connected and data packet is being transmitted */
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     if ((pmpriv->media_connected == MFALSE) && (interface == WLAN_BSS_TYPE_STA))
     {
 #ifdef CONFIG_WMM

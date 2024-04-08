@@ -483,7 +483,11 @@ mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
 #ifdef RW610
             t_u32 fw_cap_ext_rw610;
             fw_cap_ext_rw610     = mlan_adap->priv[0]->adapter->fw_cap_ext;
+#ifndef CONFIG_CUSTOM_CALDATA
             cal_data_valid_rw610 = (((fw_cap_ext_rw610 & 0x0800) == 0) ? 0 : 1);
+#else
+            cal_data_valid_rw610 = 0;
+#endif
 #endif
             break;
         case HostCmd_CMD_VERSION_EXT:
@@ -1571,7 +1575,7 @@ void WL_MCI_WAKEUP_DONE0_DriverIRQHandler(void)
 
 void mlan_init_wakeup_irq()
 {
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     /* Enable WLAN wakeup done interrupt */
     NVIC_SetPriority(WL_MCI_WAKEUP_DONE0_IRQn, MCI_WAKEUP_DONE_PRIORITY);
     NVIC_EnableIRQ(WL_MCI_WAKEUP_DONE0_IRQn);
@@ -1580,11 +1584,8 @@ void mlan_init_wakeup_irq()
 
 void mlan_deinit_wakeup_irq()
 {
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     NVIC_DisableIRQ(WL_MCI_WAKEUP_DONE0_IRQn);
-    NVIC_ClearPendingIRQ(WL_MCI_WAKEUP_DONE0_IRQn);
-#else
-    irq_disable(WL_MCI_WAKEUP_DONE0_IRQn);
     NVIC_ClearPendingIRQ(WL_MCI_WAKEUP_DONE0_IRQn);
 #endif
 }
@@ -1641,6 +1642,11 @@ retry:
     {
         wifi_shutdown_enable = false;
     }
+
+#ifdef RW610
+    wifi_cau_temperature_enable();
+    wifi_cau_temperature_write_to_firmware();
+#endif
 
     wifi_init_imulink();
 

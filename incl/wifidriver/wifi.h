@@ -13,26 +13,26 @@
 #ifndef __WIFI_H__
 #define __WIFI_H__
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
 #endif
 
 
 
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #ifndef CONFIG_STA_AUTO_DHCPV4
 #define CONFIG_STA_AUTO_DHCPV4 1
 #endif
 #endif
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #ifndef CONFIG_WIFI_STA_RECONNECT
 #define CONFIG_WIFI_STA_RECONNECT 1
 #endif
 #endif
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #ifndef CONFIG_WIFI_AUTO_POWER_SAVE
 #define CONFIG_WIFI_AUTO_POWER_SAVE 1
 #endif
@@ -1821,7 +1821,7 @@ int wifi_single_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime);
 int wifi_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 wlanBlockTime);
 #endif
 
-#ifdef CONFIG_CAU_TEMPERATURE
+#ifdef RW610
 /* get CAU module temperature and write to firmware */
 void wifi_cau_temperature_enable(void);
 void wifi_cau_temperature_write_to_firmware(void);

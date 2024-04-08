@@ -23,7 +23,7 @@
 #endif
 
 #include <cli_utils.h>
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #include "wifi_shell.h"
 #else
 #include <cli.h>
@@ -66,14 +66,14 @@ wlan_net_monitor_t g_net_monitor_param = {
 #ifdef CONFIG_HOST_SLEEP
 extern uint64_t rtc_timeout;
 #endif
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 extern char *net_sprint_addr(sa_family_t af, const void *addr);
 #endif
 
 static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 {
 // #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     struct ip4_addr ip, gw, nm, dns1, dns2;
 #else
     struct in_addr ip, gw, nm;
@@ -86,7 +86,7 @@ static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
     {
         goto out;
     }
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     ip.addr   = addr->ipv4.address;
     gw.addr   = addr->ipv4.gw;
     nm.addr   = addr->ipv4.netmask;
@@ -112,7 +112,7 @@ static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 
     (void)PRINTF("\r\n\tIPv4 Address\r\n");
     (void)PRINTF("\taddress: %s", addr_type);
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     (void)PRINTF("\r\n\t\tIP:\t\t%s", inet_ntoa(ip));
     (void)PRINTF("\r\n\t\tgateway:\t%s", inet_ntoa(gw));
     (void)PRINTF("\r\n\t\tnetmask:\t%s", inet_ntoa(nm));
@@ -130,7 +130,7 @@ out:
     {
         int i;
         (void)PRINTF("\r\n\tIPv6 Addresses\r\n");
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
         for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
         {
             if (addr->ipv6[i].addr_state != (unsigned char)IP6_ADDR_INVALID)
@@ -1642,7 +1642,7 @@ static void test_wlan_add(int argc, char **argv)
 #ifdef CONFIG_WPA2_ENTP
         else if (!info.security2 && string_equal("eap-tls", argv[arg]))
         {
-            u8_t *data   = NULL;
+            t_u8 *data   = NULL;
             int data_len = 0;
 
             network.security.type = WLAN_SECURITY_EAP_TLS;
@@ -2160,7 +2160,7 @@ static int __scan_cb(unsigned int count)
 static void test_wlan_thread_info(int argc, char **argv)
 {
     /* TODO: implement for Zephyr */
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     os_dump_threadinfo(NULL);
 #endif
 }
@@ -4287,7 +4287,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
 
 #ifdef RW610
 #if !defined(CONFIG_WIFI_BLE_COEX_APP)
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 static void test_wlan_auto_host_sleep(int argc, char **argv)
 {
     bool is_manual    = MFALSE;
@@ -4542,9 +4542,9 @@ static void test_wlan_ext_coex_uwb(int argc, char **argv)
     int ret           = -WM_FAIL;
     uint32_t reqd_len = 0;
 
-    u8_t cmd_buf[]    = {0xe0, 0x00, 0x11, 0x00, 0x4a, 0x00, 0x00, 0x00, 0x01 /* Get/Set */,
+    t_u8 cmd_buf[]    = {0xe0, 0x00, 0x11, 0x00, 0x4a, 0x00, 0x00, 0x00, 0x01 /* Get/Set */,
                          0x00, 0x00, 0x00, 0x38, 0x02, 0x01, 0x00, 0x03};
-    u8_t resp_buf[64] = {0};
+    t_u8 resp_buf[64] = {0};
 
     /**
      * Command taken from robust_btc.conf
@@ -6131,21 +6131,29 @@ static void dump_wlan_set_antcfg_usage(void)
 #ifndef RW610
     (void)PRINTF("wlan-set-antcfg <ant mode> [evaluate_time] \r\n");
 #else
-    (void)PRINTF("wlan-set-antcfg <ant_mode> <evaluate_time> <evaluate_time>\r\n");
+    (void)PRINTF("wlan-set-antcfg <ant_mode> <evaluate_time> <evaluate_mode>\r\n");
 #endif
     (void)PRINTF("\r\n");
     (void)PRINTF("\t<ant_mode>: \r\n");
-    (void)PRINTF("\t           Bit 0   -- Tx/Rx antenna 1\r\n");
-    (void)PRINTF("\t           Bit 1   -- Tx/Rx antenna 2\r\n");
-    (void)PRINTF("\t           0xFFFF  -- Tx/Rx antenna diversity\r\n");
+    (void)PRINTF("\t           Bit 0   -- Fixed to Tx/Rx antenna 1\r\n");
+    (void)PRINTF("\t           Bit 1   -- Fixed to Tx/Rx antenna 2\r\n");
+    (void)PRINTF("\t           0xFFFF  -- enable Tx/Rx antenna diversity\r\n");
     (void)PRINTF("\t[evaluate_time]: \r\n");
-    (void)PRINTF("\t           if ant mode = 0xFFFF, SAD evaluate time interval,\r\n");
-    (void)PRINTF("\t           default value is 6000 milli seconds\r\n");
+    (void)PRINTF("\t           If ant mode = 0xFFFF, use this to configure\r\n");
+    (void)PRINTF("\t           SAD evaluate time interval in milli seconds unit.\r\n");
+    (void)PRINTF("\t           If not specified, default value is 6000 milli seconds\r\n");
 #ifdef RW610
     (void)PRINTF("\t<evaluate_mode>: \r\n");
     (void)PRINTF("\t           0: PCB Ant. + Ext Ant0\r\n");
     (void)PRINTF("\t           1: Ext Ant0 + Ext Ant1\r\n");
     (void)PRINTF("\t           2: PCB Ant. + Ext Ant1\r\n");
+#endif
+    (void)PRINTF("Examples:\r\n");
+    (void)PRINTF("wlan-set-antcfg 1\r\n");
+    (void)PRINTF("wlan-set-antcfg 0xffff\r\n");
+    (void)PRINTF("wlan-set-antcfg 0xffff 5000\r\n");
+#ifdef RW610
+    (void)PRINTF("wlan-set-antcfg 0xffff 6000 0\r\n");
 #endif
 }
 
@@ -7685,22 +7693,36 @@ static void test_wlan_cpu_loading(int argc, char **argv)
 static void dump_wlan_tsp_cfg_usage()
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("    wlan-set-tsp-cfg enable <enable> backoff <backoff> high <highThreshold> low <lowThreshold>\r\n");
-    (void)PRINTF("    <enable>: 0 -- disable   1 -- enable\r\n");
-    (void)PRINTF("	  <backoff>: power backoff [0...20]\r\n");
-    (void)PRINTF("	  <highThreshold>: High power Threshold [0...300]\r\n");
-    (void)PRINTF("	  <lowThreshold>: Low power Threshold [0...300]\r\n");
-    (void)PRINTF("	   High Threshold must be greater than Low Threshold\r\n");
-    (void)PRINTF("	   If you want to get tsp cfg, you can just use wlan-get-tsp-cfg.\r\n");
+    (void)PRINTF("    wlan-set-tsp-cfg en <0/1> bo <0-20> high <0-300> low <0-300> "
+                 "dcstep <1-100> dcmin <0-100> hightemp <-100-150> lowtemp <-100-150>\r\n");
+    (void)PRINTF("	  <en>: 0 -- disable   1 -- enable\r\n");
+    (void)PRINTF("	  <bo>: power backoff [0...20]\r\n");
+    (void)PRINTF("	  <high>: High power Threshold [0...300]\r\n");
+    (void)PRINTF("	  <low>: Low power Threshold [0...300]\r\n");
+    (void)PRINTF("	  <dcstep>: Duty Cycle setp [1...100]\r\n");
+    (void)PRINTF("	  <dcmin>: Duty Cycle min [0...100]\r\n");
+    (void)PRINTF("	  <hightemp>: High Throttle Threshold temperature [-100...150]\r\n");
+    (void)PRINTF("	  <lowtemp>: Low Throttle Threshold temperature [-100...150]\r\n");
+    (void)PRINTF("	  High Threshold must be greater than Low Threshold\r\n");
+    (void)PRINTF("	  High Throttle Threshold temperature must be greater than Low Throttle Threshold temperature.\r\n");
+    (void)PRINTF("	  If you want to get tsp cfg, you can just use wlan-get-tsp-cfg.\r\n");
+    (void)PRINTF("\r\nUsage example : \r\n");
+    (void)PRINTF("wlan-set-tsp-cfg wlan-set-tsp-cfg en 1 bo 0 high 93 low 83 dcstep 5 dcmin 10 hightemp 120 lowtemp 110 \r\n");
+    (void)PRINTF("wlan-set-tsp-cfg en 0 \r\n");
 }
 static void test_wlan_set_tsp_cfg(int argc, char **argv)
 {
     int arg = 0;
     unsigned int value;
+    int   tempvalue;
     t_u16 enable        = 0;
     t_u32 back_off      = 0;
     t_u32 highThreshold = 0;
     t_u32 lowThreshold  = 0;
+    t_u32 dutycycstep   = 0;
+    t_u32 dutycycmin    = 0;
+    int highthrtemp   = 0;
+    int lowthrtemp    = 0;
     int ret             = WM_SUCCESS;
 
     struct
@@ -7709,11 +7731,15 @@ static void test_wlan_set_tsp_cfg(int argc, char **argv)
         unsigned backoff : 1;
         unsigned high : 1;
         unsigned low : 1;
+        unsigned dutycycstep : 1;
+        unsigned dutycycmin : 1;
+        unsigned highthrtemp : 1;
+        unsigned lowthrtemp : 1;
     } info;
 
     (void)memset(&info, 0, sizeof(info));
 
-    if (argc < 3 || argc > 9)
+    if (argc < 3 || argc > 17)
     {
         (void)PRINTF("Error: invalid number of arguments\r\n");
         dump_wlan_tsp_cfg_usage();
@@ -7723,7 +7749,7 @@ static void test_wlan_set_tsp_cfg(int argc, char **argv)
     arg++;
     do
     {
-        if (!info.enable && string_equal("enable", argv[arg]))
+        if (!info.enable && string_equal("en", argv[arg]))
         {
             if (get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || (value != 0 && value != 1))
             {
@@ -7735,7 +7761,7 @@ static void test_wlan_set_tsp_cfg(int argc, char **argv)
             info.enable = 1;
             enable      = value & 0xFF;
         }
-        else if (!info.backoff && string_equal("backoff", argv[arg]))
+        else if (!info.backoff && string_equal("bo", argv[arg]))
         {
             if (get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || value > 20)
             {
@@ -7771,22 +7797,72 @@ static void test_wlan_set_tsp_cfg(int argc, char **argv)
             info.low     = 1;
             lowThreshold = value;
         }
+        else if (!info.dutycycstep && string_equal("dcstep", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || value > 100)
+            {
+                (void)PRINTF("Error: invalid dutycycstep argument\r\n");
+                dump_wlan_tsp_cfg_usage();
+                return;
+            }
+            arg += 2;
+            info.dutycycstep = 1;
+            dutycycstep = value;
+        }
+        else if (!info.dutycycmin && string_equal("dcmin", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || value > 100)
+            {
+                (void)PRINTF("Error: invalid dutycycmin argument\r\n");
+                dump_wlan_tsp_cfg_usage();
+                return;
+            }
+            arg += 2;
+            info.dutycycmin = 1;
+            dutycycmin = value;
+        }
+        else if (!info.highthrtemp && string_equal("hightemp", argv[arg]))
+        {
+            tempvalue = (int)atoi(argv[arg + 1]);
+            if (tempvalue < -100 || tempvalue > 150)
+            {
+                (void)PRINTF("Error: invalid high throttle temperature threshold argument\r\n");
+                dump_wlan_tsp_cfg_usage();
+                return;
+            }
+            arg += 2;
+            info.highthrtemp = 1;
+            highthrtemp = tempvalue;
+        }
+        else if (!info.lowthrtemp && string_equal("lowtemp", argv[arg]))
+        {
+            tempvalue = (int)atoi(argv[arg + 1]);
+            if (tempvalue < -100 || tempvalue > 150)
+            {
+                (void)PRINTF("Error: invalid low throttle temperature threshold argument\r\n");
+                dump_wlan_tsp_cfg_usage();
+                return;
+            }
+            arg += 2;
+            info.lowthrtemp = 1;
+            lowthrtemp = tempvalue;
+        }
         else
         {
             (void)PRINTF("Error: invalid [%d] argument\r\n", arg + 1);
             dump_wlan_tsp_cfg_usage();
             return;
         }
-
     } while (arg < argc);
 
-    if (highThreshold <= lowThreshold)
+    if (enable && ((highThreshold <= lowThreshold) || (highthrtemp <= lowthrtemp)))
     {
         (void)PRINTF("Error: High Threshold must be greater than Low Threshold\r\n");
         dump_wlan_tsp_cfg_usage();
         return;
     }
-    ret = wlan_set_tsp_cfg(enable, back_off, highThreshold, lowThreshold);
+
+    ret = wlan_set_tsp_cfg(enable, back_off, highThreshold, lowThreshold, dutycycstep, dutycycmin, highthrtemp, lowthrtemp);
 
     if (ret != WM_SUCCESS)
     {
@@ -7801,6 +7877,13 @@ static void test_wlan_get_tsp_cfg(int argc, char **argv)
     t_u32 back_off      = 0;
     t_u32 highThreshold = 0;
     t_u32 lowThreshold  = 0;
+    t_u32 dutycycstep   = 0;
+    t_u32 dutycycmin    = 0;
+    int highthrtemp   = 0;
+    int lowthrtemp    = 0;
+    int currCAUTemp   = 0;
+    int currRFUTemp   = 0;
+
     int ret             = WM_SUCCESS;
 
     if (argc != 1)
@@ -7809,7 +7892,16 @@ static void test_wlan_get_tsp_cfg(int argc, char **argv)
         return;
     }
 
-    ret = wlan_get_tsp_cfg(&enable, &back_off, &highThreshold, &lowThreshold);
+    ret = wlan_get_tsp_cfg(&enable,
+                           &back_off,
+                           &highThreshold,
+                           &lowThreshold,
+                           &dutycycstep,
+                           &dutycycmin,
+                           &highthrtemp,
+                           &lowthrtemp,
+                           &currCAUTemp,
+                           &currRFUTemp);
 
     if (ret != WM_SUCCESS)
     {
@@ -7821,8 +7913,14 @@ static void test_wlan_get_tsp_cfg(int argc, char **argv)
     (void)PRINTF("	Enable TSP Algorithm: %d\r\n", enable);
     (void)PRINTF("		0: disable 1: enable\r\n");
     (void)PRINTF("	Power Management Backoff: %d dB\r\n", back_off);
-    (void)PRINTF("	Low Power BOT Threshold: %d °C\r\n", lowThreshold);
-    (void)PRINTF("	High Power BOT Threshold: %d °C\r\n", highThreshold);
+    (void)PRINTF("	Low Power BOT  Threshold(celcius): %d\r\n", lowThreshold);
+    (void)PRINTF("	High Power BOT Threshold(celcius): %d\r\n", highThreshold);
+    (void)PRINTF("	Duty Cycle setp(percentage): %d\r\n", dutycycstep);
+    (void)PRINTF("	Duty Cycle min (percentage): %d\r\n", dutycycmin);
+    (void)PRINTF("	High Throttle Threshold temperature(celcius): %d\r\n", highthrtemp);
+    (void)PRINTF("	Low Throttle  Threshold temperature(celcius): %d\r\n", lowthrtemp);
+    (void)PRINTF("	CAU TSEN Temperature(celcius): %d\r\n", currCAUTemp);
+    (void)PRINTF("	RFU      Temperature(celcius): %d\r\n", currRFUTemp);
 }
 #endif
 
@@ -9801,7 +9899,7 @@ static void test_wlan_sta_inactivityto(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_CAU_TEMPERATURE
+#ifdef RW610
 static void test_wlan_get_temperature(int argc, char **argv)
 {
     int32_t board_temperature = 0;
@@ -9816,12 +9914,9 @@ static void test_wlan_get_temperature(int argc, char **argv)
 static void dump_wlan_auto_null_tx_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("    wlan-auto-null-tx start interval <interval> dst_mac <dst_mac>\r\n");
+    (void)PRINTF("    wlan-auto-null-tx start interval <interval>\r\n");
     (void)PRINTF("        <interval> bit15:14 unit: 00-s 01-us 10-ms 11-one_shot  bit13-0: interval\r\n");
     (void)PRINTF("                   Please set interval Hexadecimal value. For example: 0x8064\r\n");
-    (void)PRINTF("        <dst_mac> Destination MAC address\r\n");
-    (void)PRINTF("                  Please specify dst_mac if not connected to AP\r\n");
-    (void)PRINTF("                  If connected to AP, no need to input dst_mac\r\n");
     (void)PRINTF("    wlan-auto-null-tx stop\r\n");
 }
 
@@ -9877,23 +9972,7 @@ static void test_wlan_auto_null_tx(int argc, char **argv)
         }
         else
         {
-            if (string_equal("dst_mac", argv[arg]))
-            {
-                ret = get_mac(argv[arg + 1], (char *)&auto_null_tx.dst_mac, ':');
-                if (ret != 0)
-                {
-                    dump_wlan_auto_null_tx_usage();
-                    (void)PRINTF("Error: invalid dst_mac argument\r\n");
-                    return;
-                }
-                arg += 2;
-            }
-            else
-            {
-                (void)PRINTF("Error: argument %d is invalid\r\n", arg);
-                dump_wlan_auto_null_tx_usage();
-                return;
-            }
+            (void)PRINTF("Error: not conneted AP\r\n");
         }
     }
     else if (string_equal("stop", argv[1]))
@@ -10462,7 +10541,7 @@ static void wlan_detect_ant_set_mode(uint16_t best_ant, uint16_t next_best_ant)
 
 static void wlan_start_detect_ant(void)
 {
-    int ret;
+    int ret = -1;
     uint32_t ant_mode;
     uint16_t evaluate_time = 0x0;
     uint8_t evaluate_mode = 0xff;
@@ -10802,7 +10881,7 @@ static struct cli_command tests[] = {
 #ifdef RW610
     {"wlan-wakeup-condition", "<mef/wowlan wake_up_conds>", test_wlan_wakeup_condition},
 #if !defined(CONFIG_WIFI_BLE_COEX_APP)
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
     {"wlan-auto-host-sleep", "<enable> <periodic>", test_wlan_auto_host_sleep},
 #else
     {"wlan-auto-host-sleep", "<enable> <mode> <rtc_timer> <periodic>", test_wlan_auto_host_sleep},
@@ -10960,7 +11039,9 @@ static struct cli_command tests[] = {
      test_wlan_set_monitor_param},
 #endif
 #ifdef CONFIG_TSP
-    {"wlan-set-tsp-cfg", "<enable> <backoff> <highThreshold> <lowThreshold>", test_wlan_set_tsp_cfg},
+    {"wlan-set-tsp-cfg",
+     "<enable> <backoff> <highThreshold> <lowThreshold> <dutycycstep> <dutycycmin> <highthrtemp> <lowthrtemp>",
+     test_wlan_set_tsp_cfg},
     {"wlan-get-tsp-cfg", NULL, test_wlan_get_tsp_cfg},
 #endif
 #ifdef CONFIG_CPU_LOADING
@@ -11013,7 +11094,7 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
     {"wlan-sta-inactivityto", "<n> <m> <l> [k] [j]", test_wlan_sta_inactivityto},
 #endif
-#ifdef CONFIG_CAU_TEMPERATURE
+#ifdef RW610
     {"wlan-get-temperature", NULL, test_wlan_get_temperature},
 #endif
 #ifdef CONFIG_AUTO_NULL_TX

@@ -46,7 +46,7 @@
 #ifdef CONFIG_HOST_SLEEP
 #ifdef RW610
 #include  "fsl_power.h"
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #if !defined(CONFIG_WIFI_BLE_COEX_APP)
 #include  "lpm.h"
 #include  "host_sleep.h"
@@ -145,14 +145,14 @@ static bool wlan_uap_scan_chan_list_set;
 
 wlan_flt_cfg_t g_flt_cfg;
 #ifdef RW610
-#if defined(CONFIG_NXP_FW_LOADER_MONOLITHIC) && defined(CONFIG_ZEPHYR)
+#if defined(CONFIG_MONOLITHIC_WIFI) && defined(__ZEPHYR__)
 extern const unsigned char *wlan_fw_bin;
 extern const unsigned int wlan_fw_bin_len;
 #else
 const unsigned char *wlan_fw_bin   = (const unsigned char *)(void *)0;
 const unsigned int wlan_fw_bin_len = 0;
-#endif /* CONFIG_NXP_FW_LOADER_MONOLITHIC */
-#ifdef CONFIG_ZEPHYR
+#endif /* CONFIG_MONOLITHIC_WIFI */
+#ifdef __ZEPHYR__
 extern int nxp_wifi_wlan_event_callback(enum wlan_event_reason reason, void *data);
 #define wlan_event_callback nxp_wifi_wlan_event_callback
 #else
@@ -247,7 +247,7 @@ static bool mon_thread_init = 0;
 
 #ifdef CONFIG_HOST_SLEEP
 #ifdef CONFIG_POWER_MANAGER
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, void *data);
 AT_ALWAYS_ON_DATA_INIT(pm_notify_element_t wlan_notify) =
 {
@@ -288,7 +288,7 @@ os_queue_pool_t mon_thread_events_queue_data;
 
 static t_u16 scan_channel_gap = (t_u16)SCAN_CHANNEL_GAP_VALUE;
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #ifdef SD9177
 #define POLL_TIMEOUT (20 * 1000)
 static struct udp_pcb *udp_raw_pcb;
@@ -575,7 +575,7 @@ static struct
 #ifdef CONFIG_WIFI_FW_DEBUG
     void (*wlan_usb_init_cb)(void);
 #endif
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #ifdef SD9177
     os_timer_t poll_timer;
 #endif
@@ -776,7 +776,7 @@ void wlan_dhcp_cleanup()
 {
     net_stop_dhcp_timer();
     net_interface_dhcp_stop(net_get_mlan_handle());
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     net_interface_dhcp_cleanup(net_get_mlan_handle());
 #endif
 }
@@ -1042,14 +1042,7 @@ int wlan_get_wakeup_reason(uint16_t *hs_wakeup_reason)
 #endif
 
 #ifdef CONFIG_HOST_SLEEP
-#ifdef CONFIG_POWER_MANAGER
-static void wake_timer_cb(os_timer_arg_t arg)
-{
-    if(wakelock_isheld())
-        wakelock_put();
-}
-
-status_t powerManager_send_event(int id, void *data)
+status_t wlan_hs_send_event(int id, void *data)
 {
     struct wlan_message msg;
     int ret;
@@ -1061,20 +1054,27 @@ status_t powerManager_send_event(int id, void *data)
     if (ret != 0)
     {
         (void)PRINTF("PM: Failed to send msg to queue\r\n");
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
         return -WM_FAIL;
 #else
-        return kStatus_PMNotifyEventError;
+        return kStatus_Fail;
 #endif
     }
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
     return WM_SUCCESS;
 #else
-    return kStatus_PMSuccess;
+    return kStatus_Success;
 #endif
 }
 
-#ifndef CONFIG_ZEPHYR
+#ifdef CONFIG_POWER_MANAGER
+static void wake_timer_cb(os_timer_arg_t arg)
+{
+    if(wakelock_isheld())
+        wakelock_put();
+}
+
+#ifndef __ZEPHYR__
 status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, void *data)
 {
     int ret;
@@ -1107,7 +1107,7 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
         if (!is_hs_handshake_done)
         {
             is_hs_handshake_done = WLAN_HOSTSLEEP_IN_PROCESS;
-            ret = powerManager_send_event(HOST_SLEEP_HANDSHAKE, NULL);
+            ret = wlan_hs_send_event(HOST_SLEEP_HANDSHAKE, NULL);
             if (ret != 0)
                 return kStatus_PMNotifyEventError;
             return kStatus_PMPowerStateNotAllowed;
@@ -1122,7 +1122,9 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
         }
 #ifdef RW610
 #if !defined(CONFIG_WIFI_BLE_COEX_APP)
-        host_sleep_pre_cfg((int)powerState);
+        ret = host_sleep_pre_cfg((int)powerState);
+        if(ret != 0)
+            return kStatus_PMPowerStateNotAllowed;
 #endif
 #endif
     }
@@ -1135,7 +1137,7 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
 #endif
         if (is_hs_handshake_done == WLAN_HOSTSLEEP_SUCCESS)
         {
-            ret = powerManager_send_event(HOST_SLEEP_EXIT, NULL);
+            ret = wlan_hs_send_event(HOST_SLEEP_EXIT, NULL);
             if (ret != 0)
                 return kStatus_PMNotifyEventError;
             /* reset hs hanshake flag after waking up */
@@ -3504,7 +3506,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
             }
             CONNECTION_EVENT(WLAN_REASON_AUTH_SUCCESS, NULL);
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #ifdef SD9177
             os_timer_activate(&wlan.poll_timer);
 #endif
@@ -4452,7 +4454,7 @@ static void wlcm_process_net_ipv6_config(struct wifi_message *msg,
     }
 
     net_get_if_ipv6_addr((struct net_ip_config *)&network->ip, if_handle);
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
     {
         if (ip6_addr_isvalid((network->ip.ipv6[i].addr_state)) != 0U)
@@ -5138,7 +5140,7 @@ static void wlcm_process_init(enum cm_sta_state *next)
     (void)wrapper_wlan_cmd_get_hw_spec();
 
 #ifndef RW610
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl = WLAN_ED_MAC_CTRL;
 #else
     wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl = {
@@ -5379,7 +5381,7 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
                 wpa_supp_network_status(netif, network);
 #endif
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
                 net_interface_up(if_handle);
 #endif
 
@@ -5553,7 +5555,7 @@ static void wlcm_deinit(int action)
 
     wifi_scan_stop();
     wifi_deinit();
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     wlan_dhcp_cleanup();
 #endif
 
@@ -6251,7 +6253,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
                 {
                     is_hs_handshake_done = WLAN_HOSTSLEEP_SUCCESS;
 #ifdef RW610
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #if !defined(CONFIG_WIFI_BLE_COEX_APP)
                     host_sleep_cli_notify();
 #endif
@@ -6897,7 +6899,7 @@ static void ft_roam_timer_cb(os_timer_arg_t arg)
 #endif
 #endif
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #ifdef SD9177
 
 #include "lwip/udp.h"
@@ -7122,7 +7124,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 
     if (!mon_thread_init)
     {
-#ifdef CONFIG_CAU_TEMPERATURE
+#ifdef RW610
         wifi_cau_temperature_enable();
 #endif
         mon_thread_events_queue_data = g_mon_event_queue_data;
@@ -7225,7 +7227,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     }
 #endif
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #ifdef SD9177
     ret = os_timer_create(&wlan.poll_timer, "poll-timer", os_msec_to_ticks(POLL_TIMEOUT),
                           &poll_timer_cb, NULL, OS_TIMER_PERIODIC, OS_TIMER_NO_ACTIVATE);
@@ -7308,7 +7310,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         return 0;
     }
 #endif
-#if defined(CONFIG_HOST_SLEEP) && !defined(CONFIG_ZEPHYR)
+#if defined(CONFIG_HOST_SLEEP) && !defined(__ZEPHYR__)
     ret = host_sleep_cli_init();
     if (ret != WM_SUCCESS)
     {
@@ -9190,6 +9192,24 @@ int wlan_connect(char *name)
         if (wlan.networks[i].name[0] != '\0' && strlen(wlan.networks[i].name) == len &&
             !strncmp(wlan.networks[i].name, name, len))
         {
+            switch (wlan.networks[i].role)
+            {
+                case MLAN_BSS_ROLE_UAP:
+                    wlcm_e("Invalid bss role. Bss role is uap.");
+                    ret = WLAN_ERROR_PARAM;
+                    break;
+                case MLAN_BSS_ROLE_ANY:
+                    wlcm_e("Invalid bss role. Bss role is any.");
+                    ret = WLAN_ERROR_PARAM;
+                    break;
+                default:
+                    ret = WLAN_ERROR_NONE;
+                    break;
+            }
+
+            if(ret != WLAN_ERROR_NONE)
+                return ret;
+
             wlcm_d("taking the scan lock (connect scan)");
             dbg_lock_info();
             ret = os_semaphore_get(&wlan.scan_lock, OS_WAIT_FOREVER);
@@ -9321,9 +9341,13 @@ int wlan_start_network(const char *name)
 #endif
             {
                 if ((wlan.networks[i].channel_specific) && (wlan.networks[i].channel != 0))
+                {
                     wlcm_w(
                         "NOTE: uAP will automatically switch to"
                         " the channel that station is on.");
+                    if(is_sta_connected())
+                        wlan.networks[i].channel = wlan.networks[wlan.cur_network_idx].channel;
+                }
             }
             if (wlan.networks[i].role == WLAN_BSS_ROLE_UAP)
             {
@@ -9512,7 +9536,7 @@ void wlan_reset(cli_reset_option ResetOption)
             /* Block RX data */
             wifi_set_rx_status(WIFI_DATA_BLOCK);
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
             /* DHCP Cleanup */
             wlan_dhcp_cleanup();
 #endif
@@ -9662,7 +9686,7 @@ static void wlan_mon_thread(os_thread_arg_t data)
              */
             if ((mlan_adap != NULL) && (mlan_adap->ps_state == PS_STATE_AWAKE))
             {
-#ifdef CONFIG_CAU_TEMPERATURE
+#ifdef RW610
                 wifi_cau_temperature_write_to_firmware();
 #endif
             }
@@ -11310,7 +11334,7 @@ int wlan_set_auto_arp(void)
     return wifi_set_packet_filters(&flt_cfg);
 }
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #define DIV_ROUND_UP(n, d) (((n) + (d)-1) / (d))
 #endif
 
@@ -14046,17 +14070,33 @@ int wlan_net_monitor_cfg(wlan_net_monitor_t *monitor)
 #endif
 
 #ifdef CONFIG_TSP
-int wlan_get_tsp_cfg(t_u16 *enable, t_u32 *back_off, t_u32 *highThreshold, t_u32 *lowThreshold)
+int wlan_get_tsp_cfg(t_u16 *enable,
+                     t_u32 *back_off,
+                     t_u32 *highThreshold,
+                     t_u32 *lowThreshold,
+                     t_u32 *dutycycstep,
+                     t_u32 *dutycycmin,
+                     int *highthrtemp,
+                     int *lowthrtemp,
+                     int *currCAUTemp,
+                     int *currRFUTemp)
 {
     t_u16 action = 0;
 
-    return wifi_tsp_cfg(action, enable, back_off, highThreshold, lowThreshold);
+    return wifi_tsp_cfg(action, enable, back_off, highThreshold, lowThreshold, dutycycstep, dutycycmin, highthrtemp, lowthrtemp, currCAUTemp, currRFUTemp);
 }
-int wlan_set_tsp_cfg(t_u16 enable, t_u32 back_off, t_u32 highThreshold, t_u32 lowThreshold)
+int wlan_set_tsp_cfg(t_u16 enable,
+                     t_u32 back_off,
+                     t_u32 highThreshold,
+                     t_u32 lowThreshold,
+                     t_u32 dutycycstep,
+                     t_u32 dutycycmin,
+                     int highthrtemp,
+                     int lowthrtemp)
 {
     t_u16 action = 1;
 
-    return wifi_tsp_cfg(action, &enable, &back_off, &highThreshold, &lowThreshold);
+    return wifi_tsp_cfg(action, &enable, &back_off, &highThreshold, &lowThreshold, &dutycycstep, &dutycycmin, &highthrtemp, &lowthrtemp, NULL, NULL);
 }
 #endif
 
@@ -14438,7 +14478,7 @@ int wlan_sta_inactivityto(wlan_inactivity_to_t *inac_to, t_u16 action)
 }
 #endif
 
-#ifdef CONFIG_CAU_TEMPERATURE
+#ifdef RW610
 int32_t wlan_get_temperature()
 {
     return wifi_get_temperature();

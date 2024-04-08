@@ -275,9 +275,9 @@ zephyr_code_relocate(FILES
                      # fsl_cache.c
                      # ${ZEPHYR_BASE}/modules/hal_nxp/fsl_memcpy.S
                      wifidriver/wifi-imu.c
-                     ${ZEPHYR_BASE}/modules/hal_nxp/fsl_os_abstraction_zephyr.c
+                     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/osa/fsl_os_abstraction_zephyr.c
                      ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/drivers/imu/fsl_imu.c
-                     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/components/rpmsg/fsl_adapter_rfimu.c
+                     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/rpmsg/fsl_adapter_rfimu.c
                      LOCATION RAM_TEXT)
 endif()
 

@@ -1888,7 +1888,7 @@ static mlan_status wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr,
         else
 #endif
 #ifdef CONFIG_WPA_SUPP_WPS
-            if ((pvendor_ie->element_id == VENDOR_SPECIFIC_221) && (priv->wps.session_enable == MFALSE) &&
+            if (pvendor_ie->element_id == VENDOR_SPECIFIC_221 &&
                 (!__memcmp(priv->adapter, pvendor_ie->oui, wps_oui, sizeof(pvendor_ie->oui))) &&
                 (pvendor_ie->oui_type == wps_oui[3U]))
         {
@@ -2676,8 +2676,14 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             break;
             case HostCmd_CMD_802_11D_DOMAIN_INFO:
             {
+                HostCmd_DS_802_11D_DOMAIN_INFO *domain_info = (HostCmd_DS_802_11D_DOMAIN_INFO *)&resp->params.domain_info;
                 if (resp->result == HostCmd_RESULT_OK)
                 {
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else if(domain_info->action == HostCmd_ACT_SPC_SET)
+                {
+                    /*FW not supported yet, always set command response status success for action code HostCmd_ACT_SPC_SET*/
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
                 }
                 else
@@ -3959,6 +3965,12 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                         *(tsp_get_cfg->powerMgmtBackoff)       = data->powerMgmtBackoff;
                         *(tsp_get_cfg->lowPwrBOThrshld)        = data->lowPwrBOThrshld;
                         *(tsp_get_cfg->highPwrBOThrshld)       = data->highPwrBOThrshld;
+                        *(tsp_get_cfg->dutycycstep)            = data->dutycycstep;
+                        *(tsp_get_cfg->dutycycmin)             = data->dutycycmin;
+                        *(tsp_get_cfg->highthrtemp)            = data->highthrtemp;
+                        *(tsp_get_cfg->lowthrtemp)             = data->lowthrtemp;
+                        *(tsp_get_cfg->currCAUTemp)            = data->currCAUTemp;
+                        *(tsp_get_cfg->currRFUTemp)            = data->currRFUTemp;
                     }
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
                 }
@@ -4029,6 +4041,17 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 }
             }
             break;
+        case HostCmd_CMD_ADD_NEW_STATION:
+            if (resp->result == HostCmd_RESULT_OK)
+            {
+                wm_wifi.cmd_resp_status = WM_SUCCESS;
+            }
+            else
+            {
+                wm_wifi.cmd_resp_status = -WM_FAIL;
+            }
+            break;
+
             default:
                 /* fixme: Currently handled by the legacy code. Change this
                    handling later. Also check the default return value then*/
@@ -4832,13 +4855,23 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 PRINTM(MEVENT, "PPS/UAPSD mode activated\n");
             }
 
+            t_u8 tx_lock_flag_org = pmpriv->adapter->tx_lock_flag;
+
             if (pmpriv->adapter->pps_uapsd_mode)
             {
                 os_semaphore_put(&uapsd_sem);
                 /* As the wifi_driver task has priority of 3, so sleep 1ms to yield to the CMD sending task */
                 os_thread_sleep(os_msec_to_ticks(1));
             }
-            pmpriv->adapter->tx_lock_flag = MFALSE;
+
+            /* If original tx_lock_flag is false, and last packet is sent during
+             * 1 ms sleep, we don't change the tx_lock_flag to false again,
+             * to avoid sending two last packets to FW in one sleep period */
+            if (!(tx_lock_flag_org == MFALSE && pmpriv->adapter->tx_lock_flag == MTRUE))
+            {
+                pmpriv->adapter->tx_lock_flag = MFALSE;
+            }
+
             if (pmpriv->adapter->pps_uapsd_mode && pmpriv->media_connected && pmpriv->adapter->gen_null_pkt &&
                 wifi_check_no_packet_indication(pmpriv))
             {
@@ -7264,22 +7297,19 @@ uint32_t wifi_get_board_type()
 }
 #endif
 
-#ifdef CONFIG_CAU_TEMPERATURE
+#ifdef RW610
 void wifi_cau_temperature_enable()
 {
-#ifdef RW610
     t_u32 val;
 
     val = WIFI_REG32(WLAN_CAU_ENABLE_ADDR);
     val &= ~(0xC);
     val |= (2 << 2);
     WIFI_WRITE_REG32(WLAN_CAU_ENABLE_ADDR, val);
-#endif
 }
 
 int32_t wifi_get_temperature(void)
 {
-#ifdef RW610
     int32_t val                = 0;
     uint32_t reg_val           = 0;
     uint32_t temp_Cau_Raw_Reading = 0;
@@ -7310,17 +7340,14 @@ int32_t wifi_get_temperature(void)
     }
 
     return val;
-#endif
 }
 
 void wifi_cau_temperature_write_to_firmware()
 {
-#ifdef RW610
     int32_t val = 0;
 
     val = wifi_get_temperature();
     WIFI_WRITE_REG32(WLAN_CAU_TEMPERATURE_FW_ADDR, val);
-#endif
 }
 #endif
 

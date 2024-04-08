@@ -120,7 +120,7 @@
 #ifndef __WLAN_H__
 #define __WLAN_H__
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #include <nxp_wifi.h>
 #endif
 
@@ -130,7 +130,7 @@
 #include <wifi_events.h>
 #include <wifi.h>
 
-#define WLAN_DRV_VERSION "v1.3.r48.p4"
+#define WLAN_DRV_VERSION "v1.3.r48.p7"
 
 #ifdef CONFIG_WPA2_ENTP
 #include <wm_mbedtls_helper_api.h>
@@ -3158,13 +3158,11 @@ void wlan_clear_host_sleep_config();
  * \return -WM_FAIL if failed.
  */
 int wlan_set_multicast(t_u8 mef_action);
-#ifdef CONFIG_POWER_MANAGER
-/** This function sent power Manager events to mon_thread
+/** This function sent host sleep events to mon_thread
  * \param[in] id Event ID.
  * \param[in] data Pointer to event msg.
  */
-status_t powerManager_send_event(int id, void *data);
-#endif
+status_t wlan_hs_send_event(int id, void *data);
 #endif
 
 /** Set configuration parameters of IEEE power save mode.
@@ -5990,7 +5988,16 @@ int wlan_set_threshold_link_quality(unsigned int evend_id,
  *          High Threshold must be greater than Low Threshold.
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_get_tsp_cfg(t_u16 *enable, t_u32 *back_off, t_u32 *highThreshold, t_u32 *lowThreshold);
+int wlan_get_tsp_cfg(t_u16 *enable,
+                     t_u32 *back_off,
+                     t_u32 *highThreshold,
+                     t_u32 *lowThreshold,
+                     t_u32 *dutycycstep,
+                     t_u32 *dutycycmin,
+                     int *highthrtemp,
+                     int *lowthrtemp,
+                     int *currCAUTemp,
+                     int *currRFUTemp);
 /**
  * set TSP(Thermal Safeguard Protection) configuration.
  * TSP algorithm moniters PA Tj and primarily backs off data throughput.
@@ -6002,7 +6009,14 @@ int wlan_get_tsp_cfg(t_u16 *enable, t_u32 *back_off, t_u32 *highThreshold, t_u32
  * \return WM_SUCCESS if successful otherwise failure.
  */
 
-int wlan_set_tsp_cfg(t_u16 enable, t_u32 back_off, t_u32 highThreshold, t_u32 lowThreshold);
+int wlan_set_tsp_cfg(t_u16 enable,
+                     t_u32 back_off,
+                     t_u32 highThreshold,
+                     t_u32 lowThreshold,
+                     t_u32 dutycycstep,
+                     t_u32 dutycycmin,
+                     int highthrtemp,
+                     int lowthrtemp);
 #endif
 
 #ifdef CONFIG_WIFI_REG_ACCESS
@@ -6749,7 +6763,7 @@ int wlan_set_network_ip_byname(char *name, struct wlan_ip_config *ip);
 int wlan_sta_inactivityto(wlan_inactivity_to_t *inac_to, t_u16 action);
 #endif
 
-#ifdef CONFIG_CAU_TEMPERATURE
+#ifdef RW610
 /**
  * Get board temperature.
  * \return board temperature.

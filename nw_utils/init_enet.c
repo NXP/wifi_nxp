@@ -198,7 +198,7 @@ int initNetwork(void)
 }
 /*${function:end}*/
 
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 
 static struct net_if *iface;
 

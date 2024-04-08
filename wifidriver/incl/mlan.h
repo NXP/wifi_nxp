@@ -18,26 +18,26 @@ Change log:
 #ifndef _MLAN_H_
 #define _MLAN_H_
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
 #endif
 
 
 
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #ifndef CONFIG_STA_AUTO_DHCPV4
 #define CONFIG_STA_AUTO_DHCPV4 1
 #endif
 #endif
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #ifndef CONFIG_WIFI_STA_RECONNECT
 #define CONFIG_WIFI_STA_RECONNECT 1
 #endif
 #endif
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #ifndef CONFIG_WIFI_AUTO_POWER_SAVE
 #define CONFIG_WIFI_AUTO_POWER_SAVE 1
 #endif
