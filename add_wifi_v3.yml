@@ -301,7 +301,6 @@ middleware.wifi.net_free_rtos:
     - repo_relative_path: incl/port/osa
     - repo_relative_path: port/osa
     - repo_relative_path: incl/port/net
-    - repo_relative_path: port/net/lwip
     - repo_relative_path: incl/port/net/hooks
     - repo_relative_path: dhcpd
     - repo_relative_path: incl/wlcmgr
@@ -309,9 +308,9 @@ middleware.wifi.net_free_rtos:
     - repo_relative_path: wifidriver/incl
     files:
     - source: incl/port/net/wm_net.h
-    - source: port/net/lwip/net.c
-    - source: port/net/lwip/netif_decl.h
-    - source: port/net/lwip/wifi_netif.c
+    - source: port/net/net.c
+    - source: port/net/netif_decl.h
+    - source: port/net/wifi_netif.c
     - source: incl/port/net/hooks/lwip_default_hooks.h
     - source: port/net/hooks/lwip_default_hooks.c
     - source: dhcpd/dhcp-bootp.h
@@ -537,8 +536,6 @@ middleware.wifi:
     - source: port/net/wifi_netif.c
     - source: wlcmgr/wlan.c
     - source: wlcmgr/wlan_txpwrlimit_cfg.c
-    - source: incl/port/net/hooks/lwip_default_hooks.h
-    - source: port/net/hooks/lwip_default_hooks.c
     - source: ChangeLogKSDK.txt
     - source: CMakeLists.txt
   belong_to: set.middleware.wifi
