@@ -1018,8 +1018,7 @@ enum wlan_security_type
     WLAN_SECURITY_WPA3_FT_SAE,
 #endif
 #endif
-    /** The network uses WPA2/WPA3 SAE mixed security with PSK. This security mode
-     * is specific to uAP or SoftAP only */
+    /** The network uses WPA2/WPA3 SAE mixed security with PSK. */
     WLAN_SECURITY_WPA2_WPA3_SAE_MIXED,
 #ifdef CONFIG_OWE
     /** The network uses OWE only security without Transition mode support. */
