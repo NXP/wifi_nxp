@@ -16,6 +16,7 @@
 #include <wm_net.h>
 #include <wifi-debug.h>
 #include <wlan_11d.h>
+#include <cli_utils.h>
 #ifdef CONFIG_WMSTATS
 #include <wmstats.h>
 #endif /* CONFIG_WMSTATS */
@@ -8935,7 +8936,7 @@ int wlan_add_network(struct wlan_network *network)
 #endif
     if (network->security.sae_groups == NULL)
     {
-        network->security.sae_groups = "19";
+        network->security.sae_groups = string_dup("19");
     }
 #ifdef CONFIG_OWE
     if (network->security.owe_groups == NULL)
