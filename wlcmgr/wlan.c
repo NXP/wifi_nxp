@@ -16,7 +16,6 @@
 #include <wm_net.h>
 #include <wifi-debug.h>
 #include <wlan_11d.h>
-#include <cli_utils.h>
 #ifdef CONFIG_WMSTATS
 #include <wmstats.h>
 #endif /* CONFIG_WMSTATS */
@@ -8936,12 +8935,12 @@ int wlan_add_network(struct wlan_network *network)
 #endif
     if (network->security.sae_groups == NULL)
     {
-        network->security.sae_groups = string_dup("19");
+        network->security.sae_groups = wlan_string_dup("19");
     }
 #ifdef CONFIG_OWE
     if (network->security.owe_groups == NULL)
     {
-        network->security.owe_groups = string_dup("19");
+        network->security.owe_groups = wlan_string_dup("19");
     }
 #endif
     if (network->security.group_cipher == 0)
@@ -15784,3 +15783,12 @@ int32_t wlan_get_temperature()
     return wifi_get_temperature();
 }
 #endif
+
+char *wlan_string_dup(const char *s)
+{
+    char *snew = (char *)OSA_MemoryAllocate(strlen(s) + 1);
+    if (snew)
+        (void)strcpy(snew, s);
+    return snew;
+}
+

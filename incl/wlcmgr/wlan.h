@@ -7329,4 +7329,10 @@ typedef wifi_auto_null_tx_t wlan_auto_null_tx_t;
 int wlan_auto_null_tx(wlan_auto_null_tx_t *auto_null_tx);
 #endif
 
+/**
+ * allocate a copy of a string
+ *
+ */
+char *wlan_string_dup(const char *s);
+
 #endif /* __WLAN_H__ */

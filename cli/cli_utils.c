@@ -269,6 +269,6 @@ char *string_dup(const char *s)
 {
     char *snew = (char *)OSA_MemoryAllocate(strlen(s) + 1);
     if (snew)
-        strcpy(snew, s);
+        (void)strcpy(snew, s);
     return snew;
 }
