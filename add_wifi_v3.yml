@@ -937,28 +937,41 @@ set.middleware.wifi:
         cgroup: NXP Wi-Fi
   dependency:
     allOf:
-    - board:
-      - evkmimxrt595
-      - evkmimxrt685
-      - mimxrt685audevk
-      - mimxrt700evk
-      - evkmimxrt1020
-      - evkmimxrt1040
-      - evkbimxrt1050
-      - evkmimxrt1060
-      - evkbmimxrt1060
-      - evkcmimxrt1060
-      - evkmimxrt1064
-      - evkmimxrt1160
-      - evkmimxrt1170
-      - evkbmimxrt1170
-      - evkmimxrt1180
-      - evkmimxrt1180a
-      - mcxn9xxevk
-      - mcxn5xxevk
-      - rdrw612bga
-      - rdrw612qfn
-      - frdmrw612
+    - device:
+      - MCXN546
+      - MCXN547
+      - MCXN946
+      - MCXN947
+      - MIMXRT1021
+      - MIMXRT1024
+      - MIMXRT1041
+      - MIMXRT1042
+      - MIMXRT1051
+      - MIMXRT1052
+      - MIMXRT1061
+      - MIMXRT1062
+      - MIMXRT1064
+      - MIMXRT1165
+      - MIMXRT1166
+      - MIMXRT1171
+      - MIMXRT1172
+      - MIMXRT1173
+      - MIMXRT1175
+      - MIMXRT1176
+      - MIMXRT1181
+      - MIMXRT1182
+      - MIMXRT1187
+      - MIMXRT1189
+      - MIMXRT533S
+      - MIMXRT555S
+      - MIMXRT595S
+      - MIMXRT633S
+      - MIMXRT685S
+      - MIMXRT735S
+      - MIMXRT758S
+      - MIMXRT798S
+      - RW610
+      - RW612
     - set.middleware.lwip
     - set.middleware.freertos-kernel
 
