@@ -8941,7 +8941,7 @@ int wlan_add_network(struct wlan_network *network)
 #ifdef CONFIG_OWE
     if (network->security.owe_groups == NULL)
     {
-        network->security.owe_groups = "19";
+        network->security.owe_groups = string_dup("19");
     }
 #endif
     if (network->security.group_cipher == 0)
@@ -9546,6 +9546,12 @@ int wlan_remove_network(const char *name)
             {
                 OSA_MemoryFree(wlan.networks[i].security.sae_groups);
                 wlan.networks[i].security.sae_groups = NULL;
+            }
+
+            if (wlan.networks[i].security.owe_groups)
+            {
+                OSA_MemoryFree(wlan.networks[i].security.owe_groups);
+                wlan.networks[i].security.owe_groups = NULL;
             }
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
 #ifdef CONFIG_WIFI_USB_FILE_ACCESS

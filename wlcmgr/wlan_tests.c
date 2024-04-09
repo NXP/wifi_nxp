@@ -1178,7 +1178,7 @@ static void test_wlan_add(int argc, char **argv)
 #ifdef CONFIG_WPA_SUPP
             if (string_equal(argv[arg], "og") != false)
             {
-                network.security.owe_groups = argv[arg + 1];
+                network.security.owe_groups = string_dup(argv[arg + 1]);
                 arg += 2;
             }
 #endif
