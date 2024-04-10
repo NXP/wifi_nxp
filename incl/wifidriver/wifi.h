@@ -2075,5 +2075,6 @@ int wifi_auto_null_tx(wifi_auto_null_tx_t *auto_null_tx);
 #ifdef CONFIG_WPA_SUPP
 void hostapd_connected_sta_list(wifi_sta_info_t *si, wifi_sta_list_t *sl);
 #endif
+bool wifi_is_remain_on_channel(void);
 
 #endif /* __WIFI_H__ */

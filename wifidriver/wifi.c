@@ -5164,6 +5164,11 @@ int wifi_supp_inject_frame(const unsigned int bss_type, const uint8_t *buff, con
 }
 #endif
 
+bool wifi_is_remain_on_channel(void)
+{
+    return (mlan_adap->remain_on_channel ? true : false);
+}
+
 int wifi_remain_on_channel(const bool status, const uint8_t channel, const uint32_t duration)
 {
     wifi_remain_on_channel_t roc;

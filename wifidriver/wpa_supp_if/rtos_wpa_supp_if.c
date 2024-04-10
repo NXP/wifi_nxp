@@ -635,6 +635,13 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
         goto out;
     }
 
+    if (wifi_is_remain_on_channel())
+    {
+        supp_e("%s: Block scan while remaining on channel", __func__);
+        ret = -EBUSY;
+        goto out;
+    }
+
     wifi_d("initiating wifi-scan");
 
     if (params->freqs)

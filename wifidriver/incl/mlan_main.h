@@ -2697,6 +2697,8 @@ struct _mlan_adapter
     wlan_wakeup_reason wlan_wakeup;
 #endif
     bool skip_dfs;
+    /* remain on channel flag */
+    t_u8 remain_on_channel;
 };
 
 /** Ethernet packet type for EAPOL */
