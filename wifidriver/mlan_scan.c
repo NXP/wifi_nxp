@@ -66,7 +66,7 @@ static bool abort_split_scan;
 
 #if CONFIG_MEM_POOLS
 static BSSDescriptor_t s_bss_new_entry;
-#ifdef MULTI_BSSID_SUPPORT
+#if CONFIG_MULTI_BSSID_SUPPORT
 static BSSDescriptor_t s2_bss_new_entry;
 #endif
 #endif
@@ -4497,7 +4497,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
             goto done;
         }
 #else
-#ifdef MULTI_BSSID_SUPPORT
+#if CONFIG_MULTI_BSSID_SUPPORT
         bss_new_entry = &s2_bss_new_entry;
 #endif
 #endif
