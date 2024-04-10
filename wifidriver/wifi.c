@@ -3610,7 +3610,7 @@ INLINE t_u8 wifi_wmm_get_packet_cnt(void)
 t_u32 g_wifi_xmit_schedule_end = 0;
 #endif
 
-#ifdef AMSDU_IN_AMPDU
+#if AMSDU_IN_AMPDU
 /* aggregate one amsdu packet and xmit */
 static mlan_status wifi_xmit_amsdu_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist)
 {
@@ -3764,7 +3764,7 @@ static mlan_status wifi_xmit_ralist_pkts(mlan_private *priv, t_u8 ac, raListTbl 
         if ((wifi_txbuf_available() == MFALSE) || (WIFI_DATA_RUNNING != wifi_tx_status))
             break;
 
-#ifdef AMSDU_IN_AMPDU
+#if AMSDU_IN_AMPDU
         if (wlan_is_amsdu_allowed(priv, priv->bss_index, ralist->total_pkts, ac))
             ret = wifi_xmit_amsdu_pkts(priv, ac, ralist);
         else
