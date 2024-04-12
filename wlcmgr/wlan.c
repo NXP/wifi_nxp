@@ -8054,8 +8054,8 @@ int wlan_stop(void)
      */
 #ifndef CONFIG_WIFI_RECOVERY
     if (wlan.uap_state == CM_UAP_IP_UP)
+        dhcp_server_stop();
 #endif
-        //dhcp_server_stop();
 #endif
     status = OSA_SemaphoreDestroy((osa_semaphore_handle_t)wlan.scan_lock);
     if (status != KOSA_StatusSuccess)
