@@ -72,7 +72,7 @@ static INLINE int wlan_wmm_list_len(pmlan_adapter pmadapter, pmlan_list_head hea
  */
 static INLINE t_void wlan_request_ralist_lock(pmlan_private priv)
 {
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     mlan_adapter *pmadapter = priv->adapter;
     mlan_callbacks *pcb     = (mlan_callbacks *)&pmadapter->callbacks;
 #endif
@@ -80,7 +80,7 @@ static INLINE t_void wlan_request_ralist_lock(pmlan_private priv)
     ENTER();
 
     OSA_MutexLock((osa_mutex_handle_t)priv->tx_ba_stream_tbl_lock, osaWaitForever_c);
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     /* Call MOAL spin lock callback function */
     pcb->moal_spin_lock(pmadapter->pmoal_handle, priv->wmm.ra_list_spinlock);
 #endif
@@ -98,7 +98,7 @@ static INLINE t_void wlan_request_ralist_lock(pmlan_private priv)
  */
 static INLINE t_void wlan_release_ralist_lock(pmlan_private priv)
 {
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     mlan_adapter *pmadapter = priv->adapter;
     mlan_callbacks *pcb     = (mlan_callbacks *)&pmadapter->callbacks;
 #endif
@@ -107,7 +107,7 @@ static INLINE t_void wlan_release_ralist_lock(pmlan_private priv)
 
     OSA_MutexUnlock((osa_mutex_handle_t)priv->tx_ba_stream_tbl_lock);
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     /* Call MOAL spin unlock callback function */
     pcb->moal_spin_unlock(pmadapter->pmoal_handle, priv->wmm.ra_list_spinlock);
 #endif
@@ -219,7 +219,7 @@ mlan_status wlan_cmd_wmm_param_config(pmlan_private pmpriv,
 /* process wmm_param_config command response */
 mlan_status wlan_ret_wmm_param_config(pmlan_private pmpriv, const HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);
 
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
 /* wmm enhance buffer pool */
 #define MAX_WMM_BUF_NUM 16
 #define WMM_DATA_LEN    1580
@@ -230,7 +230,7 @@ typedef struct
     mlan_linked_list entry;
     t_u8 intf_header[INTF_HEADER_LEN];
     TxPD tx_pd;
-#ifdef CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY
     t_u8 eth_header[ETH_HDR_LEN];
 #ifdef AMSDU_IN_AMPDU
     t_u8 llc_header[LLC_SNAP_LEN];

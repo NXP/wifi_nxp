@@ -11,6 +11,8 @@
 #ifndef WM_ERRNO_H
 #define WM_ERRNO_H
 
+#include <wifi_config_default.h>
+
 #if defined(FSL_RTOS_THREADX)
 #include <errno.h>
 #endif
@@ -138,4 +140,4 @@
           requirement */
 #define WM_E_OUTBIG 41 /* Data output exceeds the size provided */
 
-#endif /* ! WM_ERRNO_H */
+#endif                 /* ! WM_ERRNO_H */

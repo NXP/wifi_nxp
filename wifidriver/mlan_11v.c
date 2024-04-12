@@ -17,7 +17,7 @@ Change log:
 #ifndef RW610
 #include "wifi-sdio.h"
 #endif
-#ifdef CONFIG_11V
+#if CONFIG_11V
 #define BTM_RESP_BUF_SIZE      200
 #define WNM_BTM_QUERY_BUF_SIZE 10U
 #define WLAN_FC_TYPE_MGMT      0
@@ -142,7 +142,7 @@ void wlan_send_mgmt_wnm_btm_resp(t_u8 dialog_token,
     pkt_len                = (t_u16)(pos - (t_u8 *)pmgmt_pkt_hdr);
     pmgmt_pkt_hdr->frm_len = (t_u16)((t_u16)pkt_len - sizeof(t_u16));
     (void)wifi_inject_frame(WLAN_BSS_TYPE_STA, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
     OSA_MemoryFree(pmgmt_pkt_hdr);
 #else
     OSA_MemoryPoolFree(buf_1536_MemoryPool, pmgmt_pkt_hdr);
@@ -188,7 +188,7 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
         return;
     }
 
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
     pnlist_rep_param = (wlan_nlist_report_param *)OSA_MemoryAllocate(sizeof(wlan_nlist_report_param));
 #else
     pnlist_rep_param = (wlan_nlist_report_param *)OSA_MemoryPoolAllocate(buf_128_MemoryPool);
@@ -213,7 +213,7 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
 
     if ((btm_mode & IEEE_WNM_BTM_REQUEST_PREFERENCE_CAND_LIST_INCLUDED) != 0U)
     {
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
         struct wnm_neighbor_report *preport =
             OSA_MemoryAllocate((size_t)WLAN_WNM_MAX_NEIGHBOR_REPORT * sizeof(struct wnm_neighbor_report));
 #else
@@ -222,7 +222,7 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
         if (preport == NULL)
         {
             wifi_e("No memory available for neighbor report.");
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
             OSA_MemoryFree((void *)pnlist_rep_param);
 #else
             OSA_MemoryPoolFree(buf_128_MemoryPool, pnlist_rep_param);
@@ -238,7 +238,7 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
             if ((int)len > (end - pos))
             {
                 wifi_d("WNM: Truncated BTM request");
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
                 OSA_MemoryFree((void *)preport);
                 OSA_MemoryFree((void *)pnlist_rep_param);
 #else
@@ -275,7 +275,7 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
         {
             wlan_send_mgmt_wnm_btm_resp(dialog_token, WNM_BTM_REJECT_NO_SUITABLE_CANDIDATES, dest_addr, src_addr, NULL,
                                         ptagnr, tagnr_len, protect);
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
             OSA_MemoryFree((void *)preport);
             OSA_MemoryFree((void *)pnlist_rep_param);
 #else
@@ -313,13 +313,13 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
             WM_SUCCESS)
         {
             /* If fail to send message on queue, free allocated memory ! */
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
             OSA_MemoryFree((void *)pnlist_rep_param);
 #else
             OSA_MemoryPoolFree(buf_128_MemoryPool, pnlist_rep_param);
 #endif
         }
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
         OSA_MemoryFree(preport);
 #else
         OSA_MemoryPoolFree(buf_128_MemoryPool, preport);
@@ -339,7 +339,7 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
 
         wlan_send_mgmt_wnm_btm_resp(dialog_token, status, dest_addr, src_addr, NULL, ptagnr, tagnr_len, protect);
         /* If don't use variable pnlist_rep_param, free allocated memory ! */
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
         OSA_MemoryFree((void *)pnlist_rep_param);
 #else
         OSA_MemoryPoolFree(buf_128_MemoryPool, pnlist_rep_param);
@@ -390,7 +390,7 @@ int wlan_send_mgmt_bss_trans_query(mlan_private *pmpriv, t_u8 query_reason)
     pmgmt_pkt_hdr->frm_len = pkt_len - (t_u16)sizeof(pmgmt_pkt_hdr->frm_len);
 
     (void)wifi_inject_frame(WLAN_BSS_TYPE_STA, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
     OSA_MemoryFree(pmgmt_pkt_hdr);
 #else
     OSA_MemoryPoolFree(buf_1536_MemoryPool, pmgmt_pkt_hdr);

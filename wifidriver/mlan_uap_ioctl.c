@@ -22,7 +22,7 @@ Change log:
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /********************************************************
                 Global Variables
 ********************************************************/
@@ -656,7 +656,7 @@ static mlan_status wlan_uap_sec_ioctl_report_mic_error(IN pmlan_adapter pmadapte
 #endif
 #endif /* CONFIG_MLAN_WMSDK */
 
-#if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR) || defined(CONFIG_WPA_SUPP_AP)
+#if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR) || (CONFIG_WPA_SUPP_AP)
 /**
  *  @brief Set encrypt key
  *
@@ -700,7 +700,7 @@ static mlan_status wlan_uap_sec_ioctl_set_encrypt_key(IN pmlan_adapter pmadapter
 }
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Get BSS information
  *
@@ -1246,7 +1246,7 @@ static mlan_status wlan_uap_snmp_mib_ctrl_deauth(IN pmlan_adapter pmadapter, IN 
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
-#ifdef CONFIG_ECSA
+#if CONFIG_ECSA
 /**
  *  @brief Handle channel switch
  *
@@ -1288,17 +1288,17 @@ mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
 {
     pmlan_adapter pmadapter = (pmlan_adapter)adapter;
     mlan_status status      = MLAN_STATUS_SUCCESS;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     mlan_ds_get_info *pget_info = MNULL;
 #endif /* CONFIG_MLAN_WMSDK */
-#ifdef CONFIG_ECSA
+#if CONFIG_ECSA
     mlan_ds_misc_cfg *misc = MNULL;
     mlan_ds_bss *bss       = MNULL;
 #endif
-#if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR) || defined(CONFIG_WPA_SUPP_AP)
+#if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR) || (CONFIG_WPA_SUPP_AP)
     mlan_ds_sec_cfg *sec = MNULL;
 #endif
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     mlan_ds_pm_cfg *pm          = MNULL;
     mlan_ds_snmp_mib *snmp      = MNULL;
     mlan_ds_11d_cfg *cfg11d     = MNULL;
@@ -1312,7 +1312,7 @@ mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
 
     switch (pioctl_req->req_id)
     {
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_IOCTL_BSS:
             bss = (mlan_ds_bss *)pioctl_req->pbuf;
             if (bss->sub_command == MLAN_OID_BSS_MAC_ADDR)
@@ -1377,7 +1377,7 @@ mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
             if (misc->sub_command == MLAN_OID_MISC_DRVDBG)
                 status = wlan_set_drvdbg(pmadapter, pioctl_req);
 #endif
-#ifdef CONFIG_WIFI_CLOCKSYNC
+#if CONFIG_WIFI_CLOCKSYNC
             if (misc->sub_command == MLAN_OID_MISC_GPIO_TSF_LATCH)
                 status = wlan_misc_gpio_tsf_latch_config(pmadapter, pioctl_req);
             if (misc->sub_command == MLAN_OID_MISC_GET_TSF_INFO)
@@ -1409,7 +1409,7 @@ mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
                 status = wlan_uap_snmp_mib_11h(pmadapter, pioctl_req);
             break;
 #endif /* CONFIG_MLAN_WMSDK */
-#if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR) || defined(CONFIG_WPA_SUPP_AP)
+#if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR) || (CONFIG_WPA_SUPP_AP)
         case MLAN_IOCTL_SEC_CFG:
             sec = (mlan_ds_sec_cfg *)pioctl_req->pbuf;
             if (sec->sub_command == MLAN_OID_SEC_CFG_ENCRYPT_KEY)
@@ -1418,7 +1418,7 @@ mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
             if (sec->sub_command == MLAN_OID_SEC_CFG_WAPI_ENABLED)
                 status = wlan_uap_sec_ioctl_wapi_enable(pmadapter, pioctl_req);
 #endif
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 #ifdef HOST_AUTHENTICATOR
             if (sec->sub_command == MLAN_OID_SEC_CFG_REPORT_MIC_ERR)
                 status = wlan_uap_sec_ioctl_report_mic_error(pmadapter, pioctl_req);
@@ -1426,7 +1426,7 @@ mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
 #endif /* CONFIG_MLAN_WMSDK */
             break;
 #endif /* WAPI_AP || HOST_AUTHENTICATOR */
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_IOCTL_11N_CFG:
             status = wlan_11n_cfg_ioctl(pmadapter, pioctl_req);
             break;
@@ -1461,7 +1461,7 @@ mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
                 status = wlan_rate_ioctl_cfg(pmadapter, pioctl_req);
             }
             break;
-#ifdef CONFIG_ECSA
+#if CONFIG_ECSA
         case MLAN_IOCTL_MISC_CFG:
             misc = (mlan_ds_misc_cfg *)pioctl_req->pbuf;
             if (misc->sub_command == MLAN_OID_MISC_OPER_CLASS)
@@ -1475,7 +1475,7 @@ mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
                 status = wlan_uap_bss_ioctl_action_chan_switch(pmadapter, pioctl_req);
             break;
 #endif
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
         case MLAN_IOCTL_11AX_CFG:
             status = wlan_11ax_cfg_ioctl(pmadapter, pioctl_req);
             break;

@@ -125,7 +125,7 @@ Change log:
 
 #endif /* SDIO_MULTI_PORT_RX_AGGR */
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /** Enable host interrupt */
 mlan_status wlan_enable_host_int(pmlan_adapter pmadapter);
 /** Probe and initialization function */
@@ -142,12 +142,12 @@ t_void wlan_interrupt(mlan_adapter *pmadapter);
 /* wmsdk */
 /* mlan_status wlan_process_int_status(mlan_adapter * pmadapter); */
 
-#ifdef CONFIG_WIFI_IND_DNLD
+#if CONFIG_WIFI_IND_DNLD
 mlan_status wlan_reset_fw(pmlan_adapter pmadapter);
 #endif
 
 /** Transfer data to card */
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 mlan_status wlan_sdio_host_to_card(mlan_adapter *pmadapter, t_u8 type, mlan_buffer *mbuf, mlan_tx_param *tx_param);
 mlan_status wlan_set_sdio_gpio_int(IN pmlan_private priv);
 mlan_status wlan_cmd_sdio_gpio_int(pmlan_private pmpriv,

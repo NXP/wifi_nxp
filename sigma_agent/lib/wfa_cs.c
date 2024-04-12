@@ -50,7 +50,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "nxp_wifi.h"
 #endif
 
-#ifdef CONFIG_SIGMA_AGENT
+#if CONFIG_SIGMA_AGENT
 #include "wfa_portall.h"
 #include "wfa_debug.h"
 #include "wfa_ver.h"
@@ -312,7 +312,7 @@ int wfaStaIsConnected(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
             txrate.sub_command                = 0;
             txrate.param.rate_cfg.rate_format = HE;
             txrate.param.rate_cfg.rate_index  = MCSINDEX;
-#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
+#if (CONFIG_11AC) || (CONFIG_11AX)
             txrate.param.rate_cfg.nss = NSS;
 #endif
             if (width == 0 && coding == 0)
@@ -578,7 +578,7 @@ int wfaStaVerifyIpConnection(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBu
     fclose(tmpfile);
 #endif
 #if defined(SDK_OS_FREE_RTOS)
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     if (inet_pton(AF_INET6, verip->cmdsu.verifyIp.dipaddr, &addr) != 0)
     {
         addr.type = IPADDR_TYPE_V6;
@@ -588,7 +588,7 @@ int wfaStaVerifyIpConnection(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBu
 #endif
         if (inet_pton(AF_INET, verip->cmdsu.verifyIp.dipaddr, &addr) != 0)
     {
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         addr.type = IPADDR_TYPE_V4;
 #endif
         ret = ping(count, intval, size, timeout, &addr);
@@ -914,13 +914,13 @@ int wfaStaSetSecurity(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
             net.security.type           = WLAN_SECURITY_WPA2_WPA3_SAE_MIXED;
             net.security.pwe_derivation = 2;
         }
-#ifdef CONFIG_OWE
+#if CONFIG_OWE
         else if (sec->type == SEC_TYPE_OWE)
         {
             net.security.type = WLAN_SECURITY_OWE_ONLY;
         }
 #endif
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
         else if (sec->type == SEC_TYPE_EAPTLS)
         {
             net.security.type = WLAN_SECURITY_EAP_TLS;
@@ -946,7 +946,7 @@ int wfaStaSetSecurity(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
             net.security.mfpr = 1;
         }
 
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
         if (strcasecmp(keyMgmtType, "SuiteB") == 0)
         {
             net.security.wpa3_sb = 1;
@@ -1131,7 +1131,7 @@ int wfaStaSetPSK(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
         net.security.mfpr = 1;
     }
 
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     if (strcasecmp(keyMgmtType, "SuiteB") == 0)
     {
         net.security.wpa3_sb = 1;
@@ -2250,8 +2250,8 @@ int wfaStaPresetParams(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
         presetParams->program == PROG_TYPE_VHT5G)
     {
         wlan_remove_all_network_profiles();
-#ifndef CONFIG_WPA_SUPP
-#ifdef CONFIG_DRIVER_MBO
+#if !CONFIG_WPA_SUPP
+#if CONFIG_DRIVER_MBO
 
         if (presetParams->Ch_Op_Class_Flag)
         {
@@ -2319,7 +2319,7 @@ int wfaStaSetWireless(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
     NSS = ant_mode;
 
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
     if (staSetWireless->prog == PROG_TYPE_HE)
     {
         HE = MLAN_RATE_FORMAT_HE;
@@ -2448,7 +2448,7 @@ int wfaStaResetDefault(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
     sleep(5);
 
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
     if (!strcasecmp(reset->prog, "HE"))
     {
         DPRINT_INFO(WFA_OUT, "\n Info: HE supported SoC, setting 11ax_tol_time to 8 secs\n");
@@ -2457,22 +2457,22 @@ int wfaStaResetDefault(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 #endif
     if (!strcasecmp(reset->prog, "MBO"))
     {
-#ifndef CONFIG_WPA_SUPP
+#if !CONFIG_WPA_SUPP
         DPRINT_INFO(WFA_OUT, "\n Info: Configuring MBO parameters for Embedded supplicant\n");
-#ifdef CONFIG_DRIVER_MBO
+#if CONFIG_DRIVER_MBO
 
         (void)wlan_host_mbo_cfg(1);
 #endif
-#ifdef CONFIG_11K
+#if CONFIG_11K
         (void)wlan_host_11k_cfg(1);
 #endif
 #endif
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
         DPRINT_INFO(WFA_OUT, "\n Info: Configuring MBO parameters for Open supplicant\n");
-#ifdef CONFIG_11K
+#if CONFIG_11K
         (void)wlan_host_11k_cfg(1);
 #endif
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
         (void)wlan_mbo_set_oce(1);
         (void)wlan_mbo_set_cell_capa(1);
 #endif
@@ -2872,7 +2872,7 @@ void wfaSendPing(tgPingStart_t *staPing, float *interval, int streamid)
     size  = staPing->frameSize;
 
 #if defined(SDK_OS_FREE_RTOS)
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     if (staPing->iptype == 2)
     {
         if (inet_pton(AF_INET6, staPing->dipaddr, &addr) != 0)
@@ -2887,7 +2887,7 @@ void wfaSendPing(tgPingStart_t *staPing, float *interval, int streamid)
     {
         if (inet_pton(AF_INET, staPing->dipaddr, &addr) != 0)
         {
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
             addr.type = IPADDR_TYPE_V4;
 #endif
             DPRINT_INFO(WFA_OUT, "\nInfo: IPv4 Ping\n");
@@ -3445,7 +3445,7 @@ int wfaStaSetRFeature(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
     //	caStaRFeat_t *rfeat = &cmd->cmdsu.rfeat;
     caStaRFeat_t *rfeat = (caStaRFeat_t *)caCmdBuf;
 
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
     uint8_t rxNss, channelWidth, ulMuDisable, txNSTS, ulMuDataDisable;
 #endif
 
@@ -3464,12 +3464,12 @@ int wfaStaSetRFeature(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
     if (rfeat->LTF_Flag && is_sta_connected())
     {
         txrate.sub_command = 0;
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
         if (!strcasecmp(rfeat->prog, "HE"))
             txrate.param.rate_cfg.rate_format = MLAN_RATE_FORMAT_HE;
 #endif
         txrate.param.rate_cfg.rate_index = 7;
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
         txrate.param.rate_cfg.nss = ant_mode;
 #endif
         if ((!strcasecmp(rfeat->LTF, "6.4")) && (!strcasecmp(rfeat->GI, "0.8")) && width == 0)
@@ -3488,7 +3488,7 @@ int wfaStaSetRFeature(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
         (void)wifi_set_txratecfg(txrate, 0);
     }
 
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
     if (rfeat->transmitOMI_Flag)
     {
         rxNss           = rfeat->OMCtrl_RxNSS;
@@ -3511,8 +3511,8 @@ int wfaStaSetRFeature(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
     if (!strcasecmp(rfeat->prog, "MBO"))
     {
-#ifndef CONFIG_WPA_SUPP
-#ifdef CONFIG_DRIVER_MBO
+#if !CONFIG_WPA_SUPP
+#if CONFIG_DRIVER_MBO
 
         if (rfeat->Ch_Op_Class_Flag)
         {

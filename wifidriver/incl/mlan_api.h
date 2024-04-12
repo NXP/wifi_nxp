@@ -34,7 +34,7 @@
 #include "mlan_11n.h"
 #include "mlan_11h.h"
 #include "mlan_11ac.h"
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
 #include "mlan_11ax.h"
 #endif
 #include "mlan_11n_aggr.h"
@@ -50,10 +50,10 @@
 #endif
 #include "wifi-internal.h"
 #include "mlan_action.h"
-#ifdef CONFIG_11V
+#if CONFIG_11V
 #include "mlan_11v.h"
 #endif
-#ifdef CONFIG_11K
+#if CONFIG_11K
 #include "mlan_11k.h"
 #endif
 /* #define CONFIG_WIFI_DEBUG */
@@ -75,7 +75,7 @@ static inline void panic(const char *msg)
         }                                                     \
     } while (0)
 
-#ifdef CONFIG_WIFI_DEBUG
+#if CONFIG_WIFI_DEBUG
 /* #define DEBUG_11N_ASSOC */
 /* #define DEBUG_11N_AGGR */
 /* #define DEBUG_11N_REORDERING */
@@ -172,21 +172,21 @@ static inline void panic(const char *msg)
 /* Following is allocated in mlan_register */
 extern mlan_adapter *mlan_adap;
 
-#ifdef CONFIG_WPS2
+#if CONFIG_WPS2
 extern int wps_session_attempt;
 #endif
 
 extern osa_rw_lock_t sleep_rwlock;
 
-#ifdef CONFIG_WMM_UAPSD
+#if CONFIG_WMM_UAPSD
 extern OSA_SEMAPHORE_HANDLE_DEFINE(uapsd_sem);
 #endif
 
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
 extern OSA_SEMAPHORE_HANDLE_DEFINE(txbuf_sem);
 #endif
 
-#ifdef CONFIG_STA_AMPDU_RX
+#if CONFIG_STA_AMPDU_RX
 extern bool sta_ampdu_rx_enable;
 #endif
 #ifdef DUMP_PACKET_MAC
@@ -229,7 +229,7 @@ void wlan_scan_process_results(IN mlan_private *pmpriv);
 bool wlan_use_non_default_ht_vht_cap(IN BSSDescriptor_t *pbss_desc);
 bool check_for_wpa2_entp_ie(bool *wpa2_entp_IE_exist, const void *element_data, unsigned element_len);
 
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
 bool wifi_get_scan_enable_wpa2_enterprise_ap_only();
 
 static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *pbss_entry, t_u8 element_id)
@@ -274,7 +274,7 @@ static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *p
     return MLAN_STATUS_SUCCESS;
 }
 #endif
-#ifdef CONFIG_BG_SCAN
+#if CONFIG_BG_SCAN
 int wifi_request_bgscan_query(mlan_private *pmpriv);
 int wifi_send_scan_query(void);
 void wifi_get_band(mlan_private *pmpriv, int *band);
@@ -285,7 +285,7 @@ int wifi_send_hostcmd(
 
 int wifi_send_get_wpa_pmk(int mode, char *ssid);
 int wifi_deauthenticate(uint8_t *bssid);
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
 int wifi_nxp_deauthenticate(unsigned int bss_type, const uint8_t *bssid, uint16_t reason_code);
 void wifi_get_scan_table(mlan_private *pmpriv, mlan_scan_resp *pscan_resp);
 #endif
@@ -314,10 +314,10 @@ int wifi_send_add_wpa3_password(int mode, char *ssid, char *password, unsigned i
 int wifi_send_add_wpa_pmk(int mode, char *ssid, char *bssid, char *pmk, unsigned int len);
 bool wifi_11d_is_channel_allowed(int channel);
 
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
 void wifi_request_get_fw_info(mlan_private *priv, mlan_fw_info *fw_info);
 
-#ifdef CONFIG_MMSF
+#if CONFIG_MMSF
 int wifi_mmsf_cfg(const t_u16 action, t_u8 *enable, t_u8 *Density, t_u8 *MMSF);
 #endif
 #endif
@@ -387,10 +387,10 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
                        const t_u8 num_channels,
                        const wifi_scan_channel_list_t *chan_list,
                        const t_u8 num_probes,
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+#if CONFIG_SCAN_WITH_RSSIFILTER
                        const t_s16 rssi_threshold,
 #endif
-#ifdef CONFIG_SCAN_CHANNEL_GAP
+#if CONFIG_SCAN_CHANNEL_GAP
                        const t_u16 scan_chan_gap,
 #endif
                        const bool keep_previous_scan,
@@ -411,10 +411,10 @@ int wifi_set_txpwrlimit(wifi_txpwrlimit_t *txpwrlimit);
 int wifi_send_rssi_info_cmd(wifi_rssi_info_t *rssi_info);
 void wifi_set_curr_bss_channel(uint8_t channel);
 int wifi_get_chanlist(wifi_chanlist_t *chanlist);
-#if defined(CONFIG_IPS)
+#if (CONFIG_IPS)
 int wifi_set_ips_config(mlan_bss_type interface, int option);
 #endif
-#ifdef CONFIG_WIFI_EU_CRYPTO
+#if CONFIG_WIFI_EU_CRYPTO
 int wifi_set_eu_crypto(EU_Crypto *Crypto_Data, enum _crypto_algorithm Algorithm, t_u16 EncDec);
 #endif
 int wifi_set_rx_mgmt_indication(unsigned int bss_type, unsigned int mgmt_subtype_mask);
@@ -428,12 +428,12 @@ wlan_mgmt_pkt *wifi_PrepDefaultMgtMsg(t_u8 sub_type,
                                       mlan_802_11_mac_addr *Bssid,
                                       t_u16 pkt_len);
 
-#ifdef CONFIG_11MC
+#if CONFIG_11MC
 void wlan_location_ftm_cfg(location_cfg_info_t *ftm_location_cfg);
 void wlan_civic_ftm_cfg(location_civic_rep_t *ftm_civic_cfg);
 void wlan_dot11mc_ftm_cfg(void *cmd, ftm_11mc_nego_cfg_t *ftm_11mc_nego_cfg);
 #endif
-#ifdef CONFIG_11AZ
+#if CONFIG_11AZ
 void wlan_dto11az_ranging_cfg(void *cmd, const t_u8 protocl, HostCmd_FTM_SESSION_CFG *ftm_session_cfg);
 #endif
 
@@ -458,7 +458,7 @@ int wifi_process_wlc_ftm_event();
 void wifi_ftm_process_cfg_resp(void *resp_buff);
 void wifi_ftm_process_ctrl_resp(void *resp_buff);
 void wifi_ftm_process_event(void *p_data);
-#ifdef CONFIG_WLS_CSI_PROC
+#if CONFIG_WLS_CSI_PROC
 int wifi_process_wls_csi_event(void *p_data);
 void wls_csi_process_event(void *p_data);
 #endif
@@ -469,7 +469,7 @@ int wifi_set_custom_ie(custom_ie *beacon_ies_data,
                        custom_ie *proberesp_ies_data,
                        custom_ie *assocresp_ies_data);
 
-#ifdef CONFIG_11K
+#if CONFIG_11K
 /**
  * rrm scan callback function to process scan results
  *
@@ -510,10 +510,10 @@ int wrapper_bssdesc_first_set(int bss_index,
 int wrapper_bssdesc_second_set(int bss_index,
                                bool *phtcap_ie_present,
                                bool *phtinfo_ie_present,
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
                                bool *pvhtcap_ie_present,
 #endif
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
                                bool *phecap_ie_present,
 #endif
                                bool *wmm_ie_present,
@@ -521,20 +521,20 @@ int wrapper_bssdesc_second_set(int bss_index,
                                bool *wps_IE_exist,
                                uint16_t *wps_session,
                                bool *wpa2_entp_IE_exist,
-#ifdef CONFIG_11R
+#if CONFIG_11R
                                uint16_t *mdid,
 #endif
-#ifdef CONFIG_11K
+#if CONFIG_11K
                                bool *neighbor_report_supported,
 #endif
-#ifdef CONFIG_11V
+#if CONFIG_11V
                                bool *bss_transition_supported,
 #endif
                                uint8_t *trans_mode,
                                uint8_t *trans_bssid,
                                int *trans_ssid_len,
                                uint8_t *trans_ssid
-#ifdef CONFIG_DRIVER_MBO
+#if CONFIG_DRIVER_MBO
                                ,
                                bool *mbo_assoc_disallowed
 #endif
@@ -544,16 +544,16 @@ int wifi_get_mgmt_ie2(mlan_bss_type bss_type, void *buf, unsigned int *buf_len);
 int wifi_set_mgmt_ie2(mlan_bss_type bss_type, unsigned short mask, void *buf, unsigned int buf_len);
 int wifi_clear_mgmt_ie2(mlan_bss_type bss_type, int mgmt_bitmap_index);
 
-#ifdef CONFIG_BG_SCAN
+#if CONFIG_BG_SCAN
 int wifi_request_bgscan(mlan_private *pmpriv);
 #endif
 
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
 int wifi_send_sched_scan_cmd(nxp_wifi_trigger_sched_scan_t *params);
 int wifi_send_stop_sched_scan_cmd(void);
 #endif
 
-#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+#if CONFIG_SUBSCRIBE_EVENT_SUPPORT
 /*submit subscribe event cmd to firmware*/
 int wifi_subscribe_event_submit(mlan_private *pmpriv, mlan_ds_subscribe_evt *sub_evt);
 
@@ -584,7 +584,7 @@ int wifi_set_threshold_link_quality(mlan_private *pmpriv,
 int wifi_set_threshold_pre_beacon_lost(mlan_private *pmpriv, unsigned int pre_beacon_lost, unsigned int freq);
 #endif
 
-#ifdef CONFIG_TSP
+#if CONFIG_TSP
 int wifi_tsp_cfg(const t_u16 action,
                  t_u16 *enable,
                  t_u32 *back_off,
@@ -598,25 +598,25 @@ int wifi_tsp_cfg(const t_u16 action,
                  int *currRFUTemp);
 #endif
 
-#ifdef CONFIG_TX_AMPDU_PROT_MODE
+#if CONFIG_TX_AMPDU_PROT_MODE
 int wifi_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action);
 #endif
 
-#ifdef CONFIG_EXTERNAL_COEX_PTA
+#if CONFIG_EXTERNAL_COEX_PTA
 int wifi_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config);
 #endif
 
-#ifdef CONFIG_IMD3_CFG
+#if CONFIG_IMD3_CFG
 int wifi_imd3_cfg(t_u8 imd3_value);
 #endif
 
-#ifdef CONFIG_AUTO_RECONNECT
+#if CONFIG_AUTO_RECONNECT
 int wifi_auto_reconnect_enable(wifi_auto_reconnect_config_t auto_reconnect_config);
 int wifi_auto_reconnect_disable(void);
 int wifi_get_auto_reconnect_config(wifi_auto_reconnect_config_t *auto_reconnect_config);
 #endif
 
-#ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
+#if CONFIG_INACTIVITY_TIMEOUT_EXT
 int wifi_sta_inactivityto(wifi_inactivity_to_t *inac_to, t_u16 cmd_action);
 #endif
 #endif /* __MLAN_API_H__ */

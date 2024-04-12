@@ -55,11 +55,11 @@
 #include <wlan.h>
 #include <wmlog.h>
 
-#if defined(CONFIG_WPA2_ENTP) && !defined(CONFIG_WPS2)
+#if (CONFIG_WPA2_ENTP) && !(CONFIG_WPS2)
 #error "CONFIG_WPA2_ENTP is enabled, but CONFIG_WPS2 is not, enable it from wifi_config.h"
 #endif
 
-#ifdef CONFIG_WPS_DEBUG
+#if CONFIG_WPS_DEBUG
 #define wps_d(...) wmlog("wps", ##__VA_ARGS__)
 #else
 #define wps_d(...)
@@ -74,17 +74,17 @@
 #define MACSTR "%02x:%02x:%02x:%02x:%02x:%02x"
 #endif
 
-#ifdef CONFIG_WPS_DEBUG
+#if CONFIG_WPS_DEBUG
 /** ENTER */
 #ifndef ENTER
 #define ENTER() PRINTF("Enter: %s : %i\r\n", __FUNCTION__, __LINE__)
-//#define ENTER()    PRINTF("Enter: %s, %s:%i\r\n", __FUNCTION__, __FILE__, __LINE__)
+// #define ENTER()    PRINTF("Enter: %s, %s:%i\r\n", __FUNCTION__, __FILE__, __LINE__)
 #endif
 
 /** LEAVE */
 #ifndef LEAVE
 #define LEAVE() PRINTF("Leave: %s : %i\r\n", __FUNCTION__, __LINE__)
-//#define LEAVE()    PRINTF("Leave: %s, %s:%i\r\n", __FUNCTION__, __FILE__, __LINE__)
+// #define LEAVE()    PRINTF("Leave: %s, %s:%i\r\n", __FUNCTION__, __FILE__, __LINE__)
 #endif
 #else
 #ifndef ENTER
@@ -103,15 +103,15 @@
 #define PROV_WPS_SESSION_ATTEMPT  1
 #define PROV_ENTP_SESSION_ATTEMPT 2
 
-#ifdef CONFIG_WPS_DEBUG
+#if CONFIG_WPS_DEBUG
 static inline void wps_hexdump(const char *title, const unsigned char *data, size_t len)
 {
     int i, j;
     unsigned char *offset;
-    //#ifndef ENTER
+    // #ifndef ENTER
     offset = (unsigned char *)data;
     PRINTF("[wps] %s - hexdump(len=%lu):\r\n", title, (unsigned long)len);
-    //#define ENTER()    PRINTF("Enter: %s : %i\r\n", __FUNCTION__, __LINE__)
+    // #define ENTER()    PRINTF("Enter: %s : %i\r\n", __FUNCTION__, __LINE__)
     for (i = 0; i < len / 16; i++)
     {
         for (j = 0; j < 16; j++)

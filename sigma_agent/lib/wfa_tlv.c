@@ -27,7 +27,7 @@
 #include "nxp_wifi.h"
 #endif
 
-#ifdef CONFIG_SIGMA_AGENT
+#if CONFIG_SIGMA_AGENT
 #include "wfa_portall.h"
 #include "wfa_stdincs.h"
 #include "wfa_main.h"

@@ -1,4 +1,4 @@
-#ifdef CONFIG_WLS_CSI_PROC
+#if CONFIG_WLS_CSI_PROC
 /** @file wls_radix4Fft.c
   *
   * @brief This file contains fixed-point radix-4 FFT function

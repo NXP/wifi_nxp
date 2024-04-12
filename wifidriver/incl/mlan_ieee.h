@@ -76,7 +76,7 @@ typedef enum
     IEEE_TYPE_DATA
 } IEEEtypes_MsgType_e;
 
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
 typedef enum _IEEEtypes_Ext_ElementId_e
 {
     HE_CAPABILITY = 35,
@@ -105,7 +105,7 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
     TPC_REPORT         = 35,
     SUPPORTED_CHANNELS = 36,
     CHANNEL_SWITCH_ANN = 37,
-#ifdef CONFIG_11K
+#if CONFIG_11K
     MEASURE_REQUEST = 38,
     MEASURE_REPORT  = 39,
 #endif
@@ -114,10 +114,10 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
     HT_CAPABILITY = 45,
     QOS_INFO      = 46,
 
-#if defined(CONFIG_11K) || defined(CONFIG_11V)
+#if (CONFIG_11K) || (CONFIG_11V)
     NEIGHBOR_REPORT = 52,
 #endif
-#if defined(CONFIG_11R) || defined(CONFIG_11K)
+#if (CONFIG_11R) || (CONFIG_11K)
     /*IEEE802.11r*/
     MOBILITY_DOMAIN     = 54,
     FAST_BSS_TRANSITION = 55,
@@ -126,23 +126,23 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
 #endif
 
     REGULATORY_CLASS = 59,
-#ifdef CONFIG_ECSA
+#if CONFIG_ECSA
     EXTEND_CHANNEL_SWITCH_ANN = 60,
 #endif
     HT_OPERATION = 61,
-#ifdef CONFIG_11K
+#if CONFIG_11K
     RRM_ENABLED_CAP = 70,
 #endif
-#ifdef CONFIG_MULTI_BSSID_SUPPORT
+#if CONFIG_MULTI_BSSID_SUPPORT
     MULTI_BSSID = 71,
 #endif
     BSSCO_2040          = 72,
     OVERLAPBSSSCANPARAM = 74,
-#ifdef CONFIG_MULTI_BSSID_SUPPORT
+#if CONFIG_MULTI_BSSID_SUPPORT
     NONTX_BSSID_CAP = 83,
 #endif
 
-#ifdef CONFIG_MULTI_BSSID_SUPPORT
+#if CONFIG_MULTI_BSSID_SUPPORT
     MBSSID_INDEX = 85,
 #endif
     EXT_CAPABILITY = 127,
@@ -154,11 +154,11 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
     VHT_CAPABILITY = 191,
     VHT_OPERATION  = 192,
 /*EXT_BSS_LOAD        = 193,*/
-#ifdef CONFIG_ECSA
+#if CONFIG_ECSA
     BW_CHANNEL_SWITCH = 194,
 #endif
     VHT_TX_POWER_ENV = 195,
-#ifdef CONFIG_ECSA
+#if CONFIG_ECSA
     EXT_POWER_CONSTR = 196,
 #endif
     /*AID_INFO            = 197,
@@ -443,7 +443,7 @@ typedef MLAN_PACK_START struct _IEEEtypes_CapInfo_t
 } MLAN_PACK_END IEEEtypes_CapInfo_t, *pIEEEtypes_CapInfo_t;
 #endif /* BIG_ENDIAN_SUPPORT */
 
-#ifdef CONFIG_MULTI_BSSID_SUPPORT
+#if CONFIG_MULTI_BSSID_SUPPORT
 /** IEEEtypes_Ssid_t */
 typedef MLAN_PACK_START struct _IEEEtypes_Ssid_t
 {
@@ -564,7 +564,7 @@ typedef t_u16 IEEEtypes_AId_t;
 /** IEEEtypes_StatusCode_t */
 typedef t_u16 IEEEtypes_StatusCode_t;
 
-#ifdef CONFIG_HOST_MLME
+#if CONFIG_HOST_MLME
 /** IEEEtypes_SeqCtl_t */
 typedef MLAN_PACK_START struct _IEEEtypes_SeqCtl_t
 {
@@ -884,11 +884,11 @@ typedef MLAN_PACK_START struct
     t_u8 AccessPolicy2 : 1;                                  // !
     t_u8 AccessPolicy1 : 1;                                  // !
     IEEEtypes_WMM_TSPEC_TS_Info_Direction_e Direction : 2;
-    t_u8 TID : 4; // ! Unique identifier
+    t_u8 TID : 4;                                            // ! Unique identifier
     IEEEtypes_WMM_TSPEC_TS_TRAFFIC_TYPE_e TrafficType : 1;
 #else
     IEEEtypes_WMM_TSPEC_TS_TRAFFIC_TYPE_e TrafficType : 1;
-    t_u8 TID : 4; // ! Unique identifier
+    t_u8 TID : 4;                                            // ! Unique identifier
     IEEEtypes_WMM_TSPEC_TS_Info_Direction_e Direction : 2;
     t_u8 AccessPolicy1 : 1;                                  // !
     t_u8 AccessPolicy2 : 1;                                  // !
@@ -1016,7 +1016,7 @@ typedef MLAN_PACK_START enum _IEEEtypes_WNM_ActionFieldType_e {
     IEEE_MGMT_WNM_NOTIFY_RESPONSE                 = 28
 } MLAN_PACK_END IEEEtypes_WNM_ActionFieldType_e;
 
-#ifdef CONFIG_11V
+#if CONFIG_11V
 /* IEEE Std 802.11-2016 - Figure 9-702 Request Mode field */
 #define IEEE_WNM_BTM_REQUEST_PREFERENCE_CAND_LIST_INCLUDED MBIT(0)
 #define IEEE_WNM_BTM_REQUEST_ABRIDGED                      MBIT(1)
@@ -1305,7 +1305,7 @@ typedef MLAN_PACK_START struct _ExtCap_t
     t_u8 rsvdBit74 : 1;            /* bit 74 */
     t_u8 rsvdBit75 : 1;            /* bit 75 */
     t_u8 rsvdBit76 : 1;            /* bit 76 */
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
     t_u8 TWTReq : 1;               /* bit 77 */
     t_u8 TWTResp : 1;              /* bit 78 */
 #else
@@ -1354,7 +1354,7 @@ typedef MLAN_PACK_START struct _IEEEtypes_HTInfo_t
     HTInfo_t ht_info;
 } MLAN_PACK_END IEEEtypes_HTInfo_t, *pIEEEtypes_HTInfo_t;
 
-#ifdef CONFIG_MULTI_BSSID_SUPPORT
+#if CONFIG_MULTI_BSSID_SUPPORT
 /** the AP which send the multi_bssid IE */
 #define MULTI_BSSID_AP 1
 /** the AP which don't send beacon */
@@ -1547,7 +1547,7 @@ typedef MLAN_PACK_START struct _IEEEtypes_ExtPwerCons_t
     t_u8 local_power_cons;
 } MLAN_PACK_END IEEEtypes_ExtPwerCons_t, *pIEEEtypes_ExtPwerCons_t;
 
-#if defined(CONFIG_11AC) || defined(CONFIG_ECSA)
+#if (CONFIG_11AC) || (CONFIG_ECSA)
 /*  IEEE Wide Bandwidth Channel Switch Element */
 /**
  *  Provided in beacons and probe responses.  Used to advertise when
@@ -1582,7 +1582,7 @@ typedef MLAN_PACK_START struct
 } MLAN_PACK_END IEEEtypes_VhtTpcEnvelope_t;
 #endif
 
-#ifdef CONFIG_ECSA
+#if CONFIG_ECSA
 /** data structure for extended channel switch */
 typedef MLAN_PACK_START struct
 {
@@ -1776,7 +1776,7 @@ typedef MLAN_PACK_START struct
     t_u8 radar : 1;            /**< Radar detected on channel */
     t_u8 unmeasured : 1;       /**< Channel is unmeasured */
     t_u8 rsvd5_7 : 3;          /**< Reserved */
-#endif /* BIG_ENDIAN_SUPPORT */
+#endif                         /* BIG_ENDIAN_SUPPORT */
 
 } MLAN_PACK_END MeasRptBasicMap_t;
 
@@ -1818,7 +1818,7 @@ typedef MLAN_PACK_START struct
  */
 typedef struct
 {
-    t_u8 sensed_11h; /**< Capability bit set or 11h IE found in this BSS */
+    t_u8 sensed_11h;                              /**< Capability bit set or 11h IE found in this BSS */
 
     IEEEtypes_PowerConstraint_t power_constraint; /**< Power Constraint IE */
     IEEEtypes_PowerCapability_t power_capability; /**< Power Capability IE */
@@ -1876,7 +1876,7 @@ typedef MLAN_PACK_START struct _wlan_user_scan_chan
     t_u32 scan_time;
 } MLAN_PACK_END wlan_user_scan_chan;
 
-#ifdef CONFIG_SCAN_CHANNEL_GAP
+#if CONFIG_SCAN_CHANNEL_GAP
 /** channel statictics */
 typedef MLAN_PACK_START struct _ChanStatistics_t
 {
@@ -1932,7 +1932,7 @@ typedef MLAN_PACK_START struct
      *  Configure the number of probe requests for active chan scans
      */
     t_u8 num_probes;
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+#if CONFIG_SCAN_WITH_RSSIFILTER
     /**
      *  Threshold of RSSI
      */
@@ -1954,12 +1954,12 @@ typedef MLAN_PACK_START struct
      *  Variable number (fixed maximum) of channels to scan up
      */
     wlan_user_scan_chan chan_list[WLAN_USER_SCAN_CHAN_MAX];
-#ifdef CONFIG_SCAN_CHANNEL_GAP
+#if CONFIG_SCAN_CHANNEL_GAP
     /** scan channel gap */
     t_u16 scan_chan_gap;
 #endif
 } MLAN_PACK_END wlan_user_scan_cfg;
-#ifdef CONFIG_BG_SCAN
+#if CONFIG_BG_SCAN
 /** Default scan interval in millisecond*/
 #define DEFAULT_BGSCAN_INTERVAL 30000
 
@@ -1967,7 +1967,7 @@ typedef MLAN_PACK_START struct
 #define BG_SCAN_ACT_GET 0x0000
 /** action set all, except pps/uapsd config */
 #define BG_SCAN_ACT_SET 0x0001
-#ifdef CONFIG_WMM_UAPSD
+#if CONFIG_WMM_UAPSD
 /** action get pps/uapsd config */
 #define BG_SCAN_ACT_GET_PPS_UAPSD 0x0100
 /** action set pps/uapsd config */
@@ -1983,7 +1983,7 @@ typedef MLAN_PACK_START struct
 #define BG_SCAN_WAIT_ALL_CHAN_DONE 0x80000000
 /** Maximum number of channels that can be sent in bg scan config */
 #define WLAN_BG_SCAN_CHAN_MAX 38
-#ifdef CONFIG_UNII4_BAND_SUPPORT
+#if CONFIG_UNII4_BAND_SUPPORT
 /** max bgscan chan number, include UNII_4 channel */
 #define WLAN_BG_SCAN_CHAN_MAX_UNII_4 41
 #endif
@@ -2001,11 +2001,11 @@ typedef MLAN_PACK_START struct
 #define LOWEST_RSSI_THRESHOLD 82
 /** delta rssi */
 #define DELTA_RSSI 10
-#ifdef CONFIG_SCAN_CHANNEL_GAP
+#if CONFIG_SCAN_CHANNEL_GAP
 /** Scan channel gap */
 #define SCAN_CHANNEL_GAP_VALUE 50U
 #endif
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
 typedef MLAN_PACK_START struct _IEEEtypes_Extension_t
 {
     /** Generic IE header */
@@ -2055,7 +2055,7 @@ typedef MLAN_PACK_START struct _IEEEtypes_HECap_t
 **
 *****************************************************************************
 */
-#ifdef CONFIG_11K
+#if CONFIG_11K
 typedef MLAN_PACK_START struct _IEEEtypes_RrmEnabledCapabilities_t
 {
     /* First byte */
@@ -2131,7 +2131,7 @@ typedef MLAN_PACK_START enum _IEEEtypes_RRM_ActionFieldType_e {
 } MLAN_PACK_END IEEEtypes_RRM_ActionFieldType_e;
 #endif
 
-#ifdef CONFIG_BG_SCAN
+#if CONFIG_BG_SCAN
 /**
  *  Input structure to configure bs scan cmd to firmware
  */
@@ -2170,7 +2170,7 @@ typedef MLAN_PACK_START struct
     wlan_user_scan_ssid ssid_list[MRVDRV_MAX_SSID_LIST_LENGTH];
     /** Variable number (fixed maximum) of channels to scan up */
     wlan_user_scan_chan chan_list[WLAN_BG_SCAN_CHAN_MAX];
-#ifdef CONFIG_SCAN_CHANNEL_GAP
+#if CONFIG_SCAN_CHANNEL_GAP
     /** scan channel gap */
     t_u16 scan_chan_gap;
 #endif
@@ -2182,7 +2182,7 @@ typedef MLAN_PACK_START struct
 #pragma pack(pop)
 #endif
 
-#if defined(CONFIG_11R) || defined(CONFIG_11K)
+#if (CONFIG_11R) || (CONFIG_11K)
 /** Mobility domain IE */
 typedef MLAN_PACK_START struct _IEEEtypes_MobilityDomain_t
 {
@@ -2212,7 +2212,7 @@ typedef struct _BSSDescriptor_t
     /** Transition SSID */
     mlan_802_11_ssid trans_ssid;
 
-#ifdef CONFIG_OWE
+#if CONFIG_OWE
     /** OWE Transition mode */
     t_u8 owe_transition_mode;
 #endif
@@ -2223,7 +2223,7 @@ typedef struct _BSSDescriptor_t
     /** Receive signal strength in dBm */
     t_s32 rssi;
 
-#ifdef CONFIG_SCAN_CHANNEL_GAP
+#if CONFIG_SCAN_CHANNEL_GAP
     /** channel load */
     t_u16 chan_load;
     /** channel load */
@@ -2297,7 +2297,7 @@ typedef struct _BSSDescriptor_t
     IEEEtypes_WmmParameter_t wmm_ie;
 
     /** 802.11h BSS information */
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     wlan_11h_bss_info_t wlan_11h_bss_info;
 #endif /* CONFIG_MLAN_WMSDK */
 
@@ -2312,7 +2312,7 @@ typedef struct _BSSDescriptor_t
     IEEEtypes_HTInfo_t *pht_info;
     /** HT Information Offset */
     /* t_u16 ht_info_offset; */
-#ifdef CONFIG_MULTI_BSSID_SUPPORT
+#if CONFIG_MULTI_BSSID_SUPPORT
     /** Flag to indicate this is multi_bssid_ap */
     t_u8 multi_bssid_ap;
     /** the mac address of multi-bssid AP */
@@ -2368,7 +2368,7 @@ typedef struct _BSSDescriptor_t
     /** Max allocated size for updated scan response */
     t_u32 beacon_buf_size_max;
 
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
     /** Pointer to the returned scan response */
     t_u8 *ies;
     /** Length of the stored scan response */
@@ -2386,7 +2386,7 @@ typedef struct _BSSDescriptor_t
     IEEEtypes_HTInfo_t ht_info_saved;
     IEEEtypes_2040BSSCo_t bss_co_2040_saved;
 
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
     IEEEtypes_VHTCap_t vht_cap_saved;
     IEEEtypes_VHTOprat_t vht_oprat_saved;
     IEEEtypes_VHTtxpower_t vht_txpower_saved;
@@ -2394,7 +2394,7 @@ typedef struct _BSSDescriptor_t
 #endif
     IEEEtypes_ExtCap_t ext_cap_saved;
     bool ext_cap_exist;
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
     /** HE Capability IE */
     IEEEtypes_HECap_t *phe_cap;
     /** HE Capability IE offset */
@@ -2428,24 +2428,24 @@ typedef struct _BSSDescriptor_t
 
     bool brcm_ie_exist;
     bool epigram_ie_exist;
-#if defined(CONFIG_11R) || defined(CONFIG_11K)
+#if (CONFIG_11R) || (CONFIG_11K)
     unsigned char md_ie_buff[MLAN_MAX_MDIE_LEN];
     size_t md_ie_buff_len;
     /* Mobility domain IE */
     IEEEtypes_MobilityDomain_t *pmd_ie;
     bool mob_domain_exist;
 #endif
-#ifdef CONFIG_11K
+#if CONFIG_11K
     bool rm_cap_exist;
     IEEEtypes_RrmElement_t rm_cap_saved;
     unsigned char vendor_ie_buff[MLAN_MAX_VENDOR_IE_LEN];
     t_u8 vendor_ie_len;
     bool neighbor_report_supported;
 #endif
-#ifdef CONFIG_11V
+#if CONFIG_11V
     bool bss_transition_supported;
 #endif
-#ifdef CONFIG_DRIVER_MBO
+#if CONFIG_DRIVER_MBO
     bool mbo_assoc_disallowed;
 #endif
 } BSSDescriptor_t, *pBSSDescriptor_t;

@@ -30,7 +30,7 @@
 #include "fsl_power.h"
 #endif
 
-#ifdef CONFIG_WIFI_FW_DEBUG
+#if CONFIG_WIFI_FW_DEBUG
 #include "usb_api.h"
 #endif
 /*******************************************************************************
@@ -158,7 +158,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             {
                 PRINTF("IPv4 Address: [%s]\r\n", ip);
             }
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
             int i;
             for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
             {
@@ -308,10 +308,10 @@ int main(void)
     POWER_PowerOffBle();
 #endif
 
-#ifdef CONFIG_WIFI_FW_DEBUG
+#if CONFIG_WIFI_FW_DEBUG
     // SCB_DisableDCache();
     wlan_register_fw_dump_cb(usb_init, usb_mount, usb_file_open, usb_file_write, usb_file_close
-#if defined(CONFIG_FW_DUMP_EVENT) || defined(CONFIG_CSI)
+#if (CONFIG_FW_DUMP_EVENT) || (CONFIG_CSI)
                              ,
                              usb_file_lseek
 #endif

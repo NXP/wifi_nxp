@@ -31,7 +31,7 @@ void *wifi_mem_malloc_cmdrespbuf(void)
 
 void *wifi_malloc_eventbuf(size_t size)
 {
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
     void *ptr = OSA_MemoryAllocate(size);
 
     if (ptr != NULL)
@@ -51,7 +51,7 @@ void *wifi_malloc_eventbuf(size_t size)
 
 void wifi_free_eventbuf(void *buffer)
 {
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
     w_mem_d("[evtbuf] Free: A: %p\n\r", buffer);
     OSA_MemoryFree(buffer);
 #else

@@ -44,7 +44,7 @@ Change log:
 #define _80211_HT_MCS32
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *
  *  @brief set/get max tx buf size
@@ -142,7 +142,7 @@ static mlan_status wlan_11n_ioctl_htusrcfg(IN pmlan_adapter pmadapter, IN pmlan_
     return ret;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Enable/Disable AMSDU AGGR CTRL
  *
@@ -216,7 +216,7 @@ static mlan_status wlan_11n_ioctl_httxcfg(IN pmlan_adapter pmadapter, IN pmlan_i
     return ret;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief This function will resend addba request to all
  *          the peer in the TxBAStreamTbl
@@ -722,7 +722,7 @@ static mlan_status wlan_11n_ioctl_delba(pmlan_adapter pmadapter, pmlan_ioctl_req
     return ret;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief This function will return the pointer to a entry in BA Stream
  *  		table which matches the ba_status requested
@@ -784,7 +784,7 @@ static void wlan_fill_cap_info(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap,
 
     ENTER();
 
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     if ((bands & BAND_A) != 0U)
     {
         usr_dot_11n_dev_cap = pmadapter->usr_dot_11n_dev_cap_a;
@@ -907,7 +907,7 @@ void wlan_fill_ht_cap_tlv(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, t_u1
 
     ENTER();
 
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     if ((bands & BAND_A) != 0U)
     {
         usr_dot_11n_dev_cap = pmadapter->usr_dot_11n_dev_cap_a;
@@ -1037,7 +1037,7 @@ void wlan_show_devmcssupport(pmlan_adapter pmadapter, t_u8 support)
     return;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief This function handles the command response of
  *              delete a block ack request
@@ -1426,7 +1426,7 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
     MrvlIETypes_HTCap_t *pht_cap;
     MrvlIETypes_HTInfo_t *pht_info;
     MrvlIEtypes_ChanListParamSet_t *pchan_list;
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     MrvlIETypes_2040BSSCo_t *p2040_bss_co;
 #endif
     MrvlIETypes_ExtCap_t *pext_cap;
@@ -1448,7 +1448,7 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
         return 0;
     }
 
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     if ((pbss_desc->bss_band & BAND_A) != 0U)
     {
         usr_dot_11n_dev_cap = pmadapter->usr_dot_11n_dev_cap_a;
@@ -1469,7 +1469,7 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
     }
 
     if (((pbss_desc->bss_band & (BAND_B | BAND_G
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
                                  | BAND_A
 #endif
                                  )) &&
@@ -1585,7 +1585,7 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
         pchan_list->header.len = wlan_cpu_to_le16(pchan_list->header.len);
     }
 
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     if ((pbss_desc->bss_band & (BAND_A | BAND_AN)) && pbss_desc->pbss_co_2040 != MNULL)
     {
         p2040_bss_co = (MrvlIETypes_2040BSSCo_t *)(void *)*ppbuffer;
@@ -1613,7 +1613,7 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
         (void)__memcpy(pmadapter, (t_u8 *)pext_cap + sizeof(MrvlIEtypesHeader_t),
                        (t_u8 *)pbss_desc->pext_cap + sizeof(IEEEtypes_Header_t), pbss_desc->pext_cap->ieee_hdr.len);
 
-#ifdef CONFIG_MULTI_BSSID_SUPPORT
+#if CONFIG_MULTI_BSSID_SUPPORT
         if (pbss_desc && pbss_desc->multi_bssid_ap)
             SET_EXTCAP_MULTI_BSSID(pext_cap->ext_cap);
 #endif
@@ -1633,7 +1633,7 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
                 pext_cap->ext_cap.TDLSSupport = 1;
             }
         }
-#if defined(CONFIG_WNM_PS)
+#if (CONFIG_WNM_PS)
         if ((((mlan_private *)mlan_adap->priv[0])->wnm_set == true) && (pbss_desc->pext_cap->ext_cap.WNM_Sleep == true))
         {
             pext_cap->ext_cap.WNM_Sleep = 1;
@@ -1644,7 +1644,7 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
         }
 #endif
 
-#ifdef CONFIG_11V
+#if CONFIG_11V
         if (pbss_desc->pext_cap->ext_cap.BSS_Transition == true)
         {
             pext_cap->ext_cap.BSS_Transition = 1;
@@ -1655,7 +1655,7 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
         }
 #endif
 
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
         SET_EXTCAP_TWT_REQ(pext_cap->ext_cap);
         pext_cap->ext_cap.TWTResp = 0;
 #endif
@@ -1719,7 +1719,7 @@ mlan_status wlan_11n_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pi
         case MLAN_OID_11N_CFG_DELBA:
             status = wlan_11n_ioctl_delba(pmadapter, pioctl_req);
             break;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_OID_11N_CFG_AGGR_PRIO_TBL:
             status = wlan_11n_ioctl_aggr_prio_tbl(pmadapter, pioctl_req);
             break;
@@ -1778,7 +1778,7 @@ void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, t_u8 *ra)
 
     (void)pmadapter->callbacks.moal_spin_unlock(pmadapter->pmoal_handle, priv->tx_ba_stream_tbl_ptr.plock);
 
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
     pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)ptx_tbl);
 #else
     OSA_MemoryPoolFree(buf_128_MemoryPool, ptx_tbl);
@@ -1878,7 +1878,7 @@ void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, baStatus_e ba_
     {
         DBG_HEXDUMP(MDAT_D, "RA", ra, MLAN_MAC_ADDR_LENGTH);
 
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
         pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle, sizeof(TxBAStreamTbl), MLAN_MEM_DEF,
                                          (t_u8 **)&newNode);
 #else
@@ -2165,7 +2165,7 @@ void wlan_11n_delete_bastream(mlan_private *priv, t_u8 *del_ba)
     LEAVE();
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Get Rx reordering table
  *

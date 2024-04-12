@@ -46,7 +46,7 @@ static const region_code_mapping_t region_code_mapping[] = {
     {"FR ", 0x32}, /* France */
     {"JP ", 0xFF}, /* Japan */
     {"CN ", 0x50}, /* China */
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     {"JP ", 0x40}, /* Japan */
     {"JP ", 0x41}, /* Japan */
     {"JP ", 0xFE}, /* Japan */
@@ -70,7 +70,7 @@ static const chan_freq_power_t channel_freq_power_UN_BG[] = {
     {9, 2452, TX_PWR_DEFAULT},  {10, 2457, TX_PWR_DEFAULT}, {11, 2462, TX_PWR_DEFAULT}, {12, 2467, TX_PWR_DEFAULT},
     {13, 2472, TX_PWR_DEFAULT}, {14, 2484, TX_PWR_DEFAULT}};
 
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
 /** Channels for 802.11a/j */
 static chan_freq_power_t channel_freq_power_UN_AJ[] = {
     {8, 5040, TX_PWR_DEFAULT},   {12, 5060, TX_PWR_DEFAULT},  {16, 5080, TX_PWR_DEFAULT},  {34, 5170, TX_PWR_DEFAULT},
@@ -81,7 +81,7 @@ static chan_freq_power_t channel_freq_power_UN_AJ[] = {
     {120, 5600, TX_PWR_DEFAULT}, {124, 5620, TX_PWR_DEFAULT}, {128, 5640, TX_PWR_DEFAULT}, {132, 5660, TX_PWR_DEFAULT},
     {136, 5680, TX_PWR_DEFAULT}, {140, 5700, TX_PWR_DEFAULT}, {144, 5720, TX_PWR_DEFAULT}, {149, 5745, TX_PWR_DEFAULT},
     {153, 5765, TX_PWR_DEFAULT}, {157, 5785, TX_PWR_DEFAULT}, {161, 5805, TX_PWR_DEFAULT},
-#ifdef CONFIG_UNII4_BAND_SUPPORT
+#if CONFIG_UNII4_BAND_SUPPORT
     {165, 5825, TX_PWR_DEFAULT}, {169, 5845, TX_PWR_DEFAULT}, {173, 5865, TX_PWR_DEFAULT}, {177, 5885, TX_PWR_DEFAULT},
 #else
     {165, 5825, TX_PWR_DEFAULT}
@@ -482,7 +482,7 @@ static t_u8 wlan_11d_get_chan(pmlan_adapter pmadapter, t_u16 band, t_u8 first_ch
         cfp    = (const chan_freq_power_t *)channel_freq_power_UN_BG;
         cfp_no = sizeof(channel_freq_power_UN_BG) / sizeof(chan_freq_power_t);
     }
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     else if ((band & (BAND_A | BAND_AN)) != 0U)
     {
         cfp    = channel_freq_power_UN_AJ;
@@ -882,7 +882,7 @@ t_void wlan_11d_init(mlan_adapter *pmadapter)
     return;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief This function enable/disable 11D
  *
@@ -982,7 +982,7 @@ mlan_status wlan_cmd_802_11d_domain_info(mlan_private *pmpriv, HostCmd_DS_COMMAN
     return MLAN_STATUS_SUCCESS;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief This function handle response of CMD_802_11D_DOMAIN_INFO
  *
@@ -1175,7 +1175,7 @@ t_u32 wlan_11d_chan_2_freq(pmlan_adapter pmadapter, t_u8 chan, t_u16 band)
 
     ENTER();
 
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     /* Get channel-frequency-power trios */
     if ((band & (BAND_A | BAND_AN)) != 0)
     {
@@ -1187,7 +1187,7 @@ t_u32 wlan_11d_chan_2_freq(pmlan_adapter pmadapter, t_u8 chan, t_u16 band)
 #endif /* CONFIG_5GHz_SUPPORT */
         cf  = (const chan_freq_power_t *)channel_freq_power_UN_BG;
         cnt = sizeof(channel_freq_power_UN_BG) / sizeof(chan_freq_power_t);
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     }
 #endif /* CONFIG_5GHz_SUPPORT */
 
@@ -1247,8 +1247,8 @@ mlan_status wlan_11d_set_universaltable(mlan_private *pmpriv, t_u16 band)
         i++;
     }
 
-#ifdef CONFIG_5GHz_SUPPORT
-#ifdef CONFIG_11AC
+#if CONFIG_5GHz_SUPPORT
+#if CONFIG_11AC
     if ((band & (BAND_A | BAND_AN | BAND_AAC)) != 0U)
     {
 #else
@@ -1380,17 +1380,17 @@ mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, t_u16 band)
             }
             switch (region_chan->band)
             {
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
                 case BAND_A:
                     switch (band)
                     {
                         case BAND_A:
                         case BAND_AN:
                         case BAND_A | BAND_AN:
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
                         case BAND_A | BAND_AN | BAND_AAC:
 #endif
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
                         case BAND_A | BAND_AN | BAND_AAC | BAND_AAX:
 #endif
                             break;
@@ -1410,10 +1410,10 @@ mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, t_u16 band)
                         case BAND_GN:
                         case BAND_G | BAND_GN:
                         case BAND_B | BAND_G | BAND_GN:
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
                         case BAND_B | BAND_G | BAND_GN | BAND_GAC:
 #endif
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
                         case BAND_B | BAND_G | BAND_GN | BAND_GAC | BAND_GAX:
 #endif
                             break;

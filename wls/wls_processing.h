@@ -1,4 +1,4 @@
-#ifdef CONFIG_WLS_CSI_PROC
+#if CONFIG_WLS_CSI_PROC
 /** @file wls_processing.h
  *
  * @brief This file contains header file for CSI processing functions
@@ -126,4 +126,4 @@ void dumpRawComplex(hal_pktinfo_t *pktinfo, unsigned int *fftBuffer, int peakIdx
 
 #endif
 
-#endif  /* CONFIG_WLS_CSI_PROC */
+#endif /* CONFIG_WLS_CSI_PROC */

@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifdef CONFIG_WIFI_SMOKE_TESTS
+#if CONFIG_WIFI_SMOKE_TESTS
 
 #if defined(SDK_OS_FREE_RTOS)
 
@@ -87,7 +87,7 @@ void cmd_enet_info(int argc, char **argv)
     {
         (void)PRINTF("Connected\r\n");
         (void)PRINTF("\r\n\tIPv4 Address\r\n");
-#ifdef IP_USE_DHCP
+#if IP_USE_DHCP
         (void)PRINTF("\taddress: DHCP");
 #else
         (void)PRINTF("\taddress: Static");
@@ -96,7 +96,7 @@ void cmd_enet_info(int argc, char **argv)
         (void)PRINTF("\r\n\t\tgateway:\t%s", ipaddr_ntoa(&netif.gw));
         (void)PRINTF("\r\n\t\tnetmask:\t%s", ipaddr_ntoa(&netif.netmask));
         (void)PRINTF("\r\n");
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         int i;
         char buf[128];
         // char *str;
@@ -149,7 +149,7 @@ int initNetwork(void)
         .phyOps      = &phyksz8081_ops,
         .phyResource = &g_phy_resource,
         .srcClockHz  = CLOCK_GetFreq(kCLOCK_IpgClk),
-#ifdef configMAC_ADDR
+#if configMAC_ADDR
         .macAddress = configMAC_ADDR,
 #endif
     };
@@ -159,7 +159,7 @@ int initNetwork(void)
     /* Set special address for each chip. */
     (void)SILICONID_ConvertToMacAddr(&enet_config.macAddress);
 #endif
-#ifdef IP_USE_DHCP
+#if IP_USE_DHCP
     IP4_ADDR(&netif_ipaddr, 0, 0, 0, 0);
     IP4_ADDR(&netif_netmask, 0, 0, 0, 0);
     IP4_ADDR(&netif_gw, 0, 0, 0, 0);
@@ -187,7 +187,7 @@ int initNetwork(void)
 
         if (ret == ERR_OK)
         {
-#ifdef IP_USE_DHCP
+#if IP_USE_DHCP
             PRINTF("Obtaining IP address from DHCP...\r\n");
             netifapi_dhcp_start(&netif);
 
@@ -220,7 +220,7 @@ static struct net_if *iface;
 
 static int enet_init_done = 0;
 
-#ifdef IP_USE_DHCP
+#if IP_USE_DHCP
 static struct net_mgmt_event_callback mgmt_cb;
 #endif
 
@@ -245,7 +245,7 @@ void cmd_enet_info(int argc, char **argv)
     {
         (void)PRINTF("Connected\r\n");
         (void)PRINTF("\r\n\tIPv4 Address\r\n");
-#ifdef IP_USE_DHCP
+#if IP_USE_DHCP
         (void)PRINTF("\taddress: DHCP");
 #else
         (void)PRINTF("\taddress: Static");
@@ -279,7 +279,7 @@ static int enet_cli_init(void)
     return WM_SUCCESS;
 }
 
-#ifdef IP_USE_DHCP
+#if IP_USE_DHCP
 
 static void handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event, struct net_if *iface)
 {
@@ -323,7 +323,7 @@ int initNetwork(void)
             return -WM_FAIL;
         }
 
-#ifdef IP_USE_DHCP
+#if IP_USE_DHCP
 
         net_mgmt_init_event_callback(&mgmt_cb, handler, NET_EVENT_IPV4_ADDR_ADD);
         net_mgmt_add_event_callback(&mgmt_cb);

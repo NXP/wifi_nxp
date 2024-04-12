@@ -30,13 +30,13 @@
 #else
 #include "fsl_rtc.h"
 #endif
-#ifdef CONFIG_WIFI_USB_FILE_ACCESS
+#if CONFIG_WIFI_USB_FILE_ACCESS
 #include "usb_host_config.h"
 #include "usb_host.h"
 #include "usb_api.h"
 #endif /* CONFIG_WIFI_USB_FILE_ACCESS */
 #include "cli_utils.h"
-#ifdef CONFIG_HOST_SLEEP
+#if CONFIG_HOST_SLEEP
 #include "host_sleep.h"
 #endif
 #include "wpa_cli.h"
@@ -57,7 +57,7 @@
 #elif defined(MBEDTLS_MCUX_ELE_S400_API)
 #include "ele_mbedtls.h"
 #else
-#ifdef CONFIG_KSDK_MBEDTLS
+#if CONFIG_KSDK_MBEDTLS
 #include "ksdk_mbedtls.h"
 #endif
 #endif
@@ -72,7 +72,7 @@ int wlan_driver_init(void);
 int wlan_driver_deinit(void);
 int wlan_driver_reset(void);
 int wlan_reset_cli_init(void);
-#ifdef CONFIG_WIFI_USB_FILE_ACCESS
+#if CONFIG_WIFI_USB_FILE_ACCESS
 extern usb_host_handle g_HostHandle;
 #endif /* CONFIG_WIFI_USB_FILE_ACCESS */
 
@@ -85,7 +85,7 @@ extern int wpa_cli_init(void);
  * Code
  ******************************************************************************/
 
-#ifdef CONFIG_WPS2
+#if CONFIG_WPS2
 #define MAIN_TASK_STACK_SIZE 6000
 #else
 #define MAIN_TASK_STACK_SIZE 4096
@@ -145,8 +145,8 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             }
             PRINTF("ENHANCED WLAN CLIs are initialized\r\n");
             printSeparator();
-#ifdef RW610		
-#ifdef CONFIG_HOST_SLEEP
+#ifdef RW610
+#if CONFIG_HOST_SLEEP
             ret = host_sleep_cli_init();
             if (ret != WM_SUCCESS)
             {
@@ -184,7 +184,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
                 PRINTF("Failed to initialize WPA SUPP CLI\r\n");
                 return 0;
             }
-			ret = wlan_prov_cli_init();
+            ret = wlan_prov_cli_init();
             if (ret != WM_SUCCESS)
             {
                 PRINTF("Failed to initialize PROV CLI\r\n");
@@ -226,7 +226,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             {
                 PRINTF("IPv4 Address: [%s]\r\n", ip);
             }
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
             int i;
             for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
             {
@@ -332,7 +332,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             break;
         case WLAN_REASON_PS_EXIT:
             break;
-#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+#if CONFIG_SUBSCRIBE_EVENT_SUPPORT
         case WLAN_REASON_RSSI_HIGH:
         case WLAN_REASON_SNR_LOW:
         case WLAN_REASON_SNR_HIGH:
@@ -346,7 +346,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
         case WLAN_REASON_PRE_BEACON_LOST:
             break;
 #endif
-#ifdef CONFIG_WIFI_IND_DNLD
+#if CONFIG_WIFI_IND_DNLD
         case WLAN_REASON_FW_HANG:
         case WLAN_REASON_FW_RESET:
             break;
@@ -412,7 +412,7 @@ static void test_wlan_reset(int argc, char **argv)
     (void)wlan_driver_reset();
 }
 
-#ifdef CONFIG_HOST_SLEEP
+#if CONFIG_HOST_SLEEP
 static void test_mcu_suspend(int argc, char **argv)
 {
     (void)mcu_suspend();
@@ -421,7 +421,7 @@ static void test_mcu_suspend(int argc, char **argv)
 
 static struct cli_command reset_commands[] = {
     {"wlan-reset", NULL, test_wlan_reset},
-#ifdef CONFIG_HOST_SLEEP
+#if CONFIG_HOST_SLEEP
     {"mcu-suspend", NULL, test_mcu_suspend},
 #endif
 };
@@ -456,7 +456,7 @@ int wlan_reset_cli_deinit(void)
     return 0;
 }
 #endif
-#ifdef CONFIG_WIFI_USB_FILE_ACCESS
+#if CONFIG_WIFI_USB_FILE_ACCESS
 static void dump_read_usb_file_usage(void)
 {
     (void)PRINTF("Usage: wlan-read-usb-file <type:ca-cert/client-cert/client-key> <file name>\r\n");
@@ -488,7 +488,7 @@ static void test_wlan_read_usb_file(int argc, char **argv)
         usb_f_type = FILE_TYPE_ENTP_CLIENT_CERT2;
     else if (string_equal("client-key2", argv[1]))
         usb_f_type = FILE_TYPE_ENTP_CLIENT_KEY2;
-#ifdef CONFIG_HOSTAPD
+#if CONFIG_HOSTAPD
     else if (string_equal("server-cert", argv[1]))
         usb_f_type = FILE_TYPE_ENTP_SERVER_CERT;
     else if (string_equal("server-key", argv[1]))
@@ -555,7 +555,7 @@ static void test_wlan_dump_usb_file(int argc, char **argv)
         usb_f_type = FILE_TYPE_ENTP_CLIENT_CERT2;
     else if (string_equal("client-key2", argv[1]))
         usb_f_type = FILE_TYPE_ENTP_CLIENT_KEY2;
-#ifdef CONFIG_HOSTAPD
+#if CONFIG_HOSTAPD
     else if (string_equal("server-cert", argv[1]))
         usb_f_type = FILE_TYPE_ENTP_SERVER_CERT;
     else if (string_equal("server-key", argv[1]))
@@ -636,7 +636,7 @@ static struct cli_command wlan_prov_commands[] = {
     {"wlan-set-rtc-time", "<year> <month> <day> <hour> <minute> <second>", test_wlan_set_rtc_time},
     {"wlan-get-rtc-time", NULL, test_wlan_get_rtc_time},
 #endif
-#ifdef CONFIG_WIFI_USB_FILE_ACCESS
+#if CONFIG_WIFI_USB_FILE_ACCESS
     {"wlan-read-usb-file", "<type:ca-cert/client-cert/client-key> <file name>", test_wlan_read_usb_file},
     {"wlan-dump-usb-file", "<type:ca-cert/client-cert/client-key>", test_wlan_dump_usb_file},
 #endif
@@ -675,7 +675,7 @@ static void main_task(osa_task_param_t arg)
     assert(WM_SUCCESS == result);
 #endif
 
-#ifdef CONFIG_HOST_SLEEP
+#if CONFIG_HOST_SLEEP
 #ifndef RW610
     hostsleep_init(wlan_hs_pre_cfg, wlan_hs_post_cfg);
 #else
@@ -721,7 +721,7 @@ int main(void)
     RTC_Init(RTC);
 #endif
 
-#ifdef CONFIG_WIFI_USB_FILE_ACCESS
+#if CONFIG_WIFI_USB_FILE_ACCESS
     usb_init();
 #endif
 

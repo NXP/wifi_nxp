@@ -12,7 +12,7 @@
 #include <osa.h>
 #include <wmlog.h>
 
-#if defined(CONFIG_ZEPHYR)
+#if (CONFIG_ZEPHYR)
 
 /*** Timer Management ***/
 static void timer_callback_work_handler(struct k_work *item)

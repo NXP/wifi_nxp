@@ -61,7 +61,7 @@ static void USB_HostTask(void *param);
 
 static void USB_HostApplicationTask(void *param);
 
-#ifdef CONFIG_WIFI_USB_FILE_ACCESS
+#if CONFIG_WIFI_USB_FILE_ACCESS
 extern void USB_HostClockInit(void);
 extern void USB_HostIsrEnable(void);
 extern void USB_HostTaskFn(void *param);
@@ -124,7 +124,7 @@ static void USB_HostApplicationInit(void)
 {
     usb_status_t status = kStatus_USB_Success;
 
-#ifdef CONFIG_WIFI_USB_FILE_ACCESS
+#if CONFIG_WIFI_USB_FILE_ACCESS
     USB_HostClockInit();
 #endif
 #if ((defined FSL_FEATURE_SOC_SYSMPU_COUNT) && (FSL_FEATURE_SOC_SYSMPU_COUNT))
@@ -137,7 +137,7 @@ static void USB_HostApplicationInit(void)
         usb_echo("host init error\r\n");
         return;
     }
-#ifdef CONFIG_WIFI_USB_FILE_ACCESS
+#if CONFIG_WIFI_USB_FILE_ACCESS
     USB_HostIsrEnable();
 #endif
     usb_echo("host init done\r\n");
@@ -147,7 +147,7 @@ static void USB_HostTask(void *param)
 {
     while (1)
     {
-#ifdef CONFIG_WIFI_USB_FILE_ACCESS
+#if CONFIG_WIFI_USB_FILE_ACCESS
         USB_HostTaskFn(param);
 #endif
         OSA_TimeDelay(1);

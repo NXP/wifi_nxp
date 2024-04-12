@@ -15,14 +15,14 @@
 #include <wifi.h>
 #include <wlan_tests.h>
 #include <wlan_11d.h>
-#ifdef CONFIG_WPS2
+#if CONFIG_WPS2
 #include <wifi_nxp_wps.h>
 #endif
-#ifdef CONFIG_WPA_SUPP_DPP
+#if CONFIG_WPA_SUPP_DPP
 #include "dpp.h"
 #endif
 
-#ifdef CONFIG_MEM_POOLS
+#if CONFIG_MEM_POOLS
 #include <mem_pool_config.h>
 #endif
 
@@ -37,11 +37,11 @@
  * NXP Test Framework (MTF) functions
  */
 
-#if defined(CONFIG_CSI) || defined(CONFIG_NET_MONITOR)
+#if (CONFIG_CSI) || (CONFIG_NET_MONITOR)
 static uint8_t broadcast_mac[MLAN_MAC_ADDR_LENGTH] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 #endif
 
-#ifdef CONFIG_CSI
+#if CONFIG_CSI
 wlan_csi_config_params_t g_csi_params = {
     .bss_type           = 0,
     .csi_enable         = 1,
@@ -58,7 +58,7 @@ wlan_csi_config_params_t g_csi_params = {
 };
 #endif
 
-#ifdef CONFIG_NET_MONITOR
+#if CONFIG_NET_MONITOR
 wlan_net_monitor_t g_net_monitor_param = {
     .action           = 0x01,
     .monitor_activity = 0x01,
@@ -68,7 +68,7 @@ wlan_net_monitor_t g_net_monitor_param = {
 };
 #endif
 
-#ifdef CONFIG_HOST_SLEEP
+#if CONFIG_HOST_SLEEP
 extern uint64_t rtc_timeout;
 #endif
 #ifdef __ZEPHYR__
@@ -140,7 +140,7 @@ static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
     (void)PRINTF("\r\n");
 out:
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     if (role == WLAN_BSS_ROLE_STA || role == WLAN_BSS_ROLE_UAP)
     {
         int i;
@@ -195,7 +195,7 @@ inline static const char *sec_tag(struct wlan_network *network)
     }
     else
     {
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
         if (is_ep_valid_security(network->security.type))
         {
             if (network->security.wpa3_sb_192)
@@ -213,12 +213,12 @@ inline static const char *sec_tag(struct wlan_network *network)
         return "\tsecurity";
     }
 }
-#ifdef CONFIG_WIFI_CAPA
+#if CONFIG_WIFI_CAPA
 static int get_capa(char *arg, uint8_t *wlan_capa)
 {
     if (!arg)
         return 1;
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
     if (string_equal(arg, "11ax") != 0)
     {
         *wlan_capa = (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC | WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY);
@@ -226,7 +226,7 @@ static int get_capa(char *arg, uint8_t *wlan_capa)
     }
     else
 #endif
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
         if (string_equal(arg, "11ac") != 0)
     {
         *wlan_capa = (WIFI_SUPPORT_11AC | WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY);
@@ -257,17 +257,17 @@ static void print_network(struct wlan_network *network)
     print_mac(network->bssid);
 
     if ((network->dot11n != 0U)
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
         || (network->dot11ac != 0U)
 #endif
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
         || (network->dot11ax != 0U)
 #endif
     )
     {
         (void)PRINTF("\r\n\tmode: ");
-#ifdef CONFIG_11AC
-#ifdef CONFIG_11AX
+#if CONFIG_11AC
+#if CONFIG_11AX
         if (network->dot11ax != 0U)
         {
             (void)PRINTF("802.11AX ");
@@ -320,7 +320,7 @@ static void print_network(struct wlan_network *network)
             (void)PRINTF("%s: WPA\r\n", sec_tag(network));
             break;
         case WLAN_SECURITY_WPA2:
-#if defined(CONFIG_11R)
+#if (CONFIG_11R)
             if (network->ft_psk == 1U)
             {
                 (void)PRINTF("%s: WPA2-FT-PSK", sec_tag(network));
@@ -332,7 +332,7 @@ static void print_network(struct wlan_network *network)
             }
             (void)PRINTF("\r\n");
             break;
-#ifdef CONFIG_11R
+#if CONFIG_11R
         case WLAN_SECURITY_WPA2_FT:
             (void)PRINTF("%s: WPA2-FT-PSK\r\n", sec_tag(network));
             break;
@@ -340,24 +340,24 @@ static void print_network(struct wlan_network *network)
         case WLAN_SECURITY_WPA_WPA2_MIXED:
             (void)PRINTF("%s: WPA/WPA2 Mixed\r\n", sec_tag(network));
             break;
-#if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) || defined(CONFIG_WPA2_ENTP)
-#ifdef CONFIG_EAP_TLS
+#if (CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) || (CONFIG_WPA2_ENTP)
+#if CONFIG_EAP_TLS
         case WLAN_SECURITY_EAP_TLS:
             (void)PRINTF("%s Enterprise EAP-TLS\r\n", sec_tag(network));
             break;
 #endif
 #endif
-#ifdef CONFIG_PEAP_MSCHAPV2
+#if CONFIG_PEAP_MSCHAPV2
         case WLAN_SECURITY_EAP_PEAP_MSCHAPV2:
             (void)PRINTF("%s: WPA2 Enterprise PEAP-MSCHAPV2\r\n", sec_tag(network));
             break;
 #endif
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
-#ifdef CONFIG_EAP_TLS
+#if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#if CONFIG_EAP_TLS
         case WLAN_SECURITY_EAP_TLS_SHA256:
             (void)PRINTF("%s Enterprise EAP-TLS-SHA256\r\n", sec_tag(network));
             break;
-#ifdef CONFIG_11R
+#if CONFIG_11R
         case WLAN_SECURITY_EAP_TLS_FT:
             (void)PRINTF("%s Enterprise EAP-TLS-FT\r\n", sec_tag(network));
             break;
@@ -366,68 +366,68 @@ static void print_network(struct wlan_network *network)
             break;
 #endif
 #endif
-#ifdef CONFIG_EAP_TTLS
+#if CONFIG_EAP_TTLS
         case WLAN_SECURITY_EAP_TTLS:
             (void)PRINTF("%s Enterprise EAP-TTLSv%d\r\n", sec_tag(network), network->security.eap_ver);
             break;
-#ifdef CONFIG_EAP_MSCHAPV2
+#if CONFIG_EAP_MSCHAPV2
         case WLAN_SECURITY_EAP_TTLS_MSCHAPV2:
             (void)PRINTF("%s Enterprise EAP-TTLSv%d-MSCHAPV2\r\n", sec_tag(network), network->security.eap_ver);
             break;
 #endif
 #endif
-#ifdef CONFIG_EAP_PEAP
-#ifdef CONFIG_EAP_MSCHAPV2
+#if CONFIG_EAP_PEAP
+#if CONFIG_EAP_MSCHAPV2
         case WLAN_SECURITY_EAP_PEAP_MSCHAPV2:
             (void)PRINTF("%s Enterprise EAP-PEAPv%d-MSCHAPV2\r\n", sec_tag(network), network->security.eap_ver);
             break;
 #endif
-#ifdef CONFIG_EAP_TLS
+#if CONFIG_EAP_TLS
         case WLAN_SECURITY_EAP_PEAP_TLS:
             (void)PRINTF("%s Enterprise EAP-PEAPv%d-TLS\r\n", sec_tag(network), network->security.eap_ver);
             break;
 #endif
-#ifdef CONFIG_EAP_GTC
+#if CONFIG_EAP_GTC
         case WLAN_SECURITY_EAP_PEAP_GTC:
             (void)PRINTF("%s Enterprise EAP-PEAPv%d-GTC\r\n", sec_tag(network), network->security.eap_ver);
             break;
 #endif
 #endif
-#ifdef CONFIG_EAP_FAST
-#ifdef CONFIG_EAP_MSCHAPV2
+#if CONFIG_EAP_FAST
+#if CONFIG_EAP_MSCHAPV2
         case WLAN_SECURITY_EAP_FAST_MSCHAPV2:
             (void)PRINTF("%s Enterprise EAP-FAST-MSCHAPV2\r\n", sec_tag(network));
             break;
 #endif
-#ifdef CONFIG_EAP_GTC
+#if CONFIG_EAP_GTC
         case WLAN_SECURITY_EAP_FAST_GTC:
             (void)PRINTF("%s Enterprise EAP-FAST-GTC\r\n", sec_tag(network));
             break;
 #endif
 #endif
-#ifdef CONFIG_EAP_SIM
+#if CONFIG_EAP_SIM
         case WLAN_SECURITY_EAP_SIM:
             (void)PRINTF("%s Enterprise EAP-SIM\r\n", sec_tag(network));
             break;
 #endif
-#ifdef CONFIG_EAP_AKA
+#if CONFIG_EAP_AKA
         case WLAN_SECURITY_EAP_AKA:
             (void)PRINTF("%s Enterprise EAP-AKA\r\n", sec_tag(network));
             break;
 #endif
-#ifdef CONFIG_EAP_AKA_PRIME
+#if CONFIG_EAP_AKA_PRIME
         case WLAN_SECURITY_EAP_AKA_PRIME:
             (void)PRINTF("%s Enterprise EAP-AKA-PRIME\r\n", sec_tag(network));
             break;
 #endif
 #endif
-#ifdef CONFIG_OWE
+#if CONFIG_OWE
         case WLAN_SECURITY_OWE_ONLY:
             (void)PRINTF("%s: OWE Only\r\n", sec_tag(network));
             break;
 #endif
         case WLAN_SECURITY_WPA3_SAE:
-#if defined(CONFIG_11R)
+#if (CONFIG_11R)
             if (network->ft_sae == 1U)
             {
                 (void)PRINTF("%s: WPA3-FT-SAE", sec_tag(network));
@@ -439,8 +439,8 @@ static void print_network(struct wlan_network *network)
             }
             (void)PRINTF("\r\n");
             break;
-#ifdef CONFIG_WPA_SUPP
-#ifdef CONFIG_11R
+#if CONFIG_WPA_SUPP
+#if CONFIG_11R
         case WLAN_SECURITY_WPA3_FT_SAE:
             (void)PRINTF("%s: WPA3-FT-SAE\r\n", sec_tag(network));
             break;
@@ -453,30 +453,30 @@ static void print_network(struct wlan_network *network)
             (void)PRINTF("\r\nUnexpected WLAN SECURITY\r\n");
             break;
     }
-#ifdef CONFIG_WIFI_CAPA
+#if CONFIG_WIFI_CAPA
     if (network->role == WLAN_BSS_ROLE_UAP)
     {
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
         uint8_t enable_11ax = false;
 #endif
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
         uint8_t enable_11ac = false;
 #endif
         uint8_t enable_11n = false;
 
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
         enable_11ax = wlan_check_11ax_capa(network->channel);
 #endif
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
         enable_11ac = wlan_check_11ac_capa(network->channel);
 #endif
         enable_11n = wlan_check_11n_capa(network->channel);
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
         if (network->wlan_capa & WIFI_SUPPORT_11AX)
         {
             if (!enable_11ax)
             {
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
                 if (enable_11ac)
                 {
                     (void)PRINTF("\twifi capability: 11ac\r\n");
@@ -496,7 +496,7 @@ static void print_network(struct wlan_network *network)
         }
         else
 #endif
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
             if (network->wlan_capa & WIFI_SUPPORT_11AC)
         {
             if (!enable_11ac)
@@ -532,14 +532,14 @@ static void print_network(struct wlan_network *network)
         }
     }
 #endif
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
     if (network->role == WLAN_BSS_ROLE_STA)
     {
         (void)PRINTF("\tProactive Key Caching: %s\r\n", network->security.pkc == 1 ? "Enabled" : "Disabled");
     }
 #endif
     print_address(&network->ip, network->role);
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+#if CONFIG_SCAN_WITH_RSSIFILTER
     (void)PRINTF("\r\n\trssi threshold: %d \r\n", network->rssi_threshold);
 #endif
 }
@@ -656,40 +656,40 @@ static void dump_wlan_add_usage(void)
     (void)PRINTF("  For DHCP IP Address assignment:\r\n");
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa2 <psk/psk-sha256"
-#ifdef CONFIG_11R
+#if CONFIG_11R
         "/ft-psk"
 #endif
         "> <secret>] [mfpc <1> mfpr <0>] "
         "\r\n");
     (void)PRINTF("      If using WPA2 security, set the PMF configuration as mentioned above.\r\n");
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
     (void)PRINTF(
         "If using proactive key caching set pkc as 1, to disable set to 0(default), if okc is set this is not "
         "used.\r\n");
     (void)PRINTF("If using specific ciphers, set the group, pairwise and group mgmt using gc, pc and gmc options.\r\n");
     (void)PRINTF(
         "supported ciphers: ccmp=0x10"
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
         ", gcmp=0x40, gcmp_256=0x100, ccmp_256=0x200"
 #endif
         "\r\n");
     (void)PRINTF(
         "supported group mgmt ciphers: aes_128_cmac=0x20"
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
         ", bip_gmac_128=0x800, bip_gmac_256=0x1000, "
         "bip_cmac_256=0x2000"
 #endif
         "\r\n");
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] ["
-#ifdef CONFIG_EAP_TLS
+#if CONFIG_EAP_TLS
         "eap-tls/eap-tls-sha256"
-#ifdef CONFIG_11R
+#if CONFIG_11R
         "/eap-tls-ft/eap-tls-ft-sha384"
 #endif
 #endif
-#ifdef CONFIG_EAP_TLS
+#if CONFIG_EAP_TLS
         " [tls_cipher <ECC_P384/RSA_3K>]"
 #endif
         " id <identity> "
@@ -698,12 +698,12 @@ static void dump_wlan_add_usage(void)
         "<domain_suffix_match_string>]] "
         "[mfpc <1> mfpr <0/1>] [mc 0x10 uc 0x10 gc 0x20]"
         "\r\n");
-#ifdef CONFIG_EAP_TTLS
+#if CONFIG_EAP_TTLS
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-ttls aid <anonymous identity> [key2_passwd "
         "<client_key2_passwd>]] [mfpc <1> mfpr <0/1>]"
         "\r\n");
-#ifdef CONFIG_EAP_MSCHAPV2
+#if CONFIG_EAP_MSCHAPV2
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-ttls-mschapv2 aid <anonymous identity> id "
         "<identity> pass "
@@ -711,29 +711,29 @@ static void dump_wlan_add_usage(void)
         "\r\n");
 #endif
 #endif
-#ifdef CONFIG_EAP_PEAP
+#if CONFIG_EAP_PEAP
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] ["
-#ifdef CONFIG_EAP_MSCHAPV2
+#if CONFIG_EAP_MSCHAPV2
         "eap-peap-mschapv2"
 #endif
-#ifdef CONFIG_EAP_TLS
+#if CONFIG_EAP_TLS
         "/eap-peap-tls"
 #endif
-#ifdef CONFIG_EAP_GTC
+#if CONFIG_EAP_GTC
         "/eap-peap-gtc"
 #endif
         " [ver 0/1] id <identity> pass "
         "<password> [key_passwd <client_key_passwd>]] [mfpc <1> mfpr <0/1>]"
         "\r\n");
 #endif
-#ifdef CONFIG_EAP_FAST
+#if CONFIG_EAP_FAST
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] ["
-#ifdef CONFIG_EAP_MSCHAPV2
+#if CONFIG_EAP_MSCHAPV2
         "eap-fast-mschapv2"
 #endif
-#ifdef CONFIG_EAP_GTC
+#if CONFIG_EAP_GTC
         "/eap-fast-gtc"
 #endif
         " aid <anonymous "
@@ -741,16 +741,16 @@ static void dump_wlan_add_usage(void)
         "<password> [key_passwd <client_key_passwd>]] [mfpc <1> mfpr <0/1>]"
         "\r\n");
 #endif
-#if defined(CONFIG_EAP_SIM) || defined(CONFIG_EAP_AKA) || defined(CONFIG_EAP_AKA_PRIME)
+#if (CONFIG_EAP_SIM) || (CONFIG_EAP_AKA) || (CONFIG_EAP_AKA_PRIME)
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> ["
-#ifdef CONFIG_EAP_SIM
+#if CONFIG_EAP_SIM
         "eap-sim"
 #endif
-#ifdef CONFIG_EAP_AKA
+#if CONFIG_EAP_AKA
         "/eap-aka"
 #endif
-#ifdef CONFIG_EAP_AKA_PRIME
+#if CONFIG_EAP_AKA_PRIME
         "/eap-aka-prime"
 #endif
         " id <identity> pass <password>]"
@@ -759,10 +759,10 @@ static void dump_wlan_add_usage(void)
     (void)PRINTF("      If using WPA2/WPA3 Enterprise security, set the PMF configuration as required.\r\n");
 #endif
 #endif
-#ifdef CONFIG_OWE
+#if CONFIG_OWE
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> <owe_only> "
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
         "[og <\"19 20 21\">] "
 #endif
         "mfpc 1 mfpr 1"
@@ -771,13 +771,13 @@ static void dump_wlan_add_usage(void)
 #endif
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3 sae"
-#ifdef CONFIG_WPA_SUPP
-#ifdef CONFIG_11R
+#if CONFIG_WPA_SUPP
+#if CONFIG_11R
         "/ft-sae"
 #endif
 #endif
         " <secret> "
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
         "[sg <\"19 20 21\">] "
 #endif
         "[pwe <0/1/2>] mfpc <1> mfpr <0/1>]"
@@ -794,26 +794,26 @@ static void dump_wlan_add_usage(void)
     (void)PRINTF(
         "    [bssid <bssid>] [channel <channel number>]\r\n"
         "    [wpa2 <psk/psk-sha256"
-#ifdef CONFIG_11R
+#if CONFIG_11R
         "/ft-psk"
 #endif
         "> <secret>]"
-#if defined(CONFIG_WPA2_ENTP) || defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
+#if (CONFIG_WPA2_ENTP) || (CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
         " [wpa3-sb/wpa3-sb-192] "
-#ifdef CONFIG_EAP_TLS
+#if CONFIG_EAP_TLS
         "[eap-tls/eap-tls-sha256"
-#ifdef CONFIG_11R
+#if CONFIG_11R
         "/eap-tls-ft/eap-tls-ft-sha384"
 #endif
 #endif
         "]"
 #endif
-#ifdef CONFIG_OWE
+#if CONFIG_OWE
         " [owe_only]"
 #endif
         " [wpa3 sae"
-#ifdef CONFIG_WPA_SUPP
-#ifdef CONFIG_11R
+#if CONFIG_WPA_SUPP
+#if CONFIG_11R
         "/ft-sae"
 #endif
 #endif
@@ -830,93 +830,93 @@ static void dump_wlan_add_usage(void)
         "    [channel <channelnumber>]\r\n");
     (void)PRINTF(
         "    [wpa2 <psk/psk-sha256> <secret>] [wpa3 sae <secret> "
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
         "[sg <\"19 20 21\">] "
 #endif
         "[pwe <0/1/2>] [tr <0/1"
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
         "/2/4/8"
 #endif
         ">]]\r\n");
-#ifdef CONFIG_WPA_SUPP
-#ifdef CONFIG_HOSTAPD
-#ifdef CONFIG_11R
+#if CONFIG_WPA_SUPP
+#if CONFIG_HOSTAPD
+#if CONFIG_11R
     (void)PRINTF("    [ft-psk <secret>] [wpa3 ft-sae <secret>]\r\n");
 #endif
-#if defined(CONFIG_WPA2_ENTP) || defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
+#if (CONFIG_WPA2_ENTP) || (CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
     (void)PRINTF(
         "    [wpa3-sb/wpa3-sb-192] "
         "["
-#ifdef CONFIG_EAP_TLS
+#if CONFIG_EAP_TLS
         "eap-tls/eap-tls-sha256"
 #endif
-#ifdef CONFIG_EAP_TTLS
+#if CONFIG_EAP_TTLS
         "/eap-ttls"
-#ifdef CONFIG_EAP_MSCHAPV2
+#if CONFIG_EAP_MSCHAPV2
         "/eap-ttls-mschapv2"
 #endif
 #endif
-#ifdef CONFIG_EAP_PEAP
-#ifdef CONFIG_EAP_MSCHAPV2
+#if CONFIG_EAP_PEAP
+#if CONFIG_EAP_MSCHAPV2
         "/eap-peap-mschapv2"
 #endif
-#ifdef CONFIG_EAP_TLS
+#if CONFIG_EAP_TLS
         "/eap-peap-tls"
 #endif
-#ifdef CONFIG_EAP_GTC
+#if CONFIG_EAP_GTC
         "/eap-peap-gtc"
 #endif
 #endif
-#ifdef CONFIG_EAP_FAST
-#ifdef CONFIG_EAP_MSCHAPV2
+#if CONFIG_EAP_FAST
+#if CONFIG_EAP_MSCHAPV2
         "/eap-fast-mschapv2"
 #endif
-#ifdef CONFIG_EAP_GTC
+#if CONFIG_EAP_GTC
         "/eap-fast-gtc"
 #endif
 #endif
-#ifdef CONFIG_EAP_SIM
+#if CONFIG_EAP_SIM
         "/eap-sim"
 #endif
-#ifdef CONFIG_EAP_AKA
+#if CONFIG_EAP_AKA
         "/eap-aka"
 #endif
-#ifdef CONFIG_EAP_AKA_PRIME
+#if CONFIG_EAP_AKA_PRIME
         "/eap-aka-prime"
 #endif
         "]\r\n");
-#ifdef CONFIG_11R
+#if CONFIG_11R
     (void)PRINTF("    [eap-tls-ft/eap-tls-ft-sha384]\r\n");
 #endif
 #endif
 #endif
 #endif
-#ifdef CONFIG_OWE
+#if CONFIG_OWE
     (void)PRINTF(
         "    [owe_only "
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
         "[og <\"19 20 21\">]"
 #endif
         "]\r\n");
 #endif
     (void)PRINTF("    [mfpc <0/1>] [mfpr <0/1>]\r\n");
-#if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
-#if defined(CONFIG_EAP_SIM) || defined(CONFIG_EAP_AKA) || defined(CONFIG_EAP_AKA_PRIME)
+#if (CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
+#if (CONFIG_EAP_SIM) || (CONFIG_EAP_AKA) || (CONFIG_EAP_AKA_PRIME)
     (void)PRINTF(
         "    If using eap-sim/eap-aka/eap-aka-prime use read_gsm_triplets to add GSM authentication triplets and "
         "read_milenage to add Milenage keys and hlr_cli to start hlr_auc_gw\r\n");
 #endif
 #endif
-#ifdef CONFIG_WIFI_DTIM_PERIOD
+#if CONFIG_WIFI_DTIM_PERIOD
     (void)PRINTF("If setting dtim\r\n");
     (void)PRINTF("The value of dtim is an integer. The default value is 10.\r\n");
 #endif
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
     (void)PRINTF(
         "Note: Setting the channel value greater than or equal to 36 is mandatory,\r\n"
         "      if UAP bandwidth is set to 80MHz.\r\n");
 #endif
-#ifdef CONFIG_WIFI_CAPA
+#if CONFIG_WIFI_CAPA
     (void)PRINTF("\r\n");
 #if defined CONFIG_11AX
     (void)PRINTF("    [capa <11ax/11ac/11n/legacy>]\r\n");
@@ -948,19 +948,19 @@ static void test_wlan_add(int argc, char **argv)
         unsigned role : 1;
         unsigned mfpc : 1;
         unsigned mfpr : 1;
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
         unsigned pkc : 1;
         unsigned gcipher : 1;
         unsigned pcipher : 1;
         unsigned gmcipher : 1;
 #endif
-#ifdef CONFIG_WIFI_DTIM_PERIOD
+#if CONFIG_WIFI_DTIM_PERIOD
         unsigned dtim : 1;
 #endif
-#ifdef CONFIG_WIFI_CAPA
+#if CONFIG_WIFI_CAPA
         unsigned wlan_capa : 1;
 #endif
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
         unsigned wpa3_sb : 1;
 #endif
         unsigned acs_band : 1;
@@ -1118,7 +1118,7 @@ static void test_wlan_add(int argc, char **argv)
                     network.security.key_mgmt |= WLAN_KEY_MGMT_PSK;
                     arg += 1;
 
-#ifdef CONFIG_11R
+#if CONFIG_11R
                     if (string_equal(argv[arg], "ft-psk") != false)
                     {
                         network.security.key_mgmt |= WLAN_KEY_MGMT_FT_PSK;
@@ -1137,7 +1137,7 @@ static void test_wlan_add(int argc, char **argv)
                     network.security.key_mgmt = WLAN_KEY_MGMT_PSK_SHA256;
                     arg += 1;
                 }
-#ifdef CONFIG_11R
+#if CONFIG_11R
                 else if (string_equal(argv[arg], "ft-psk") != false)
                 {
                     network.security.type     = WLAN_SECURITY_WPA2_FT;
@@ -1165,7 +1165,7 @@ static void test_wlan_add(int argc, char **argv)
             arg += 1;
             info.security2++;
         }
-#ifdef CONFIG_OWE
+#if CONFIG_OWE
         else if (!info.security && string_equal("owe_only", argv[arg]))
         {
             network.security.type = WLAN_SECURITY_OWE_ONLY;
@@ -1175,7 +1175,7 @@ static void test_wlan_add(int argc, char **argv)
             arg += 1;
             info.security++;
 
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
             if (string_equal(argv[arg], "og") != false)
             {
                 network.security.owe_groups = string_dup(argv[arg + 1]);
@@ -1190,7 +1190,7 @@ static void test_wlan_add(int argc, char **argv)
             {
                 arg += 1;
 
-#ifndef CONFIG_WPA_SUPP
+#if !CONFIG_WPA_SUPP
                 if (string_equal(argv[arg], "ft-sae") != false)
                 {
                     (void)PRINTF("Error: WPA3 FT-SAE not supported\r\n");
@@ -1204,8 +1204,8 @@ static void test_wlan_add(int argc, char **argv)
                     network.security.key_mgmt |= WLAN_KEY_MGMT_SAE;
                     arg += 1;
 
-#ifdef CONFIG_WPA_SUPP
-#ifdef CONFIG_11R
+#if CONFIG_WPA_SUPP
+#if CONFIG_11R
                     if (string_equal(argv[arg], "ft-sae") != false)
                     {
                         network.security.key_mgmt |= WLAN_KEY_MGMT_FT_SAE;
@@ -1214,8 +1214,8 @@ static void test_wlan_add(int argc, char **argv)
 #endif
 #endif
                 }
-#ifdef CONFIG_WPA_SUPP
-#ifdef CONFIG_11R
+#if CONFIG_WPA_SUPP
+#if CONFIG_11R
                 else if (string_equal(argv[arg], "ft-sae") != false)
                 {
                     network.security.type = WLAN_SECURITY_WPA3_FT_SAE;
@@ -1252,7 +1252,7 @@ static void test_wlan_add(int argc, char **argv)
                 }
                 arg += 1;
 
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
                 if (string_equal(argv[arg], "sg") != false)
                 {
                     network.security.sae_groups = string_dup(argv[arg + 1]);
@@ -1290,7 +1290,7 @@ static void test_wlan_add(int argc, char **argv)
                         }
                         if (arg + 1 >= argc ||
                             (network.security.transition_disable != 0 && network.security.transition_disable != 1
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
                              && network.security.transition_disable != 2 && network.security.transition_disable != 4 &&
                              network.security.transition_disable != 8
 #endif
@@ -1318,7 +1318,7 @@ static void test_wlan_add(int argc, char **argv)
             }
             info.security3++;
         }
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
         else if ((info.wpa3_sb == 0U) && string_equal("wpa3-sb", argv[arg]))
         {
             network.security.wpa3_sb = 1;
@@ -1333,49 +1333,49 @@ static void test_wlan_add(int argc, char **argv)
         }
         else if ((info.security2 == 0U) &&
                  (
-#ifdef CONFIG_EAP_TLS
+#if CONFIG_EAP_TLS
                      string_equal("eap-tls", argv[arg]) || string_equal("eap-tls-sha256", argv[arg]) ||
-#ifdef CONFIG_11R
+#if CONFIG_11R
                      string_equal("eap-tls-ft", argv[arg]) || string_equal("eap-tls-ft-sha384", argv[arg]) ||
 #endif
 #endif
-#ifdef CONFIG_EAP_TTLS
+#if CONFIG_EAP_TTLS
                      string_equal("eap-ttls", argv[arg]) ||
-#ifdef CONFIG_EAP_MSCHAPV2
+#if CONFIG_EAP_MSCHAPV2
                      string_equal("eap-ttls-mschapv2", argv[arg]) ||
 #endif
 #endif
-#ifdef CONFIG_EAP_PEAP
-#ifdef CONFIG_EAP_MSCHAPV2
+#if CONFIG_EAP_PEAP
+#if CONFIG_EAP_MSCHAPV2
                      string_equal("eap-peap-mschapv2", argv[arg]) ||
 #endif
-#ifdef CONFIG_EAP_TLS
+#if CONFIG_EAP_TLS
                      string_equal("eap-peap-tls", argv[arg]) ||
 #endif
-#ifdef CONFIG_EAP_GTC
+#if CONFIG_EAP_GTC
                      string_equal("eap-peap-gtc", argv[arg]) ||
 #endif
 #endif
-#ifdef CONFIG_EAP_FAST
-#ifdef CONFIG_EAP_MSCHAPV2
+#if CONFIG_EAP_FAST
+#if CONFIG_EAP_MSCHAPV2
                      string_equal("eap-fast-mschapv2", argv[arg]) ||
 #endif
-#ifdef CONFIG_EAP_GTC
+#if CONFIG_EAP_GTC
                      string_equal("eap-fast-gtc", argv[arg]) ||
 #endif
 #endif
-#ifdef CONFIG_EAP_SIM
+#if CONFIG_EAP_SIM
                      string_equal("eap-sim", argv[arg]) ||
 #endif
-#ifdef CONFIG_EAP_AKA
+#if CONFIG_EAP_AKA
                      string_equal("eap-aka", argv[arg]) ||
 #endif
-#ifdef CONFIG_EAP_AKA_PRIME
+#if CONFIG_EAP_AKA_PRIME
                      string_equal("eap-aka-prime", argv[arg]) ||
 #endif
                      false))
         {
-#ifdef CONFIG_EAP_TLS
+#if CONFIG_EAP_TLS
             if (string_equal("eap-tls", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_TLS;
@@ -1384,7 +1384,7 @@ static void test_wlan_add(int argc, char **argv)
             {
                 network.security.type = WLAN_SECURITY_EAP_TLS_SHA256;
             }
-#ifdef CONFIG_11R
+#if CONFIG_11R
             if (string_equal("eap-tls-ft", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_TLS_FT;
@@ -1395,72 +1395,72 @@ static void test_wlan_add(int argc, char **argv)
             }
 #endif
 #endif
-#ifdef CONFIG_EAP_TTLS
+#if CONFIG_EAP_TTLS
             if (string_equal("eap-ttls", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_TTLS;
             }
-#ifdef CONFIG_EAP_MSCHAPV2
+#if CONFIG_EAP_MSCHAPV2
             if (string_equal("eap-ttls-mschapv2", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_TTLS_MSCHAPV2;
             }
 #endif
 #endif
-#ifdef CONFIG_EAP_PEAP
-#ifdef CONFIG_EAP_MSCHAPV2
+#if CONFIG_EAP_PEAP
+#if CONFIG_EAP_MSCHAPV2
             if (string_equal("eap-peap-mschapv2", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_PEAP_MSCHAPV2;
             }
 #endif
-#ifdef CONFIG_EAP_TLS
+#if CONFIG_EAP_TLS
             if (string_equal("eap-peap-tls", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_PEAP_TLS;
             }
 #endif
-#ifdef CONFIG_EAP_GTC
+#if CONFIG_EAP_GTC
             if (string_equal("eap-peap-gtc", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_PEAP_GTC;
             }
 #endif
 #endif
-#ifdef CONFIG_EAP_FAST
-#ifdef CONFIG_EAP_MSCHAPV2
+#if CONFIG_EAP_FAST
+#if CONFIG_EAP_MSCHAPV2
             if (string_equal("eap-fast-mschapv2", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_FAST_MSCHAPV2;
             }
 #endif
-#ifdef CONFIG_EAP_GTC
+#if CONFIG_EAP_GTC
             if (string_equal("eap-fast-gtc", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_FAST_GTC;
             }
 #endif
 #endif
-#ifdef CONFIG_EAP_SIM
+#if CONFIG_EAP_SIM
             if (string_equal("eap-sim", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_SIM;
             }
 #endif
-#ifdef CONFIG_EAP_AKA
+#if CONFIG_EAP_AKA
             if (string_equal("eap-aka", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_AKA;
             }
 #endif
-#ifdef CONFIG_EAP_AKA_PRIME
+#if CONFIG_EAP_AKA_PRIME
             if (string_equal("eap-aka-prime", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_AKA_PRIME;
             }
 #endif
 
-#ifdef CONFIG_EAP_PEAP
+#if CONFIG_EAP_PEAP
             network.security.eap_ver = 1;
             if (string_equal(argv[arg + 1], "ver") != false)
             {
@@ -1521,7 +1521,7 @@ static void test_wlan_add(int argc, char **argv)
                 arg += 2;
             }
 #endif
-#if defined(CONFIG_EAP_SIM) || defined(CONFIG_EAP_AKA) || defined(CONFIG_EAP_AKA_PRIME)
+#if (CONFIG_EAP_SIM) || (CONFIG_EAP_AKA) || (CONFIG_EAP_AKA_PRIME)
             network.security.eap_result_ind = 1;
             if (string_equal(argv[arg + 1], "result_ind") != false)
             {
@@ -1542,7 +1542,7 @@ static void test_wlan_add(int argc, char **argv)
                 arg += 2;
             }
 #endif
-#ifdef CONFIG_EAP_TLS
+#if CONFIG_EAP_TLS
             if ((string_equal(argv[arg + 1], "tls_cipher") != false) && network.security.wpa3_sb_192 &&
                 (network.security.type == WLAN_SECURITY_EAP_TLS))
             {
@@ -1568,7 +1568,7 @@ static void test_wlan_add(int argc, char **argv)
             {
                 /* For Station Set Client Identity */
                 strcpy(network.security.identity, argv[arg + 2]);
-#ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
+#if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
                 /* For uAP Set External Client Identity */
                 strcpy(network.security.identities[network.security.nusers], argv[arg + 2]);
 #endif
@@ -1579,13 +1579,13 @@ static void test_wlan_add(int argc, char **argv)
                 {
                     /* Set Client Password */
                     strcpy(network.security.eap_password, argv[arg + 2]);
-#ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
+#if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
                     /* For uAP Set External Client Identity */
                     strcpy(network.security.passwords[network.security.nusers], argv[arg + 2]);
 #endif
                     arg += 2;
                 }
-#ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
+#if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
                 network.security.nusers += 1;
 #endif
             }
@@ -1594,15 +1594,15 @@ static void test_wlan_add(int argc, char **argv)
             {
                 /* Set Client/Server Key password */
                 strcpy(network.security.client_key_passwd, argv[arg + 2]);
-#ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
+#if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
                 strcpy(network.security.server_key_passwd, argv[arg + 2]);
 #endif
                 arg += 2;
             }
 
-#ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
+#if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
 
-#ifdef CONFIG_EAP_FAST
+#if CONFIG_EAP_FAST
             if (string_equal(argv[arg + 1], "pac_opa_enc_key") != false)
             {
                 /* Encryption key for EAP-FAST PAC-Opaque values. */
@@ -1664,7 +1664,7 @@ static void test_wlan_add(int argc, char **argv)
             arg += 1;
         }
 #else  /* CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE */
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
         else if (!info.security2 && string_equal("eap-tls", argv[arg]))
         {
             t_u8 *data   = NULL;
@@ -1708,7 +1708,7 @@ static void test_wlan_add(int argc, char **argv)
             wlan_free_entp_cert_files();
         }
 #endif /* CONFIG_WPA2_ENTP */
-#ifdef CONFIG_PEAP_MSCHAPV2
+#if CONFIG_PEAP_MSCHAPV2
         else if (!info.security2 && string_equal("peap", argv[arg]))
         {
             /* Specify address type as DHCP */
@@ -1797,7 +1797,7 @@ static void test_wlan_add(int argc, char **argv)
             info.address = (uint8_t)ADDR_TYPE_LLA;
             arg++;
         }
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
         else if (!info.pkc && string_equal("pkc", argv[arg]))
         {
             unsigned short pkc;
@@ -1863,7 +1863,7 @@ static void test_wlan_add(int argc, char **argv)
             info.gmcipher = 1;
         }
 #endif
-#ifdef CONFIG_WIFI_DTIM_PERIOD
+#if CONFIG_WIFI_DTIM_PERIOD
         else if (!info.dtim && string_equal("dtim", argv[arg]))
         {
             unsigned int dtim_period;
@@ -1879,7 +1879,7 @@ static void test_wlan_add(int argc, char **argv)
             info.dtim = 1;
         }
 #endif
-#ifdef CONFIG_WIFI_CAPA
+#if CONFIG_WIFI_CAPA
         else if (!info.wlan_capa && network.role == WLAN_BSS_ROLE_UAP && string_equal("capa", argv[arg]))
         {
             if (arg + 1 >= argc || get_capa(argv[arg + 1], &network.wlan_capa))
@@ -1969,7 +1969,7 @@ static void test_wlan_add(int argc, char **argv)
     }
 }
 
-#ifdef CONFIG_WPA_SUPP_WPS
+#if CONFIG_WPA_SUPP_WPS
 /** Enum that indicates type of WPS session
  *   either a push button or a PIN based session is
  *   determined by value fo this enum
@@ -2019,8 +2019,8 @@ static int __scan_cb(unsigned int count)
             (void)PRINTF(" (hidden) %s\r\n", print_role(res.role));
         }
         (void)PRINTF("\tmode: ");
-#ifdef CONFIG_11AC
-#ifdef CONFIG_11AX
+#if CONFIG_11AC
+#if CONFIG_11AX
         if (res.dot11ax != 0U)
         {
             (void)PRINTF("802.11AX ");
@@ -2076,7 +2076,7 @@ static int __scan_cb(unsigned int count)
             {
                 (void)PRINTF("WPA3-SAE ");
             }
-#ifdef CONFIG_OWE
+#if CONFIG_OWE
             if (res.owe != 0U)
             {
                 (void)PRINTF("OWE Only");
@@ -2099,7 +2099,7 @@ static int __scan_cb(unsigned int count)
                 (void)PRINTF("WPA3-SHA384 Enterprise ");
             }
         }
-#if defined(CONFIG_11R)
+#if (CONFIG_11R)
         if (res.ft_1x != 0U)
         {
             (void)PRINTF("with FT_802.1x");
@@ -2119,7 +2119,7 @@ static int __scan_cb(unsigned int count)
 #endif
         if (!((res.wep != 0U) || (res.wpa != 0U) || (res.wpa2 != 0U) || (res.wpa3_sae != 0U) || (res.wpa2_entp != 0U) ||
               (res.wpa2_sha256 != 0U) ||
-#ifdef CONFIG_OWE
+#if CONFIG_OWE
               (res.owe != 0U) ||
 #endif
               (res.wpa2_entp_sha256 != 0U) || (res.wpa3_1x_sha256 != 0U) || (res.wpa3_1x_sha384 != 0U)))
@@ -2130,13 +2130,13 @@ static int __scan_cb(unsigned int count)
 
         (void)PRINTF("\tWMM: %s\r\n", (res.wmm != 0U) ? "YES" : "NO");
 
-#ifdef CONFIG_11K
+#if CONFIG_11K
         if (res.neighbor_report_supported == true)
         {
             (void)PRINTF("\t802.11K: YES\r\n");
         }
 #endif
-#ifdef CONFIG_11V
+#if CONFIG_11V
         if (res.bss_transition_supported == true)
         {
             (void)PRINTF("\t802.11V: YES\r\n");
@@ -2154,7 +2154,7 @@ static int __scan_cb(unsigned int count)
         {
             (void)PRINTF("\t802.11W: NA\r\n");
         }
-#ifdef CONFIG_WPA_SUPP_WPS
+#if CONFIG_WPA_SUPP_WPS
         if (res.wps)
         {
             if (res.wps_session == WPS_SESSION_PBC)
@@ -2167,7 +2167,7 @@ static int __scan_cb(unsigned int count)
         else
             (void)PRINTF("\tWPS: %s \r\n", "NO");
 #endif
-#ifdef CONFIG_OWE
+#if CONFIG_OWE
         if (res.trans_ssid_len != 0U)
         {
             (void)PRINTF("\tOWE BSSID: ");
@@ -2194,7 +2194,7 @@ static void test_wlan_thread_info(int argc, char **argv)
 #endif
 }
 
-#ifdef CONFIG_SCHED_SWITCH_TRACE
+#if CONFIG_SCHED_SWITCH_TRACE
 static void test_wlan_sched_switch_debug(int argc, char **argv)
 {
     if (strncmp(argv[1], "start", strlen("start") + 1))
@@ -2228,7 +2228,7 @@ static void dump_wlan_scan_opt_usage(void)
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF(
         "    wlan-scan-opt ssid <ssid> bssid <bssid> "
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+#if CONFIG_SCAN_WITH_RSSIFILTER
         "channel <channel> probes <probes> rssi_threshold <rssi_threshold>"
 #else
         "channel <channel> probes <probes>"
@@ -2240,7 +2240,7 @@ static void test_wlan_scan_opt(int argc, char **argv)
 {
     wlan_scan_params_v2_t wlan_scan_param;
     int arg = 1;
-#ifdef CONFIG_COMBO_SCAN
+#if CONFIG_COMBO_SCAN
     int num_ssid = 0;
 #endif
     struct
@@ -2249,7 +2249,7 @@ static void test_wlan_scan_opt(int argc, char **argv)
         unsigned bssid : 1;
         unsigned channel : 1;
         unsigned probes : 1;
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+#if CONFIG_SCAN_WITH_RSSIFILTER
         unsigned rssi_threshold : 1;
 #endif
     } info;
@@ -2265,7 +2265,7 @@ static void test_wlan_scan_opt(int argc, char **argv)
     }
     do
     {
-#ifdef CONFIG_COMBO_SCAN
+#if CONFIG_COMBO_SCAN
         if (string_equal("ssid", argv[arg]))
         {
             if (num_ssid >= MAX_NUM_SSID)
@@ -2282,7 +2282,7 @@ static void test_wlan_scan_opt(int argc, char **argv)
                 (void)PRINTF("Error: SSID is too long\r\n");
                 return;
             }
-#ifdef CONFIG_COMBO_SCAN
+#if CONFIG_COMBO_SCAN
             (void)memcpy(wlan_scan_param.ssid[num_ssid], argv[arg + 1], strlen(argv[arg + 1]));
             num_ssid++;
 #else
@@ -2340,7 +2340,7 @@ static void test_wlan_scan_opt(int argc, char **argv)
             arg += 2;
             info.probes = 1;
         }
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+#if CONFIG_SCAN_WITH_RSSIFILTER
         else if (!info.rssi_threshold && string_equal("rssi_threshold", argv[arg]))
         {
             if (arg + 1 >= argc)
@@ -2388,7 +2388,7 @@ static void test_wlan_scan_opt(int argc, char **argv)
         (void)PRINTF("Scan for ");
         if (info.ssid != 0U)
         {
-#ifdef CONFIG_COMBO_SCAN
+#if CONFIG_COMBO_SCAN
             (void)PRINTF("ssid \"%s\" ", wlan_scan_param.ssid[0]);
 #else
             (void)PRINTF("ssid \"%s\" ", wlan_scan_param.ssid);
@@ -2402,7 +2402,7 @@ static void test_wlan_scan_opt(int argc, char **argv)
         if (info.probes != 0U)
         {
             (void)PRINTF("with %d probes ", wlan_scan_param.num_probes);
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+#if CONFIG_SCAN_WITH_RSSIFILTER
             wlan_set_rssi_threshold(wlan_scan_param.rssi_threshold);
             if (info.rssi_threshold != 0U)
                 (void)PRINTF("with %d rssi_threshold ", wlan_scan_param.rssi_threshold);
@@ -2592,7 +2592,7 @@ static void test_wlan_stat(int argc, char **argv)
         case WLAN_IEEE_DEEP_SLEEP:
             (void)strcpy(ps_mode_str, "IEEE ps and Deep sleep");
             break;
-#ifdef CONFIG_WNM_PS
+#if CONFIG_WNM_PS
         case WLAN_WNM:
             (void)strcpy(ps_mode_str, "WNM ps");
             break;
@@ -2694,7 +2694,7 @@ static void test_wlan_list(int argc, char **argv)
 static void test_wlan_info(int argc, char **argv)
 {
     enum wlan_connection_state state;
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
     struct wlan_network *network = (struct wlan_network *)OSA_MemoryAllocate(sizeof(struct wlan_network));
 #else
     struct wlan_network *network = OSA_MemoryPoolAllocate(buf_2048_MemoryPool);
@@ -2740,7 +2740,7 @@ static void test_wlan_info(int argc, char **argv)
     }
     if (network)
     {
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
         OSA_MemoryFree(network);
 #else
         OSA_MemoryPoolFree(buf_2048_MemoryPool, network);
@@ -2800,7 +2800,7 @@ static void test_wlan_get_uap_sta_list(int argc, char **argv)
         (void)PRINTF("Power mfg status: %s\r\n", (si[i].power_mgmt_status == 0U) ? "active" : "power save");
         (void)PRINTF("Rssi : %d dBm\r\n\r\n", (signed char)si[i].rssi);
     }
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
     OSA_MemoryFree(sl);
 #else
     OSA_MemoryPoolFree(buf_256_MemoryPool, sl);
@@ -2876,7 +2876,7 @@ static void test_wlan_set_ps_cfg(int argc, char **argv)
         (void)PRINTF("Failed to set power save cfg, error: %d", ret);
 }
 
-#if defined(CONFIG_WNM_PS)
+#if (CONFIG_WNM_PS)
 static void test_wlan_wnm_ps(int argc, char **argv)
 {
     int choice                = -1;
@@ -2985,7 +2985,7 @@ static void test_wlan_get_beacon_interval(int argc, char **argv)
     (void)PRINTF("Beacon interval: %d\r\n", beacon_interval);
 }
 
-#ifdef CONFIG_WIFI_TX_PER_TRACK
+#if CONFIG_WIFI_TX_PER_TRACK
 static void dump_wlan_tx_pert_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -3045,7 +3045,7 @@ static void test_wlan_tx_pert(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_TX_RX_HISTOGRAM
+#if CONFIG_TX_RX_HISTOGRAM
 static void dump_wlan_txrx_histogram_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -3272,7 +3272,7 @@ static void test_wlan_txrx_histogram(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_ROAMING
+#if CONFIG_ROAMING
 static void dump_wlan_roaming_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -3319,7 +3319,7 @@ static void test_wlan_roaming(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_WIFI_MAX_CLIENTS_CNT
+#if CONFIG_WIFI_MAX_CLIENTS_CNT
 static void test_wlan_set_max_clients_count(int argc, char **argv)
 {
     int max_clients_count;
@@ -3342,7 +3342,7 @@ static void test_wlan_set_max_clients_count(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_WIFI_RTS_THRESHOLD
+#if CONFIG_WIFI_RTS_THRESHOLD
 static void test_wlan_set_rts(int argc, char **argv)
 {
     int rthr;
@@ -3378,7 +3378,7 @@ static void test_wlan_set_rts(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_WIFI_FRAG_THRESHOLD
+#if CONFIG_WIFI_FRAG_THRESHOLD
 static void test_wlan_set_frag(int argc, char **argv)
 {
     int frag;
@@ -3415,7 +3415,7 @@ static void test_wlan_set_frag(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_11K_OFFLOAD
+#if CONFIG_11K_OFFLOAD
 static void test_wlan_11k_cfg(int argc, char **argv)
 {
     int enable_11k;
@@ -3457,7 +3457,7 @@ static void test_wlan_11k_neighbor_req(int argc, char **argv)
 
 #endif
 
-#ifdef CONFIG_11K
+#if CONFIG_11K
 static void test_wlan_host_11k_cfg(int argc, char **argv)
 {
     int enable_11k;
@@ -3530,7 +3530,7 @@ static void test_wlan_host_11k_neighbor_request(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_11V
+#if CONFIG_11V
 static void test_wlan_host_11v_bss_trans_query(int argc, char **argv)
 {
     int ret;
@@ -3565,8 +3565,8 @@ static void test_wlan_host_11v_bss_trans_query(int argc, char **argv)
 }
 #endif
 
-#ifndef CONFIG_WPA_SUPP
-#ifdef CONFIG_DRIVER_MBO
+#if !CONFIG_WPA_SUPP
+#if CONFIG_DRIVER_MBO
 static void test_wlan_mbo_cfg(int argc, char **argv)
 {
     int enable_mbo;
@@ -3666,7 +3666,7 @@ static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
 #endif
 #endif
 
-#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+#if (CONFIG_11MC) || (CONFIG_11AZ)
 static void dump_wlan_ftm_ctrl_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -4232,8 +4232,8 @@ static void test_wlan_11az_rang_cfg(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_WPA_SUPP
-#ifdef CONFIG_11AX
+#if CONFIG_WPA_SUPP
+#if CONFIG_11AX
 static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
 {
     int ret;
@@ -4475,7 +4475,7 @@ static void test_wlan_set_scan_interval(int argc, char **argv)
 
 #endif
 
-#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
+#if CONFIG_UAP_STA_MAC_ADDR_FILTER
 /**
  *  @brief Show usage information for the sta_filter_table command
  *
@@ -4545,7 +4545,7 @@ static void test_wlan_set_sta_filter(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_WIFI_GET_LOG
+#if CONFIG_WIFI_GET_LOG
 static void test_wlan_get_log(int argc, char **argv)
 {
     wlan_pkt_stats_t stats;
@@ -4733,7 +4733,7 @@ static void test_wlan_get_log(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_MEF_CFG
+#if CONFIG_MEF_CFG
 static void dump_multiple_mef_config_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -4804,16 +4804,16 @@ static void test_wlan_set_multiple_mef_config(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_HOST_SLEEP
+#if CONFIG_HOST_SLEEP
 #ifdef RW610
 static void test_wlan_wakeup_condition(int argc, char **argv)
 {
-#ifdef CONFIG_MEF_CFG
+#if CONFIG_MEF_CFG
     uint8_t is_mef = MFALSE;
 #endif
     uint32_t wake_up_conds = 0;
 
-#ifdef CONFIG_MEF_CFG
+#if CONFIG_MEF_CFG
     if (argc < 2 || argc > 3)
 #else
     if (argc != 3)
@@ -4821,7 +4821,7 @@ static void test_wlan_wakeup_condition(int argc, char **argv)
     {
         (void)PRINTF("Error: invalid number of arguments\r\n");
         (void)PRINTF("Usage:\r\n");
-#ifdef CONFIG_MEF_CFG
+#if CONFIG_MEF_CFG
         (void)PRINTF("    wlan-wakeup-condition <mef/wowlan wake_up_conds>\r\n");
 #else
         (void)PRINTF("    wlan-wakeup-condition <wowlan wake_up_conds>\r\n");
@@ -4835,17 +4835,17 @@ static void test_wlan_wakeup_condition(int argc, char **argv)
         (void)PRINTF("	       bit 4: WAKE_ON_ARP_BROADCAST\r\n");
         (void)PRINTF("	       bit 6: WAKE_ON_MGMT_FRAME\r\n");
         (void)PRINTF("	       All bit 0 discard and not wakeup host\r\n");
-#ifdef CONFIG_MEF_CFG
+#if CONFIG_MEF_CFG
         (void)PRINTF("    mef     -- MEF host wakeup\r\n");
 #endif
         (void)PRINTF("Example:\r\n");
-#ifdef CONFIG_MEF_CFG
+#if CONFIG_MEF_CFG
         (void)PRINTF("    wlan-wakeup-condition mef\r\n");
 #endif
         (void)PRINTF("    wlan-wakeup-condition wowlan 0x1e\r\n");
         return;
     }
-#ifdef CONFIG_MEF_CFG
+#if CONFIG_MEF_CFG
     if (string_equal("mef", argv[1]))
     {
         is_mef = MTRUE;
@@ -4870,14 +4870,14 @@ static void test_wlan_wakeup_condition(int argc, char **argv)
     }
     else
     {
-#ifdef CONFIG_MEF_CFG
+#if CONFIG_MEF_CFG
         (void)PRINTF("wowlan/mef need be specified\r\n");
 #else
         (void)PRINTF("wowlan need be specified\r\n");
 #endif
         return;
     }
-#ifdef CONFIG_MEF_CFG
+#if CONFIG_MEF_CFG
     wlan_wowlan_config(is_mef, wake_up_conds);
 #else
     wlan_wowlan_config(wake_up_conds);
@@ -4886,7 +4886,7 @@ static void test_wlan_wakeup_condition(int argc, char **argv)
 }
 #endif /*RW610*/
 
-#ifdef CONFIG_MEF_CFG
+#if CONFIG_MEF_CFG
 extern wlan_flt_cfg_t g_flt_cfg;
 #endif
 
@@ -4927,7 +4927,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
     }
     else if (choice == 1)
     {
-#ifdef CONFIG_MEF_CFG
+#if CONFIG_MEF_CFG
         if (argc < 3)
 #else
         if (argc < 4)
@@ -4956,7 +4956,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
                 (void)PRINTF("Failed to host sleep configuration, error: %d", ret);
             }
         }
-#ifdef CONFIG_MEF_CFG
+#if CONFIG_MEF_CFG
         else if (string_equal(argv[2], "mef"))
         {
             ret = wlan_send_host_sleep(HOST_SLEEP_NO_COND);
@@ -4990,7 +4990,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
         (void)PRINTF("	       bit 6: WAKE_ON_MGMT_FRAME\r\n");
         (void)PRINTF("	       All bit 0 discard and not wakeup host\r\n");
         (void)PRINTF("	       All bit 1 cancel host sleep configuration\r\n");
-#ifdef CONFIG_MEF_CFG
+#if CONFIG_MEF_CFG
         (void)PRINTF("    mef     -- MEF host wakeup\r\n");
         (void)PRINTF("Example:\r\n");
         (void)PRINTF("    wlan-host-sleep <1/0> mef\r\n");
@@ -5003,7 +5003,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
 #endif
 
 #ifdef RW610
-#if !defined(CONFIG_WIFI_BLE_COEX_APP)
+#if !(CONFIG_WIFI_BLE_COEX_APP)
 #ifdef __ZEPHYR__
 static void test_wlan_auto_host_sleep(int argc, char **argv)
 {
@@ -5153,7 +5153,7 @@ static void test_wlan_auto_arp(int argc, char **argv)
         (void)PRINTF("Failed to enabled wlan auto arp offload, error: %d\r\n", ret);
 }
 
-#ifdef CONFIG_MEF_CFG
+#if CONFIG_MEF_CFG
 static void dump_wlan_add_packet_filter()
 {
     (void)PRINTF("Usage:\r\n");
@@ -5240,7 +5240,7 @@ static void test_wlan_auto_arp(int argc, char **argv)
         (void)PRINTF("Failed to enabled wlan auto arp offload, error: %d\r\n", ret);
 }
 
-#ifdef CONFIG_MEF_CFG
+#if CONFIG_MEF_CFG
 static void dump_wlan_add_packet_filter()
 {
     (void)PRINTF("Usage:\r\n");
@@ -5444,7 +5444,7 @@ static void test_wlan_set_uap_bandwidth(int argc, char **argv)
 
     if (argc < 2)
     {
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
         (void)PRINTF("Usage: %s <1/2/3>\r\n", argv[0]);
         (void)PRINTF("Error: Specify 1 to set bandwidth 20MHz or 2 for 40MHz or 3 for 80MHz\r\n");
 #else
@@ -5466,7 +5466,7 @@ static void test_wlan_set_uap_bandwidth(int argc, char **argv)
 
     if (ret != WM_SUCCESS)
     {
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
         (void)PRINTF("Usage: %s <1/2/3>\r\n", argv[0]);
         (void)PRINTF("Error: Specify 1 to set bandwidth 20MHz or 2 for 40MHz or 3 for 80MHz\r\n");
 #else
@@ -5521,7 +5521,7 @@ static void test_wlan_set_uap_hidden_ssid(int argc, char **argv)
     }
 }
 
-#ifdef CONFIG_WIFI_MEM_ACCESS
+#if CONFIG_WIFI_MEM_ACCESS
 static void dump_wlan_mem_access_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -5587,7 +5587,7 @@ static void test_wlan_mem_access(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_WIFI_BOOT_SLEEP
+#if CONFIG_WIFI_BOOT_SLEEP
 static void dump_wlan_boot_sleep_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -5633,7 +5633,7 @@ static void test_wlan_boot_sleep(int argc, char **argv)
 }
 #endif
 
-#if defined(CONFIG_11R)
+#if (CONFIG_11R)
 static void dump_wlan_ft_roam_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -5679,14 +5679,14 @@ static void test_wlan_ft_roam(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_HEAP_STAT
+#if CONFIG_HEAP_STAT
 static void test_heap_stat(int argc, char **argv)
 {
     OSA_DumpMemStats();
 }
 #endif
 
-#ifdef CONFIG_EU_VALIDATION
+#if CONFIG_EU_VALIDATION
 static void dump_wlan_eu_validation(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -5757,7 +5757,7 @@ static void test_wlan_eu_validation(int argc, char **argv)
 }
 #endif /* CONFIG_EU_VALIDATION */
 
-#ifdef CONFIG_WIFI_EU_CRYPTO
+#if CONFIG_WIFI_EU_CRYPTO
 static void dump_wlan_eu_crypto_rc4(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -6339,7 +6339,7 @@ static void test_wlan_eu_crypto_gcmp_256(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_HEAP_DEBUG
+#if CONFIG_HEAP_DEBUG
 int os_mem_alloc_cnt = 0;
 int os_mem_free_cnt  = 0;
 
@@ -6352,7 +6352,7 @@ static void test_wlan_os_mem_stat(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_RX_ABORT_CFG
+#if CONFIG_RX_ABORT_CFG
 static void dump_wlan_rx_abort_cfg_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -6421,7 +6421,7 @@ static void test_wlan_rx_abort_cfg(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_RX_ABORT_CFG_EXT
+#if CONFIG_RX_ABORT_CFG_EXT
 static void dump_wlan_rx_abort_cfg_ext_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -6659,7 +6659,7 @@ static void test_wlan_set_rx_abort_cfg_ext(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_CCK_DESENSE_CFG
+#if CONFIG_CCK_DESENSE_CFG
 static void dump_wlan_cck_desense_cfg_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -6780,7 +6780,7 @@ static void test_wlan_cck_desense_cfg(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_MULTI_CHAN
+#if CONFIG_MULTI_CHAN
 static void test_wlan_set_multi_chan_status(int argc, char **argv)
 {
     int ret;
@@ -7152,7 +7152,7 @@ static void wlan_antcfg_get(int argc, char *argv[])
 }
 #endif
 
-#ifdef CONFIG_SCAN_CHANNEL_GAP
+#if CONFIG_SCAN_CHANNEL_GAP
 static void test_wlan_set_scan_channel_gap(int argc, char **argv)
 {
     unsigned scan_chan_gap;
@@ -7177,7 +7177,7 @@ static void test_wlan_set_scan_channel_gap(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
 static void test_wlan_wmm_tx_stats(int argc, char **argv)
 {
     int bss_type = atoi(argv[1]);
@@ -7198,7 +7198,7 @@ static void dump_wlan_set_regioncode_usage(void)
     (void)PRINTF("0x32 : France\r\n");
     (void)PRINTF("0x50 : China\r\n");
     (void)PRINTF("0xFF : Japan\r\n");
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     (void)PRINTF("0x40 : Japan\r\n");
     (void)PRINTF("0x41 : Japan\r\n");
     (void)PRINTF("0xFE : Japan\r\n");
@@ -7271,7 +7271,7 @@ static void test_wlan_set_mac_address(int argc, char **argv)
     wlan_set_mac_addr(raw_mac);
 }
 
-#if defined(RW610) && defined(CONFIG_WIFI_RESET)
+#if defined(RW610) && (CONFIG_WIFI_RESET)
 static void test_wlan_reset(int argc, char **argv)
 {
     int option;
@@ -7290,7 +7290,7 @@ static void test_wlan_reset(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_ECSA
+#if CONFIG_ECSA
 static void test_wlan_uap_set_ecsa_cfg(int argc, char **argv)
 {
     int ret;
@@ -7346,8 +7346,8 @@ static void test_wlan_uap_set_ecsa_cfg(int argc, char **argv)
 }
 #endif /* CONFIG_ECSA */
 
-#ifdef CONFIG_11AX
-#ifdef CONFIG_MMSF
+#if CONFIG_11AX
+#if CONFIG_MMSF
 static void dump_wlan_set_mmsf_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -7453,7 +7453,7 @@ static void test_wlan_get_mmsf(int argc, char **argv)
 #endif
 #endif /* CONFIG_11AX */
 
-#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+#if CONFIG_SUBSCRIBE_EVENT_SUPPORT
 /**
  *  @brief This function print the get subscribe event from firmware for user test.
  */
@@ -7708,7 +7708,7 @@ static void test_wlan_subscribe_event(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_WIFI_REG_ACCESS
+#if CONFIG_WIFI_REG_ACCESS
 static void dump_wlan_reg_access_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -7767,7 +7767,7 @@ static void test_wlan_reg_access(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_WMM_UAPSD
+#if CONFIG_WMM_UAPSD
 static void test_wlan_wmm_uapsd_qosinfo(int argc, char **argv)
 {
     unsigned int qos_info = 0xf;
@@ -7824,7 +7824,7 @@ static void test_wlan_sleep_period(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_WIFI_AMPDU_CTRL
+#if CONFIG_WIFI_AMPDU_CTRL
 static void dump_wlan_ampdu_enable_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -7942,7 +7942,7 @@ static void test_wlan_ampdu_enable(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_TX_AMPDU_PROT_MODE
+#if CONFIG_TX_AMPDU_PROT_MODE
 static void dump_wlan_tx_ampdu_prot_mode_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -8008,7 +8008,7 @@ static void test_wlan_tx_ampdu_prot_mode(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_CSI
+#if CONFIG_CSI
 static void dump_wlan_csi_filter_usage()
 {
     (void)PRINTF("Error: invalid number of arguments\r\n");
@@ -8306,7 +8306,7 @@ static void test_wlan_csi_cfg(int argc, char **argv)
 }
 #endif
 
-#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
+#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_11R) || (CONFIG_ROAMING)
 static void test_wlan_rssi_low_threshold(int argc, char **argv)
 {
     uint8_t rssi_threshold;
@@ -8332,7 +8332,7 @@ static void test_wlan_rssi_low_threshold(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_NET_MONITOR
+#if CONFIG_NET_MONITOR
 static void dump_wlan_set_monitor_filter_usage()
 {
     (void)PRINTF("Error : invalid arguments\r\n");
@@ -8536,10 +8536,10 @@ static void test_wlan_net_monitor_cfg(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_CPU_TASK_STATUS
+#if CONFIG_CPU_TASK_STATUS
 void test_wlan_cpu_task_info(int argc, char **argv)
 {
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
     char *CPU_RunInfo = (char *)OSA_MemoryAllocate(MAX_TASK_INFO_BUF);
 #else
     char *CPU_RunInfo = (char *)OSA_MemoryPoolAllocate(buf_1024_MemoryPool);
@@ -8576,7 +8576,7 @@ void test_wlan_cpu_task_info(int argc, char **argv)
     (void)PRINTF("%s", CPU_RunInfo);
     (void)PRINTF("---------------------------------------------\r\n\n");
 
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
     OSA_MemoryFree(CPU_RunInfo);
 #else
     OSA_MemoryPoolFree(buf_1024_MemoryPool, CPU_RunInfo);
@@ -8585,7 +8585,7 @@ void test_wlan_cpu_task_info(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_CPU_LOADING
+#if CONFIG_CPU_LOADING
 static void dump_wlan_cpu_loading_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -8714,7 +8714,7 @@ static void test_wlan_cpu_loading(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_TSP
+#if CONFIG_TSP
 static void dump_wlan_tsp_cfg_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -8944,7 +8944,7 @@ static void test_wlan_get_tsp_cfg(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_CLOUD_KEEP_ALIVE
+#if CONFIG_CLOUD_KEEP_ALIVE
 
 #include "lwip/priv/tcp_priv.h"
 #include "lwip/stats.h"
@@ -9062,7 +9062,7 @@ static void test_wlan_tcp_client(int argc, char **argv)
     }
 
     (void)memcpy(&ipaddr.u_addr.ip4, &dst_ip, sizeof(ip4_addr_t));
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     ipaddr.type = IPADDR_TYPE_V4;
 #endif
 
@@ -9280,7 +9280,7 @@ static void test_wlan_set_multiple_dtim(int argc, char **argv)
     (void)PRINTF("Set multiple dtim to %d\r\n", multiple_dtim);
 }
 
-#ifdef CONFIG_SET_SU
+#if CONFIG_SET_SU
 static void dump_wlan_set_su_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -9347,7 +9347,7 @@ static void test_wlan_set_su(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_WIFI_FORCE_RTS
+#if CONFIG_WIFI_FORCE_RTS
 #define HOSTCMD_RESP_BUFF_SIZE 1024
 uint8_t debug_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
 
@@ -9416,7 +9416,7 @@ static void test_wlan_set_forceRTS(int argc, char **argv)
 }
 #endif
 
-#if defined(CONFIG_IPS)
+#if (CONFIG_IPS)
 static void dump_wlan_set_ips_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -9454,7 +9454,7 @@ static void test_wlan_set_ips(int argc, char **argv)
 }
 #endif
 
-#if defined(CONFIG_WPA_SUPP_WPS) || defined(CONFIG_WPS2)
+#if (CONFIG_WPA_SUPP_WPS) || (CONFIG_WPS2)
 static void test_wlan_start_wps_pbc(int argc, char **argv)
 {
     int ret;
@@ -9491,7 +9491,7 @@ static void test_wlan_start_wps_pin(int argc, char **argv)
         return;
     }
 
-#if defined(CONFIG_WPA_SUPP_WPS)
+#if (CONFIG_WPA_SUPP_WPS)
     ret = wlan_start_wps_pin(argv[1]);
 #else
     ret = wlan_start_wps_pin((uint32_t)atoi(argv[1]));
@@ -9521,7 +9521,7 @@ static void test_wlan_wps_generate_pin(int argc, char **argv)
     PRINTF("WPS PIN is: %08d\r\n", pin);
 }
 #endif
-#ifdef CONFIG_WPA_SUPP_WPS
+#if CONFIG_WPA_SUPP_WPS
 static void test_wlan_wps_cancel(int argc, char **argv)
 {
     int ret;
@@ -9539,7 +9539,7 @@ static void test_wlan_wps_cancel(int argc, char **argv)
         PRINTF("Cancel WPS failed\r\n");
     }
 }
-#ifdef CONFIG_WPA_SUPP_AP
+#if CONFIG_WPA_SUPP_AP
 static void test_wlan_start_ap_wps_pbc(int argc, char **argv)
 {
     int ret;
@@ -9600,7 +9600,7 @@ static void test_wlan_wps_ap_cancel(int argc, char **argv)
 #endif
 #endif
 
-#ifdef CONFIG_TURBO_MODE
+#if CONFIG_TURBO_MODE
 static void test_wlan_get_turbo_mode(int argc, char **argv)
 {
     int ret = -WM_FAIL;
@@ -9703,7 +9703,7 @@ static void test_wlan_set_turbo_mode(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
 
 static void dump_wlan_set_debug_htc_usage(void)
 {
@@ -9956,7 +9956,7 @@ static void test_wlan_set_country_ie_ignore(int argc, char **argv)
     }
 }
 
-#ifdef CONFIG_COEX_DUTY_CYCLE
+#if CONFIG_COEX_DUTY_CYCLE
 static void dump_wlan_single_ant_duty_cycle_usage()
 {
     (void)PRINTF("Usage: wlan-single-ant-duty-cycle <enable/disable> [<Ieee154Duration> <TotalDuration>]\r\n");
@@ -10090,7 +10090,7 @@ static void test_wlan_dual_ant_duty_cycle(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_EXTERNAL_COEX_PTA
+#if CONFIG_EXTERNAL_COEX_PTA
 
 static void dump_wlan_external_coex_pta_usage()
 {
@@ -10435,7 +10435,7 @@ static void test_wlan_external_coex_pta(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_WPA_SUPP_DPP
+#if CONFIG_WPA_SUPP_DPP
 static void test_wlan_dpp_configurator_add(int argc, char **argv)
 {
     int conf_id, is_ap = 0;
@@ -10855,7 +10855,7 @@ static void test_wlan_dpp_configurator_sign(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_IMD3_CFG
+#if CONFIG_IMD3_CFG
 
 static void dump_wlan_imd3_cfg_usage(void)
 {
@@ -10927,7 +10927,7 @@ static void test_wlan_imd3_cfg(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_AUTO_RECONNECT
+#if CONFIG_AUTO_RECONNECT
 #define AUTO_RECON_CNT_DEF      255U
 #define AUTO_RECON_TIME_INT_DEF 10U
 #define AUTO_RECON_FLAG_DEF     0U
@@ -11070,7 +11070,7 @@ done:
 }
 #endif
 
-#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
+#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
 static void dump_wlan_set_ind_rst_cfg_usage(void)
 {
     (void)PRINTF("Usage :                                                                \r\n");
@@ -11201,7 +11201,7 @@ static void test_wlan_independent_reset(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
+#if CONFIG_INACTIVITY_TIMEOUT_EXT
 static void dump_wlan_sta_inactivityto_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -11286,7 +11286,7 @@ static void test_wlan_get_temperature(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_AUTO_NULL_TX
+#if CONFIG_AUTO_NULL_TX
 static void dump_wlan_auto_null_tx_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -11369,7 +11369,7 @@ static void test_wlan_auto_null_tx(int argc, char **argv)
 }
 #endif
 
-#if defined(RW610) && defined(CONFIG_ANT_DETECT)
+#if defined(RW610) && (CONFIG_ANT_DETECT)
 static void swap_scan_entry(scan_result_entry_t *pEntry1, scan_result_entry_t *pEntry2)
 {
     scan_result_entry_t temp;
@@ -12221,36 +12221,36 @@ static struct cli_command tests[] = {
     {"wlan-set-ps-cfg", "<null_pkt_interval>", test_wlan_set_ps_cfg},
     {"wlan-deep-sleep-ps", "<0/1>", test_wlan_deep_sleep_ps},
     {"wlan-get-beacon-interval", NULL, test_wlan_get_beacon_interval},
-#if defined(CONFIG_WNM_PS)
+#if (CONFIG_WNM_PS)
     {"wlan-wnm-ps", "<0/1> <sleep_interval>", test_wlan_wnm_ps},
 #endif
-#ifdef CONFIG_WIFI_MAX_CLIENTS_CNT
+#if CONFIG_WIFI_MAX_CLIENTS_CNT
     {"wlan-set-max-clients-count", "<max clients count>", test_wlan_set_max_clients_count},
 #endif
-#ifdef CONFIG_WIFI_RTS_THRESHOLD
+#if CONFIG_WIFI_RTS_THRESHOLD
     {"wlan-rts", "<sta/uap> <rts threshold>", test_wlan_set_rts},
 #endif
-#ifdef CONFIG_WIFI_FRAG_THRESHOLD
+#if CONFIG_WIFI_FRAG_THRESHOLD
     {"wlan-frag", "<sta/uap> <fragment threshold>", test_wlan_set_frag},
 #endif
-#ifdef CONFIG_11K_OFFLOAD
+#if CONFIG_11K_OFFLOAD
     {"wlan-11k-enable", "<0/1>", test_wlan_11k_cfg},
     {"wlan-11k-neighbor-req", NULL, test_wlan_11k_neighbor_req},
 #endif
-#ifdef CONFIG_11K
+#if CONFIG_11K
     {"wlan-host-11k-enable", "<0/1>", test_wlan_host_11k_cfg},
     {"wlan-host-11k-neighbor-req", "[ssid <ssid>]", test_wlan_host_11k_neighbor_request},
 #endif
-#ifdef CONFIG_11V
+#if CONFIG_11V
     {"wlan-host-11v-bss-trans-query", "<0..16>", test_wlan_host_11v_bss_trans_query},
 #endif
-#ifdef CONFIG_DRIVER_MBO
+#if CONFIG_DRIVER_MBO
     {"wlan-mbo-enable", "<0/1>", test_wlan_mbo_cfg},
     {"wlan-mbo-nonprefer-ch", "<ch0> <Preference0: 0/1/255> <ch1> <Preference1: 0/1/255>",
      test_wlan_mbo_non_prefer_chs},
 #endif
-#ifdef CONFIG_WPA_SUPP
-#ifdef CONFIG_11AX
+#if CONFIG_WPA_SUPP
+#if CONFIG_11AX
     {"wlan-mbo-nonprefer-ch", "\"<oper_class>:<chan>:<preference>:<reason> <oper_class>:<chan>:<preference>:<reason>\"",
      test_wlan_mbo_non_prefer_chs},
     {"wlan-mbo-set-cell-capa", "<cell capa: 1/2/3(default)>", test_wlan_mbo_set_cell_capa},
@@ -12302,7 +12302,7 @@ static struct cli_command tests[] = {
 #else
     {"enable-ns-offload", NULL, test_wlan_ns_offload},
     {"wlan-auto-arp", NULL, test_wlan_auto_arp},
-#ifdef CONFIG_MEF_CFG
+#if CONFIG_MEF_CFG
     {"wlan-add-packet-filter", "0/1 <patterns number> <ptn_len> <pkt_offset> <ptn> ...........",
      test_wlan_add_packet_filter},
     {"wlan-host-sleep", "<0/1> mef/wowlan <wake_up_conds>", test_wlan_host_sleep},
@@ -12316,7 +12316,7 @@ static struct cli_command tests[] = {
     {"wlan-ext-coex-uwb", NULL, test_wlan_ext_coex_uwb},
 #endif
 #if !defined(SD8801) && !defined(RW610)
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
     {"wlan-set-uap-bandwidth", "<1/2/3> 1:20 MHz 2:40MHz 3:80MHz", test_wlan_set_uap_bandwidth},
 #else
     {"wlan-set-uap-bandwidth", "<1/2> 1:20 MHz 2:40MHz", test_wlan_set_uap_bandwidth},
@@ -12327,7 +12327,7 @@ static struct cli_command tests[] = {
     {"wlan-8801-enable-ext-coex", NULL, test_wlan_8801_enable_ext_coex},
     {"wlan-8801-get-ext-coex-stats", NULL, test_wlan_8801_ext_coex_stats},
 #endif
-#ifdef CONFIG_WIFI_EU_CRYPTO
+#if CONFIG_WIFI_EU_CRYPTO
     {"wlan-eu-crypto-rc4", "<EncDec>", test_wlan_eu_crypto_rc4},
     {"wlan-eu-crypto-aes-wrap", "<EncDec>", test_wlan_eu_crypto_aes_wrap},
     {"wlan-eu-crypto-aes-ecb", "<EncDec>", test_wlan_eu_crypto_aes_ecb},
@@ -12336,22 +12336,22 @@ static struct cli_command tests[] = {
     {"wlan-eu-crypto-gcmp-128", "<EncDec>", test_wlan_eu_crypto_gcmp_128},
     {"wlan-eu-crypto-gcmp-256", "<EncDec>", test_wlan_eu_crypto_gcmp_256},
 #endif
-#ifdef CONFIG_WIFI_MEM_ACCESS
+#if CONFIG_WIFI_MEM_ACCESS
     {"wlan-mem-access", "<memory_address> [<value>]", test_wlan_mem_access},
 #endif
-#ifdef CONFIG_WIFI_BOOT_SLEEP
+#if CONFIG_WIFI_BOOT_SLEEP
     {"wlan-boot-sleep", "<0/1> 0:Disable 1:Enable", test_wlan_boot_sleep},
 #endif
-#ifdef CONFIG_HEAP_STAT
+#if CONFIG_HEAP_STAT
     {"heap-stat", NULL, test_heap_stat},
 #endif
-#ifdef CONFIG_EU_VALIDATION
+#if CONFIG_EU_VALIDATION
     {"wlan-eu-validation", "<value>", test_wlan_eu_validation},
 #endif
-#ifdef CONFIG_HEAP_DEBUG
+#if CONFIG_HEAP_DEBUG
     {"wlan-os-mem-stat", NULL, test_wlan_os_mem_stat},
 #endif
-#ifdef CONFIG_MULTI_CHAN
+#if CONFIG_MULTI_CHAN
     {"wlan-set-mc-policy", "<0/1>(disable/enable)", test_wlan_set_multi_chan_status},
     {"wlan-get-mc-policy", NULL, test_wlan_get_multi_chan_status},
     {"wlan-set-drcs",
@@ -12359,7 +12359,7 @@ static struct cli_command tests[] = {
      test_wlan_set_drcs_cfg},
     {"wlan-get-drcs", NULL, test_wlan_get_drcs_cfg},
 #endif
-#if defined(CONFIG_11R)
+#if (CONFIG_11R)
     {"wlan-ft-roam", "<bssid> <channel>", test_wlan_ft_roam},
 #endif
 #ifndef STREAM_2X2
@@ -12370,78 +12370,78 @@ static struct cli_command tests[] = {
 #endif
     {"wlan-get-antcfg", NULL, wlan_antcfg_get},
 #endif
-#ifdef CONFIG_SCAN_CHANNEL_GAP
+#if CONFIG_SCAN_CHANNEL_GAP
     {"wlan-scan-channel-gap", "<channel_gap_value>", test_wlan_set_scan_channel_gap},
 #endif
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
     {"wlan-wmm-stat", "<bss_type>", test_wlan_wmm_tx_stats},
 #endif
-#if defined(RW610) && defined(CONFIG_WIFI_RESET)
+#if defined(RW610) && (CONFIG_WIFI_RESET)
     {"wlan-reset", NULL, test_wlan_reset},
 #endif
     {"wlan-set-regioncode", "<region-code>", test_wlan_set_regioncode},
     {"wlan-get-regioncode", NULL, test_wlan_get_regioncode},
     {"wlan-11d-enable", "<sta/uap> <0/1>", test_wlan_11d_enable},
-#ifdef CONFIG_ECSA
+#if CONFIG_ECSA
     {"wlan-uap-set-ecsa-cfg", "<block_tx> <oper_class> <new_channel> <switch_count> <bandwidth>",
      test_wlan_uap_set_ecsa_cfg},
 #endif
-#ifdef CONFIG_CSI
+#if CONFIG_CSI
     {"wlan-csi-cfg", NULL, test_wlan_csi_cfg},
     {"wlan-set-csi-param-header",
      " <sta/uap> <csi_enable> <head_id> <tail_id> <chip_id> <band_config> <channel> <csi_monitor_enable> <ra4us>",
      test_wlan_set_csi_param_header},
     {"wlan-set-csi-filter", "<opt> <macaddr> <pkt_type> <type> <flag>", test_wlan_set_csi_filter},
 #endif
-#ifdef CONFIG_TX_RX_HISTOGRAM
+#if CONFIG_TX_RX_HISTOGRAM
     {"wlan-txrx-histogram", "<action> <enable>", test_wlan_txrx_histogram},
 #endif
-#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+#if CONFIG_SUBSCRIBE_EVENT_SUPPORT
     {"wlan-subscribe-event", "<action> <type> <value> <freq>", test_wlan_subscribe_event},
 #endif
-#ifdef CONFIG_WIFI_REG_ACCESS
+#if CONFIG_WIFI_REG_ACCESS
     {"wlan-reg-access", "<type> <offset> [value]", test_wlan_reg_access},
 #endif
-#ifdef CONFIG_WMM_UAPSD
+#if CONFIG_WMM_UAPSD
     {"wlan-uapsd-enable", "<uapsd_enable>", test_wlan_set_wmm_uapsd},
     {"wlan-uapsd-qosinfo", "<qos_info>", test_wlan_wmm_uapsd_qosinfo},
     {"wlan-uapsd-sleep-period", "<sleep_period>", test_wlan_sleep_period},
 #endif
-#ifdef CONFIG_WIFI_AMPDU_CTRL
+#if CONFIG_WIFI_AMPDU_CTRL
     {"wlan-ampdu-enable", "<sta/uap> <xx: rx/tx bit map. Tx(bit 0), Rx(bit 1> <xx: TID bit map>",
      test_wlan_ampdu_enable},
 #endif
-#ifdef CONFIG_TX_AMPDU_PROT_MODE
+#if CONFIG_TX_AMPDU_PROT_MODE
     {"wlan-tx-ampdu-prot-mode", "<mode>", test_wlan_tx_ampdu_prot_mode},
 #endif
-#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
+#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_11R) || (CONFIG_ROAMING)
     {"wlan-rssi-low-threshold", "<threshold_value>", test_wlan_rssi_low_threshold},
 #endif
-#ifdef CONFIG_RX_ABORT_CFG
+#if CONFIG_RX_ABORT_CFG
     {"wlan-rx-abort-cfg", NULL, test_wlan_rx_abort_cfg},
 #endif
-#ifdef CONFIG_RX_ABORT_CFG_EXT
+#if CONFIG_RX_ABORT_CFG_EXT
     {"wlan-set-rx-abort-cfg-ext", "enable <enable> margin <margin> ceil <ceil_thresh> floor <floor_thresh>",
      test_wlan_set_rx_abort_cfg_ext},
     {"wlan-get-rx-abort-cfg-ext", NULL, test_wlan_get_rx_abort_cfg_ext},
 #endif
-#ifdef CONFIG_CCK_DESENSE_CFG
+#if CONFIG_CCK_DESENSE_CFG
     {"wlan-cck-desense-cfg", NULL, test_wlan_cck_desense_cfg},
 #endif
-#if defined(CONFIG_WPS2) || defined(CONFIG_WPA_SUPP_WPS)
+#if (CONFIG_WPS2) || (CONFIG_WPA_SUPP_WPS)
     {"wlan-generate-wps-pin", NULL, test_wlan_wps_generate_pin},
     {"wlan-start-wps-pbc", NULL, test_wlan_start_wps_pbc},
     {"wlan-start-wps-pin", "<8 digit pin>", test_wlan_start_wps_pin},
 #endif
-#ifdef CONFIG_WPA_SUPP_WPS
+#if CONFIG_WPA_SUPP_WPS
     {"wlan-wps-cancel", NULL, test_wlan_wps_cancel},
-#ifdef CONFIG_WPA_SUPP_AP
+#if CONFIG_WPA_SUPP_AP
     {"wlan-start-ap-wps-pbc", NULL, test_wlan_start_ap_wps_pbc},
     {"wlan-start-ap-wps-pin", "<8 digit pin>", test_wlan_start_ap_wps_pin},
     {"wlan-wps-ap-cancel", NULL, test_wlan_wps_ap_cancel},
 #endif
 #endif
-#ifdef CONFIG_WPA_SUPP_DPP
+#if CONFIG_WPA_SUPP_DPP
     {"wlan-dpp-configurator-add", NULL, test_wlan_dpp_configurator_add},
     {"wlan-dpp-configurator-params", " conf=<sta-dpp/ap-dpp> ssid=<ascii> configurator=<id>",
      test_wlan_dpp_configurator_params},
@@ -12458,66 +12458,66 @@ static struct cli_command tests[] = {
     {"wlan-dpp-configurator-sign", " conf=<sta-dpp/ap-dpp> ssid=<ascii> configurator=<id>",
      test_wlan_dpp_configurator_sign},
 #endif
-#ifdef CONFIG_NET_MONITOR
+#if CONFIG_NET_MONITOR
     {"wlan-net-monitor-cfg", NULL, test_wlan_net_monitor_cfg},
     {"wlan-set-monitor-filter", "<opt> <macaddr>", test_wlan_set_monitor_filter},
     {"wlan-set-monitor-param", "<action> <monitor_activity> <filter_flags> <radio_type> <chan_number>",
      test_wlan_set_monitor_param},
 #endif
-#ifdef CONFIG_TSP
+#if CONFIG_TSP
     {"wlan-set-tsp-cfg",
      "<enable> <backoff> <highThreshold> <lowThreshold> <dutycycstep> <dutycycmin> <highthrtemp> <lowthrtemp>",
      test_wlan_set_tsp_cfg},
     {"wlan-get-tsp-cfg", NULL, test_wlan_get_tsp_cfg},
 #endif
-#ifdef CONFIG_CPU_TASK_STATUS
+#if CONFIG_CPU_TASK_STATUS
     {"wlan-cpu-task-info", NULL, test_wlan_cpu_task_info},
 #endif
-#ifdef CONFIG_CPU_LOADING
+#if CONFIG_CPU_LOADING
     {"wlan-cpu-loading", "start <start> sample_loops <number> sample_period <period>", test_wlan_cpu_loading},
 #endif
 #ifdef STA_SUPPORT
     {"wlan-get-signal", NULL, test_wlan_get_signal},
 #endif
-#if defined(CONFIG_IPS)
+#if (CONFIG_IPS)
     {"wlan-set-ips", "<option>", test_wlan_set_ips},
 #endif
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
     {"wlan-set-debug-htc",
      "<count> <vht> <he> <rxNss> <channelWidth> <ulMuDisable> <txNSTS> <erSuDisable> <erSuDisable> <erSuDisable>",
      test_wlan_set_debug_htc},
     {"wlan-enable-disable-htc", "<option>", test_wlan_enable_disable_htc},
 #endif
-#ifdef CONFIG_SET_SU
+#if CONFIG_SET_SU
     {"wlan-set-su", "<0/1>", test_wlan_set_su},
 #endif
-#ifdef CONFIG_WIFI_FORCE_RTS
+#if CONFIG_WIFI_FORCE_RTS
     {"wlan-set-forceRTS", "<0/1>", test_wlan_set_forceRTS},
 #endif
-#ifdef CONFIG_11AX
-#ifdef CONFIG_MMSF
+#if CONFIG_11AX
+#if CONFIG_MMSF
     {"wlan-set-mmsf", "<enable> <Density> <MMSF>", test_wlan_set_mmsf},
     {"wlan-get-mmsf", NULL, test_wlan_get_mmsf},
 #endif
 #endif
-#ifdef CONFIG_TURBO_MODE
+#if CONFIG_TURBO_MODE
     {"wlan-get-turbo-mode", "<STA/UAP>", test_wlan_get_turbo_mode},
     {"wlan-set-turbo-mode", "<STA/UAP> <mode>", test_wlan_set_turbo_mode},
 #endif
     {"wlan-set-multiple-dtim", "<value>", test_wlan_set_multiple_dtim},
-#ifdef CONFIG_CLOUD_KEEP_ALIVE
+#if CONFIG_CLOUD_KEEP_ALIVE
     {"wlan-cloud-keep-alive", "<start/stop/reset>", test_wlan_cloud_keep_alive},
     {"wlan_tcp_client", "dst_ip <dst_ip> src_port <src_port> dst_port <dst_port>", test_wlan_tcp_client},
 #endif
     {"wlan-set-country", "<country_code_str>", test_wlan_set_country_code},
     {"wlan-set-country-ie-ignore", "<0/1>", test_wlan_set_country_ie_ignore},
-#ifdef CONFIG_COEX_DUTY_CYCLE
+#if CONFIG_COEX_DUTY_CYCLE
     {"wlan-single-ant-duty-cycle", "<enable/disable> [<Ieee154Duration> <TotalDuration>]",
      test_wlan_single_ant_duty_cycle},
     {"wlan-dual-ant-duty-cycle", "<enable/disable> [<Ieee154Duration> <TotalDuration> <Ieee154FarRangeDuration>]",
      test_wlan_dual_ant_duty_cycle},
 #endif
-#ifdef CONFIG_EXTERNAL_COEX_PTA
+#if CONFIG_EXTERNAL_COEX_PTA
     {"wlan-external-coex-pta",
      "enable <PTA/WCI-2/WCI-2 GPIO> ExtWifiBtArb <enable/disable> PolGrantPin <high/low> PriPtaInt <enable/disable> "
      "StateFromPta <state pin/ priority pin/ state input disable> SampTiming <Sample timing> InfoSampTiming <Sample "
@@ -12525,27 +12525,27 @@ static struct cli_command tests[] = {
      "TrafficPrio <enable/disable> CoexHwIntWic <enable/disable>",
      test_wlan_external_coex_pta},
 #endif
-#ifdef CONFIG_IMD3_CFG
+#if CONFIG_IMD3_CFG
     {"wlan-imd3-cfg", "<enable>", test_wlan_imd3_cfg},
 #endif
-#ifdef CONFIG_AUTO_RECONNECT
+#if CONFIG_AUTO_RECONNECT
     {"wlan-auto-reconnect", "<0/1/2> [<reconnect counter> <reconnect interval> <flags>]", test_wlan_auto_reconnect},
 #endif
-#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
+#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
     {"wlan-set-indrstcfg", "<mode> <gpio_pin>", test_set_indrst_cfg},
     {"wlan-get-indrstcfg", NULL, test_get_indrst_cfg},
     {"wlan-independent-reset", "<mode>", test_wlan_independent_reset},
 #endif
-#ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
+#if CONFIG_INACTIVITY_TIMEOUT_EXT
     {"wlan-sta-inactivityto", "<n> <m> <l> [k] [j]", test_wlan_sta_inactivityto},
 #endif
 #ifdef RW610
     {"wlan-get-temperature", NULL, test_wlan_get_temperature},
 #endif
-#ifdef CONFIG_AUTO_NULL_TX
+#if CONFIG_AUTO_NULL_TX
     {"wlan-auto-null-tx", "<start/stop>", test_wlan_auto_null_tx},
 #endif
-#if defined(RW610) && defined(CONFIG_ANT_DETECT)
+#if defined(RW610) && (CONFIG_ANT_DETECT)
     {"wlan-detect-ant", "<detect_mode> <ant_port_count> channel <channel> ...", test_wlan_detect_ant},
 #endif
 };

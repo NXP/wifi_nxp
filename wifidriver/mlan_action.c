@@ -50,7 +50,7 @@ static mlan_status wlan_process_mgmt_radio_measurement_action(
 
     pos         = payload + sizeof(wlan_802_11_header) + 1;
     action_code = *pos++;
-#ifdef CONFIG_11K
+#if CONFIG_11K
     IEEEtypes_FrameCtl_t *mgmt_fc_p =
         (IEEEtypes_FrameCtl_t *)(void *)&(((wlan_802_11_header *)(void *)payload)->frm_ctl);
     payload_len -= (sizeof(wlan_802_11_header) + 2U);
@@ -58,7 +58,7 @@ static mlan_status wlan_process_mgmt_radio_measurement_action(
 
     switch (action_code)
     {
-#ifdef CONFIG_11K
+#if CONFIG_11K
         case (t_u8)IEEE_MGMT_RRM_RADIO_MEASUREMENT_REQUEST:
         {
             wlan_process_radio_measurement_request(pos, payload_len, dest_addr, src_addr, (bool)mgmt_fc_p->wep);
@@ -108,7 +108,7 @@ static mlan_status wlan_process_mgmt_wnm_action(t_u8 *payload, t_u32 payload_len
 
     switch (action_code)
     {
-#ifdef CONFIG_11V
+#if CONFIG_11V
         case IEEE_MGMT_WNM_BTM_REQUEST:
         {
             IEEEtypes_FrameCtl_t *mgmt_fc_p =
@@ -138,7 +138,7 @@ static mlan_status wlan_process_mgmt_unprotect_wnm_action(t_u8 *payload, t_u32 p
     switch (action_code)
     {
         case 1:
-#ifdef CONFIG_1AS
+#if CONFIG_1AS
             wlan_process_timing_measurement_frame(payload, payload_len, rxpd);
             ret = MLAN_STATUS_SUCCESS;
 #endif
@@ -150,7 +150,7 @@ static mlan_status wlan_process_mgmt_unprotect_wnm_action(t_u8 *payload, t_u32 p
     return ret;
 }
 
-#ifdef CONFIG_1AS
+#if CONFIG_1AS
 /* imu_header + mgmt_txpd_len + sizeof(t_u16 frame_len) */
 #define WLAN_MGMT_PKT_START_OFFSET (INTF_HEADER_LEN + 0x14U)
 

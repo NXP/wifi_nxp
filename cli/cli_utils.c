@@ -183,13 +183,13 @@ bool get_mac(const char *arg, char *dest, char sep)
     return false;
 }
 
-#if defined(RW610) && defined(CONFIG_ANT_DETECT)
+#if defined(RW610) && (CONFIG_ANT_DETECT)
 bool get_channel_list(const char *arg, uint8_t *num_channels, uint8_t *chan_number, char sep)
 {
     unsigned int len = 0;
     unsigned int i;
     uint8_t count = 0;
-    uint8_t val = 0;
+    uint8_t val   = 0;
 
     len = strlen(arg);
 

@@ -8,7 +8,7 @@
  *
  */
 
-#if defined(CONFIG_XZ_DECOMPRESSION)
+#if (CONFIG_XZ_DECOMPRESSION)
 #include <xz.h>
 #include <decompress.h>
 #endif /* CONFIG_XZ_DECOMPRESSION */
@@ -56,7 +56,7 @@ static int32_t conn_download_normal_fw(const t_u8 *connfw_dl, t_u32 firmwarelen,
     return ret;
 }
 
-#if defined(CONFIG_XZ_DECOMPRESSION)
+#if (CONFIG_XZ_DECOMPRESSION)
 int32_t conn_download_decomp_fw(t_u8 *wlanfw_xz, t_u32 firmwarelen, t_u32 ioport)
 {
     t_u32 tx_blocks = 0, txlen = 0, buflen = 0;
@@ -74,7 +74,7 @@ int32_t conn_download_decomp_fw(t_u8 *wlanfw_xz, t_u32 firmwarelen, t_u32 ioport
     int ret;
     struct xz_buf stream;
     uint32_t retlen, readlen = 0;
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
     t_u8 *sbuf = (t_u8 *)OSA_MemoryAllocate(SBUF_SIZE);
 #else
     t_u8 *sbuf = (t_u8 *)OSA_MemoryPoolAllocate(buf_2048_MemoryPool);
@@ -115,7 +115,7 @@ int32_t conn_download_decomp_fw(t_u8 *wlanfw_xz, t_u32 firmwarelen, t_u32 ioport
         {
             fwdnld_io_e("FW Download Failure. Invalid len");
             xz_uncompress_end();
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
             OSA_MemoryFree(sbuf);
 #else
             OSA_MemoryPoolFree(buf_2048_MemoryPool, sbuf);
@@ -166,7 +166,7 @@ int32_t conn_download_decomp_fw(t_u8 *wlanfw_xz, t_u32 firmwarelen, t_u32 ioport
     } while (1);
 
     xz_uncompress_end();
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
     OSA_MemoryFree(sbuf);
 #else
     OSA_MemoryPoolFree(buf_2048_MemoryPool, sbuf);
@@ -205,7 +205,7 @@ int32_t firmware_download(const uint8_t *fw_start_addr, const size_t size, void 
         }
     }
 
-#if defined(CONFIG_WIFI_IND_DNLD)
+#if (CONFIG_WIFI_IND_DNLD)
     if ((fw_reload != 0) && (intf->intf_s.fwdnld_intf_check_reload))
     {
         ret = intf->intf_s.fwdnld_intf_check_reload(intf, fw_reload);
@@ -223,7 +223,7 @@ int32_t firmware_download(const uint8_t *fw_start_addr, const size_t size, void 
     firmwarelen = size;
     /*Making this section as #if 00 for now, as the decopress and
      * verification of compression etc funcitons are not present*/
-#if defined(CONFIG_XZ_DECOMPRESSION)
+#if (CONFIG_XZ_DECOMPRESSION)
     t_u8 buffer[6];
 
     (void)memcpy((void *)buffer, (const void *)conn_fw, sizeof(buffer));

@@ -39,7 +39,7 @@ typedef enum osa_timer_activation
 typedef TimerHandle_t osa_timer_arg_t;
 typedef TickType_t osa_timer_tick;
 
-#ifdef CONFIG_HEAP_STAT
+#if CONFIG_HEAP_STAT
 /** This function dumps complete statistics
  *  of the heap memory.
  */

@@ -18,7 +18,7 @@ Change log:
 
 #include "type_decls.h"
 #include <osa.h>
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
 #include <ieee802_11_defs.h>
 #endif
 
@@ -176,7 +176,7 @@ Change log:
 #define MLAN_RATE_INDEX_MCS8 8U
 /** Rate index for MCS 9 */
 #define MLAN_RATE_INDEX_MCS9 9U
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
 /** Rate index for MCS11 */
 #define MLAN_RATE_INDEX_MCS11 11U
 #endif
@@ -184,7 +184,7 @@ Change log:
 #define MLAN_RATE_INDEX_MCS32 32U
 /** Rate index for MCS 127 */
 #define MLAN_RATE_INDEX_MCS127 127U
-#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
+#if (CONFIG_11AC) || (CONFIG_11AX)
 #define MLAN_RATE_NSS1 1
 #define MLAN_RATE_NSS2 2
 #endif
@@ -197,7 +197,7 @@ Change log:
 #define MLAN_RATE_BITMAP_MCS0 32U
 /** Rate bitmap for MCS 127 */
 #define MLAN_RATE_BITMAP_MCS127 159
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
 #define MLAN_RATE_BITMAP_NSS1_MCS0 160
 #define MLAN_RATE_BITMAP_NSS1_MCS9 169
 #define MLAN_RATE_BITMAP_NSS2_MCS0 176
@@ -311,7 +311,7 @@ typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 /** Default memory allocation flag */
 #define MLAN_MEM_DEF 0U
 
-#ifdef CONFIG_WIFI_IND_DNLD
+#if CONFIG_WIFI_IND_DNLD
 /** driver initial the fw reset */
 #define FW_RELOAD_SDIO_INBAND_RESET 1
 /** out band reset trigger reset, no interface re-emulation */
@@ -495,7 +495,7 @@ typedef struct _mlan_fw_image
     t_u8 *pfw_buf;
     /** Firmware image length */
     t_u32 fw_len;
-#ifdef CONFIG_WIFI_IND_DNLD
+#if CONFIG_WIFI_IND_DNLD
     /** Firmware reload flag */
     t_u8 fw_reload;
 #endif
@@ -570,7 +570,7 @@ typedef struct _mlan_event
     t_u8 event_buf[1];
 } mlan_event, *pmlan_event;
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 /** mlan_event data structure */
 typedef struct _mlan_event_p2p
 {
@@ -581,7 +581,7 @@ typedef struct _mlan_event_p2p
 } mlan_event_p2p, *pmlan_event_p2p;
 #endif
 
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#if CONFIG_EXT_SCAN_SUPPORT
 /** mlan_event_scan_result data structure */
 typedef MLAN_PACK_START struct _mlan_event_scan_result
 {
@@ -852,7 +852,7 @@ typedef MLAN_PACK_START struct _chan_band_info
 } MLAN_PACK_END chan_band_info;
 
 /** csi event data structure */
-#ifdef CONFIG_CSI
+#if CONFIG_CSI
 typedef MLAN_PACK_START struct _csi_record_ds
 {
     /** Length in DWORDS, including header */
@@ -1005,7 +1005,7 @@ typedef struct _mlan_callbacks
     mlan_status (*moal_spin_lock)(IN t_void *pmoal_handle, IN t_void *plock);
     /** moal_spin_unlock */
     mlan_status (*moal_spin_unlock)(IN t_void *pmoal_handle, IN t_void *plock);
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
     /** moal_init_semaphore */
     mlan_status (*moal_init_semaphore)(IN t_void *pmoal_handle, IN const char *name, OUT t_void *plock);
     /** moal_free_semaphore */
@@ -1042,7 +1042,7 @@ typedef struct _mlan_callbacks
 /** mlan_device data structure */
 typedef struct _mlan_device
 {
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     /** MOAL Handle */
     t_void *pmoal_handle;
 #endif /* CONFIG_MLAN_WMSDK */
@@ -1050,7 +1050,7 @@ typedef struct _mlan_device
     mlan_bss_attr bss_attr[MLAN_MAX_BSS_NUM];
     /** Callbacks */
     mlan_callbacks callbacks;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 #ifdef WIFI_CALIB_CMD_SUPPORT
     /** WiFi Calibration mode */
     t_u32 wifi_calib_mode;
@@ -1095,7 +1095,7 @@ MLAN_API mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan
 /** Un-registration */
 MLAN_API mlan_status mlan_unregister(IN t_void *pmlan_adapter);
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /** Firmware Downloading */
 MLAN_API mlan_status mlan_dnld_fw(IN t_void *pmlan_adapter, IN pmlan_fw_image pmfw);
 
@@ -1106,7 +1106,7 @@ MLAN_API mlan_status mlan_set_init_param(IN t_void *pmlan_adapter, IN pmlan_init
 /** Firmware Initialization */
 MLAN_API mlan_status mlan_init_fw(IN t_void *pmlan_adapter);
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /** Firmware Shutdown */
 MLAN_API mlan_status mlan_shutdown_fw(IN t_void *pmlan_adapter);
 /** Main Process */

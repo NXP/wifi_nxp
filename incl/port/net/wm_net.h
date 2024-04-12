@@ -55,7 +55,7 @@
 #endif
 
 #if CONFIG_IPV6 && LWIP_IPV6
-#ifndef CONFIG_MAX_IPV6_ADDRESSES
+#if !CONFIG_MAX_IPV6_ADDRESSES
 #error "Define CONFIG_MAX_IPV6_ADDRESSES same as LWIP_IPV6_NUM_ADDRESSES in wifi_config.h"
 #else
 #if CONFIG_MAX_IPV6_ADDRESSES != LWIP_IPV6_NUM_ADDRESSES
@@ -68,7 +68,7 @@
 #error "Define LWIP_NETIF_EXT_STATUS_CALLBACK as 1 in lwipopts.h"
 #endif
 
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
 #if (!defined(LWIP_NUM_NETIF_CLIENT_DATA) || (LWIP_NUM_NETIF_CLIENT_DATA < 2))
 #error "Define LWIP_NUM_NETIF_CLIENT_DATA atleast 2 in lwipopts.h"
 #endif
@@ -82,7 +82,7 @@
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/wifi_mgmt.h>
 
-#if defined(CONFIG_POSIX_API)
+#if (CONFIG_POSIX_API)
 #include <zephyr/posix/sys/socket.h>
 #include <zephyr/posix/sys/select.h>
 #include <zephyr/posix/arpa/inet.h>
@@ -91,31 +91,32 @@
 #include <zephyr/net/socket.h>
 #endif
 
-#define NETIF_NAMESIZE 6
+#define NETIF_NAMESIZE       6
 #define NETIF_MAX_HWADDR_LEN 6
 
 /* copy zephyr struct net if */
-struct netif {
+struct netif
+{
     /** The net_if_dev instance the net_if is related to */
-	struct net_if_dev *if_dev;
-#if defined(CONFIG_NET_STATISTICS_PER_INTERFACE)
-	/** Network statistics related to this network interface */
-	struct net_stats stats;
+    struct net_if_dev *if_dev;
+#if (CONFIG_NET_STATISTICS_PER_INTERFACE)
+    /** Network statistics related to this network interface */
+    struct net_stats stats;
 #endif /* CONFIG_NET_STATISTICS_PER_INTERFACE */
 
-	/** Network interface instance configuration */
-	struct net_if_config config;
+    /** Network interface instance configuration */
+    struct net_if_config config;
 
-#if defined(CONFIG_NET_POWER_MANAGEMENT)
-	/** Keep track of packets pending in traffic queues. This is
-	 * needed to avoid putting network device driver to sleep if
-	 * there are packets waiting to be sent.
-	 */
-	int tx_pending;
+#if (CONFIG_NET_POWER_MANAGEMENT)
+    /** Keep track of packets pending in traffic queues. This is
+     * needed to avoid putting network device driver to sleep if
+     * there are packets waiting to be sent.
+     */
+    int tx_pending;
 #endif
 
-	struct k_mutex lock;
-	struct k_mutex tx_lock;
+    struct k_mutex lock;
+    struct k_mutex tx_lock;
 };
 
 /**
@@ -141,7 +142,7 @@ typedef struct
     struct net_addr nmask;
     struct net_addr gw;
     struct ethernetif state;
-#if defined(CONFIG_NET_STATISTICS_WIFI)
+#if (CONFIG_NET_STATISTICS_WIFI)
     struct net_stats_wifi stats;
 #endif
     scan_result_cb_t scan_cb;
@@ -150,7 +151,7 @@ typedef struct
 #elif defined(FSL_RTOS_THREADX)
 
 #include "nx_api.h"
-//#include "nxd_bsd.h"
+// #include "nxd_bsd.h"
 
 #endif
 
@@ -215,7 +216,7 @@ struct net_ipv4_config
     unsigned dns2;
 };
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 /** This data structure represents an IPv6 address */
 struct net_ipv6_config
 {
@@ -235,7 +236,7 @@ struct net_ipv6_config
  */
 struct net_ip_config
 {
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     /** The network IPv6 address configuration that should be
      * associated with this interface. */
     struct net_ipv6_config ipv6[CONFIG_MAX_IPV6_ADDRESSES];
@@ -365,8 +366,8 @@ static inline uint8_t *net_stack_buffer_skip(void *buf, uint16_t in_offset)
 {
 #if defined(SDK_OS_FREE_RTOS)
     uint16_t out_offset = 0;
-    struct pbuf *p = pbuf_skip((struct pbuf *)buf, in_offset, &out_offset);
-    return (uint8_t*)(p->payload) + out_offset;
+    struct pbuf *p      = pbuf_skip((struct pbuf *)buf, in_offset, &out_offset);
+    return (uint8_t *)(p->payload) + out_offset;
 #elif __ZEPHYR__
     uint16_t offset_left = in_offset;
     struct net_buf *frag = ((struct net_pkt *)buf)->frags;
@@ -662,7 +663,7 @@ void net_configure_dns(struct net_ip_config *ip, unsigned int role);
  */
 int net_get_if_addr(struct net_ip_config *addr, void *intrfc_handle);
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 /** Get interface IPv6 Addresses & their states in \ref net_ip_config
  *
  * This function will get the IPv6 addresses & address states of a given
@@ -779,7 +780,7 @@ void net_ipv4stack_init(void);
 
 #if defined(SDK_OS_FREE_RTOS)
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 
 /** Initialize the IPv6 network stack
  *
@@ -799,7 +800,7 @@ void dhcp_stat(void);
  */
 void net_stat(void);
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 int netif_get_bss_type();
 #endif
 

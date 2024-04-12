@@ -11,7 +11,7 @@
 
 #if defined(SD9177)
 
-#if defined(CONFIG_WIFI_IND_DNLD)
+#if (CONFIG_WIFI_IND_DNLD)
 
 const uint8_t fw_cpu1[] = {
 #include <sd_nw61x.bin.se.inc>

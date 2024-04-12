@@ -64,7 +64,7 @@ Change log:
 /** Indicate packet has been dropped in FW */
 #define RX_PKT_DROPPED_IN_FW 0xffffffffU
 
-#ifdef CONFIG_RSN_REPLAY_DETECTION
+#if CONFIG_RSN_REPLAY_DETECTION
 t_void wlan_reset_pn_value(mlan_private *pmpriv, mlan_ds_encrypt_key *key);
 t_u8 wlan_is_rsn_replay_attack(mlan_private *pmpriv, t_void *payload, RxReorderTbl *rx_reor_tbl_ptr);
 void wlan_reset_pn_on_rekey(mlan_private *priv, t_u8 *event_buf);

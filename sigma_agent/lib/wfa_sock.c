@@ -37,7 +37,7 @@
 #include "nxp_wifi.h"
 #endif
 
-#ifdef CONFIG_SIGMA_AGENT
+#if CONFIG_SIGMA_AGENT
 #include "wfa_portall.h"
 #include "wfa_stdincs.h"
 #include "wfa_debug.h"
@@ -350,7 +350,7 @@ int wfaGetifAddr(char *ifname, struct sockaddr_in *sa)
         return WFA_FAILURE;
     }
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     sa->sin_addr.s_addr = device->ip_addr.u_addr.ip4.addr;
 #else
     sa->sin_addr.s_addr = device->ip_addr.addr;

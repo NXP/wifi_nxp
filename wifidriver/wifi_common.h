@@ -17,7 +17,7 @@
 #define wfd_e(...) wmlog_e("p2p", ##__VA_ARGS__)
 #define wfd_w(...) wmlog_w("p2p", ##__VA_ARGS__)
 
-#ifdef CONFIG_P2P_DEBUG
+#if CONFIG_P2P_DEBUG
 #define wfd_d(...) wmlog("p2p", ##__VA_ARGS__)
 /**
  *  @brief Dump hex data

@@ -19,11 +19,11 @@
 #include "wmcrypto.h"
 
 #include "wps_msg.h"
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 #include <wifi.h>
 #endif
 
-#ifdef CONFIG_FSL_AES
+#if CONFIG_FSL_AES
 #include "fsl_aes.h"
 #endif
 #include "wps_mem.h"
@@ -51,7 +51,7 @@ WPS_DATA wps_global PM3_BSS;
 
 bool gpwps_info_initialized;
 
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
 /** WPA sm */
 WPA_SM wpa_sm;
 #endif
@@ -74,7 +74,7 @@ static short ie_index = 0x0002;
 short assoc_ie_index  = 0x0002;
 short ap_assocresp_ie_index;
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 OSA_MUTEX_HANDLE_DEFINE(p2p_session);
 
 struct wlan_network p2p_uap_network;
@@ -96,14 +96,14 @@ extern int wpa2_failure;
 static void wps_main(osa_task_param_t arg);
 OSA_TASK_HANDLE_DEFINE(wps_main_Handle);
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 static void wps_peer_event_receive(osa_task_param_t arg);
 OSA_TASK_HANDLE_DEFINE(p2p_scan_Handle);
-static OSA_TASK_DEFINE(p2p_scan,  PRIORITY_RTOS_TO_OSA(3), 1, 4096, 0);
+static OSA_TASK_DEFINE(p2p_scan, PRIORITY_RTOS_TO_OSA(3), 1, 4096, 0);
 
-static OSA_TASK_DEFINE(wps_main,  PRIORITY_RTOS_TO_OSA(3), 1, 10240, 0);
+static OSA_TASK_DEFINE(wps_main, PRIORITY_RTOS_TO_OSA(3), 1, 10240, 0);
 #else
-static OSA_TASK_DEFINE(wps_main,  PRIORITY_RTOS_TO_OSA(2), 1, 10240, 0);
+static OSA_TASK_DEFINE(wps_main, PRIORITY_RTOS_TO_OSA(2), 1, 10240, 0);
 #endif
 
 extern void wps_register_rx_callback(void (*WPSEAPoLRxDataHandler)(const u8 *buf, const size_t len));
@@ -139,7 +139,7 @@ static int wps_private_info_allocate(PWPS_INFO *pwps_info)
     }
     *pwps_info = temp;
 
-#ifndef CONFIG_P2P
+#if !CONFIG_P2P
     g_bssid = wps_mem_malloc(ETH_ALEN);
 
     if (!g_bssid)
@@ -163,7 +163,7 @@ static int wps_private_info_allocate(PWPS_INFO *pwps_info)
     return WPS_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 void wps_set_wfd_cfg()
 {
     char wps_para[] = "pbc";
@@ -198,7 +198,7 @@ void wps_set_device_password_id(PWPS_INFO pwps_info)
 
     if (index == 1)
     {
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         if (pwps_info->role == WFD_ROLE)
             wps_set_wfd_cfg();
 #endif
@@ -213,7 +213,7 @@ void wps_set_device_password_id(PWPS_INFO pwps_info)
     }
     else if (index == 0)
     {
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         if (pwps_info->role == WFD_ROLE)
         {
             char wps_para[] = "pin";
@@ -340,7 +340,7 @@ static int wps_parameter_initialization(PWPS_INFO pwps_info, WPS_DATA *wps_s)
     pwps_info->input_state                  = WPS_INPUT_STATE_METHOD;
     pwps_info->enrollee_in_authorized_mac   = WPS_SET;
     pwps_info->wps_session                  = 0;
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     pwps_info->p2p_session = 0;
 #endif
 
@@ -362,7 +362,7 @@ static int wps_parameter_initialization(PWPS_INFO pwps_info, WPS_DATA *wps_s)
     pwps_info->prov_session      = local_wcc->prov_session;
     pwps_info->enrollee.version  = local_wcc->version;
     pwps_info->enrollee.version2 = local_wcc->version2;
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     strncpy((char *)local_wcc->device_name, (const char *)WFD_devicename, strlen(WFD_devicename) + 1);
 #endif
     strcpy((char *)pwps_info->enrollee.device_name, (const char *)local_wcc->device_name);
@@ -451,7 +451,7 @@ static int wps_parameter_initialization(PWPS_INFO pwps_info, WPS_DATA *wps_s)
     }
     else if (pwps_info->role == WFD_ROLE)
     {
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         wps_d("Role : WiFi Direct\r\n");
 
         if (auto_go)
@@ -488,7 +488,7 @@ static int wps_parameter_initialization(PWPS_INFO pwps_info, WPS_DATA *wps_s)
     return ret;
 }
 
-#ifndef CONFIG_FSL_AES
+#if !CONFIG_FSL_AES
 uint32_t wps_wlan_random_entropy(void)
 {
     unsigned char mac[6] = {0}, byte;
@@ -602,7 +602,7 @@ static int wps_session_start(WPS_DATA *wps_s)
     }
     else if (gpwps_info->role == WFD_ROLE)
     {
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         if (auto_go)
         {
             if (wps.cb(P2P_SESSION_STARTED, NULL, 0) == -WM_FAIL)
@@ -644,7 +644,7 @@ void wps_session_deinit(void)
 
     gpwps_info_initialized = false;
 
-#ifndef CONFIG_P2P
+#if !CONFIG_P2P
     if (g_bssid)
         wps_mem_free(g_bssid);
     if (g_ssid)
@@ -704,7 +704,7 @@ int wps_connect(enum wps_session_command pbc, uint32_t pin, struct wlan_scan_res
     return WM_SUCCESS;
 }
 
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
 int wpa2_ent_connect(struct wlan_network *wpa2_network)
 {
     struct prov_command *prov_cmd = NULL;
@@ -748,7 +748,7 @@ void wpa2_shutdown()
  */
 static void wps_main(osa_task_param_t data)
 {
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     struct timeval tv, now;
     WPS_DATA *wps_s     = (WPS_DATA *)&wps_global;
     WFD_DATA *pwfd_data = &wps_global.wfd_data;
@@ -758,13 +758,13 @@ static void wps_main(osa_task_param_t data)
     int ret;
 
     struct prov_command *prov_cmd = NULL;
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
     struct wpa2_command *wpa2_cmd = NULL;
     WPS_DATA *wps_s               = (WPS_DATA *)&wps_global;
 #endif
     struct wps_command *wps_cmd = NULL;
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     (void)memset(&bss_config, 0, sizeof(bss_config_t));
 
     /*
@@ -883,12 +883,12 @@ static void wps_main(osa_task_param_t data)
 
     while (1)
     {
-#ifdef CONFIG_WPS2
+#if CONFIG_WPS2
         ret = OSA_MsgQGet(&wps.cmd_queue, &prov_cmd, RX_WAIT);
         if (ret != WM_SUCCESS || prov_cmd == NULL)
             continue;
 #else
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         if (!auto_go && p2p_scan_on)
         {
             if (wps_loop.timeout)
@@ -942,7 +942,7 @@ static void wps_main(osa_task_param_t data)
             g_method  = wps_cmd->command;
             g_channel = wps_cmd->res.channel;
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
             g_bssid = (u8 *)wps_cmd->res.bssid;
             g_ssid  = (u8 *)wps_cmd->res.ssid;
 #else
@@ -979,7 +979,7 @@ static void wps_main(osa_task_param_t data)
             prov_cmd = NULL;
             wps_cmd  = NULL;
         }
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
         else if (prov_cmd->prov_session == PROV_ENTP_SESSION_ATTEMPT)
         {
             wpa2_cmd = &(prov_cmd->cmd.entp_cmd);
@@ -1006,7 +1006,7 @@ static void wps_main(osa_task_param_t data)
         }
     }
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 fail:
     if (wps.cb(P2P_FAILED, NULL, 0) == -WM_FAIL)
         P2P_LOG("WPS Callback failed for event: %d\r\n", P2P_FAILED);
@@ -1020,7 +1020,7 @@ static int wps_cleanup(void)
 {
     int ret;
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     ret = OSA_MutexDestroy((osa_mutex_handle_t)wps.p2p_session);
     if (ret != KOSA_StatusSuccess)
     {
@@ -1083,7 +1083,7 @@ int wps_start(struct wps_config *wps_conf)
 {
     int ret;
     WPS_DATA *wps_s = (WPS_DATA *)&wps_global;
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
     WPA_SM *wpa_sm_s = (WPA_SM *)&wpa_sm;
 #endif
 
@@ -1094,13 +1094,13 @@ int wps_start(struct wps_config *wps_conf)
 
     (void)memset((void *)&wps, 0, sizeof(wps));
     (void)memset((void *)&(wps_s->wps_conn_network), 0, sizeof(struct wlan_network));
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     wps.peer_event_queue_data = wps_peer_event_queue_data;
     wps.event_queue_data      = wps_event_queue_data;
 #endif
-    wps.cb              = local_wcc->wps_callback;
+    wps.cb = local_wcc->wps_callback;
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     /* WFD data initiliazation */
     (void)memset(&wps_s->wfd_data, 0, sizeof(WFD_DATA));
     wps_s->wfd_data.dev_index = -1;
@@ -1152,7 +1152,7 @@ int wps_start(struct wps_config *wps_conf)
         goto fail;
     }
 
-#ifdef CONFIG_FSL_AES
+#if CONFIG_FSL_AES
     AES_Init(APP_AES);
 #else
     random_register_handler(wps_wlan_random_entropy);
@@ -1162,7 +1162,7 @@ int wps_start(struct wps_config *wps_conf)
 
     (void)memset(wps_s->ifname, 0, IFNAMESIZE + 1);
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     if (local_wcc->role == WFD_ROLE)
         strncpy(wps_s->ifname, "wfd0", IFNAMESIZE);
     else
@@ -1178,7 +1178,7 @@ int wps_start(struct wps_config *wps_conf)
 
     wps_d("Initializing interface '%s'", wps_s->ifname);
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     if (local_wcc->role == WFD_ROLE)
     {
         if (auto_go)
@@ -1193,7 +1193,7 @@ int wps_start(struct wps_config *wps_conf)
     else
         wps_s->bss_type = BSS_TYPE_STA;
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     gpwps_info->discovery_role = WPS_ENROLLEE;
 #endif
 
@@ -1207,7 +1207,7 @@ int wps_start(struct wps_config *wps_conf)
         wps_stop();
         goto fail;
     }
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
     (void)memset(wpa_sm_s, 0, sizeof(WPA_SM));
 
     wpa_sm_s->pairwise_cipher = WPA_CIPHER_CCMP;
@@ -1224,8 +1224,8 @@ int wps_start(struct wps_config *wps_conf)
         wps_d("Error: Failed to create p2p thread: %d\r\n", ret);
         goto fail;
     }
-    
-#ifdef CONFIG_P2P
+
+#if CONFIG_P2P
     ret = OSA_TaskCreate((osa_task_handle_t)p2p_scan_Handle, OSA_TASK(wps_peer_event_receive), NULL);
     if (ret != WM_SUCCESS)
     {
@@ -1236,7 +1236,7 @@ int wps_start(struct wps_config *wps_conf)
         goto fail;
     }
 #endif
-    
+
     return WM_SUCCESS;
 
 fail:
@@ -1246,7 +1246,7 @@ fail:
         (void)OSA_MsgQDestroy((osa_msgq_handle_t)wps.cmd_queue);
     if (wps.data_queue)
         (void)OSA_MsgQDestroy((osa_msgq_handle_t)wps.data_queue);
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     if (wps.p2p_session)
         OSA_MutexDestroy((osa_mutex_handle_t)wps.p2p_session);
     if (wps.peer_event_queue)
@@ -1263,7 +1263,7 @@ int wps_init()
     if (wps.initialized == false)
         return -WM_FAIL;
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     int ret             = -WM_FAIL;
     WFD_DATA *pwfd_data = &wps_global.wfd_data;
 #endif
@@ -1279,7 +1279,7 @@ int wps_init()
     {
         wps_d("Role does not match UAP/STA, change bss_type!\n");
         (void)memset(wps_s->ifname, 0, IFNAMESIZE + 1);
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         if (local_wcc->role == WFD_ROLE)
         {
             strncpy(wps_s->ifname, "wfd0", IFNAMESIZE);
@@ -1295,7 +1295,7 @@ int wps_init()
             strncpy(wps_s->ifname, "mlan0", IFNAMESIZE);
         }
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         if (local_wcc->role == WFD_ROLE)
         {
             if (auto_go)
@@ -1341,7 +1341,7 @@ int wps_init()
         wps_stop();
     }
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     p2p_scan_on = 0;
     wps_cancel_timer(wfd_peer_ageout_time_handler, pwfd_data);
 
@@ -1363,7 +1363,7 @@ int wps_init()
         }
     }
 #endif
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     if (gpwps_info->wps_session || auto_go)
     {
 #endif
@@ -1381,7 +1381,7 @@ int wps_init()
             /* Main loop for socket read and timeout function */
             wps_main_loop_proc();
         }
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     }
 #endif
 
@@ -1407,7 +1407,7 @@ int wps_stop()
     wps_loop_deinit(wps_s);
     wps_intf_deinit(wps_s);
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     ret = wifi_unregister_wfd_event_queue(&wps.peer_event_queue);
     if (ret)
         wps_d(
@@ -1420,14 +1420,14 @@ int wps_stop()
     if (wps.cb(WPS_FINISHED, NULL, 0) == -WM_FAIL)
         wps_d("WPS Callback failed for event: %d\r\n", WPS_FINISHED);
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     if (wps.cb(P2P_FINISHED, NULL, 0) == -WM_FAIL)
         P2P_LOG(
             "WFD Callback failed for "
             "event: %d\r\n",
             P2P_FINISHED);
 #endif
-#ifndef CONFIG_FSL_AES
+#if !CONFIG_FSL_AES
     random_unregister_handler(wps_wlan_random_entropy);
 #endif
     return ret;

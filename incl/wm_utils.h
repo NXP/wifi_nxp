@@ -14,6 +14,7 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
 
+#include <wifi_config_default.h>
 #include <wmtypes.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -25,7 +26,7 @@
 #include "fsl_debug_console.h"
 #endif
 
-#ifdef CONFIG_WIFI_SMOKE_TESTS
+#if CONFIG_WIFI_SMOKE_TESTS
 #if defined(SDK_OS_FREE_RTOS)
 
 #undef PRINTF
@@ -271,7 +272,7 @@ uint32_t sample_initialise_random_seed(void);
  */
 void get_random_sequence(void *buf, unsigned int size);
 
-#if (SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE) || defined (__ZEPHYR__)
+#if (SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE) || defined(__ZEPHYR__)
 #define DUMP_WRAPAROUND 16U
 
 /** Dump buffer in hex format on console
@@ -350,7 +351,7 @@ static inline int wm_frac_part_of(float x, short precision)
     return (x < 0 ? (int)(((int)x - x) * scale) : (int)((x - (int)x) * scale));
 }
 
-#ifdef CONFIG_SIGMA_AGENT
+#if CONFIG_SIGMA_AGENT
 #if defined(SDK_OS_FREE_RTOS)
 #if (defined(__MCUXPRESSO) || defined(__GNUC__)) && !defined(__ARMCC_VERSION)
 static inline int strcasecmp(const char *a, const char *b)

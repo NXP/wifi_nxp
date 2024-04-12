@@ -36,7 +36,7 @@ Change log:
 mlan_status wlan_misc_ioctl_region(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 t_u8 wlan_get_random_charactor(pmlan_adapter pmadapter);
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief enable adhoc aes key
  *
@@ -329,7 +329,7 @@ static mlan_status wlan_get_info_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
     return status;
 }
 #endif /*CONFIG_MLAN_WMSDK*/
-#if defined(CONFIG_WIFI_RTS_THRESHOLD) || defined(CONFIG_WIFI_FRAG_THRESHOLD)
+#if (CONFIG_WIFI_RTS_THRESHOLD) || (CONFIG_WIFI_FRAG_THRESHOLD)
 /**
  *  @brief Set/Get SNMP MIB handler
  *
@@ -396,7 +396,7 @@ exit:
     return ret;
 }
 #endif
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Set/Get Infra/Ad-hoc band configuration
  *
@@ -521,10 +521,10 @@ static mlan_status wlan_radio_ioctl_band_cfg(IN pmlan_adapter pmadapter, IN pmla
                                                                                      Bands
                                                                                    */
         PRINTM(MINFO, "Global config band = %d\n", pmadapter->config_bands);
-        radio_cfg->param.band_cfg.sec_chan_offset = pmadapter->chan_bandwidth; /* adhoc
-                                                                                  channel
-                                                                                  bandwidth
-                                                                                */
+        radio_cfg->param.band_cfg.sec_chan_offset = pmadapter->chan_bandwidth;    /* adhoc
+                                                                                     channel
+                                                                                     bandwidth
+                                                                                   */
     }
 
     LEAVE();
@@ -1002,7 +1002,7 @@ static mlan_status wlan_bss_ioctl_start(IN pmlan_adapter pmadapter, IN pmlan_ioc
             /* fixme: Disabled for now since handling is done in legacy
              * code. It is IMPORTANT and needs to enabled.
              */
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
             /* use bsslist index number to assoicate */
             i = wlan_is_network_compatible(pmpriv, bss->param.ssid_bssid.idx - 1, pmpriv->bss_mode);
 #else
@@ -1026,7 +1026,7 @@ static mlan_status wlan_bss_ioctl_start(IN pmlan_adapter pmadapter, IN pmlan_ioc
         else
         {   /* i >= 0 */
             /* fixme: The below seems related to Adhoc. Check later. */
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
             PRINTM(MERROR, "SSID not found in scan list: ssid=%s, %02x:%02x:%02x:%02x:%02x:%02x, idx=%d\n",
                    bss->param.ssid_bssid.ssid.ssid, bss->param.ssid_bssid.bssid[0], bss->param.ssid_bssid.bssid[1],
                    bss->param.ssid_bssid.bssid[2], bss->param.ssid_bssid.bssid[3], bss->param.ssid_bssid.bssid[4],
@@ -1039,7 +1039,7 @@ static mlan_status wlan_bss_ioctl_start(IN pmlan_adapter pmadapter, IN pmlan_ioc
     }
     else
     {
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         /* Adhoc mode */
         /* If the requested SSID matches current SSID, return */
         if (bss->param.ssid_bssid.ssid.ssid_len &&
@@ -1072,7 +1072,7 @@ static mlan_status wlan_bss_ioctl_start(IN pmlan_adapter pmadapter, IN pmlan_ioc
         else
         {
             /* fixme: This is IMPORTANT. Enable this later. */
-            /*  #ifndef CONFIG_MLAN_WMSDK */
+            /*  #if !CONFIG_MLAN_WMSDK */
             /* use bsslist index number to assoicate */
             i = wlan_is_network_compatible(pmpriv, bss->param.ssid_bssid.idx - 1, pmpriv->bss_mode);
             /* #endif /\* CONFIG_MLAN_WMSDK *\/ */
@@ -1102,7 +1102,7 @@ static mlan_status wlan_bss_ioctl_start(IN pmlan_adapter pmadapter, IN pmlan_ioc
 #endif /* CONFIG_MLAN_WMSDK */
     }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     if (ret == MLAN_STATUS_SUCCESS)
 #endif /* CONFIG_MLAN_WMSDK */
         ret = MLAN_STATUS_PENDING;
@@ -1112,7 +1112,7 @@ start_ssid_done:
     return ret;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Stop BSS
  *
@@ -1348,7 +1348,7 @@ static mlan_status wlan_bss_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req
         case MLAN_OID_BSS_START:
             status = wlan_bss_ioctl_start(pmadapter, pioctl_req);
             break;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_OID_BSS_STOP:
             status = wlan_bss_ioctl_stop(pmadapter, pioctl_req);
             break;
@@ -1399,7 +1399,7 @@ static mlan_status wlan_bss_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req
     return status;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Get supported rates
  *
@@ -1498,7 +1498,7 @@ static mlan_status wlan_rate_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_re
         case MLAN_OID_RATE_CFG:
             status = wlan_rate_ioctl_cfg(pmadapter, pioctl_req);
             break;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_OID_GET_DATA_RATE:
             status = wlan_rate_ioctl_get_data_rate(pmadapter, pioctl_req);
             break;
@@ -1865,7 +1865,7 @@ static mlan_status wlan_power_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_r
     return status;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Set power save configurations
  *
@@ -1887,7 +1887,7 @@ static mlan_status wlan_pm_ioctl_ps_mode(IN pmlan_adapter pmadapter, IN pmlan_io
     {
         sub_cmd = (pmadapter->ps_mode == Wlan802_11PowerModePSP) ? EN_AUTO_PS : DIS_AUTO_PS;
         ret     = wlan_prepare_cmd(pmpriv, HostCmd_CMD_802_11_PS_MODE_ENH, sub_cmd, BITMAP_STA_PS, (t_void *)pioctl_req,
-                               MNULL);
+                                   MNULL);
         if ((ret == MLAN_STATUS_SUCCESS) && (sub_cmd == DIS_AUTO_PS))
         {
             ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_802_11_PS_MODE_ENH, GET_PS, 0, MNULL, MNULL);
@@ -2252,7 +2252,7 @@ static mlan_status wlan_wmm_ioctl_enable(IN pmlan_adapter pmadapter, IN pmlan_io
     return ret;
 }
 #endif
-#ifdef CONFIG_WMM_UAPSD
+#if CONFIG_WMM_UAPSD
 /**
  *  @brief Set/Get WMM QoS configuration
  *
@@ -2284,8 +2284,8 @@ static mlan_status wlan_wmm_ioctl_qos(IN pmlan_adapter pmadapter, IN pmlan_ioctl
     return ret;
 }
 #endif
-#ifdef CONFIG_WMM_UAPSD
-#ifndef CONFIG_MLAN_WMSDK
+#if CONFIG_WMM_UAPSD
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Request for add a TSPEC
  *
@@ -2465,7 +2465,7 @@ static mlan_status wlan_wmm_ioctl_ts_status(IN pmlan_adapter pmadapter, IN pmlan
 }
 #endif
 #endif
-#ifdef CONFIG_WMM_UAPSD
+#if CONFIG_WMM_UAPSD
 /**
  *  @brief WMM configuration handler
  *
@@ -2493,7 +2493,7 @@ static mlan_status wlan_wmm_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl
     wmm = (mlan_ds_wmm_cfg *)pioctl_req->pbuf;
     switch (wmm->sub_command)
     {
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_OID_WMM_CFG_ENABLE:
             status = wlan_wmm_ioctl_enable(pmadapter, pioctl_req);
             break;
@@ -2501,7 +2501,7 @@ static mlan_status wlan_wmm_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl
         case MLAN_OID_WMM_CFG_QOS:
             status = wlan_wmm_ioctl_qos(pmadapter, pioctl_req);
             break;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_OID_WMM_CFG_ADDTS:
             status = wlan_wmm_ioctl_addts_req(pmadapter, pioctl_req);
             break;
@@ -2530,7 +2530,7 @@ static mlan_status wlan_wmm_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl
     return status;
 }
 #endif
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Set/Get WPA IE
  *
@@ -2809,7 +2809,7 @@ t_u8 wlan_get_random_charactor(pmlan_adapter pmadapter)
     return ch;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Set/Get WPA status
  *
@@ -2861,7 +2861,7 @@ static mlan_status wlan_sec_ioctl_wpa_enable(IN pmlan_adapter pmadapter, IN pmla
  *
  *  @return		MLAN_STATUS_PENDING --success, otherwise fail
  */
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req)
 {
     mlan_status ret          = MLAN_STATUS_SUCCESS;
@@ -3241,7 +3241,7 @@ exit:
 }
 #endif /* WPA */
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Get security keys
  *
@@ -3373,7 +3373,7 @@ static mlan_status wlan_sec_ioctl_encrypt_key(IN pmlan_adapter pmadapter, IN pml
         {
             status = wlan_sec_ioctl_set_wpa_key(pmadapter, pioctl_req);
         }
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         else
         {
             status = wlan_sec_ioctl_set_wep_key(pmadapter, pioctl_req);
@@ -3390,7 +3390,7 @@ static mlan_status wlan_sec_ioctl_encrypt_key(IN pmlan_adapter pmadapter, IN pml
     return status;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Query Encrpyt key
  *
@@ -3462,7 +3462,7 @@ static mlan_status wlan_sec_ioctl_passphrase(IN pmlan_adapter pmadapter, IN pmla
             if (sec->param.passphrase.ssid.ssid_len == 0U)
             {
                 /* fixme: We do not need this functionality right now. */
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
                 i = wlan_find_bssid_in_list(pmpriv, (t_u8 *)&sec->param.passphrase.bssid, MLAN_BSS_MODE_AUTO);
                 if (i >= 0)
                 {
@@ -3531,7 +3531,7 @@ static mlan_status wlan_sec_ioctl_password(IN pmlan_adapter pmadapter, IN pmlan_
             if (sec->param.passphrase.ssid.ssid_len == 0U)
             {
                 /* fixme: We do not need this functionality right now. */
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
                 i = wlan_find_bssid_in_list(pmpriv, (t_u8 *)&sec->param.passphrase.bssid, MLAN_BSS_MODE_AUTO);
                 if (i >= 0)
                 {
@@ -3562,7 +3562,7 @@ static mlan_status wlan_sec_ioctl_password(IN pmlan_adapter pmadapter, IN pmlan_
     return ret;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Set/Get esupplicant status
  *
@@ -3696,7 +3696,7 @@ static mlan_status wlan_sec_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl
     sec = (mlan_ds_sec_cfg *)(void *)pioctl_req->pbuf;
     switch (sec->sub_command)
     {
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_OID_SEC_CFG_AUTH_MODE:
             status = wlan_sec_ioctl_auth_mode(pmadapter, pioctl_req);
             break;
@@ -3716,7 +3716,7 @@ static mlan_status wlan_sec_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl
         case MLAN_OID_SEC_CFG_ENCRYPT_KEY:
             status = wlan_sec_ioctl_encrypt_key(pmadapter, pioctl_req);
             break;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_OID_SEC_QUERY_KEY:
             status = wlan_sec_ioctl_query_key(pmadapter, pioctl_req);
             break;
@@ -3727,7 +3727,7 @@ static mlan_status wlan_sec_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl
         case MLAN_OID_SEC_CFG_PASSWORD:
             status = wlan_sec_ioctl_password(pmadapter, pioctl_req);
             break;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_OID_SEC_CFG_EWPA_ENABLED:
             status = wlan_sec_ioctl_ewpa_enable(pmadapter, pioctl_req);
             break;
@@ -3744,7 +3744,7 @@ static mlan_status wlan_sec_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl
     return status;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief  Append/Reset IE buffer.
  *
@@ -4014,7 +4014,7 @@ mlan_status wlan_11d_cfg_ioctl(IN mlan_private *pmpriv, IN pmlan_ioctl_req pioct
     pcfg_11d = (mlan_ds_11d_cfg *)(void *)pioctl_req->pbuf;
     switch (pcfg_11d->sub_command)
     {
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_OID_11D_CFG_ENABLE:
             status = wlan_11d_cfg_ioctl_enable(pmadapter, pioctl_req);
             break;
@@ -4039,7 +4039,7 @@ exit:
     return status;
 }
 
-#ifdef CONFIG_WPS2
+#if CONFIG_WPS2
 /**
  *  @brief WPS configuration handler
  *
@@ -4095,7 +4095,7 @@ static mlan_status wlan_wps_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl
 }
 #endif /* CONFIG_WPS2 */
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Read/write adapter register
  *
@@ -4459,14 +4459,14 @@ static mlan_status wlan_misc_ioctl_gen_ie(IN pmlan_adapter pmadapter, IN pmlan_i
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
-/**
- *  @brief Set/Get region code
- *
- *  @param pmadapter	A pointer to mlan_adapter structure
- *  @param pioctl_req	A pointer to ioctl request buffer
- *
- *  @return		MLAN_STATUS_SUCCESS --success, otherwise fail
- */
+       /**
+        *  @brief Set/Get region code
+        *
+        *  @param pmadapter	A pointer to mlan_adapter structure
+        *  @param pioctl_req	A pointer to ioctl request buffer
+        *
+        *  @return		MLAN_STATUS_SUCCESS --success, otherwise fail
+        */
 /* static */ mlan_status wlan_misc_ioctl_region(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req)
 {
     mlan_status ret        = MLAN_STATUS_SUCCESS;
@@ -4525,7 +4525,7 @@ static mlan_status wlan_misc_ioctl_gen_ie(IN pmlan_adapter pmadapter, IN pmlan_i
     return ret;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Perform warm reset
  *
@@ -4822,7 +4822,7 @@ mlan_status wlan_misc_ioctl_thermal(IN pmlan_adapter pmadapter, IN pmlan_ioctl_r
 }
 #endif
 
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
+#if CONFIG_GTK_REKEY_OFFLOAD
 /**
  *  @brief Gtk Rekey Offload
  *
@@ -4904,7 +4904,7 @@ mlan_status wlan_misc_ioctl_subscribe_evt(IN pmlan_adapter pmadapter, IN pmlan_i
     return ret;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Set ARP filter based on IP address
  *
@@ -5421,7 +5421,7 @@ static mlan_status wlan_misc_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
         case MLAN_OID_MISC_REGION:
             status = wlan_misc_ioctl_region(pmadapter, pioctl_req);
             break;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_OID_MISC_GEN_IE:
             status = wlan_misc_ioctl_gen_ie(pmadapter, pioctl_req);
             break;
@@ -5478,17 +5478,17 @@ static mlan_status wlan_misc_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
             status = wlan_misc_ioctl_thermal(pmadapter, pioctl_req);
             break;
 #endif
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
+#if CONFIG_GTK_REKEY_OFFLOAD
         case MLAN_OID_MISC_CONFIG_GTK_REKEY_OFFLOAD:
             status = wlan_misc_ioctl_gtk_rekey_offload(pmadapter, pioctl_req);
             break;
 #endif
-#ifdef CONFIG_ROAMING
+#if CONFIG_ROAMING
         case MLAN_OID_MISC_SUBSCRIBE_EVENT:
             status = wlan_misc_ioctl_subscribe_evt(pmadapter, pioctl_req);
             break;
 #endif
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_OID_MISC_HOTSPOT_CFG:
             status = wlan_misc_hotspot_cfg(pmadapter, pioctl_req);
             break;
@@ -5501,7 +5501,7 @@ static mlan_status wlan_misc_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
             status = wlan_misc_ioctl_low_pwr_mode(pmadapter, pioctl_req);
             break;
 #endif // WLAN_LOW_POWER_ENABLE
-#ifdef CONFIG_WIFI_CLOCKSYNC
+#if CONFIG_WIFI_CLOCKSYNC
         case MLAN_OID_MISC_GPIO_TSF_LATCH:
             status = wlan_misc_gpio_tsf_latch_config(pmadapter, pioctl_req);
             break;
@@ -5509,7 +5509,7 @@ static mlan_status wlan_misc_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
             status = wlan_misc_get_tsf_info(pmadapter, pioctl_req);
             break;
 #endif /* CONFIG_WIFI_CLOCKSYNC */
-#ifdef CONFIG_RF_TEST_MODE
+#if CONFIG_RF_TEST_MODE
         case MLAN_OID_MISC_RF_TEST_GENERIC:
         case MLAN_OID_MISC_RF_TEST_TX_CONT:
         case MLAN_OID_MISC_RF_TEST_CONFIG_TRIGGER_FRAME:
@@ -5518,7 +5518,7 @@ static mlan_status wlan_misc_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
             status = wlan_misc_ioctl_rf_test_cfg(pmadapter, pioctl_req);
             break;
 #endif /* CONFIG_RF_TEST_MODE */
-#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
+#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
         case MLAN_OID_MISC_IND_RST_CFG:
             status = wlan_misc_ioctl_ind_rst_cfg(pmadapter, pioctl_req);
             break;
@@ -5533,7 +5533,7 @@ static mlan_status wlan_misc_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
     return status;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Set/Get scan configuration parameter
  *
@@ -5558,7 +5558,7 @@ static mlan_status wlan_set_get_scan_cfg(IN pmlan_adapter pmadapter, IN pmlan_io
         scan->param.scan_cfg.scan_time.specific_scan_time = (t_u32)pmadapter->specific_scan_time;
         scan->param.scan_cfg.scan_time.active_scan_time   = (t_u32)pmadapter->active_scan_time;
         scan->param.scan_cfg.scan_time.passive_scan_time  = (t_u32)pmadapter->passive_scan_time;
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#if CONFIG_EXT_SCAN_SUPPORT
         scan->param.scan_cfg.ext_scan = pmadapter->ext_scan;
 #endif
     }
@@ -5576,7 +5576,7 @@ static mlan_status wlan_set_get_scan_cfg(IN pmlan_adapter pmadapter, IN pmlan_io
             pmadapter->active_scan_time = (t_u16)scan->param.scan_cfg.scan_time.active_scan_time;
         if (scan->param.scan_cfg.scan_time.passive_scan_time)
             pmadapter->passive_scan_time = (t_u16)scan->param.scan_cfg.scan_time.passive_scan_time;
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#if CONFIG_EXT_SCAN_SUPPORT
         pmadapter->ext_scan = scan->param.scan_cfg.ext_scan;
 #endif
     }
@@ -5785,7 +5785,7 @@ mlan_status wlan_find_bss(mlan_private *pmpriv, pmlan_ioctl_req pioctl_req)
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
-#ifdef CONFIG_11K_OFFLOAD
+#if CONFIG_11K_OFFLOAD
 /**
  *  @brief 11k enable
  *
@@ -5954,7 +5954,7 @@ mlan_status wlan_ops_sta_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
 
     switch (pioctl_req->req_id)
     {
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_IOCTL_SCAN:
             status = wlan_scan_ioctl(pmadapter, pioctl_req);
             break;
@@ -5962,17 +5962,17 @@ mlan_status wlan_ops_sta_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
         case MLAN_IOCTL_BSS:
             status = wlan_bss_ioctl(pmadapter, pioctl_req);
             break;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_IOCTL_RADIO_CFG:
             status = wlan_radio_ioctl(pmadapter, pioctl_req);
             break;
 #endif /* CONFIG_MLAN_WMSDK */
-#if defined(CONFIG_WIFI_RTS_THRESHOLD) || defined(CONFIG_WIFI_FRAG_THRESHOLD)
+#if (CONFIG_WIFI_RTS_THRESHOLD) || (CONFIG_WIFI_FRAG_THRESHOLD)
         case MLAN_IOCTL_SNMP_MIB:
             status = wlan_snmp_mib_ioctl(pmadapter, pioctl_req);
             break;
 #endif
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_IOCTL_GET_INFO:
             status = wlan_get_info_ioctl(pmadapter, pioctl_req);
             break;
@@ -5986,17 +5986,17 @@ mlan_status wlan_ops_sta_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
         case MLAN_IOCTL_POWER_CFG:
             status = wlan_power_ioctl(pmadapter, pioctl_req);
             break;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_IOCTL_PM_CFG:
             status = wlan_pm_ioctl(pmadapter, pioctl_req);
             break;
 #endif
-#ifdef CONFIG_WMM_UAPSD
+#if CONFIG_WMM_UAPSD
         case MLAN_IOCTL_WMM_CFG:
             status = wlan_wmm_cfg_ioctl(pmadapter, pioctl_req);
             break;
 #endif
-#ifdef CONFIG_WPS2
+#if CONFIG_WPS2
         case MLAN_IOCTL_WPS_CFG:
             status = wlan_wps_cfg_ioctl(pmadapter, pioctl_req);
             break;
@@ -6010,7 +6010,7 @@ mlan_status wlan_ops_sta_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
                 status = pmpriv->support_11d_APIs->wlan_11d_cfg_ioctl_p(pmpriv, pioctl_req);
             }
             break;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_IOCTL_REG_MEM:
             status = wlan_reg_mem_ioctl(pmadapter, pioctl_req);
             break;
@@ -6018,17 +6018,17 @@ mlan_status wlan_ops_sta_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
         case MLAN_IOCTL_MISC_CFG:
             status = wlan_misc_cfg_ioctl(pmadapter, pioctl_req);
             break;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case MLAN_IOCTL_11H_CFG:
             status = wlan_11h_cfg_ioctl(pmadapter, pioctl_req);
             break;
 #endif /* CONFIG_MLAN_WMSDK */
-#ifdef CONFIG_11K_OFFLOAD
+#if CONFIG_11K_OFFLOAD
         case MLAN_IOCTL_11K_CFG:
             status = wlan_11k_cfg_ioctl(pmadapter, pioctl_req);
             break;
 #endif
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
         case MLAN_IOCTL_11AX_CFG:
             status = wlan_11ax_cfg_ioctl(pmadapter, pioctl_req);
             break;

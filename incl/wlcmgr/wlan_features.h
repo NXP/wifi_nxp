@@ -4,7 +4,7 @@
  *  SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifdef CONFIG_WIFI_FEATURES
+#if CONFIG_WIFI_FEATURES
 /** Register WLAN Features CLI commands.
  *
  *  Register the WLAN Features CLI commands offload and hostwake features.
@@ -26,7 +26,7 @@ int wlan_features_cli_init(void);
  *  called.
  *
  *  \return WM_SUCCESS if the CLI commands were unregistered or
- *  \return -WM_FAIL if they were not unregistered 
+ *  \return -WM_FAIL if they were not unregistered
  */
 int wlan_features_cli_deinit(void);
 #endif

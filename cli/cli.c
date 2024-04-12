@@ -24,7 +24,7 @@
 
 #include "cli_mem.h"
 #if defined(SDK_OS_FREE_RTOS)
-#ifdef CONFIG_UART_INTERRUPT
+#if CONFIG_UART_INTERRUPT
 #include "fsl_usart_freertos.h"
 #include "fsl_usart.h"
 #endif
@@ -39,16 +39,16 @@
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
 #if defined(SDK_OS_FREE_RTOS)
-#ifdef CONFIG_UART_INTERRUPT
+#if CONFIG_UART_INTERRUPT
 
 #define CONFIG_UART_STACK_SIZE (1024)
 
 static void uart_task(osa_task_param_t arg);
 
-#ifdef CONFIG_UART_INTERACTIVE
+#if CONFIG_UART_INTERACTIVE
 static OSA_TASK_DEFINE(uart_task, PRIORITY_RTOS_TO_OSA(3), 1, CONFIG_UART_STACK_SIZE, 0);
 #else
-#ifdef CONFIG_NCP_BRIDGE
+#if CONFIG_NCP_BRIDGE
 static OSA_TASK_DEFINE(uart_task, PRIORITY_RTOS_TO_OSA(1), 1, CONFIG_UART_STACK_SIZE, 0);
 #else
 static OSA_TASK_DEFINE(uart_task, PRIORITY_RTOS_TO_OSA(0), 1, CONFIG_UART_STACK_SIZE, 0);
@@ -69,17 +69,15 @@ static OSA_TASK_DEFINE(uart_task, OSA_PRIORITY_BELOW_NORMAL, 1, CONFIG_UART_STAC
 #endif
 OSA_TASK_HANDLE_DEFINE(uart_task_Handle);
 
-
-
 #define CONFIG_CLI_STACK_SIZE (5376)
 
 static void cli_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-#ifdef CONFIG_UART_INTERACTIVE
-static OSA_TASK_DEFINE(cli_task, PRIORITY_RTOS_TO_OSA(3) , 1, CONFIG_CLI_STACK_SIZE, 0);
+#if CONFIG_UART_INTERACTIVE
+static OSA_TASK_DEFINE(cli_task, PRIORITY_RTOS_TO_OSA(3), 1, CONFIG_CLI_STACK_SIZE, 0);
 #else
-static OSA_TASK_DEFINE(cli_task, PRIORITY_RTOS_TO_OSA(1) , 1, CONFIG_CLI_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(cli_task, PRIORITY_RTOS_TO_OSA(1), 1, CONFIG_CLI_STACK_SIZE, 0);
 #endif
 
 OSA_TASK_HANDLE_DEFINE(cli_task_Handle);
@@ -102,7 +100,7 @@ static struct
 } cli;
 
 #if defined(SDK_OS_FREE_RTOS)
-#ifdef CONFIG_UART_INTERRUPT
+#if CONFIG_UART_INTERRUPT
 #define USART_INPUT_SIZE 1
 #define USART_NVIC_PRIO  5
 uint8_t background_buffer[32];
@@ -117,21 +115,21 @@ struct rtos_usart_config usart_config = {
     .buffer      = background_buffer,
     .buffer_size = sizeof(background_buffer),
 };
-#ifdef CONFIG_HOST_SLEEP
-#ifdef CONFIG_POWER_MANAGER
+#if CONFIG_HOST_SLEEP
+#if CONFIG_POWER_MANAGER
 extern bool usart_suspend_flag;
 #endif
 #endif
 #endif
 #endif
 
-#ifdef CONFIG_APP_FRM_CLI_HISTORY
+#if CONFIG_APP_FRM_CLI_HISTORY
 #define MAX_CMDS_IN_HISTORY 20
 static char *cmd_hist_arr[MAX_CMDS_IN_HISTORY];
 static int total_hist_cmds, last_cmd_num;
 static int console_loop_num;
 static bool hist_inited;
-#ifdef CONFIG_CLI_PSM_SUPPORT
+#if CONFIG_CLI_PSM_SUPPORT
 #define CMD_HIST_VAR_NAME       "cmd-%d"
 #define CMD_HIST_VAR_NAME_MAXSZ 8
 
@@ -181,7 +179,7 @@ static int get_cmd_from_hist(int cmd_no, char *buf, int max_len)
         return WM_SUCCESS;
     }
 
-#ifdef CONFIG_CLI_PSM_SUPPORT
+#if CONFIG_CLI_PSM_SUPPORT
     char var_name[CMD_HIST_VAR_NAME_MAXSZ];
     snprintf(var_name, CMD_HIST_VAR_NAME_MAXSZ, CMD_HIST_VAR_NAME, cmd_no);
 
@@ -214,7 +212,7 @@ static int store_cmd_to_hist(int cmd_no, const char *buf, int len)
         }
     }
 
-#ifdef CONFIG_CLI_PSM_SUPPORT
+#if CONFIG_CLI_PSM_SUPPORT
     char var_name[CMD_HIST_VAR_NAME_MAXSZ];
     snprintf(var_name, CMD_HIST_VAR_NAME_MAXSZ, CMD_HIST_VAR_NAME, cmd_no);
 
@@ -225,7 +223,7 @@ static int store_cmd_to_hist(int cmd_no, const char *buf, int len)
 
     cmd_hist_arr[cmd_no] = cli_strdup(buf, len); /* ignore failure silently */
 
-#if 0 /* debug only */
+#if 0                                            /* debug only */
 	int i;
     PRINTF("\r\n");
 	for (i = 0; i < MAX_CMDS_IN_HISTORY; i++)
@@ -243,7 +241,7 @@ static int get_total_cmds()
 {
     int cmd_no = 0;
 
-#ifdef CONFIG_CLI_PSM_SUPPORT
+#if CONFIG_CLI_PSM_SUPPORT
     void *tmpbuf = OSA_MemoryAllocate(INBUF_SIZE);
     if (!tmpbuf)
         return -WM_FAIL;
@@ -318,7 +316,7 @@ static int cmd_hist_is_duplicate(const char *cmd)
     return false;
 }
 
-#ifdef CONFIG_CLI_PSM_SUPPORT
+#if CONFIG_CLI_PSM_SUPPORT
 static int cmd_hist_init()
 #else
 int cmd_hist_init()
@@ -338,7 +336,7 @@ int cmd_hist_init()
     return WM_SUCCESS;
 }
 
-#ifdef CONFIG_CLI_PSM_SUPPORT
+#if CONFIG_CLI_PSM_SUPPORT
 int cli_add_history_hook(cli_name_val_get get_cb, cli_name_val_set set_cb)
 {
     if (!get_cb || !set_cb)
@@ -438,7 +436,7 @@ int handle_input(char *handle_inbuf)
     static char *argv[64];
     int argc = 0;
     int i    = 0;
-#ifdef CONFIG_APP_FRM_CLI_HISTORY
+#if CONFIG_APP_FRM_CLI_HISTORY
     int len = 0;
 #endif
     unsigned int j                    = 0;
@@ -552,7 +550,7 @@ int handle_input(char *handle_inbuf)
         (void)PRINTF("\r\n");
     }
 
-#ifdef CONFIG_APP_FRM_CLI_HISTORY
+#if CONFIG_APP_FRM_CLI_HISTORY
     len = i - 1;
 #endif
 
@@ -567,7 +565,7 @@ int handle_input(char *handle_inbuf)
         return 1;
     }
 
-#ifdef CONFIG_APP_FRM_CLI_HISTORY
+#if CONFIG_APP_FRM_CLI_HISTORY
     cmd_hist_add(handle_inbuf, len);
 #endif
 
@@ -636,7 +634,7 @@ enum
     EXT_KEY_SECOND_SYMBOL,
 };
 
-#ifdef CONFIG_APP_FRM_CLI_HISTORY
+#if CONFIG_APP_FRM_CLI_HISTORY
 static void clear_line(unsigned int cnt)
 {
     while (cnt--)
@@ -651,11 +649,11 @@ static int get_input(char *get_inbuf, unsigned int *bp)
 {
     static int state = BASIC_KEY;
     static char second_char;
-#ifdef CONFIG_APP_FRM_CLI_HISTORY
+#if CONFIG_APP_FRM_CLI_HISTORY
     int rv = -WM_FAIL;
 #endif /* CONFIG_APP_FRM_CLI_HISTORY */
 #if defined(SDK_OS_FREE_RTOS)
-#ifdef CONFIG_UART_INTERRUPT
+#if CONFIG_UART_INTERRUPT
     int ret;
     size_t n;
 #endif
@@ -673,9 +671,9 @@ static int get_input(char *get_inbuf, unsigned int *bp)
     while (true)
     {
 #if defined(SDK_OS_FREE_RTOS)
-#ifdef CONFIG_UART_INTERRUPT
-#ifdef CONFIG_HOST_SLEEP
-#ifdef CONFIG_POWER_MANAGER
+#if CONFIG_UART_INTERRUPT
+#if CONFIG_HOST_SLEEP
+#if CONFIG_POWER_MANAGER
         if (usart_suspend_flag)
         {
             OSA_TimeDelay(1000);
@@ -718,7 +716,7 @@ static int get_input(char *get_inbuf, unsigned int *bp)
                     return 1;
                 }
             }
-#ifdef CONFIG_APP_FRM_CLI_HISTORY
+#if CONFIG_APP_FRM_CLI_HISTORY
             if (second_char == 0x5B)
             {
                 if (get_inbuf[*bp] == 0x41)
@@ -797,7 +795,7 @@ static int get_input(char *get_inbuf, unsigned int *bp)
 
         if ((get_inbuf[*bp] == (char)(0x08)) || /* backspace */
             (get_inbuf[*bp] == (char)(0x7f)))
-        { /* DEL */
+        {                                       /* DEL */
             if (*bp > (unsigned int)(0))
             {
                 (*bp)--;
@@ -966,7 +964,7 @@ static void cli_task(void *arg)
 }
 
 #if defined(SDK_OS_FREE_RTOS)
-#ifndef CONFIG_UART_INTERRUPT
+#if !CONFIG_UART_INTERRUPT
 /* Automatically bind an input processor to the console */
 static int cli_install_UART_Tick(void)
 {
@@ -988,7 +986,7 @@ static int __cli_cleanup(void)
     osa_status_t status;
 
 #if defined(SDK_OS_FREE_RTOS)
-#ifndef CONFIG_UART_INTERRUPT
+#if !CONFIG_UART_INTERRUPT
     if (cli_remove_UART_Tick() != WM_SUCCESS)
     {
         (void)PRINTF(
@@ -1025,7 +1023,7 @@ static int __cli_cleanup(void)
         final = -WM_FAIL;
     }
 #if defined(SDK_OS_FREE_RTOS)
-#ifdef CONFIG_UART_INTERRUPT
+#if CONFIG_UART_INTERRUPT
     status = OSA_TaskDestroy((osa_task_handle_t)uart_task_Handle);
     if (status != KOSA_StatusSuccess)
     {
@@ -1077,7 +1075,7 @@ static int cli_start(void)
         return -WM_FAIL;
     }
 
-#ifdef CONFIG_APP_FRM_CLI_HISTORY
+#if CONFIG_APP_FRM_CLI_HISTORY
     cmd_hist_init();
     cmd_hist_add(" ", 1);
 #endif
@@ -1197,7 +1195,7 @@ static void echo_cmd_handler(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_CLI_ECHO_MODE
+#if CONFIG_CLI_ECHO_MODE
 bool cli_get_echo_mode()
 {
     return !cli.echo_disabled;
@@ -1212,7 +1210,7 @@ void cli_set_echo_mode(bool enabled)
 }
 #endif /*CONFIG_CLI_ECHO_MODE*/
 
-#ifdef CONFIG_CLI_TESTS
+#if CONFIG_CLI_TESTS
 static void test_getopt(int argc, char **argv)
 {
     int c;
@@ -1247,7 +1245,7 @@ static void test_getopt(int argc, char **argv)
 static struct cli_command built_ins[] = {
     {"help", NULL, help_command},
     {"clear", NULL, clear_command},
-#ifdef CONFIG_CLI_TESTS
+#if CONFIG_CLI_TESTS
     {"getopt_test", NULL, test_getopt},
 #endif
 };
@@ -1338,7 +1336,7 @@ int cli_unregister_commands(const struct cli_command *commands, int num_commands
 }
 
 #if defined(SDK_OS_FREE_RTOS)
-#ifdef CONFIG_UART_INTERRUPT
+#if CONFIG_UART_INTERRUPT
 static void uart_task(void *pvParameters)
 {
     usart_config.srcclk = BOARD_DEBUG_UART_CLK_FREQ;
@@ -1358,7 +1356,7 @@ static void uart_task(void *pvParameters)
     }
 }
 
-#ifdef CONFIG_HOST_SLEEP
+#if CONFIG_HOST_SLEEP
 int cli_uart_reinit()
 {
     return USART_RTOS_Init(&ur_handle, &t_u_handle, &usart_config);
@@ -1420,7 +1418,7 @@ int cli_init(void)
         return -WM_FAIL;
     }
 #if defined(SDK_OS_FREE_RTOS)
-#ifndef CONFIG_UART_INTERRUPT
+#if !CONFIG_UART_INTERRUPT
     if (cli_install_UART_Tick() != WM_SUCCESS)
     {
         (void)PRINTF(
@@ -1436,7 +1434,7 @@ int cli_init(void)
         cli_init_done = true;
     }
 #if defined(SDK_OS_FREE_RTOS)
-#ifdef CONFIG_UART_INTERRUPT
+#if CONFIG_UART_INTERRUPT
     osa_status_t status = OSA_TaskCreate((osa_task_handle_t)uart_task_Handle, OSA_TASK(uart_task), NULL);
     if (status != KOSA_StatusSuccess)
     {

@@ -1,4 +1,4 @@
-#ifdef CONFIG_WLS_CSI_PROC
+#if CONFIG_WLS_CSI_PROC
 /** @file wls_radix4Fft.h
  *
  * @brief This file contains header file for fixed-point FFT functions
@@ -28,9 +28,9 @@
 #define MAX_FFT_SIZE_2048
 #define MAX_FFT_SIZE 2048
 #endif
-//#define TWIDDLE_HALF_SIZE
+// #define TWIDDLE_HALF_SIZE
 #define TWIDDLE_BIPT 15
-//#define BIASED_ROUNDING
+// #define BIASED_ROUNDING
 
 // call separate stages
 void radix4FftStageOne(INT16 *pSrc, INT16 *pDst, int Nfft);
@@ -72,4 +72,4 @@ extern const INT16 radix4FftTwiddleArr[2 * MAX_FFT_SIZE];
 
 #endif
 
-#endif  /* CONFIG_WLS_CSI_PROC */
+#endif /* CONFIG_WLS_CSI_PROC */

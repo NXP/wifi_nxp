@@ -64,7 +64,7 @@ Change Log:
 /** Value for undetermined priv_curr_idx on first entry to new RDH stage */
 #define RDH_STAGE_FIRST_ENTRY_PRIV_IDX (0xff)
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /** Region codes 0x10, 0x20:  channels 1 thru 11 supported */
 static const IEEEtypes_SupportChan_Subband_t wlan_11h_2_4G_region_FCC = {1, 11};
 
@@ -104,7 +104,7 @@ typedef struct
 /********************************************************
                 Local Functions
 ********************************************************/
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Utility function to get a random number based on the underlying OS
  *
@@ -1053,11 +1053,11 @@ static mlan_status wlan_11h_prepare_custom_ie_chansw(IN mlan_adapter *pmadapter,
 
     /* configure custom_ie api settings */
     pcust_chansw_ie                    = (custom_ie *)&pds_misc_cfg->param.cust_ie.ie_data_list[0];
-    pcust_chansw_ie->ie_index          = 0xffff; /* Auto index */
+    pcust_chansw_ie->ie_index          = 0xffff;                            /* Auto index */
     pcust_chansw_ie->ie_length         = sizeof(IEEEtypes_ChanSwitchAnn_t);
     pcust_chansw_ie->mgmt_subtype_mask = (is_adding_ie) ? MBIT(8) | MBIT(5) /* add IE for BEACON | PROBE_RSP */
                                                           :
-                                                          0; /* remove IE */
+                                                          0;                /* remove IE */
 
     /* prepare CHAN_SW IE inside ioctl */
     pchansw_ie                    = (IEEEtypes_ChanSwitchAnn_t *)pcust_chansw_ie->ie_buffer;
@@ -1541,7 +1541,7 @@ void wlan_11h_init(mlan_adapter *adapter)
     LEAVE();
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Cleanup for the 11h parameters that allocated memory, etc.
  *
@@ -1591,7 +1591,7 @@ void wlan_11h_priv_init(mlan_private *pmpriv)
     LEAVE();
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Retrieve a randomly selected starting channel if needed for 11h
  *
@@ -1731,7 +1731,7 @@ t_bool wlan_11h_radar_detect_required(mlan_private *priv, t_u8 channel)
     return required;
 }
 
-#ifdef CONFIG_ECSA
+#if CONFIG_ECSA
 /**
  *  @brief try to get a non-dfs channel
  *
@@ -1788,7 +1788,7 @@ done:
 }
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Perform a radar measurement if required on given channel
  *
@@ -2894,7 +2894,7 @@ mlan_status wlan_11h_radar_detected_handling(mlan_adapter *pmadapter)
                                                                          5GHz
                                                                        */
                     ret = wlan_uap_set_channel(pmpriv, pstate_rdh->uap_band_cfg, pstate_rdh->new_channel);
-                    break; // leads to exit case
+                    break;                                            // leads to exit case
                 }
 #endif
             }

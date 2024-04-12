@@ -43,7 +43,7 @@ USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "nxp_wifi.h"
 #endif
 
-#ifdef CONFIG_SIGMA_AGENT
+#if CONFIG_SIGMA_AGENT
 #include "wfa_portall.h"
 #include "wfa_debug.h"
 #include "wfa_types.h"

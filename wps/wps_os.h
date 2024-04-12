@@ -58,7 +58,7 @@ typedef struct wps_loop_s
 struct wps_thread_t
 {
     int initialized;
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     OSA_MUTEX_HANDLE_DEFINE(p2p_session);
     osa_msgq_handle_t peer_event_queue;
     osa_msgq_handle_t event_queue;
@@ -163,7 +163,7 @@ int wps_start_timer(unsigned int secs, unsigned int usecs, void (*handler)(void 
  */
 int wps_cancel_timer(void (*handler)(void *timeout_ctx), void *callback_data);
 void wps_peer_event_receive();
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 void wps_event_receive(WPS_DATA *wps_s, WFD_DATA *pwfd_data);
 #endif
 #endif /* _WPS_OS_H_ */

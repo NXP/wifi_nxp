@@ -66,16 +66,16 @@ Change log:
 /** Enable Host PKT forwarding */
 #define PKT_FWD_ENABLE_BIT 0x01U
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 mlan_status wlan_uap_get_channel(IN pmlan_private pmpriv);
 #endif /* CONFIG_MLAN_WMSDK */
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 
 mlan_status wlan_uap_set_channel(IN pmlan_private pmpriv, IN t_u8 uap_band_cfg, IN t_u8 channel);
 
 #endif
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 mlan_status wlan_uap_get_beacon_dtim(IN pmlan_private pmpriv);
 #endif /* CONFIG_MLAN_WMSDK */
 
@@ -89,11 +89,11 @@ mlan_status wlan_ops_uap_prepare_cmd(IN t_void *priv,
                                      IN t_void *pdata_buf,
                                      IN t_void *pcmd_buf);
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 mlan_status wlan_ops_uap_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, IN t_void *pcmd_buf, IN t_void *pioctl);
 #endif /* CONFIG_MLAN_WMSDK */
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 mlan_status wlan_ops_uap_process_event(IN t_void *priv);
 
 t_void *wlan_ops_uap_process_txpd(IN t_void *priv, IN pmlan_buffer pmbuf);

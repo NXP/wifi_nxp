@@ -39,7 +39,7 @@
 
 #define sdio_e(...) wmlog_e("sdio", ##__VA_ARGS__)
 
-#ifdef CONFIG_WIFI_SDIO_DEBUG
+#if CONFIG_WIFI_SDIO_DEBUG
 #define sdio_d(...) wmlog("sdio", ##__VA_ARGS__)
 #else
 #define sdio_d(...)

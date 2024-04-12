@@ -22,7 +22,7 @@ Change Log:
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /********************************************************
                 Local Variables
 ********************************************************/
@@ -643,7 +643,7 @@ pmlan_buffer wlan_alloc_mlan_buffer(mlan_adapter *pmadapter, t_u32 data_len, t_u
         pmbuf->data_len    = data_len;
         pmbuf->flags |= MLAN_BUF_FLAG_MALLOC_BUF;
     }
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     else
     {
         /* use moal_alloc_mlan_buffer, head_room supported */
@@ -675,7 +675,7 @@ exit:
  */
 t_void wlan_free_mlan_buffer(mlan_adapter *pmadapter, pmlan_buffer pmbuf)
 {
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     pmlan_callbacks pcb = &pmadapter->callbacks;
     ENTER();
 
@@ -692,7 +692,7 @@ t_void wlan_free_mlan_buffer(mlan_adapter *pmadapter, pmlan_buffer pmbuf)
     return;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Delay function implementation
  *
@@ -1196,7 +1196,7 @@ t_void wlan_delete_station_list(pmlan_private priv)
     return;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Get extended version information
  *
@@ -1279,7 +1279,7 @@ mlan_status wlan_reg_rx_mgmt_ind(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req 
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 extern void wifi_wfd_event(bool peer_event, bool action_frame, void *data);
 #define ZERO_BUF_LEN 8
 #endif
@@ -1298,7 +1298,7 @@ mlan_status wlan_process_802dot11_mgmt_pkt(IN mlan_private *priv, IN t_u8 *paylo
     mlan_status ret                   = MLAN_STATUS_SUCCESS;
     wlan_802_11_header *pieee_pkt_hdr = MNULL;
     t_u16 sub_type                    = 0;
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     pmlan_adapter pmadapter = priv->adapter;
     pmlan_callbacks pcb     = &pmadapter->callbacks;
     t_u8 *event_buf         = MNULL;
@@ -1307,7 +1307,7 @@ mlan_status wlan_process_802dot11_mgmt_pkt(IN mlan_private *priv, IN t_u8 *paylo
     t_u8 zero_buf[8]        = {0, 0, 0, 0, 0, 0, 0, 0};
 #endif
     ENTER();
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     if (payload_len > (MAX_EVENT_SIZE - sizeof(mlan_event_p2p)))
     {
         PRINTM(MERROR, "Dropping large mgmt frame,len =%d\n", payload_len);
@@ -1340,7 +1340,7 @@ mlan_status wlan_process_802dot11_mgmt_pkt(IN mlan_private *priv, IN t_u8 *paylo
         case SUBTYPE_DEAUTH:
         case SUBTYPE_AUTH:
         case SUBTYPE_PROBE_RESP:
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
             unicast = MTRUE;
 #endif
             break;
@@ -1348,7 +1348,7 @@ mlan_status wlan_process_802dot11_mgmt_pkt(IN mlan_private *priv, IN t_u8 *paylo
             PRINTM(MINFO, "Unexpected pkt subtype \n");
             break;
     }
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     if (unicast == MTRUE)
     {
         if (__memcmp(pmadapter, pieee_pkt_hdr->addr1, priv->curr_p2p_addr, MLAN_MAC_ADDR_LENGTH))
@@ -1429,7 +1429,7 @@ mlan_status wlan_bypass_802dot11_mgmt_pkt(void *data)
     return ret;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Set hotspot enable/disable
  *
@@ -1483,7 +1483,7 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss
         pext_cap->ext_cap.TDLSSupport = 1;
     }
 
-#if defined(CONFIG_WNM_PS)
+#if (CONFIG_WNM_PS)
     if ((((mlan_private *)mlan_adap->priv[0])->wnm_set == true) && (pbss_desc != MNULL) &&
         (pbss_desc->pext_cap->ext_cap.WNM_Sleep == true))
     {
@@ -1494,15 +1494,15 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss
         pext_cap->ext_cap.WNM_Sleep = 0;
     }
 #endif
-#ifdef CONFIG_11AX
-#ifdef CONFIG_MULTI_BSSID_SUPPORT
+#if CONFIG_11AX
+#if CONFIG_MULTI_BSSID_SUPPORT
     if (pbss_desc && pbss_desc->multi_bssid_ap)
         SET_EXTCAP_MULTI_BSSID(pext_cap->ext_cap);
 #endif
     if (wlan_check_11ax_twt_supported(pmpriv, pbss_desc))
         SET_EXTCAP_TWT_REQ(pext_cap->ext_cap);
 #endif
-#ifdef CONFIG_11V
+#if CONFIG_11V
     pext_cap->ext_cap.BSS_Transition = 1;
 #endif
 #ifdef CONFIG_11MC
@@ -1515,7 +1515,7 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss
     LEAVE();
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Get OTP user data
  *
@@ -1961,7 +1961,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
 {
     t_s32 rate_index;
     mlan_rate_format rate_format;
-#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
+#if (CONFIG_11AC) || (CONFIG_11AX)
     t_u32 nss;
 #endif
     t_u32 i;
@@ -1981,7 +1981,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
     ds_rate = (mlan_ds_rate *)(void *)pioctl_req->pbuf;
 
     rate_format = ds_rate->param.rate_cfg.rate_format;
-#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
+#if (CONFIG_11AC) || (CONFIG_11AX)
     nss = ds_rate->param.rate_cfg.nss;
 #endif
     rate_index = (t_s32)ds_rate->param.rate_cfg.rate;
@@ -2000,7 +2000,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
             bitmap_rates[i] = 0xFFFF;
         }
         bitmap_rates[9] = 0x3FFF;
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
         /* [10..17] VHT */
 #ifdef RW610
         /* RW610 only supports VHT MCS0 ~ MCS8*/
@@ -2020,7 +2020,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
             bitmap_rates[i] = 0x0;
         }
 #endif
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
         /* [18..25] HE */
 #ifdef RW610
         /* RW610 only supports HE MCS0 ~ MCS9*/
@@ -2090,7 +2090,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
             /*DO Nothing*/
         }
 
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
         if (rate_format == MLAN_RATE_FORMAT_VHT)
         {
             if ((rate_index <= MLAN_RATE_INDEX_MCS9) && (MLAN_RATE_NSS1 <= nss) && (nss <= MLAN_RATE_NSS2))
@@ -2100,7 +2100,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
             }
         }
 #endif
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
         if (rate_format == MLAN_RATE_FORMAT_HE)
         {
             if (IS_FW_SUPPORT_11AX(pmadapter))
@@ -2175,14 +2175,14 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
  */
 mlan_status wlan_rate_ioctl_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req)
 {
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     mlan_ds_rate *rate = MNULL;
 #endif /* CONFIG_MLAN_WMSDK */
     mlan_status status = MLAN_STATUS_SUCCESS;
 
     ENTER();
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     rate = (mlan_ds_rate *)pioctl_req->pbuf;
     if (rate->param.rate_cfg.rate_type == MLAN_RATE_VALUE)
     {
@@ -2206,7 +2206,7 @@ mlan_status wlan_rate_ioctl_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req p
         {
             status = wlan_rate_ioctl_set_rate_index(pmadapter, pioctl_req);
         }
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     }
 #endif /* CONFIG_MLAN_WMSDK */
 
@@ -2270,7 +2270,7 @@ mlan_status wlan_cmd_802_11_rf_antenna(IN pmlan_private pmpriv,
     return MLAN_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_NET_MONITOR
+#if CONFIG_NET_MONITOR
 mlan_status wlan_cmd_802_11_net_monitor(IN pmlan_private pmpriv,
                                         IN HostCmd_DS_COMMAND *cmd,
                                         IN t_u16 cmd_action,
@@ -2310,7 +2310,7 @@ mlan_status wlan_cmd_802_11_net_monitor(IN pmlan_private pmpriv,
 }
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief This function handles the command response of rf_antenna
  *
@@ -2447,7 +2447,7 @@ mlan_status wlan_misc_ioctl_low_pwr_mode(IN pmlan_adapter pmadapter, IN pmlan_io
 }
 #endif // WLAN_LOW_POWER_ENABLE
 
-#ifdef CONFIG_WIFI_CLOCKSYNC
+#if CONFIG_WIFI_CLOCKSYNC
 /**
  *  @brief Set/Get GPIO TSF Latch config
  *
@@ -2508,7 +2508,7 @@ mlan_status wlan_misc_get_tsf_info(pmlan_adapter pmadapter, pmlan_ioctl_req pioc
 }
 #endif /* CONFIG_WIFI_CLOCKSYNC */
 
-#ifdef CONFIG_ECSA
+#if CONFIG_ECSA
 /**
  *  @brief Get non-global operating class
  *
@@ -2596,7 +2596,7 @@ mlan_status wlan_misc_ioctl_operclass_validation(pmlan_adapter pmadapter, mlan_i
 }
 #endif
 
-#ifdef CONFIG_RF_TEST_MODE
+#if CONFIG_RF_TEST_MODE
 /**
  *  @brief RF Test Mode config
  *
@@ -2689,7 +2689,7 @@ done:
 }
 #endif
 
-#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
+#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
 /**
  *  @brief Configure GPIO independent reset
  *

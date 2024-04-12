@@ -60,7 +60,7 @@ static void test_wlan_get_mac_address(int argc, char **argv)
         (void)PRINTF("uAP MAC Address: %02X:%02X:%02X:%02X:%02X:%02X\r\n", uap_mac[0], uap_mac[1], uap_mac[2],
                      uap_mac[3], uap_mac[4], uap_mac[5]);
     }
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     (void)PRINTF("P2P MAC address\r\n");
     if (wlan_get_wfd_mac_address(mac))
         (void)PRINTF("Error: unable to retrieve P2P MAC address\r\n");

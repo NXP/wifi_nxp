@@ -115,13 +115,13 @@
 #define WIFI_WRITE_REG32(reg, val) (WIFI_REG32(reg) = (val))
 
 /* Set default mode of fw download */
-#ifndef CONFIG_SUPPORT_WIFI
+#if !CONFIG_SUPPORT_WIFI
 #define CONFIG_SUPPORT_WIFI 1
 #endif
-#ifndef CONFIG_SUPPORT_BLE
+#if !CONFIG_SUPPORT_BLE
 #define CONFIG_SUPPORT_BLE 1
 #endif
-#ifndef CONFIG_SUPPORT_15D4
+#if !CONFIG_SUPPORT_15D4
 #define CONFIG_SUPPORT_15D4 1
 #endif
 
@@ -538,8 +538,8 @@ int process_input_cmd(uint8_t *buf, int m_len)
         imupkt->pkttype = SDIOPKTTYPE_CMD;
 
         imupkt->size = m_len - sizeof(cmd_header) + INTF_HEADER_LEN;
-        d             = (uint8_t *)local_outbuf + INTF_HEADER_LEN;
-        s             = (uint8_t *)buf + sizeof(uart_header) + sizeof(cmd_header);
+        d            = (uint8_t *)local_outbuf + INTF_HEADER_LEN;
+        s            = (uint8_t *)buf + sizeof(uart_header) + sizeof(cmd_header);
 #else
         d   = (uint8_t *)local_outbuf;
         s   = (uint8_t *)buf + sizeof(uart_header) + sizeof(cmd_header);
@@ -991,7 +991,7 @@ static void main_task(osa_task_param_t arg)
             case MLAN_STATUS_FW_NOT_DETECTED:
                 result = -WIFI_ERROR_FW_NOT_DETECTED;
                 break;
-#ifdef CONFIG_XZ_DECOMPRESSION
+#if CONFIG_XZ_DECOMPRESSION
             case MLAN_STATUS_FW_XZ_FAILED:
                 result = -WIFI_ERROR_FW_XZ_FAILED;
                 break;
@@ -1062,7 +1062,7 @@ static void main_task(osa_task_param_t arg)
 #error \
     "One of CONFIG_SUPPORT_WIFI CONFIG_SUPPORT_15D4 and CONFIG_SUPPORT_BLE should be defined, or it will not download any formware!!"
 #endif
-#if defined(CONFIG_SUPPORT_WIFI) && (CONFIG_SUPPORT_WIFI == 1)
+#if (CONFIG_SUPPORT_WIFI) && (CONFIG_SUPPORT_WIFI == 1)
     sb3_fw_download(LOAD_WIFI_FIRMWARE, 1, 0);
 #endif
 
@@ -1070,12 +1070,11 @@ static void main_task(osa_task_param_t arg)
     wifi_cau_temperature_write_to_firmware();
 
     /* 15d4 single and 15d4+ble combo */
-#if defined(CONFIG_SUPPORT_15D4) && (CONFIG_SUPPORT_15D4 == 1)
+#if (CONFIG_SUPPORT_15D4) && (CONFIG_SUPPORT_15D4 == 1)
     sb3_fw_download(LOAD_15D4_FIRMWARE, 1, 0);
 #endif
     /* only ble, no 15d4 */
-#if defined(CONFIG_SUPPORT_15D4) && (CONFIG_SUPPORT_15D4 == 0) && defined(CONFIG_SUPPORT_BLE) && \
-    (CONFIG_SUPPORT_BLE == 1)
+#if (CONFIG_SUPPORT_15D4) && (CONFIG_SUPPORT_15D4 == 0) && (CONFIG_SUPPORT_BLE) && (CONFIG_SUPPORT_BLE == 1)
     sb3_fw_download(LOAD_BLE_FIRMWARE, 1, 0);
 #endif
 

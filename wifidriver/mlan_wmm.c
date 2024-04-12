@@ -18,7 +18,7 @@ Change log:
 /* Additional WMSDK header files */
 #include <wmerrno.h>
 #include <osa.h>
-#ifdef CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY
 #include <wm_net.h>
 #endif
 /* Always keep this include at the end of all include files */
@@ -62,7 +62,7 @@ static const t_u8 wmm_info_ie[] = {(t_u8)WMM_IE, 0x07, 0x00, 0x50, 0xf2, 0x02, 0
 /** Type enumeration of WMM AC_QUEUES */
 typedef MLAN_PACK_START enum _wmm_ac_e { AC_BE, AC_BK, AC_VI, AC_VO } MLAN_PACK_END wmm_ac_e;
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  * AC Priorities go from AC_BK to AC_VO.  The ACI enumeration for AC_BK (1)
  *   is higher than the enumeration for AC_BE (0); hence the needed
@@ -91,7 +91,7 @@ static t_u8 tos_to_tid[] = {
     0x07  /* 1 1 1 AC_VO */
 };
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  * This table inverses the tos_to_tid operation to get a priority
  * which is in sequential order, and can be compared.
@@ -101,7 +101,7 @@ static t_u8 tos_to_tid_inv[] = {0x02, /* from tos_to_tid[2] = 0 */
                                 0x00, /* from tos_to_tid[0] = 1 */
                                 0x01, /* from tos_to_tid[1] = 2 */
                                 0x03, 0x04, 0x05, 0x06, 0x07};
-#endif /* CONFIG_MLAN_WMSDK */
+#endif                                /* CONFIG_MLAN_WMSDK */
 
 /**
  * This table will provide the tid value for given ac. This table does not
@@ -144,7 +144,7 @@ static void wlan_wmm_ac_debug_print(const IEEEtypes_WmmAcParameters_t *pac_param
 #define PRINTM_AC(pac_param)
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Allocate route address
  *
@@ -925,7 +925,7 @@ static int wlan_dequeue_tx_packet(pmlan_adapter pmadapter)
             {
                 PRINTM(MDAT_D, "tid_del=%d tid=%d\n", tid_del, tid);
                 wlan_11n_create_txbastream_tbl(priv, ptr->ra, tid, BA_STREAM_SETUP_INPROGRESS);
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
                 (void)wlan_send_delba(priv, tid_del, ra, 1);
 #endif
             }
@@ -1039,14 +1039,14 @@ t_void wlan_clean_txrx(pmlan_private priv)
 
     ENTER();
 
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
     wlan_cleanup_bypass_txq(GET_BSS_ROLE(priv));
 #endif
 
     wlan_11n_cleanup_reorder_tbl(priv);
 
     (void)pmadapter->callbacks.moal_spin_lock(pmadapter->pmoal_handle, priv->wmm.ra_list_spinlock);
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     wlan_wmm_cleanup_queues(priv);
 #endif /* CONFIG_MLAN_WMSDK */
     wlan_11n_deleteall_txbastream_tbl(priv);
@@ -1056,11 +1056,11 @@ t_void wlan_clean_txrx(pmlan_private priv)
 #ifdef SDIO_MULTI_PORT_RX_AGGR_FOR_REF
     MP_RX_AGGR_BUF_RESET(priv->adapter);
 #endif
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
     wlan_ralist_del_all_enh(priv);
 #endif /* CONFIG_WMM */
     (void)__memcpy(pmadapter, tos_to_tid, ac_to_tid, sizeof(tos_to_tid));
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     for (i = 0; i < MAX_NUM_TID; i++)
     {
         tos_to_tid_inv[tos_to_tid[i]] = (t_u8)i;
@@ -1095,7 +1095,7 @@ void wlan_wmm_default_queue_priorities(pmlan_private priv)
     LEAVE();
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Initialize WMM priority queues
  *
@@ -1391,7 +1391,7 @@ t_void wlan_wmm_init(pmlan_adapter pmadapter)
     LEAVE();
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Setup the queue priorities and downgrade any queues as required
  *         by the WMM info.  Setups default values if WMM is not active
@@ -1494,7 +1494,7 @@ raListTbl *wlan_wmm_get_ralist_node(pmlan_private priv, t_u8 tid, t_u8 *ra_addr)
     return MNULL;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *   @brief Check if RA list is valid or not
  *
@@ -1661,7 +1661,7 @@ t_void wlan_wmm_add_buf_txqueue(pmlan_adapter pmadapter, pmlan_buffer pmbuf)
 #endif /* CONFIG_MLAN_WMSDK */
 
 #ifdef STA_SUPPORT
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Process the GET_WMM_STATUS command response from firmware
  *
@@ -1866,7 +1866,7 @@ t_u32 wlan_wmm_process_association_req(pmlan_private priv,
 }
 #endif /* STA_SUPPORT */
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *   @brief Compute the time delay in the driver queues for a given packet.
  *
@@ -2093,8 +2093,8 @@ mlan_status wlan_cmd_wmm_addts_req(IN pmlan_private pmpriv, OUT HostCmd_DS_COMMA
 
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_WMM_ADDTS_REQ);
     cmd->size    = wlan_cpu_to_le16(sizeof(pcmd_addts->dialog_token) + sizeof(pcmd_addts->timeout_ms) +
-                                 sizeof(pcmd_addts->command_result) + sizeof(pcmd_addts->ieee_status_code) +
-                                 paddts->ie_data_len + S_DS_GEN);
+                                    sizeof(pcmd_addts->command_result) + sizeof(pcmd_addts->ieee_status_code) +
+                                    paddts->ie_data_len + S_DS_GEN);
     cmd->result  = 0;
 
     pcmd_addts->timeout_ms   = wlan_cpu_to_le32(paddts->timeout);
@@ -2175,7 +2175,7 @@ mlan_status wlan_cmd_wmm_delts_req(IN pmlan_private pmpriv, OUT HostCmd_DS_COMMA
 
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_WMM_DELTS_REQ);
     cmd->size    = wlan_cpu_to_le16(sizeof(pcmd_delts->dialog_token) + sizeof(pcmd_delts->command_result) +
-                                 sizeof(pcmd_delts->ieee_reason_code) + pdelts->ie_data_len + S_DS_GEN);
+                                    sizeof(pcmd_delts->ieee_reason_code) + pdelts->ie_data_len + S_DS_GEN);
     cmd->result  = 0;
     pcmd_delts->ieee_reason_code = (t_u8)pdelts->status_code;
     (void)__memcpy(pmpriv->adapter, pcmd_delts->tspec_data, pdelts->ie_data, MIN(WMM_TSPEC_SIZE, pdelts->ie_data_len));
@@ -2240,7 +2240,7 @@ mlan_status wlan_cmd_wmm_queue_config(IN pmlan_private pmpriv, OUT HostCmd_DS_CO
 
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_WMM_QUEUE_CONFIG);
     cmd->size    = wlan_cpu_to_le16(sizeof(pcmd_qcfg->action) + sizeof(pcmd_qcfg->access_category) +
-                                 sizeof(pcmd_qcfg->msdu_lifetime_expiry) + S_DS_GEN);
+                                    sizeof(pcmd_qcfg->msdu_lifetime_expiry) + S_DS_GEN);
     cmd->result  = 0;
 
     pcmd_qcfg->action               = pqcfg->action;
@@ -2416,7 +2416,7 @@ mlan_status wlan_ret_wmm_ts_status(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAN
 }
 #endif /* STA_SUPPORT */
 #endif /* CONFIG_MLAN_WMSDK */
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
 /**
  *  @brief This function prepares the command of WMM_PARAM_CONFIG
  *
@@ -2484,8 +2484,8 @@ mlan_status wlan_ret_wmm_param_config(pmlan_private pmpriv, const HostCmd_DS_COM
 }
 #endif
 
-#ifdef CONFIG_WMM
-#ifdef CONFIG_WMM_DEBUG
+#if CONFIG_WMM
+#if CONFIG_WMM_DEBUG
 #define MAX_HISTORY_RA_LIST_NUM 32
 
 static raListTbl *wlan_ralist_get_history(mlan_private *priv, t_u8 *ra, t_u8 ac)
@@ -2649,7 +2649,7 @@ SUCC:
     mlan_adap->priv[interface]->wmm.pkts_queued[queue]--;
     ra_list->total_pkts--;
     ra_list->drop_count++;
-#ifdef CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY
     /* Before replacement, need free the buffer from stack first */
     net_stack_buffer_free(buf->buffer);
 #endif
@@ -2738,7 +2738,7 @@ int wlan_wmm_add_buf_txqueue_enh(const uint8_t interface, const uint8_t *buffer,
         priv = mlan_adap->priv[1];
 
         /* refer to low_level_output payload memcpy */
-#ifdef CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY
     wifi_wmm_da_to_ra(&((outbuf_t *)buffer)->eth_header[0], ra);
 #else
     wifi_wmm_da_to_ra(&((outbuf_t *)buffer)->data[0], ra);
@@ -2798,7 +2798,7 @@ void wifi_wmm_buf_put(outbuf_t *buf)
 
     assert(mlan_adap->outbuf_pool.free_cnt < MAX_WMM_BUF_NUM);
 
-#ifdef CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY
     /* Free driver's reference count for network buffer */
     net_stack_buffer_free(buf->buffer);
 #endif
@@ -2873,11 +2873,11 @@ void wlan_ralist_pkts_free_enh(mlan_private *priv, raListTbl *ra_list, t_u8 ac)
 /* should be called inside wmm tid_tbl_ptr ra_list lock */
 static void wlan_ralist_free_enh(mlan_private *priv, raListTbl *ra_list, t_u8 ac)
 {
-#ifdef CONFIG_WMM_DEBUG
+#if CONFIG_WMM_DEBUG
     wlan_ralist_restore_history(priv, ra_list, ac);
 #else
     priv->adapter->callbacks.moal_free_semaphore(priv->adapter->pmoal_handle, &ra_list->buf_head.plock);
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
 
     priv->adapter->callbacks.moal_mfree(priv->adapter->pmoal_handle, (t_u8 *)ra_list);
 #else
@@ -2891,7 +2891,7 @@ static raListTbl *wlan_ralist_alloc_enh(pmlan_adapter pmadapter, t_u8 *ra)
     mlan_status ret;
     raListTbl *ra_list = MNULL;
 
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
     ret = pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle, sizeof(raListTbl), MLAN_MEM_DEF, (t_u8 **)&ra_list);
     if (ret != MLAN_STATUS_SUCCESS || ra_list == MNULL)
         return MNULL;
@@ -2899,7 +2899,7 @@ static raListTbl *wlan_ralist_alloc_enh(pmlan_adapter pmadapter, t_u8 *ra)
     ra_list = OSA_MemoryPoolAllocate(buf_128_MemoryPool);
     if (ra_list == MNULL)
     {
-    	return MNULL;
+        return MNULL;
     }
 
 #endif
@@ -2961,7 +2961,7 @@ int wlan_ralist_update_enh(mlan_private *priv, t_u8 *old_ra, t_u8 *new_ra)
     int i;
     int update_count   = 0;
     raListTbl *ra_list = MNULL;
-#ifdef CONFIG_WMM_DEBUG
+#if CONFIG_WMM_DEBUG
     raListTbl *hist_ra_list = MNULL;
 #endif
 
@@ -2985,7 +2985,7 @@ int wlan_ralist_update_enh(mlan_private *priv, t_u8 *old_ra, t_u8 *new_ra)
 
         (void)__memcpy(priv->adapter, ra_list->ra, new_ra, MLAN_MAC_ADDR_LENGTH);
 
-#ifdef CONFIG_WMM_DEBUG
+#if CONFIG_WMM_DEBUG
         hist_ra_list = wlan_ralist_alloc_enh(priv->adapter, old_ra);
         if (hist_ra_list != MNULL)
         {
@@ -3189,7 +3189,7 @@ void wlan_cleanup_bypass_txq(uint8_t interface)
 
         buf = (bypass_outbuf_t *)util_dequeue_list(mlan_adap->pmoal_handle, &priv->bypass_txq, MNULL, MNULL);
         priv->bypass_txq_cnt--;
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
         OSA_MemoryFree(buf);
 #else
         OSA_MemoryPoolFree(buf_1536_MemoryPool, buf);

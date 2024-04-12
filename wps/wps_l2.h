@@ -18,7 +18,7 @@
 
 #define PF_PACKET 17 /* Packet family.  */
 #define AF_PACKET PF_PACKET
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
 #define ETH_FRAME_LEN 1400
 #else
 #define ETH_FRAME_LEN 1200

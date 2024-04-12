@@ -12,7 +12,9 @@
 #ifndef __RTOS_WPA_SUPP_IF_H__
 #define __RTOS_WPA_SUPP_IF_H__
 
-#ifdef CONFIG_WPA_SUPP
+#include <wifi_config_default.h>
+
+#if CONFIG_WPA_SUPP
 #include "includes.h"
 #include "common.h"
 #include "eloop.h"
@@ -27,7 +29,7 @@
 
 #define supp_e(...) wmlog_e("supp_if", ##__VA_ARGS__)
 
-#ifdef CONFIG_SUPP_DEBUG
+#if CONFIG_SUPP_DEBUG
 #define supp_d(...) wmlog("supp_if", ##__VA_ARGS__)
 #else
 #define supp_d(...)

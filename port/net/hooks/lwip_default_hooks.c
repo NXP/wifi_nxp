@@ -13,7 +13,7 @@
 #include "lwip/tcpip.h"
 #include "lwip/prot/tcp.h"
 #include "lwip/tcp.h"
-#ifdef CONFIG_CLOUD_KEEP_ALIVE
+#if CONFIG_CLOUD_KEEP_ALIVE
 #include "lwip_default_hooks.h"
 #include "wlan.h"
 #endif
@@ -44,7 +44,7 @@ struct netif *lwip_hook_ip4_route_src(const ip4_addr_t *src, const ip4_addr_t *d
     return NULL;
 }
 
-#ifdef CONFIG_CLOUD_KEEP_ALIVE
+#if CONFIG_CLOUD_KEEP_ALIVE
 u32_t *lwip_hook_tcp_out_add_tcpopts(struct pbuf *p, struct tcp_hdr *hdr, const struct tcp_pcb *pcb, u32_t *opts)
 {
     t_u16 source_port;

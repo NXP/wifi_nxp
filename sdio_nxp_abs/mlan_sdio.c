@@ -546,7 +546,7 @@ static int sdio_card_init(void)
     wm_g_sd.operationVoltage = kSDMMC_OperationVoltage180V;
 #endif
 
-#if !defined(COEX_APP_SUPPORT) || (defined(COEX_APP_SUPPORT) && !defined(CONFIG_WIFI_IND_DNLD))
+#if !defined(COEX_APP_SUPPORT) || (defined(COEX_APP_SUPPORT) && !(CONFIG_WIFI_IND_DNLD))
     BOARD_WIFI_BT_Enable(true);
 #endif
 
@@ -672,8 +672,7 @@ void sdio_drv_deinit(void)
 
 #define SDIO_CMD_TIMEOUT 2000
 
-const struct device *sdhc_dev = DEVICE_DT_GET(
-                DT_BUS(DT_COMPAT_GET_ANY_STATUS_OKAY(nxp_wifi)));
+const struct device *sdhc_dev = DEVICE_DT_GET(DT_BUS(DT_COMPAT_GET_ANY_STATUS_OKAY(nxp_wifi)));
 
 static struct sd_card wm_g_sd;
 static struct sdio_func g_sdio_funcs[8];
@@ -739,8 +738,7 @@ void sdio_irq_handler(const struct device *dev, int reason, const void *user_dat
 
 void sdio_enable_interrupt(void)
 {
-    sdhc_enable_interrupt(sdhc_dev, (sdhc_interrupt_cb_t)sdio_irq_handler, SDHC_INT_SDIO,
-                          NULL);
+    sdhc_enable_interrupt(sdhc_dev, (sdhc_interrupt_cb_t)sdio_irq_handler, SDHC_INT_SDIO, NULL);
     return;
 }
 
@@ -784,7 +782,6 @@ static int sdio_card_init(void)
     (void)sdio_drv_creg_write(0x4, 0, 0x3, &resp);
     /* Enable IO in card */
     (void)sdio_drv_creg_write(0x2, 0, 0x2, &resp);
-
 
     (void)sdio_set_block_size(&g_sdio_funcs[0], 256);
     (void)sdio_set_block_size(&g_sdio_funcs[1], 256);

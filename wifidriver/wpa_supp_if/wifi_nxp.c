@@ -16,7 +16,7 @@
 #include <wifi.h>
 #include <wifi-debug.h>
 
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
 
 #include <wifi_nxp.h>
 #include <rtos_wpa_supp_if.h>

@@ -43,14 +43,14 @@ static struct iperf_test_context ctx;
 OSA_TIMER_HANDLE_DEFINE(ptimer);
 static ip_addr_t server_address;
 static ip_addr_t bind_address;
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 static bool ipv6;
 #endif
 static int amount                   = IPERF_CLIENT_AMOUNT;
 static unsigned int udp_rate_factor = IPERF_UDP_DEFAULT_FACTOR;
 unsigned int buffer_len             = 0;
 unsigned int port                   = LWIPERF_TCP_PORT_DEFAULT;
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
 uint8_t qos = 0;
 #endif
 static uint8_t mcast_mac[6];
@@ -58,8 +58,8 @@ static bool mcast_mac_valid;
 
 static void timer_poll_udp_client(osa_timer_arg_t arg);
 #if defined(CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)
-#ifdef CONFIG_HOST_SLEEP
-#ifdef CONFIG_POWER_MANAGER
+#if CONFIG_HOST_SLEEP
+#if CONFIG_POWER_MANAGER
 extern void APP_SetTicklessIdle(bool enable);
 bool disable_tickless_hook = false;
 #endif
@@ -68,13 +68,13 @@ bool disable_tickless_hook = false;
 
 /* Report state => string */
 const char *report_type_str[] = {
-    "TCP_DONE_SERVER (RX)", /* LWIPERF_TCP_DONE_SERVER_RX,*/
+    "TCP_DONE_SERVER (RX)",        /* LWIPERF_TCP_DONE_SERVER_RX,*/
 #ifdef LWIPERF_REVERSE_MODE
-    "TCP_DONE_SERVER (TX)", /* LWIPERF_TCP_DONE_SERVER_TX,*/
+    "TCP_DONE_SERVER (TX)",        /* LWIPERF_TCP_DONE_SERVER_TX,*/
 #endif
-    "TCP_DONE_CLIENT (TX)", /* LWIPERF_TCP_DONE_CLIENT_TX,*/
+    "TCP_DONE_CLIENT (TX)",        /* LWIPERF_TCP_DONE_CLIENT_TX,*/
 #ifdef LWIPERF_REVERSE_MODE
-    "TCP_DONE_CLIENT (RX)", /* LWIPERF_TCP_DONE_CLIENT_RX,*/
+    "TCP_DONE_CLIENT (RX)",        /* LWIPERF_TCP_DONE_CLIENT_RX,*/
 #endif
     "TCP_ABORTED_LOCAL",           /* LWIPERF_TCP_ABORTED_LOCAL, */
     "TCP_ABORTED_LOCAL_DATAERROR", /* LWIPERF_TCP_ABORTED_LOCAL_DATAERROR, */
@@ -82,11 +82,11 @@ const char *report_type_str[] = {
     "TCP_ABORTED_REMOTE",          /* LWIPERF_TCP_ABORTED_REMOTE, */
     "UDP_DONE_SERVER (RX)",        /* LWIPERF_UDP_DONE_SERVER_RX, */
 #ifdef LWIPERF_REVERSE_MODE
-    "UDP_DONE_SERVER (TX)", /* LWIPERF_UDP_DONE_SERVER_TX, */
+    "UDP_DONE_SERVER (TX)",        /* LWIPERF_UDP_DONE_SERVER_TX, */
 #endif
-    "UDP_DONE_CLIENT (TX)", /* LWIPERF_UDP_DONE_CLIENT_TX, */
+    "UDP_DONE_CLIENT (TX)",        /* LWIPERF_UDP_DONE_CLIENT_TX, */
 #ifdef LWIPERF_REVERSE_MODE
-    "UDP_DONE_CLIENT (RX)", /* LWIPERF_UDP_DONE_CLIENT_RX, */
+    "UDP_DONE_CLIENT (RX)",        /* LWIPERF_UDP_DONE_CLIENT_RX, */
 #endif
     "UDP_ABORTED_LOCAL",           /* LWIPERF_UDP_ABORTED_LOCAL, */
     "UDP_ABORTED_LOCAL_DATAERROR", /* LWIPERF_UDP_ABORTED_LOCAL_DATAERROR, */
@@ -94,9 +94,9 @@ const char *report_type_str[] = {
     "UDP_ABORTED_REMOTE",          /* LWIPERF_UDP_ABORTED_REMOTE, */
 };
 
-#if defined(CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)
-#ifdef CONFIG_HOST_SLEEP
-#ifdef CONFIG_POWER_MANAGER
+#if (CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)
+#if CONFIG_HOST_SLEEP
+#if CONFIG_POWER_MANAGER
 static void iperf_disable_tickless_hook(bool disable)
 {
     if (disable == true)
@@ -177,7 +177,7 @@ static void lwiperf_report(void *arg,
         (void)PRINTF(" %s \r\n", report_type_str[report_type]);
         if (local_addr != NULL && remote_addr != NULL)
         {
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
             if (ipv6)
             {
                 (void)PRINTF(" Local address : %s ", inet6_ntoa(local_addr->u_addr.ip6));
@@ -190,7 +190,7 @@ static void lwiperf_report(void *arg,
                              ((const u8_t *)local_addr)[3]);
             }
             (void)PRINTF(" Port %d \r\n", local_port);
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
             if (ipv6)
             {
                 (void)PRINTF(" Remote address : %s ", inet6_ntoa(remote_addr->u_addr.ip6));
@@ -236,9 +236,9 @@ static void lwiperf_report(void *arg,
     }
 
     iperf_free_ctx_iperf_session(arg, report_type);
-#if defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 1)
-#ifdef CONFIG_HOST_SLEEP
-#ifdef CONFIG_POWER_MANAGER
+#if (CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 1)
+#if CONFIG_HOST_SLEEP
+#if CONFIG_POWER_MANAGER
     /* Re-enable Tickless Idle */
     if (iperf_need_enable_tickless_idle(arg, report_type))
         iperf_disable_tickless_hook(false);
@@ -247,7 +247,7 @@ static void lwiperf_report(void *arg,
 #endif
 }
 
-#ifdef CONFIG_WMM_IPERF_TEST
+#if CONFIG_WMM_IPERF_TEST
 struct wmm_test_data_t
 {
     uint16_t port1;
@@ -581,7 +581,7 @@ void test_wmm(int argc, char **argv)
 static void iperf_test_start(void *arg)
 {
     struct iperf_test_context *ctx = (struct iperf_test_context *)arg;
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     struct netif *netiftmp  = NULL;
     struct netif *netifbind = NULL;
 #endif
@@ -593,9 +593,9 @@ static void iperf_test_start(void *arg)
         ctx->iperf_session = NULL;
     }
 
-#if defined(CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)
-#ifdef CONFIG_HOST_SLEEP
-#ifdef CONFIG_POWER_MANAGER
+#if (CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)
+#if CONFIG_HOST_SLEEP
+#if CONFIG_POWER_MANAGER
     /* Disable tickless idle when running iperf test */
     if (ctx->server_mode)
         (void)PRINTF("Please use iperf -a to close iperf after iperf server mode done\r\n");
@@ -613,7 +613,7 @@ static void iperf_test_start(void *arg)
     {
         if (ctx->tcp)
         {
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
             if (ipv6)
             {
                 ctx->iperf_session = lwiperf_start_tcp_server(IP6_ADDR_ANY, port, lwiperf_report, ctx);
@@ -626,7 +626,7 @@ static void iperf_test_start(void *arg)
         }
         else
         {
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
             if (ipv6)
             {
                 ctx->iperf_session = lwiperf_start_udp_server(IP6_ADDR_ANY, port, lwiperf_report, ctx);
@@ -642,7 +642,7 @@ static void iperf_test_start(void *arg)
     {
         if (ctx->tcp)
         {
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
             if (ipv6)
             {
                 NETIF_FOREACH(netiftmp)
@@ -664,7 +664,7 @@ static void iperf_test_start(void *arg)
             }
 #endif
             ctx->iperf_session = lwiperf_start_tcp_client(&server_address, port, ctx->client_type, amount, buffer_len,
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
                                                           qos,
 #else
                                                           0,
@@ -673,13 +673,13 @@ static void iperf_test_start(void *arg)
         }
         else
         {
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
             if (ipv6)
             {
                 ctx->iperf_session =
                     lwiperf_start_udp_client(&bind_address, port, &server_address, port, ctx->client_type, amount,
                                              buffer_len, IPERF_UDP_CLIENT_RATE * udp_rate_factor,
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
                                              qos,
 #else
                                              0,
@@ -693,14 +693,14 @@ static void iperf_test_start(void *arg)
                 ctx->iperf_session =
                     lwiperf_start_udp_client(&bind_address, port, &server_address, port, ctx->client_type, amount,
                                              buffer_len, IPERF_UDP_CLIENT_RATE * udp_rate_factor,
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
                                              qos,
 #else
                                          0,
 #endif
 
                                              lwiperf_report, ctx);
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
             }
 #endif
         }
@@ -893,7 +893,7 @@ static void display_iperf_usage(void)
     (void)PRINTF("\tClient/Server:\r\n");
     (void)PRINTF("\t   -u             use UDP rather than TCP\r\n");
     (void)PRINTF("\t   -B    <host>   bind to <host> (including multicast address)\r\n");
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     (void)PRINTF("\t   -V             Set the domain to IPv6 (send packets over IPv6)\r\n");
 #endif
     (void)PRINTF("\t   -a             abort ongoing iperf session\r\n");
@@ -912,7 +912,7 @@ static void display_iperf_usage(void)
     (void)PRINTF("\t   -t    #        time in seconds to transmit for (default 10 secs)\r\n");
     (void)PRINTF(
         "\t   -b    #        for UDP, bandwidth to send at in Mbps, default 100Mbps without the parameter\r\n");
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
     (void)PRINTF("\t   -S    #        QoS for udp traffic (default 0(Best Effort))\r\n");
 #endif
     (void)PRINTF(
@@ -942,11 +942,11 @@ static void cmd_iperf(int argc, char **argv)
         unsigned reverse : 1;
 #endif
         unsigned time : 1;
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
         unsigned tos : 1;
 #endif
         unsigned dserver : 1;
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         unsigned ipv6 : 1;
 #endif
         unsigned buflen : 1;
@@ -955,10 +955,10 @@ static void cmd_iperf(int argc, char **argv)
 
     amount          = IPERF_CLIENT_AMOUNT;
     udp_rate_factor = IPERF_UDP_DEFAULT_FACTOR;
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
     qos = 0;
 #endif
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     ipv6 = false;
 #endif
     buffer_len = 0;
@@ -1056,7 +1056,7 @@ static void cmd_iperf(int argc, char **argv)
             }
             arg += 1;
         }
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
         else if (!info.tos && string_equal("-S", argv[arg]))
         {
             arg += 1;
@@ -1071,7 +1071,7 @@ static void cmd_iperf(int argc, char **argv)
             arg += 1;
         }
 #endif
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         else if ((info.ipv6 == 0U) && string_equal("-V", argv[arg]))
         {
             arg += 1;
@@ -1153,7 +1153,7 @@ static void cmd_iperf(int argc, char **argv)
         }
     } while (arg < argc);
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     if (ipv6)
     {
         (void)inet6_aton(ip_addr, ip_2_ip6(&server_address));
@@ -1163,14 +1163,14 @@ static void cmd_iperf(int argc, char **argv)
     {
 #endif
         (void)inet_aton(ip_addr, ip_2_ip4(&server_address));
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         server_address.type = IPADDR_TYPE_V4;
     }
 #endif
 
     if (info.bind)
     {
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         if (ipv6)
         {
             inet6_aton(ip_addr_bind, ip_2_ip6(&bind_address));
@@ -1182,12 +1182,12 @@ static void cmd_iperf(int argc, char **argv)
         {
 #endif
             inet_aton(ip_addr_bind, ip_2_ip4(&bind_address));
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
             bind_address.type = IPADDR_TYPE_V4;
 #endif
             if (IP_IS_V4(&bind_address) != 0)
                 info.bhost = 1;
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         }
 #endif
     }
@@ -1195,7 +1195,7 @@ static void cmd_iperf(int argc, char **argv)
     if (((info.abort == 0U) && (info.server == 0U) && (info.client == 0U)) ||
         ((info.client != 0U) && (info.chost == 0U)) || ((info.server != 0U) && (info.client != 0U)) ||
         ((info.udp != 0U)
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
          && (info.ipv6 == 0U)
 #endif
          && ((info.bind == 0U) || (info.bhost == 0U))) ||
@@ -1210,13 +1210,13 @@ static void cmd_iperf(int argc, char **argv)
         ((info.dual != 0U) && (info.reverse != 0U)) || ((info.tradeoff != 0U) && (info.reverse != 0U)) ||
 #endif
         ((info.dserver != 0U) && (info.server == 0U || info.udp == 0U))
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         || ((info.ipv6 != 0U) && (info.client != 0U) && ((info.bind == 0U) || (info.bhost == 0U)))
 #endif
     )
     {
         (void)PRINTF("Incorrect usage\r\n");
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         if ((info.ipv6 != 0U) && (info.client != 0U) && ((info.bind == 0U) || (info.bhost == 0U)))
         {
             (void)PRINTF("IPv6: For client please specify local interface ip address using -B option\r\n");
@@ -1229,7 +1229,7 @@ static void cmd_iperf(int argc, char **argv)
 #endif
         {
             if ((info.udp != 0U)
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
                 && (info.ipv6 == 0U)
 #endif
                 && ((info.bind == 0U) || (info.bhost == 0U)))
@@ -1325,7 +1325,7 @@ static void cmd_iperf(int argc, char **argv)
 
 static struct cli_command iperf[] = {
     {"iperf", "[-s|-c <host>|-a|-h] [options]", cmd_iperf},
-#ifdef CONFIG_WMM_IPERF_TEST
+#if CONFIG_WMM_IPERF_TEST
     {"wmm_iperf", "wmm_test iperf instances commands...", test_wmm},
 #endif
 };

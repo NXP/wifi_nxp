@@ -15,7 +15,7 @@
 #define fwdnld_io_e(...) wmlog_e("wifi_io", ##__VA_ARGS__)
 #define fwdnld_io_w(...) wmlog_w("wifi_io", ##__VA_ARGS__)
 
-#ifdef CONFIG_FWDNLD_IO_DEBUG
+#if CONFIG_FWDNLD_IO_DEBUG
 #define fwdnld_io_d(...) wmlog("wifi_io", ##__VA_ARGS__)
 #else
 #define fwdnld_io_d(...)

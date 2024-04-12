@@ -9,11 +9,11 @@
 #include <stdint.h>
 #include <osa.h>
 
-#ifndef CONFIG_UART_WIFI_BRIDGE
+#if !CONFIG_UART_WIFI_BRIDGE
 
 #if defined(SD8801)
 
-#if !defined(CONFIG_WIFI_IND_DNLD)
+#if !(CONFIG_WIFI_IND_DNLD)
 
 const uint8_t fw_cpu1[] = {
 #include <sd8801_wlan.bin.inc>

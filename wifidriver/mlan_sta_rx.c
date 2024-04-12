@@ -101,7 +101,7 @@ typedef MLAN_PACK_START struct
 /********************************************************
   Global functions
 ********************************************************/
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief This function check and discard IPv4 and IPv6 gratuitous broadcast packets
  *
@@ -162,7 +162,7 @@ mlan_status wlan_process_rx_packet(pmlan_adapter pmadapter, pmlan_buffer pmbuf)
     pmlan_private priv = pmadapter->priv[pmbuf->bss_index];
     /* RxPacketHdr_t *prx_pkt; */
     RxPD *prx_pd;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     int hdr_chop;
     EthII_Hdr_t *peth_hdr;
     t_u8 rfc1042_eth_hdr[MLAN_MAC_ADDR_LENGTH] = {0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00};
@@ -187,7 +187,7 @@ mlan_status wlan_process_rx_packet(pmlan_adapter pmadapter, pmlan_buffer pmbuf)
        ethernet header processing.
     */
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     if (prx_pd->rx_pkt_type == PKT_TYPE_DEBUG)
     {
         t_u8 dbgType;
@@ -263,7 +263,7 @@ mlan_status wlan_process_rx_packet(pmlan_adapter pmadapter, pmlan_buffer pmbuf)
 #else
     priv->rxpd_rate_info = prx_pd->rate_info;
 #endif
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     /* wmsdk: looks like only a debugging thing. disabling for now */
     pmadapter->callbacks.moal_get_system_time(pmadapter->pmoal_handle, &pmbuf->out_ts_sec, &pmbuf->out_ts_usec);
     PRINTM(MDATA, "%lu.%06lu : Data => kernel seq_num=%d tid=%d\n", pmbuf->out_ts_sec, pmbuf->out_ts_usec,
@@ -303,7 +303,7 @@ mlan_status wlan_ops_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf
     pmlan_private priv            = pmadapter->priv[pmbuf->bss_index];
     t_u8 ta[MLAN_MAC_ADDR_LENGTH] = {0};
     t_u16 rx_pkt_type             = 0;
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     wlan_mgmt_pkt *pmgmt_pkt_hdr = MNULL;
 #endif /* CONFIG_P2P */
     ENTER();
@@ -339,7 +339,7 @@ mlan_status wlan_ops_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf
     {
         /* Check if this is mgmt packet and needs to forwarded to app as an
            event */
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         /* Note: We do not have data @ some offset of pbuf. pbuf only has RxPD */
         /* pmgmt_pkt_hdr = */
         /*     (wlan_mgmt_pkt *) ((t_u8 *) prx_pd + prx_pd->rx_pkt_offset); */

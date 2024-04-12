@@ -32,7 +32,7 @@
 
 #define cypto_e(...) wmlog_e("cypto", ##__VA_ARGS__)
 #define cypto_w(...) wmlog_w("cypto", ##__VA_ARGS__)
-#ifdef CONFIG_CRYPTO_DEBUG
+#if CONFIG_CRYPTO_DEBUG
 #define cypto_d(...) wmlog("cypto", ##__VA_ARGS__)
 #else
 #define crypto_d(...)

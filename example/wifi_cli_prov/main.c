@@ -30,12 +30,12 @@
 #ifndef RW610
 #include "wifi_bt_config.h"
 #endif
-#ifdef CONFIG_WPS2
+#if CONFIG_WPS2
 #include "wmtime.h"
 #endif
 
 #include "cli_utils.h"
-#ifdef CONFIG_WIFI_USB_FILE_ACCESS
+#if CONFIG_WIFI_USB_FILE_ACCESS
 #include "usb_api.h"
 #endif
 
@@ -73,7 +73,7 @@ int wlan_driver_init(void);
 int wlan_driver_deinit(void);
 int wlan_driver_reset(void);
 int wlan_reset_cli_init(void);
-#ifdef CONFIG_WPS2
+#if CONFIG_WPS2
 static int wlan_prov_cli_init(void);
 #endif
 
@@ -81,7 +81,7 @@ static int wlan_prov_cli_init(void);
  * Variables
  ******************************************************************************/
 
-#ifdef CONFIG_WPS2
+#if CONFIG_WPS2
 #define MAIN_TASK_STACK_SIZE 1500
 #else
 #define MAIN_TASK_STACK_SIZE 800
@@ -172,7 +172,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
                 return 0;
             }
 
-#ifdef CONFIG_WPS2
+#if CONFIG_WPS2
             ret = wlan_prov_cli_init();
             if (ret != WM_SUCCESS)
             {
@@ -216,7 +216,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             {
                 PRINTF("IPv4 Address: [%s]\r\n", ip);
             }
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
             int i;
             for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
             {
@@ -396,7 +396,7 @@ int wlan_reset_cli_init(void)
 }
 #endif
 
-#ifdef CONFIG_WPS2
+#if CONFIG_WPS2
 static void dump_set_rtc_time_usage(void)
 {
     (void)PRINTF("Usage: wlan-set-rtc-time <year> <month> <day> <hour> <minute> <second>\r\n");
@@ -456,7 +456,7 @@ static void test_wlan_get_rtc_time(int argc, char **argv)
                  date.hour, date.minute, date.second);
 }
 
-#ifdef CONFIG_WIFI_USB_FILE_ACCESS
+#if CONFIG_WIFI_USB_FILE_ACCESS
 static void dump_read_usb_file_usage(void)
 {
     (void)PRINTF("Usage: wlan-read-usb-file <type:ca-cert/client-cert/client-key> <file name>\r\n");
@@ -546,7 +546,7 @@ static void test_wlan_dump_usb_file(int argc, char **argv)
 static struct cli_command wlan_prov_commands[] = {
     {"wlan-set-rtc-time", "<year> <month> <day> <hour> <minute> <second>", test_wlan_set_rtc_time},
     {"wlan-get-rtc-time", NULL, test_wlan_get_rtc_time},
-#ifdef CONFIG_WIFI_USB_FILE_ACCESS
+#if CONFIG_WIFI_USB_FILE_ACCESS
     {"wlan-read-usb-file", "<type:ca-cert/client-cert/client-key> <file name>", test_wlan_read_usb_file},
     {"wlan-dump-usb-file", "<type:ca-cert/client-cert/client-key>", test_wlan_dump_usb_file},
 #endif
@@ -609,7 +609,7 @@ void main_task(void *param)
 int main(void)
 {
     BaseType_t result = 0;
-#ifdef CONFIG_WPS2
+#if CONFIG_WPS2
     struct rtc_cb_t rtc;
 #endif
     (void)result;
@@ -626,7 +626,7 @@ int main(void)
 
     RTC_Init(RTC);
 
-#ifdef CONFIG_WPS2
+#if CONFIG_WPS2
     memset(&rtc, 0, sizeof(struct rtc_cb_t));
     rtc.base         = (uint32_t)RTC;
     rtc.set_datetime = (int (*)(void *, struct datetime_t *))RTC_SetDatetime;
@@ -637,12 +637,12 @@ int main(void)
         wmtime_register_rtc_cb(&rtc);
 #endif
 
-#ifdef CONFIG_WIFI_USB_FILE_ACCESS
+#if CONFIG_WIFI_USB_FILE_ACCESS
     usb_init();
 #endif
 
     (void)OSA_TaskCreate((osa_task_handle_t)main_task_Handle, OSA_TASK(main_task), NULL);
-    
+
     vTaskStartScheduler();
     for (;;)
         ;

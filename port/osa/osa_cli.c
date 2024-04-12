@@ -11,7 +11,7 @@
 #include <inttypes.h>
 #include <osa.h>
 
-#ifdef CONFIG_MEM_POOLS
+#if CONFIG_MEM_POOLS
 #include <mem_pool_config.h>
 #endif
 
@@ -22,7 +22,7 @@
 void OSA_DumpThreadInfo(char *name)
 {
     char *task_info_buf = NULL;
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
     task_info_buf = (char *)OSA_MemoryAllocate(MAX_TASK_INFO_BUF);
 #else
     task_info_buf = (char *)OSA_MemoryPoolAllocate(buf_1024_MemoryPool);
@@ -37,7 +37,7 @@ void OSA_DumpThreadInfo(char *name)
     PRINTF("==================================================\r\n");
     PRINTF("%s\r\n", task_info_buf);
 
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
     OSA_MemoryFree(task_info_buf);
 #else
     OSA_MemoryPoolFree(buf_1024_MemoryPool, task_info_buf);

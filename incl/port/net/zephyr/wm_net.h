@@ -27,7 +27,7 @@ typedef struct
     struct net_addr nmask;
     struct net_addr gw;
     struct ethernetif state;
-#if defined(CONFIG_NET_STATISTICS_WIFI)
+#if (CONFIG_NET_STATISTICS_WIFI)
     struct net_stats_wifi stats;
 #endif
     scan_result_cb_t scan_cb;
@@ -93,7 +93,7 @@ struct net_ipv4_config
     unsigned dns2;
 };
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 /** This data structure represents an IPv6 address */
 struct net_ipv6_config
 {
@@ -113,7 +113,7 @@ struct net_ipv6_config
  */
 struct net_ip_config
 {
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     /** The network IPv6 address configuration that should be
      * associated with this interface. */
     struct net_ipv6_config ipv6[NET_IF_MAX_IPV6_ADDR];
@@ -460,7 +460,7 @@ void net_configure_dns(struct net_ip_config *ip, unsigned int role);
  */
 int net_get_if_addr(struct net_ip_config *addr, void *intrfc_handle);
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 /** Get interface IPv6 Addresses & their states in \ref net_ip_config
  *
  * This function will get the IPv6 addresses & address states of a given
@@ -575,9 +575,9 @@ int net_get_if_ip_mask(uint32_t *nm, void *intrfc_handle);
  */
 void net_ipv4stack_init(void);
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 
-#undef CONFIG_MAX_IPV6_ADDRESSES
+#define CONFIG_MAX_IPV6_ADDRESSES 0
 
 #define CONFIG_MAX_IPV6_ADDRESSES NET_IF_MAX_IPV6_ADDR
 
@@ -593,7 +593,7 @@ void net_ipv6stack_init(struct netif *netif);
  */
 void net_stat(void);
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 int netif_get_bss_type();
 #endif
 

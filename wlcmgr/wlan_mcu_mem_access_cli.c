@@ -7,7 +7,7 @@
  *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
-#ifdef CONFIG_MCU_MEM_ACCESS
+#if CONFIG_MCU_MEM_ACCESS
 #include <cli.h>
 #include <cli_utils.h>
 #include <osa.h>

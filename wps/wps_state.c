@@ -16,7 +16,7 @@
 #include <lwip/inet.h>
 #include <osa.h>
 #include <wlan.h>
-#ifdef CONFIG_PEAP_MSCHAPV2
+#if CONFIG_PEAP_MSCHAPV2
 #include <mbedtls/sha1.h>
 #include <mbedtls/md4.h>
 #include <mbedtls/des.h>
@@ -29,20 +29,20 @@
 #include "wps_os.h"
 #include "wps_mem.h"
 #include <wifi.h>
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 #include "wlan_hostcmd.h"
 #include "wlan_wfd.h"
 #endif
 
 extern struct wps_thread_t wps;
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 extern struct wlan_network p2p_uap_network;
 extern struct wlan_network p2p_network;
 char ipaddr[16];
 extern u8 auto_go;
 #endif
 
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
 #define SSL_WAIT             5000
 #define TLS_RECV_BUFFER_SIZE 6144
 extern WPA_SM wpa_sm;
@@ -51,10 +51,10 @@ extern void wpa2_shutdown();
 
 static void wps_tls(osa_task_param_t arg);
 OSA_TASK_HANDLE_DEFINE(wps_tls_Handle);
-static OSA_TASK_DEFINE(wps_tls,  PRIORITY_RTOS_TO_OSA(2), 1, 8192, 0);
+static OSA_TASK_DEFINE(wps_tls, PRIORITY_RTOS_TO_OSA(2), 1, 8192, 0);
 
 u8 *rbuf;
-#ifdef CONFIG_PEAP_MSCHAPV2
+#if CONFIG_PEAP_MSCHAPV2
 static u8 plain_data[512], msg[512];
 #endif
 static int msg_length, fragment = 0;
@@ -99,7 +99,7 @@ static int (*wps_msg_prepare[18])(PWPS_INFO) = {
     wps_eap_M5_frame_prepare,      wps_eap_M6_frame_prepare,         wps_eap_M7_frame_prepare,
     wps_eap_M8_frame_prepare,      wps_ack_message_prepare,          wps_nack_message_remap,
     wps_done_message_prepare,      wps_eap_fail_frame_prepare,       NULL};
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
 typedef struct eap_tls_keys
 {
     unsigned char master_secret[48];
@@ -308,7 +308,7 @@ static int wps_get_message_type(PEAP_FRAME_HEADER peap)
     return msg_type;
 }
 
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
 static void signal_receive()
 {
     WPS_DATA *wps_s = (WPS_DATA *)&wps_global;
@@ -582,7 +582,7 @@ static int wps_enrollee_state_transition(PWPS_INFO pwps_info, u16 msg_type)
 
             switch (pwps_info->state)
             {
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
                 case WPS_STATE_B:
                     pwps_info->state = WPS_STATE_A;
                     wps_d("State B->A");
@@ -623,7 +623,7 @@ static int wps_enrollee_state_transition(PWPS_INFO pwps_info, u16 msg_type)
     return status;
 }
 
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
 void wpa2_session_success()
 {
     WPS_DATA *wps_s = (WPS_DATA *)&wps_global;
@@ -842,7 +842,7 @@ void wps_tls(void *argv)
 
     wps_d("EAP: Done");
 
-#ifdef CONFIG_PEAP_MSCHAPV2
+#if CONFIG_PEAP_MSCHAPV2
     if (wps_s->wpa2_network.security.type == WLAN_SECURITY_EAP_PEAP_MSCHAPV2)
         wps_s->tls_session_active = true;
 #endif
@@ -880,7 +880,7 @@ void wps_tls(void *argv)
             "WPA2 Enterprise (EAP-TLS) Protocol "
             "Completed Successfully !");
     }
-#ifdef CONFIG_PEAP_MSCHAPV2
+#if CONFIG_PEAP_MSCHAPV2
     else if (wps_s->wpa2_network.security.type == WLAN_SECURITY_EAP_PEAP_MSCHAPV2)
     {
         while (1)
@@ -891,7 +891,7 @@ fail:
     wpa2_session_clean();
 }
 
-#ifdef CONFIG_PEAP_MSCHAPV2
+#if CONFIG_PEAP_MSCHAPV2
 static void des_encrypt(const u8 *clear, const u8 *key, u8 *cipher)
 {
     u8 pkey[8], next, tmp;
@@ -1565,7 +1565,7 @@ static int wps_eap_request_message_handler(PWPS_INFO pwps_info, PEAP_FRAME_HEADE
     int status = WPS_STATUS_SUCCESS;
     int msg_next, msg_type;
     WPS_DATA *wps_s = (WPS_DATA *)&wps_global;
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
     PEAP_TLS_FRAME_HEADER peap_tls;
 #endif
 
@@ -1791,7 +1791,7 @@ static int wps_eap_request_message_handler(PWPS_INFO pwps_info, PEAP_FRAME_HEADE
                 break;
         }
     }
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
     else if (peap->type == EAP_TYPE_TLS || peap->type == EAP_TYPE_PEAP)
     {
         peap_tls = (PEAP_TLS_FRAME_HEADER)((void *)peap);
@@ -1842,7 +1842,7 @@ static int wps_eap_request_message_handler(PWPS_INFO pwps_info, PEAP_FRAME_HEADE
             pwps_info->last_recv_wps_msg            = msg_type;
             pwps_info->last_recv_tls_msg_identifier = peap_tls->identifier;
 
-#ifdef CONFIG_PEAP_MSCHAPV2
+#if CONFIG_PEAP_MSCHAPV2
             if (wps_s->tls_session_active)
             {
                 rlen                      = 0;
@@ -2037,7 +2037,7 @@ static int wps_eap_request_message_handler(PWPS_INFO pwps_info, PEAP_FRAME_HEADE
                     }
                 }
             }
-#ifdef CONFIG_PEAP_MSCHAPV2
+#if CONFIG_PEAP_MSCHAPV2
         }
 #endif
     }
@@ -2741,10 +2741,10 @@ void wps_message_handler(u8 *buffer, u8 *src_addr)
 
                     wps_eap_response_message_handler(pwps_info, peap);
                     break;
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
                 case EAP_SUCCESS:
                 {
-#ifdef CONFIG_PEAP_MSCHAPV2
+#if CONFIG_PEAP_MSCHAPV2
                     if (wps_s->wpa2_network.security.type == WLAN_SECURITY_EAP_PEAP_MSCHAPV2)
                     {
                         wpa2_session_success();
@@ -2764,7 +2764,7 @@ void wps_message_handler(u8 *buffer, u8 *src_addr)
 
                 case EAP_FAILURE:
                 {
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
                     if (pwps_info->prov_session == PROV_ENTP_SESSION_ATTEMPT)
                     {
                         wpa2_failure = 1;
@@ -2819,7 +2819,7 @@ void wps_message_handler(u8 *buffer, u8 *src_addr)
                             /*
                              * Registration complete with M8 received.
                              */
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
                             wps_d(
                                 "Registration Protocol"
                                 " Completed Successfully !");
@@ -2864,7 +2864,7 @@ void wps_message_handler(u8 *buffer, u8 *src_addr)
 
                             wps_d("Cancelling registration timer!");
                             wps_cancel_timer(wps_registration_time_handler, pwps_info);
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
                             /* Read network data to connect to */
                             (void)memset(&p2p_network, 0, sizeof(struct wlan_network));
                             (void)memcpy(&p2p_network, &wps_global.wps_conn_network, sizeof(struct wlan_network));
@@ -2898,7 +2898,7 @@ void wps_message_handler(u8 *buffer, u8 *src_addr)
                                 "Cancelling "
                                 "registration timer!");
                             wps_cancel_timer(wps_registration_time_handler, pwps_info);
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
                             wfd_reset();
 
                             if (wps.cb(P2P_SESSION_FAILED, NULL, 0) == -WM_FAIL)
@@ -3106,7 +3106,7 @@ int wps_uap_session_complete_handler(PWPS_INFO pwps_info, WPS_DATA *wps_s)
         if (pwps_info->register_completed == WPS_SET)
         {
             pwps_info->wps_session = 0;
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
             P2P_LOG("Registration Process Completed Successfully !");
 
             if (wps.cb(P2P_AP_SESSION_SUCCESSFUL, NULL, 0) == -WM_FAIL)
@@ -3137,7 +3137,7 @@ int wps_uap_session_complete_handler(PWPS_INFO pwps_info, WPS_DATA *wps_s)
 
 static int wps_sta_check_link_active(WPS_DATA *wps_s, PWPS_INFO pwps_info, int *reconnected)
 {
-#if !defined(CONFIG_P2P) // && !defined(CONFIG_WPA2_ENTP)
+#if !(CONFIG_P2P) // && !(CONFIG_WPA2_ENTP)
     int ret       = WPS_STATUS_SUCCESS;
     int retry_cnt = 2;
     int connect_retry;
@@ -3161,7 +3161,7 @@ static int wps_sta_check_link_active(WPS_DATA *wps_s, PWPS_INFO pwps_info, int *
         return link_active;
     }
 
-#if defined(CONFIG_P2P)
+#if (CONFIG_P2P)
     wps_d("Connection with AP lost..... ");
 #else
     if (pwps_info->prov_session == PROV_ENTP_SESSION_ATTEMPT)
@@ -3287,7 +3287,7 @@ void wps_txTimer_handler(void *user_data)
         wps_cancel_timer(wps_txTimer_handler, pwps_info);
         pwps_info->set_timer = WPS_CANCEL;
     }
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     if (wps_s->bss_type == BSS_TYPE_UAP && (pwps_info->wps_msg_resent_count >= pwps_info->wps_msg_max_retry))
     {
         switch (pwps_info->role)
@@ -3316,7 +3316,7 @@ void wps_txTimer_handler(void *user_data)
 
         if (!link_active)
         {
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
             if (pwps_info->prov_session == PROV_ENTP_SESSION_ATTEMPT)
             {
                 wpa2_failure = 1;
@@ -3341,7 +3341,7 @@ void wps_txTimer_handler(void *user_data)
                     wps_d("Failed to remove network");
             }
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
             if (wps.cb(P2P_SESSION_FAILED, NULL, 0) == -WM_FAIL)
                 wps_d(
                     "P2P Callback failed for event:"
@@ -3401,7 +3401,7 @@ void wps_txTimer_handler(void *user_data)
 done:
     if (status != WPS_STATUS_SUCCESS)
     {
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         wfd_reset();
 #endif
         if (wps_s->bss_type == BSS_TYPE_UAP)
@@ -3517,7 +3517,7 @@ void wps_registration_time_handler(void *user_data)
 
     if ((wps_s->bss_type == BSS_TYPE_STA && pwps_info->role == WPS_ENROLLEE) || (IS_DISCOVERY_ENROLLEE(pwps_info)))
     {
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         if (wps.cb(P2P_SESSION_TIMEOUT, NULL, 0) == -WM_FAIL)
             wps_d("P2P Callback failed for event: %d", P2P_SESSION_TIMEOUT);
 #else
@@ -3537,7 +3537,7 @@ void wps_registration_time_handler(void *user_data)
             ret = wlan_remove_network(wps_network.name);
             if (ret != 0)
                 wps_d("Failed to remove network");
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
             wfd_reset();
 #endif
             wps_d("WPS registration timer time-out.");
@@ -3546,7 +3546,7 @@ void wps_registration_time_handler(void *user_data)
             /* shutdown the main processing loop */
             wps_main_loop_shutdown();
         }
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
         else
         {
             wpa2_failure = 1;
@@ -3567,7 +3567,7 @@ void wps_registration_time_handler(void *user_data)
 
         /* shutdown the main processing loop */
         wps_main_loop_shutdown();
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         if (!auto_go)
         {
             ret = wlan_remove_network(p2p_uap_network.name);

@@ -25,7 +25,7 @@
 
 #include "lwiperf.h"
 #include "lwip/tcpip.h"
-#ifdef CONFIG_PALLADIUM_SUPPORT
+#if CONFIG_PALLADIUM_SUPPORT
 #include "wifi_ping.h"
 #include "mlan_api.h"
 #endif
@@ -52,7 +52,7 @@ TimerHandle_t timer;
 
 static void timer_poll_udp_client(TimerHandle_t timer);
 
-#ifdef CONFIG_PALLADIUM_SUPPORT
+#if CONFIG_PALLADIUM_SUPPORT
 extern pdm_wlan_t pdm_wlan;
 enum
 {
@@ -120,7 +120,7 @@ static void iperf_test_abort(void *arg);
 // ============================================================================
 // Menu Handling
 // ============================================================================
-#ifdef CONFIG_PALLADIUM_SUPPORT
+#if CONFIG_PALLADIUM_SUPPORT
 static void pdm_wlan_set_txratecfg(u32_t rate_format, u32_t rate_index, u32_t nss)
 {
     wlan_ds_rate ds_rate;
@@ -130,11 +130,11 @@ static void pdm_wlan_set_txratecfg(u32_t rate_format, u32_t rate_index, u32_t ns
     ds_rate.sub_command                = WIFI_DS_RATE_CFG;
     ds_rate.param.rate_cfg.rate_format = rate_format;
     ds_rate.param.rate_cfg.rate_index  = rate_index;
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
     ds_rate.param.rate_cfg.nss = nss;
 #endif
 
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
     if (ds_rate.param.rate_cfg.rate_format > 2)
 #else
     if (ds_rate.param.rate_cfg.rate_format > 1)
@@ -151,7 +151,7 @@ static void pdm_wlan_set_txratecfg(u32_t rate_format, u32_t rate_index, u32_t ns
         (void)PRINTF("Invalid index selection\r\n");
         return;
     }
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
     /* NSS is supported up to 2 */
     if ((ds_rate.param.rate_cfg.nss <= 0) || (ds_rate.param.rate_cfg.nss >= 3))
     {
@@ -181,7 +181,7 @@ static void pdm_wlan_set_static_ip(struct wlan_network *network)
     {
         network->security.type = pdm_wlan.security_mode;
         psk_len                = (strlen(EXT_AP_PASSPHRASE) <= (WLAN_PSK_MAX_LENGTH - 1)) ? strlen(EXT_AP_PASSPHRASE) :
-                                                                             (WLAN_PSK_MAX_LENGTH - 1);
+                                                                                            (WLAN_PSK_MAX_LENGTH - 1);
         strncpy(network->security.psk, EXT_AP_PASSPHRASE, psk_len);
         network->security.psk_len = psk_len;
     }
@@ -782,7 +782,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
 
                 ssid_len = (strlen(EXT_AP_SSID) <= IEEEtypes_SSID_SIZE) ? strlen(EXT_AP_SSID) : IEEEtypes_SSID_SIZE;
                 memcpy(sta_network.ssid, (const char *)EXT_AP_SSID, ssid_len);
-#ifdef CONFIG_PALLADIUM_SUPPORT
+#if CONFIG_PALLADIUM_SUPPORT
                 pdm_wlan_set_static_ip(&sta_network);
 #else
                 sta_network.ip.ipv4.addr_type = ADDR_TYPE_DHCP;
@@ -821,7 +821,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
                 ssid_len = (strlen(AP_SSID) <= IEEEtypes_SSID_SIZE) ? strlen(AP_SSID) : IEEEtypes_SSID_SIZE;
                 memcpy(uap_network.ssid, (const char *)AP_SSID, ssid_len);
                 /* Channel 0 sets channel selection to auto */
-#ifdef CONFIG_PALLADIUM_SUPPORT
+#if CONFIG_PALLADIUM_SUPPORT
                 uap_network.channel       = pdm_wlan.test_channel;
                 uap_network.security.type = pdm_wlan.enable_security;
 #else
@@ -879,7 +879,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             {
                 PRINTF("IPv4 Address: [%s]\r\n", ip);
             }
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
             int i;
             for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
             {
@@ -894,7 +894,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
 #endif
             PRINTF("SSID = [%s], IP = [%s]\r\n", sta_network.ssid, ip);
             auth_fail = 0;
-#ifdef CONFIG_PALLADIUM_SUPPORT
+#if CONFIG_PALLADIUM_SUPPORT
             pdm_wlan.get_ip_addr = true;
 #endif
             break;
@@ -948,7 +948,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             print_mac((const char *)data);
             PRINTF("Associated with Soft AP\r\n");
             printSeparator();
-#ifdef CONFIG_PALLADIUM_SUPPORT
+#if CONFIG_PALLADIUM_SUPPORT
             pdm_wlan.get_ip_addr = true;
 #endif
             break;
@@ -992,7 +992,7 @@ void task_main(void *param)
 
     PRINTF("Initialize WLAN Driver\r\n");
 
-#ifdef CONFIG_PALLADIUM_SUPPORT
+#if CONFIG_PALLADIUM_SUPPORT
     inet_aton("192.168.10.1", &addr);
 #endif
 
@@ -1010,7 +1010,7 @@ void task_main(void *param)
 
     menuPrint();
 
-#ifdef CONFIG_PALLADIUM_SUPPORT
+#if CONFIG_PALLADIUM_SUPPORT
     pdm_wlan.inputC = 0;
     while (1)
     {

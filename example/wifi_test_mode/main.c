@@ -80,7 +80,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
                 PRINTF("Failed to initialize BASIC WLAN CLIs\r\n");
                 return 0;
             }
-#ifdef CONFIG_RF_TEST_MODE
+#if CONFIG_RF_TEST_MODE
             ret = wlan_test_mode_cli_init();
             if (ret != WM_SUCCESS)
             {
@@ -125,7 +125,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             {
                 PRINTF("IPv4 Address: [%s]\r\n", ip);
             }
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
             int i;
             for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
             {

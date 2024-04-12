@@ -1,4 +1,4 @@
-#ifdef CONFIG_WLS_CSI_PROC
+#if CONFIG_WLS_CSI_PROC
 /** @file wls_structure_defs.h
  *
  * @brief This file contains header file for CSI structure definitions

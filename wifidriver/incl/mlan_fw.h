@@ -96,7 +96,7 @@ typedef MLAN_PACK_START struct
 /** Rates supported in band N */
 #define N_SUPPORTED_RATES 3
 #ifdef STA_SUPPORT
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
 /** All bands (B, G, N) */
 #define ALL_802_11_BANDS (BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AAC | BAND_GAC)
 #else
@@ -273,7 +273,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 
 #define RXPD_FLAG_EXTRA_HEADER (1 << 1)
 
-#ifdef CONFIG_RSN_REPLAY_DETECTION
+#if CONFIG_RSN_REPLAY_DETECTION
 #define RXPD_FLAG_PN_CHECK_SUPPORT (1 << 2)
 #endif
 
@@ -356,7 +356,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define TLV_TYPE_AUTH_TYPE (PROPRIETARY_TLV_BASE_ID + 0x1fU) // 0x011f
 /** TLV type : BSSID */
 #define TLV_TYPE_BSSID (PROPRIETARY_TLV_BASE_ID + 0x23U) // 0x0123
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+#if CONFIG_SCAN_WITH_RSSIFILTER
 /** TLV type : RSSI Threshold */
 #define TLV_TYPE_RSSI_THRESHOLD (PROPRIETARY_TLV_BASE_ID + 0x151)
 #endif
@@ -430,7 +430,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** TLV type: key param v2 */
 #define TLV_TYPE_KEY_PARAM_V2 (PROPRIETARY_TLV_BASE_ID + 0x9CU) /* 0x019C */
 #endif
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#if CONFIG_EXT_SCAN_SUPPORT
 /** TLV type : SCAN channel gap */
 #define TLV_TYPE_SCAN_CHANNEL_GAP (PROPRIETARY_TLV_BASE_ID + 0xc5) /* 0x01c5 */
 #endif
@@ -440,7 +440,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define TLV_TYPE_AUTOLINK_PARAM (PROPRIETARY_TLV_BASE_ID + 0xe8) /*0x01e8*/
 /** TLV type : Coex parameter config */
 #define TLV_TYPE_EXT_BLE_COEX_CFG (PROPRIETARY_TLV_BASE_ID + 0x12F)
-#ifdef CONFIG_WIFI_CLOCKSYNC
+#if CONFIG_WIFI_CLOCKSYNC
 /** TLV type : GPIO TSF LATCH CONFIG */
 #define TLV_TYPE_GPIO_TSF_LATCH_CONFIG (PROPRIETARY_TLV_BASE_ID + 0x154U)
 /** TLV type : GPIO TSF LATCH REPORT*/
@@ -490,7 +490,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define MLAN_TX_DATA_BUF_SIZE_4K 4096
 /** 8K buf size */
 #define MLAN_TX_DATA_BUF_SIZE_8K 8192
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
 /** 12K buf size */
 #define MLAN_TX_DATA_BUF_SIZE_12K 12288
 #endif
@@ -721,14 +721,14 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /* fw_cap_info bit18 for ecsa support*/
 #define FW_CAPINFO_ECSA MBIT(18)
 
-#ifdef CONFIG_OWE
+#if CONFIG_OWE
 /** fw_cap_info bit30 for Embedded OWE Support*/
 #define FW_CAPINFO_EMBEDDED_OWE_SUPPORT MBIT(30)
 /** Check if Embedded OWE is supported by firmware */
 #define IS_FW_SUPPORT_EMBEDDED_OWE(_adapter) (_adapter->fw_cap_info & FW_CAPINFO_EMBEDDED_OWE_SUPPORT)
 #endif
 
-#ifdef CONFIG_MULTI_BSSID_SUPPORT
+#if CONFIG_MULTI_BSSID_SUPPORT
 /** FW cap info bit 9: Multi BSSID Support */
 #define FW_CAPINFO_EXT_MULTI_BSSID MBIT(9)
 /** Check if Multi BSSID supported by firmware */
@@ -897,19 +897,19 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define SET_DEVNSSRXMCS(DevMCSMap, nss, value) ((DevMCSMap) |= ((value)&0x3) << (2 * ((nss)-1)))
 #define RESET_DEVRXMCSMAP(DevMCSMap)           ((DevMCSMap) &= 0xFFFF0000U)
 
-#ifdef CONFIG_11K_OFFLOAD
+#if CONFIG_11K_OFFLOAD
 /** ExtCap : Set Support BSS_Transition */
 #define SET_EXTCAP_BSS_TRANSITION(ext_cap) (ext_cap.BSS_Transition = 1)
 /** ExtCap : Reset support BSS_Transition */
 #define RESET_EXTCAP_BSS_TRANSITION(ext_cap) (ext_cap.BSS_Transition = 0)
 #endif
 
-#ifdef CONFIG_MULTI_BSSID_SUPPORT
+#if CONFIG_MULTI_BSSID_SUPPORT
 /** ExtCap : Set support Multi BSSID */
 #define SET_EXTCAP_MULTI_BSSID(ext_cap) (ext_cap.MultipleBSSID = 1)
 #endif
 
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
 /** FW cap info bit 7 11AX */
 #define FW_CAPINFO_EXT_802_11AX MBIT(7)
 
@@ -998,7 +998,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
  * HE ER SU settings to this tlv */
 #define TLV_TYPE_TX_RATE_CFG (PROPRIETARY_TLV_BASE_ID + 319) /* 0x023f */
 
-#if defined(CONFIG_EXT_SCAN_SUPPORT)
+#if (CONFIG_EXT_SCAN_SUPPORT)
 /** TLV type : Scan Response */
 #define TLV_TYPE_BSS_SCAN_RSP (PROPRIETARY_TLV_BASE_ID + 0x56) // 0x0156
 /** TLV type : Scan Response Stats */
@@ -1011,21 +1011,21 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** TLV type : Action frame */
 #define TLV_TYPE_IEEE_ACTION_FRAME (PROPRIETARY_TLV_BASE_ID + 0x8c) // 0x018c
 
-#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+#if (CONFIG_11MC) || (CONFIG_11AZ)
 #define FTM_SESSION_CFG_LCI_TLV_ID            (PROPRIETARY_TLV_BASE_ID + 270) /* 0x20e */
 #define FTM_SESSION_CFG_LOCATION_CIVIC_TLV_ID (PROPRIETARY_TLV_BASE_ID + 271) /* 0x20f */
 #define FTM_SESSION_CFG_INITATOR_TLV_ID       (PROPRIETARY_TLV_BASE_ID + 273) /* 0x211 */
 #define FTM_NTB_RANGING_CFG_TLV_ID            (PROPRIETARY_TLV_BASE_ID + 343) /* 0x257 */
 #define FTM_TB_RANGING_CFG_TLV_ID             (PROPRIETARY_TLV_BASE_ID + 344) /* 0x258 */
 
-#ifdef CONFIG_WLS_CSI_PROC
+#if CONFIG_WLS_CSI_PROC
 #define WLS_CSI_DATA_LEN_DW 181
 #define WLS_CSI_DATA_LEN    (WLS_CSI_DATA_LEN_DW * sizeof(uint32_t))
 #endif
 
 #endif
 
-#ifdef CONFIG_SCAN_CHANNEL_GAP
+#if CONFIG_SCAN_CHANNEL_GAP
 /** TLV type : SCAN channel gap */
 #define TLV_TYPE_SCAN_CHANNEL_GAP              \
     (PROPRIETARY_TLV_BASE_ID + 0xc5) /* 0x01c5 \
@@ -1126,7 +1126,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID : 802.11 subscribe event */
 #define HostCmd_CMD_802_11_SUBSCRIBE_EVENT 0x0075
 
-#ifdef CONFIG_WIFI_EU_CRYPTO
+#if CONFIG_WIFI_EU_CRYPTO
 /** Host Command ID : EU Test */
 #define HostCmd_CMD_EU_CRYPTO 0x0078
 #endif
@@ -1155,7 +1155,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID : SDIO GPIO interrupt configuration */
 #define HostCmd_CMD_SDIO_GPIO_INT_CONFIG 0x0088
 
-#ifdef CONFIG_RF_TEST_MODE
+#if CONFIG_RF_TEST_MODE
 /** Host Command ID : Mfg command */
 #define HostCmd_CMD_MFG_COMMAND 0x0089
 #endif
@@ -1168,7 +1168,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID : Get memory */
 #define HostCmd_CMD_GET_MEM 0x008c
 
-#if defined(CONFIG_WIFI_TX_PER_TRACK) || defined(CONFIG_TX_RX_HISTOGRAM)
+#if (CONFIG_WIFI_TX_PER_TRACK) || (CONFIG_TX_RX_HISTOGRAM)
 /** Host Command ID: TX_RX_PKT_STATS */
 #define HostCmd_CMD_TX_RX_PKT_STATS 0x008d
 #endif
@@ -1241,7 +1241,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID : mgmt IE list */
 #define HostCmd_CMD_MGMT_IE_LIST 0x00f2
 
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#if CONFIG_EXT_SCAN_SUPPORT
 /** Host Command ID : Extended scan support */
 #define HostCmd_CMD_802_11_SCAN_EXT 0x0107
 #endif
@@ -1283,7 +1283,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID: Tx data pause */
 #define HostCmd_CMD_CFG_TX_DATA_PAUSE 0x0103
 
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
+#if CONFIG_GTK_REKEY_OFFLOAD
 /** Host Command ID: GTK REKEY OFFLOAD CFG */
 #define HostCmd_CMD_CONFIG_GTK_REKEY_OFFLOAD_CFG 0x010f
 #endif
@@ -1301,7 +1301,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID : OTP user data */
 #define HostCmd_CMD_OTP_READ_USER_DATA 0x0114
 
-#ifdef CONFIG_11K_OFFLOAD
+#if CONFIG_11K_OFFLOAD
 /** Host Command ID : 802.11 K Feature Control */
 #define HostCmd_CMD_OFFLOAD_FEATURE_CONTROL 0x00fd
 #endif
@@ -1332,12 +1332,12 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID: CW Mode */
 #define HostCmd_CMD_CW_MODE_CTRL 0x0239
 
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
 /** Host Command ID: WMM Param Config */
 #define HostCmd_CMD_WMM_PARAM_CONFIG 0x023a
 #endif
 
-#ifdef CONFIG_FW_VDLL
+#if CONFIG_FW_VDLL
 #define HostCmd_CMD_VDLL 0x0240
 #endif
 
@@ -1350,20 +1350,20 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID : GET TBTT Offset stats */
 #define HostCmd_CMD_TBTT_OFFSET 0x0268
 
-#if defined(CONFIG_IPS)
+#if (CONFIG_IPS)
 /** Host Command ID : IPS Config */
 #define HostCmd_CMD_IPS_CONFIG 0x0279
 #endif
 
-#ifdef CONFIG_RX_ABORT_CFG
+#if CONFIG_RX_ABORT_CFG
 #define HostCmd_CMD_RX_ABORT_CFG 0x0261
 #endif
 
-#ifdef CONFIG_RX_ABORT_CFG_EXT
+#if CONFIG_RX_ABORT_CFG_EXT
 #define HostCmd_CMD_RX_ABORT_CFG_EXT 0x0262
 #endif
 
-#ifdef CONFIG_CCK_DESENSE_CFG
+#if CONFIG_CCK_DESENSE_CFG
 #define HostCmd_CMD_CCK_DESENSE_CFG 0x0265
 #endif
 
@@ -1391,7 +1391,7 @@ typedef enum _ENH_PS_MODES
 /** Special purpose action : Set */
 #define HostCmd_ACT_SPC_SET 0x8001
 
-#ifdef CONFIG_AUTO_NULL_TX
+#if CONFIG_AUTO_NULL_TX
 /** Special purpose action : Set */
 #define HostCmd_ACT_SPC_AUTO_SET 0x8002
 /** Special purpose action : Set */
@@ -1420,7 +1420,7 @@ typedef enum _ENH_PS_MODES
 /** Host command action : Get both Rx and Tx */
 #define HostCmd_ACT_GET_BOTH 0x000cU
 
-#if defined(CONFIG_WIFI_TX_PER_TRACK) || defined(CONFIG_TX_RX_HISTOGRAM)
+#if (CONFIG_WIFI_TX_PER_TRACK) || (CONFIG_TX_RX_HISTOGRAM)
 /** Host command action: Get Tx statics */
 #define HostCmd_ACT_GET_TX_STATICS 0x0001
 /** Host command action: Get Rx statics */
@@ -1466,14 +1466,14 @@ typedef enum _ENH_PS_MODES
 #define HostCmd_ACT_MAC_FORCE_11N_PROTECTION_OFF 0x0800
 /** MAC action : Ad-Hoc G protection on */
 #define HostCmd_ACT_MAC_ADHOC_G_PROTECTION_ON 0x2000
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
 /** MAC action : Static-Dynamic BW enable */
 #define HostCmd_ACT_MAC_STATIC_DYNAMIC_BW_ENABLE MBIT(16)
 /** MAC action : Dynamic BW */
 #define HostCmd_ACT_MAC_DYNAMIC_BW MBIT(17)
 #endif
 
-#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+#if (CONFIG_11MC) || (CONFIG_11AZ)
 /** Host Command ID : FTM session config and control */
 #define HostCmd_CMD_FTM_SESSION_CFG  0x024d
 #define HostCmd_CMD_FTM_SESSION_CTRL 0x024e
@@ -1487,30 +1487,30 @@ typedef enum _ENH_PS_MODES
 /** Scan type : Any */
 #define HostCmd_BSS_MODE_ANY 0x0003
 
-#ifdef CONFIG_TX_AMPDU_PROT_MODE
+#if CONFIG_TX_AMPDU_PROT_MODE
 #define HostCmd_CMD_TX_AMPDU_PROT_MODE 0x0263
 #endif
 
-#ifdef CONFIG_CSI
+#if CONFIG_CSI
 #define HostCmd_CMD_CSI 0x025b
 #define CSI_CMD_ENABLE  0x0001
 #define CSI_CMD_DISABLE 0x0002
 #endif
 
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
 /** Host Command ID: 11AX config */
 #define HostCmd_CMD_11AX_CFG 0x0266
 
 /** Host Command ID: 11AX command */
 #define HostCmd_CMD_11AX_CMD 0x026d
 
-#ifdef CONFIG_11AX_TWT
+#if CONFIG_11AX_TWT
 /** Host Command ID: TWT cfg command */
 #define HostCmd_CMD_TWT_CFG 0x0270
 #endif /* CONFIG_11AX_TWT */
 #endif
 
-#ifdef CONFIG_WIFI_CLOCKSYNC
+#if CONFIG_WIFI_CLOCKSYNC
 /** Host Command ID: GPIO TSF LATCH */
 #define HostCmd_GPIO_TSF_LATCH_PARAM_CONFIG 0x0278
 #endif /* CONFIG_WIFI_CLOCKSYNC */
@@ -1518,7 +1518,7 @@ typedef enum _ENH_PS_MODES
 /** Host Command ID: HS Wakeup Reason */
 #define HostCmd_CMD_HS_WAKEUP_REASON 0x0116
 
-#ifdef CONFIG_MULTI_CHAN
+#if CONFIG_MULTI_CHAN
 /** Host Command ID: Multi chan config */
 #define HostCmd_CMD_MULTI_CHAN_CONFIG 0x011e
 /** Host Command ID: Multi chan policy */
@@ -1534,7 +1534,7 @@ typedef enum _ENH_PS_MODES
 
 #endif
 
-#ifdef CONFIG_1AS
+#if CONFIG_1AS
 #define HostCmd_CMD_HOST_CLOCK_CFG 0x0246
 #endif
 
@@ -1575,7 +1575,7 @@ typedef enum _ENH_PS_MODES
 
 /** Maximum number of BSS Descriptors */
 /* wmsdk: Count taken from kconfig */
-#ifdef CONFIG_MAX_AP_ENTRIES
+#if CONFIG_MAX_AP_ENTRIES
 #define MRVDRV_MAX_BSSID_LIST CONFIG_MAX_AP_ENTRIES
 #else
 #define MRVDRV_MAX_BSSID_LIST 20U
@@ -1629,7 +1629,7 @@ typedef enum _ENH_PS_MODES
 #define EVENT_PS_AWAKE 0x0000000a
 /** Card Event definition : Power save sleep */
 #define EVENT_PS_SLEEP 0x0000000b
-#if defined(CONFIG_WNM_PS)
+#if (CONFIG_WNM_PS)
 /** Card Event definition : WNM power save */
 #define EVENT_WNM_PS 0x00000097
 #endif
@@ -1730,7 +1730,7 @@ typedef enum _ENH_PS_MODES
 
 /** Event definition:  wake-up indication to host by card */
 #define EVENT_MEF_HOST_WAKEUP 0x0000004f
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#if CONFIG_EXT_SCAN_SUPPORT
 /** Event definition:  Scan results through event */
 #define EVENT_EXT_SCAN_REPORT 0x00000058
 #endif
@@ -1743,12 +1743,12 @@ typedef enum _ENH_PS_MODES
 #define EVENT_IMD3_CAL_END   0x000000A1
 #endif
 
-#ifdef CONFIG_WIFI_FW_DEBUG
+#if CONFIG_WIFI_FW_DEBUG
 /** Event definition : FW debug information */
 #define EVENT_FW_DEBUG_INFO 0x00000063
 #endif
 
-#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+#if (CONFIG_11MC) || (CONFIG_11AZ)
 #define EVENT_WLS_FTM_COMPLETE 0x00000086
 
 #define WLS_SUB_EVENT_FTM_COMPLETE       0
@@ -1758,16 +1758,16 @@ typedef enum _ENH_PS_MODES
 
 #endif
 
-#ifdef CONFIG_11K
+#if CONFIG_11K
 #define EVENT_NLIST_REPORT          0x00000079
 #define MRVL_NEIGHBOR_REPORT_TLV_ID 0x1de
 #endif
 
-#if defined(CONFIG_FW_VDLL) || defined(CONFIG_FW_VDLLV2)
+#if (CONFIG_FW_VDLL) || (CONFIG_FW_VDLLV2)
 #define EVENT_VDLL_IND 0x00000081
 #endif
 
-#ifdef CONFIG_WLAN_BRIDGE
+#if CONFIG_WLAN_BRIDGE
 /** Event definition: auto link switched network */
 #define EVENT_AUTO_LINK_SWITCH_NEW_NODE 0X00000125
 #endif
@@ -1791,26 +1791,26 @@ typedef enum _ENH_PS_MODES
 /** Event ID: TX data pause event */
 #define EVENT_TX_DATA_PAUSE 0x00000055
 
-#ifdef CONFIG_MULTI_CHAN
+#if CONFIG_MULTI_CHAN
 /** Event ID: Multi Chan Info*/
 #define EVENT_MULTI_CHAN_INFO 0x0000006a
 #endif
 
 #define EVENT_TX_STATUS_REPORT 0x00000074
 
-#if defined(CONFIG_CSI) || defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+#if (CONFIG_CSI) || (CONFIG_11MC) || (CONFIG_11AZ)
 #define EVENT_CSI 0x0000008D
 #endif
 
 /** Event ID: EV_SMC_GENERIC */
 #define EVENT_EV_SMC_GENERIC 0x00000077
 
-#ifdef CONFIG_CSI
+#if CONFIG_CSI
 #define EVENT_CSI 0x0000008D
 #endif
 
 /** Card Event definition : RESET PN */
-#ifdef CONFIG_RSN_REPLAY_DETECTION
+#if CONFIG_RSN_REPLAY_DETECTION
 #define EVENT_RESET_PN_ON_REKEY 0x00000092
 #endif
 
@@ -1833,7 +1833,7 @@ typedef enum _ENH_PS_MODES
 /** Get BSS type from event cause (bit 31:24) */
 #define EVENT_GET_BSS_TYPE(event_cause) (((event_cause) >> 24) & 0x00ff)
 
-#ifdef CONFIG_TSP
+#if CONFIG_TSP
 #define HostCmd_CMD_TSP_CFG 0x0280
 #endif
 
@@ -1861,7 +1861,7 @@ typedef enum _mod_grp
     MOD_HT2_40_QAM64, // 15
 #endif
 
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
     MOD_VHT_20_QAM256,  // 16
     MOD_VHT_40_QAM256,  // 17
     MOD_VHT_80_PSK,     // 18
@@ -1894,7 +1894,7 @@ typedef MLAN_PACK_START struct _power_table_attr
 #define FW_CFP_TABLE_MAX_COLS_BG 11
 #endif
 
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
 #define FW_CFP_TABLE_MAX_ROWS_A 42
 #ifdef STREAM_2X2
 #define FW_CFP_TABLE_MAX_COLS_A 29
@@ -1907,7 +1907,7 @@ typedef MLAN_PACK_START struct _power_table_attr
 /** Host Command ID : GPIO independent reset configure */
 #define HostCmd_CMD_INDEPENDENT_RESET_CFG 0x0243
 
-#ifdef CONFIG_COMPRESS_TX_PWTBL
+#if CONFIG_COMPRESS_TX_PWTBL
 /** used in hostcmd to download region power cfg setting to firmware */
 #define HostCmd_CMD_REGION_POWER_CFG 0x0249
 #endif
@@ -1988,7 +1988,7 @@ typedef MLAN_PACK_START struct
 
 } MLAN_PACK_END MrvlIETypes_SmcAddrRange_t;
 
-#ifdef CONFIG_HOST_SLEEP
+#if CONFIG_HOST_SLEEP
 #define MAX_MGMT_FRAME_FILTER         2
 #define EVENT_MANAGEMENT_FRAME_WAKEUP 0x00000088
 
@@ -2147,7 +2147,7 @@ typedef MLAN_PACK_START struct _RxPD
     t_u8 antenna;
     /** Reserved */
     t_u64 reserved1;
-#ifdef CONFIG_TXPD_RXPD_V3
+#if CONFIG_TXPD_RXPD_V3
     t_u32 rx_info;
 #else  /* CONFIG_TXPD_RXPD_V3 */
     /** band config */
@@ -2155,7 +2155,7 @@ typedef MLAN_PACK_START struct _RxPD
     /** chan number */
     t_u8 chan_num;
 #endif /* CONFIG_TXPD_RXPD_V3 */
-#ifdef CONFIG_RSN_REPLAY_DETECTION
+#if CONFIG_RSN_REPLAY_DETECTION
     /** PN number high 32 bits*/
     t_u32 hi_rx_count32;
     /** PN number low 16 bits*/
@@ -2367,7 +2367,7 @@ typedef MLAN_PACK_START struct _wlan_802_11_header
     mlan_802_11_mac_addr addr4;
 } MLAN_PACK_END wlan_802_11_header;
 
-#ifdef CONFIG_11K_OFFLOAD
+#if CONFIG_11K_OFFLOAD
 /** host_OffloadFeatureStdControl_t */
 typedef MLAN_PACK_START struct
 {
@@ -2537,7 +2537,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_ChanBandListParamSet_t
     ChanBandParamSet_t chan_band_param[1];
 } MLAN_PACK_END MrvlIEtypes_ChanBandListParamSet_t;
 
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+#if CONFIG_SCAN_WITH_RSSIFILTER
 typedef MLAN_PACK_START struct _MrvlIEtypes_RssiThresholdParamSet_t
 {
     /** Header */
@@ -2560,7 +2560,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_RatesParamSet_t
     t_u8 rates[MAX_DATA_RATES];
 } MLAN_PACK_END MrvlIEtypes_RatesParamSet_t;
 
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#if CONFIG_EXT_SCAN_SUPPORT
 /** _MrvlIEtypes_Bssid_List_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_Bssid_List_t
 {
@@ -2580,7 +2580,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_SsIdParamSet_t
     t_u8 ssid[1];
 } MLAN_PACK_END MrvlIEtypes_SsIdParamSet_t;
 
-#ifdef CONFIG_HOST_MLME
+#if CONFIG_HOST_MLME
 /**MrvlIEtypes_AssocType_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_HostMlme_t
 {
@@ -2702,7 +2702,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_AuthType_t
     t_u16 auth_type;
 } MLAN_PACK_END MrvlIEtypes_AuthType_t;
 
-#ifdef CONFIG_SCAN_CHANNEL_GAP
+#if CONFIG_SCAN_CHANNEL_GAP
 /** MrvlIEtypes_ScanChanGap_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_ScanChanGap_t
 {
@@ -2978,7 +2978,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_802_11_KEY_MATERIAL
 } MLAN_PACK_END HostCmd_DS_802_11_KEY_MATERIAL;
 #endif /* WPA || WAPI_AP || HOST_AUTHENTICATOR */
 
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
+#if CONFIG_GTK_REKEY_OFFLOAD
 /** HostCmd_DS_GTK_REKEY_PARAMS */
 typedef MLAN_PACK_START struct _HostCmd_DS_GTK_REKEY_PARAMS
 {
@@ -3271,7 +3271,7 @@ typedef MLAN_PACK_START struct __auto_ds_param
     t_u16 deep_sleep_timeout;
 } MLAN_PACK_END auto_ds_param;
 
-#if defined(CONFIG_WNM_PS)
+#if (CONFIG_WNM_PS)
 /** Structure definition for the wnm power save command */
 typedef MLAN_PACK_START struct __wnm_ps_param
 {
@@ -3353,7 +3353,7 @@ typedef struct _auto_ps_param
 /** TLV type : ps param */
 #define TLV_TYPE_PS_PARAM (PROPRIETARY_TLV_BASE_ID + 0x72U) // 0x0172
 
-#if defined(CONFIG_WNM_PS)
+#if (CONFIG_WNM_PS)
 /** TLV type : wnm param */
 #define TLV_TYPE_WNM_PARAM (PROPRIETARY_TLV_BASE_ID + 0x158) // 0x0258
 #endif
@@ -3378,7 +3378,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_ps_param_t
     ps_param param;
 } MLAN_PACK_END MrvlIEtypes_ps_param_t;
 
-#if defined(CONFIG_WNM_PS)
+#if (CONFIG_WNM_PS)
 /** MrvlIEtypes_wnm_ps_param_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_wnm_ps_param_t
 {
@@ -3418,7 +3418,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_PS_MODE_ENH
         t_u16 ps_bitmap;
         /** auto ps param */
         auto_ps_param auto_ps;
-#if defined(CONFIG_WNM_PS)
+#if (CONFIG_WNM_PS)
         /** wnm ps param */
         wnm_ps_param param;
 #endif
@@ -3557,7 +3557,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_MAC_CONTROL
     t_u32 action;
 } MLAN_PACK_END HostCmd_DS_MAC_CONTROL;
 
-#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
+#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
 /** HostCmd_DS_IND_RST */
 typedef MLAN_PACK_START struct _HostCmd_DS_IND_RST
 {
@@ -3741,7 +3741,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_802_11_AD_HOC_JOIN
     t_u16 reserved2;
 } MLAN_PACK_END HostCmd_DS_802_11_AD_HOC_JOIN;
 
-#ifdef CONFIG_NET_MONITOR
+#if CONFIG_NET_MONITOR
 /** MrvlIEtypes_Monitor_filter_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_Monitor_filter_t
 {
@@ -3971,7 +3971,7 @@ typedef MLAN_PACK_START struct _HostCmd_TX_RATE_QUERY
      * [Bit 7] [Bit 4] 11ax GI, 00, 01, 10, 11 */
     t_u8 tx_rate_info;
 #endif
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
     /**
      * BIT0: DCM
      * BIT3-BIT1: tone mode
@@ -4049,7 +4049,7 @@ typedef enum _SNMP_MIB_INDEX
     StopDeauth_i    = 44,
 } SNMP_MIB_INDEX;
 
-#ifdef CONFIG_TURBO_MODE
+#if CONFIG_TURBO_MODE
 /** Used just for Turbo mode */
 #define OID_WMM_TURBO_MODE 0x27
 /** turbo_mode parameters */
@@ -4210,7 +4210,7 @@ typedef MLAN_PACK_START struct _MrvlRateScope_t
     t_u16 ht_mcs_rate_bitmap[8];
     /** VHT MCS rate bitmap */
     t_u16 vht_mcs_rate_bitmap[8];
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
     /** HE MCS rate bitmap */
     t_u16 he_mcs_rate_bitmap[8];
 #endif
@@ -4256,7 +4256,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_TX_RATE_CFG
     /* MrvlRateScope_t RateScope; MrvlRateDropPattern_t RateDrop; */
 } MLAN_PACK_END HostCmd_DS_TX_RATE_CFG;
 
-#ifdef CONFIG_WIFI_TX_PER_TRACK
+#if CONFIG_WIFI_TX_PER_TRACK
 #define TLV_TYPE_TX_PER_TRACK   (PROPRIETARY_TLV_BASE_ID + 338)
 #define EVENT_PER_STATUS_REPORT 0x94
 typedef MLAN_PACK_START struct _HostCmd_DS_TX_RX_PKT_STATS
@@ -4282,7 +4282,7 @@ typedef MLAN_PACK_START struct _MrvlTxPerTrackInfo_t
 } MLAN_PACK_END MrvlTxPerTrackInfo_t;
 #endif
 
-#ifdef CONFIG_TX_RX_HISTOGRAM
+#if CONFIG_TX_RX_HISTOGRAM
 /** TX and RX histogram statistic parameters*/
 typedef MLAN_PACK_START struct _HostCmd_DS_TX_RX_HISTOGRAM
 {
@@ -4293,7 +4293,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_TX_RX_HISTOGRAM
 } MLAN_PACK_END HostCmd_DS_TX_RX_HISTOGRAM;
 #endif
 
-#ifdef CONFIG_RX_ABORT_CFG
+#if CONFIG_RX_ABORT_CFG
 typedef MLAN_PACK_START struct _HostCmd_DS_RX_ABORT_CFG
 {
     t_u16 action;
@@ -4304,7 +4304,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_RX_ABORT_CFG
 } MLAN_PACK_END HostCmd_DS_RX_ABORT_CFG;
 #endif
 
-#ifdef CONFIG_RX_ABORT_CFG_EXT
+#if CONFIG_RX_ABORT_CFG_EXT
 typedef MLAN_PACK_START struct _HostCmd_DS_RX_ABORT_CFG_EXT
 {
     /** Action */
@@ -4326,7 +4326,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_RX_ABORT_CFG_EXT
 } MLAN_PACK_END HostCmd_DS_RX_ABORT_CFG_EXT;
 #endif
 
-#ifdef CONFIG_CCK_DESENSE_CFG
+#if CONFIG_CCK_DESENSE_CFG
 typedef MLAN_PACK_START struct _HostCmd_DS_CCK_DESENSE_CFG
 {
     /** Action */
@@ -4538,7 +4538,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_802_11_SCAN
      */
 } MLAN_PACK_END HostCmd_DS_802_11_SCAN;
 
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#if CONFIG_EXT_SCAN_SUPPORT
 /*
  * This scan handle Country Information IE(802.11d compliant)
  * Define data structure for HostCmd_CMD_802_11_SCAN_EXT
@@ -4793,7 +4793,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_11AC_CFG
     t_u8 vht_supp_mcs_set[VHT_MCS_SET_LEN];
 } MLAN_PACK_END HostCmd_DS_11AC_CFG;
 
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
 /** HostCmd_DS_11AX_CFG */
 typedef MLAN_PACK_START struct _HostCmd_DS_11AX_CFG
 {
@@ -4816,7 +4816,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_11AX_CMD_CFG
     t_u8 val[];
 } MLAN_PACK_END HostCmd_DS_11AX_CMD_CFG;
 
-#ifdef CONFIG_11AX_TWT
+#if CONFIG_11AX_TWT
 /** Type definition of hostcmd_twt_setup */
 typedef MLAN_PACK_START struct _hostcmd_twt_setup
 {
@@ -4911,7 +4911,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_TWT_CFG
 } MLAN_PACK_END HostCmd_DS_TWT_CFG;
 #endif /* CONFIG_11AX_TWT */
 
-#ifdef CONFIG_MMSF
+#if CONFIG_MMSF
 /** Type definition of hostcmd_mmsf_cfg*/
 typedef MLAN_PACK_START struct _HostCmd_DS_MMSF_CFG
 {
@@ -4929,7 +4929,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_MMSF_CFG
 #endif
 #endif
 
-#ifdef CONFIG_WIFI_CLOCKSYNC
+#if CONFIG_WIFI_CLOCKSYNC
 /** MrvlIEtypes_GPIO_TSF_LATCH_CONFIG*/
 typedef MLAN_PACK_START struct _MrvlIEtypes_GPIO_TSF_LATCH_CONFIG
 {
@@ -5915,7 +5915,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_ExtBLECoex_Config_t
 /** TLV type : AP ECSA CONFIG TLV */
 #define TLV_TYPE_UAP_ECSA_CONFIG (PROPRIETARY_TLV_BASE_ID + 289)
 
-#ifdef CONFIG_IMD3_CFG
+#if CONFIG_IMD3_CFG
 #define TLV_TYPE_IMD_VALIDATION (PROPRIETARY_TLV_BASE_ID + 0x60) // 0x0160
 #endif
 
@@ -5938,17 +5938,17 @@ typedef MLAN_PACK_START struct _HostCmd_DS_ExtBLECoex_Config_t
 /** TLV type : BSS Status */
 #define TLV_TYPE_BSS_STATUS (PROPRIETARY_TLV_BASE_ID + 0x93) // 0x0193
 
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
 /** TLV type: Extension ID for 11AX Capability */
 #define TLV_TYPE_EXTENSION_ID 0x00ff
 #endif
 
-#ifdef CONFIG_HOST_MLME
+#if CONFIG_HOST_MLME
 /**TLV type : Host MLME Flag*/
 #define TLV_TYPE_HOST_MLME (PROPRIETARY_TLV_BASE_ID + 307)
 #endif
 
-#ifdef CONFIG_EXTERNAL_COEX_PTA
+#if CONFIG_EXTERNAL_COEX_PTA
 /** TLV type : Robust Coex */
 #define TLV_TYPE_ROBUST_COEX (PROPRIETARY_TLV_BASE_ID + 0x138) // 0x0238
 #endif
@@ -6199,7 +6199,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_mac_filter_t
 /** setting for band_config - band=5GHZ */
 #define BAND_CONFIG_5GHZ 0x01U
 
-#ifdef CONFIG_UNII4_BAND_SUPPORT
+#if CONFIG_UNII4_BAND_SUPPORT
 /** TODO: Temporary work around until firmware fix is available */
 /** setting for band_config - channel 173 */
 #define BAND_CONFIG_CH_173 0x11U
@@ -6567,7 +6567,7 @@ typedef MLAN_PACK_START struct _HostCmd_CONFIG_ED_MAC_MODE
     t_u16 ed_ctrl_2g;
     /** Offset of default threshold */
     t_s16 ed_offset_2g;
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     /** Enable/Disable ED MAC mode */
     t_u16 ed_ctrl_5g;
     /** Offset of default threshold */
@@ -6577,7 +6577,7 @@ typedef MLAN_PACK_START struct _HostCmd_CONFIG_ED_MAC_MODE
 #endif
 } MLAN_PACK_END HostCmd_CONFIG_ED_MAC_MODE;
 
-#ifdef CONFIG_ECSA
+#if CONFIG_ECSA
 #define MRVL_ACTION_CHAN_SWITCH_ANNOUNCE (PROPRIETARY_TLV_BASE_ID + 0x341)
 
 /** MrvlIEtypes_uap_chan_switch */
@@ -6592,7 +6592,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_action_chan_switch_t
 } MLAN_PACK_END MrvlIEtypes_action_chan_switch_t;
 #endif
 
-#ifdef CONFIG_RF_TEST_MODE
+#if CONFIG_RF_TEST_MODE
 
 #define MFG_CMD_SET_TEST_MODE        1
 #define MFG_CMD_UNSET_TEST_MODE      0
@@ -7083,7 +7083,7 @@ typedef MLAN_PACK_START struct
     t_u8 tlv_buffer[1]; /**< TLV Buffer */
 } MLAN_PACK_END HostCmd_DS_CHAN_RPT_RSP;
 
-#ifdef CONFIG_WIFI_EU_CRYPTO
+#if CONFIG_WIFI_EU_CRYPTO
 typedef MLAN_PACK_START struct
 {
     /* EncDec: 0-Decrypt, 1-Encrypt */
@@ -7166,7 +7166,7 @@ typedef MLAN_PACK_START struct
 } MLAN_PACK_END EU_Crypto;
 #endif
 
-#if defined(CONFIG_IPS)
+#if (CONFIG_IPS)
 typedef MLAN_PACK_START struct
 {
     t_u32 enable;
@@ -7217,7 +7217,7 @@ typedef MLAN_PACK_START struct _MrvlIETypes_SuppOperClass_t
     t_u8 oper_class[1];
 } MLAN_PACK_END MrvlIETypes_SuppOperClass_t;
 
-#ifdef CONFIG_MULTI_CHAN
+#if CONFIG_MULTI_CHAN
 typedef MLAN_PACK_START struct _MrvlTypes_DrcsTimeSlice_t
 {
     /** Header */
@@ -7278,7 +7278,7 @@ typedef MLAN_PACK_START struct _MrvlIETypes_mutli_chan_info_t
 } MLAN_PACK_END MrvlIEtypes_multi_chan_info_t;
 #endif
 
-#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+#if (CONFIG_11MC) || (CONFIG_11AZ)
 /**Structure for FTM complete subevent*/
 typedef MLAN_PACK_START struct _wls_subevent_ftm_complete
 {
@@ -7488,7 +7488,7 @@ typedef MLAN_PACK_START struct _Hostcmd_FTM_SESSION_CTRL
     t_u8 chan;
 } MLAN_PACK_END HostCmd_FTM_SESSION_CTRL;
 
-#ifdef CONFIG_WLS_CSI_PROC
+#if CONFIG_WLS_CSI_PROC
 typedef MLAN_PACK_START struct _CSI_EVENT_HEADER_t
 {
     /** No of bytes in packet including this field */
@@ -7517,7 +7517,7 @@ typedef MLAN_PACK_START struct _Hostcmd_WLS_CSI_ACK
 
 #endif
 
-#ifdef CONFIG_1AS
+#if CONFIG_1AS
 /** HostCmd_DS_HOST_CLOCK_CFG */
 typedef MLAN_PACK_START struct _HostCmd_DS_HOST_CLOCK_CFG
 {
@@ -7530,7 +7530,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_HOST_CLOCK_CFG
 } MLAN_PACK_END HostCmd_DS_HOST_CLOCK_CFG;
 #endif
 
-#ifdef CONFIG_CSI
+#if CONFIG_CSI
 /** MrvlIEtypes_channel_bandcfg_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_channel_bandcfg_t
 {
@@ -7577,7 +7577,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_BOOT_SLEEP
     t_u16 enable;
 } MLAN_PACK_END HostCmd_DS_BOOT_SLEEP;
 
-#ifdef CONFIG_TSP
+#if CONFIG_TSP
 typedef MLAN_PACK_START struct _HostCmd_DS_TSP_CFG
 {
     /** Action */
@@ -7629,7 +7629,7 @@ typedef MLAN_PACK_START struct _TSP_CFG
 } MLAN_PACK_END TSP_CFG;
 #endif
 
-#ifdef CONFIG_COEX_DUTY_CYCLE
+#if CONFIG_COEX_DUTY_CYCLE
 /** TLV type : Coex duty cycle */
 #define TLV_TYPE_COEX_DUTY_CYCLE (PROPRIETARY_TLV_BASE_ID + 0x290)
 
@@ -7682,7 +7682,7 @@ typedef MLAN_PACK_START struct _HostCmd_DUAL_ANT_DUTY_CYCLE
 } MLAN_PACK_END HostCmd_DUAL_ANT_DUTY_CYCLE;
 #endif
 
-#if defined(CONFIG_EXTERNAL_COEX_PTA) || defined(CONFIG_IMD3_CFG)
+#if (CONFIG_EXTERNAL_COEX_PTA) || (CONFIG_IMD3_CFG)
 
 /** HostCmd_EXTERNAL_COEX_PTA structure */
 typedef MLAN_PACK_START struct _MrvlIETypes_Coex_params_t
@@ -7694,7 +7694,7 @@ typedef MLAN_PACK_START struct _MrvlIETypes_Coex_params_t
 } MLAN_PACK_END MrvlIETypes_Coex_params_t;
 #endif
 
-#ifdef CONFIG_EXTERNAL_COEX_PTA
+#if CONFIG_EXTERNAL_COEX_PTA
 /** MrvlIETypes_DualAntDutyCycle_Config_t */
 typedef MLAN_PACK_START struct _MrvlIETypes_ExternalCoexPta_Config_t
 {
@@ -7731,7 +7731,7 @@ typedef MLAN_PACK_START struct _HostCmd_EXTERNAL_COEX_PTA
 } MLAN_PACK_END HostCmd_EXTERNAL_COEX_PTA;
 #endif
 
-#ifdef CONFIG_IMD3_CFG
+#if CONFIG_IMD3_CFG
 /** MrvlIETypes_IMD_Config_t */
 typedef MLAN_PACK_START struct _MrvlIETypes_IMD_Config_t
 {
@@ -7794,7 +7794,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_802_11_CFG_DATA cfg_data;
         /** MAC control */
         HostCmd_DS_MAC_CONTROL mac_ctrl;
-#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
+#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
         /** Test Independent reset */
         HostCmd_DS_IND_RST ind_rst;
         /** GPIO Independent reset configure */
@@ -7828,7 +7828,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_CW_MODE_CTRL cwmode;
         /** RF antenna */
         HostCmd_DS_802_11_RF_ANTENNA antenna;
-#ifdef CONFIG_NET_MONITOR
+#if CONFIG_NET_MONITOR
         /** Net Monitor Mode command */
         HostCmd_DS_802_11_NET_MONITOR net_mon;
 #endif
@@ -7837,7 +7837,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_802_11_HS_CFG_ENH opt_hs_cfg;
         /** Scan */
         HostCmd_DS_802_11_SCAN scan;
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#if CONFIG_EXT_SCAN_SUPPORT
         /** Extended Scan */
         HostCmd_DS_802_11_SCAN_EXT ext_scan;
 #endif
@@ -7891,14 +7891,14 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_11N_CFG htcfg;
         /** HostCmd_DS_11AC_CFG */
         HostCmd_DS_11AC_CFG vhtcfg;
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
         /** HostCmd_DS_11AX_CFG */
         HostCmd_DS_11AX_CFG axcfg;
-#ifdef CONFIG_11AX_TWT
+#if CONFIG_11AX_TWT
         /** HostCmd_DS_TWT_CFG */
         HostCmd_DS_TWT_CFG twtcfg;
 #endif /* CONFIG_11AX_TWT  */
-#ifdef CONFIG_MMSF
+#if CONFIG_MMSF
         /* HostCmd_DS_MMSF_CFG*/
         HostCmd_DS_MMSF_CFG mmsf_cfg;
 #endif
@@ -7921,7 +7921,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         /** Key material */
         HostCmd_DS_802_11_KEY_MATERIAL key_material;
 #endif /*WPA || WAPI_AP || HOST_AUTHENTICATOR*/
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
+#if CONFIG_GTK_REKEY_OFFLOAD
         /** GTK Rekey parameters */
         HostCmd_DS_GTK_REKEY_PARAMS gtk_rekey;
 #endif
@@ -7991,15 +7991,15 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #endif /* WLAN_LOW_POWER_ENABLE */
         HostCmd_CONFIG_ED_MAC_MODE ed_mac_mode_cfg;
         HostCmd_DS_CHAN_TRPC_CONFIG chan_trpc_cfg;
-#ifdef CONFIG_EXTERNAL_BLE_COEX
+#if CONFIG_EXTERNAL_BLE_COEX
         MrvlIETypes_ExtBLECoex_Config_t ext_ble_coex_cfg;
 #endif
         HostCmd_DS_TSF tsf_cfg;
-#ifdef CONFIG_WIFI_CLOCKSYNC
+#if CONFIG_WIFI_CLOCKSYNC
         HostCmd_DS_GPIO_TSF_LATCH_PARAM_CONFIG gpio_tsf_latch;
 #endif /* CONFIG_WIFI_CLOCKSYNC */
         HostCmd_DS_TBTT_OFFSET tbtt_offset;
-#ifdef CONFIG_RF_TEST_MODE
+#if CONFIG_RF_TEST_MODE
         HostCmd_DS_MFG_CMD_GENERIC_CFG mfg_generic_cfg;
         HostCmd_DS_MFG_CMD_TX_FRAME2 mfg_tx_frame2;
         HostCmd_DS_MFG_CMD_TX_CONT mfg_tx_cont;
@@ -8008,89 +8008,89 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_MFG_CMD_OTP_MAC_ADD_T mfg_otp_mac_addr_rd_wr;
         HostCmd_DS_MFG_CMD_OTP_CAL_DATA_T mfg_otp_cal_data_rd_wr;
 #endif
-#ifdef CONFIG_WIFI_TX_PER_TRACK
+#if CONFIG_WIFI_TX_PER_TRACK
         HostCmd_DS_TX_RX_PKT_STATS pkt_stats;
 #endif
-#ifdef CONFIG_TX_RX_HISTOGRAM
+#if CONFIG_TX_RX_HISTOGRAM
         HostCmd_DS_TX_RX_HISTOGRAM histogram;
 #endif
 #ifdef OTP_CHANINFO
         HostCmd_DS_CHAN_REGION_CFG reg_cfg;
 #endif
-#ifdef CONFIG_11K_OFFLOAD
+#if CONFIG_11K_OFFLOAD
         /** OFFLOAD FEATURE CTRL */
         HostCmd_OFFLOAD_FEATURE_CTRL fctrl;
 #endif /* CONFIG_11K_OFFLOAD */
-#ifdef CONFIG_WIFI_EU_CRYPTO
+#if CONFIG_WIFI_EU_CRYPTO
         HostCmd_DS_EU_AES_CRYPTO eu_aes_crypto;
         HostCmd_DS_EU_CRYPTO eu_crypto;
 #endif
 
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
         HostCmd_DS_11AX_CMD_CFG axcmd;
 #endif
 #ifdef SD8801
         HostCmd_DS_ExtBLECoex_Config_t ext_ble_coex_cfg;
 #endif
-#ifdef CONFIG_MULTI_CHAN
+#if CONFIG_MULTI_CHAN
         HostCmd_DS_MULTI_CHAN_CFG multi_chan_cfg;
         HostCmd_DS_MULTI_CHAN_POLICY multi_chan_policy;
         HostCmd_DS_DRCS_CFG drcs_cfg;
 #endif
-#ifdef CONFIG_1AS
+#if CONFIG_1AS
         HostCmd_DS_HOST_CLOCK_CFG host_clock_cfg;
 #endif
-#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+#if (CONFIG_11MC) || (CONFIG_11AZ)
         /** hostcmd for session_ctrl user command */
         HostCmd_FTM_SESSION_CTRL ftm_session_ctrl;
         /** hostcmd for session_cfg user command */
         HostCmd_FTM_SESSION_CFG ftm_session_cfg;
-#ifdef CONFIG_WLS_CSI_PROC
+#if CONFIG_WLS_CSI_PROC
         HostCmd_WLS_CSI_ACK wls_csi_ack;
 #endif
 #endif
-#ifdef CONFIG_TX_AMPDU_PROT_MODE
+#if CONFIG_TX_AMPDU_PROT_MODE
         HostCmd_DS_CMD_TX_AMPDU_PROT_MODE tx_ampdu_prot_mode;
 #endif
-#if defined(CONFIG_IPS)
+#if (CONFIG_IPS)
         HostCmd_DS_IPS_CONFIG ips_config;
 #endif
-#ifdef CONFIG_CSI
+#if CONFIG_CSI
         HostCmd_DS_CSI_CFG csi_params;
 #endif
 
         /** boot sleep configure */
         HostCmd_DS_BOOT_SLEEP boot_sleep;
 
-#ifdef CONFIG_RX_ABORT_CFG
+#if CONFIG_RX_ABORT_CFG
         HostCmd_DS_RX_ABORT_CFG rx_abort_cfg;
 #endif
 
-#ifdef CONFIG_RX_ABORT_CFG_EXT
+#if CONFIG_RX_ABORT_CFG_EXT
         HostCmd_DS_RX_ABORT_CFG_EXT rx_abort_cfg_ext;
 #endif
 
-#ifdef CONFIG_CCK_DESENSE_CFG
+#if CONFIG_CCK_DESENSE_CFG
         HostCmd_DS_CCK_DESENSE_CFG cck_desense_cfg;
 #endif
 
-#ifdef CONFIG_FW_VDLL
+#if CONFIG_FW_VDLL
         uint8_t *vdll_cmd_mem;
 #endif
-#ifdef CONFIG_TSP
+#if CONFIG_TSP
         HostCmd_DS_TSP_CFG tsp_cfg;
 #endif
-#ifdef CONFIG_CLOUD_KEEP_ALIVE
+#if CONFIG_CLOUD_KEEP_ALIVE
         HostCmd_DS_AUTO_TX auto_tx;
 #endif
-#ifdef CONFIG_COEX_DUTY_CYCLE
+#if CONFIG_COEX_DUTY_CYCLE
         HostCmd_SIGNLE_ANT_DUTY_CYCLE single_ant_duty_cycle;
         HostCmd_DUAL_ANT_DUTY_CYCLE dual_ant_duty_cycle;
 #endif
-#ifdef CONFIG_EXTERNAL_COEX_PTA
+#if CONFIG_EXTERNAL_COEX_PTA
         HostCmd_EXTERNAL_COEX_PTA external_coex_pta;
 #endif
-#ifdef CONFIG_IMD3_CFG
+#if CONFIG_IMD3_CFG
         HostCmd_IMD3_CFG imd3_cfg;
 #endif
         HostCmd_DS_80211_TX_FRAME tx_frame;
@@ -8122,7 +8122,7 @@ typedef MLAN_PACK_START struct _opt_sleep_confirm_buffer
     OPT_Confirm_Sleep ps_cfm_sleep;
 } MLAN_PACK_END opt_sleep_confirm_buffer;
 
-#if defined(CONFIG_FW_VDLL) || defined(CONFIG_FW_VDLLV2)
+#if (CONFIG_FW_VDLL) || (CONFIG_FW_VDLLV2)
 /** req host side download vdll block */
 #define VDLL_IND_TYPE_REQ 0
 /** notify vdll start offset in firmware image */
@@ -8169,7 +8169,7 @@ typedef MLAN_PACK_START struct _mlan_event_vdll_indication
 
 #endif /* CONFIG_FW_VDLL || CONFIG_FW_VDLLV2*/
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /* enum for event access mem by host action */
 enum
 {

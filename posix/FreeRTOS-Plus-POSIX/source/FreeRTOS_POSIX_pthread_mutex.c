@@ -1,4 +1,4 @@
-#ifdef CONFIG_SIGMA_AGENT
+#if CONFIG_SIGMA_AGENT
 
 /*
  * Amazon FreeRTOS POSIX V1.1.0

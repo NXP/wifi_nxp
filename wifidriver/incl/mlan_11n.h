@@ -178,7 +178,7 @@ static void disable_station_ampdu(mlan_private *priv, t_u8 tid, t_u8 *ra)
     return;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief This function checks whether current BA stream is high priority or not
  *
@@ -322,7 +322,7 @@ static t_u8 wlan_is_bastream_avail(mlan_private *priv)
     return ((bastream_num < MLAN_MAX_TX_BASTREAM_SUPPORTED) ? MTRUE : MFALSE);
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief This function finds the stream to delete
  *

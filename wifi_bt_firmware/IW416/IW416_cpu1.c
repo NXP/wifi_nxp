@@ -11,7 +11,7 @@
 
 #if defined(SD8978)
 
-#if defined(CONFIG_WIFI_IND_DNLD)
+#if (CONFIG_WIFI_IND_DNLD)
 
 const uint8_t fw_cpu1[] = {
 #include <sdIW416_wlan.bin.inc>

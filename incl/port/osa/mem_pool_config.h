@@ -14,7 +14,7 @@
 #define mpool_e(...) wmlog_e("mpool", ##__VA_ARGS__)
 #define mpool_w(...) wmlog_w("mpool", ##__VA_ARGS__)
 
-#ifdef CONFIG_MEM_POOL_DEBUG
+#if CONFIG_MEM_POOL_DEBUG
 #define mpool_d(...) wmlog("mpool", ##__VA_ARGS__)
 #else
 #define mpool_d(...)

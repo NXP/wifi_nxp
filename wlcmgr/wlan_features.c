@@ -15,7 +15,7 @@
 #include <wm_net.h> /* for net_inet_aton */
 #include <wifi.h>
 
-#ifdef CONFIG_WIFI_FEATURES
+#if CONFIG_WIFI_FEATURES
 
 #ifdef ENABLE_OFFLOAD
 static void test_wlan_ns_offload(int argc, char **argv)

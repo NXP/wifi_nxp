@@ -17,7 +17,7 @@
 bool string_equal(const char *s1, const char *s2);
 bool get_uint(const char *arg, unsigned int *dest, unsigned int len);
 bool get_mac(const char *arg, char *dest, char sep);
-#if defined(RW610) && defined(CONFIG_ANT_DETECT)
+#if defined(RW610) && (CONFIG_ANT_DETECT)
 bool get_channel_list(const char *arg, uint8_t *num_channels, uint8_t *chan_number, char sep);
 #endif
 /* Simplified non-re-entrant cli_getopt function.  Call this in a while loop to

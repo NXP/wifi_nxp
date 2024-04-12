@@ -15,13 +15,13 @@
 
 #define net_e(...) wmlog_e("net", ##__VA_ARGS__)
 
-#ifdef CONFIG_NET_DEBUG
+#if CONFIG_NET_DEBUG
 #define net_d(...) wmlog("net", ##__VA_ARGS__)
 #else
 #define net_d(...)
 #endif /* ! CONFIG_NET_DEBUG */
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 #define IPV6_ADDR_STATE_TENTATIVE  "Tentative"
 #define IPV6_ADDR_STATE_PREFERRED  "Preferred"
 #define IPV6_ADDR_STATE_INVALID    "Invalid"
@@ -34,7 +34,7 @@
 #define IPV6_ADDR_UNKNOWN          "Unknown"
 #endif
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 #define DHCP_TIMEOUT (60 * 1000)
 #else
 #define DHCP_TIMEOUT (120 * 1000)
@@ -43,7 +43,7 @@
 #ifdef RW610
 #define TX_DATA_PAYLOAD_SIZE 1500
 #else
-//To do for other chips
+// To do for other chips
 #endif
 
 #if defined(SDK_OS_FREE_RTOS)
@@ -59,7 +59,7 @@ typedef struct interface interface_t;
 
 static interface_t g_mlan;
 static interface_t g_uap;
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 static interface_t g_wfd;
 #endif
 
@@ -69,22 +69,22 @@ static void dhcp_timer_cb(osa_timer_arg_t arg);
 
 err_t lwip_netif_init(struct netif *netif);
 err_t lwip_netif_uap_init(struct netif *netif);
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 err_t lwip_netif_wfd_init(struct netif *netif);
 #endif
-#ifndef CONFIG_WIFI_RX_REORDER
+#if !CONFIG_WIFI_RX_REORDER
 void handle_data_packet(const t_u8 interface, const t_u8 *rcvdata, const t_u16 datalen);
 #endif
 void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen);
 void handle_deliver_packet_above(t_void *rxpd, t_u8 interface, t_void *lwip_pbuf);
 bool wrapper_net_is_ip_or_ipv6(const t_u8 *buffer);
-#ifdef CONFIG_WIFI_RX_REORDER
+#if CONFIG_WIFI_RX_REORDER
 void *gen_pbuf_from_data2(t_u8 *payload, t_u16 datalen, void **p_payload);
 #endif
 
 NETIF_DECLARE_EXT_CALLBACK(netif_ext_callback)
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 static void wm_netif_ipv6_status_callback(struct netif *n);
 #endif
 
@@ -99,7 +99,7 @@ static void netif_ext_status_callback(struct netif *netif,
 
     if (&if_handle->netif == netif)
     {
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         if ((reason & (LWIP_NSC_IPV6_ADDR_STATE_CHANGED | LWIP_NSC_IPV6_SET)) != LWIP_NSC_NONE)
         {
             wm_netif_ipv6_status_callback(netif);
@@ -119,7 +119,7 @@ static void netif_ext_status_callback(struct netif *netif,
     }
 }
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 char *ipv6_addr_state_to_desc(unsigned char addr_state)
 {
     if (ip6_addr_istentative((addr_state)) != 0U)
@@ -188,7 +188,7 @@ int net_dhcp_hostname_set(char *hostname)
     return WM_SUCCESS;
 }
 
-#ifndef CONFIG_NO_WIFI_TCPIP_INIT
+#if !CONFIG_NO_WIFI_TCPIP_INIT
 static void tcpip_init_done_cb(void *arg)
 {
     sys_sem_t *init_sem;
@@ -226,7 +226,7 @@ void net_ipv4stack_init(void)
 }
 #endif
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 void net_ipv6stack_init(struct netif *netif)
 {
     LOCK_TCPIP_CORE();
@@ -262,30 +262,30 @@ int net_wlan_init(void)
     int ret;
 
 #ifdef RW610
-#ifndef CONFIG_WIFI_RX_REORDER
+#if !CONFIG_WIFI_RX_REORDER
     (void)wifi_register_data_input_callback(&handle_data_packet);
 #endif
     (void)wifi_register_amsdu_data_input_callback(&handle_amsdu_data_packet);
     (void)wifi_register_deliver_packet_above_callback(&handle_deliver_packet_above);
     (void)wifi_register_wrapper_net_is_ip_or_ipv6_callback(&wrapper_net_is_ip_or_ipv6);
-#ifdef CONFIG_WIFI_RX_REORDER
+#if CONFIG_WIFI_RX_REORDER
     (void)wifi_register_gen_pbuf_from_data2_callback(&gen_pbuf_from_data2);
 #endif
 #endif
     if (!net_wlan_init_done)
     {
-#ifndef CONFIG_NO_WIFI_TCPIP_INIT
+#if !CONFIG_NO_WIFI_TCPIP_INIT
         net_ipv4stack_init();
 #endif
 
 #ifndef RW610
-#ifndef CONFIG_WIFI_RX_REORDER
+#if !CONFIG_WIFI_RX_REORDER
         (void)wifi_register_data_input_callback(&handle_data_packet);
 #endif
         (void)wifi_register_amsdu_data_input_callback(&handle_amsdu_data_packet);
         (void)wifi_register_deliver_packet_above_callback(&handle_deliver_packet_above);
         (void)wifi_register_wrapper_net_is_ip_or_ipv6_callback(&wrapper_net_is_ip_or_ipv6);
-#ifdef CONFIG_WIFI_RX_REORDER
+#if CONFIG_WIFI_RX_REORDER
         (void)wifi_register_gen_pbuf_from_data2_callback(&gen_pbuf_from_data2);
 #endif
 #endif
@@ -297,7 +297,7 @@ int net_wlan_init(void)
             net_e("MLAN interface add failed");
             return -WM_FAIL;
         }
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         net_ipv6stack_init(&g_mlan.netif);
 #endif /* CONFIG_IPV6 */
 
@@ -308,14 +308,14 @@ int net_wlan_init(void)
             net_e("UAP interface add failed");
             return -WM_FAIL;
         }
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         net_ipv6stack_init(&g_uap.netif);
 #endif /* CONFIG_IPV6 */
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         g_wfd.ipaddr.addr = INADDR_ANY;
         ret               = netifapi_netif_add(&g_wfd.netif, ip_2_ip4(&g_wfd.ipaddr), ip_2_ip4(&g_wfd.ipaddr),
-                                 ip_2_ip4(&g_wfd.ipaddr), NULL, lwip_netif_wfd_init, tcpip_input);
+                                               ip_2_ip4(&g_wfd.ipaddr), NULL, lwip_netif_wfd_init, tcpip_input);
         if (ret)
         {
             net_e("P2P interface add failed\r\n");
@@ -376,7 +376,7 @@ int net_get_if_name_netif(char *pif_name, struct netif *iface)
 static int net_netif_deinit(struct netif *netif)
 {
     int ret;
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     if (netif->mld_mac_filter != NULL)
     {
         ip6_addr_t ip6_allnodes_ll;
@@ -454,7 +454,7 @@ static void wm_netif_status_callback(struct netif *n)
     bool is_default_dhcp_address = (ip_2_ip4(&(n->ip_addr))->addr == INADDR_ANY);
     /* is_dhcp_off: true if dhcp is switched off*/
     bool is_dhcp_off = (netif_dhcp_data(n)->state == DHCP_STATE_OFF);
-#ifdef CONFIG_AUTOIP
+#if CONFIG_AUTOIP
     /* Variable to hold whether autoip address has been supplied
      * We store the status of autoip address in this variable
      * once autoip reaches the bound state this variable is set
@@ -500,7 +500,7 @@ static void wm_netif_status_callback(struct netif *n)
     {
         /* If the supplied dhcp address is the default address */
         event_flag_dhcp_connection = DHCP_FAILED;
-#ifdef CONFIG_AUTOIP
+#if CONFIG_AUTOIP
     }
     else if (not_dhcp_address && (is_autoip_address))
     {
@@ -632,7 +632,7 @@ void *net_get_uap_handle(void)
     return &g_uap;
 }
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 void *net_get_wfd_handle(void)
 {
     return &g_wfd;
@@ -679,7 +679,7 @@ void net_interface_dhcp_cleanup(void *intrfc_handle)
 
 int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
 {
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     t_u8 i;
 #endif
 
@@ -694,8 +694,11 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
 
     interface_t *if_handle = (interface_t *)intrfc_handle;
 
-#ifdef CONFIG_P2P
-    net_d("configuring interface %s (with %s)", (if_handle == &g_mlan) ? "mlan" : (if_handle == &g_uap) ? "uap" : "wfd",
+#if CONFIG_P2P
+    net_d("configuring interface %s (with %s)",
+          (if_handle == &g_mlan) ? "mlan" :
+          (if_handle == &g_uap)  ? "uap" :
+                                   "wfd",
           (addr->ipv4.addr_type == NET_ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
 #else
     net_d("configuring interface %s (with %s)", (if_handle == &g_mlan) ? "mlan" : "uap",
@@ -705,7 +708,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
     (void)netifapi_netif_set_down(&if_handle->netif);
     wm_netif_status_callback_ptr = NULL;
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     if (if_handle == &g_mlan || if_handle == &g_uap)
     {
         LOCK_TCPIP_CORE();
@@ -771,7 +774,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
     }
     /* Finally this should send the following event. */
     if ((if_handle == &g_mlan)
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         || ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_STA))
 #endif
     )
@@ -785,7 +788,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
          */
     }
     else if ((if_handle == &g_uap)
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
              || ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_UAP))
 #endif
     )
@@ -816,7 +819,7 @@ int net_get_if_addr(struct net_ip_config *addr, void *intrfc_handle)
     return WM_SUCCESS;
 }
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 int net_get_if_ipv6_addr(struct net_ip_config *addr, void *intrfc_handle)
 {
     interface_t *if_handle = (interface_t *)intrfc_handle;
@@ -914,7 +917,7 @@ void net_stat(void)
     stats_display();
 }
 
-#elif defined(CONFIG_ZEPHYR)
+#elif (CONFIG_ZEPHYR)
 
 /*******************************************************************************
  * Definitions
@@ -938,7 +941,7 @@ enum netif_mac_filter_action
 
 static int igmp_mac_filter(struct netif *netif, const struct in_addr *group, enum netif_mac_filter_action action);
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 static int mld_mac_filter(struct netif *netif, const struct in6_addr *group, enum netif_mac_filter_action action);
 #endif
 
@@ -951,7 +954,7 @@ static struct net_mgmt_event_callback net_event_v4_cb;
 #define DHCPV4_MASK  (NET_EVENT_IPV4_DHCP_BOUND | NET_EVENT_IPV4_DHCP_STOP)
 #define MCASTV4_MASK (NET_EVENT_IPV4_MADDR_ADD | NET_EVENT_IPV4_MADDR_DEL)
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 static struct net_mgmt_event_callback net_event_v6_cb;
 #define MCASTV6_MASK (NET_EVENT_IPV6_MADDR_ADD | NET_EVENT_IPV6_MADDR_DEL)
 #endif
@@ -972,7 +975,7 @@ void deliver_packet_above(struct net_pkt *p, int recv_interface)
     switch (htons(ethhdr->type))
     {
         case NET_ETH_PTYPE_IP:
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         case NET_ETH_PTYPE_IPV6:
 #endif
         case NET_ETH_PTYPE_ARP:
@@ -1041,7 +1044,7 @@ retry:
     return pkt;
 }
 
-#ifdef CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY
 static struct net_pkt *gen_pkt_from_data_for_zerocopy(t_u8 interface, t_u8 *payload, t_u16 datalen)
 {
     struct net_pkt *pkt = NULL;
@@ -1102,8 +1105,8 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         g_data_snr_last = rxpd->snr;
     }
 
-    t_u8 *payload = (t_u8 *)rxpd + rxpd->rx_pkt_offset;
-#ifdef CONFIG_TX_RX_ZERO_COPY
+    t_u8 *payload     = (t_u8 *)rxpd + rxpd->rx_pkt_offset;
+#if CONFIG_TX_RX_ZERO_COPY
     t_u16 header_len  = INTF_HEADER_LEN + rxpd->rx_pkt_offset;
     struct net_pkt *p = gen_pkt_from_data_for_zerocopy(recv_interface, (t_u8 *)rcvdata,
                                                        rxpd->rx_pkt_length + header_len + sizeof(mlan_buffer));
@@ -1117,7 +1120,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         return;
     }
 
-#ifdef CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY
     /* Directly use rxpd from net_pkt */
     rxpd = (RxPD *)(void *)(net_pkt_data(p) + INTF_HEADER_LEN);
     /* Skip interface header and RxPD */
@@ -1128,7 +1131,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     /* points to packet payload, which starts with an Ethernet header */
     struct net_eth_hdr *ethhdr = NET_ETH_HDR(p);
 
-#ifdef CONFIG_FILTER_LOCALLY_ADMINISTERED_AND_SELF_MAC_ADDR
+#if CONFIG_FILTER_LOCALLY_ADMINISTERED_AND_SELF_MAC_ADDR
     /* TODO: port wifi_netif.c */
     if ((ISLOCALLY_ADMINISTERED_ADDR(ethhdr->src.addr[0]) &&
          (!memcmp(&ethhdr->src.addr[3], &iw416_data.mac_addr[3], 3))) ||
@@ -1164,7 +1167,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     switch (header_type)
     {
         case NET_ETH_PTYPE_IP:
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         case NET_ETH_PTYPE_IPV6:
 #endif
         /* Unicast ARP also need do rx reorder */
@@ -1225,7 +1228,7 @@ void handle_deliver_packet_above(t_void *rxpd, t_u8 interface, t_void *pkt)
 {
     struct net_pkt *p = (struct net_pkt *)pkt;
 
-#ifndef CONFIG_WIFI_RX_REORDER
+#if !CONFIG_WIFI_RX_REORDER
     (void)rxpd;
     deliver_packet_above(p, interface);
 #else
@@ -1254,8 +1257,8 @@ int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt)
     t_u8 interface         = if_handle->state.interface;
     t_u16 net_pkt_len      = net_pkt_get_len(pkt);
     t_u32 pkt_len, outbuf_len;
-    t_u8 *wmm_outbuf = NULL;
-#ifdef CONFIG_WMM
+    t_u8 *wmm_outbuf              = NULL;
+#if CONFIG_WMM
     t_u8 *payload                 = net_pkt_data(pkt);
     t_u8 tid                      = 0;
     int retry                     = 0;
@@ -1265,14 +1268,14 @@ int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt)
 
     t_u16 mtu = net_if_get_mtu(net_pkt_iface(pkt));
 #ifdef RW610
-    mtu = MIN(TX_DATA_PAYLOAD_SIZE, mtu);
+    mtu       = MIN(TX_DATA_PAYLOAD_SIZE, mtu);
 #endif
     if (net_pkt_len - ETH_HDR_LEN > mtu)
     {
         return -ENOMEM;
     }
 
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
     t_u32 pkt_prio = wifi_wmm_get_pkt_prio(pkt, &tid);
     if (pkt_prio == -WM_FAIL)
     {
@@ -1339,12 +1342,12 @@ int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt)
 #endif
 
     pkt_len =
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
         sizeof(mlan_linked_list) +
 #endif
         sizeof(TxPD) + INTF_HEADER_LEN;
 
-#ifdef CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY
     memset(wmm_outbuf, 0x00, pkt_len + ETH_HDR_LEN);
     /* Save the ethernet header */
     net_pkt_set_overwrite(pkt, false);
@@ -1365,7 +1368,7 @@ int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt)
     pkt_len += net_pkt_len;
 
     ret = wifi_low_level_output(interface, wmm_outbuf, pkt_len
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
                                 ,
                                 pkt_prio, tid
 #endif
@@ -1418,7 +1421,7 @@ static int igmp_mac_filter(struct netif *netif, const struct in_addr *group, enu
         case NET_IF_ADD_MAC_FILTER:
             /* LwIP takes care of duplicate IP addresses and it always send
              * unique IP address. Simply add IP to top of list*/
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
             curr = (group_ip4_addr_t *)OSA_MemoryAllocate(sizeof(group_ip4_addr_t));
 #else
             curr = (group_ip4_addr_t *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
@@ -1446,7 +1449,7 @@ static int igmp_mac_filter(struct netif *netif, const struct in_addr *group, enu
                 /* In case of failure remove IP from list */
                 curr          = igmp_ip4_list;
                 igmp_ip4_list = curr->next;
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
                 OSA_MemoryFree(curr);
 #else
                 OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
@@ -1466,7 +1469,7 @@ static int igmp_mac_filter(struct netif *netif, const struct in_addr *group, enu
                     if (prev == curr)
                     {
                         igmp_ip4_list = curr->next;
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
                         OSA_MemoryFree(curr);
 #else
                         OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
@@ -1475,7 +1478,7 @@ static int igmp_mac_filter(struct netif *netif, const struct in_addr *group, enu
                     else
                     {
                         prev->next = curr->next;
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
                         OSA_MemoryFree(curr);
 #else
                         OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
@@ -1518,7 +1521,7 @@ done:
     return result;
 }
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 /* Below struct is used for creating IGMP IPv6 multicast list */
 typedef struct group_ip6_addr
 {
@@ -1545,7 +1548,7 @@ static int mld_mac_filter(struct netif *netif, const struct in6_addr *group, enu
         case NET_IF_ADD_MAC_FILTER:
             /* LwIP takes care of duplicate IP addresses and it always send
              * unique IP address. Simply add IP to top of list*/
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
             curr = (group_ip6_addr_t *)OSA_MemoryAllocate(sizeof(group_ip6_addr_t));
 #else
             curr = (group_ip6_addr_t *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
@@ -1573,7 +1576,7 @@ static int mld_mac_filter(struct netif *netif, const struct in6_addr *group, enu
                 /* In case of failure remove IP from list */
                 curr         = mld_ip6_list;
                 mld_ip6_list = mld_ip6_list->next;
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
                 OSA_MemoryFree(curr);
 #else
                 OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
@@ -1593,7 +1596,7 @@ static int mld_mac_filter(struct netif *netif, const struct in6_addr *group, enu
                     if (prev == curr)
                     {
                         mld_ip6_list = curr->next;
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
                         OSA_MemoryFree(curr);
 #else
                         OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
@@ -1602,7 +1605,7 @@ static int mld_mac_filter(struct netif *netif, const struct in6_addr *group, enu
                     else
                     {
                         prev->next = curr->next;
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
                         OSA_MemoryFree(curr);
 #else
                         OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
@@ -1644,7 +1647,7 @@ static int mld_mac_filter(struct netif *netif, const struct in6_addr *group, enu
 done:
     return result;
 }
-#endif /* #ifdef CONFIG_IPV6 */
+#endif /* #if CONFIG_IPV6 */
 
 void *net_get_sta_handle(void)
 {
@@ -1719,7 +1722,7 @@ static void ipv4_mcast_delete(struct net_mgmt_event_callback *cb, struct net_if 
     igmp_mac_filter((struct netif *)iface, cb->info, NET_IF_DEL_MAC_FILTER);
 }
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 static void ipv6_mcast_add(struct net_mgmt_event_callback *cb, struct net_if *iface)
 {
     mld_mac_filter((struct netif *)iface, cb->info, NET_IF_ADD_MAC_FILTER);
@@ -1748,7 +1751,7 @@ static void wifi_net_event_handler(struct net_mgmt_event_callback *cb, uint32_t 
         case NET_EVENT_IPV4_MADDR_DEL:
             ipv4_mcast_delete(cb, iface);
             break;
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         case NET_EVENT_IPV6_MADDR_ADD:
             ipv6_mcast_add(cb, iface);
             break;
@@ -1775,8 +1778,11 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
 
     interface_t *if_handle = (interface_t *)intrfc_handle;
 
-#ifdef CONFIG_P2P
-    net_d("configuring interface %s (with %s)", (if_handle == &g_mlan) ? "mlan" : (if_handle == &g_uap) ? "uap" : "wfd",
+#if CONFIG_P2P
+    net_d("configuring interface %s (with %s)",
+          (if_handle == &g_mlan) ? "mlan" :
+          (if_handle == &g_uap)  ? "uap" :
+                                   "wfd",
           (addr->ipv4.addr_type == NET_ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
 #else
     net_d("configuring interface %s (with %s)", (if_handle == &g_mlan) ? "mlan" : "uap",
@@ -1817,12 +1823,12 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
     }
     /* Finally this should send the following event. */
     if ((if_handle == &g_mlan)
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         || ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_STA))
 #endif
     )
     {
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_IPV6_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
 #endif
         (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_STA_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
@@ -1834,7 +1840,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
          */
     }
     else if ((if_handle == &g_uap)
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
              || ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_UAP))
 #endif
     )
@@ -1857,7 +1863,7 @@ int net_get_if_addr(struct net_ip_config *addr, void *intrfc_handle)
     addr->ipv4.netmask = ipv4->netmask.s_addr;
     addr->ipv4.gw      = ipv4->gw.s_addr;
 
-#if defined(CONFIG_DNS_RESOLVER)
+#if (CONFIG_DNS_RESOLVER)
     struct dns_resolve_context *ctx;
 
     /* DNS status */
@@ -1886,7 +1892,7 @@ int net_get_if_addr(struct net_ip_config *addr, void *intrfc_handle)
     return WM_SUCCESS;
 }
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 char *ipv6_addr_state_to_desc(unsigned char addr_state)
 {
     if (addr_state == NET_ADDR_TENTATIVE)
@@ -2105,7 +2111,7 @@ static void setup_mgmt_events(void)
 
     net_mgmt_add_event_callback(&net_event_v4_cb);
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     net_mgmt_init_event_callback(&net_event_v6_cb, wifi_net_event_handler, MCASTV6_MASK);
 
     net_mgmt_add_event_callback(&net_event_v6_cb);
@@ -2116,7 +2122,7 @@ static void cleanup_mgmt_events(void)
 {
     net_mgmt_del_event_callback(&net_event_v4_cb);
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     net_mgmt_del_event_callback(&net_event_v6_cb);
 #endif
 }
@@ -2177,7 +2183,7 @@ void net_wlan_set_mac_address(unsigned char *sta_mac, unsigned char *uap_mac)
 {
     if (sta_mac != NULL)
     {
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         net_clear_ipv6_ll_address(&g_mlan);
 #endif
         (void)memcpy(g_mlan.state.ethaddr.addr, &sta_mac[0], MLAN_MAC_ADDR_LENGTH);
@@ -2186,7 +2192,7 @@ void net_wlan_set_mac_address(unsigned char *sta_mac, unsigned char *uap_mac)
 
     if (uap_mac != NULL)
     {
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         net_clear_ipv6_ll_address(&g_uap);
 #endif
         (void)memcpy(g_uap.state.ethaddr.addr, &uap_mac[0], MLAN_MAC_ADDR_LENGTH);
@@ -2198,7 +2204,7 @@ static int net_netif_deinit(struct net_if *netif)
 {
 #if 0
     int ret;
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     if (netif->mld_mac_filter != NULL)
     {
         ip6_addr_t ip6_allnodes_ll;
@@ -2216,7 +2222,7 @@ static int net_netif_deinit(struct net_if *netif)
 
     if (netif->state != NULL)
     {
-#ifndef CONFIG_WPA_SUPP
+#if !CONFIG_WPA_SUPP
         mem_free(netif->state);
 #endif
         netif->state = NULL;
@@ -2324,7 +2330,7 @@ int net_stack_buffer_copy_partial(void *stack_buffer, void *dst, uint16_t len, u
     return total_copied;
 }
 
-#ifdef CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY
 void net_tx_zerocopy_process_cb(void *destAddr, void *srcAddr, uint32_t len)
 {
     outbuf_t *buf    = (outbuf_t *)srcAddr;

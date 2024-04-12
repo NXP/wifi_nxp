@@ -7,7 +7,7 @@
 
 #include "mem_pool_config.h"
 
-#ifdef CONFIG_MEM_POOLS
+#if CONFIG_MEM_POOLS
 
 #define ALIGNED_START(x)
 

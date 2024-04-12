@@ -20,7 +20,7 @@
  * NXP Test Framework (MTF) functions
  */
 
-#ifdef CONFIG_RF_TEST_MODE
+#if CONFIG_RF_TEST_MODE
 
 static bool rf_test_mode = false;
 
@@ -212,7 +212,7 @@ static void dump_wlan_set_rf_band_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-set-rf-band <band> \r\n");
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     (void)PRINTF("band: 0=2.4G, 1=5G \r\n");
 #else
     (void)PRINTF("band: 0=2.4G \r\n");
@@ -240,7 +240,7 @@ static void wlan_rf_band_set(int argc, char *argv[])
     band = strtol(argv[1], NULL, 10);
 
     if (band != 0U
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
         && band != 1U
 #endif
     )
@@ -303,10 +303,10 @@ static void dump_wlan_set_bandwidth_usage(void)
     (void)PRINTF("\r\n");
     (void)PRINTF("\t<bandwidth>: \r\n");
     (void)PRINTF("\t        0: 20MHz\r\n");
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     (void)PRINTF("\t        1: 40MHz\r\n");
 #endif
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
     (void)PRINTF("\t        4: 80MHz\r\n");
 #endif
     (void)PRINTF("\r\n");
@@ -492,8 +492,9 @@ disable:
         (void)PRINTF("  Continuous Wave Mode  : %s\r\n", cw_mode ? "enable" : "disable");
         (void)PRINTF("  Payload Pattern       : 0x%08X\r\n", payload_pattern);
         (void)PRINTF("  CS Mode               : %s\r\n", cs_mode ? "enable" : "disable");
-        (void)PRINTF("  Active SubChannel     : %s\r\n",
-                     act_sub_ch == 0U ? "low" : act_sub_ch == 1U ? "upper" : "both");
+        (void)PRINTF("  Active SubChannel     : %s\r\n", act_sub_ch == 0U ? "low" :
+                                                         act_sub_ch == 1U ? "upper" :
+                                                                            "both");
         (void)PRINTF("  Tx Data Rate          : %d\r\n", tx_rate);
     }
     else
@@ -898,8 +899,9 @@ disable:
         (void)PRINTF("  Adjust Burst SIFS3 Gap    : %s\r\n", adjust_burst_sifs ? "enable" : "disable");
         (void)PRINTF("  Burst SIFS in us          : %d us\r\n", burst_sifs_in_us);
         (void)PRINTF("  Short Preamble            : %s\r\n", short_preamble ? "enable" : "disable");
-        (void)PRINTF("  Active SubChannel         : %s\r\n",
-                     act_sub_ch == 0U ? "low" : act_sub_ch == 1U ? "upper" : "both");
+        (void)PRINTF("  Active SubChannel         : %s\r\n", act_sub_ch == 0U ? "low" :
+                                                             act_sub_ch == 1U ? "upper" :
+                                                                                "both");
         (void)PRINTF("  Short GI                  : %s\r\n", short_gi ? "enable" : "disable");
         (void)PRINTF("  Adv Coding                : %s\r\n", adv_coding ? "enable" : "disable");
         (void)PRINTF("  Beamforming               : %s\r\n", tx_bf ? "enable" : "disable");
@@ -1266,7 +1268,7 @@ static void wlan_rf_otp_mac_addr_get(int argc, char *argv[])
     if (ret == WM_SUCCESS)
     {
         (void)PRINTF("OTP MAC address: %02X:%02X:%02X:%02X:%02X:%02X\r\n", mac_addr[0], mac_addr[1], mac_addr[2],
-                      mac_addr[3], mac_addr[4], mac_addr[5]);
+                     mac_addr[3], mac_addr[4], mac_addr[5]);
     }
     else
     {
@@ -1276,16 +1278,14 @@ static void wlan_rf_otp_mac_addr_get(int argc, char *argv[])
 }
 
 const uint8_t otp_cal_data[] = {
-    0x01, 0x00, 0x0F, 0x00, 0x88, 0x00, 0x00, 0x20, 0x44, 0x0F, 0x00, 0x00, 0x00, 0x20, 0xFF, 0xFF,
-    0x40, 0x00, 0x77, 0x00, 0x29, 0x12, 0x00, 0x00, 0x00, 0x10, 0x00, 0x04, 0x6A, 0xB1, 0x02, 0x00,
-    0x00, 0x3F, 0x01, 0x00, 0x00, 0x0D, 0x00, 0x18, 0x97, 0x53, 0x00, 0x00, 0x00, 0x38, 0x39, 0x22,
-    0x3C, 0x55, 0xBC, 0x68, 0x6A, 0x37, 0xBE, 0x82, 0x22, 0xB4, 0x41, 0x64, 0x8D, 0xCE, 0x00, 0x1C,
-    0x9F, 0x37, 0x00, 0x00, 0x00, 0x54, 0x02, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00, 0x08, 0x00, 0x2D,
-    0xC6, 0xC0, 0x43, 0x00, 0x00, 0x66, 0x00, 0x00, 0x00, 0x50, 0x00, 0x1C, 0x49, 0x5F, 0x00, 0x00,
-    0x00, 0x70, 0x02, 0x05, 0x00, 0x01, 0x00, 0x00, 0x00, 0x08, 0x00, 0x2D, 0xC6, 0xC0, 0x43, 0x00,
-    0x00, 0x77, 0x00, 0x00, 0x00, 0x50, 0x00, 0x18, 0xB2, 0x68, 0xFF, 0xFF, 0xFF, 0xFF, 0xD3, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
+    0x01, 0x00, 0x0F, 0x00, 0x88, 0x00, 0x00, 0x20, 0x44, 0x0F, 0x00, 0x00, 0x00, 0x20, 0xFF, 0xFF, 0x40, 0x00,
+    0x77, 0x00, 0x29, 0x12, 0x00, 0x00, 0x00, 0x10, 0x00, 0x04, 0x6A, 0xB1, 0x02, 0x00, 0x00, 0x3F, 0x01, 0x00,
+    0x00, 0x0D, 0x00, 0x18, 0x97, 0x53, 0x00, 0x00, 0x00, 0x38, 0x39, 0x22, 0x3C, 0x55, 0xBC, 0x68, 0x6A, 0x37,
+    0xBE, 0x82, 0x22, 0xB4, 0x41, 0x64, 0x8D, 0xCE, 0x00, 0x1C, 0x9F, 0x37, 0x00, 0x00, 0x00, 0x54, 0x02, 0x04,
+    0x00, 0x01, 0x00, 0x00, 0x00, 0x08, 0x00, 0x2D, 0xC6, 0xC0, 0x43, 0x00, 0x00, 0x66, 0x00, 0x00, 0x00, 0x50,
+    0x00, 0x1C, 0x49, 0x5F, 0x00, 0x00, 0x00, 0x70, 0x02, 0x05, 0x00, 0x01, 0x00, 0x00, 0x00, 0x08, 0x00, 0x2D,
+    0xC6, 0xC0, 0x43, 0x00, 0x00, 0x77, 0x00, 0x00, 0x00, 0x50, 0x00, 0x18, 0xB2, 0x68, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xD3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 static void dump_wlan_set_otp_cal_data_usage(void)
 {
@@ -1313,7 +1313,6 @@ static void wlan_rf_otp_cal_data_set(int argc, char *argv[])
         (void)PRINTF("OTP cal data configuration failed\r\n");
         dump_wlan_set_otp_cal_data_usage();
     }
-
 }
 
 static void dump_wlan_get_otp_cal_data_usage(void)
@@ -1325,7 +1324,7 @@ static void dump_wlan_get_otp_cal_data_usage(void)
 static void wlan_rf_otp_cal_data_get(int argc, char *argv[])
 {
     int ret;
-    //int i = 0;
+    // int i = 0;
     uint8_t *cal_data = NULL;
 
     if (!rf_test_mode)

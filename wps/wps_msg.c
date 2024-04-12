@@ -32,8 +32,8 @@ extern u8 g_channel;
 /** Global pwps information */
 extern PWPS_INFO gpwps_info;
 
-#ifdef CONFIG_WPA2_ENTP
-#define CONFIG_EAP_TLS
+#if CONFIG_WPA2_ENTP
+#define CONFIG_EAP_TLS 1
 extern bool gpwps_info_initialized;
 #endif
 
@@ -714,7 +714,7 @@ int output_supp_config(PWPS_INFO pwps_info, int index, int nCred)
     (void)memset(&(wps_global.wps_conn_network), 0, sizeof(struct wlan_network));
     wps_global.wps_conn_network.ssid_specific     = 1;
     wps_global.wps_conn_network.ip.ipv4.addr_type = ADDR_TYPE_DHCP;
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     wps_global.wps_conn_network.type = WLAN_BSS_TYPE_WIFIDIRECT;
     wps_global.wps_conn_network.role = WLAN_BSS_ROLE_STA;
 #endif
@@ -750,7 +750,7 @@ int output_supp_config(PWPS_INFO pwps_info, int index, int nCred)
 
         (void)memcpy(wps_global.wps_conn_network.name, pCredential->ssid, pCredential->ssid_length);
         (void)memcpy(wps_global.wps_conn_network.ssid, pCredential->ssid, pCredential->ssid_length);
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         wps_global.wps_conn_network.channel = g_channel;
 #endif
 
@@ -1020,7 +1020,7 @@ int wps_write_credentials(PWPS_INFO pwps_info)
 {
     int i, ret = WPS_STATUS_SUCCESS;
     int index_g = -1;
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     int index_a = -1;
 #endif /* CONFIG_5GHz_SUPPORT */
 
@@ -1037,7 +1037,7 @@ int wps_write_credentials(PWPS_INFO pwps_info)
         }
     }
 
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     for (i = 0; i < num_cred; i++)
     {
         if (pwps_info->registrar.cred_data[i].rf_bands == 2)
@@ -1058,7 +1058,7 @@ int wps_write_credentials(PWPS_INFO pwps_info)
             (pwps_info->registrar.cred_data[i].auth_type >= pwps_info->registrar.cred_data[index_g].auth_type))
             index_g = i;
 
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
         if (index_a < 0)
         {
             break;
@@ -1071,7 +1071,7 @@ int wps_write_credentials(PWPS_INFO pwps_info)
 
     if (index_g != -1)
         ret = output_supp_config(pwps_info, index_g, 1);
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     else if (index_a != -1)
         ret = output_supp_config(pwps_info, index_a, 1);
 #endif /* CONFIG_5GHz_SUPPORT */
@@ -1177,7 +1177,7 @@ static inline int wps_process_authentication_type_flags(PWPS_INFO pwps_info)
  */
 int wps_eap_response_identity_prepare(PWPS_INFO pwps_info)
 {
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
     WPS_DATA *wps_s = (WPS_DATA *)&wps_global;
 #endif
     PEAP_FRAME_HEADER peap_wps_frame;
@@ -1198,11 +1198,11 @@ int wps_eap_response_identity_prepare(PWPS_INFO pwps_info)
 
     if (pwps_info->prov_session == PROV_ENTP_SESSION_ATTEMPT)
     {
-#ifdef CONFIG_EAP_TLS
+#if CONFIG_EAP_TLS
         if (wps_s->wpa2_network.security.type == WLAN_SECURITY_EAP_TLS)
             id_str = wps_s->wpa2_network.identity;
 #endif
-#ifdef CONFIG_PEAP_MSCHAPV2
+#if CONFIG_PEAP_MSCHAPV2
         if (wps_s->wpa2_network.security.type == WLAN_SECURITY_EAP_PEAP_MSCHAPV2)
             id_str = wps_s->wpa2_network.anonymous_identity;
 #endif
@@ -1231,7 +1231,7 @@ int wps_eap_response_identity_prepare(PWPS_INFO pwps_info)
     return WPS_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
 int wps_peap_response_identity_prepare(PWPS_INFO pwps_info)
 {
     WPS_DATA *wps_s = (WPS_DATA *)&wps_global;
@@ -5179,7 +5179,7 @@ int wps_eap_M8_frame_process(PWPS_INFO pwps_info, u8 *buf, u16 size)
     u8 *plast_byte, *data, *wps_frm_body = NULL;
     u16 len, wps_frm_body_len, tlv_type, tlv_length;
     u16 data16;
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     WPS_DATA *wps_s = (WPS_DATA *)&wps_global;
     int ret;
 #endif
@@ -5281,7 +5281,7 @@ int wps_eap_M8_frame_process(PWPS_INFO pwps_info, u8 *buf, u16 size)
 
                 wps_hexdump("M8_process Wrap Raw Data", (u8 *)pwps_info->registrar.wrap_raw_data,
                             pwps_info->registrar.encrypted_data_len);
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
                 if (wps_s->bss_type == BSS_TYPE_UAP)
                 {
                     ret = wps_process_ap_settings_from_registrar(pwps_info, (u8 *)pes,
@@ -5479,7 +5479,7 @@ int wps_done_message_prepare(PWPS_INFO pwps_info)
     peap_wps_frame = (PEAP_FRAME_HEADER)pwps_info->buffer;
     offset         = wps_message_common_attribute_prepare(pwps_info, pwps_info->peer_id,
                                                   (wps_s->bss_type == BSS_TYPE_UAP) ? EAP_REQUEST : EAP_RESPONSE,
-                                                  WPS_Done, WPS_DONE);
+                                                          WPS_Done, WPS_DONE);
 
     message_length += offset;
     ptr += offset;

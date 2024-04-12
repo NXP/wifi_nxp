@@ -431,7 +431,7 @@ int OSA_RemoveTickFunction(void (*func)(void))
     return WM_SUCCESS;
 }
 
-#ifdef CONFIG_HEAP_STAT
+#if CONFIG_HEAP_STAT
 /** This function dumps complete statistics
  *  of the heap memory.
  */

@@ -9,7 +9,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-//#include "os.h"
+// #include "os.h"
 
 #if defined(__linux__) || defined(__GLIBC__)
 #include <endian.h>
@@ -60,7 +60,7 @@ static inline unsigned int bswap_32(unsigned int v)
 #define bswap_32        CPU_swap_u32
 #endif /* __rtems__ */
 
-#ifdef CONFIG_NATIVE_WINDOWS
+#if CONFIG_NATIVE_WINDOWS
 #include <winsock.h>
 
 typedef int socklen_t;
@@ -104,12 +104,12 @@ typedef INT32 s32;
 typedef INT16 s16;
 typedef INT8 s8;
 #define WPA_TYPES_DEFINED
-#endif /* __vxworks */
+#endif                    /* __vxworks */
 
 #define WPA_TYPES_DEFINED /* for MCUSDK */
 
 #ifndef WPA_TYPES_DEFINED
-#ifdef CONFIG_USE_INTTYPES_H
+#if CONFIG_USE_INTTYPES_H
 #include <inttypes.h>
 #else
 #include <stdint.h>
@@ -127,7 +127,7 @@ typedef int8_t s8;
 
 /* Define platform specific byte swapping macros */
 
-#if defined(__CYGWIN__) || defined(CONFIG_NATIVE_WINDOWS)
+#if defined(__CYGWIN__) || (CONFIG_NATIVE_WINDOWS)
 
 static inline unsigned short wpa_swap_16(unsigned short v)
 {
@@ -196,8 +196,8 @@ static inline unsigned int wpa_swap_32(unsigned int v)
 #ifndef WORDS_BIGENDIAN
 #define WORDS_BIGENDIAN
 #endif
-//#else
-//#error Could not determine CPU byte order
+// #else
+// #error Could not determine CPU byte order
 #endif
 
 #define WPA_BYTE_SWAP_DEFINED
@@ -343,7 +343,7 @@ static inline void WPA_PUT_LE64(u8 *a, u64 val)
 #define STRUCT_PACKED
 #endif
 
-#ifdef CONFIG_ANSI_C_EXTRA
+#if CONFIG_ANSI_C_EXTRA
 
 #if !defined(_MSC_VER) || _MSC_VER < 1400
 /* snprintf - used in number of places; sprintf() is _not_ a good replacement
@@ -361,14 +361,14 @@ int getopt(int argc, char *const argv[], const char *optstring);
 extern char *optarg;
 extern int optind;
 
-#ifndef CONFIG_NO_SOCKLEN_T_TYPEDEF
+#if !CONFIG_NO_SOCKLEN_T_TYPEDEF
 #ifndef __socklen_t_defined
 typedef int socklen_t;
 #endif
 #endif
 
 /* inline - define as __inline or just define it to be empty, if needed */
-#ifdef CONFIG_NO_INLINE
+#if CONFIG_NO_INLINE
 #define inline
 #else
 #define inline __inline
@@ -474,7 +474,7 @@ int wpa_snprintf_hex_uppercase(char *buf, size_t buf_size, const u8 *data, size_
 int hwaddr_mask_txt(char *buf, size_t len, const u8 *addr, const u8 *mask);
 int ssid_parse(const char *buf, struct wpa_ssid_value *ssid);
 
-#ifdef CONFIG_NATIVE_WINDOWS
+#if CONFIG_NATIVE_WINDOWS
 void wpa_unicode2ascii_inplace(TCHAR *str);
 TCHAR *wpa_strdup_tchar(const char *str);
 #else /* CONFIG_NATIVE_WINDOWS */
@@ -514,7 +514,7 @@ static inline int is_multicast_ether_addr(const u8 *a)
 
 #define broadcast_ether_addr (const u8 *)"\xff\xff\xff\xff\xff\xff"
 
-//#include "wpa_debug.h"
+// #include "wpa_debug.h"
 
 struct wpa_freq_range_list
 {
@@ -522,7 +522,7 @@ struct wpa_freq_range_list
     {
         unsigned int min;
         unsigned int max;
-    } * range;
+    } *range;
     unsigned int num;
 };
 
@@ -535,7 +535,7 @@ void int_array_concat(int **res, const int *a);
 void int_array_sort_unique(int *a);
 void int_array_add_unique(int **res, int a);
 
-//#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+// #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 #define ARRAY_SIZE_CRYPTO(a) (sizeof(a) / sizeof((a)[0]))
 
 void str_clear_free(char *str);
@@ -566,7 +566,7 @@ u8 rssi_to_rcpi(int rssi);
 void *__hide_aliasing_typecast(void *foo);
 #define aliasing_hide_typecast(a, t) (t *)__hide_aliasing_typecast((a))
 
-#ifdef CONFIG_VALGRIND
+#if CONFIG_VALGRIND
 #include <valgrind/memcheck.h>
 #define WPA_MEM_DEFINED(ptr, len) VALGRIND_MAKE_MEM_DEFINED((ptr), (len))
 #else /* CONFIG_VALGRIND */

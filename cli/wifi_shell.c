@@ -6,7 +6,7 @@
 
 #include "nxp_wifi.h"
 
-#ifdef CONFIG_WIFI_SHELL
+#if CONFIG_WIFI_SHELL
 #include <zephyr/kernel.h>
 #include <zephyr/shell/shell.h>
 
@@ -14,7 +14,8 @@
 #include <wlan.h>
 #include <wifi.h>
 
-static struct {
+static struct
+{
     const struct cli_command *commands[MAX_COMMANDS];
     unsigned int num_commands;
 } cli;

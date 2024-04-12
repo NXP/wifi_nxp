@@ -33,7 +33,7 @@ Change log:
 /********************************************************
                 Local Functions
 ********************************************************/
-#ifdef CONFIG_RF_TEST_MODE
+#if CONFIG_RF_TEST_MODE
 
 /**
  *  @brief This function prepares command resp of MFG Continuous Tx
@@ -149,7 +149,6 @@ static mlan_status wlan_ret_mfg_he_tb_tx(pmlan_private pmpriv, HostCmd_DS_COMMAN
     return MLAN_STATUS_SUCCESS;
 }
 
-
 /**
  *  @brief This function prepares command resp of MFG OTP MAC add
  *
@@ -162,8 +161,8 @@ static mlan_status wlan_ret_mfg_he_tb_tx(pmlan_private pmpriv, HostCmd_DS_COMMAN
 
 static mlan_status wlan_ret_mfg_otp_mac_add(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf)
 {
-    mlan_ds_misc_cfg *misc                    = MNULL;
-    HostCmd_DS_MFG_CMD_OTP_MAC_ADD_T *mcmd    = (HostCmd_DS_MFG_CMD_OTP_MAC_ADD_T *)&resp->params.mfg_otp_mac_addr_rd_wr;
+    mlan_ds_misc_cfg *misc                 = MNULL;
+    HostCmd_DS_MFG_CMD_OTP_MAC_ADD_T *mcmd = (HostCmd_DS_MFG_CMD_OTP_MAC_ADD_T *)&resp->params.mfg_otp_mac_addr_rd_wr;
     mlan_ds_mfg_cmd_otp_mac_addr_rd_wr_t *cfg = MNULL;
 
     ENTER();
@@ -193,8 +192,8 @@ static mlan_status wlan_ret_mfg_otp_mac_add(pmlan_private pmpriv, HostCmd_DS_COM
 
 static mlan_status wlan_ret_mfg_otp_cal_data(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf)
 {
-    mlan_ds_misc_cfg *misc                    = MNULL;
-    HostCmd_DS_MFG_CMD_OTP_CAL_DATA_T *mcmd    = (HostCmd_DS_MFG_CMD_OTP_CAL_DATA_T *)&resp->params.mfg_otp_cal_data_rd_wr;
+    mlan_ds_misc_cfg *misc                  = MNULL;
+    HostCmd_DS_MFG_CMD_OTP_CAL_DATA_T *mcmd = (HostCmd_DS_MFG_CMD_OTP_CAL_DATA_T *)&resp->params.mfg_otp_cal_data_rd_wr;
     mlan_ds_mfg_cmd_otp_cal_data_rd_wr_t *cfg = MNULL;
 
     ENTER();
@@ -207,7 +206,7 @@ static mlan_status wlan_ret_mfg_otp_cal_data(pmlan_private pmpriv, HostCmd_DS_CO
     cfg  = (mlan_ds_mfg_cmd_otp_cal_data_rd_wr_t *)&misc->param.mfg_otp_cal_data_rd_wr;
 
     cfg->cal_data_status = mcmd->cal_data_status;
-    cfg->cal_data_len = mcmd->cal_data_len;
+    cfg->cal_data_len    = mcmd->cal_data_len;
     memcpy(cfg->cal_data, mcmd->cal_data, mcmd->cal_data_len);
 
     LEAVE();
@@ -329,7 +328,7 @@ cmd_mfg_done:
 }
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief This function handles the command response error
  *
@@ -365,7 +364,7 @@ static void wlan_process_cmdresp_error(mlan_private *pmpriv, HostCmd_DS_COMMAND 
                 pmadapter->ps_mode = Wlan802_11PowerModeCAM;
         }
         break;
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#if CONFIG_EXT_SCAN_SUPPORT
         case HostCmd_CMD_802_11_SCAN_EXT:
 #endif
         case HostCmd_CMD_802_11_SCAN:
@@ -521,7 +520,7 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
                     mib->param.dtim_period = ul_temp;
                 }
                 break;
-#ifdef CONFIG_WIFI_FRAG_THRESHOLD
+#if CONFIG_WIFI_FRAG_THRESHOLD
             case FragThresh_i:
                 ul_temp = wlan_le16_to_cpu(*((t_u16 *)(psmib->value)));
                 PRINTM(MINFO, "SNMP_RESP: FragThsd =%u\n", ul_temp);
@@ -531,7 +530,7 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
                 }
                 break;
 #endif
-#ifdef CONFIG_WIFI_RTS_THRESHOLD
+#if CONFIG_WIFI_RTS_THRESHOLD
             case RtsThresh_i:
                 ul_temp = wlan_le16_to_cpu(*((t_u16 *)(psmib->value)));
                 PRINTM(MINFO, "SNMP_RESP: RTSThsd =%u\n", ul_temp);
@@ -541,7 +540,7 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
                 }
                 break;
 #endif
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
             case ShortRetryLim_i:
                 ul_temp = wlan_le16_to_cpu(*((t_u16 *)(psmib->value)));
                 PRINTM(MINFO, "SNMP_RESP: TxRetryCount=%u\n", ul_temp);
@@ -828,7 +827,7 @@ static mlan_status wlan_ret_tx_power_cfg(IN pmlan_private pmpriv,
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 
 /**
  *  @brief This function handles the command response of rf_tx_power
@@ -872,7 +871,7 @@ static mlan_status wlan_ret_802_11_rf_tx_power(IN pmlan_private pmpriv,
     return MLAN_STATUS_SUCCESS;
 }
 #endif /* CONFIG_MLAN_WMSDK */
-#ifdef CONFIG_WMM_UAPSD
+#if CONFIG_WMM_UAPSD
 /**
  *  @brief This function handles the command response of sleep_period
  *
@@ -909,7 +908,7 @@ static mlan_status wlan_ret_802_11_sleep_period(IN pmlan_private pmpriv,
     }
     else
     {
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         pmpriv->adapter->delay_null_pkt = MFALSE;
         pmpriv->adapter->gen_null_pkt   = MFALSE;
 #endif
@@ -920,7 +919,7 @@ static mlan_status wlan_ret_802_11_sleep_period(IN pmlan_private pmpriv,
     return MLAN_STATUS_SUCCESS;
 }
 #endif
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief This function handles the command response of sleep_params
  *
@@ -1035,11 +1034,11 @@ mlan_status wlan_ret_802_11_deauthenticate(IN pmlan_private pmpriv,
                                            IN HostCmd_DS_COMMAND *resp,
                                            IN mlan_ioctl_req *pioctl_buf)
 {
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     mlan_adapter *pmadapter = pmpriv->adapter;
 #endif /* CONFIG_MLAN_WMSDK */
     ENTER();
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     pmadapter->dbg.num_cmd_deauth++;
 
     if (!__memcmp(pmadapter, resp->params.deauth.mac_addr, &pmpriv->curr_bss_params.bss_descriptor.mac_address,
@@ -1047,7 +1046,7 @@ mlan_status wlan_ret_802_11_deauthenticate(IN pmlan_private pmpriv,
 #endif /* CONFIG_MLAN_WMSDK */
         wlan_reset_connect_state(pmpriv, MTRUE);
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     if (pmpriv->adapter->state_rdh.stage == RDH_STOP_INTFS)
         wlan_11h_radar_detected_callback((t_void *)pmpriv);
 #endif /* CONFIG_MLAN_WMSDK */
@@ -1056,7 +1055,7 @@ mlan_status wlan_ret_802_11_deauthenticate(IN pmlan_private pmpriv,
     return MLAN_STATUS_SUCCESS;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief This function handles the command response of ad_hoc_stop
  *
@@ -1094,7 +1093,7 @@ static mlan_status wlan_ret_802_11_key_material(IN pmlan_private pmpriv,
 {
     HostCmd_DS_802_11_KEY_MATERIAL *pkey = &resp->params.key_material;
     mlan_ds_sec_cfg *sec                 = MNULL;
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
+#if CONFIG_GTK_REKEY_OFFLOAD
     t_u8 zero_kek[MLAN_KEK_LEN] = {0};
 #endif
 
@@ -1112,7 +1111,7 @@ static mlan_status wlan_ret_802_11_key_material(IN pmlan_private pmpriv,
                 PRINTM(MINFO, "GTK_SET: Open port for WPA/WPA2 h-supp mode\n");
                 pmpriv->port_open = MTRUE;
             }
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
+#if CONFIG_GTK_REKEY_OFFLOAD
             if (memcmp(pmpriv->adapter, pmpriv->gtk_rekey.kek, zero_kek, sizeof(zero_kek)) != 0)
             {
                 mlan_status ret = MLAN_STATUS_SUCCESS;
@@ -1344,7 +1343,7 @@ static mlan_status wlan_ret_802_11_rf_channel(IN pmlan_private pmpriv,
 {
     ENTER();
     /* fixme: enable this part when needed */
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     HostCmd_DS_802_11_RF_CHANNEL *prf_channel = &resp->params.rf_channel;
     t_u16 new_channel                         = wlan_le16_to_cpu(prf_channel->current_channel);
     /* mlan_ds_bss *bss = MNULL; */
@@ -1364,7 +1363,7 @@ static mlan_status wlan_ret_802_11_rf_channel(IN pmlan_private pmpriv,
     return MLAN_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_11K_OFFLOAD
+#if CONFIG_11K_OFFLOAD
 /**
  *  @brief This function handles the command response of offload feature
  *
@@ -1406,7 +1405,7 @@ static mlan_status wlan_ret_offload_feature_ctrl(mlan_private *priv, HostCmd_DS_
 }
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Handle the ibss_coalescing_status resp
  *
@@ -1731,7 +1730,7 @@ static mlan_status wlan_ret_inactivity_timeout(IN pmlan_private pmpriv,
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
-#if defined(CONFIG_SUBSCRIBE_EVENT_SUPPORT)
+#if (CONFIG_SUBSCRIBE_EVENT_SUPPORT)
 /**
  *  @brief This function handles the command response of
  *  subscribe event
@@ -1758,7 +1757,7 @@ static mlan_status wlan_ret_subscribe_event(IN pmlan_private pmpriv,
 }
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief This function handles the command response of
  *  OTP user data
@@ -1814,7 +1813,7 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
     ENTER();
 
     /* fixme: enable below code when required */
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     /* If the command is not successful, cleanup and return failure */
     if ((resp->result != HostCmd_RESULT_OK))
     {
@@ -1832,7 +1831,7 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
         case HostCmd_CMD_TXPWR_CFG:
             ret = wlan_ret_tx_power_cfg(pmpriv, resp, pioctl_buf);
             break;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case HostCmd_CMD_CFG_DATA:
             ret = wlan_ret_cfg_data(pmpriv, resp, pioctl_buf);
             break;
@@ -1849,7 +1848,7 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
         case HostCmd_CMD_TX_RATE_CFG:
             ret = wlan_ret_tx_rate_cfg(pmpriv, resp, pioctl_buf);
             break;
-#ifndef CONFIG_EXT_SCAN_SUPPORT
+#if !CONFIG_EXT_SCAN_SUPPORT
         case HostCmd_CMD_802_11_SCAN:
             ret        = wlan_ret_802_11_scan(pmpriv, resp, pioctl_buf);
             pioctl_buf = MNULL;
@@ -1861,7 +1860,7 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             pioctl_buf = MNULL;
             break;
 #endif /* CONFIG_EXT_SCAN_SUPPORT */
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case HostCmd_CMD_802_11_BG_SCAN_CONFIG:
             ret = wlan_ret_bgscan_config(pmpriv, resp, pioctl_buf);
             break;
@@ -1876,12 +1875,12 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             ret = wlan_ret_802_11_hs_cfg(pmpriv, resp, pioctl_buf);
             break;
 #endif /* CONFIG_MLAN_WMSDK */
-#ifdef CONFIG_WMM_UAPSD
+#if CONFIG_WMM_UAPSD
         case HostCmd_CMD_802_11_SLEEP_PERIOD:
             ret = wlan_ret_802_11_sleep_period(pmpriv, resp, pioctl_buf);
             break;
 #endif
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case HostCmd_CMD_802_11_SLEEP_PARAMS:
             ret = wlan_ret_802_11_sleep_params(pmpriv, resp, pioctl_buf);
             break;
@@ -1889,7 +1888,7 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
         case HostCmd_CMD_802_11_ASSOCIATE:
             ret = wlan_ret_802_11_associate(pmpriv, resp, pioctl_buf);
             break;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case HostCmd_CMD_802_11_DEAUTHENTICATE:
             ret = wlan_ret_802_11_deauthenticate(pmpriv, resp, pioctl_buf);
             break;
@@ -1904,7 +1903,7 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
         case HostCmd_CMD_802_11_GET_LOG:
             ret = wlan_ret_get_log(pmpriv, resp, pioctl_buf);
             break;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case HostCmd_CMD_RSSI_INFO:
             ret = wlan_ret_802_11_rssi_info(pmpriv, resp, pioctl_buf);
             break;
@@ -1912,7 +1911,7 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
         case HostCmd_CMD_802_11_SNMP_MIB:
             ret = wlan_ret_802_11_snmp_mib(pmpriv, resp, pioctl_buf);
             break;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case HostCmd_CMD_802_11_RADIO_CONTROL:
             ret = wlan_ret_802_11_radio_control(pmpriv, resp, pioctl_buf);
             break;
@@ -1923,7 +1922,7 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
         case HostCmd_CMD_802_11_RF_CHANNEL:
             ret = wlan_ret_802_11_rf_channel(pmpriv, resp, pioctl_buf);
             break;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case HostCmd_CMD_802_11_RF_ANTENNA:
             ret = wlan_ret_802_11_rf_antenna(pmpriv, resp, pioctl_buf);
             break;
@@ -1939,7 +1938,7 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
         case HostCmd_CMD_802_11_KEY_MATERIAL:
             ret = wlan_ret_802_11_key_material(pmpriv, resp, pioctl_buf);
             break;
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
+#if CONFIG_GTK_REKEY_OFFLOAD
         case HostCmd_CMD_CONFIG_GTK_REKEY_OFFLOAD_CFG:
             break;
 #endif
@@ -2052,30 +2051,30 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             break;
 #endif
 #endif /* CONFIG_MLAN_WMSDK */
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
         case HostCmd_CMD_WMM_PARAM_CONFIG:
             ret = wlan_ret_wmm_param_config(pmpriv, resp, pioctl_buf);
             break;
 #endif
-#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+#if CONFIG_SUBSCRIBE_EVENT_SUPPORT
         case HostCmd_CMD_802_11_SUBSCRIBE_EVENT:
             ret = wlan_ret_subscribe_event(pmpriv, resp, pioctl_buf);
             break;
 #endif
-#if defined(CONFIG_BG_SCAN)
+#if (CONFIG_BG_SCAN)
         case HostCmd_CMD_802_11_BG_SCAN_QUERY:
             ret = wlan_ret_802_11_scan(pmpriv, resp, pioctl_buf);
             PRINTM(MINFO, "CMD_RESP: BG_SCAN result is ready!\n");
             break;
 #endif
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         case HostCmd_CMD_OTP_READ_USER_DATA:
             ret = wlan_ret_otp_user_data(pmpriv, resp, pioctl_buf);
             break;
         case HostCMD_CONFIG_LOW_POWER_MODE:
             break;
 #endif /* CONFIG_MLAN_WMSDK */
-#ifdef CONFIG_RF_TEST_MODE
+#if CONFIG_RF_TEST_MODE
         case HostCmd_CMD_MFG_COMMAND:
             ret = wlan_ret_mfg(pmpriv, resp, pioctl_buf);
             break;
@@ -2088,22 +2087,22 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
         case HostCmd_CMD_BOOT_SLEEP:
             ret = wlan_ret_boot_sleep(pmpriv, resp, pioctl_buf);
             break;
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
         case HostCmd_CMD_11AX_CMD:
             ret = wlan_ret_11ax_cmd(pmpriv, resp, pioctl_buf);
             break;
 #endif
-#ifdef CONFIG_WIFI_CLOCKSYNC
+#if CONFIG_WIFI_CLOCKSYNC
         case HostCmd_GPIO_TSF_LATCH_PARAM_CONFIG:
             ret = wlan_ret_gpio_tsf_latch(pmpriv, resp, pioctl_buf);
             break;
 #endif /* CONFIG_WIFI_CLOCKSYNC */
-#ifdef CONFIG_11K_OFFLOAD
+#if CONFIG_11K_OFFLOAD
         case HostCmd_CMD_OFFLOAD_FEATURE_CONTROL:
             ret = wlan_ret_offload_feature_ctrl(pmpriv, resp);
             break;
 #endif /* CONFIG_11K_OFFLOAD*/
-#ifdef CONFIG_MULTI_CHAN
+#if CONFIG_MULTI_CHAN
         case HostCmd_CMD_MULTI_CHAN_CONFIG:
             ret = wlan_ret_multi_chan_cfg(pmpriv, resp, pioctl_buf);
             break;
@@ -2114,12 +2113,12 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             ret = wlan_ret_drcs_cfg(pmpriv, resp, pioctl_buf);
             break;
 #endif
-#ifdef CONFIG_1AS
+#if CONFIG_1AS
         case HostCmd_CMD_HOST_CLOCK_CFG:
             ret = wlan_ret_host_clock_cfg(pmpriv, resp, pioctl_buf);
             break;
 #endif
-#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
+#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
         case HostCmd_CMD_INDEPENDENT_RESET_CFG:
             ret = wlan_ret_ind_rst_cfg(pmpriv, resp, pioctl_buf);
             break;

@@ -164,7 +164,7 @@ WPS_L2_INFO *wps_l2_init(const char *ifname,
     (void)memset(l2, 0, sizeof(*l2));
     strncpy(l2->ifname, ifname, sizeof(l2->ifname));
     l2->ifname[(sizeof(l2->ifname) / sizeof(l2->ifname[0])) - 1] = '\0';
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     if (wlan_get_wfd_mac_address(mac))
     {
         wps_d("Error: unable to retrieve MAC address\r\n");

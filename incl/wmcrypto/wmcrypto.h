@@ -23,7 +23,7 @@
 #define crypto_e(...) wmlog_e("crypt", ##__VA_ARGS__)
 #define crypto_w(...) wmlog_w("crypt", ##__VA_ARGS__)
 
-#ifdef CONFIG_CRYPTO_DEBUG
+#if CONFIG_CRYPTO_DEBUG
 #define crypto_d(...) wmlog("crypt", ##__VA_ARGS__)
 #else
 #define crypto_d(...)

@@ -1,4 +1,4 @@
-#ifdef CONFIG_WLS_CSI_PROC
+#if CONFIG_WLS_CSI_PROC
 /** @file wls_QR_algorithm.h
  *
  * @brief This file contains header for QR math functions
@@ -40,4 +40,4 @@ void myBackSub(float *Q_MATR, float *R_MATR, float *MAT_OUT, int matSizeN, int m
 
 #endif
 
-#endif  /* CONFIG_WLS_CSI_PROC */
+#endif /* CONFIG_WLS_CSI_PROC */

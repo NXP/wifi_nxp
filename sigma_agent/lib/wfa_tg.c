@@ -26,7 +26,7 @@
 #include "nxp_wifi.h"
 #endif
 
-#ifdef CONFIG_SIGMA_AGENT
+#if CONFIG_SIGMA_AGENT
 #include <sys/types.h>
 #include <pthread.h>
 #include <signal.h>

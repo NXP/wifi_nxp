@@ -88,8 +88,6 @@ __hierarchy__:
             project_path: source
           files:
           - source: boards/${board}/wifi_examples/common/app_config/app_config.h
-            attribute: preinclude_file
-            linked_support: true
             package_path: project-root-path
             project_path: source
         sdmmc_config:
@@ -123,8 +121,6 @@ wifi_palladium_iperf:
   __remove__:
     merge_segment:
     - middleware.lwip.default_heap_stack
-  merge_segment:
-  - middleware.lwip.default_heap_stack
   contents:
     document:
       name: wifi_palladium_iperf
@@ -202,9 +198,6 @@ wifi_palladium_iperf:
           merge-to-freertosconfig: main
           package_path: boards/${board}/wifi_examples/wifi_palladium_iperf/${multicore_foldername}
           project_path: source
-        - source: middleware/wifi_nxp/example/wifi_palladium_iperf/wifi_config.h
-          package_path: project-root-path
-          project_path: source
         - source: boards/${board}/FreeRTOSConfigBoard.h
           merge-to-freertosconfig: sub
           package_path: boards/${board}/wifi_examples/wifi_palladium_iperf/${multicore_foldername}
@@ -215,6 +208,16 @@ wifi_palladium_iperf:
         - source: boards/${board}/wifi_examples/common/pin_mux.h
           package_path: boards/${board}/wifi_examples/wifi_palladium_iperf/${multicore_foldername}
           project_path: board
+      wifi_config:
+        required: true
+        cc-include:
+        - path: middleware/wifi_nxp/example/wifi_palladium_iperf/wifi_config
+          package_path: project-root-path
+          project_path: source
+        files:
+        - source: middleware/wifi_nxp/example/wifi_palladium_iperf/wifi_config/wifi_config.h
+          package_path: project-root-path
+          project_path: source
       pinset:
         required: true
       sdmmc_config:
@@ -234,8 +237,6 @@ wifi_cert:
   __remove__:
     merge_segment:
     - middleware.lwip.default_heap_stack
-  merge_segment:
-  - middleware.lwip.default_heap_stack
   contents:
     document:
       name: wifi_cert
@@ -320,9 +321,6 @@ wifi_cert:
           merge-to-freertosconfig: main
           package_path: boards/${board}/wifi_examples/wifi_cert/${multicore_foldername}
           project_path: source
-        - source: middleware/wifi_nxp/example/wifi_cert/wifi_config.h
-          package_path: project-root-path
-          project_path: source
         - source: boards/${board}/FreeRTOSConfigBoard.h
           merge-to-freertosconfig: sub
           package_path: boards/${board}/wifi_examples/wifi_cert/${multicore_foldername}
@@ -337,6 +335,16 @@ wifi_cert:
           package_path: project-root-path
           project_path: doc
           exclude: true
+      wifi_config:
+        required: true
+        cc-include:
+        - path: middleware/wifi_nxp/example/wifi_cert/wifi_config
+          package_path: project-root-path
+          project_path: source
+        files:
+        - source: middleware/wifi_nxp/example/wifi_cert/wifi_config/wifi_config.h
+          package_path: project-root-path
+          project_path: source
       pinset:
         required: true
       sdmmc_config:
@@ -356,8 +364,6 @@ wifi_cli:
   __remove__:
     merge_segment:
     - middleware.lwip.default_heap_stack
-  merge_segment:
-  - middleware.lwip.default_heap_stack
   contents:
     document:
       support_CMSIS_PACK: false
@@ -460,7 +466,14 @@ wifi_cli:
         - source: middleware/wifi_nxp/example/wifi_cli/lwipopts.h
           package_path: boards/${board}/wifi_examples/wifi_cli/${multicore_foldername}
           project_path: source
-        - source: middleware/wifi_nxp/example/wifi_cli/wifi_config.h
+      wifi_config:
+        required: true
+        cc-include:
+        - path: middleware/wifi_nxp/example/wifi_cli/wifi_config
+          package_path: project-root-path
+          project_path: source
+        files:
+        - source: middleware/wifi_nxp/example/wifi_cli/wifi_config/wifi_config.h
           package_path: project-root-path
           project_path: source
       pinset:
@@ -483,8 +496,6 @@ wifi_wpa_supplicant:
   __remove__:
     merge_segment:
     - middleware.lwip.default_heap_stack
-  merge_segment:
-  - middleware.lwip.default_heap_stack
   contents:
     document:
       support_CMSIS_PACK: false
@@ -581,14 +592,21 @@ wifi_wpa_supplicant:
           merge-to-freertosconfig: main
           package_path: boards/${board}/wifi_examples/wifi_wpa_supplicant/${multicore_foldername}
           project_path: source
-        - source: middleware/wifi_nxp/example/wifi_wpa_supplicant/wifi_config.h
-          package_path: project-root-path
-          project_path: source
       demo_config:
         required: true
         files:
         - source: middleware/wifi_nxp/example/wifi_wpa_supplicant/lwipopts.h
           package_path: boards/${board}/wifi_examples/wifi_wpa_supplicant/${multicore_foldername}
+          project_path: source
+      wifi_config:
+        required: true
+        cc-include:
+        - path: middleware/wifi_nxp/example/wifi_wpa_supplicant/wifi_config
+          package_path: project-root-path
+          project_path: source
+        files:
+        - source: middleware/wifi_nxp/example/wifi_wpa_supplicant/wifi_config/wifi_config.h
+          package_path: project-root-path
           project_path: source
       pinset:
         required: true
@@ -609,8 +627,6 @@ uart_wifi_bridge:
   __remove__:
     merge_segment:
     - middleware.lwip.default_heap_stack
-  merge_segment:
-  - middleware.lwip.default_heap_stack
   contents:
     document:
       support_CMSIS_PACK: false
@@ -682,9 +698,6 @@ uart_wifi_bridge:
         - source: boards/${board}/wifi_examples/uart_wifi_bridge/pin_mux.h
           package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}
           project_path: board
-        - source: middleware/wifi_nxp/example/uart_wifi_bridge/wifi_config.h
-          package_path: project-root-path
-          project_path: source
         - source: boards/${board}/wifi_examples/readme_modules.txt
           package_path: project-root-path
           project_path: doc
@@ -728,6 +741,16 @@ uart_wifi_bridge:
           merge-to-freertosconfig: main
           package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}
           project_path: source
+      wifi_config:
+        required: true
+        cc-include:
+        - path: middleware/wifi_nxp/example/uart_wifi_bridge/wifi_config
+          package_path: project-root-path
+          project_path: source
+        files:
+        - source: middleware/wifi_nxp/example/uart_wifi_bridge/wifi_config/wifi_config.h
+          package_path: project-root-path
+          project_path: source
       pinset:
         required: true
       sdmmc_config:
@@ -747,8 +770,6 @@ wifi_test_mode:
   __remove__:
     merge_segment:
     - middleware.lwip.default_heap_stack
-  merge_segment:
-  - middleware.lwip.default_heap_stack
   contents:
     document:
       name: wifi_test_mode
@@ -836,13 +857,20 @@ wifi_test_mode:
         - source: boards/${board}/wifi_examples/common/pin_mux.h
           package_path: boards/${board}/wifi_examples/wifi_test_mode/${multicore_foldername}
           project_path: board
-        - source: middleware/wifi_nxp/example/wifi_test_mode/wifi_config.h
-          package_path: project-root-path
-          project_path: source
         - source: boards/${board}/wifi_examples/readme_modules.txt
           package_path: project-root-path
           project_path: doc
           exclude: true
+      wifi_config:
+        required: true
+        cc-include:
+        - path: middleware/wifi_nxp/example/wifi_test_mode/wifi_config
+          package_path: project-root-path
+          project_path: source
+        files:
+        - source: middleware/wifi_nxp/example/wifi_test_mode/wifi_config/wifi_config.h
+          package_path: project-root-path
+          project_path: source
       pinset:
         required: true
       sdmmc_config:
@@ -864,8 +892,6 @@ wifi_cli_fw_dump:
   __remove__:
     merge_segment:
     - middleware.lwip.default_heap_stack
-  merge_segment:
-  - middleware.lwip.default_heap_stack
   contents:
     document:
       name: wifi_cli_fw_dump
@@ -985,9 +1011,6 @@ wifi_cli_fw_dump:
         - source: boards/${board}/wifi_examples/wifi_cli_fw_dump/pin_mux.h
           package_path: boards/${board}/wifi_examples/wifi_cli_fw_dump/${multicore_foldername}
           project_path: board
-        - source: middleware/wifi_nxp/example/wifi_cli_fw_dump/wifi_config.h
-          package_path: project-root-path
-          project_path: source
         - source: boards/${board}/wifi_examples/readme_modules.txt
           package_path: project-root-path
           project_path: doc
@@ -1004,6 +1027,16 @@ wifi_cli_fw_dump:
         - source: boards/${board}/wifi_examples/wifi_cli_fw_dump/${multicore_foldername}/app.h
           merge-to-main: sub
           project_path: board
+      wifi_config:
+        required: true
+        cc-include:
+        - path: middleware/wifi_nxp/example/wifi_cli_fw_dump/wifi_config
+          package_path: project-root-path
+          project_path: source
+        files:
+        - source: middleware/wifi_nxp/example/wifi_cli_fw_dump/wifi_config/wifi_config.h
+          package_path: project-root-path
+          project_path: source
       sdmmc_config:
         required: true
       preinclude_file:
@@ -1024,8 +1057,6 @@ wifi_cli_prov:
   __remove__:
     merge_segment:
     - middleware.lwip.default_heap_stack
-  merge_segment:
-  - middleware.lwip.default_heap_stack
   contents:
     document:
       name: wifi_cli_prov
@@ -1156,9 +1187,6 @@ wifi_cli_prov:
         - source: middleware/wifi_nxp/example/wifi_cli_prov/wifi_mbedtls_config.h
           package_path: project-root-path
           project_path: source
-        - source: middleware/wifi_nxp/example/wifi_cli_prov/wifi_config.h
-          package_path: project-root-path
-          project_path: source
       pinset_config:
         required: true
         cc-include:
@@ -1173,6 +1201,16 @@ wifi_cli_prov:
         - source: boards/${board}/wifi_examples/common/${multicore_foldername}/app.h
           merge-to-main: sub
           project_path: board
+      wifi_config:
+        required: true
+        cc-include:
+        - path: middleware/wifi_nxp/example/wifi_cli_prov/wifi_config
+          package_path: project-root-path
+          project_path: source
+        files:
+        - source: middleware/wifi_nxp/example/wifi_cli_prov/wifi_config/wifi_config.h
+          package_path: project-root-path
+          project_path: source
       sdmmc_config:
         required: true
       preinclude_file:

@@ -32,7 +32,7 @@
 #include "fsl_ocotp.h"
 #endif
 #include "cli_utils.h"
-#ifdef CONFIG_HOST_SLEEP
+#if CONFIG_HOST_SLEEP
 #include "host_sleep.h"
 #endif
 
@@ -52,7 +52,7 @@ int wlan_reset_cli_init(void);
  * Code
  ******************************************************************************/
 
-#ifdef CONFIG_WPS2
+#if CONFIG_WPS2
 #define MAIN_TASK_STACK_SIZE 6000
 #else
 #define MAIN_TASK_STACK_SIZE 4096
@@ -113,7 +113,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             PRINTF("ENHANCED WLAN CLIs are initialized\r\n");
             printSeparator();
 #ifdef RW610
-#ifdef CONFIG_HOST_SLEEP
+#if CONFIG_HOST_SLEEP
             ret = host_sleep_cli_init();
             if (ret != WM_SUCCESS)
             {
@@ -180,7 +180,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             {
                 PRINTF("IPv4 Address: [%s]\r\n", ip);
             }
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
             int i;
             for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
             {
@@ -286,7 +286,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             break;
         case WLAN_REASON_PS_EXIT:
             break;
-#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+#if CONFIG_SUBSCRIBE_EVENT_SUPPORT
         case WLAN_REASON_RSSI_HIGH:
         case WLAN_REASON_SNR_LOW:
         case WLAN_REASON_SNR_HIGH:
@@ -300,7 +300,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
         case WLAN_REASON_PRE_BEACON_LOST:
             break;
 #endif
-#ifdef CONFIG_WIFI_IND_DNLD
+#if CONFIG_WIFI_IND_DNLD
         case WLAN_REASON_FW_HANG:
         case WLAN_REASON_FW_RESET:
             break;
@@ -366,7 +366,7 @@ static void test_wlan_reset(int argc, char **argv)
     (void)wlan_driver_reset();
 }
 
-#ifdef CONFIG_HOST_SLEEP
+#if CONFIG_HOST_SLEEP
 static void test_mcu_suspend(int argc, char **argv)
 {
     (void)mcu_suspend();
@@ -375,7 +375,7 @@ static void test_mcu_suspend(int argc, char **argv)
 
 static struct cli_command reset_commands[] = {
     {"wlan-reset", NULL, test_wlan_reset},
-#ifdef CONFIG_HOST_SLEEP
+#if CONFIG_HOST_SLEEP
     {"mcu-suspend", NULL, test_mcu_suspend},
 #endif
 };
@@ -414,7 +414,7 @@ static void main_task(osa_task_param_t arg)
     assert(WM_SUCCESS == result);
 #endif
 
-#ifdef CONFIG_HOST_SLEEP
+#if CONFIG_HOST_SLEEP
 #ifndef RW610
     hostsleep_init(wlan_hs_pre_cfg, wlan_hs_post_cfg);
 #else

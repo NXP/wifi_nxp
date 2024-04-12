@@ -45,9 +45,9 @@ SDK_ALIGN(uint8_t mp_regs_buffer[MAX_MP_REGS], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZ
 /* We are allocating BSS list globally as we need heap for other purposes */
 SDK_ALIGN(BSSDescriptor_t BSS_List[MRVDRV_MAX_BSSID_LIST], 32);
 
-#ifdef CONFIG_SCAN_CHANNEL_GAP
+#if CONFIG_SCAN_CHANNEL_GAP
 
-#ifndef CONFIG_5GHz_SUPPORT
+#if !CONFIG_5GHz_SUPPORT
 static ChanStatistics_t Chan_Stats[14];
 #else
 static ChanStatistics_t Chan_Stats[48];
@@ -59,7 +59,7 @@ static ChanStatistics_t Chan_Stats[48];
         Local Functions
 ********************************************************/
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief This function adds a BSS priority table
  *
@@ -158,7 +158,7 @@ static t_void wlan_delete_bsspriotbl(pmlan_private priv)
  */
 mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
 {
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     mlan_status ret = MLAN_STATUS_SUCCESS;
 #ifdef STA_SUPPORT
     BSSDescriptor_t *ptemp_scan_table = MNULL;
@@ -193,9 +193,9 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
     (void)__memset(MNULL, &BSS_List, 0x00, sizeof(BSS_List));
 
     pmadapter->pscan_table = BSS_List;
-#ifdef CONFIG_SCAN_CHANNEL_GAP
+#if CONFIG_SCAN_CHANNEL_GAP
 
-#ifndef CONFIG_5GHz_SUPPORT
+#if !CONFIG_5GHz_SUPPORT
     pmadapter->num_in_chan_stats = 14;
 #else
     pmadapter->num_in_chan_stats = 48;
@@ -203,7 +203,7 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
     pmadapter->pchan_stats = Chan_Stats;
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     /* Allocate command buffer */
     ret = wlan_alloc_cmd_buffer(pmadapter);
     if (ret != MLAN_STATUS_SUCCESS)
@@ -231,7 +231,7 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
 // mp_regs_buffer;
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 #if defined(SDIO_MULTI_PORT_TX_AGGR) || defined(SDIO_MULTI_PORT_RX_AGGR)
     ret = wlan_alloc_sdio_mpa_buffers(pmadapter, SDIO_MP_TX_AGGR_DEF_BUF_SIZE, SDIO_MP_RX_AGGR_DEF_BUF_SIZE);
     if (ret != MLAN_STATUS_SUCCESS)
@@ -294,22 +294,22 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->ewpa_query         = MFALSE;
     priv->adhoc_aes_enabled  = MFALSE;
     priv->curr_pkt_filter =
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
         HostCmd_ACT_MAC_STATIC_DYNAMIC_BW_ENABLE |
 #endif
         HostCmd_ACT_MAC_RTS_CTS_ENABLE | HostCmd_ACT_MAC_RX_ON | HostCmd_ACT_MAC_TX_ON |
         HostCmd_ACT_MAC_ETHERNETII_ENABLE;
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     priv->beacon_period       = MLAN_BEACON_INTERVAL;
     priv->pattempted_bss_desc = MNULL;
 #endif /* CONFIG_MLAN_WMSDK */
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
+#if CONFIG_GTK_REKEY_OFFLOAD
     (void)__memset(pmadapter, &priv->gtk_rekey, 0, sizeof(priv->gtk_rekey));
 #endif
     (void)__memset(pmadapter, &priv->curr_bss_params, 0, sizeof(priv->curr_bss_params));
     priv->listen_interval = MLAN_DEFAULT_LISTEN_INTERVAL;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     (void)__memset(pmadapter, &priv->assoc_rsp_buf, 0, sizeof(priv->assoc_rsp_buf));
     priv->assoc_rsp_size = 0;
 #endif /* CONFIG_MLAN_WMSDK */
@@ -324,7 +324,7 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->num_drop_pkts = 0;
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 #if defined(STA_SUPPORT)
     priv->adhoc_state_prev = ADHOC_IDLE;
     (void)__memset(pmadapter, &priv->adhoc_last_start_ssid, 0, sizeof(priv->adhoc_last_start_ssid));
@@ -378,7 +378,7 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->wmm_enabled  = MFALSE;
     priv->wmm_qosinfo  = 0;
 #ifdef STA_SUPPORT
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     priv->pcurr_bcn_buf = MNULL;
     priv->curr_bcn_size = 0;
 #endif /* CONFIG_MLAN_WMSDK */
@@ -386,17 +386,17 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->pmfcfg.mfpc = 0;
     priv->pmfcfg.mfpr = 0;
 
-#ifdef CONFIG_11K
+#if CONFIG_11K
     priv->enable_host_11k = (t_u8)MFALSE;
 #endif
-#ifdef CONFIG_11K_OFFLOAD
+#if CONFIG_11K_OFFLOAD
     priv->enable_11k = (t_u8)MFALSE;
 #endif
-#ifdef CONFIG_11K
+#if CONFIG_11K
     priv->neighbor_rep_token    = (t_u8)1U;
     priv->rrm_mgmt_bitmap_index = -1;
 #endif
-#ifdef CONFIG_11V
+#if CONFIG_11V
     priv->bss_trans_query_token = (t_u8)1U;
 #endif
     for (i = 0; i < MAX_NUM_TID; i++)
@@ -416,10 +416,10 @@ mlan_status wlan_init_priv(pmlan_private priv)
         priv->port_ctrl_mode = MFALSE;
     }
     priv->port_open = MFALSE;
-#ifdef CONFIG_ROAMING
+#if CONFIG_ROAMING
     priv->roaming_enabled = MFALSE;
 #endif
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     if (!ret)
     {
         ret = wlan_add_bsspriotbl(priv);
@@ -431,11 +431,11 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->uap_host_based  = MFALSE;
 #endif
 
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
     reset_ie_index();
     priv->default_scan_ies_len = 0;
     priv->probe_req_index      = -1;
-#ifdef CONFIG_WPA_SUPP_AP
+#if CONFIG_WPA_SUPP_AP
     priv->beacon_vendor_index = -1;
     priv->beacon_index        = 0;
     priv->proberesp_index     = 1;
@@ -443,11 +443,11 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->beacon_wps_index    = 3;
 #endif
 #endif
-#ifdef CONFIG_TCP_ACK_ENH
+#if CONFIG_TCP_ACK_ENH
     priv->enable_tcp_ack_enh = MTRUE;
 #endif
 
-#ifdef CONFIG_WPA_SUPP_DPP
+#if CONFIG_WPA_SUPP_DPP
     priv->is_dpp_connect = MFALSE;
 #endif
 
@@ -465,7 +465,7 @@ mlan_status wlan_init_priv(pmlan_private priv)
  */
 t_void wlan_init_adapter(pmlan_adapter pmadapter)
 {
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     opt_sleep_confirm_buffer *sleep_cfm_buf = MNULL;
 
     ENTER();
@@ -482,7 +482,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
         pmadapter->wifi_calib_mode = pmadapter->init_para.wifi_calib_mode;
     }
 #endif
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     pmadapter->int_mode = pmadapter->init_para.int_mode;
     pmadapter->gpio_pin = pmadapter->init_para.gpio_pin;
 
@@ -511,7 +511,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->mp_data_port_mask = DATA_PORT_MASK;
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 #ifdef SDIO_MULTI_PORT_TX_AGGR
     pmadapter->mpa_tx.buf_len    = 0;
     pmadapter->mpa_tx.pkt_cnt    = 0;
@@ -595,31 +595,31 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->ecsa_enable = MFALSE;
 
     /* fixme: enable this later when required */
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     (void)__memset(pmadapter, pmadapter->pscan_table, 0, (sizeof(BSSDescriptor_t) * MRVDRV_MAX_BSSID_LIST));
 #endif /* CONFIG_MLAN_WMSDK */
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#if CONFIG_EXT_SCAN_SUPPORT
     pmadapter->ext_scan = 1;
 #endif
     pmadapter->scan_probes = DEFAULT_PROBES;
 
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+#if CONFIG_SCAN_WITH_RSSIFILTER
     pmadapter->rssi_threshold = 0;
 #endif
 
     /* fixme: enable this later when required */
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     (void)__memset(pmadapter, pmadapter->bcn_buf, 0, pmadapter->bcn_buf_size);
     pmadapter->pbcn_buf_end = pmadapter->bcn_buf;
 
     pmadapter->radio_on = RADIO_ON;
-#endif /* CONFIG_MLAN_WMSDK */
+#endif                                    /* CONFIG_MLAN_WMSDK */
     pmadapter->multiple_dtim         = MRVDRV_DEFAULT_MULTIPLE_DTIM;
     pmadapter->local_listen_interval = 0; /* default value in firmware
                                              will be used */
 #endif                                    /* STA_SUPPORT */
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     pmadapter->is_deep_sleep = MFALSE;
     pmadapter->idle_time     = DEEP_SLEEP_IDLE_TIME;
     if (!pmadapter->init_para.auto_ds)
@@ -641,11 +641,11 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->enhanced_ps_mode  = PS_MODE_AUTO;
     pmadapter->bcn_miss_time_out = DEFAULT_BCN_MISS_TIMEOUT;
 
-#ifdef CONFIG_WMM_UAPSD
+#if CONFIG_WMM_UAPSD
     pmadapter->gen_null_pkt   = MFALSE; /* Disable NULL Pkt generation-default */
     pmadapter->pps_uapsd_mode = MFALSE; /* Disable pps/uapsd mode -default */
 #endif
-#ifdef CONFIG_HOST_SLEEP
+#if CONFIG_HOST_SLEEP
     pmadapter->is_hs_configured          = MFALSE;
     pmadapter->mgmt_filter[0].action     = 0;      /* discard and not wakeup host */
     pmadapter->mgmt_filter[0].type       = 0xff;   /* management frames */
@@ -664,7 +664,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
                                                    */
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     pmadapter->delay_null_pkt = MFALSE;
 
     pmadapter->pm_wakeup_card_req = MFALSE;
@@ -703,12 +703,12 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->hw_dot_11ac_mcs_support   = 0;
     pmadapter->usr_dot_11ac_opermode_bw  = 0;
     pmadapter->usr_dot_11ac_opermode_nss = 0;
-#ifdef CONFIG_WIFI_CAPA
+#if CONFIG_WIFI_CAPA
     pmadapter->usr_dot_11n_enable = MFALSE;
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
     pmadapter->usr_dot_11ac_enable = MFALSE;
 #endif
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
     pmadapter->usr_dot_11ax_enable = MFALSE;
 #endif
 #endif
@@ -719,7 +719,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
 
     wlan_wmm_init(pmadapter);
     wlan_init_wmm_param(pmadapter);
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     if (pmadapter->psleep_cfm)
     {
         pmadapter->psleep_cfm->buf_type = MLAN_BUF_TYPE_CMD;
@@ -732,7 +732,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
         sleep_cfm_buf->ps_cfm_sleep.sleep_cfm.resp_ctrl = wlan_cpu_to_le16(RESP_NEEDED);
     }
 #endif
-#ifdef CONFIG_WMM_UAPSD
+#if CONFIG_WMM_UAPSD
     (void)__memset(pmadapter, &pmadapter->sleep_params, 0, sizeof(pmadapter->sleep_params));
     (void)__memset(pmadapter, &pmadapter->sleep_period, 0, sizeof(pmadapter->sleep_period));
 
@@ -745,7 +745,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     /* pmadapter->pscan_channels = MNULL; */
     pmadapter->fw_release_number = 0;
     pmadapter->fw_cap_info       = 0;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     (void)__memset(pmadapter, &pmadapter->upld_buf, 0, sizeof(pmadapter->upld_buf));
     pmadapter->upld_len           = 0;
     pmadapter->event_cause        = 0;
@@ -756,7 +756,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     (void)__memcpy(pmadapter, pmadapter->country_code, MRVDRV_DEFAULT_COUNTRY_CODE, COUNTRY_CODE_LEN);
     pmadapter->adhoc_awake_period = 0;
     pmadapter->ps_state           = PS_STATE_AWAKE;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 #ifdef STA_SUPPORT
     (void)__memset(pmadapter, &pmadapter->arp_filter, 0, sizeof(pmadapter->arp_filter));
     pmadapter->arp_filter_size = 0;
@@ -787,7 +787,7 @@ mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter)
     t_u8 j = 0;
 
     ENTER();
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     if (pcb->moal_init_lock(pmadapter->pmoal_handle, &pmadapter->pmlan_lock) != MLAN_STATUS_SUCCESS)
     {
         ret = MLAN_STATUS_FAILURE;
@@ -864,7 +864,7 @@ mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter)
                                     priv->adapter->callbacks.moal_init_lock);
             }
 
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
             /* wmm enhanced reuses 4 ac xmit queues */
             for (j = 0; j < MAX_AC_QUEUES; ++j)
             {
@@ -872,7 +872,7 @@ mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter)
                                                                  &priv->wmm.tid_tbl_ptr[j].ra_list.plock) !=
                     MLAN_STATUS_SUCCESS)
                     return MLAN_STATUS_FAILURE;
-#ifdef CONFIG_WMM_DEBUG
+#if CONFIG_WMM_DEBUG
                 util_init_list_head((t_void *)pmadapter->pmoal_handle, &priv->wmm.hist_ra[j], MFALSE, MNULL);
 #endif
             }
@@ -903,7 +903,7 @@ mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter)
     return ret;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief This function releases the lock variables
  *
@@ -1073,7 +1073,7 @@ mlan_status wlan_init_fw(IN pmlan_adapter pmadapter)
         /* Issue firmware initialize commands for first BSS, for other
            interfaces it will be called after getting the last init command
            response of previous interface */
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         priv = wlan_get_priv(pmadapter, MLAN_BSS_ROLE_ANY);
         ret  = priv->ops.init_cmd(priv, MTRUE);
         if (ret == MLAN_STATUS_FAILURE)
@@ -1119,7 +1119,7 @@ t_void wlan_free_adapter(pmlan_adapter pmadapter)
         return;
     }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     wlan_cancel_all_pending_cmd(pmadapter);
     /* Free command buffer */
     PRINTM(MINFO, "Free Command buffer\n");
@@ -1164,7 +1164,7 @@ t_void wlan_free_adapter(pmlan_adapter pmadapter)
     return;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief This function frees the structure of priv
  *

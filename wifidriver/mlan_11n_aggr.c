@@ -34,7 +34,7 @@ Change log:
 
 void wrapper_deliver_amsdu_subframe(pmlan_buffer amsdu_pmbuf, t_u8 *data, t_u16 pkt_len);
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Aggregate individual packets into one AMSDU packet
  *
@@ -196,7 +196,7 @@ mlan_status wlan_11n_deaggregate_pkt(mlan_private *priv, pmlan_buffer pmbuf)
     int pad;
     mlan_status ret = MLAN_STATUS_FAILURE;
     RxPacketHdr_t *prx_pkt;
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     mlan_buffer *daggr_mbuf = MNULL;
 #endif /* CONFIG_MLAN_WMSDK */
     /* mlan_adapter *pmadapter = priv->adapter; */
@@ -246,7 +246,7 @@ mlan_status wlan_11n_deaggregate_pkt(mlan_private *priv, pmlan_buffer pmbuf)
             pkt_len += sizeof(Eth803Hdr_t);
         }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
         daggr_mbuf = wlan_alloc_mlan_buffer(pmadapter, pkt_len, 0, MFALSE);
         if (daggr_mbuf == MNULL)
         {
@@ -269,7 +269,7 @@ mlan_status wlan_11n_deaggregate_pkt(mlan_private *priv, pmlan_buffer pmbuf)
         ret = MLAN_STATUS_SUCCESS;
 #endif /* CONFIG_MLAN_WMSDK */
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 #ifdef UAP_SUPPORT
         if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP)
             ret = wlan_uap_recv_packet(priv, daggr_mbuf);
@@ -280,7 +280,7 @@ mlan_status wlan_11n_deaggregate_pkt(mlan_private *priv, pmlan_buffer pmbuf)
 
         switch (ret)
         {
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
             case MLAN_STATUS_PENDING:
                 break;
             case MLAN_STATUS_FAILURE:
@@ -288,7 +288,7 @@ mlan_status wlan_11n_deaggregate_pkt(mlan_private *priv, pmlan_buffer pmbuf)
                 daggr_mbuf->status_code = MLAN_ERROR_PKT_INVALID;
 #endif /* CONFIG_MLAN_WMSDK */
             case MLAN_STATUS_SUCCESS:
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
                 wlan_recv_packet_complete(pmadapter, daggr_mbuf, ret);
 #endif /* CONFIG_MLAN_WMSDK */
                 break;
@@ -333,7 +333,7 @@ int wlan_11n_form_amsdu_pkt(t_u8 *amsdu_buf, t_u8 *data, int pkt_len, int *pad)
     amsdu_buf_offset += sizeof(t_u16);
     memcpy(amsdu_buf + amsdu_buf_offset, &snap, LLC_SNAP_LEN);
     amsdu_buf_offset += LLC_SNAP_LEN;
-#ifdef CONFIG_IMU_GDMA
+#if CONFIG_IMU_GDMA
     HAL_ImuGdmaCopyData(amsdu_buf + amsdu_buf_offset, data + dt_offset, pkt_len - dt_offset);
 #else
     memcpy(amsdu_buf + amsdu_buf_offset, data + dt_offset, pkt_len - dt_offset);
@@ -347,7 +347,7 @@ int wlan_11n_form_amsdu_pkt(t_u8 *amsdu_buf, t_u8 *data, int pkt_len, int *pad)
 }
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Aggregate multiple packets into one single AMSDU packet
  *

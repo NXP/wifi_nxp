@@ -18,7 +18,7 @@
 
 #include "dhcp-priv.h"
 
-#ifndef CONFIG_DHCP_SERVER_STACK_SIZE
+#if !CONFIG_DHCP_SERVER_STACK_SIZE
 #define CONFIG_DHCP_SERVER_STACK_SIZE 2048
 #endif
 

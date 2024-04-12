@@ -842,9 +842,9 @@ typedef enum
 #define WPS_MSG_MAX_RESENT 30
 /** PBC Walk time */
 #define PBC_WALK_TIME 120 /* sec */
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 /** WPS Registration Protocol Timeout */
-#define WPS_REGISTRATION_TIME 30 /* sec */
+#define WPS_REGISTRATION_TIME 30  /* sec */
 #else
 /** WPS Registration Protocol Timeout */
 #define WPS_REGISTRATION_TIME 120 /* sec */
@@ -948,7 +948,7 @@ extern int wfdcmd_config_download(char *filename);
 extern int wfdcmd_start_find_phase(void);
 extern int wfdcmd_start_group_owner(void);
 extern int wfd_peer_device_selected();
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 extern void wfd_start_peer_ageout_timer(WFD_DATA *pwfd_data);
 extern void wfd_start_peer_selected_ageout_timer(WFD_DATA *pwfd_data);
 #endif

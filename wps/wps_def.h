@@ -152,7 +152,7 @@ typedef struct wps_l2_info
     u8 my_mac_addr[6];
 } WPS_L2_INFO;
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 /** Maximum no of channels in channel list */
 #define MAX_CHANNELS 14
 
@@ -227,7 +227,7 @@ typedef struct wps_data
     void *evt_msg_head;
     /** event destination address */
     void *evt_dest_addr;
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     /** WFD data pointer */
     WFD_DATA wfd_data;
 #endif
@@ -256,7 +256,7 @@ typedef struct wps_data
     bool tls_session_init;
     /* TLS Session active flag */
     bool tls_session_active;
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
     /* Derived key data */
     uint8_t key_data[TLS_KEY_LEN];
     u8 peer_challenge[MSCHAPV2_CHAL_LEN];
@@ -274,7 +274,7 @@ typedef struct wps_data
     struct wlan_network wps_conn_network;
 } WPS_DATA, *PWPS_DATA;
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 /** Maximum Persistent peers possible in a group */
 #define WFD_MAX_PERSISTENT_PEERS (2)
 /** PSK max len */
@@ -336,13 +336,13 @@ struct prov_command
     union
     {
         struct wps_command wps_cmd;
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
         struct wpa2_command entp_cmd;
 #endif
     } cmd;
 };
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 struct wfd_wlan_event
 {
     bool peer_event;

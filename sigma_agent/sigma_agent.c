@@ -16,8 +16,7 @@
 #include <string.h>
 #include <osa.h>
 
-
-#ifdef CONFIG_SIGMA_AGENT
+#if CONFIG_SIGMA_AGENT
 
 /*******************************************************************************
  * Includes

@@ -196,7 +196,7 @@ static int prov_wps_enrollee_start(PWPS_INFO pwps_info, WPS_DATA *wps_s)
     (void)memcpy(wps_network.bssid, (const char *)g_bssid, ETH_ALEN);
     wps_network.channel           = g_channel;
     wps_network.ip.ipv4.addr_type = ADDR_TYPE_DHCP;
-#ifdef CONFIG_WPS2
+#if CONFIG_WPS2
     wps_network.wps_specific = 1;
 #endif /* CONFIG_WPS2 */
     if (g_channel)
@@ -207,7 +207,7 @@ static int prov_wps_enrollee_start(PWPS_INFO pwps_info, WPS_DATA *wps_s)
         wps_network.bssid_specific = 1;
 
     wps_network.security.type = WLAN_SECURITY_NONE;
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     wps_network.type = WLAN_BSS_TYPE_WIFIDIRECT;
     wps_network.role = WLAN_BSS_ROLE_STA;
 #endif
@@ -248,11 +248,11 @@ static int prov_wps_enrollee_start(PWPS_INFO pwps_info, WPS_DATA *wps_s)
 
             if (state == WLAN_ASSOCIATED || connect_retry == 0)
                 break;
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
             connect_retry--;
 #endif
         }
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         while (state != WLAN_DISCONNECTED);
 #else
         while (connect_retry--);
@@ -287,7 +287,7 @@ static int prov_wps_enrollee_start(PWPS_INFO pwps_info, WPS_DATA *wps_s)
             else
                 (void)memcpy(pwps_info->registrar.mac_address, wps_network.bssid, ETH_ALEN);
         }
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         wps_d("Registration Process Started....");
 #else
         wps_d("WPS Registration Protocol Started .....");
@@ -319,7 +319,7 @@ static int prov_wps_enrollee_start(PWPS_INFO pwps_info, WPS_DATA *wps_s)
     fail:
         OSA_TimeDelay(500);
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         wps_d("Registration Protocol Failed !");
 #else
         wps_d("WPS Registration Protocol Failed !");
@@ -332,7 +332,7 @@ static int prov_wps_enrollee_start(PWPS_INFO pwps_info, WPS_DATA *wps_s)
         ret = wlan_remove_network(wps_network.name);
         if (ret != 0)
             wps_d("Failed to remove network %d\r\n", ret);
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         wfd_reset();
 
         gpwps_info->wps_session = 0;
@@ -349,7 +349,7 @@ static int prov_wps_enrollee_start(PWPS_INFO pwps_info, WPS_DATA *wps_s)
     return ret;
 }
 
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
 static int prov_entp_enrollee_start(PWPS_INFO pwps_info, WPS_DATA *wps_s)
 {
     int ret = WPS_STATUS_SUCCESS;
@@ -417,7 +417,7 @@ int wps_enrollee_start(PWPS_INFO pwps_info, WPS_DATA *wps_s)
 {
     int ret = WPS_STATUS_SUCCESS;
 
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
     if (pwps_info->prov_session == PROV_ENTP_SESSION_ATTEMPT)
         ret = prov_entp_enrollee_start(pwps_info, wps_s);
     else
@@ -460,7 +460,7 @@ int wps_registrar_start(PWPS_INFO pwps_info, WPS_DATA *wps_s)
             pwps_info->enrollee.updated_device_password_id = DEVICE_PASSWORD_REG_SPECIFIED;
         }
     }
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     wps_d("Registration Process Started....");
 #else
     wps_d("WPS Registration Protocol Started .....");

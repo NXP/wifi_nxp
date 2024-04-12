@@ -1,4 +1,4 @@
-#ifdef CONFIG_WLS_CSI_PROC
+#if CONFIG_WLS_CSI_PROC
 /** @file  wls_subspace_processing.h
  *
  * @brief This file contains header file for sub-space based fine timing calculation
@@ -29,4 +29,4 @@ int calcSubspaceFineTiming(hal_pktinfo_t *pktinfo,               // structure wi
 
 #endif
 
-#endif  /* CONFIG_WLS_CSI_PROC */
+#endif /* CONFIG_WLS_CSI_PROC */

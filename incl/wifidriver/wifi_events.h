@@ -43,8 +43,8 @@ enum wifi_event
     WIFI_EVENT_GET_HW_SPEC,
     /** Association */
     WIFI_EVENT_ASSOCIATION,
-#ifdef CONFIG_WPA_SUPP
-#ifdef CONFIG_AUTO_RECONNECT
+#if CONFIG_WPA_SUPP
+#if CONFIG_AUTO_RECONNECT
     /** Association Notify */
     WIFI_EVENT_ASSOCIATION_NOTIFY,
 #endif
@@ -65,7 +65,7 @@ enum wifi_event
     WIFI_EVENT_FW_HANG,
     /** Firmware Reset event */
     WIFI_EVENT_FW_RESET,
-#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+#if CONFIG_SUBSCRIBE_EVENT_SUPPORT
     /* WiFi RSSI High Event */
     WIFI_EVENT_RSSI_HIGH,
     /* WiFi SRN Low Event */
@@ -89,7 +89,7 @@ enum wifi_event
     /* WiFi Pre Beacon Lost Event */
     WIFI_EVENT_FW_PRE_BCN_LOST,
 #endif
-#ifdef CONFIG_HOST_SLEEP
+#if CONFIG_HOST_SLEEP
     /* Host sleep activated */
     WIFI_EVENT_HS_ACTIVATED,
     /** HS configuration */
@@ -144,11 +144,11 @@ enum wifi_event
     WIFI_EVENT_CHAN_SWITCH_ANN,
     /** Channel Switch */
     WIFI_EVENT_CHAN_SWITCH,
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     /** IPv6 address state change */
     WIFI_EVENT_NET_IPV6_CONFIG,
 #endif
-#ifdef CONFIG_WLAN_BRIDGE
+#if CONFIG_WLAN_BRIDGE
     /** Auto link switch network */
     WIFI_EVENT_AUTOLINK_NETWORK_SWITCHED,
 #endif
@@ -162,14 +162,14 @@ enum wifi_event
     WIFI_EVENT_REMAIN_ON_CHANNEL,
     /* Event to indicate Management tx status */
     WIFI_EVENT_MGMT_TX_STATUS,
-#ifdef CONFIG_CSI
+#if CONFIG_CSI
     /* Recv csi data */
     WIFI_EVENT_CSI,
 #endif
-#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+#if (CONFIG_11MC) || (CONFIG_11AZ)
     /* Event to trigger or stop ftm*/
     WIFI_EVENT_FTM_COMPLETE,
-#ifdef CONFIG_WLS_CSI_PROC
+#if CONFIG_WLS_CSI_PROC
     WIFI_EVENT_WLS_CSI,
 #endif
 #endif
@@ -201,7 +201,7 @@ enum wlan_bss_type
     WLAN_BSS_TYPE_STA = 0,
     /** uAP */
     WLAN_BSS_TYPE_UAP = 1,
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     /** WiFi Direct */
     WLAN_BSS_TYPE_WIFIDIRECT = 2,
 #endif

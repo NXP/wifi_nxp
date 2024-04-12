@@ -28,12 +28,12 @@
 #include "wps_eapol.h"
 #include "wps_os.h"
 #include "wps_wlan.h"
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 #include "wlan_hostcmd.h"
 #include "wlan_wfd.h"
 #endif
 
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
 void wpa2_session_complete();
 void wpa2_session_clean();
 #endif
@@ -55,7 +55,7 @@ extern short ie_index;
 /** IE buffer index */
 extern short ap_assocresp_ie_index;
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 extern void wfd_peer_ageout_time_handler(void *user_data);
 #endif
 
@@ -91,7 +91,7 @@ static void wps_main_loop_free(void)
 /********************************************************
         Global Functions
 ********************************************************/
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 /**
  *  @brief Process reception of event from wlan
  *
@@ -498,8 +498,8 @@ void wps_main_loop_proc(void)
             }
         }
 
-        ret =OSA_MsgQGet((osa_msgq_handle_t)wps.data_queue, &msg,
-            (gpwps_info->prov_session == PROV_WPS_SESSION_ATTEMPT) ? 50 : 500);
+        ret = OSA_MsgQGet((osa_msgq_handle_t)wps.data_queue, &msg,
+                          (gpwps_info->prov_session == PROV_WPS_SESSION_ATTEMPT) ? 50 : 500);
         if (ret == WM_SUCCESS)
         {
             if ((gpwps_info->wps_session) || (gpwps_info->prov_session == PROV_ENTP_SESSION_ATTEMPT))
@@ -522,7 +522,7 @@ void wps_main_loop_proc(void)
             wps_mem_free(msg.buffer);
         }
     }
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
     if (gpwps_info->prov_session == PROV_ENTP_SESSION_ATTEMPT)
     {
         wpa2_session_complete();

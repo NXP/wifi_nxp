@@ -24,7 +24,7 @@
 #define WPA_CIPHER_WEP104 BIT(2)
 #define WPA_CIPHER_TKIP   BIT(3)
 #define WPA_CIPHER_CCMP   BIT(4)
-#ifdef CONFIG_IEEE80211W
+#if CONFIG_IEEE80211W
 #define WPA_CIPHER_AES_128_CMAC BIT(5)
 #endif /* CONFIG_IEEE80211W */
 #define WPA_CIPHER_GCMP BIT(6)
@@ -179,7 +179,7 @@ struct ieee802_1x_eapol_key
 #endif
 #define RSN_KEY_DATA_MAC_ADDR RSN_SELECTOR(0x00, 0x0f, 0xac, 3)
 #define RSN_KEY_DATA_PMKID    RSN_SELECTOR(0x00, 0x0f, 0xac, 4)
-#ifdef CONFIG_PEERKEY
+#if CONFIG_PEERKEY
 #define RSN_KEY_DATA_SMK      RSN_SELECTOR(0x00, 0x0f, 0xac, 5)
 #define RSN_KEY_DATA_NONCE    RSN_SELECTOR(0x00, 0x0f, 0xac, 6)
 #define RSN_KEY_DATA_LIFETIME RSN_SELECTOR(0x00, 0x0f, 0xac, 7)
@@ -285,8 +285,8 @@ typedef struct wpa_sm
     unsigned int key_mgmt;
     unsigned int mgmt_group_cipher;
 
-    int rsn_enabled; /* Whether RSN is enabled in configuration */
-    int mfp;         /* 0 = disabled, 1 = optional, 2 = mandatory */
+    int rsn_enabled;  /* Whether RSN is enabled in configuration */
+    int mfp;          /* 0 = disabled, 1 = optional, 2 = mandatory */
 
     u8 *assoc_wpa_ie; /* Own WPA/RSN IE from (Re)AssocReq */
     size_t assoc_wpa_ie_len;
@@ -304,7 +304,7 @@ struct wpa_eapol_key
     u8 key_nonce[WPA_NONCE_LEN];
     u8 key_iv[16];
     u8 key_rsc[WPA_KEY_RSC_LEN];
-    u8 key_id[8]; /* Reserved in IEEE 802.11i/RSN */
+    u8 key_id[8];          /* Reserved in IEEE 802.11i/RSN */
     u8 key_mic[16];
     u8 key_data_length[2]; /* big endian */
     /* followed by key_data_length bytes of key_data */
@@ -358,12 +358,12 @@ struct wpa_ie_hdr
 
 struct rsn_ie_hdr
 {
-    u8 elem_id; /* WLAN_EID_RSN */
+    u8 elem_id;    /* WLAN_EID_RSN */
     u8 len;
     u8 version[2]; /* little endian */
 } __attribute__((packed));
 
-#ifdef CONFIG_PEERKEY
+#if CONFIG_PEERKEY
 enum
 {
     STK_MUI_4WAY_STA_AP   = 1,

@@ -24,7 +24,7 @@ Change log:
 /** process rx action frame */
 mlan_status wlan_process_mgmt_action(t_u8 *payload, t_u32 payload_len, RxPD *rxpd);
 
-#ifdef CONFIG_1AS
+#if CONFIG_1AS
 /* frame body for timing measurement action frame */
 typedef PACK_START struct _wifi_wnm_timing_msmt_t
 {

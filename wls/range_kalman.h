@@ -1,4 +1,4 @@
-#ifdef CONFIG_WLS_CSI_PROC
+#if CONFIG_WLS_CSI_PROC
 /** @file range_kalman.h
  *
  * @brief This file contains Kalman filter for WLS range measurements
@@ -61,4 +61,4 @@ int range_kalman(range_kalman_state *in);
 
 #endif
 
-#endif  /* CONFIG_WLS_CSI_PROC */
+#endif /* CONFIG_WLS_CSI_PROC */

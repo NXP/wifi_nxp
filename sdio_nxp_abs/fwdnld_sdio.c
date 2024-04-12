@@ -71,7 +71,7 @@ static bool wlan_sdio_check_fw_status(t_u32 card_poll)
     return false;
 }
 
-#ifdef CONFIG_WIFI_IND_DNLD
+#if CONFIG_WIFI_IND_DNLD
 
 /**  @brief This function disables the host interrupts mask.
  *
@@ -223,7 +223,7 @@ static fwdnld_intf_ret_t sdio_post_fwdnld_check_conn_ready(fwdnld_intf_t *intf, 
     }
 }
 
-#if defined(CONFIG_WIFI_IND_DNLD)
+#if (CONFIG_WIFI_IND_DNLD)
 static fwdnld_intf_ret_t sdio_fwdnld_check_reload(fwdnld_intf_t *intf, uint8_t fw_reload)
 {
     t_u32 poll_num = 10;
@@ -365,7 +365,7 @@ fwdnld_intf_t *sdio_init_interface(void *settings)
     sdio_intf_g.intf_s.fwdnld_intf_send        = sdio_interface_send;
     sdio_intf_g.intf_s.fwdnld_intf_prepare     = sdio_prep_for_fwdnld;
     sdio_intf_g.intf_s.fwdnld_intf_check_ready = sdio_post_fwdnld_check_conn_ready;
-#if defined(CONFIG_WIFI_IND_DNLD)
+#if (CONFIG_WIFI_IND_DNLD)
     sdio_intf_g.intf_s.fwdnld_intf_check_reload = sdio_fwdnld_check_reload;
 #endif
     sdio_intf_g.intf_s.outbuf        = wifi_get_sdio_outbuf(&sdio_intf_g.intf_s.outbuf_len);

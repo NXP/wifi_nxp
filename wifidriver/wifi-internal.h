@@ -13,7 +13,7 @@
 
 #include <limits.h>
 
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
 #include "wifi_nxp_internal.h"
 #endif
 
@@ -22,7 +22,7 @@
 #include <osa.h>
 #include <wifi_events.h>
 #include <wifi-decl.h>
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
 #include <ieee802_11_defs.h>
 #endif
 
@@ -82,7 +82,7 @@ typedef struct
     OSA_TASK_HANDLE_DEFINE(wifi_core_task_Handle);
 #endif
     OSA_TASK_HANDLE_DEFINE(wifi_scan_task_Handle);
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
     /** Thread handle for sending data */
     OSA_TASK_HANDLE_DEFINE(wifi_drv_tx_task_Handle);
 #endif
@@ -92,7 +92,7 @@ typedef struct
 
     osa_msgq_handle_t *wlc_mgr_event_queue;
 
-#ifndef CONFIG_WIFI_RX_REORDER
+#if !CONFIG_WIFI_RX_REORDER
     void (*data_input_callback)(const uint8_t interface, const uint8_t *buffer, const uint16_t len);
 #endif
 #if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
@@ -101,11 +101,11 @@ typedef struct
     void (*amsdu_data_input_callback)(uint8_t interface, uint8_t *buffer, uint16_t len);
     void (*deliver_packet_above_callback)(void *rxpd, t_u8 interface, t_void *lwip_pbuf);
     bool (*wrapper_net_is_ip_or_ipv6_callback)(const t_u8 *buffer);
-#ifdef CONFIG_WIFI_RX_REORDER
+#if CONFIG_WIFI_RX_REORDER
     void *(*gen_pbuf_from_data2)(t_u8 *payload, t_u16 datalen, void **p_payload);
 #endif
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     osa_msgq_handle_t *wfd_event_queue;
 #endif
     OSA_MUTEX_HANDLE_DEFINE(command_lock);
@@ -114,7 +114,7 @@ typedef struct
 
     OSA_MUTEX_HANDLE_DEFINE(mcastf_mutex);
 
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
     /** Semaphore to protect data parameters */
     OSA_SEMAPHORE_HANDLE_DEFINE(tx_data_sem);
 #ifdef __ZEPHYR__
@@ -173,7 +173,7 @@ typedef struct
     t_u16 ht_cap_info;
     /** HTTX Cfg */
     t_u16 ht_tx_cfg;
-#ifdef CONFIG_WIFI_FW_DEBUG
+#if CONFIG_WIFI_FW_DEBUG
     /** This function mount USB device.
      *
      * return WM_SUCCESS on success
@@ -213,7 +213,7 @@ typedef struct
     wlan_user_scan_cfg *g_user_scan_cfg;
 
     bool scan_stop;
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
     void *if_priv;
     void *hapd_if_priv;
     wifi_nxp_callbk_fns_t *supp_if_callbk_fns;
@@ -223,7 +223,7 @@ typedef struct
     nxp_wifi_event_eapol_mlme_t eapol_rx;
     bool wpa_supp_scan;
     bool external_scan;
-#ifdef CONFIG_HOSTAPD
+#if CONFIG_HOSTAPD
     bool hostapd_op;
 #endif
 #endif
@@ -298,7 +298,7 @@ bool is_split_scan_complete(void);
  * Waits for Command processing to complete and waits for command response
  */
 int wifi_wait_for_cmdresp(void *cmd_resp_priv);
-#ifdef CONFIG_FW_VDLL
+#if CONFIG_FW_VDLL
 /**
  * Waits for Command processing to complete and waits for command response for VDLL
  */
@@ -316,7 +316,7 @@ int bus_register_event_queue(osa_msgq_handle_t event_queue);
  * De-register the event queue.
  */
 void bus_deregister_event_queue(void);
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 /**
  * Register a special queue for WPS
  */
@@ -359,7 +359,7 @@ int wifi_put_command_resp_sem(void);
  */
 int wifi_put_command_lock(void);
 
-#if (defined(CONFIG_11MC) || defined(CONFIG_11AZ)) && defined(CONFIG_WLS_CSI_PROC)
+#if ((CONFIG_11MC) || (CONFIG_11AZ)) && (CONFIG_WLS_CSI_PROC)
 /*
  * @internal
  *
@@ -411,7 +411,7 @@ int wifi_sdio_lock(void);
 void wifi_sdio_unlock(void);
 #endif
 
-#ifdef CONFIG_WIFI_IND_RESET
+#if CONFIG_WIFI_IND_RESET
 bool wifi_ind_reset_in_progress(void);
 void wifi_ind_reset_start(void);
 void wifi_ind_reset_stop(void);
@@ -433,22 +433,22 @@ void wifi_user_scan_config_cleanup(void);
  *
  */
 void wifi_scan_stop(void);
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
 void wpa_supp_handle_link_lost(mlan_private *priv);
 
 int wifi_set_scan_ies(void *ie, size_t ie_len);
-#ifdef CONFIG_WPA_SUPP_WPS
+#if CONFIG_WPA_SUPP_WPS
 bool wifi_nxp_wps_session_enable(void);
 #endif
 
 int wifi_setup_ht_cap(t_u16 *ht_capab, t_u8 *mcs_set, t_u8 *a_mpdu_params, t_u8 band);
 void wifi_setup_channel_info(void *channels, int num_channels, t_u8 band);
 
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
 int wifi_setup_vht_cap(t_u32 *vht_capab, t_u8 *vht_mcs_set, t_u8 band);
 #endif
 
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
 int wifi_setup_he_cap(nxp_wifi_he_capabilities *he_cap, t_u8 band);
 #endif
 int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info);
@@ -468,11 +468,11 @@ int wifi_nxp_scan_res_num(void);
 int wifi_nxp_scan_res_get2(t_u32 table_idx, nxp_wifi_event_new_scan_result_t *scan_res);
 #endif /* CONFIG_WPA_SUPP */
 
-#ifdef CONFIG_WIFI_RX_REORDER
+#if CONFIG_WIFI_RX_REORDER
 int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payload);
 #endif
 
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
 int send_wifi_driver_tx_data_event(t_u8 interface);
 int send_wifi_driver_tx_null_data_event(t_u8 interface);
 #endif

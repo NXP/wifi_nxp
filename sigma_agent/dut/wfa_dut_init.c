@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <osa.h>
 
-#ifdef CONFIG_SIGMA_AGENT
+#if CONFIG_SIGMA_AGENT
 #include "wfa_debug.h"
 #include "wfa_main.h"
 #include "wfa_types.h"

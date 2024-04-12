@@ -31,14 +31,14 @@
 
 #define MOD_GROUPS 7
 
-#ifdef CONFIG_OWE
+#if CONFIG_OWE
 /** The open AP in OWE transmition Mode */
 #define OWE_TRANS_MODE_OPEN 1U
 /** The security AP in OWE trsnsition Mode */
 #define OWE_TRANS_MODE_OWE 2U
 #endif
 
-#ifdef CONFIG_WIFI_CAPA
+#if CONFIG_WIFI_CAPA
 #define WIFI_SUPPORT_11AX   (1 << 3)
 #define WIFI_SUPPORT_11AC   (1 << 2)
 #define WIFI_SUPPORT_11N    (1 << 1)
@@ -186,7 +186,7 @@ struct wifi_message
     void *data;
 };
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 struct wifi_wfd_event
 {
     bool peer_event;
@@ -311,11 +311,11 @@ struct wifi_scan_result2
      */
     bool phtcap_ie_present;  /*!< PHT CAP IE present info */
     bool phtinfo_ie_present; /*!< PHT INFO IE present info */
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
     /** 11AC VHT capab support */
     bool pvhtcap_ie_present;
 #endif
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
     /** 11AX HE capab support */
     bool phecap_ie_present;
 #endif
@@ -330,18 +330,18 @@ struct wifi_scan_result2
     uint8_t trans_bssid[MLAN_MAC_ADDR_LENGTH]; /*!< Trans bssid array */
     uint8_t trans_ssid[MLAN_MAX_SSID_LENGTH];  /*!< Trans ssid array */
     int trans_ssid_len;                        /*!< Trans bssid length */
-#ifdef CONFIG_DRIVER_MBO
+#if CONFIG_DRIVER_MBO
     bool mbo_assoc_disallowed;                 /*!< MBO disallowed */
 #endif
-#ifdef CONFIG_11R
+#if CONFIG_11R
     /** Mobility domain identifier */
     uint16_t mdid;
 #endif
-#ifdef CONFIG_11K
+#if CONFIG_11K
     /** Neigbort report support */
     bool neighbor_report_supported;
 #endif
-#ifdef CONFIG_11V
+#if CONFIG_11V
     /** bss transition support */
     bool bss_transition_supported;
 #endif
@@ -413,7 +413,7 @@ typedef struct
     uint32_t remain_period;
 } wifi_remain_on_channel_t;
 
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
 /** TX Rate Setting */
 typedef PACK_START struct _txrate_setting
 {
@@ -504,7 +504,7 @@ typedef PACK_START struct _txrate_setting
     t_u16 reserverd : 2; // BIT14-BIT15
 } PACK_END txrate_setting;
 
-#ifdef CONFIG_MMSF
+#if CONFIG_MMSF
 typedef struct
 {
     t_u8 *enable;
@@ -523,7 +523,7 @@ typedef PACK_START struct _wifi_rate_cfg_t
     t_u32 rate_index;
     /** Rate rate */
     t_u32 rate;
-#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
+#if (CONFIG_11AC) || (CONFIG_11AX)
     /** NSS */
     t_u32 nss;
 #endif
@@ -553,7 +553,7 @@ typedef PACK_START struct _wifi_data_rate_t
     t_u32 tx_mcs_index;
     /** MCS index */
     t_u32 rx_mcs_index;
-#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
+#if (CONFIG_11AC) || (CONFIG_11AX)
     /** NSS */
     t_u32 tx_nss;
     /** NSS */
@@ -577,7 +577,7 @@ typedef PACK_START struct _wifi_ds_rate
 {
     /** Sub-command */
     enum wifi_ds_command_type sub_command;
-#ifdef CONFIG_AUTO_NULL_TX
+#if CONFIG_AUTO_NULL_TX
     /** Only set auto tx fix rate */
     t_u16 auto_null_fixrate_enable;
 #endif
@@ -868,7 +868,7 @@ typedef struct
     t_u16 dst_port;
 } wifi_nat_keep_alive_t;
 
-#ifdef CONFIG_CLOUD_KEEP_ALIVE
+#if CONFIG_CLOUD_KEEP_ALIVE
 #define MKEEP_ALIVE_IP_PKT_MAX 256
 /** Cloud keep alive information */
 typedef struct
@@ -1056,9 +1056,9 @@ typedef PACK_START struct
     /** Chnannel descriptor */
     wifi_channel_desc_t chan_desc;
     /** Channel Modulation groups */
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
     wifi_txpwrlimit_entry_t txpwrlimit_entry[20];
-#elif defined(CONFIG_11AC)
+#elif (CONFIG_11AC)
     wifi_txpwrlimit_entry_t txpwrlimit_entry[16];
 #else
     wifi_txpwrlimit_entry_t txpwrlimit_entry[10];
@@ -1084,7 +1084,7 @@ typedef PACK_START struct
 #endif
 } PACK_END wifi_txpwrlimit_t;
 
-#ifdef CONFIG_11AX
+#if CONFIG_11AX
 typedef PACK_START struct _wifi_rupwrlimit_config_t
 {
     /** start freq */
@@ -1131,7 +1131,7 @@ typedef PACK_START struct
     t_u8 val[4];
 } PACK_END wifi_11ax_config_t;
 
-#ifdef CONFIG_11AX_TWT
+#if CONFIG_11AX_TWT
 /** Wi-Fi TWT setup configuration */
 typedef PACK_START struct
 {
@@ -1223,7 +1223,7 @@ typedef PACK_START struct
 #endif /* CONFIG_11AX_TWT */
 #endif
 
-#ifdef CONFIG_WIFI_CLOCKSYNC
+#if CONFIG_WIFI_CLOCKSYNC
 /** Wi-Fi Clock sync configuration */
 typedef PACK_START struct
 {
@@ -1252,7 +1252,7 @@ typedef PACK_START struct
     t_s32 tsf_offset;
 } PACK_END wifi_tsf_info_t;
 #endif /* CONFIG_WIFI_CLOCKSYNC */
-#ifdef CONFIG_WLAN_BRIDGE
+#if CONFIG_WLAN_BRIDGE
 /**
  * Data structure for Bridge Autolink Configuration
  */
@@ -1309,7 +1309,7 @@ typedef struct
 } wifi_bridge_cfg_t;
 #endif
 
-#ifdef CONFIG_NET_MONITOR
+#if CONFIG_NET_MONITOR
 typedef t_u8 wifi_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 
 /** Network monitor structure */
@@ -1405,7 +1405,7 @@ typedef enum
 typedef PACK_START struct
 {
     wifi_frame_type_t frame_type;
-#ifdef CONFIG_NET_MONITOR
+#if CONFIG_NET_MONITOR
     union
     {
         wifi_beacon_info_t beacon_info;
@@ -1420,7 +1420,7 @@ typedef struct
     uint8_t mfpr;
 } wifi_pmf_params_t;
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /** mix rate information structure */
 typedef PACK_START struct _mix_rate_info
 {
@@ -1532,17 +1532,17 @@ typedef PACK_START struct _wifi_scan_channel_list_t
 } PACK_END wifi_scan_channel_list_t;
 
 /* Configuration for wireless scanning */
-#if defined(RW610) && defined(CONFIG_ANT_DETECT)
+#if defined(RW610) && (CONFIG_ANT_DETECT)
 #define ANT_DETECT_MAX_CHANNEL_LIST 50U
 #endif
 #define MAX_CHANNEL_LIST 6
-#ifdef CONFIG_COMBO_SCAN
+#if CONFIG_COMBO_SCAN
 #define MAX_NUM_SSID 2
 #endif
 /** V2 scan parameters */
 typedef PACK_START struct _wifi_scan_params_v2_t
 {
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
     /** Scan Only */
     t_u8 scan_only;
     /** BSSID present */
@@ -1553,7 +1553,7 @@ typedef PACK_START struct _wifi_scan_params_v2_t
     /** BSSID to scan */
     t_u8 bssid[MLAN_MAC_ADDR_LENGTH];
     /** SSID to scan */
-#ifdef CONFIG_COMBO_SCAN
+#if CONFIG_COMBO_SCAN
     char ssid[MAX_NUM_SSID][MLAN_MAX_SSID_LENGTH + 1];
 #else
     char ssid[MLAN_MAX_SSID_LENGTH + 1];
@@ -1561,18 +1561,18 @@ typedef PACK_START struct _wifi_scan_params_v2_t
     /** Number of channels */
     t_u8 num_channels;
     /** Channel list with channel information */
-#if defined(RW610) && defined(CONFIG_ANT_DETECT)
+#if defined(RW610) && (CONFIG_ANT_DETECT)
     wifi_scan_channel_list_t chan_list[ANT_DETECT_MAX_CHANNEL_LIST];
 #else
     wifi_scan_channel_list_t chan_list[MAX_CHANNEL_LIST];
 #endif
     /** Number of probes */
     t_u8 num_probes;
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+#if CONFIG_SCAN_WITH_RSSIFILTER
     /** Threshold of rssi */
     t_s16 rssi_threshold;
 #endif
-#ifdef CONFIG_SCAN_CHANNEL_GAP
+#if CONFIG_SCAN_CHANNEL_GAP
     /** scan channel gap */
     t_u16 scan_chan_gap;
 #endif
@@ -1580,7 +1580,7 @@ typedef PACK_START struct _wifi_scan_params_v2_t
     int (*cb)(unsigned int count);
 } PACK_END wifi_scan_params_v2_t;
 
-#ifdef CONFIG_RF_TEST_MODE
+#if CONFIG_RF_TEST_MODE
 /** Configuration for Manufacturing generic command */
 typedef PACK_START struct _wifi_mfg_cmd_generic_cfg
 {
@@ -1725,13 +1725,13 @@ typedef PACK_START struct wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr
 typedef PACK_START struct wifi_mfg_cmd_otp_mac_addr_rd_wr
 {
     /** MFG command code */
-    t_u32  mfg_cmd;
+    t_u32 mfg_cmd;
     /** Action */
-    t_u16  action;
+    t_u16 action;
     /** Device ID */
-    t_u16  device_id;
+    t_u16 device_id;
     /** MFG Error code */
-    t_u32  error;
+    t_u32 error;
     /** Destination MAC Address */
     t_u8 mac_addr[MLAN_MAC_ADDR_LENGTH];
 } PACK_END wifi_mfg_cmd_otp_mac_addr_rd_wr_t;
@@ -1739,23 +1739,23 @@ typedef PACK_START struct wifi_mfg_cmd_otp_mac_addr_rd_wr
 typedef PACK_START struct wifi_mfg_cmd_otp_cal_data_rd_wr
 {
     /** MFG command code */
-    t_u32  mfg_cmd;
+    t_u32 mfg_cmd;
     /** Action */
-    t_u16  action;
+    t_u16 action;
     /** Device ID */
-    t_u16  device_id;
+    t_u16 device_id;
     /** MFG Error code */
-    t_u32  error;
+    t_u32 error;
     /** CAL Data write status */
-    t_u32   cal_data_status;
+    t_u32 cal_data_status;
     /** CAL Data Length*/
-    t_u32   cal_data_len;
+    t_u32 cal_data_len;
     /** Destination MAC Address */
     t_u8 cal_data[CAL_DATA_LEN];
 } PACK_END wifi_mfg_cmd_otp_cal_data_rd_wr_t;
 #endif
 
-#ifdef CONFIG_HEAP_DEBUG
+#if CONFIG_HEAP_DEBUG
 #define MAX_FUNC_SYMBOL_LEN    64
 #define OS_MEM_STAT_TABLE_SIZE 128
 
@@ -1770,7 +1770,7 @@ typedef struct
 } wifi_os_mem_info;
 #endif
 
-#ifdef CONFIG_MULTI_CHAN
+#if CONFIG_MULTI_CHAN
 typedef PACK_START struct
 {
     /** Channel Index*/
@@ -1787,7 +1787,7 @@ typedef PACK_START struct
 } PACK_END wifi_drcs_cfg_t;
 #endif
 
-#ifdef CONFIG_1AS
+#if CONFIG_1AS
 #define DOT1AS_TM_ROLE_TRANSMITTER 0
 #define DOT1AS_TM_ROLE_RECEIVER    1
 
@@ -1850,7 +1850,7 @@ typedef struct _wifi_dot1as_info_t
 
 #endif
 
-#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+#if CONFIG_SUBSCRIBE_EVENT_SUPPORT
 /** Type definition of mlan_ds_subscribe_evt for subscribe events */
 typedef struct _wifi_ds_subscribe_evt
 {
@@ -1913,7 +1913,7 @@ typedef struct _wifi_ds_subscribe_evt
 } wifi_ds_subscribe_evt;
 #endif
 
-#ifdef CONFIG_CSI
+#if CONFIG_CSI
 #define CSI_FILTER_MAX 16
 /** Structure of CSI filters */
 typedef PACK_START struct _wifi_csi_filter_t
@@ -1954,7 +1954,7 @@ typedef PACK_START struct _wifi_csi_config_params_t
 } PACK_END wifi_csi_config_params_t;
 #endif /* CSI_SUPPORT */
 
-#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
+#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
 /** Wi-Fi independent reset config */
 typedef PACK_START struct
 {
@@ -1965,7 +1965,7 @@ typedef PACK_START struct
 } PACK_END wifi_indrst_cfg_t;
 #endif
 
-#ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
+#if CONFIG_INACTIVITY_TIMEOUT_EXT
 /** Type definition of wifi_inactivity_to
  *  for MLAN_OID_PM_CFG_INACTIVITY_TO
  */
@@ -1984,7 +1984,7 @@ typedef PACK_START struct
 } PACK_END wifi_inactivity_to_t;
 #endif
 
-#ifdef CONFIG_AUTO_NULL_TX
+#if CONFIG_AUTO_NULL_TX
 /** auto null tx information */
 typedef struct
 {
@@ -2001,13 +2001,13 @@ typedef struct
 } wifi_auto_null_tx_t;
 #endif
 
-#if defined(RW610) && defined(CONFIG_ANT_DETECT)
-#define NORMAL_DETECT_MODE 0
-#define QUICK_DETECT_MODE 1
-#define PCB_DETECT_MODE 2
+#if defined(RW610) && (CONFIG_ANT_DETECT)
+#define NORMAL_DETECT_MODE                 0
+#define QUICK_DETECT_MODE                  1
+#define PCB_DETECT_MODE                    2
 #define PCB_DETECT_MODE_CHECK_DEVICE_COUNT 2
-#define ANT_DETECT_MAX_SCAN_ENTRY 5
-#define MAX_ANTENNA_PORT_NUM 4
+#define ANT_DETECT_MAX_SCAN_ENTRY          5
+#define MAX_ANTENNA_PORT_NUM               4
 typedef PACK_START struct _scan_result_entry_t
 {
     char ssid[33];

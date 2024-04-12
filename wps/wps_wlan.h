@@ -66,7 +66,7 @@
 #define CLEAR_STA_WPS_IE (CLEAR_WPS_IE | WPS_STA_SESSION_ACTIVE)
 
 /** Maximum MGMT IE index count */
-//#define MAX_MGMT_IE_INDEX                        12
+// #define MAX_MGMT_IE_INDEX                        12
 
 /** WPA Passphrase length*/
 #define WPA_PASSPHARE_LENGTH 64
@@ -80,7 +80,7 @@
 /** Standard DEAUTH code for AP deauth */
 #define DEAUTH_REASON_PREV_AUTH_INVALID 0x0002
 
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
 #define WLAN_EID_ERP_INFO                        42
 #define WLAN_EID_HT_CAP                          45
 #define WLAN_EID_RSN                             48

@@ -31,7 +31,7 @@ Change Log:
  *  11H APIs
  */
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /* Is master radar detection enabled in firmware? */
 extern t_bool wlan_11h_is_master_radar_det_active(mlan_private *priv);
 
@@ -95,7 +95,7 @@ extern void wlan_11h_init(mlan_adapter *adapter);
 /** Initialize the 11h interface structure */
 extern void wlan_11h_priv_init(mlan_private *pmpriv);
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /** Get an initial random channel to start an adhoc network on */
 extern t_u8 wlan_11h_get_adhoc_start_channel(mlan_private *priv);
 #endif /* CONFIG_MLAN_WMSDK */
@@ -103,7 +103,7 @@ extern t_u8 wlan_11h_get_adhoc_start_channel(mlan_private *priv);
 /** Check if radar detection is required on the specified channel */
 extern t_bool wlan_11h_radar_detect_required(mlan_private *priv, t_u8 channel);
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /** Perform a standard availibility check on the specified channel */
 extern t_s32 wlan_11h_issue_radar_detect(mlan_private *priv, pmlan_ioctl_req pioctl_req, t_u8 channel);
 

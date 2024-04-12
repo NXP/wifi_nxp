@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include "mem_pool.h"
 
-#ifdef CONFIG_MEM_POOLS
+#if CONFIG_MEM_POOLS
 
 #if defined(SDK_OS_FREE_RTOS)
 

@@ -1,4 +1,4 @@
-#ifdef CONFIG_WLS_CSI_PROC
+#if CONFIG_WLS_CSI_PROC
 /** @file  wls_processing.c
   *
   * @brief This file contains processing functions to calculate CSI correction for WLS time stamps

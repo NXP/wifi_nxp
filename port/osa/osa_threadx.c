@@ -18,7 +18,7 @@
 #define MSEC_TO_TICK(msec) \
     (((uint32_t)(msec) + 500uL / (uint32_t)TX_TIMER_TICKS_PER_SECOND) * (uint32_t)TX_TIMER_TICKS_PER_SECOND / 1000uL)
 
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
 
 /**
  * These are example addresses for the purposes of compiling.
@@ -164,8 +164,8 @@ osa_status_t OSA_TimerCreate(osa_timer_handle_t timerHandle,
 
     struct timer_data *ptimer = (struct timer_data *)timerHandle;
 
-    ptimer->callback       = call_back;
-    ptimer->user_arg       = cb_arg;
+    ptimer->callback = call_back;
+    ptimer->user_arg = cb_arg;
 
     if (TX_SUCCESS != tx_timer_create((TX_TIMER *)&ptimer->timer, NULL, (void (*)(ULONG))call_back, (ULONG)cb_arg,
                                       (ULONG)ticks, reload == KOSA_TimerOnce ? 0 : (ULONG)ticks, auto_activate))
@@ -212,7 +212,8 @@ osa_status_t OSA_TimerChange(osa_timer_handle_t timerHandle, osa_timer_tick ntim
         return KOSA_StatusError;
     }
 
-    if (TX_SUCCESS != tx_timer_change((TX_TIMER *)&ptimer->timer, (ULONG)ntime, reschedule_ticks == 0 ? 0 : (ULONG)ntime))
+    if (TX_SUCCESS !=
+        tx_timer_change((TX_TIMER *)&ptimer->timer, (ULONG)ntime, reschedule_ticks == 0 ? 0 : (ULONG)ntime))
     {
         status = KOSA_StatusError;
     }

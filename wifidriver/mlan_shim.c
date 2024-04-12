@@ -38,7 +38,7 @@ Change log:
 ********************************************************/
 #ifdef STA_SUPPORT
 static mlan_operations mlan_sta_ops = {
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     /* init cmd handler */
     wlan_ops_sta_init_cmd,
     /* ioctl handler */
@@ -46,13 +46,13 @@ static mlan_operations mlan_sta_ops = {
 #endif /* CONFIG_MLAN_WMSDK */
     /* cmd handler */
     wlan_ops_sta_prepare_cmd,
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     /* cmdresp handler */
     wlan_ops_sta_process_cmdresp,
 #endif /* CONFIG_MLAN_WMSDK */
     /* rx handler */
     wlan_ops_process_rx_packet,
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     /* Event handler */
     wlan_ops_sta_process_event,
     /* txpd handler */
@@ -64,7 +64,7 @@ static mlan_operations mlan_sta_ops = {
 #endif
 #ifdef UAP_SUPPORT
 static mlan_operations mlan_uap_ops = {
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     /* init cmd handler */
     wlan_ops_uap_init_cmd,
     /* ioctl handler */
@@ -72,13 +72,13 @@ static mlan_operations mlan_uap_ops = {
 #endif /* CONFIG_MLAN_WMSDK */
     /* cmd handler */
     wlan_ops_uap_prepare_cmd,
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     /* cmdresp handler */
     wlan_ops_uap_process_cmdresp,
 #endif /* CONFIG_MLAN_WMSDK */
        /* rx handler */
     wlan_ops_process_rx_packet,
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     /* Event handler */
     wlan_ops_uap_process_event,
     /* txpd handler */
@@ -180,7 +180,7 @@ mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter)
     /* MASSERT(pmdevice->callbacks.moal_memmove); */
 
     /* Allocate memory for adapter structure */
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
     if ((pmdevice->callbacks.moal_malloc(/* pmdevice->pmoal_handle */ NULL, sizeof(mlan_adapter), MLAN_MEM_DEF,
                                          (t_u8 **)(void **)&pmadapter) != MLAN_STATUS_SUCCESS) ||
         (pmadapter == MNULL))
@@ -204,7 +204,7 @@ mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter)
     /* Save callback functions */
     (void)__memmove(pmadapter->pmoal_handle, pcb, &pmdevice->callbacks, sizeof(mlan_callbacks));
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     /* Assertion for all callback functions */
     MASSERT(pcb->moal_init_fw_complete);
     MASSERT(pcb->moal_shutdown_fw_complete);
@@ -282,7 +282,7 @@ mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter)
         if (pmdevice->bss_attr[i].active == MTRUE)
         {
             /* For valid bss_attr, allocate memory for private structure */
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
             if ((pcb->moal_malloc(pmadapter->pmoal_handle, sizeof(mlan_private), MLAN_MEM_DEF,
                                   (t_u8 **)(void **)&pmadapter->priv[i]) != MLAN_STATUS_SUCCESS) ||
                 (pmadapter->priv[i] == MNULL))
@@ -360,7 +360,7 @@ mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter)
         goto error;
     }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     /* Initialize timers */
     if (wlan_init_timer(pmadapter) != MLAN_STATUS_SUCCESS)
     {
@@ -375,7 +375,7 @@ mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter)
 
 error:
     PRINTM(MINFO, "Leave mlan_register with error\n");
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
     /* Free timers */
     wlan_free_timer(pmadapter);
     /* Free adapter structure */
@@ -387,13 +387,13 @@ error:
     for (i = 0; i < MLAN_MAX_BSS_NUM; i++)
     {
         if (pmadapter->priv[i])
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
             pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->priv[i]);
 #else
             OSA_MemoryPoolFree(pmPrivateMemoryPool, pmadapter->priv[i]);
 #endif
     }
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
     (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter);
 #else
     OSA_MemoryPoolFree(pmAdapterMemoryPool, pmadapter);
@@ -445,7 +445,7 @@ MLAN_API mlan_status mlan_unregister(IN t_void *pmlan_adapter)
     return ret;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief This function downloads the firmware
  *
@@ -592,7 +592,7 @@ mlan_status mlan_init_fw(IN t_void *pmlan_adapter)
     return ret;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#if !CONFIG_MLAN_WMSDK
 /**
  *  @brief Shutdown firmware
  *

@@ -3,6 +3,37 @@
 __load__:
 - bin/generator/records_v3/shared/component/docs/wireless/wifi.yml
 - middleware/wireless/wpa_supplicant-rtos/add_wpa_supplicant_v3.yml
+
+middleware.wifi.wifi_bt_config.template:
+  section-type: component
+  contents:
+    repo_base_path: components/wifi_bt_module/template
+    project_base_path: wifi/template
+    cc-include:
+    - repo_relative_path: "./"
+      target_file:
+        - wifi_bt_config.h
+    files:
+    - source: wifi_bt_config.h
+      attribute: config
+    - source: wifi_bt_config.c
+      attribute: config
+    configuration:
+      cc-define:
+        SDIO_ENABLED:
+  belong_to: set.middleware.wifi
+  section_info:
+    type: project_template
+    full_name: Wi-Fi configuration template
+    description: Template configuration file to be edited by user.
+    version: 1.0.0
+    vendor: NXP
+    user_visible: never
+    taxonomy:
+      csub: template
+      belong_to: wifi
+    display_name: Wi-Fi configuration template
+
 middleware.wifi.template:
   section-type: component
   contents:
@@ -13,17 +44,10 @@ middleware.wifi.template:
       target_file:
         - app_config.h
         - wifi_config.h
-        - wifi_bt_config.h
     files:
     - source: app_config.h
-      attribute: preinclude_file
-      config: true
-      linked_support: true
+      attribute: config
     - source: wifi_config.h
-      attribute: config
-    - source: wifi_bt_config.h
-      attribute: config
-    - source: wifi_bt_config.c
       attribute: config
     configuration:
       cc-define:
@@ -32,7 +56,6 @@ middleware.wifi.template:
         LWIP_DNS: 1
         LWIP_NETIF_HOSTNAME: 1
         LWIP_IGMP: 1
-        SDIO_ENABLED:
         _XOPEN_SOURCE: 500
   belong_to: set.middleware.wifi
   section_info:
@@ -47,9 +70,16 @@ middleware.wifi.template:
       belong_to: wifi
     display_name: Wi-Fi configuration template
   dependency:
-    allOf:
-    - component.wifi_bt_module.tx_pwr_limits
-    - component.wifi_bt_module.config
+    anyOf:
+      - allOf:
+        - component.wifi_bt_module.tx_pwr_limits
+        - driver.imu
+      - allOf:
+        - component.wifi_bt_module.tx_pwr_limits
+        - component.wifi_bt_module.config
+        - middleware.wifi.wifi_bt_config.template
+        - not: driver.imu
+
 middleware.wifi.osa_free_rtos:
   section-type: component
   contents:
@@ -152,6 +182,7 @@ middleware.wifi.common_files:
     - repo_relative_path: wifidriver
     - repo_relative_path: wifidriver/incl
     files:
+    - source: incl/wifi_config_default.h
     - source: incl/wifidriver/wifi-decl.h
     - source: incl/wifidriver/wifi.h
     - source: incl/wifidriver/wifi_events.h
@@ -271,7 +302,7 @@ middleware.wifi.net_free_rtos:
     - repo_relative_path: port/osa
     - repo_relative_path: incl/port/net
     - repo_relative_path: port/net/lwip
-    - repo_relative_path: incl/port/net/lwip/hooks
+    - repo_relative_path: incl/port/net/hooks
     - repo_relative_path: dhcpd
     - repo_relative_path: incl/wlcmgr
     - repo_relative_path: incl/wifidriver
@@ -281,8 +312,8 @@ middleware.wifi.net_free_rtos:
     - source: port/net/lwip/net.c
     - source: port/net/lwip/netif_decl.h
     - source: port/net/lwip/wifi_netif.c
-    - source: incl/port/net/lwip/hooks/lwip_default_hooks.h
-    - source: port/net/lwip/hooks/lwip_default_hooks.c
+    - source: incl/port/net/hooks/lwip_default_hooks.h
+    - source: port/net/hooks/lwip_default_hooks.c
     - source: dhcpd/dhcp-bootp.h
     - source: dhcpd/dhcp-priv.h
     - source: dhcpd/dhcp-server-main.c
@@ -555,10 +586,7 @@ middleware.wifi.mlan_sdio:
     repo_base_path: middleware/wifi_nxp
     project_base_path: wifi
     cc-include:
-    - repo_relative_path: incl/wifidriver
     - repo_relative_path: wifidriver
-    - repo_relative_path: wifidriver/incl
-    - repo_relative_path: sdio_nxp_abs
     - repo_relative_path: sdio_nxp_abs/incl
     files:
     - source: sdio_nxp_abs/mlan_sdio.c

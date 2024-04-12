@@ -10,7 +10,7 @@
 
 #ifndef _CLI_MEM_H_
 #define _CLI_MEM_H_
-#ifdef CONFIG_APPLE_SW_AUTH_TEST
+#if CONFIG_APPLE_SW_AUTH_TEST
 #define INBUF_SIZE 1383
 #else
 /** The original INBUF_SIZE is 256.

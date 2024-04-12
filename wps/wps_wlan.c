@@ -35,7 +35,7 @@
 
 extern mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int len, t_u16 action);
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 extern struct wps_thread_t wps;
 /** Global pwps information */
 extern PWPS_INFO gpwps_info;
@@ -144,7 +144,7 @@ int bin2hexstr(const u8 *bin, s8 *hex, size_t len)
     return WPS_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 /** uAP Protocol: Open */
 #define UAP_PROTO_OPEN 1
 /** uAP Protocol: WEP Static */
@@ -559,23 +559,23 @@ int wps_load_uap_cred(WPS_DATA *wps_s, PWPS_INFO pwps_info)
         switch (uap_network.security.type)
         {
             case WLAN_SECURITY_NONE:
-                reg_cred->auth_type = AUTHENTICATION_TYPE_OPEN;
+                reg_cred->auth_type  = AUTHENTICATION_TYPE_OPEN;
                 reg_cred->encry_type = ENCRYPTION_TYPE_NONE;
                 break;
             case WLAN_SECURITY_WPA:
-                reg_cred->auth_type = AUTHENTICATION_TYPE_WPAPSK;
+                reg_cred->auth_type  = AUTHENTICATION_TYPE_WPAPSK;
                 reg_cred->encry_type = ENCRYPTION_TYPE_TKIP;
                 break;
             case WLAN_SECURITY_WPA2:
-                reg_cred->auth_type = AUTHENTICATION_TYPE_WPA2PSK;
+                reg_cred->auth_type  = AUTHENTICATION_TYPE_WPA2PSK;
                 reg_cred->encry_type = ENCRYPTION_TYPE_AES;
                 break;
             case WLAN_SECURITY_WPA_WPA2_MIXED:
-                reg_cred->auth_type = AUTHENTICATION_TYPE_WPA_MIXED;
+                reg_cred->auth_type  = AUTHENTICATION_TYPE_WPA_MIXED;
                 reg_cred->encry_type = ENCRYPTION_TYPE_TKIP_AES_MIXED;
                 break;
             default:
-                reg_cred->auth_type = 1 << uap_network.security.type;
+                reg_cred->auth_type  = 1 << uap_network.security.type;
                 reg_cred->encry_type = ENCRYPTION_TYPE_AES;
                 break;
         }
@@ -772,7 +772,7 @@ int wps_wlan_ie_config(int flag, short *pie_index)
     buf_len  = tlv->length + TLV_HEADER_SIZE;
     bss_type = (type == WPS_STA_SESSION_ACTIVE) ? BSS_TYPE_STA : BSS_TYPE_UAP;
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
     ret = wlan_sys_config(buf, &buf_len, saction);
 #else
     ret = wrapper_wlan_cmd_mgmt_ie(bss_type, buf, buf_len, saction);
@@ -786,7 +786,7 @@ _exit_:
     return ret;
 }
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 /**
  *  @brief  Wlan event parser for FW events
  *  @param context    Pointer to Context

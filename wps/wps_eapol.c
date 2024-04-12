@@ -40,7 +40,7 @@ extern PWPS_INFO gpwps_info;
 
 extern struct wps_thread_t wps;
 
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
 extern WPA_SM wpa_sm;
 extern u8 *rbuf;
 extern u8 content_type;
@@ -48,7 +48,7 @@ extern size_t rlen, used_len;
 extern int wait_for_receive();
 int err_count, req_len, wpa2_failure;
 extern void wpa2_shutdown();
-#ifdef CONFIG_PEAP_MSCHAPV2
+#if CONFIG_PEAP_MSCHAPV2
 static u8 tbuf[256];
 static size_t tlen;
 static int f_count;
@@ -261,7 +261,7 @@ void wps_rx_eapol(const u8 *src_addr, const u8 *buf, size_t len)
 
 void WPSEAPoLRxDataHandler(const u8 *buf, const size_t len)
 {
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
     PWPS_INFO pwps_info;
     pwps_info = wps_get_private_info();
 #endif
@@ -271,7 +271,7 @@ void WPSEAPoLRxDataHandler(const u8 *buf, const size_t len)
     struct l2_ethhdr *eh = (struct l2_ethhdr *)etherhead;
     PEAPOL_FRAME_HEADER peapol;
     PEAP_FRAME_HEADER peap;
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
     PEAP_TLS_FRAME_HEADER peap_tls;
 #endif
     int new_msg_type = 0;
@@ -314,7 +314,7 @@ void WPSEAPoLRxDataHandler(const u8 *buf, const size_t len)
                         new_msg_type = WPS_EAP_MSG_REQUEST_IDENTITY;
 
 #if 0 // -- TBD
-//#ifdef CONFIG_WPA2_ENTP
+//#if CONFIG_WPA2_ENTP
                         /* Here we check for wlan state and if
                          * it is connected than we will re-start
                          * wpa2_ent main thread.
@@ -390,7 +390,7 @@ void WPSEAPoLRxDataHandler(const u8 *buf, const size_t len)
                                 return;
                         }
                     }
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
                     else if (peap->type == EAP_TYPE_TLS || peap->type == EAP_TYPE_PEAP)
                     {
                         peap_tls = (PEAP_TLS_FRAME_HEADER)(data + sizeof(EAPOL_FRAME_HEADER));
@@ -405,7 +405,7 @@ void WPSEAPoLRxDataHandler(const u8 *buf, const size_t len)
                         if (peap_tls->flags & EAP_TLS_FLAGS_START)
                         {
                             new_msg_type = WPS_EAP_TLS_START;
-#ifdef CONFIG_PEAP_MSCHAPV2
+#if CONFIG_PEAP_MSCHAPV2
                             tlen     = 0;
                             f_count  = 0;
                             not_cert = true;
@@ -416,7 +416,7 @@ void WPSEAPoLRxDataHandler(const u8 *buf, const size_t len)
                     }
 #endif
                     break;
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
                 case EAP_RESPONSE:
 #ifdef WPS_RX_EOPAL_DEBUG
                     wps_d("EAP_RESPONSE received");
@@ -463,7 +463,7 @@ void WPSEAPoLRxDataHandler(const u8 *buf, const size_t len)
                     }
                     break;
 #endif
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
                 case EAP_SUCCESS:
                     new_msg_type = WPS_EAP_MSG_SUCCESS;
                     break;
@@ -505,7 +505,7 @@ void WPSEAPoLRxDataHandler(const u8 *buf, const size_t len)
 #endif
 }
 
-#ifdef CONFIG_WPA2_ENTP
+#if CONFIG_WPA2_ENTP
 int WPSEAPoLSSLTxDataHandler(u8 *buf, size_t len)
 {
     u8 *tr_buf    = buf;
@@ -515,7 +515,7 @@ int WPSEAPoLSSLTxDataHandler(u8 *buf, size_t len)
 
     pwps_info = wps_get_private_info();
 
-#ifdef CONFIG_PEAP_MSCHAPV2
+#if CONFIG_PEAP_MSCHAPV2
     if (len < 100 && not_cert)
     {
         (void)memcpy(tbuf + tlen, buf, len);

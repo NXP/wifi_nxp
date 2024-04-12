@@ -1,4 +1,4 @@
-#ifdef CONFIG_WLS_CSI_PROC
+#if CONFIG_WLS_CSI_PROC
 /** @file wls_param_defines.h
  *
  * @brief This file contains global header file for configuring fft processing of CSI.
@@ -21,7 +21,7 @@
 #define _TTL 2
 
 #define INPUT_FILE _TXT
-//#define SMAC_BFINFO
+// #define SMAC_BFINFO
 
 #ifdef SMAC_BFINFO
 #define CSI_SIGNATURE      0x0
@@ -36,10 +36,10 @@
 #endif
 
 #define ENABLE_SUBSPACE_FTIMING
-//#define ENABLE_AOA
-//#define FFT_PARALLEL
-//#define FFT_INPLACE
-//#define TDDE_FIRSTPATH
+// #define ENABLE_AOA
+// #define FFT_PARALLEL
+// #define FFT_INPLACE
+// #define TDDE_FIRSTPATH
 #define STA_20_ONLY
 
 #define MAX_RX 1
@@ -91,9 +91,9 @@
 #define DEFAULT_FTM_FORMAT 0xD // vht80
 #define ENABLE_DELAY_PEAKS 1
 
-#define DEFAULT_CAL_LOW_A 0x3de // 0x3d1
-#define DEFAULT_CAL_LOW_B 0x23d // 0x222
-#define DEFAULT_CAL_LOW_C 0x37f // 0x399
+#define DEFAULT_CAL_LOW_A 0x3de  // 0x3d1
+#define DEFAULT_CAL_LOW_B 0x23d  // 0x222
+#define DEFAULT_CAL_LOW_C 0x37f  // 0x399
 
 #define DEFAULT_CAL_HIGH_A 0x386 // 0x37f
 #define DEFAULT_CAL_HIGH_B 0x1ff // 0x1e6
@@ -101,7 +101,7 @@
 
 #define SCREEN_OUT
 #ifdef SCREEN_OUT
-//#define SMAC_LOG printf("\n");printf
+// #define SMAC_LOG printf("\n");printf
 #define HAL_LOG(...) printf(__VA_ARGS__); // printf("\n")
 #else
 #define HAL_LOG(...)
@@ -112,10 +112,10 @@
 #define AOA_DEFAULT      0
 
 #ifndef ARM
-//#define FLOATING_POINT
+// #define FLOATING_POINT
 #endif
 
-//#define DEBUG_OUT_FD
+// #define DEBUG_OUT_FD
 
 #define MAX_TSF_DIFF_POS 10
 #define MAX_TSF_DIFF_NEG -120
@@ -123,7 +123,7 @@
 #define CAL_DATA _USE_DEFAULT_CAL
 
 #define IFFT_OSF_SHIFT 2
-//#define IFFT_OSF (1<<IFFT_OSF_SHIFT)
+// #define IFFT_OSF (1<<IFFT_OSF_SHIFT)
 #define SPATIAL_RES          64 // number of angular bins
 #define NUM_MAX_PEAKS        32 // max number of angle/delay peaks to keep
 #define DELAY_DELTA_SHIFT    4
@@ -134,7 +134,7 @@
 #define PEAK_THRESH_MIN_ABS  0xA00 // (0.1976)^2=0.0391 0xC00 // 3/64=0.0469 0x1400 // 5/64=0.0781 in p16
 #define SUBBAND_DET_THRESH   4     // 18 dB
 #define REMOVE_IIR           2
-#define COMPUTE_80P80_AS_160 // or true 160 in SC4+Citril
+#define COMPUTE_80P80_AS_160       // or true 160 in SC4+Citril
 #define TOA_FPATH_BIPT       12
 
 #ifdef STA_20_ONLY
@@ -152,7 +152,7 @@
 #define IIR_FORMAT_NP 12
 #define IIR_FORMAT_NB 16
 
-//#define CAL_FORMAT_NP 12
+// #define CAL_FORMAT_NP 12
 #define CAL_FORMAT_NP 10
 #define CAL_FORMAT_NB 16
 
@@ -172,4 +172,4 @@
 
 #endif
 
-#endif  /* CONFIG_WLS_CSI_PROC */
+#endif /* CONFIG_WLS_CSI_PROC */

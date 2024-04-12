@@ -24,7 +24,7 @@
 #define COEX_APP_SUPPORT
 #endif
 
-#define CONFIG_APP_FRM_CLI_HISTORY
+#define CONFIG_APP_FRM_CLI_HISTORY 1
 
 /** Structure for registering CLI commands */
 struct cli_command
@@ -136,7 +136,7 @@ typedef int (*cli_name_val_get)(const char *name, char *value, int max_len);
  *
  */
 typedef int (*cli_name_val_set)(const char *name, const char *value);
-#ifdef CONFIG_APP_FRM_CLI_HISTORY
+#if CONFIG_APP_FRM_CLI_HISTORY
 /**
  * @internal
  *
@@ -145,7 +145,7 @@ typedef int (*cli_name_val_set)(const char *name, const char *value);
 int cli_add_history_hook(cli_name_val_get get_cb, cli_name_val_set set_cb);
 #endif /* CONFIG_APP_FRM_CLI_HISTORY */
 
-#ifdef CONFIG_CLI_ECHO_MODE
+#if CONFIG_CLI_ECHO_MODE
 /** Get the 'echo' mode for CLI
  *
  * \return true if echo is enabled
@@ -167,8 +167,8 @@ void cli_set_echo_mode(bool enabled);
  */
 void help_command(int argc, char **argv);
 
-#ifdef CONFIG_UART_INTERRUPT
-#ifdef CONFIG_HOST_SLEEP
+#if CONFIG_UART_INTERRUPT
+#if CONFIG_HOST_SLEEP
 /** Reinit USART
  *
  * \return kStatus_Success, others fail.

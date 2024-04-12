@@ -23,7 +23,7 @@
 #include "lwip/pbuf.h"
 #include "lwip/udp.h"
 #include "lwip/sys.h"
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 #include "lwip/ethip6.h"
 #endif /* CONFIG_IPV6 */
 #include <lwip/stats.h>
@@ -42,7 +42,6 @@
  * for WPS and Supplicant
  */
 #define ETHTYPE_EAPOL 0x888EU /* EAPOL */
-
 
 PACK_STRUCT_BEGIN
 /* This is an Token-Ring LLC structure */
@@ -90,7 +89,7 @@ struct eth_llc_hdr
  * This is observed with  8801 Wi-Fi card.
  * So for 8801 based platforms the wait time is now 35 ms.
  */
-#define MAX_WAIT_TIME 35
+#define MAX_WAIT_TIME            35
 #define MAX_INTERFACES_SUPPORTED 3U
 
 /* The time to block waiting for input. */
@@ -100,16 +99,16 @@ struct eth_llc_hdr
 extern int wlan_get_mac_address(uint8_t *dest);
 extern void wlan_wake_up_card(void);
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 mlan_status wlan_send_gen_sdio_cmd(uint8_t *buf, uint32_t buflen);
 #endif
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 extern int wlan_get_wfd_mac_address(t_u8 *);
 extern int wfd_bss_type;
 #endif
 
-#ifdef CONFIG_WPA_SUPP
-//void (*l2_packet_rx_callback)(const struct pbuf *p);
+#if CONFIG_WPA_SUPP
+// void (*l2_packet_rx_callback)(const struct pbuf *p);
 #endif /* CONFIG_HOST_SUPP */
 
 void wrapper_wlan_update_uap_rxrate_info(RxPD *rxpd);
@@ -118,7 +117,7 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
 
 int wrapper_wlan_handle_amsdu_rx_packet(const t_u8 *rcvdata, const t_u16 datalen);
 
-#ifdef CONFIG_NET_MONITOR
+#if CONFIG_NET_MONITOR
 void user_recv_monitor_data(const t_u8 *rcvdata);
 #endif
 

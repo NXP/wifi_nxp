@@ -21,7 +21,7 @@
 #define wifi_io_e(...) wmlog_e("wifi_io", ##__VA_ARGS__)
 #define wifi_io_w(...) wmlog_w("wifi_io", ##__VA_ARGS__)
 
-#ifdef CONFIG_WIFI_IO_DEBUG
+#if CONFIG_WIFI_IO_DEBUG
 #define wifi_io_d(...) wmlog("wifi_io", ##__VA_ARGS__)
 #else
 #define wifi_io_d(...)
@@ -30,7 +30,7 @@
 #define wifi_io_info_e(...) wmlog_e("wpkt", ##__VA_ARGS__)
 #define wifi_io_info_w(...) wmlog_w("wpkt", ##__VA_ARGS__)
 
-#ifdef CONFIG_WIFI_IO_INFO_DUMP
+#if CONFIG_WIFI_IO_INFO_DUMP
 #define wifi_io_info_d(...) wmlog("wpkt", ##__VA_ARGS__)
 #else
 #define wifi_io_info_d(...)
@@ -75,7 +75,7 @@ extern bool low_power_mode;
 #endif
 extern bool cal_data_valid;
 extern bool mac_addr_valid;
-#ifdef CONFIG_WIFI_TX_BUFF
+#if CONFIG_WIFI_TX_BUFF
 extern uint16_t tx_buf_size;
 #endif
 extern bool txpwrlimit_data_valid;
@@ -115,11 +115,11 @@ uint8_t *wifi_get_imu_outbuf(uint32_t *outbuf_len);
 
 void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid, t_u32 tx_control);
 
-#ifdef CONFIG_WIFI_FW_DEBUG
+#if CONFIG_WIFI_FW_DEBUG
 extern void wifi_dump_firmware_info();
 #endif /* CONFIG_WIFI_FW_DEBUG */
 
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
 mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf);
 mlan_status wlan_flush_wmm_pkt(int pkt_cnt);
 mlan_status wlan_xmit_bypass_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface);
@@ -130,7 +130,7 @@ mlan_status wlan_xmit_wmm_amsdu_pkt(mlan_wmm_ac_e ac, t_u8 interface, t_u32 txle
 #endif
 
 void imu_wakeup_card();
-#ifdef CONFIG_WIFI_TX_BUFF
+#if CONFIG_WIFI_TX_BUFF
 int _wlan_return_all_tx_buf(imu_link_t link);
 #endif
 

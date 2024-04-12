@@ -20,7 +20,7 @@
 #error "Region tx power config not defined"
 #endif
 
-#if defined(RW610) && defined(CONFIG_COMPRESS_TX_PWTBL)
+#if defined(RW610) && (CONFIG_COMPRESS_TX_PWTBL)
 #define MAX_SOC_OTP_LINE 64
 #define OTP_PKG_TAG      0x15D
 #define PKG_TYPE_MAX     3
@@ -107,7 +107,7 @@ int wlan_set_rg_power_cfg(t_u16 region_code)
 
     return rv;
 }
-#elif defined(CONFIG_COMPRESS_TX_PWTBL)
+#elif (CONFIG_COMPRESS_TX_PWTBL)
 typedef struct _rg_power_cfg
 {
     t_u16 region_code;
@@ -144,7 +144,7 @@ int wlan_set_rg_power_cfg(t_u16 region_code)
 
 #endif
 
-#ifdef CONFIG_COMPRESS_TX_PWTBL
+#if CONFIG_COMPRESS_TX_PWTBL
 int wlan_set_wwsm_txpwrlimit()
 {
     int rv = WM_SUCCESS;
@@ -170,7 +170,7 @@ int wlan_set_wwsm_txpwrlimit()
 #ifdef RW610
     ARG_UNUSED(tx_pwrlimit_2g_cfg);
     ARG_UNUSED(chanlist_2g_cfg);
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     ARG_UNUSED(tx_pwrlimit_5g_cfg);
     ARG_UNUSED(chanlist_5g_cfg);
 #endif
@@ -182,7 +182,7 @@ int wlan_set_wwsm_txpwrlimit()
         (void)PRINTF("Unable to set 2G chanlist configuration\r\n");
         return -WM_FAIL;
     }
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     rv = wlan_set_chanlist(&chanlist_5g_cfg);
     if (rv != WM_SUCCESS)
     {
@@ -203,8 +203,8 @@ int wlan_set_wwsm_txpwrlimit()
         return -WM_FAIL;
     }
 #ifndef RW610
-#ifdef CONFIG_11AX
-#ifdef CONFIG_COMPRESS_RU_TX_PWTBL
+#if CONFIG_11AX
+#if CONFIG_COMPRESS_RU_TX_PWTBL
     rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set, sizeof(rutxpowerlimit_cfg_set));
     if (rv != WM_SUCCESS)
     {
@@ -218,7 +218,7 @@ int wlan_set_wwsm_txpwrlimit()
         (void)PRINTF("Unable to set 2G RU TX PWR Limit configuration\r\n");
         return -WM_FAIL;
     }
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     else
     {
         rv = wlan_set_11ax_rutxpowerlimit_legacy(&rutxpowerlimit_5g_cfg_set);
@@ -253,7 +253,7 @@ int wlan_set_wwsm_txpwrlimit(void)
         (void)PRINTF("Unable to set 2G TX PWR Limit configuration\r\n");
         return -WM_FAIL;
     }
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     rv = wlan_set_chanlist_and_txpwrlimit(&chanlist_5g_cfg, &tx_pwrlimit_5g_cfg);
     if (rv != WM_SUCCESS)
     {
@@ -263,8 +263,8 @@ int wlan_set_wwsm_txpwrlimit(void)
 #endif
 
 #ifndef RW610
-#ifdef CONFIG_11AX
-#ifdef CONFIG_COMPRESS_RU_TX_PWTBL
+#if CONFIG_11AX
+#if CONFIG_COMPRESS_RU_TX_PWTBL
     rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set, sizeof(rutxpowerlimit_cfg_set));
     if (rv != WM_SUCCESS)
     {
@@ -278,7 +278,7 @@ int wlan_set_wwsm_txpwrlimit(void)
         (void)PRINTF("Unable to set 2G RU TX PWR Limit configuration\r\n");
         return -WM_FAIL;
     }
-#ifdef CONFIG_5GHz_SUPPORT
+#if CONFIG_5GHz_SUPPORT
     else
     {
         rv = wlan_set_11ax_rutxpowerlimit_legacy(&rutxpowerlimit_5g_cfg_set);

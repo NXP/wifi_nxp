@@ -46,7 +46,7 @@
 #if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
 static struct nxp_wifi_device gs_nxp_wifi_dev;
 
-#ifndef CONFIG_NETMGR_STACK_SIZE
+#if !CONFIG_NETMGR_STACK_SIZE
 #define CONFIG_NETMGR_STACK_SIZE 1024
 #endif
 
@@ -66,39 +66,38 @@ uint32_t lwip_rx_count = 0;
 #endif
 #endif
 
-
 uint16_t g_data_nf_last;
 uint16_t g_data_snr_last;
 
 #if defined(SDK_OS_FREE_RTOS)
 
 static struct netif *netif_arr[MAX_INTERFACES_SUPPORTED];
-#ifndef CONFIG_WIFI_RX_REORDER
+#if !CONFIG_WIFI_RX_REORDER
 static t_u8 rfc1042_eth_hdr[MLAN_MAC_ADDR_LENGTH] = {0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00};
 #endif
-#ifdef CONFIG_WPS2
+#if CONFIG_WPS2
 void (*wps_rx_callback)(const t_u8 *buf, size_t len);
 #endif
 
 /*------------------------------------------------------*/
 static err_t igmp_mac_filter(struct netif *netif, const ip4_addr_t *group, enum netif_mac_filter_action action);
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 static err_t mld_mac_filter(struct netif *netif, const ip6_addr_t *group, enum netif_mac_filter_action action);
 #endif
 
 err_t lwip_netif_uap_init(struct netif *netif);
 err_t lwip_netif_init(struct netif *netif);
-#ifndef CONFIG_WIFI_RX_REORDER
+#if !CONFIG_WIFI_RX_REORDER
 void handle_data_packet(const t_u8 interface, const t_u8 *rcvdata, const t_u16 datalen);
 #endif
 void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen);
 void handle_deliver_packet_above(t_void *rxpd, t_u8 interface, t_void *lwip_pbuf);
 bool wrapper_net_is_ip_or_ipv6(const t_u8 *buffer);
-#ifdef CONFIG_WIFI_RX_REORDER
+#if CONFIG_WIFI_RX_REORDER
 void *gen_pbuf_from_data2(t_u8 *payload, t_u16 datalen, void **p_payload);
 #endif
 
-#ifdef MGMT_RX
+#if MGMT_RX
 static int (*rx_mgmt_callback)(const enum wlan_bss_type bss_type, const wifi_mgmt_frame_t *frame, const size_t len);
 void rx_mgmt_register_callback(int (*rx_mgmt_cb_fn)(const enum wlan_bss_type bss_type,
                                                     const wifi_mgmt_frame_t *frame,
@@ -184,7 +183,7 @@ static void register_interface(struct netif *iface, mlan_bss_type iface_type)
     netif_arr[iface_type] = iface;
 }
 
-#ifdef CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY
 void net_tx_zerocopy_process_cb(void *destAddr, void *srcAddr, uint32_t len)
 {
     outbuf_t *buf    = (outbuf_t *)srcAddr;
@@ -195,7 +194,7 @@ void net_tx_zerocopy_process_cb(void *destAddr, void *srcAddr, uint32_t len)
 }
 #endif
 
-#ifndef CONFIG_WIFI_RX_REORDER
+#if !CONFIG_WIFI_RX_REORDER
 static void deliver_packet_above(struct pbuf *p, int recv_interface)
 #else
 static void deliver_packet_above(RxPD *rxpd, struct pbuf *p, int recv_interface)
@@ -206,7 +205,7 @@ static void deliver_packet_above(RxPD *rxpd, struct pbuf *p, int recv_interface)
     struct eth_hdr *ethhdr = p->payload;
     t_u8 retry_cnt         = 1;
 
-#ifdef CONFIG_WIFI_RX_REORDER
+#if CONFIG_WIFI_RX_REORDER
     if (netif_arr[recv_interface] == NULL)
     {
         LINK_STATS_INC(link.drop);
@@ -224,7 +223,7 @@ static void deliver_packet_above(RxPD *rxpd, struct pbuf *p, int recv_interface)
     switch (htons(ethhdr->type))
     {
         case ETHTYPE_IP:
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         case ETHTYPE_IPV6:
 #endif
         case ETHTYPE_ARP:
@@ -237,7 +236,7 @@ static void deliver_packet_above(RxPD *rxpd, struct pbuf *p, int recv_interface)
                     ;
                 }
             }
-#ifdef CONFIG_WIFI_RX_REORDER
+#if CONFIG_WIFI_RX_REORDER
             if (recv_interface == MLAN_BSS_TYPE_UAP)
             {
                 wrapper_wlan_update_uap_rxrate_info(rxpd);
@@ -262,7 +261,7 @@ static void deliver_packet_above(RxPD *rxpd, struct pbuf *p, int recv_interface)
             break;
         case ETHTYPE_EAPOL:
             LINK_STATS_INC(link.recv);
-#ifdef CONFIG_WPS2
+#if CONFIG_WPS2
             if (wps_rx_callback)
                 wps_rx_callback(p->payload, p->len);
 #endif /* CONFIG_WPS2 */
@@ -279,7 +278,7 @@ static void deliver_packet_above(RxPD *rxpd, struct pbuf *p, int recv_interface)
     }
 }
 
-#ifdef CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY
 static struct pbuf *gen_pbuf_from_data_for_zerocopy(t_u8 *payload, t_u16 datalen)
 {
     t_u8 retry_cnt = 3;
@@ -369,7 +368,7 @@ retry:
     return p;
 }
 
-#ifndef CONFIG_WIFI_RX_REORDER
+#if !CONFIG_WIFI_RX_REORDER
 static void process_data_packet(const t_u8 *rcvdata,
                                 const t_u16 datalen
 #if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
@@ -456,12 +455,12 @@ static void process_data_packet(const t_u8 *rcvdata,
     }
 #endif
 
-#if defined(CONFIG_TX_RX_ZERO_COPY) || defined(FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
+#if (CONFIG_TX_RX_ZERO_COPY) || defined(FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
     u16_t header_len = INTF_HEADER_LEN + rxpd->rx_pkt_offset;
 #if !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-#ifdef CONFIG_TX_RX_ZERO_COPY
-    payload_len      = rxpd->rx_pkt_length + header_len + sizeof(mlan_buffer);
-    p                = gen_pbuf_from_data_for_zerocopy((t_u8 *)rcvdata, payload_len);
+#if CONFIG_TX_RX_ZERO_COPY
+    payload_len = rxpd->rx_pkt_length + header_len + sizeof(mlan_buffer);
+    p           = gen_pbuf_from_data_for_zerocopy((t_u8 *)rcvdata, payload_len);
 #else
     p = gen_pbuf_from_data(payload, payload_len);
 #endif
@@ -497,14 +496,14 @@ static void process_data_packet(const t_u8 *rcvdata,
         }
 #endif
 #endif
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
         wifi_is_wpa_supplicant_input(recv_interface, p->payload, p->tot_len);
 #endif
         pbuf_free(p);
         p = NULL;
         return;
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
         if (recv_interface == MLAN_BSS_TYPE_WIFIDIRECT)
         {
             int rv = wrapper_wlan_handle_rx_packet(datalen, rxpd, p, p->payload);
@@ -519,7 +518,7 @@ static void process_data_packet(const t_u8 *rcvdata,
             return;
         }
 #endif
-#ifdef MGMT_RX
+#if MGMT_RX
         if (rx_mgmt_callback)
         {
             wifi_mgmt_frame_t *frame = (wifi_mgmt_frame_t *)(void *)((uint8_t *)rxpd + rxpd->rx_pkt_offset);
@@ -543,7 +542,7 @@ static void process_data_packet(const t_u8 *rcvdata,
     /* points to packet payload, which starts with an Ethernet header */
     struct eth_hdr *ethhdr = p->payload;
 
-#ifdef CONFIG_FILTER_LOCALLY_ADMINISTERED_AND_SELF_MAC_ADDR
+#if CONFIG_FILTER_LOCALLY_ADMINISTERED_AND_SELF_MAC_ADDR
     if ((ISLOCALLY_ADMINISTERED_ADDR(ethhdr->src.addr[0]) &&
          (!memcmp(&ethhdr->src.addr[3], &netif_arr[recv_interface]->hwaddr[3], 3))) ||
         (!memcmp(&ethhdr->src.addr, &netif_arr[recv_interface]->hwaddr, ETHARP_HWADDR_LEN)))
@@ -574,7 +573,7 @@ static void process_data_packet(const t_u8 *rcvdata,
         }
     }
 
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
 #if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
 
     if (header_type == ETHTYPE_EAPOL)
@@ -591,12 +590,12 @@ static void process_data_packet(const t_u8 *rcvdata,
     switch (header_type)
     {
         case ETHTYPE_IP:
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
         case ETHTYPE_IPV6:
 #endif
         /* Unicast ARP also need do rx reorder */
         case ETHTYPE_ARP:
-#ifdef CONFIG_11N
+#if CONFIG_11N
             if (recv_interface == MLAN_BSS_TYPE_STA || recv_interface == MLAN_BSS_TYPE_UAP)
             {
                 int rv = wrapper_wlan_handle_rx_packet(datalen, rxpd, p, payload);
@@ -622,7 +621,7 @@ static void process_data_packet(const t_u8 *rcvdata,
             deliver_packet_above(p, recv_interface);
             break;
         default:
-#ifdef CONFIG_NET_MONITOR
+#if CONFIG_NET_MONITOR
             /*If rx_pkt_type is 802.11, and in monitor mode, deliver data to user*/
             if ((rxpd->rx_pkt_type == PKT_TYPE_802DOT11) && (true == get_monitor_flag()))
             {
@@ -671,7 +670,7 @@ static struct pbuf *wifi_low_level_input(struct nxp_wifi_device *ps_nxp_wifi_dev
         LINK_STATS_INC(link.recv);
 
         /* Fill empty descriptors with new pbufs. */
-        //nxp_wifi_rx_populate_queue(ps_nxp_wifi_dev);
+        // nxp_wifi_rx_populate_queue(ps_nxp_wifi_dev);
 
         ps_nxp_wifi_dev->us_rx_tail = (ps_nxp_wifi_dev->us_rx_tail + 1) % NETIF_RX_BUFFERS;
 
@@ -764,7 +763,7 @@ void *gen_pbuf_from_data2(t_u8 *payload, t_u16 datalen, void **p_payload)
 
 void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen)
 {
-#ifdef CONFIG_WIFI_RX_REORDER
+#if CONFIG_WIFI_RX_REORDER
     RxPD *rxpd = (RxPD *)(void *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
 #endif
 
@@ -776,7 +775,7 @@ void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen)
         LINK_STATS_INC(link.drop);
         return;
     }
-#ifndef CONFIG_WIFI_RX_REORDER
+#if !CONFIG_WIFI_RX_REORDER
     deliver_packet_above(p, interface);
 #else
     deliver_packet_above(rxpd, p, interface);
@@ -787,7 +786,7 @@ void handle_deliver_packet_above(t_void *rxpd, t_u8 interface, t_void *lwip_pbuf
 {
     struct pbuf *p = (struct pbuf *)lwip_pbuf;
 
-#ifndef CONFIG_WIFI_RX_REORDER
+#if !CONFIG_WIFI_RX_REORDER
     (void)rxpd;
     deliver_packet_above(p, interface);
 #else
@@ -823,7 +822,7 @@ static void low_level_init(struct netif *netif)
 
     netif_set_igmp_mac_filter(netif, igmp_mac_filter);
     netif->flags |= NETIF_FLAG_IGMP;
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     netif_set_mld_mac_filter(netif, mld_mac_filter);
     netif->flags |= NETIF_FLAG_MLD6;
 
@@ -864,13 +863,13 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     int ret;
     struct ethernetif *ethernetif = netif->state;
     u32_t pkt_len, outbuf_len;
-#ifndef CONFIG_TX_RX_ZERO_COPY
+#if !CONFIG_TX_RX_ZERO_COPY
     u16_t uCopied;
 #endif
     t_u8 interface   = ethernetif->interface;
     t_u8 *wmm_outbuf = NULL;
 
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
     t_u8 tid                      = 0;
     int retry                     = 0;
     t_u8 ra[MLAN_MAC_ADDR_LENGTH] = {0};
@@ -942,12 +941,12 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 #endif
 
     pkt_len =
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
         sizeof(mlan_linked_list) +
 #endif
         sizeof(TxPD) + INTF_HEADER_LEN;
 
-#ifndef CONFIG_WMM
+#if !CONFIG_WMM
 #if LWIP_NETIF_TX_SINGLE_PBUF
     if ((p->len == p->tot_len) && (pbuf_header(p, pkt_len) == 0))
     {
@@ -959,7 +958,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 #endif
 #endif
     {
-#ifdef CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY
         pkt_len += ETH_HDR_LEN;
         memset(wmm_outbuf, 0x00, pkt_len);
         /* Save the ethernet header */
@@ -983,13 +982,13 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     }
 
     ret = wifi_low_level_output(interface, wmm_outbuf, pkt_len
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
                                 ,
                                 pkt_prio, tid
 #endif
     );
 
-#ifndef CONFIG_WMM
+#if !CONFIG_WMM
 #if LWIP_NETIF_TX_SINGLE_PBUF
     pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
 
@@ -1020,7 +1019,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     return ret;
 }
 
-#ifdef CONFIG_WPS2
+#if CONFIG_WPS2
 void wps_register_rx_callback(void (*WPSEAPoLRxDataHandler)(const t_u8 *buf, const size_t len))
 {
     wps_rx_callback = WPSEAPoLRxDataHandler;
@@ -1032,7 +1031,7 @@ void wps_deregister_rx_callback()
 }
 #endif /* CONFIG_WPS2 */
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 int netif_get_bss_type()
 {
     return wfd_bss_type;
@@ -1065,7 +1064,7 @@ static err_t igmp_mac_filter(struct netif *netif, const ip4_addr_t *group, enum 
         case NETIF_ADD_MAC_FILTER:
             /* LwIP takes care of duplicate IP addresses and it always send
              * unique IP address. Simply add IP to top of list*/
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
             curr = (group_ip4_addr_t *)OSA_MemoryAllocate(sizeof(group_ip4_addr_t));
 #else
             curr = (group_ip4_addr_t *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
@@ -1093,7 +1092,7 @@ static err_t igmp_mac_filter(struct netif *netif, const ip4_addr_t *group, enum 
                 /* In case of failure remove IP from list */
                 curr          = igmp_ip4_list;
                 igmp_ip4_list = curr->next;
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
                 OSA_MemoryFree(curr);
 #else
                 OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
@@ -1113,7 +1112,7 @@ static err_t igmp_mac_filter(struct netif *netif, const ip4_addr_t *group, enum 
                     if (prev == curr)
                     {
                         igmp_ip4_list = curr->next;
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
                         OSA_MemoryFree(curr);
 #else
                         OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
@@ -1122,7 +1121,7 @@ static err_t igmp_mac_filter(struct netif *netif, const ip4_addr_t *group, enum 
                     else
                     {
                         prev->next = curr->next;
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
                         OSA_MemoryFree(curr);
 #else
                         OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
@@ -1165,7 +1164,7 @@ done:
     return result;
 }
 
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
 /* Below struct is used for creating IGMP IPv6 multicast list */
 typedef struct group_ip6_addr
 {
@@ -1192,7 +1191,7 @@ static err_t mld_mac_filter(struct netif *netif, const ip6_addr_t *group, enum n
         case NETIF_ADD_MAC_FILTER:
             /* LwIP takes care of duplicate IP addresses and it always send
              * unique IP address. Simply add IP to top of list*/
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
             curr = (group_ip6_addr_t *)OSA_MemoryAllocate(sizeof(group_ip6_addr_t));
 #else
             curr = (group_ip6_addr_t *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
@@ -1220,7 +1219,7 @@ static err_t mld_mac_filter(struct netif *netif, const ip6_addr_t *group, enum n
                 /* In case of failure remove IP from list */
                 curr         = mld_ip6_list;
                 mld_ip6_list = mld_ip6_list->next;
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
                 OSA_MemoryFree(curr);
 #else
                 OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
@@ -1240,7 +1239,7 @@ static err_t mld_mac_filter(struct netif *netif, const ip6_addr_t *group, enum n
                     if (prev == curr)
                     {
                         mld_ip6_list = curr->next;
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
                         OSA_MemoryFree(curr);
 #else
                         OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
@@ -1249,7 +1248,7 @@ static err_t mld_mac_filter(struct netif *netif, const ip6_addr_t *group, enum n
                     else
                     {
                         prev->next = curr->next;
-#ifndef CONFIG_MEM_POOLS
+#if !CONFIG_MEM_POOLS
                         OSA_MemoryFree(curr);
 #else
                         OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
@@ -1291,7 +1290,7 @@ static err_t mld_mac_filter(struct netif *netif, const ip6_addr_t *group, enum n
 done:
     return result;
 }
-#endif /* #ifdef CONFIG_IPV6 */
+#endif /* #if CONFIG_IPV6 */
 
 /**
  * Should be called at the beginning of the program to set up the
@@ -1335,7 +1334,7 @@ err_t lwip_netif_init(struct netif *netif)
      * is available...) */
     netif->output     = etharp_output;
     netif->linkoutput = low_level_output;
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     netif->output_ip6 = ethip6_output;
 #endif
 
@@ -1382,7 +1381,7 @@ err_t lwip_netif_uap_init(struct netif *netif)
      * is available...) */
     netif->output     = etharp_output;
     netif->linkoutput = low_level_output;
-#ifdef CONFIG_IPV6
+#if CONFIG_IPV6
     netif->output_ip6 = ethip6_output;
 #endif
 
@@ -1399,7 +1398,7 @@ err_t lwip_netif_uap_init(struct netif *netif)
     return ERR_OK;
 }
 
-#ifdef CONFIG_P2P
+#if CONFIG_P2P
 err_t lwip_netif_wfd_init(struct netif *netif)
 {
     struct ethernetif *ethernetif;

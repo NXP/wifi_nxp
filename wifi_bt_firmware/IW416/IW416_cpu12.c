@@ -9,11 +9,11 @@
 #include <stdint.h>
 #include <osa.h>
 
-#ifndef CONFIG_UART_WIFI_BRIDGE
+#if !CONFIG_UART_WIFI_BRIDGE
 
 #if defined(SD8978)
 
-#if !defined(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
+#if !(CONFIG_WIFI_IND_DNLD) && !(CONFIG_BT_IND_DNLD)
 
 const uint8_t fw_cpu12[] = {
 #include <sduartIW416_wlan_bt.bin.inc>

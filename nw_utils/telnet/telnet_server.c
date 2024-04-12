@@ -19,7 +19,7 @@
 #define SOCK_SERVER_PORT 23
 #endif
 
-#ifdef CONFIG_WIFI_SMOKE_TESTS
+#if CONFIG_WIFI_SMOKE_TESTS
 
 volatile int clientfd = 0;
 char token[1000];

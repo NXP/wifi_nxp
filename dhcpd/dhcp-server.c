@@ -148,7 +148,7 @@ int dhcp_server_lease_timeout(uint32_t val)
  */
 static unsigned int next_yiaddr(void)
 {
-#ifdef CONFIG_DHCP_SERVER_DEBUG
+#if CONFIG_DHCP_SERVER_DEBUG
     struct in_addr ip;
 #endif
     uint32_t new_ip;
@@ -175,7 +175,7 @@ static unsigned int next_yiaddr(void)
         }
     }
 
-#ifdef CONFIG_DHCP_SERVER_DEBUG
+#if CONFIG_DHCP_SERVER_DEBUG
     ip.s_addr = new_ip;
     dhcp_d("New client IP will be %s", inet_ntoa(ip));
     ip.s_addr = dhcps.my_ip & dhcps.netmask;
@@ -614,7 +614,7 @@ done:
     dhcp_clean_sockets();
     dns_free_allocations();
 #ifndef __ZEPHYR__
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
     netconn_thread_cleanup();
 #endif
 #else
@@ -901,7 +901,7 @@ static void get_broadcast_addr(struct sockaddr_in *addr)
     /* limited broadcast addr (255.255.255.255) */
     addr->sin_addr.s_addr = 0xffffffffU;
 #ifndef __ZEPHYR__
-    addr->sin_len         = (uint8_t)sizeof(struct sockaddr_in);
+    addr->sin_len = (uint8_t)sizeof(struct sockaddr_in);
 #endif
 }
 

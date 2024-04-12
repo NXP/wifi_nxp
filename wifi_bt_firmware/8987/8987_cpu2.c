@@ -11,7 +11,7 @@
 
 #if defined(SD8987)
 
-#if defined(CONFIG_BT_IND_DNLD)
+#if (CONFIG_BT_IND_DNLD)
 
 const uint8_t fw_cpu2[] = {
 #include <uart8987_bt.bin.inc>

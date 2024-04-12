@@ -1,4 +1,4 @@
-#ifdef CONFIG_WLS_CSI_PROC
+#if CONFIG_WLS_CSI_PROC
 /** @file wls_api.h
  *
  * @brief This file contains header file for WLS processing fixed-point version API
@@ -28,4 +28,4 @@ int wls_process_csi(unsigned int *bufferMemory,
 
 #endif
 
-#endif  /* CONFIG_WLS_CSI_PROC */
+#endif /* CONFIG_WLS_CSI_PROC */

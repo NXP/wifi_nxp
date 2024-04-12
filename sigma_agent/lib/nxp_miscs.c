@@ -12,7 +12,7 @@
 #include "nxp_wifi.h"
 #endif
 
-#ifdef CONFIG_SIGMA_AGENT
+#if CONFIG_SIGMA_AGENT
 
 #include <stdio.h>
 #include <unistd.h>
