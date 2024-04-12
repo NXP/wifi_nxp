@@ -548,7 +548,7 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
         return MLAN_STATUS_FAILURE;
     }
     if ((preference_selected == PREFERENCE_TKIP) && ((*akm_type == AssocAgentAuth_Wpa3Sae)
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
                                                      || (*akm_type == AssocAgentAuth_Owe)))
     {
 #else
@@ -631,7 +631,7 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
                 *akm_type = AssocAgentAuth_FastBss;
             }
 #endif
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
             else if (akm_type_id == 18)
             {
                 *akm_type = AssocAgentAuth_Owe;
@@ -696,7 +696,7 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
                 {
                     break;
                 }
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
                 else if ((*akm_type == AssocAgentAuth_Owe) && (ptr[3] == 18))
                 {
                     break;
@@ -1047,7 +1047,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 
     /* Add the Authentication type to be used for Auth frames if needed */
     if ((pmpriv->sec_info.authentication_mode != MLAN_AUTH_MODE_AUTO)
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         || (pbss_desc->owe_transition_mode == OWE_TRANS_MODE_OWE)
 #endif
     )
@@ -1074,7 +1074,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
             }
         }
 #endif
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         else if (
 #if CONFIG_HOST_MLME
             !pmpriv->curr_bss_params.host_mlme &&
@@ -1130,7 +1130,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         */
         /* if (!pmpriv->wps.session_enable) { */
         if ((pmpriv->sec_info.wpa_enabled || pmpriv->sec_info.wpa2_enabled)
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
             || (pbss_desc->owe_transition_mode == OWE_TRANS_MODE_OWE) ||
             (pmpriv->sec_info.authentication_mode == MLAN_AUTH_MODE_OWE)
 #endif
@@ -1189,7 +1189,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
                 akm_type = AssocAgentAuth_Wpa3Sae;
             }
 #endif
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
             if ((akm_type == AssocAgentAuth_Owe) && (pmpriv->curr_bss_params.host_mlme))
             {
                 akm_type = AssocAgentAuth_Open;

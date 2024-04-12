@@ -721,7 +721,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /* fw_cap_info bit18 for ecsa support*/
 #define FW_CAPINFO_ECSA MBIT(18)
 
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
 /** fw_cap_info bit30 for Embedded OWE Support*/
 #define FW_CAPINFO_EMBEDDED_OWE_SUPPORT MBIT(30)
 /** Check if Embedded OWE is supported by firmware */

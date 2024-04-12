@@ -421,7 +421,7 @@ static void print_network(struct wlan_network *network)
             break;
 #endif
 #endif
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         case WLAN_SECURITY_OWE_ONLY:
             (void)PRINTF("%s: OWE Only\r\n", sec_tag(network));
             break;
@@ -759,7 +759,7 @@ static void dump_wlan_add_usage(void)
     (void)PRINTF("      If using WPA2/WPA3 Enterprise security, set the PMF configuration as required.\r\n");
 #endif
 #endif
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> <owe_only> "
 #if CONFIG_WPA_SUPP
@@ -808,7 +808,7 @@ static void dump_wlan_add_usage(void)
 #endif
         "]"
 #endif
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         " [owe_only]"
 #endif
         " [wpa3 sae"
@@ -891,7 +891,7 @@ static void dump_wlan_add_usage(void)
 #endif
 #endif
 #endif
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     (void)PRINTF(
         "    [owe_only "
 #if CONFIG_WPA_SUPP
@@ -1165,7 +1165,7 @@ static void test_wlan_add(int argc, char **argv)
             arg += 1;
             info.security2++;
         }
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         else if (!info.security && string_equal("owe_only", argv[arg]))
         {
             network.security.type = WLAN_SECURITY_OWE_ONLY;
@@ -2076,7 +2076,7 @@ static int __scan_cb(unsigned int count)
             {
                 (void)PRINTF("WPA3-SAE ");
             }
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
             if (res.owe != 0U)
             {
                 (void)PRINTF("OWE Only");
@@ -2119,7 +2119,7 @@ static int __scan_cb(unsigned int count)
 #endif
         if (!((res.wep != 0U) || (res.wpa != 0U) || (res.wpa2 != 0U) || (res.wpa3_sae != 0U) || (res.wpa2_entp != 0U) ||
               (res.wpa2_sha256 != 0U) ||
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
               (res.owe != 0U) ||
 #endif
               (res.wpa2_entp_sha256 != 0U) || (res.wpa3_1x_sha256 != 0U) || (res.wpa3_1x_sha384 != 0U)))
@@ -2167,7 +2167,7 @@ static int __scan_cb(unsigned int count)
         else
             (void)PRINTF("\tWPS: %s \r\n", "NO");
 #endif
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         if (res.trans_ssid_len != 0U)
         {
             (void)PRINTF("\tOWE BSSID: ");
@@ -4233,7 +4233,7 @@ static void test_wlan_11az_rang_cfg(int argc, char **argv)
 #endif
 
 #if CONFIG_WPA_SUPP
-#if CONFIG_11AX
+#if (CONFIG_11AX && CONFIG_DRIVER_MBO)
 static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
 {
     int ret;
@@ -12250,7 +12250,7 @@ static struct cli_command tests[] = {
      test_wlan_mbo_non_prefer_chs},
 #endif
 #if CONFIG_WPA_SUPP
-#if CONFIG_11AX
+#if (CONFIG_11AX && CONFIG_DRIVER_MBO)
     {"wlan-mbo-nonprefer-ch", "\"<oper_class>:<chan>:<preference>:<reason> <oper_class>:<chan>:<preference>:<reason>\"",
      test_wlan_mbo_non_prefer_chs},
     {"wlan-mbo-set-cell-capa", "<cell capa: 1/2/3(default)>", test_wlan_mbo_set_cell_capa},

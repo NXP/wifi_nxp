@@ -2212,7 +2212,7 @@ typedef struct _BSSDescriptor_t
     /** Transition SSID */
     mlan_802_11_ssid trans_ssid;
 
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     /** OWE Transition mode */
     t_u8 owe_transition_mode;
 #endif

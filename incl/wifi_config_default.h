@@ -579,10 +579,18 @@
 #endif
 #endif
 
-#if !defined CONFIG_FIPS
+#if !defined CONFIG_DRIVER_FIPS
 #if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
-#define CONFIG_FIPS 0
+#define CONFIG_DRIVER_FIPS 0
 #endif
+#endif
+
+#if CONFIG_DRIVER_FIPS
+#define CONFIG_FIPS
+#endif
+
+#if !CONFIG_DRIVER_FIPS
+#undef CONFIG_FIPS
 #endif
 
 #if !defined CONFIG_11K
@@ -642,19 +650,6 @@
 #endif
 #endif
 
-#if !defined CONFIG_MBO
-#if defined(RW610) || defined(SD9177)
-#define CONFIG_MBO (CONFIG_11AX && CONFIG_WPA_SUPP)
-#endif
-#endif
-
-#if CONFIG_MBO
-#if !CONFIG_11AX || !CONFIG_WPA_SUPP
-#undef CONFIG_MBO
-#define CONFIG_MBO 0
-#endif
-#endif
-
 #if !defined CONFIG_DRIVER_MBO
 #if defined(RW610) || defined(SD9177)
 #define CONFIG_DRIVER_MBO (CONFIG_11AX && !CONFIG_WPA_SUPP)
@@ -668,17 +663,33 @@
 #endif
 #endif
 
-#if !defined CONFIG_OWE
+#if CONFIG_DRIVER_MBO
+#define CONFIG_MBO
+#endif
+
+#if !CONFIG_DRIVER_MBO
+#undef CONFIG_MBO
+#endif
+
+#if !defined CONFIG_DRIVER_OWE
 #if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
-#define CONFIG_OWE 0
+#define CONFIG_DRIVER_OWE 0
 #endif
 #endif
 
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
 #if defined(RW610) || defined(SD8801)
-#undef CONFIG_OWE
-#define CONFIG_OWE CONFIG_WPA_SUPP
+#undef CONFIG_DRIVER_OWE
+#define CONFIG_DRIVER_OWE CONFIG_WPA_SUPP
 #endif
+#endif
+
+#if CONFIG_DRIVER_OWE
+#define CONFIG_OWE
+#endif
+
+#if !CONFIG_DRIVER_OWE
+#undef CONFIG_OWE
 #endif
 
 #if !defined CONFIG_11R

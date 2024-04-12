@@ -617,7 +617,7 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
 
     if ((bss->param.bss_config.protocol & PROTOCOL_WPA) || (bss->param.bss_config.protocol & PROTOCOL_WPA2) ||
         (bss->param.bss_config.protocol & PROTOCOL_WPA3_SAE) ||
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         (bss->param.bss_config.protocol & PROTOCOL_OWE) ||
 #endif
         (bss->param.bss_config.protocol & PROTOCOL_EAP))

@@ -20,7 +20,7 @@
 #define CONFIG_EXT_SCAN_SUPPORT 1
 #define CONFIG_WIFI_EU_CRYPTO 1
 #define CONFIG_11R 1
-#define CONFIG_OWE 1
+#define CONFIG_DRIVER_OWE 1
 #define CONFIG_11K 1
 #define CONFIG_11V 1
 #endif

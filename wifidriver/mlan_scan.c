@@ -1490,7 +1490,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
     const t_u8 epigram_type1[1] = {0x33};
     const t_u8 epigram_type2[1] = {0x34};
 
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     const t_u8 owe_oui[3]  = {0x50, 0x6f, 0x9a};
     const t_u8 owe_type[1] = {0x01c};
 #endif
@@ -1869,7 +1869,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 {
                     pbss_entry->epigram_ie_exist = 1;
                 }
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
                 else if (IS_FW_SUPPORT_EMBEDDED_OWE(pmadapter) &&
                          (!__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, owe_oui, sizeof(owe_oui)) &&
                           (pvendor_ie->vend_hdr.oui_type == owe_type[0])))
@@ -3031,7 +3031,7 @@ t_s32 wlan_is_network_compatible(IN mlan_private *pmpriv, IN t_u32 index, IN mla
         return index;
     }
 #endif /* CONFIG_WPS2 */
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     if ((pbss_desc->owe_transition_mode == OWE_TRANS_MODE_OPEN) &&
         (pmpriv->sec_info.authentication_mode != MLAN_AUTH_MODE_OWE))
     {

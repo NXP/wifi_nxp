@@ -914,7 +914,7 @@ int wfaStaSetSecurity(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
             net.security.type           = WLAN_SECURITY_WPA2_WPA3_SAE_MIXED;
             net.security.pwe_derivation = 2;
         }
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         else if (sec->type == SEC_TYPE_OWE)
         {
             net.security.type = WLAN_SECURITY_OWE_ONLY;

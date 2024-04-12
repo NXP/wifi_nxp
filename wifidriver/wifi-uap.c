@@ -418,7 +418,7 @@ static int wifi_cmd_uap_config(char *ssid,
     if (!(security == WLAN_SECURITY_NONE || security == WLAN_SECURITY_WPA2 ||
           security == WLAN_SECURITY_WPA_WPA2_MIXED || security == WLAN_SECURITY_WPA3_SAE ||
           security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
           || security == WLAN_SECURITY_OWE_ONLY
 #endif
           ))
@@ -560,7 +560,7 @@ static int wifi_cmd_uap_config(char *ssid,
 
     if (security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA_WPA2_MIXED ||
         security == WLAN_SECURITY_WPA3_SAE || security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         || security == WLAN_SECURITY_OWE_ONLY
 #endif
     )
@@ -618,7 +618,7 @@ static int wifi_cmd_uap_config(char *ssid,
                 bss.param.bss_config.key_mgmt |= KEY_MGMT_SAE;
             }
         }
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         else if (security == WLAN_SECURITY_OWE_ONLY)
         {
             bss.param.bss_config.protocol = PROTOCOL_OWE;
@@ -1078,7 +1078,7 @@ int wifi_uap_start(mlan_bss_type type,
 
     if ((security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA_WPA2_MIXED ||
          security == WLAN_SECURITY_WPA3_SAE || security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
          || security == WLAN_SECURITY_OWE_ONLY
 #endif
          ))
@@ -2114,7 +2114,7 @@ static t_u8 wifi_check_rsn_ie(IEEEtypes_Rsn_t *rsn_ie, mlan_uap_bss_param *sys_c
                 sys_config->key_mgmt |= KEY_MGMT_SAE;
                 break;
             case RSN_AKM_OWE:
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
                 sys_config->key_mgmt |= KEY_MGMT_OWE;
 #endif
                 break;

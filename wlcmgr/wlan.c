@@ -1423,7 +1423,7 @@ static int security_profile_matches(const struct wlan_network *network, const st
         if (res->wps_session != WPS_SESSION_INACTIVE)
             return 1;
 #endif
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         if (res->trans_mode == OWE_TRANS_MODE_OPEN)
         {
             return res->trans_ssid_len;
@@ -1482,7 +1482,7 @@ static int security_profile_matches(const struct wlan_network *network, const st
 #endif
 
     /* OWE mode: if we are using OWE, the AP must use OWE */
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     if (config->type == WLAN_SECURITY_OWE_ONLY)
     {
         return (int)res->WPA_WPA2_WEP.owe;
@@ -1579,7 +1579,7 @@ static int network_matches_scan_result(const struct wlan_network *network,
         if ((res->ssid_len == 0) ||
             (strncmp((const char *)network->ssid, (const char *)res->ssid,
                      (size_t)MAX(strlen(network->ssid), (unsigned int)res->ssid_len)) != 0)
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
             || ((res->trans_mode == OWE_TRANS_MODE_OWE) &&
                 (strncmp((const char *)network->trans_ssid, (const char *)res->ssid,
                          (size_t)MAX(strlen(network->trans_ssid), (unsigned int)res->ssid_len))) != 0)
@@ -1633,7 +1633,7 @@ static int network_matches_scan_result(const struct wlan_network *network,
     }
 #endif
 
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     wlcm_d("%s: Match successful", res->trans_mode == OWE_TRANS_MODE_OWE ? network->trans_ssid : network->ssid);
 #endif
     /* If the bss blacklist is not empty, check whether the network is in the blacklist or not. */
@@ -1810,7 +1810,7 @@ static int configure_security(struct wlan_network *network, struct wifi_scan_res
             }
 #endif
             break;
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         case WLAN_SECURITY_OWE_ONLY:
             if (res->WPA_WPA2_WEP.owe != 0U)
             {
@@ -1929,7 +1929,7 @@ static void do_scan(struct wlan_network *network)
         bridge_ssid = network->bridge_ssid;
 #endif
     }
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     if (network->owe_trans_mode == OWE_TRANS_MODE_OPEN)
     {
         ssid    = network->trans_ssid;
@@ -2100,7 +2100,7 @@ static int do_connect(int netindex)
         return -WM_E_INVAL;
     }
 
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     wlan.networks[netindex].owe_trans_mode = 0;
 #endif
     wlan.cur_network_idx = netindex;
@@ -2334,7 +2334,7 @@ static int do_stop(struct wlan_network *network)
  * connect by releasing the scan lock and informing the user. */
 static void do_connect_failed(enum wlan_event_reason reason)
 {
-#if (CONFIG_OWE) || (CONFIG_WPA2_ENTP)
+#if (CONFIG_DRIVER_OWE) || (CONFIG_WPA2_ENTP)
     struct wlan_network *network = &wlan.networks[wlan.cur_network_idx];
 #endif
 #if CONFIG_WMSTATS
@@ -2367,7 +2367,7 @@ static void do_connect_failed(enum wlan_event_reason reason)
         wlan.connect_wakelock_taken = false;
     }
 
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     if (network->trans_ssid_specific && network->trans_ssid_len)
     {
         (void)memset(&network->trans_ssid, 0x00, sizeof(network->trans_ssid));
@@ -2435,7 +2435,7 @@ static void update_network_params(struct wlan_network *network, const struct wif
         {
             t = WLAN_SECURITY_WEP_OPEN;
         }
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         else if (res->WPA_WPA2_WEP.wpa2 && res->WPA_WPA2_WEP.owe)
         {
             t = WLAN_SECURITY_OWE_ONLY;
@@ -2507,7 +2507,7 @@ static void update_network_params(struct wlan_network *network, const struct wif
 
     network->beacon_period = res->beacon_period;
     network->dtim_period   = res->dtim_period;
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     network->owe_trans_mode = res->trans_mode;
 
     if (res->trans_mode == OWE_TRANS_MODE_OPEN)
@@ -2604,7 +2604,7 @@ static int start_association(struct wlan_network *network, struct wifi_scan_resu
         do_connect_failed(WLAN_REASON_NETWORK_AUTH_FAILED);
         return -WM_FAIL;
     }
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     owe_trans_mode = res->trans_mode;
 #endif
 #if CONFIG_11R
@@ -2781,7 +2781,7 @@ static void handle_scan_results(void)
         wlan.same_ess |= wlan.roam_reassoc;
 
         update_network_params(network, best_ap);
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         if (network->owe_trans_mode == OWE_TRANS_MODE_OPEN)
         {
             wlcm_d("do scan for OWE Transition SSID: %s", network->trans_ssid);
@@ -2806,7 +2806,7 @@ static void handle_scan_results(void)
 #endif
                 return;
             }
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         }
 #endif
     }
@@ -8328,7 +8328,7 @@ static bool wlan_is_key_valid(struct wlan_network *network)
             break;
         case WLAN_SECURITY_NONE:
         case WLAN_SECURITY_WILDCARD:
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         case WLAN_SECURITY_OWE_ONLY:
 #endif
 #if CONFIG_WPA2_ENTP
@@ -8578,7 +8578,7 @@ static int wlan_key_mgmt_wpa_psk_sae(int akm)
     return (!akm && rakm);
 }
 
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
 static int wlan_key_mgmt_owe(int akm)
 {
     int rakm = WLAN_KEY_MGMT_OWE;
@@ -8676,7 +8676,7 @@ int wlan_add_network(struct wlan_network *network)
 
     if (((network->role == WLAN_BSS_ROLE_UAP) || (network->role == WLAN_BSS_ROLE_STA)) &&
         ((network->security.type == WLAN_SECURITY_WPA3_SAE)
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
          || (network->security.type == WLAN_SECURITY_OWE_ONLY)
 #endif
          ))
@@ -8739,7 +8739,7 @@ int wlan_add_network(struct wlan_network *network)
         {
             network->security.key_mgmt = WLAN_KEY_MGMT_SAE;
         }
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         else if (network->security.type == WLAN_SECURITY_OWE_ONLY)
         {
             network->security.key_mgmt = WLAN_KEY_MGMT_OWE;
@@ -8798,7 +8798,7 @@ int wlan_add_network(struct wlan_network *network)
 #endif
 #endif
         || ((network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED) && (!wlan_key_mgmt_wpa_psk_sae(network->security.key_mgmt)))
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         || ((network->security.type == WLAN_SECURITY_OWE_ONLY) && (!wlan_key_mgmt_owe(network->security.key_mgmt)))
 #endif
 #if CONFIG_WPA_SUPP_DPP
@@ -8937,7 +8937,7 @@ int wlan_add_network(struct wlan_network *network)
     {
         network->security.sae_groups = wlan_string_dup("19");
     }
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     if (network->security.owe_groups == NULL)
     {
         network->security.owe_groups = wlan_string_dup("19");
@@ -10556,7 +10556,7 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
         }
         if (desc->WPA_WPA2_WEP.owe != 0U)
         {
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
             res->owe = 1;
 #endif
         }
@@ -12915,7 +12915,7 @@ int wlan_ftm_civic_cfg(location_civic_rep_t *ftm_civic_cfg)
 #endif
 
 #if CONFIG_WPA_SUPP
-#if CONFIG_11AX
+#if (CONFIG_11AX && CONFIG_DRIVER_MBO)
 int wlan_mbo_peferch_cfg(const char *non_pref_chan)
 {
     struct netif *netif = net_get_sta_interface();

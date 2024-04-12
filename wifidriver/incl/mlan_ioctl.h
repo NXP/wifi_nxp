@@ -784,7 +784,7 @@ typedef struct _mlan_ssid_bssid
 #define PROTOCOL_WAPI 0x80U
 /** WPA3 SAE */
 #define PROTOCOL_WPA3_SAE 256U
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
 /** OWE */
 #define PROTOCOL_OWE 512U
 #endif
@@ -793,7 +793,7 @@ typedef struct _mlan_ssid_bssid
 #define KEY_MGMT_PSK_SHA256 0x100
 /** Key_mgmt_sae */
 #define KEY_MGMT_SAE 0x400
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
 /** Key_mgmt_owe */
 #define KEY_MGMT_OWE 0x200
 #endif
@@ -1928,7 +1928,7 @@ typedef enum _mlan_auth_mode
     MLAN_AUTH_MODE_SHARED = 0x01,
     MLAN_AUTH_MODE_FT     = 0x02,
     MLAN_AUTH_MODE_SAE    = 0x03,
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     MLAN_AUTH_MODE_OWE = 0x04,
 #endif
     MLAN_AUTH_MODE_NETWORKEAP = 0x80,
@@ -1944,7 +1944,7 @@ typedef enum
     AssocAgentAuth_FastBss_Skip,
     AssocAgentAuth_FastBss_SAE,
     AssocAgentAuth_Wpa3Sae = 6,
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     AssocAgentAuth_Owe = 7,
 #endif
     AssocAgentAuth_Auto,

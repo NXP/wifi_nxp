@@ -31,7 +31,7 @@
 
 #define MOD_GROUPS 7
 
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
 /** The open AP in OWE transmition Mode */
 #define OWE_TRANS_MODE_OPEN 1U
 /** The security AP in OWE trsnsition Mode */

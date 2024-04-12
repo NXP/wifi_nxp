@@ -1938,7 +1938,7 @@ int wrapper_wifi_assoc(
              (!is_ft) &&
 #endif
              (wlan_security == WLAN_SECURITY_WPA2 || wlan_security == WLAN_SECURITY_WPA_WPA2_MIXED ||
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
               owe_trans_mode == OWE_TRANS_MODE_OWE || wlan_security == WLAN_SECURITY_OWE_ONLY ||
 #endif
               wlan_security == WLAN_SECURITY_WPA3_SAE || wlan_security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED))
@@ -5984,7 +5984,7 @@ static void process_rsn_ie(t_u8 *rsn_ie,
     t_u8 wpa3_oui08[4] = {0x00, 0x0f, 0xac, 0x08};
     t_u8 wpa3_oui0b[4] = {0x00, 0x0f, 0xac, 0x0b};
     t_u8 wpa3_oui0c[4] = {0x00, 0x0f, 0xac, 0x0c};
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     t_u8 wpa3_oui12[4] = {0x00, 0x0f, 0xac, 0x12};
 #endif
 #if CONFIG_11R
@@ -6093,7 +6093,7 @@ static void process_rsn_ie(t_u8 *rsn_ie,
         {
             WPA_WPA2_WEP->wpa3_1x_sha384 = 1;
         }
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         else if (memcmp(temp, wpa3_oui12, sizeof(wpa3_oui12)) == 0)
         {
             WPA_WPA2_WEP->owe = 1;
@@ -6512,7 +6512,7 @@ int wrapper_bssdesc_second_set(int bss_index,
     }
 #endif
 
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     *trans_mode = d->owe_transition_mode;
 #endif
     (void)memcpy((void *)trans_bssid, (const void *)d->trans_mac_address, MLAN_MAC_ADDR_LENGTH);

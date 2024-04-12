@@ -829,7 +829,7 @@ struct wlan_scan_result
     unsigned wpa2 : 1;
     /** The network uses WPA2 SHA256 security */
     unsigned wpa2_sha256 : 1;
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     /** The network uses OWE security */
     unsigned owe : 1;
 #endif
@@ -1020,7 +1020,7 @@ enum wlan_security_type
 #endif
     /** The network uses WPA2/WPA3 SAE mixed security with PSK. */
     WLAN_SECURITY_WPA2_WPA3_SAE_MIXED,
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     /** The network uses OWE only security without Transition mode support. */
     WLAN_SECURITY_OWE_ONLY,
 #endif
@@ -1228,7 +1228,7 @@ static inline int is_valid_security(int security)
         (security == WLAN_SECURITY_EAP_PEAP_MSCHAPV2) ||
 #endif
 #endif /* CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE */
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
         (security == WLAN_SECURITY_OWE_ONLY) ||
 #endif
         (security == WLAN_SECURITY_WPA3_SAE) || (security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED) ||
@@ -1342,7 +1342,7 @@ struct wlan_network_security
     uint8_t pwe_derivation;
     /** transition disable */
     uint8_t transition_disable;
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     /** OWE Groups */
     char *owe_groups;
 #endif
@@ -1939,7 +1939,7 @@ struct wlan_network
      * specified (not an empty string), otherwise it is set to 0.
      */
     unsigned ssid_specific : 1;
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     /**
      * If set to 1, the ssid field contains the transitional SSID for this
      * network.
@@ -1996,7 +1996,7 @@ struct wlan_network
     /** The network uses FT SAE security (For internal use only)*/
     unsigned ft_sae : 1;
 #endif
-#if CONFIG_OWE
+#if CONFIG_DRIVER_OWE
     /** OWE Transition mode */
     unsigned int owe_trans_mode;
     /** The network transitional SSID, represented as a C string of up to 32 characters
@@ -6266,7 +6266,7 @@ int wlan_ftm_civic_cfg(location_civic_rep_t *ftm_civic_cfg);
 #endif
 
 #if CONFIG_WPA_SUPP
-#if CONFIG_11AX
+#if (CONFIG_11AX && CONFIG_DRIVER_MBO)
 /**
  * Multi Band Operation (MBO) non-preferred channels
  *
