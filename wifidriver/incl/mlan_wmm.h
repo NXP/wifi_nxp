@@ -232,7 +232,7 @@ typedef struct
     TxPD tx_pd;
 #if CONFIG_TX_RX_ZERO_COPY
     t_u8 eth_header[ETH_HDR_LEN];
-#ifdef AMSDU_IN_AMPDU
+#if CONFIG_AMSDU_IN_AMPDU
     t_u8 llc_header[LLC_SNAP_LEN];
 #endif
     /* Data payload pointer */

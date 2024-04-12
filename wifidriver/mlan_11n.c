@@ -1242,7 +1242,7 @@ mlan_status wlan_cmd_amsdu_aggr_ctrl(mlan_private *priv, HostCmd_DS_COMMAND *cmd
  *
  *  @return        MLAN_STATUS_SUCCESS
  */
-#ifdef AMSDU_IN_AMPDU
+#if CONFIG_AMSDU_IN_AMPDU
 mlan_status wlan_ret_amsdu_aggr_ctrl(IN pmlan_private pmpriv,
                                      IN HostCmd_DS_COMMAND *resp,
                                      IN mlan_ioctl_req *pioctl_buf)
@@ -2066,7 +2066,7 @@ int wlan_send_addba(mlan_private *priv, int tid, const t_u8 *peer_mac)
     add_ba_req.block_ack_param_set =
         (t_u16)((tid << BLOCKACKPARAM_TID_POS) | (priv->add_ba_param.tx_win_size << BLOCKACKPARAM_WINSIZE_POS) |
                 IMMEDIATE_BLOCK_ACK);
-#ifdef AMSDU_IN_AMPDU
+#if CONFIG_AMSDU_IN_AMPDU
     /** enable AMSDU inside AMPDU */
     /* To be done: change priv->aggr_prio_tbl[tid].amsdu for specific AMSDU support by CLI cmd */
 #if 0

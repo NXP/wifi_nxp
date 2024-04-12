@@ -901,7 +901,7 @@ typedef struct _txAggr_t
     t_u8 ampdu_ap;
     /** AMSDU */
     t_u8 amsdu;
-#ifdef AMSDU_IN_AMPDU
+#if CONFIG_AMSDU_IN_AMPDU
     /** peer AMSDU */
     t_u8 amsdu_peer;
 #endif
@@ -1387,7 +1387,7 @@ struct _mlan_private
     mlan_802_11_ssid filter_ssid[MRVDRV_MAX_SSID_LIST_LENGTH];
     /** max amsdu size */
     t_u16 max_amsdu;
-#ifdef AMSDU_IN_AMPDU
+#if CONFIG_AMSDU_IN_AMPDU
     /** amsdu enabled */
     t_bool is_amsdu_enabled;
 #endif

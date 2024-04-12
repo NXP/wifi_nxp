@@ -48,7 +48,7 @@ static uint32_t cal_data_len;
 bool mac_addr_valid;
 static uint8_t *mac_addr;
 #if CONFIG_WIFI_TX_BUFF
-#ifdef AMSDU_IN_AMPDU
+#if CONFIG_AMSDU_IN_AMPDU
 uint16_t tx_buf_size = MLAN_TX_DATA_BUF_SIZE_4K;
 #else
 uint16_t tx_buf_size = MLAN_TX_DATA_BUF_SIZE_2K;
@@ -3166,7 +3166,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             case HostCmd_CMD_11N_ADDBA_RSP:
                 (void)do_wlan_ret_11n_addba_resp(resp);
                 break;
-#ifdef AMSDU_IN_AMPDU
+#if CONFIG_AMSDU_IN_AMPDU
             case HostCmd_CMD_AMSDU_AGGR_CTRL:
                 rv = wlan_ret_amsdu_aggr_ctrl(pmpriv, resp, NULL);
                 break;

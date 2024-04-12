@@ -305,7 +305,7 @@ done:
     return ret;
 }
 
-#ifdef AMSDU_IN_AMPDU
+#if CONFIG_AMSDU_IN_AMPDU
 int wlan_11n_form_amsdu_pkt(t_u8 *amsdu_buf, t_u8 *data, int pkt_len, int *pad)
 {
     int dt_offset, amsdu_buf_offset;

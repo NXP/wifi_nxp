@@ -106,7 +106,7 @@ SDK_ALIGN(uint8_t inbuf[2 * DATA_BUFFER_SIZE], 32);
 /*! @brief Data read from the card */
 SDK_ALIGN(uint8_t inbuf[SDIO_MP_AGGR_DEF_PKT_LIMIT * 2 * DATA_BUFFER_SIZE], 32);
 #endif
-#ifdef AMSDU_IN_AMPDU
+#if CONFIG_AMSDU_IN_AMPDU
 SDK_ALIGN(uint8_t amsdu_outbuf[MAX_SUPPORT_AMSDU_SIZE], 32);
 #endif
 
@@ -303,7 +303,7 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid, t_
     imuhdr->size = payloadlen;
 }
 
-#ifdef AMSDU_IN_AMPDU
+#if CONFIG_AMSDU_IN_AMPDU
 #if defined(RW610)
 int process_amsdu_pkt_hdrs(void *pbuf, t_u32 payloadlen, mlan_wmm_ac_e ac, t_u8 interface)
 #else
@@ -490,7 +490,7 @@ mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
             break;
         case HostCmd_CMD_11N_CFG:
             break;
-#ifdef AMSDU_IN_AMPDU
+#if CONFIG_AMSDU_IN_AMPDU
         case HostCmd_CMD_AMSDU_AGGR_CTRL:
             wlan_ret_amsdu_aggr_ctrl((mlan_private *)mlan_adap->priv[0], (HostCmd_DS_COMMAND *)cmdresp, NULL);
             break;
@@ -803,7 +803,7 @@ static int _wlan_recfg_tx_buf_size(uint16_t buf_size)
 }
 #endif
 
-#ifdef AMSDU_IN_AMPDU
+#if CONFIG_AMSDU_IN_AMPDU
 void wifi_prepare_enable_amsdu_cmd(void *cmd, int seq_number);
 static int wlan_enable_amsdu()
 {
@@ -1088,7 +1088,7 @@ static int wlan_fw_init_cfg()
         return false;
     }
 
-#ifdef AMSDU_IN_AMPDU
+#if CONFIG_AMSDU_IN_AMPDU
     wcmdr_d("CMD : AMSDU_AGGR_CTRL (0xdf)");
     wlan_enable_amsdu();
 
@@ -1128,7 +1128,7 @@ uint8_t *wifi_get_imu_outbuf(uint32_t *outbuf_len)
     *outbuf_len = sizeof(outbuf);
     return outbuf;
 }
-#ifdef AMSDU_IN_AMPDU
+#if CONFIG_AMSDU_IN_AMPDU
 uint8_t *wifi_get_amsdu_outbuf(uint32_t offset)
 {
     return (amsdu_outbuf + offset);
@@ -1300,7 +1300,7 @@ mlan_status wlan_flush_wmm_pkt(int pkt_cnt)
     return MLAN_STATUS_SUCCESS;
 }
 
-#ifdef AMSDU_IN_AMPDU
+#if CONFIG_AMSDU_IN_AMPDU
 /**
  *  @brief This function checks if we need to send last amsdu indication.
  *
