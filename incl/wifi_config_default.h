@@ -943,21 +943,6 @@
 #define CONFIG_WPA2_ENTP !CONFIG_WPA_SUPP
 #endif
 
-#if !defined CONFIG_DPP
-#if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
-#if !CONFIG_WPA_SUPP
-#define CONFIG_DPP 0
-#endif
-#endif
-#endif
-
-#if CONFIG_DPP
-#undef CONFIG_DPP
-#if !CONFIG_WPA_SUPP
-#define CONFIG_DPP !CONFIG_WPA_SUPP
-#endif
-#endif
-
 #if !defined CONFIG_PEAP_MSCHAPV2
 #if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
 #define CONFIG_PEAP_MSCHAPV2 0
