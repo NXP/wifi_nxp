@@ -15,14 +15,15 @@
 #include "timers.h"
 #include "portmacro.h"
 
-#if (defined(configSUPPORT_STATIC_ALLOCATION) && (configSUPPORT_STATIC_ALLOCATION > 0U)) && \
-    !((defined(configSUPPORT_DYNAMIC_ALLOCATION) && (configSUPPORT_DYNAMIC_ALLOCATION > 0U)))
 /**
  *  Handle for memory pools.
  *
  *  These are fixed allocation size memory areas.
  */
 typedef void * MemoryPool_t;
+
+#if (defined(configSUPPORT_STATIC_ALLOCATION) && (configSUPPORT_STATIC_ALLOCATION > 0U)) && \
+    !((defined(configSUPPORT_DYNAMIC_ALLOCATION) && (configSUPPORT_DYNAMIC_ALLOCATION > 0U)))
 
 #define CONFIG_MEM_POOLS 1
 
