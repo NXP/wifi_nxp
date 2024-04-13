@@ -60,13 +60,6 @@ typedef TX_BLOCK_POOL MemPool_t;
 #endif
 
 /**
- *  Handle for memory pools.
- *
- *  These are fixed allocation size memory areas.
- */
-typedef void *MemoryPool_t;
-
-/**
  *  Create a MemoryPool
  *
  *  @param ItemSize How big is an allocation.
