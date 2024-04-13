@@ -1505,7 +1505,7 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss
 #if CONFIG_11V
     pext_cap->ext_cap.BSS_Transition = 1;
 #endif
-#ifdef CONFIG_11MC
+#if CONFIG_11MC
     pext_cap->ext_cap.FTMI          = 1;
     pext_cap->ext_cap.CivicLocation = 1;
 #endif
@@ -2138,7 +2138,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
            pmpriv->is_data_rate_auto, pmpriv->data_rate);
 
     /* Send request to firmware */
-#ifdef CONFIG_AUTO_NULL_TX
+#if CONFIG_AUTO_NULL_TX
     if (ds_rate->auto_null_fixrate_enable == 1)
     {
         ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_SPC_AUTO_SET, 0, (t_void *)pioctl_req,

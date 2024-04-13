@@ -254,21 +254,12 @@ middleware.wifi.fwdnld:
     - source: wifi_bt_firmware/nw61x/sduart_nw61x.bin.se.inc
     - source: wifi_bt_firmware/nw61x/sd_nw61x.bin.se.inc
     - source: wifi_bt_firmware/nw61x/uart_nw61x.bin.se.inc
-    - source: wifi_bt_firmware/nw61x/sduart_nw61x.bin.inc
-    - source: wifi_bt_firmware/nw61x/sd_nw61x.bin.inc
-    - source: wifi_bt_firmware/nw61x/uart_nw61x.bin.inc
     - source: wifi_bt_firmware/nw61x/sduart_nw61x_se.h
     - source: wifi_bt_firmware/nw61x/sd_nw61x_se.h
     - source: wifi_bt_firmware/nw61x/uart_nw61x_se.h
-    - source: wifi_bt_firmware/nw61x/sduart_nw61x.h
-    - source: wifi_bt_firmware/nw61x/sd_nw61x.h
-    - source: wifi_bt_firmware/nw61x/uart_nw61x.h
     - source: wifi_bt_firmware/nw61x/nw61x_cpu12_se.c
     - source: wifi_bt_firmware/nw61x/nw61x_cpu1_se.c
     - source: wifi_bt_firmware/nw61x/nw61x_cpu2_se.c
-    - source: wifi_bt_firmware/nw61x/nw61x_cpu12.c
-    - source: wifi_bt_firmware/nw61x/nw61x_cpu1.c
-    - source: wifi_bt_firmware/nw61x/nw61x_cpu2.c
     - source: wifidriver/sdio.c
     - source: wifidriver/sdio.h
     - source: firmware_dnld/firmware_dnld.c
@@ -348,10 +339,6 @@ middleware.wifi.net_thread:
     - repo_relative_path: port/net/netxduo
     files:
     - source: incl/port/net/wm_net.h
-    - source: port/net/netxduo/netif_decl.h
-    - source: port/net/netxduo/nx_driver_wifi.h
-    - source: port/net/netxduo/nx_driver_wifi.c
-    - source: port/net/netxduo/net.c
   belong_to: set.middleware.wifi
   section_info:
     version: 1.0.0
@@ -690,7 +677,7 @@ middleware.wifi.cli:
     - source: incl/iperf.h
     - source: incl/wifi_ping.h
     - source: nw_utils/init_enet.c
-    - source: nw_utils/nerwork_cfg.h
+    - source: nw_utils/network_cfg.h
     - source: nw_utils/telnet/telnet_server.h
     - source: nw_utils/telnet/telnet_server.c
     - source: wlcmgr/wlan_basic_cli.c

@@ -437,7 +437,7 @@ void wlan_dot11mc_ftm_cfg(void *cmd, ftm_11mc_nego_cfg_t *ftm_11mc_nego_cfg);
 void wlan_dto11az_ranging_cfg(void *cmd, const t_u8 protocl, HostCmd_FTM_SESSION_CFG *ftm_session_cfg);
 #endif
 
-#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+#if (CONFIG_11MC) || (CONFIG_11AZ)
 /* ftm ctrl params */
 typedef struct
 {

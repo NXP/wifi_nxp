@@ -5512,7 +5512,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             (void)wifi_event_completion(WIFI_EVENT_FW_PRE_BCN_LOST, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
 #endif
-#ifdef CONFIG_11N
+#if CONFIG_11N
         case EVENT_ADDBA:
         {
             void *saved_event_buff = wifi_11n_save_request(evt);
@@ -8125,7 +8125,7 @@ int wifi_set_threshold_pre_beacon_lost(mlan_private *pmpriv, unsigned int pre_be
 }
 #endif
 
-#ifdef CONFIG_11MC
+#if CONFIG_11MC
 static location_cfg_info_t g_ftm_location_cfg;
 static location_civic_rep_t g_ftm_civic_cfg;
 

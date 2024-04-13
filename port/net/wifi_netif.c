@@ -381,8 +381,8 @@ static void process_data_packet(const t_u8 *rcvdata,
     mlan_bss_type recv_interface = (mlan_bss_type)(rxpd->bss_type);
     u16_t header_type;
 
-#ifndef CONFIG_WPA_SUPP
-#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
+#if !CONFIG_WPA_SUPP
+#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_1AS)
     wlan_mgmt_pkt *pmgmt_pkt_hdr      = MNULL;
     wlan_802_11_header *pieee_pkt_hdr = MNULL;
     t_u16 sub_type                    = 0;
@@ -412,8 +412,8 @@ static void process_data_packet(const t_u8 *rcvdata,
         g_data_snr_last = rxpd->snr;
     }
 
-#ifndef CONFIG_WPA_SUPP
-#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
+#if !CONFIG_WPA_SUPP
+#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_1AS)
     if ((rxpd->rx_pkt_type == PKT_TYPE_MGMT_FRAME) && (recv_interface == MLAN_BSS_TYPE_STA))
     {
         pmgmt_pkt_hdr = (wlan_mgmt_pkt *)(void *)((t_u8 *)rxpd + rxpd->rx_pkt_offset);
@@ -479,12 +479,12 @@ static void process_data_packet(const t_u8 *rcvdata,
     }
     if (rxpd->rx_pkt_type == PKT_TYPE_MGMT_FRAME)
     {
-#if defined(CONFIG_TX_RX_ZERO_COPY) || defined(FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
+#if (CONFIG_TX_RX_ZERO_COPY) || defined(FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
         /* Skip interface header */
         pbuf_header(p, -(s16_t)(sizeof(mlan_buffer) + INTF_HEADER_LEN));
 #endif
-#ifndef CONFIG_WPA_SUPP
-#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
+#if !CONFIG_WPA_SUPP
+#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_1AS)
         if ((sub_type == (t_u16)SUBTYPE_ACTION) && (recv_interface == MLAN_BSS_TYPE_STA))
         {
             if (wifi_event_completion(WIFI_EVENT_MGMT_FRAME, WIFI_EVENT_REASON_SUCCESS, p) != WM_SUCCESS)
@@ -532,7 +532,7 @@ static void process_data_packet(const t_u8 *rcvdata,
         }
 #endif
     }
-#if defined(CONFIG_TX_RX_ZERO_COPY) || defined(FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
+#if (CONFIG_TX_RX_ZERO_COPY) || defined(FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
     /* Directly use rxpd from pbuf */
     rxpd = (RxPD *)(void *)((t_u8 *)p->payload + INTF_HEADER_LEN);
     /* Skip interface header and RxPD */

@@ -1231,7 +1231,7 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
     }
 #endif
 
-#ifdef CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY
     ret = HAL_ImuAddWlanTxPacketExt(kIMU_LinkCpu1Cpu3, tx_buf, txlen, net_tx_zerocopy_process_cb);
 #else
     ret              = HAL_ImuAddWlanTxPacket(kIMU_LinkCpu1Cpu3, tx_buf, txlen);
@@ -1239,10 +1239,10 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
 
     if (ret != kStatus_HAL_ImumcSuccess)
     {
-#ifdef CONFIG_WMM_UAPSD
+#if CONFIG_WMM_UAPSD
         if (last_packet)
         {
-#ifdef CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY
             process_pkt_hdrs_flags(&((outbuf_t *)tx_buf)->intf_header[0], 0);
 #else
             process_pkt_hdrs_flags((t_u8 *)tx_buf, 0);
@@ -1471,7 +1471,7 @@ hal_imumc_status_t imumc_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length)
         size     = inimupkt->size;
         if ((size <= INTF_HEADER_LEN) || (size > sizeof(inbuf)))
         {
-#ifdef CONFIG_HOST_SLEEP
+#if CONFIG_HOST_SLEEP
             wakelock_put();
 #endif
             wifi_io_e("pImuMsg->PayloadPtr[%u] has invalid size=%u", i, size);
@@ -1479,7 +1479,7 @@ hal_imumc_status_t imumc_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length)
         }
 
 #if !CONFIG_TX_RX_ZERO_COPY
-#ifdef CONFIG_IMU_GDMA
+#if CONFIG_IMU_GDMA
         HAL_ImuGdmaCopyData(inbuf, inimupkt, size);
 #else
         memcpy(inbuf, inimupkt, size);

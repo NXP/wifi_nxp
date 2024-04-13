@@ -130,7 +130,7 @@
 #include <wifi_events.h>
 #include <wifi.h>
 
-#define WLAN_DRV_VERSION "v1.3.r48.p2"
+#define WLAN_DRV_VERSION "v1.3.r48.p3"
 
 #if CONFIG_WPA2_ENTP
 #include <wm_mbedtls_helper_api.h>
@@ -152,6 +152,15 @@
 #else
 #define wlcm_d(...)
 #endif /* ! CONFIG_WLCMGR_DEBUG */
+
+#if (defined(configSUPPORT_STATIC_ALLOCATION) && (configSUPPORT_STATIC_ALLOCATION > 0U)) && \
+    !((defined(configSUPPORT_DYNAMIC_ALLOCATION) && (configSUPPORT_DYNAMIC_ALLOCATION == 1U)))
+
+#if CONFIG_WPA_SUPP
+#error "Static memory allocation is not supported for wpa supplicant "
+#endif
+
+#endif
 
 /** Action GET */
 #define ACTION_GET (0U)
