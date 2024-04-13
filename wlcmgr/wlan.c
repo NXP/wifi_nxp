@@ -7925,7 +7925,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 #endif
 
 #if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
-#if IR_OUTBAND_TRIGGER_GPIO
+#ifdef IR_OUTBAND_TRIGGER_GPIO
     gpio_pin_config_t out_config = {kGPIO_DigitalOutput, 1, kGPIO_NoIntmode};
 
 #if defined(IOMUXC_GPIO_IR_OUTBAND_TRIGGER)
@@ -15528,7 +15528,7 @@ static int wlan_trigger_oob_ind_reset()
 
     OSA_TimeDelay(1000);
 
-#if IR_OUTBAND_TRIGGER_GPIO
+#ifdef IR_OUTBAND_TRIGGER_GPIO
     GPIO_PinWrite(IR_OUTBAND_TRIGGER_GPIO, IR_OUTBAND_TRIGGER_GPIO_PIN, 0);
 
     OSA_TimeDelay(10);
