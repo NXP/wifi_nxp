@@ -1095,7 +1095,7 @@ int wlan_get_wakeup_reason(uint16_t *hs_wakeup_reason)
 
 #endif
 
-#ifdef CONFIG_HOST_SLEEP
+#if CONFIG_HOST_SLEEP
 #ifdef RW610
 status_t wlan_hs_send_event(int id, void *data)
 {
@@ -5578,7 +5578,7 @@ static void wlcm_process_init(enum cm_sta_state *next)
     wifi_get_wfd_mac_address();
 #endif
 
-#ifdef OTP_CHANINFO
+#if OTP_CHANINFO
     (void)wifi_get_fw_region_and_cfp_tables();
 #endif
 
@@ -7925,7 +7925,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 #endif
 
 #if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
-#ifdef IR_OUTBAND_TRIGGER_GPIO
+#if IR_OUTBAND_TRIGGER_GPIO
     gpio_pin_config_t out_config = {kGPIO_DigitalOutput, 1, kGPIO_NoIntmode};
 
 #if defined(IOMUXC_GPIO_IR_OUTBAND_TRIGGER)
@@ -8017,7 +8017,7 @@ int wlan_stop(void)
         wlcm_e("cannot stop wlcmgr. unexpected wlan.running: %d", wlan.running);
         return WLAN_ERROR_STATE;
     }
-#ifdef OTP_CHANINFO
+#if OTP_CHANINFO
     wifi_free_fw_region_and_cfp_tables();
 #endif
 
@@ -11675,7 +11675,7 @@ int wlan_get_txpwrlimit(wifi_SubBand_t subband, wifi_txpwrlimit_t *txpwrlimit)
     return -WM_FAIL;
 }
 
-#ifdef WLAN_LOW_POWER_ENABLE
+#if WLAN_LOW_POWER_ENABLE
 int wlan_enable_low_pwr_mode()
 {
     if (wlan.status == WLCMGR_INACTIVE)
@@ -15165,7 +15165,7 @@ int wlan_set_tsp_cfg(t_u16 enable,
 }
 #endif
 
-#ifdef STA_SUPPORT
+#if STA_SUPPORT
 int wlan_get_signal_info(wlan_rssi_info_t *signal)
 {
     return wifi_send_rssi_info_cmd(signal);
@@ -15528,7 +15528,7 @@ static int wlan_trigger_oob_ind_reset()
 
     OSA_TimeDelay(1000);
 
-#ifdef IR_OUTBAND_TRIGGER_GPIO
+#if IR_OUTBAND_TRIGGER_GPIO
     GPIO_PinWrite(IR_OUTBAND_TRIGGER_GPIO, IR_OUTBAND_TRIGGER_GPIO_PIN, 0);
 
     OSA_TimeDelay(10);

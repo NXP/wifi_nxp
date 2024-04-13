@@ -918,9 +918,9 @@ static void dump_wlan_add_usage(void)
 #endif
 #if CONFIG_WIFI_CAPA
     (void)PRINTF("\r\n");
-#if defined CONFIG_11AX
+#if CONFIG_11AX
     (void)PRINTF("    [capa <11ax/11ac/11n/legacy>]\r\n");
-#elif defined CONFIG_11AC
+#elif CONFIG_11AC
     (void)PRINTF("    [capa <11ac/11n/legacy>]\r\n");
 #else
     (void)PRINTF("    [capa <11n/legacy>]\r\n");
@@ -2180,7 +2180,7 @@ static int __scan_cb(unsigned int count)
         }
 #endif
     }
-#ifdef CONFIG_WIFI_SMOKE_TESTS
+#if CONFIG_WIFI_SMOKE_TESTS
     PRINTF("SCAN COMPLETED !\r\n");
 #endif
     return 0;
@@ -9215,7 +9215,7 @@ static void test_wlan_cloud_keep_alive(int argc, char **argv)
 }
 #endif
 
-#ifdef STA_SUPPORT
+#if STA_SUPPORT
 static void test_wlan_get_signal(int argc, char **argv)
 {
     wlan_rssi_info_t signal;
@@ -12261,7 +12261,7 @@ static struct cli_command tests[] = {
     {"wlan-pmksa-flush", NULL, test_wlan_pmksa_flush},
     {"wlan-set-scan-interval", "<scan_int: in seconds>", test_wlan_set_scan_interval},
 #endif
-#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+#if (CONFIG_11MC) || (CONFIG_11AZ)
     {"wlan-ftm-ctrl", "<action> <loop_cnt> <peer_mac> <channel>", test_wlan_ftm_ctrl},
     {"wlan-11mc-nego-cfg", "<burst_inst> <burst_dur> <min_delta> <asap> <ftm_per_burst> <bw> <burst_period>",
      test_wlan_11mc_nego_cfg},
@@ -12270,24 +12270,24 @@ static struct cli_command tests[] = {
     {"wlan-11az-rang-cfg", "<protocol> <format_bw> <num_measurements> <measurement_freq> <i2r_sts> <r2i_sts> <i2r_lmr>",
      test_wlan_11az_rang_cfg},
 #endif
-#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
+#if CONFIG_UAP_STA_MAC_ADDR_FILTER
     {"wlan-sta-filter", " <filter mode> [<mac address list>]", test_wlan_set_sta_filter},
 #endif
-#ifdef CONFIG_WIFI_GET_LOG
+#if CONFIG_WIFI_GET_LOG
     {"wlan-get-log", "<sta/uap> <ext>", test_wlan_get_log},
 #endif
-#ifdef CONFIG_WIFI_TX_PER_TRACK
+#if CONFIG_WIFI_TX_PER_TRACK
     {"wlan-tx-pert", "<0/1> <STA/UAP> <p> <r> <n>", test_wlan_tx_pert},
 #endif
-#ifdef CONFIG_ROAMING
+#if CONFIG_ROAMING
     {"wlan-roaming", "<0/1> <rssi_threshold>", test_wlan_roaming},
 #endif
-#ifdef CONFIG_MEF_CFG
+#if CONFIG_MEF_CFG
     {"wlan-multi-mef", "<ping/arp/multicast/del> [<action>]", test_wlan_set_multiple_mef_config},
 #endif
-#if defined(CONFIG_HOST_SLEEP)
+#if CONFIG_HOST_SLEEP
 #ifdef RW610
-#ifdef CONFIG_MEF_CFG
+#if CONFIG_MEF_CFG
     {"wlan-wakeup-condition", "<mef/wowlan wake_up_conds>", test_wlan_wakeup_condition},
 #else
     {"wlan-wakeup-condition", "<wowlan wake_up_conds>", test_wlan_wakeup_condition},
@@ -12476,7 +12476,7 @@ static struct cli_command tests[] = {
 #if CONFIG_CPU_LOADING
     {"wlan-cpu-loading", "start <start> sample_loops <number> sample_period <period>", test_wlan_cpu_loading},
 #endif
-#ifdef STA_SUPPORT
+#if STA_SUPPORT
     {"wlan-get-signal", NULL, test_wlan_get_signal},
 #endif
 #if (CONFIG_IPS)
