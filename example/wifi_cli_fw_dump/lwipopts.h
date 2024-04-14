@@ -339,9 +339,7 @@
 /**
  * LWIP_IPV6==1: Enable IPv6
  */
-#if CONFIG_IPV6
 #define LWIP_IPV6 1
-#endif
 
 #define LWIP_NETIF_EXT_STATUS_CALLBACK 1
 
@@ -480,6 +478,13 @@
 #define TCP_RESOURCE_FAIL_RETRY_LIMIT 50
 
 #define LWIP_COMPAT_MUTEX_ALLOWED 1
+
+#if (LWIP_DNS || LWIP_IGMP || LWIP_IPV6) && !defined(LWIP_RAND)
+/* When using IGMP or IPv6, LWIP_RAND() needs to be defined to a random-function returning an u32_t random value*/
+#include "lwip/arch.h"
+u32_t lwip_rand(void);
+#define LWIP_RAND() lwip_rand()
+#endif
 
 /**
  * Support ip fragment max size 10000 in arp queue
