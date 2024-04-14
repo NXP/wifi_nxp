@@ -182,7 +182,6 @@ middleware.wifi.common_files:
     - repo_relative_path: wifidriver
     - repo_relative_path: wifidriver/incl
     files:
-    - source: incl/wifi_config_default.h
     - source: incl/wifidriver/wifi-decl.h
     - source: incl/wifidriver/wifi.h
     - source: incl/wifidriver/wifi_events.h
@@ -510,6 +509,7 @@ middleware.wifi:
     - repo_relative_path: port/net
     - repo_relative_path: incl/port/net/hooks
     files:
+    - source: incl/wifi_config_default.h
     - source: dhcpd/dhcp-bootp.h
     - source: dhcpd/dhcp-priv.h
     - source: dhcpd/dhcp-server-main.c
