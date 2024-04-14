@@ -9,8 +9,9 @@
 #define _WIFI_CONFIG_H_
 
 #include "app_config.h"
+#ifndef RW610
 #include "wifi_bt_module_config.h"
-
+#endif
 
 #if defined(SD9177)
 #define CONFIG_WMM 1
@@ -20,9 +21,12 @@
 #endif
 
 #if defined(RW610)
+#define CONFIG_MAX_RESCAN_LIMIT 30
 #define PRINTF_FLOAT_ENABLE 1
 /* WMM options */
 #define CONFIG_WMM 1
+/* OWE mode */
+#define CONFIG_DRIVER_OWE 1
 /* WLAN SCAN OPT */
 #define CONFIG_SCAN_WITH_RSSIFILTER 1
 /* WLAN white/black list opt */
@@ -49,21 +53,29 @@
 #define CONFIG_EXT_SCAN_SUPPORT 1
 #define CONFIG_11K 1
 #define CONFIG_11V 1
+#define CONFIG_11R 1
 #define CONFIG_RX_ABORT_CFG 1
 #define CONFIG_RX_ABORT_CFG_EXT 1
 #define CONFIG_CCK_DESENSE_CFG 1
 #define CONFIG_11AX_TWT 1
 #define CONFIG_IPS 1
-#define CONFIG_DRIVER_MBO 1
 #define CONFIG_SUBSCRIBE_EVENT_SUPPORT 1
 #define CONFIG_WIFI_FORCE_RTS 1
 #define CONFIG_TX_AMPDU_PROT_MODE 1
-#define CONFIG_EU_VALIDATION 1
 #define CONFIG_TSP 1
 #define CONFIG_TX_RX_HISTOGRAM 1
 #define CONFIG_CLOUD_KEEP_ALIVE 1
-#define CONFIG_MULTI_BSSID_SUPPORT 1
 #define CONFIG_TURBO_MODE 1
+#define CONFIG_UNII4_BAND_SUPPORT 1
+#define CONFIG_MMSF 1
+#define CONFIG_COEX_DUTY_CYCLE 1
+#define CONFIG_TX_RX_ZERO_COPY 1
+#define CONFIG_WIFI_CLOCKSYNC 1
+#define CONFIG_INACTIVITY_TIMEOUT_EXT 1
+#define CONFIG_MEF_CFG 1
+#define CONFIG_AUTO_NULL_TX 1
+#define CONFIG_EXTERNAL_COEX_PTA 1
+#define CONFIG_FW_VDLLV2 1
 #endif
 
 #if defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
@@ -86,6 +98,31 @@
 #define CONFIG_WPA_SUPP 1
 
 #if CONFIG_WPA_SUPP
+#ifdef RW610
+#define CONFIG_WPA_SUPP_WPS               1
+#define CONFIG_WPA_SUPP_WPA3              1
+#define CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE 1
+#define CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE 1
+#define CONFIG_WIFI_USB_FILE_ACCESS       1
+
+#define CONFIG_WPA_SUPP_DPP 1
+
+#if (CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE || CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE)
+#define CONFIG_EAP_TLS 1
+#define CONFIG_EAP_PEAP 1
+#define CONFIG_EAP_TTLS 1
+#define CONFIG_EAP_FAST 1
+#define CONFIG_EAP_SIM 1
+#define CONFIG_EAP_AKA 1
+#define CONFIG_EAP_AKA_PRIME 1
+
+#if (CONFIG_EAP_PEAP || CONFIG_EAP_TTLS || CONFIG_EAP_FAST)
+#define CONFIG_EAP_MSCHAPV2 1
+#define CONFIG_EAP_GTC 1
+#endif
+#endif
+
+#else
 #define CONFIG_WPA_SUPP_WPS               1
 #define CONFIG_WPA_SUPP_WPA3              1
 #define CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE 0
@@ -117,7 +154,7 @@
 
 #endif
 #endif
-
+#endif
 
 /* WLCMGR debug */
 #define CONFIG_WLCMGR_DEBUG 0

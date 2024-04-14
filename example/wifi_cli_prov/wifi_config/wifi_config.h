@@ -9,8 +9,9 @@
 #define _WIFI_CONFIG_H_
 
 #include "app_config.h"
+#ifndef RW610
 #include "wifi_bt_module_config.h"
-
+#endif
 
 #if defined (SD9177)
 #define CONFIG_WMM 1
@@ -31,6 +32,7 @@
 #define CONFIG_DPP 1
 #define CONFIG_WIFI_USB_FILE_ACCESS 1
 #define CONFIG_PEAP_MSCHAPV2 1
+#define CONFIG_UNII4_BAND_SUPPORT 1
 #endif
 
 /* WLCMGR debug */

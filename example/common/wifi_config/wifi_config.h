@@ -9,18 +9,11 @@
 #define _WIFI_CONFIG_H_
 
 #include "app_config.h"
-#ifndef
-#include "wifi_bt_module_config.h"
-#endif
 
-#if defined(SD8978) || defined(SD8987)
-#define CONFIG_FW_VDLL 1
-#endif
 
-#define CONFIG_RF_TEST_MODE 1
-
-#ifdef RW610
-#define CONFIG_UNII4_BAND_SUPPORT 1
+#if defined(RW610)
+#define CONFIG_HOST_SLEEP 0
+#define CONFIG_POWER_MANAGER 0
 #endif
 
 /* WLCMGR debug */
