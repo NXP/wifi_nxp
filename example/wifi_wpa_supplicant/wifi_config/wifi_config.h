@@ -179,8 +179,10 @@
 #define CONFIG_WPS_DEBUG 0
 #define CONFIG_FW_VDLL_DEBUG 0
 #define CONFIG_DHCP_SERVER_DEBUG 0
-#define CONFIG_WIFI_SDIO_DEBUG 0
 #define CONFIG_FWDNLD_IO_DEBUG 0
+#ifdef RW610
+#define CONFIG_WIFI_PS_DEBUG 0
+#endif
 
 /*
  * Heap debug options
