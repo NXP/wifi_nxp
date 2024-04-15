@@ -460,16 +460,12 @@
 #endif
 #endif
 
-#if defined(USE_RTOS) && defined(SDK_OS_FREE_RTOS)
-#include <lwip/opt.h>
-#endif
-
 #if !defined CONFIG_IPV6
-#define CONFIG_IPV6 LWIP_IPV6
+#define CONFIG_IPV6 1
 #endif
 
 #if !defined CONFIG_MAX_IPV6_ADDRESSES
-#define CONFIG_MAX_IPV6_ADDRESSES LWIP_IPV6_NUM_ADDRESSES
+#define CONFIG_MAX_IPV6_ADDRESSES 3
 #endif
 
 #if !defined CONFIG_WIFI_CAPA
