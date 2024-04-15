@@ -13,6 +13,9 @@
 #include "wifi_bt_module_config.h"
 #endif
 
+#define CONFIG_IPV6 0
+#define CONFIG_MAX_IPV6_ADDRESSES 0
+
 #if defined(SD8978) || defined(SD8987)
 #define CONFIG_FW_VDLL 1
 #endif
