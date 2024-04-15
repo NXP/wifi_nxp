@@ -304,7 +304,6 @@ static int cmd_hist_is_duplicate(const char *cmd)
     int rv = get_cmd_from_hist(last_cmd_num, tmpbuf, INBUF_SIZE);
     if (rv != WM_SUCCESS)
     {
-        (void)PRINTF("%s: read cmd %d failed\r\n", __func__, last_cmd_num);
         return false;
     }
 

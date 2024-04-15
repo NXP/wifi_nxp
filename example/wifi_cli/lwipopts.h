@@ -522,12 +522,6 @@
 
 #define LWIP_COMPAT_MUTEX_ALLOWED 1
 
-#ifndef LWIP_HOOK_FILENAME
-#define LWIP_HOOK_FILENAME                 "lwiphooks.h"
-#endif
-
-#define LWIP_HOOK_IP4_ROUTE_SRC(src, dest) lwip_hook_ip4_route_src(src, dest)
-
 /**
  * LWIP_CHECKSUM_ON_COPY==1: Calculate checksum when copying data from
  * application buffers to pbufs.
@@ -553,13 +547,21 @@ u32_t lwip_rand(void);
 #endif
 #endif
 
+#define LWIP_NUM_NETIF_CLIENT_DATA 2
+
 /* ---------- Core locking ---------- */
 
 #define LWIP_TCPIP_CORE_LOCKING 1
 
+#ifndef LWIP_HOOK_FILENAME
+#define LWIP_HOOK_FILENAME                               "lwiphooks.h"
+#endif
+
 #if CONFIG_CLOUD_KEEP_ALIVE
 #define LWIP_HOOK_TCP_OUT_ADD_TCPOPTS(p, hdr, pcb, opts) lwip_hook_tcp_out_add_tcpopts(p, hdr, pcb, opts)
 #endif
+
+#define LWIP_HOOK_IP4_ROUTE_SRC(src, dest) lwip_hook_ip4_route_src(src, dest)
 
 /**
  * Support ip fragment max size 10000 in arp queue

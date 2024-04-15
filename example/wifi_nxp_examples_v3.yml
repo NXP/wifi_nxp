@@ -460,7 +460,7 @@ wifi_cli:
           merge-to-freertosconfig: main
           package_path: boards/${board}/wifi_examples/wifi_cli/${multicore_foldername}
           project_path: source
-      demo_config:
+      demo_config_lwipopts:
         required: true
         files:
         - source: middleware/wifi_nxp/example/wifi_cli/lwipopts.h
@@ -592,7 +592,7 @@ wifi_wpa_supplicant:
           merge-to-freertosconfig: main
           package_path: boards/${board}/wifi_examples/wifi_wpa_supplicant/${multicore_foldername}
           project_path: source
-      demo_config:
+      demo_config_lwipopts:
         required: true
         files:
         - source: middleware/wifi_nxp/example/wifi_wpa_supplicant/lwipopts.h
