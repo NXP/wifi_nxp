@@ -5277,10 +5277,11 @@ int wifi_handle_fw_event(struct bus_message *msg)
             wifi_if_ctx_rtos->associated = MFALSE;
 
             wpa_supp_handle_link_lost(pmpriv);
-#endif
+#else
 #if CONFIG_11N
             /* fixme: Should this be outside CONFIG_11N ? */
             wlan_handle_disconnect_event(pmpriv);
+#endif
 #endif
             break;
         case EVENT_DEAUTHENTICATED:

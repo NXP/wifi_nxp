@@ -362,8 +362,28 @@ static mlan_status wlan_11n_scan_and_dispatch(t_void *priv, RxReorderTbl *rx_reo
 static t_void wlan_11n_delete_rxreorder_tbl_entry(mlan_private *priv, RxReorderTbl *rx_reor_tbl_ptr)
 {
     pmlan_adapter pmadapter = priv->adapter;
+    osa_status_t ret = KOSA_StatusSuccess;
 
     ENTER();
+
+    if (rx_reor_tbl_ptr == MNULL)
+    {
+        LEAVE();
+        return;
+    }
+
+    /* Get and unlick the delete node using lock */
+    ret = OSA_SemaphoreWait((osa_semaphore_handle_t)priv->rx_reorder_tbl_lock, osaWaitForever_c);
+    if (ret != KOSA_StatusSuccess)
+    {
+        PRINTM(MWARN, "%s: rx_reorder_tbl_lock not ready: %d", __func__, ret);
+        return;
+    }
+    PRINTM(MDAT_D, "Delete rx_reor_tbl_ptr: %p\n", rx_reor_tbl_ptr);
+    rx_reor_tbl_ptr = (RxReorderTbl *)(void *)util_dequeue_list(priv->adapter->pmoal_handle, &priv->rx_reorder_tbl_ptr,
+                            priv->adapter->callbacks.moal_spin_lock,
+                            priv->adapter->callbacks.moal_spin_unlock);
+    OSA_SemaphorePost((osa_semaphore_handle_t)priv->rx_reorder_tbl_lock);
 
     if (rx_reor_tbl_ptr == MNULL)
     {
@@ -383,10 +403,6 @@ static t_void wlan_11n_delete_rxreorder_tbl_entry(mlan_private *priv, RxReorderT
 
         (void)priv->adapter->callbacks.moal_free_timer(pmadapter->pmoal_handle, &rx_reor_tbl_ptr->timer_context.timer);
     }
-
-    PRINTM(MDAT_D, "Delete rx_reor_tbl_ptr: %p\n", rx_reor_tbl_ptr);
-    util_unlink_list(pmadapter->pmoal_handle, &priv->rx_reorder_tbl_ptr, (pmlan_linked_list)(void *)rx_reor_tbl_ptr,
-                     pmadapter->callbacks.moal_spin_lock, pmadapter->callbacks.moal_spin_unlock);
 
 #if !CONFIG_MEM_POOLS
     (void)pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)rx_reor_tbl_ptr->rx_reorder_ptr);

@@ -1570,6 +1570,8 @@ struct _mlan_private
     add_ba_param_t add_ba_param;
     /** last rx_seq */
     t_u16 rx_seq[MAX_NUM_TID];
+    /** Lock to the Receive Reordering table */
+    OSA_SEMAPHORE_HANDLE_DEFINE(rx_reorder_tbl_lock);
     /** Pointer to the Receive Reordering table*/
     mlan_list_head rx_reorder_tbl_ptr;
     /** Lock for Rx packets */

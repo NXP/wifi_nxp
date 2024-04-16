@@ -871,7 +871,11 @@ mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter)
                 if (priv->adapter->callbacks.moal_init_semaphore(pmadapter->pmoal_handle, "ra_list_sem",
                                                                  &priv->wmm.tid_tbl_ptr[j].ra_list.plock) !=
                     MLAN_STATUS_SUCCESS)
-                    return MLAN_STATUS_FAILURE;
+                {
+                    wifi_e("Create ra_list_sem failed");
+                    ret = MLAN_STATUS_FAILURE;
+                    goto done;
+                }
 #if CONFIG_WMM_DEBUG
                 util_init_list_head((t_void *)pmadapter->pmoal_handle, &priv->wmm.hist_ra[j], MFALSE, MNULL);
 #endif
@@ -882,13 +886,23 @@ mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter)
             if (ret != MLAN_STATUS_SUCCESS)
             {
                 wifi_e("Create Tx BA tbl sem failed");
-                return ret;
+                ret = MLAN_STATUS_FAILURE;
+                goto done;
             }
 
             util_init_list_head((t_void *)pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, MTRUE,
                                 pmadapter->callbacks.moal_init_lock);
+
+            ret = (mlan_status)OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)priv->rx_reorder_tbl_lock);
+            if (ret != MLAN_STATUS_SUCCESS)
+            {
+                wifi_e("Create Rx Reorder tbl lock failed");
+                ret = MLAN_STATUS_FAILURE;
+                goto done;
+            }
             util_init_list_head((t_void *)pmadapter->pmoal_handle, &priv->rx_reorder_tbl_ptr, MTRUE,
                                 pmadapter->callbacks.moal_init_lock);
+
             util_scalar_init((t_void *)pmadapter->pmoal_handle, &priv->wmm.tx_pkts_queued, 0,
                              priv->wmm.ra_list_spinlock, pmadapter->callbacks.moal_init_lock);
             util_scalar_init((t_void *)pmadapter->pmoal_handle, &priv->wmm.highest_queued_prio, HIGH_PRIO_TID,
@@ -898,7 +912,27 @@ mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter)
         }
     }
 
+done:
     /* error: */
+    if (ret != MLAN_STATUS_SUCCESS)
+    {
+        for (i = 0; i < pmadapter->priv_num; i++)
+        {
+            priv = pmadapter->priv[i];
+#ifdef CONFIG_WMM
+            for (j = 0; j < MAX_AC_QUEUES; ++j)
+            {
+                if ((uint32_t *)(*(uint32_t *)priv->wmm.tid_tbl_ptr[j].ra_list.plock) != NULL)
+                    priv->adapter->callbacks.moal_free_semaphore(
+                        pmadapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[j].ra_list.plock);
+            }
+#endif
+            if ((uint32_t *)(*(uint32_t *)priv->tx_ba_stream_tbl_lock) != NULL)
+                OSA_MutexDestroy((osa_mutex_handle_t)priv->tx_ba_stream_tbl_lock);
+            if ((uint32_t *)(*(uint32_t *)priv->rx_reorder_tbl_lock) != NULL)
+                OSA_SemaphoreDestroy((osa_semaphore_handle_t)priv->rx_reorder_tbl_lock);
+        }
+    }
     LEAVE();
     return ret;
 }

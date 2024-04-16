@@ -2188,6 +2188,7 @@ static void wifi_core_deinit(void)
         {
             wlan_clean_txrx(mlan_adap->priv[i]);
             (void)OSA_MutexDestroy((osa_mutex_handle_t)mlan_adap->priv[i]->tx_ba_stream_tbl_lock);
+            (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)mlan_adap->priv[i]->rx_reorder_tbl_lock);
 #if CONFIG_WMM
             wlan_ralist_deinit_enh(mlan_adap->priv[i]);
 #endif
