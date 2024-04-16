@@ -4641,6 +4641,49 @@ int wifi_set_uap_frag(int frag_threshold)
     return rv;
 }
 
+void wifi_nxp_uap_disconnect(mlan_private *priv, t_u16 reason_code, t_u8 *mac)
+{
+    wlan_mgmt_pkt *pmgmt_pkt_hdr    = MNULL;
+    nxp_wifi_event_mlme_t *mgmt_rx  = &wm_wifi.mgmt_rx;
+    t_u8 *pos                       = MNULL;
+    t_u16 reason;
+    t_u32 payload_len;
+
+    pmgmt_pkt_hdr = wifi_PrepDefaultMgtMsg(SUBTYPE_DEAUTH, (mlan_802_11_mac_addr *)(void *)priv->curr_addr,
+        (mlan_802_11_mac_addr *)(void *)mac, (mlan_802_11_mac_addr *)(void *)priv->curr_addr, 100);
+    if (pmgmt_pkt_hdr == MNULL)
+    {
+        wifi_e("No memory available for deauth");
+        return;
+    }
+
+    pos = (t_u8 *)pmgmt_pkt_hdr + sizeof(wlan_mgmt_pkt);
+    reason = wlan_cpu_to_le16(reason_code);
+    (void)memcpy(pos, &reason, sizeof(reason));
+    payload_len = sizeof(reason) + sizeof(pmgmt_pkt_hdr->wlan_header);
+
+    if (payload_len <= (int)sizeof(mgmt_rx->frame.frame))
+    {
+        memset(mgmt_rx, 0, sizeof(nxp_wifi_event_mlme_t));
+        mgmt_rx->frame.frame_len = payload_len;
+        (void)memcpy((void *)mgmt_rx->frame.frame, (const void *)(&pmgmt_pkt_hdr->wlan_header), mgmt_rx->frame.frame_len);
+        if (wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn)
+        {
+            wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn(wm_wifi.hapd_if_priv, mgmt_rx, mgmt_rx->frame.frame_len);
+        }
+    }
+    else
+    {
+        wifi_e("Insufficient frame buffer");
+    }
+
+#if !CONFIG_MEM_POOLS
+    OSA_MemoryFree(pmgmt_pkt_hdr);
+#else
+    OSA_MemoryPoolFree(buf_1536_MemoryPool, pmgmt_pkt_hdr);
+#endif
+}
+
 int wifi_nxp_stop_ap()
 {
     mlan_private *priv = (mlan_private *)mlan_adap->priv[1];

@@ -5926,7 +5926,18 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
 #endif
             break;
         case WIFI_EVENT_UAP_CLIENT_DEAUTH:
+#ifdef CONFIG_WPA_SUPP_AP
+            {
+                wlan_uap_client_disassoc_t *disassoc_resp = msg->data;
+                /* BIT 14 indicate deauth is initiated by FW */
+                if(!(disassoc_resp->reason_code & MBIT(14)))
+                {
+                    wifi_nxp_sta_remove(disassoc_resp->sta_addr);
+                }
+            }
+#else
             CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_DISSOC, msg->data);
+#endif
             /* This was allocated by the sender */
 #if !CONFIG_MEM_POOLS
             OSA_MemoryFree(msg->data);

@@ -5064,6 +5064,7 @@ static void wifi_handle_blocked_sta_report(Event_Ext_t *evt)
 #define IEEEtypes_REASON_UNSPEC             1U
 #define IEEEtypes_REASON_PRIOR_AUTH_INVALID 2U
 #define IEEEtypes_REASON_DEAUTH_LEAVING     3
+#define IEEEtypes_REASON_DISASSOC_DUE_TO_INACTIVITY 4U
 #define AP_DEAUTH_REASON_MAC_ADDR_BLOCKED   6U
 
 #if CONFIG_WIFI_TX_PER_TRACK
@@ -5748,13 +5749,22 @@ int wifi_handle_fw_event(struct bus_message *msg)
 
             wlan_delete_station_entry(pmpriv_uap, sta_addr);
 
-#if CONFIG_WPA_SUPP
-#if !CONFIG_MEM_POOLS
-            OSA_MemoryFree((void *)disassoc_resp);
-#else
-            OSA_MemoryPoolFree(buf_32_MemoryPool, disassoc_resp);
+#ifdef CONFIG_WPA_SUPP_AP
+            /* BIT 14 indicate deauth is initiated by FW */
+            if (disassoc_resp->reason_code & MBIT(14))
+            {
+                if (disassoc_resp->reason_code & MBIT(1))
+                {
+                    t_u16 reason_code = IEEEtypes_REASON_DISASSOC_DUE_TO_INACTIVITY;
+                    wifi_nxp_uap_disconnect(pmpriv_uap, reason_code, sta_addr);
+                }
+                else
+                {
+                    wifi_nxp_uap_disconnect(pmpriv_uap, 0, sta_addr);
+                }
+            }
 #endif
-#else
+
             if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_DEAUTH, WIFI_EVENT_REASON_SUCCESS, disassoc_resp) !=
                 WM_SUCCESS)
             {
@@ -5765,7 +5775,6 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 OSA_MemoryPoolFree(buf_32_MemoryPool, disassoc_resp);
 #endif
             }
-#endif /* CONFIG_WPA_SUPP */
 #if CONFIG_WMM
             wlan_ralist_del_enh(mlan_adap->priv[1], evt->src_mac_addr);
 #endif
