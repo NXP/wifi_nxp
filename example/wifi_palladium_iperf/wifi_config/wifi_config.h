@@ -13,6 +13,9 @@
 #define CONFIG_POWER_MANAGER 0
 #endif
 
+#define CONFIG_IPV6 1
+#define CONFIG_MAX_IPV6_ADDRESSES 3
+
 /* WLCMGR debug */
 #define CONFIG_WLCMGR_DEBUG 0
 

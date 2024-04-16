@@ -461,11 +461,11 @@
 #endif
 
 #if !defined CONFIG_IPV6
-#define CONFIG_IPV6 1
+#define CONFIG_IPV6 0
 #endif
 
 #if !defined CONFIG_MAX_IPV6_ADDRESSES
-#define CONFIG_MAX_IPV6_ADDRESSES 3
+#define CONFIG_MAX_IPV6_ADDRESSES 0
 #endif
 
 #if !defined CONFIG_WIFI_CAPA

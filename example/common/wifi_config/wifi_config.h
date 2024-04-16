@@ -13,6 +13,9 @@
 #include "wifi_bt_module_config.h"
 #endif
 
+#define CONFIG_IPV6 1
+#define CONFIG_MAX_IPV6_ADDRESSES 3
+
 #if defined(RW610)
 #define PRINTF_FLOAT_ENABLE 1
 #define CONFIG_SCAN_WITH_RSSIFILTER 1

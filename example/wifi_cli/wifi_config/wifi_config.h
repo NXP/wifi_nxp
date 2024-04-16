@@ -13,6 +13,9 @@
 #include "wifi_bt_module_config.h"
 #endif
 
+#define CONFIG_IPV6 1
+#define CONFIG_MAX_IPV6_ADDRESSES 3
+
 #if defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
 #define CONFIG_WIFI_CAPA 1
 #define CONFIG_ROAMING    1

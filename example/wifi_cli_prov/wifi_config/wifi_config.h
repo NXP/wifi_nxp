@@ -13,6 +13,9 @@
 #include "wifi_bt_module_config.h"
 #endif
 
+#define CONFIG_IPV6 1
+#define CONFIG_MAX_IPV6_ADDRESSES 3
+
 #if defined (SD9177)
 #define CONFIG_WMM 1
 #endif
