@@ -328,7 +328,6 @@
  */
 #define LWIP_RAW 1
 
-#if CONFIG_IPV6
 #define LWIP_IPV6 1
 
 /**
@@ -338,7 +337,7 @@
  */
 
 #define LWIP_NETIF_IPV6_STATUS_CALLBACK LWIP_IPV6
-#endif
+
 /* Enable IPv4 Auto IP	*/
 #if CONFIG_AUTOIP
 #define LWIP_AUTOIP                 1
