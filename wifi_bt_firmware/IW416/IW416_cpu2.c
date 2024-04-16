@@ -11,7 +11,7 @@
 
 #if defined(SD8978)
 
-#if (CONFIG_BT_IND_DNLD)
+#if defined(CONFIG_BT_IND_DNLD)
 
 const uint8_t fw_cpu2[] = {
 #include <uartIW416_bt.bin.inc>
