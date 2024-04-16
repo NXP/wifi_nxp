@@ -10358,7 +10358,9 @@ void wlan_reset(cli_reset_option ResetOption)
 static void wlcmgr_mon_task(void * data)
 {
     unsigned long delay_ms = 5000;
+#if CONFIG_HOST_SLEEP
     int ret = 0;
+#endif
     osa_status_t status;
     struct wlan_message msg;
 
