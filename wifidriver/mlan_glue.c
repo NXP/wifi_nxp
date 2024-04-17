@@ -2420,14 +2420,15 @@ int wifi_set_scan_ies(void *ie, size_t ie_len)
 #if CONFIG_WPA_SUPP_WPS
 static int wifi_assocreq_wps_ie_cfg(mlan_private *priv)
 {
-    int ret = WM_SUCCESS;
+    int ret       = WM_SUCCESS;
     int wpsie_len = 0;
-    u8 *wps_buf = NULL;
-    wpsie_len = sizeof(IEEEtypes_Header_t) + priv->wps.wps_ie.vend_hdr.len;
-    wps_buf = (t_u8 *)OSA_MemoryAllocate(wpsie_len);
+    u8 *wps_buf   = NULL;
+    wpsie_len     = sizeof(IEEEtypes_Header_t) + priv->wps.wps_ie.vend_hdr.len;
+    wps_buf       = (t_u8 *)OSA_MemoryAllocate(wpsie_len);
     (void)memset(wps_buf, 0, wpsie_len);
     (void)__memcpy(priv->adapter, wps_buf, (t_u8 *)&priv->wps.wps_ie, wpsie_len);
-    priv->wps.wps_mgmt_bitmap_index = wifi_set_mgmt_ie2(priv->bss_type, MGMT_MASK_ASSOC_REQ | MGMT_MASK_REASSOC_REQ, (void *)wps_buf, wpsie_len);
+    priv->wps.wps_mgmt_bitmap_index =
+        wifi_set_mgmt_ie2(priv->bss_type, MGMT_MASK_ASSOC_REQ | MGMT_MASK_REASSOC_REQ, (void *)wps_buf, wpsie_len);
     if (-WM_FAIL != priv->wps.wps_mgmt_bitmap_index)
         ret = WM_SUCCESS;
     else
@@ -2706,6 +2707,10 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
     }
 #else
     wcmdr_d("CMD_RESP - : 0x%x, result %d, len %d, seqno 0x%x", resp->command, resp->result, resp->size, resp->seq_num);
+#endif
+
+#if CONFIG_FW_VDLL
+    mlan_adap->vdll_in_progress = MFALSE;
 #endif
 
     mlan_bss_type bss_type = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
@@ -4285,7 +4290,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #endif
                 if (cancel_channel != NULL)
                 {
-                    *cancel_channel = remain_channel->action == HostCmd_ACT_GEN_REMOVE ? MTRUE : MFALSE;
+                    *cancel_channel              = remain_channel->action == HostCmd_ACT_GEN_REMOVE ? MTRUE : MFALSE;
                     mlan_adap->remain_on_channel = remain_channel->action == HostCmd_ACT_GEN_REMOVE ? MFALSE : MTRUE;
                     if (*cancel_channel)
                     {
@@ -5106,11 +5111,11 @@ static void wifi_handle_blocked_sta_report(Event_Ext_t *evt)
 }
 
 /* fixme: duplicated from legacy. needs to be cleaned up later */
-#define IEEEtypes_REASON_UNSPEC             1U
-#define IEEEtypes_REASON_PRIOR_AUTH_INVALID 2U
-#define IEEEtypes_REASON_DEAUTH_LEAVING     3
+#define IEEEtypes_REASON_UNSPEC                     1U
+#define IEEEtypes_REASON_PRIOR_AUTH_INVALID         2U
+#define IEEEtypes_REASON_DEAUTH_LEAVING             3
 #define IEEEtypes_REASON_DISASSOC_DUE_TO_INACTIVITY 4U
-#define AP_DEAUTH_REASON_MAC_ADDR_BLOCKED   6U
+#define AP_DEAUTH_REASON_MAC_ADDR_BLOCKED           6U
 
 #if CONFIG_WIFI_TX_PER_TRACK
 #define OFFSET_SEQNUM 8
