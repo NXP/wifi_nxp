@@ -922,7 +922,7 @@ done:
         for (i = 0; i < pmadapter->priv_num; i++)
         {
             priv = pmadapter->priv[i];
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
             for (j = 0; j < MAX_AC_QUEUES; ++j)
             {
                 if ((uint32_t *)(*(uint32_t *)priv->wmm.tid_tbl_ptr[j].ra_list.plock) != NULL)
