@@ -473,6 +473,13 @@
  */
 #define LWIP_NETIF_HOSTNAME 1
 
+#if (LWIP_DNS || LWIP_IGMP || LWIP_IPV6) && !defined(LWIP_RAND)
+/* When using IGMP or IPv6, LWIP_RAND() needs to be defined to a random-function returning an u32_t random value*/
+#include "lwip/arch.h"
+u32_t lwip_rand(void);
+#define LWIP_RAND() lwip_rand()
+#endif
+
 /**
  * TCP_RESOURCE_FAIL_RETRY_LIMIT: limit for retrying sending of tcp segment
  * on resource failure error returned by driver.
