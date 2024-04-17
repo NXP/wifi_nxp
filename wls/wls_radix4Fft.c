@@ -1,4 +1,3 @@
-#if CONFIG_WLS_CSI_PROC
 /** @file wls_radix4Fft.c
   *
   * @brief This file contains fixed-point radix-4 FFT function
@@ -13,7 +12,9 @@
 * DFW fixed-point radix-4 FFT function
 ************************************************************************/
 
-//
+#include <osa.h>
+#if CONFIG_WLS_CSI_PROC
+
 #include <stdio.h>
 #include "wls_param_defines.h"
 #include "wls_radix4Fft.h"

@@ -1,4 +1,3 @@
-#if CONFIG_WLS_CSI_PROC
 /** @file range_kalman.c
  *
  * @brief This file contains Kalman filter for WLS range measurements
@@ -8,6 +7,9 @@
  * SPDX-License-Identifier: BSD-3-Clause
  *
  */
+
+#include <osa.h>
+#if CONFIG_WLS_CSI_PROC
 
 #include "range_kalman.h"
 #include "fsl_debug_console.h"

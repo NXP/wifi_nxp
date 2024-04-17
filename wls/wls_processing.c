@@ -1,4 +1,3 @@
-#if CONFIG_WLS_CSI_PROC
 /** @file  wls_processing.c
   *
   * @brief This file contains processing functions to calculate CSI correction for WLS time stamps
@@ -12,6 +11,9 @@
 /************************************************************************
 * DFW processing functions to calculate CSI correction for WLS time stamps
 ************************************************************************/
+
+#include <osa.h>
+#if CONFIG_WLS_CSI_PROC
 
 // Standard includes.
 #include <stdio.h>

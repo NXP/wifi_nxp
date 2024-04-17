@@ -1,4 +1,3 @@
-#if CONFIG_WLS_CSI_PROC
 /** @file wls_api.c
  *
  * @brief This file contains source code for CSI processing API.
@@ -12,6 +11,9 @@
 /************************************************************************
  * DFW source code for CSI processing API.
  ************************************************************************/
+
+#include <osa.h>
+#if CONFIG_WLS_CSI_PROC
 
 // Standard includes.
 // #include <stdio.h>

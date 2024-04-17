@@ -5945,8 +5945,8 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
 #if (CONFIG_11AZ) || (CONFIG_11MC)
 #if CONFIG_WLS_CSI_PROC
-            wifi_get_wls_csi_sem(); // Get wls csi sem to prevent CSI event raw data from being overwritten before
-                                    // processing.
+            // wifi_get_wls_csi_sem(); // Get wls csi sem to prevent CSI event raw data from being overwritten before
+            //  processing.
             memcpy(wls_data, (t_u8 *)msg->data, WLS_CSI_DATA_LEN);
             wifi_event_completion(WIFI_EVENT_WLS_CSI, WIFI_EVENT_REASON_SUCCESS, wls_data);
 #endif

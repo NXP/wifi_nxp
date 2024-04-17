@@ -1,4 +1,3 @@
-#if CONFIG_WLS_CSI_PROC
 /** @file wls_QR_algorithm.c
  *
  * @brief This file contains the QR algorithm processing code.
@@ -12,6 +11,9 @@
 /************************************************************************
  * DFW code that defines the QR algorithm processing.
  ************************************************************************/
+
+#include <osa.h>
+#if CONFIG_WLS_CSI_PROC
 
 // Standard includes.
 #include <stdio.h>

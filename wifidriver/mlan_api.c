@@ -6354,7 +6354,7 @@ int wifi_process_wls_csi_event(void *p_data)
     int ret;
 
     proc_csi_event(((t_u8 *)p_data + sizeof(csi_event_t)), csi_res_array);
-    wifi_put_wls_csi_sem(); // After processing CSI raw data, release csi sem for next CSI event.
+    // wifi_put_wls_csi_sem(); // After processing CSI raw data, release csi sem for next CSI event.
     ret = send_csi_ack(csi_res_array);
     return ret;
 }

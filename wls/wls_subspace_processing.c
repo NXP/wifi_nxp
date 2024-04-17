@@ -1,4 +1,3 @@
-#if CONFIG_WLS_CSI_PROC
 /** @file wls_subspace_processing.c
   *
   * @brief This file contains source code to calculate fine timing using sub-space methods (ESPRIT)
@@ -12,6 +11,9 @@
 /************************************************************************
 * DFW Source code to calculate fine timing using sub-space methods (ESPRIT)
 ************************************************************************/
+
+#include <osa.h>
+#if CONFIG_WLS_CSI_PROC
 
 // Standard includes.
 #include <stdio.h>
