@@ -6104,9 +6104,6 @@ static void wlcm_deinit(int action)
 
     wifi_scan_stop();
     wifi_deinit();
-#ifndef __ZEPHYR__
-    wlan_dhcp_cleanup();
-#endif
 
     wlan.status = WLCMGR_INACTIVE;
 }
@@ -8198,6 +8195,10 @@ int wlan_stop(void)
         wlcm_w("failed to terminate thread: %d", ret);
         return WLAN_ERROR_STATE;
     }
+
+#ifndef __ZEPHYR__
+    wlan_dhcp_cleanup();
+#endif
 
     (void)net_wlan_deinit();
 
