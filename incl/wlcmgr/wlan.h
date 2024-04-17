@@ -349,6 +349,7 @@ typedef enum
 #define WLAN_KEY_MGMT_DPP                   MBIT(23)
 #define WLAN_KEY_MGMT_FT_IEEE8021X_SHA384   MBIT(24)
 #define WLAN_KEY_MGMT_PASN                  MBIT(25)
+#define WLAN_KEY_MGMT_SAE_EXT_KEY           MBIT(26)
 
 #define WLAN_KEY_MGMT_FT                                                                                            \
     (WLAN_KEY_MGMT_FT_PSK | WLAN_KEY_MGMT_FT_IEEE8021X | WLAN_KEY_MGMT_FT_IEEE8021X_SHA384 | WLAN_KEY_MGMT_FT_SAE | \
@@ -1027,6 +1028,8 @@ enum wlan_security_type
     WLAN_SECURITY_WPA3_FT_SAE,
 #endif
 #endif
+    /** The network uses WPA3 security with SAE EXT KEY. */
+    WLAN_SECURITY_WPA3_SAE_EXT_KEY,
     /** The network uses WPA2/WPA3 SAE mixed security with PSK. */
     WLAN_SECURITY_WPA2_WPA3_SAE_MIXED,
 #if CONFIG_DRIVER_OWE
@@ -1246,6 +1249,7 @@ static inline int is_valid_security(int security)
         (security == WLAN_SECURITY_WPA3_FT_SAE) ||
 #endif
 #endif
+        (security == WLAN_SECURITY_WPA3_SAE_EXT_KEY) ||
         (security == WLAN_SECURITY_WILDCARD))
     {
         return 1;

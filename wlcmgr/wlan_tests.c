@@ -439,6 +439,9 @@ static void print_network(struct wlan_network *network)
             }
             (void)PRINTF("\r\n");
             break;
+        case WLAN_SECURITY_WPA3_SAE_EXT_KEY:
+            (void)PRINTF("%s: WPA3-SAE-EXT-KEY\r\n", sec_tag(network));
+            break;
 #if CONFIG_WPA_SUPP
 #if CONFIG_11R
         case WLAN_SECURITY_WPA3_FT_SAE:
@@ -1186,7 +1189,8 @@ static void test_wlan_add(int argc, char **argv)
 #endif
         else if ((info.security3 == 0U) && string_equal("wpa3", argv[arg]))
         {
-            if ((string_equal(argv[arg + 1], "sae") != false) || (string_equal(argv[arg + 1], "ft-sae") != false))
+            if ((string_equal(argv[arg + 1], "sae") != false) || (string_equal(argv[arg + 1], "ft-sae") != false) ||
+                (string_equal(argv[arg + 1], "sae-ext-key") != false))
             {
                 arg += 1;
 
@@ -1204,9 +1208,14 @@ static void test_wlan_add(int argc, char **argv)
                     network.security.key_mgmt |= WLAN_KEY_MGMT_SAE;
                     arg += 1;
 
+                    if (string_equal(argv[arg], "sae-ext-key") != false)
+                    {
+                        network.security.key_mgmt |= WLAN_KEY_MGMT_SAE_EXT_KEY;
+                        arg += 1;
+                    }
 #if CONFIG_WPA_SUPP
 #if CONFIG_11R
-                    if (string_equal(argv[arg], "ft-sae") != false)
+                    else if (string_equal(argv[arg], "ft-sae") != false)
                     {
                         network.security.key_mgmt |= WLAN_KEY_MGMT_FT_SAE;
                         arg += 1;
@@ -1230,6 +1239,18 @@ static void test_wlan_add(int argc, char **argv)
                 }
 #endif
 #endif
+                else if (string_equal(argv[arg], "sae-ext-key") != false)
+                {
+                    network.security.type = WLAN_SECURITY_WPA3_SAE_EXT_KEY;
+                    network.security.key_mgmt |= WLAN_KEY_MGMT_SAE_EXT_KEY;
+                    arg += 1;
+
+                    if (string_equal(argv[arg], "sae") != false)
+                    {
+                        network.security.key_mgmt |= WLAN_KEY_MGMT_SAE;
+                        arg += 1;
+                    }
+                }
                 /* copy the SAE password */
                 network.security.password_len = strlen(argv[arg]);
                 if (network.security.password_len == 0U)

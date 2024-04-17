@@ -4695,7 +4695,8 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
     wifi_wfd_event(false, false, NULL);
 #endif
 #if CONFIG_WPA_SUPP
-    if (network->security.type == WLAN_SECURITY_WPA3_SAE &&
+    if ((network->security.type == WLAN_SECURITY_WPA3_SAE ||
+         network->security.type == WLAN_SECURITY_WPA3_SAE_EXT_KEY) &&
         (msg->reason == WLAN_REASON_PREV_AUTH_NOT_VALID ||
         msg->reason == WLAN_REASON_DISASSOC_DUE_TO_INACTIVITY ||
         msg->reason == WLAN_REASON_INVALID_IE))
@@ -8331,6 +8332,7 @@ static bool wlan_is_key_valid(struct wlan_network *network)
         case WLAN_SECURITY_WPA3_FT_SAE:
 #endif
 #endif
+        case WLAN_SECURITY_WPA3_SAE_EXT_KEY:
             if (network->security.password_len < WLAN_PASSWORD_MIN_LENGTH ||
                 network->security.password_len > WLAN_PASSWORD_MAX_LENGTH)
             {
@@ -8537,13 +8539,15 @@ static int wlan_key_mgmt_sae(int akm)
 #if CONFIG_WPA_SUPP_DPP
             WLAN_KEY_MGMT_DPP |
 #endif
-            WLAN_KEY_MGMT_SAE);
+            WLAN_KEY_MGMT_SAE |
+            WLAN_KEY_MGMT_SAE_EXT_KEY);
 
     akm &= ~(
 #if CONFIG_WPA_SUPP_DPP
             WLAN_KEY_MGMT_DPP |
 #endif
-            WLAN_KEY_MGMT_SAE);
+            WLAN_KEY_MGMT_SAE |
+            WLAN_KEY_MGMT_SAE_EXT_KEY);
 
     return (!akm && rakm);
 }
@@ -8688,6 +8692,7 @@ int wlan_add_network(struct wlan_network *network)
 
     if (((network->role == WLAN_BSS_ROLE_UAP) || (network->role == WLAN_BSS_ROLE_STA)) &&
         ((network->security.type == WLAN_SECURITY_WPA3_SAE)
+        || (network->security.type == WLAN_SECURITY_WPA3_SAE_EXT_KEY)
 #if CONFIG_DRIVER_OWE
          || (network->security.type == WLAN_SECURITY_OWE_ONLY)
 #endif
@@ -8751,6 +8756,10 @@ int wlan_add_network(struct wlan_network *network)
         {
             network->security.key_mgmt = WLAN_KEY_MGMT_SAE;
         }
+        else if (network->security.type == WLAN_SECURITY_WPA3_SAE_EXT_KEY)
+        {
+            network->security.key_mgmt = WLAN_KEY_MGMT_SAE_EXT_KEY;
+        }
 #if CONFIG_DRIVER_OWE
         else if (network->security.type == WLAN_SECURITY_OWE_ONLY)
         {
@@ -8804,6 +8813,7 @@ int wlan_add_network(struct wlan_network *network)
         || ((network->security.type == WLAN_SECURITY_WPA2_FT) && (!wlan_key_mgmt_ft_psk(network->security.key_mgmt)))
 #endif
         || ((network->security.type == WLAN_SECURITY_WPA3_SAE) && (!wlan_key_mgmt_sae(network->security.key_mgmt)))
+        || ((network->security.type == WLAN_SECURITY_WPA3_SAE_EXT_KEY) && (!wlan_key_mgmt_sae(network->security.key_mgmt)))
 #if CONFIG_WPA_SUPP
 #if CONFIG_11R
         || ((network->security.type == WLAN_SECURITY_WPA3_FT_SAE) && (!wlan_key_mgmt_ft_sae(network->security.key_mgmt)))

@@ -496,6 +496,7 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
     t_u8 oui[4] = {0x00, 0x0f, 0xac, 0x00};
 
     /* AKM Perference Order:
+       (13) AKM_SUITE_TYPE_SAE_EXT_KEY       = 24
        (12) AKM_SUITE_TYPE_1X_SUITEB_FT_SHA384  = 13
        (11) AKM_SUITE_TYPE_1X_SUITEB_SHA384  = 12
        (10) AKM_SUITE_TYPE_1X_SUITEB_SHA256  = 11
@@ -512,7 +513,7 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
     */
     t_u8 akm_type_selected;
     t_u8 akm_type_id        = 0;
-    t_u8 akm_preference[19] = {0, 7, 1, 9, 3, 8, 2, 0, 5, 6, 0, 10, 11, 12, 0, 0, 0, 0, 4};
+    t_u8 akm_preference[25] = {0, 7, 1, 9, 3, 8, 2, 0, 5, 6, 0, 10, 11, 12, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 13};
 
     int ap_mfpc = 0, ap_mfpr = 0, ret = MLAN_STATUS_SUCCESS;
 
@@ -637,7 +638,7 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
                 *akm_type = AssocAgentAuth_Owe;
             }
 #endif
-            else if (akm_type_id == 8)
+            else if (akm_type_id == 8 || akm_type_id == 24)
             {
                 *akm_type = AssocAgentAuth_Wpa3Sae;
             }
@@ -692,7 +693,7 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
                     break;
                 }
 #endif
-                else if ((*akm_type == AssocAgentAuth_Wpa3Sae) && (ptr[3] == 8))
+                else if ((*akm_type == AssocAgentAuth_Wpa3Sae) && (ptr[3] == 8 || ptr[3] == 24))
                 {
                     break;
                 }
