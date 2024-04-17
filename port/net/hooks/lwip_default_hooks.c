@@ -8,15 +8,15 @@
  *
  */
 
+#include <osa.h>
+
 #if defined(SDK_OS_FREE_RTOS)
 
 #include "lwip/tcpip.h"
 #include "lwip/prot/tcp.h"
 #include "lwip/tcp.h"
-#if CONFIG_CLOUD_KEEP_ALIVE
 #include "lwip_default_hooks.h"
 #include "wlan.h"
-#endif
 
 struct netif *lwip_hook_ip4_route_src(const ip4_addr_t *src, const ip4_addr_t *dest)
 {
@@ -65,6 +65,11 @@ u32_t *lwip_hook_tcp_out_add_tcpopts(struct pbuf *p, struct tcp_hdr *hdr, const 
 
     return opts;
 }
+#else
+u32_t *lwip_hook_tcp_out_add_tcpopts(struct pbuf *p, struct tcp_hdr *hdr, const struct tcp_pcb *pcb, u32_t *opts)
+{
+	return 0;
+}
+#endif
 #endif
 
-#endif
