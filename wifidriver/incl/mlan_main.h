@@ -1189,6 +1189,7 @@ typedef struct
 {
     /** WPS IE */
     IEEEtypes_VendorSpecific_t wps_ie;
+    int wps_mgmt_bitmap_index;
     /** Session enable flag */
     t_u8 session_enable;
 } wps_t;

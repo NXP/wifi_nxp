@@ -96,8 +96,9 @@ t_void wlan_reset_connect_state(pmlan_private priv, t_u8 drv_disconnect)
 
     priv->sec_info.encryption_mode = MLAN_ENCRYPTION_MODE_NONE;
 #endif /* CONFIG_MLAN_WMSDK */
-#if CONFIG_WPS2
+#if (CONFIG_WPS2) || (CONFIG_WPA_SUPP_WPS)
     priv->wps.session_enable = MFALSE;
+    priv->wps.wps_mgmt_bitmap_index = -1;
     (void)__memset(priv->adapter, (t_u8 *)&priv->wps.wps_ie, 0x00, sizeof(priv->wps.wps_ie));
 #endif /* CONFIG_WPS2 */
 

@@ -435,6 +435,9 @@ mlan_status wlan_init_priv(pmlan_private priv)
     reset_ie_index();
     priv->default_scan_ies_len = 0;
     priv->probe_req_index      = -1;
+#if CONFIG_WPA_SUPP_WPS
+    priv->wps.wps_mgmt_bitmap_index = -1;
+#endif
 #if CONFIG_WPA_SUPP_AP
     priv->beacon_vendor_index = -1;
     priv->beacon_index        = 0;

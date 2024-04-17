@@ -2416,6 +2416,28 @@ int wifi_set_scan_ies(void *ie, size_t ie_len)
     return WM_SUCCESS;
 }
 
+#if CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP_WPS
+static int wifi_assocreq_wps_ie_cfg(mlan_private *priv)
+{
+    int ret = WM_SUCCESS;
+    int wpsie_len = 0;
+    u8 *wps_buf = NULL;
+    wpsie_len = sizeof(IEEEtypes_Header_t) + priv->wps.wps_ie.vend_hdr.len;
+    wps_buf = (t_u8 *)OSA_MemoryAllocate(wpsie_len);
+    (void)memset(wps_buf, 0, wpsie_len);
+    (void)__memcpy(priv->adapter, wps_buf, (t_u8 *)&priv->wps.wps_ie, wpsie_len);
+    priv->wps.wps_mgmt_bitmap_index = wifi_set_mgmt_ie2(priv->bss_type, MGMT_MASK_ASSOC_REQ | MGMT_MASK_REASSOC_REQ, (void *)wps_buf, wpsie_len);
+    if (-WM_FAIL != priv->wps.wps_mgmt_bitmap_index)
+        ret = WM_SUCCESS;
+    else
+        ret = -WM_FAIL;
+    OSA_MemoryFree(wps_buf);
+    return ret;
+}
+#endif
+#endif
+
 int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
 {
     int ret                    = -WM_FAIL;
@@ -2479,6 +2501,29 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
         wifi_w("Could not set the IEs");
         return -WM_FAIL;
     }
+#if CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP_WPS
+    if (priv->wps.wps_mgmt_bitmap_index != -1)
+    {
+        ret = wifi_clear_mgmt_ie2(priv->bss_type, priv->wps.wps_mgmt_bitmap_index);
+        if (ret != WM_SUCCESS)
+        {
+            wifi_e("Clear Assoc req IE failed");
+            return -WM_FAIL;
+        }
+        priv->wps.wps_mgmt_bitmap_index = -1;
+    }
+    else if (priv->wps.session_enable == MTRUE)
+    {
+        ret = wifi_assocreq_wps_ie_cfg(priv);
+        if (ret != WM_SUCCESS)
+        {
+            wifi_w("add WPS_IE to assocreq fail");
+            return -WM_FAIL;
+        }
+    }
+#endif
+#endif
 
     (void)wifi_set_rx_mgmt_indication(MLAN_BSS_TYPE_STA, WIFI_MGMT_DEAUTH | WIFI_MGMT_DIASSOC | WIFI_MGMT_ACTION);
 
