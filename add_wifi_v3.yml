@@ -30,7 +30,7 @@ middleware.wifi.wifi_bt_config.template:
     vendor: NXP
     user_visible: never
     taxonomy:
-      csub: template
+      csub: wifi_bt_config_template
       belong_to: wifi
     display_name: Wi-Fi configuration template
 
@@ -66,7 +66,7 @@ middleware.wifi.template:
     vendor: NXP
     user_visible: never
     taxonomy:
-      csub: template
+      csub: wifi_template
       belong_to: wifi
     display_name: Wi-Fi configuration template
   dependency:
@@ -318,7 +318,7 @@ middleware.wifi.net_free_rtos:
     full_name: NXP WLAN OSA
     description: NXP WLAN OSA
     taxonomy:
-      csub: nxp_wifi_osa_free_rtos
+      csub: nxp_wifi_net_free_rtos
       belong_to: wifi
     display_name: nxp wifi osa free_rtos
   dependency:
@@ -348,7 +348,7 @@ middleware.wifi.net_thread:
     full_name: NXP WLAN OSA
     description: NXP WLAN OSA
     taxonomy:
-      csub: nxp_wifi_osa_thread
+      csub: nxp_wifi_net_thread
       belong_to: wifi
     display_name: nxp wifi osa thread
   dependency:
@@ -372,7 +372,7 @@ middleware.wifi.net:
     full_name: NXP WLAN OSA
     description: NXP WLAN OSA
     taxonomy:
-      csub: nxp_wifi_osa
+      csub: nxp_wifi_net
       belong_to: wifi
     display_name: nxp wifi osa
   dependency:
@@ -770,7 +770,7 @@ middleware.wifi.wmtime:
     version: 1.0.0
     description: Middlware Wi-Fi WMTIME
     taxonomy:
-      csub: cli
+      csub: wmtime
       belong_to: wifi
     display_name: wifi_nxp_wmtime
   dependency:
