@@ -6548,7 +6548,7 @@ int wifi_sta_inactivityto(wifi_inactivity_to_t *inac_to, t_u16 cmd_action)
 #endif
 
 #if CONFIG_AUTO_NULL_TX
-int wifi_auto_null_tx(wifi_auto_null_tx_t *auto_null_tx)
+int wifi_auto_null_tx(wifi_auto_null_tx_t *auto_null_tx, mlan_bss_type bss_type)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd         = wifi_get_command_buffer();
@@ -6558,7 +6558,7 @@ int wifi_auto_null_tx(wifi_auto_null_tx_t *auto_null_tx)
         return -WM_E_INVAL;
 
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
-    cmd->seq_num        = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_STA);
+    cmd->seq_num        = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, bss_type);
     cmd->command        = wlan_cpu_to_le16(HostCmd_CMD_AUTO_TX);
     cmd->size           = S_DS_GEN + sizeof(HostCmd_DS_AUTO_TX);
     auto_tx_cmd->action = wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);

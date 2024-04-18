@@ -7339,7 +7339,7 @@ typedef wifi_auto_null_tx_t wlan_auto_null_tx_t;
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_auto_null_tx(wlan_auto_null_tx_t *auto_null_tx);
+int wlan_auto_null_tx(wlan_auto_null_tx_t *auto_null_tx, mlan_bss_type bss_type);
 #endif
 
 /**

@@ -15851,14 +15851,14 @@ int wlan_cpu_loading(uint8_t start, uint32_t number, uint8_t period)
 #endif
 
 #if CONFIG_AUTO_NULL_TX
-int wlan_auto_null_tx(wlan_auto_null_tx_t *auto_null_tx)
+int wlan_auto_null_tx(wlan_auto_null_tx_t *auto_null_tx, mlan_bss_type bss_type)
 {
     if (auto_null_tx == NULL)
     {
         return -WM_E_INVAL;
     }
 
-    return wifi_auto_null_tx(auto_null_tx);
+    return wifi_auto_null_tx(auto_null_tx, bss_type);
 }
 #endif
 

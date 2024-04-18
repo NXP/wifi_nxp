@@ -11304,20 +11304,24 @@ static void test_wlan_get_temperature(int argc, char **argv)
 static void dump_wlan_auto_null_tx_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("    wlan-auto-null-tx start interval <interval>\r\n");
+    (void)PRINTF("    wlan-auto-null-tx <sta/uap> start interval <interval> dst_mac <dst_mac>\r\n");
     (void)PRINTF("        <interval> bit15:14 unit: 00-s 01-us 10-ms 11-one_shot  bit13-0: interval\r\n");
     (void)PRINTF("                   Please set interval Hexadecimal value. For example: 0x8064\r\n");
+    (void)PRINTF("        <dst_mac> Destination MAC address\r\n");
+    (void)PRINTF("                  Please specify dst_mac if bss_type is uAP, and dst_mac should be of STA which connected to uAP\r\n");
+    (void)PRINTF("                  If bss_type is not uAP, no need to input dst_mac\r\n");
     (void)PRINTF("    wlan-auto-null-tx stop\r\n");
 }
 
 static void test_wlan_auto_null_tx(int argc, char **argv)
 {
     int ret = -WM_FAIL;
-    int arg = 1;
+    int arg = 2;
+    mlan_bss_type bss_type = (mlan_bss_type)0;
 
     wlan_auto_null_tx_t auto_null_tx;
 
-    if (argc < 2)
+    if (argc < 3)
     {
         (void)PRINTF("Error: invalid number of arguments\r\n");
         dump_wlan_auto_null_tx_usage();
@@ -11326,7 +11330,17 @@ static void test_wlan_auto_null_tx(int argc, char **argv)
 
     memset(&auto_null_tx, 0x00, sizeof(wlan_auto_null_tx_t));
 
-    if (string_equal("start", argv[1]))
+    if (string_equal("sta", argv[1]))
+        bss_type = MLAN_BSS_TYPE_STA;
+    else if (string_equal("uap", argv[1]))
+        bss_type = MLAN_BSS_TYPE_UAP;
+    else
+    {
+        (void)PRINTF("Invalid bss type selection\r\n");
+        return;
+    }
+
+    if (string_equal("start", argv[2]))
     {
         auto_null_tx.start = MTRUE;
         arg += 1;
@@ -11351,21 +11365,77 @@ static void test_wlan_auto_null_tx(int argc, char **argv)
             return;
         }
 
-        if (is_sta_connected())
+        if (bss_type == MLAN_BSS_TYPE_STA)
         {
-            ret = wlan_get_current_network_bssid((char *)&auto_null_tx.dst_mac);
-            if (ret != 0)
+            if (is_sta_connected())
             {
-                (void)PRINTF("Error: could not get current network bssid\r\n");
+                ret = wlan_get_current_network_bssid((char *)&auto_null_tx.dst_mac);
+                if (ret != 0)
+                {
+                    (void)PRINTF("Error: could not get current network bssid\r\n");
+                    return;
+                }
+            }
+            else
+            {
+                (void)PRINTF("Error: not conneted AP\r\n");
                 return;
             }
         }
-        else
+        if (bss_type == MLAN_BSS_TYPE_UAP)
         {
-            (void)PRINTF("Error: not conneted AP\r\n");
+            wifi_sta_list_t *sl = NULL;
+            (void)wifi_uap_bss_sta_list(&sl);
+            if (!sl)
+            {
+                (void)PRINTF("Failed to get sta list\n\r");
+                return;
+            }
+            if (is_uap_started() && (sl->count > 0))
+            {
+                wifi_sta_info_t *si = (wifi_sta_info_t *)(void *)(&sl->count + 1);
+                if (string_equal("dst_mac", argv[arg]))
+                {
+                    unsigned int mac_matched = 0;
+                    ret = get_mac(argv[arg + 1], (char *)&auto_null_tx.dst_mac, ':');
+                    if (ret != 0)
+                    {
+                        dump_wlan_auto_null_tx_usage();
+                        (void)PRINTF("Error: invalid dst_mac argument\r\n");
+                        return;
+                    }
+                    for (int i = 0; i < sl->count; i++)
+                    {
+                        if (!memcmp(si[i].mac, auto_null_tx.dst_mac, 6))
+                        {
+                            mac_matched = 1;
+                            break;
+                        }
+                    }
+                    if (mac_matched == 0)
+                    {
+                        (void)PRINTF("Error: wrong dst_mac, please put one connected STA mac address\r\n");
+                        return;
+                    }
+                    arg += 2;
+                }
+                else
+                {
+                    (void)PRINTF("Error: argument %d is invalid\r\n", arg);
+                    dump_wlan_auto_null_tx_usage();
+                    return;
+                }
+            }
+            else
+            {
+                if (!is_uap_started())
+                    (void)PRINTF("uap isn't up\r\n");
+                else
+                    (void)PRINTF("There is no STA connected to uAP\r\n");
+            }
         }
     }
-    else if (string_equal("stop", argv[1]))
+    else if (string_equal("stop", argv[2]))
     {
         auto_null_tx.start = MFALSE;
     }
@@ -11379,7 +11449,7 @@ static void test_wlan_auto_null_tx(int argc, char **argv)
     /* bit7-4: bandwidth. bit3-0: priority, ignored if non-WMM */
     auto_null_tx.priority = 0x07;
 
-    ret = wlan_auto_null_tx(&auto_null_tx);
+    ret = wlan_auto_null_tx(&auto_null_tx, bss_type);
 }
 #endif
 
