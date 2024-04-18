@@ -9568,12 +9568,13 @@ int wlan_remove_network(const char *name)
                 OSA_MemoryFree(wlan.networks[i].security.sae_groups);
                 wlan.networks[i].security.sae_groups = NULL;
             }
-
+#if CONFIG_DRIVER_OWE
             if (wlan.networks[i].security.owe_groups)
             {
                 OSA_MemoryFree(wlan.networks[i].security.owe_groups);
                 wlan.networks[i].security.owe_groups = NULL;
             }
+#endif
 #if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
 #if CONFIG_WIFI_USB_FILE_ACCESS
             if (wlan.networks[i].role == WLAN_BSS_ROLE_STA)
