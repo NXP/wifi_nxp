@@ -622,10 +622,9 @@ int mlan_subsys_init(void)
 
 int mlan_subsys_deinit(void)
 {
+    wlan_clear_scan_bss();
     (void)mlan_unregister(mlan_adap);
     mlan_adap = MNULL;
-
-    wlan_clear_scan_bss();
 
     return WM_SUCCESS;
 }
@@ -5858,6 +5857,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             PRINTM(MEVENT, "EVENT: MICRO_AP_BSS_IDLE\n");
             pmpriv_uap->media_connected = MFALSE;
             wlan_clean_txrx(pmpriv_uap);
+            wlan_delete_station_list(pmpriv_uap);
             break;
 #if CONFIG_WMM
         case EVENT_TX_DATA_PAUSE:

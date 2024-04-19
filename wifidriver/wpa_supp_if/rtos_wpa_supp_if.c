@@ -907,6 +907,10 @@ struct wpa_scan_res *wifi_nxp_wpa_supp_proc_scan_res(nxp_wifi_event_new_scan_res
     if (!r)
     {
         supp_e("%s: Unable to calloc  memory for scan result\n", __func__);
+        if (ie)
+        {
+            OSA_MemoryFree((void *)ie);
+        }
         return NULL;
     }
 

@@ -433,6 +433,7 @@ MLAN_API mlan_status mlan_unregister(IN t_void *pmlan_adapter)
     {
         if (pmadapter->priv[i] != MNULL)
         {
+            wlan_delete_station_list(pmadapter->priv[i]);
             (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->priv[i]);
             pmadapter->priv[i] = MNULL;
         }

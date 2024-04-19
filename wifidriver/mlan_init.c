@@ -251,6 +251,19 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
 
 void wlan_clear_scan_bss(void)
 {
+#if CONFIG_WPA_SUPP
+    BSSDescriptor_t *bss_entry = NULL;
+    int i;
+
+    for (i = 0; i < mlan_adap->num_in_scan_table; i++)
+    {
+        bss_entry = &mlan_adap->pscan_table[i];
+        if (bss_entry && bss_entry->ies != NULL)
+        {
+            OSA_MemoryFree(bss_entry->ies);
+        }
+    }
+#endif
     (void)__memset(MNULL, &BSS_List, 0x00, sizeof(BSS_List));
 }
 

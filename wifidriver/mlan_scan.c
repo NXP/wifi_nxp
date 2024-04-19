@@ -931,9 +931,22 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
 
         if (abort_split_scan)
         {
+#if CONFIG_WPA_SUPP
+            BSSDescriptor_t *bss_entry = NULL;
+            int i;
+#endif
             abort_split_scan       = false;
             split_scan_in_progress = false;
 #if CONFIG_WPA_SUPP
+            for (i = 0; i < pmadapter->num_in_scan_table; i++)
+            {
+                bss_entry = &pmadapter->pscan_table[i];
+                if (bss_entry && bss_entry->ies != NULL)
+                {
+                    OSA_MemoryFree(bss_entry->ies);
+                }
+            }
+
             pmadapter->num_in_scan_table = 0;
             ret                          = MLAN_STATUS_FAILURE;
 #endif
@@ -3372,6 +3385,19 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
 
     if (keep_previous_scan == MFALSE)
     {
+#if CONFIG_WPA_SUPP
+        BSSDescriptor_t *bss_entry = NULL;
+        int i;
+
+        for (i = 0; i < pmadapter->num_in_scan_table; i++)
+        {
+            bss_entry = &pmadapter->pscan_table[i];
+            if (bss_entry && bss_entry->ies != NULL)
+            {
+                OSA_MemoryFree(bss_entry->ies);
+            }
+        }
+#endif
         (void)__memset(pmadapter, pmadapter->pscan_table, 0x00, sizeof(BSSDescriptor_t) * MRVDRV_MAX_BSSID_LIST);
         pmadapter->num_in_scan_table = 0;
 #if !CONFIG_MLAN_WMSDK

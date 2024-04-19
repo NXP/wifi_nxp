@@ -527,6 +527,7 @@ static struct
 
     unsigned running : 1;
     unsigned stop_request : 1;
+    bool in_reset : 1;
     wlcmgr_status_t status;
 
     /*
@@ -1100,7 +1101,6 @@ int wlan_get_wakeup_reason(uint16_t *hs_wakeup_reason)
 status_t wlan_hs_send_event(int id, void *data)
 {
     struct wlan_message msg;
-    int ret;
 
     (void)memset(&msg, 0U, sizeof(struct wlan_message));
     msg.data = data;
@@ -8991,7 +8991,7 @@ int wlan_add_network(struct wlan_network *network)
             if (network->security.group_cipher != WLAN_CIPHER_GCMP_256)
             {
                 wlcm_e("Group cipher configuration not allowed");
-                return -WM_E_INVAL;
+                goto INVAL;
             }
         }
         else if (network->security.wpa3_sb == 1U)
@@ -8999,7 +8999,7 @@ int wlan_add_network(struct wlan_network *network)
             if ((network->security.group_cipher != WLAN_CIPHER_GCMP_256) && (network->security.group_cipher != WLAN_CIPHER_CCMP_256) && (network->security.group_cipher != WLAN_CIPHER_GCMP) && (network->security.group_cipher != WLAN_CIPHER_CCMP))
             {
                 wlcm_e("Group cipher configuration not allowed");
-                return -WM_E_INVAL;
+                goto INVAL;
             }
         }
         else
@@ -9009,13 +9009,13 @@ int wlan_add_network(struct wlan_network *network)
                 if ((network->security.group_cipher != WLAN_CIPHER_CCMP) && (network->security.group_cipher != WLAN_CIPHER_TKIP))
                 {
                     wlcm_e("Group cipher configuration not allowed");
-                    return -WM_E_INVAL;
+                    goto INVAL;
                 }
         }
         else
         {
             wlcm_e("Group cipher configuration not allowed");
-            return -WM_E_INVAL;
+            goto INVAL;
         }
     }
 
@@ -9044,7 +9044,7 @@ int wlan_add_network(struct wlan_network *network)
             if (network->security.pairwise_cipher != WLAN_CIPHER_GCMP_256)
             {
                 wlcm_e("Pairwise cipher configuration not allowed");
-                return -WM_E_INVAL;
+                goto INVAL;
             }
         }
         else if (network->security.wpa3_sb == 1U)
@@ -9052,7 +9052,7 @@ int wlan_add_network(struct wlan_network *network)
             if ((network->security.pairwise_cipher != WLAN_CIPHER_GCMP_256) && (network->security.pairwise_cipher != WLAN_CIPHER_CCMP_256) && (network->security.pairwise_cipher != WLAN_CIPHER_GCMP) && (network->security.pairwise_cipher != WLAN_CIPHER_CCMP))
             {
                 wlcm_e("Pairwise cipher configuration not allowed");
-                return -WM_E_INVAL;
+                goto INVAL;
             }
         }
         else
@@ -9062,13 +9062,13 @@ int wlan_add_network(struct wlan_network *network)
                 if ((network->security.pairwise_cipher != WLAN_CIPHER_CCMP) && (network->security.pairwise_cipher != WLAN_CIPHER_TKIP))
                 {
                     wlcm_e("Pairwise cipher configuration not allowed");
-                    return -WM_E_INVAL;
+                    goto INVAL;
                 }
         }
         else
         {
             wlcm_e("Pairwise cipher configuration not allowed");
-            return -WM_E_INVAL;
+            goto INVAL;
         }
     }
 
@@ -9097,7 +9097,7 @@ int wlan_add_network(struct wlan_network *network)
             if (network->security.group_mgmt_cipher != WLAN_CIPHER_BIP_GMAC_256)
             {
                 wlcm_e("Group mgmt cipher configuration not allowed");
-                return -WM_E_INVAL;
+                goto INVAL;
             }
         }
         else if (network->security.wpa3_sb == 1U)
@@ -9105,7 +9105,7 @@ int wlan_add_network(struct wlan_network *network)
             if ((network->security.group_mgmt_cipher != WLAN_CIPHER_BIP_GMAC_256) && (network->security.group_mgmt_cipher != WLAN_CIPHER_BIP_CMAC_256) && (network->security.group_mgmt_cipher != WLAN_CIPHER_BIP_GMAC_128) && (network->security.group_mgmt_cipher != WLAN_CIPHER_AES_128_CMAC))
             {
                 wlcm_e("Group mgmt cipher configuration not allowed");
-                return -WM_E_INVAL;
+                goto INVAL;
             }
         }
         else
@@ -9115,13 +9115,13 @@ int wlan_add_network(struct wlan_network *network)
                 if (network->security.group_mgmt_cipher != WLAN_CIPHER_AES_128_CMAC)
                 {
                     wlcm_e("Group mgmt cipher configuration not allowed");
-                    return -WM_E_INVAL;
+                    goto INVAL;
                 }
         }
         else
         {
             wlcm_e("Group mgmt cipher configuration not allowed");
-            return -WM_E_INVAL;
+            goto INVAL;
         }
     }
 
@@ -9152,7 +9152,7 @@ int wlan_add_network(struct wlan_network *network)
             {
                 wlan_free_entp_cert_files();
                 wlcm_e("CA cert is not configured");
-                return -WM_E_INVAL;
+                goto INVAL;
             }
 
             /* Specify Server certificate */
@@ -9165,7 +9165,7 @@ int wlan_add_network(struct wlan_network *network)
                 OSA_MemoryFree(network->security.ca_cert_data);
 #endif
                 wlcm_e("Server cert is not configured");
-                return -WM_E_INVAL;
+                goto INVAL;
             }
             /* Specify Server key */
             network->security.server_key_len =
@@ -9178,7 +9178,7 @@ int wlan_add_network(struct wlan_network *network)
                 OSA_MemoryFree(network->security.server_cert_data);
 #endif
                 wlcm_e("Server key is not configured");
-                return -WM_E_INVAL;
+                goto INVAL;
             }
             /* Specify DH params */
             network->security.dh_len = wlan_get_entp_cert_files(FILE_TYPE_ENTP_DH_PARAMS, &network->security.dh_data);
@@ -9191,7 +9191,7 @@ int wlan_add_network(struct wlan_network *network)
                 OSA_MemoryFree(network->security.server_key_data);
 #endif
                 wlcm_e("DH params are not configured");
-                return -WM_E_INVAL;
+                goto INVAL;
             }
 
 #if CONFIG_EAP_FAST
@@ -9200,12 +9200,12 @@ int wlan_add_network(struct wlan_network *network)
                 if (strlen(network->security.pac_opaque_encr_key) != (PAC_OPAQUE_ENCR_KEY_MAX_LENGTH - 1))
                 {
                     wlcm_e("Invalid PAC Opaque Encryption key");
-                    return -WM_E_INVAL;
+                    goto INVAL;
                 }
                 if (strlen(network->security.a_id) != (A_ID_MAX_LENGTH - 1))
                 {
                     wlcm_e("Invalid authority identity(a_id)");
-                    return -WM_E_INVAL;
+                    goto INVAL;
                 }
             }
 #endif
@@ -9223,7 +9223,7 @@ int wlan_add_network(struct wlan_network *network)
                 {
                     wlan_free_entp_cert_files();
                     wlcm_e("CA cert is not configured");
-                    return -WM_E_INVAL;
+                    goto INVAL;
                 }
 
                 /* Specify Client certificate */
@@ -9236,7 +9236,7 @@ int wlan_add_network(struct wlan_network *network)
                     OSA_MemoryFree(network->security.ca_cert_data);
 #endif
                     wlcm_e("Client cert is not configured");
-                    return -WM_E_INVAL;
+                    goto INVAL;
                 }
                 /* Specify Client key */
                 network->security.client_key_len =
@@ -9249,7 +9249,7 @@ int wlan_add_network(struct wlan_network *network)
                     OSA_MemoryFree(network->security.client_cert_data);
 #endif
                     wlcm_e("Client key is not configured");
-                    return -WM_E_INVAL;
+                    goto INVAL;
                 }
             }
         }
@@ -9271,7 +9271,7 @@ int wlan_add_network(struct wlan_network *network)
                     OSA_MemoryFree(network->security.client_key_data);
 #endif
                     wlcm_e("CA cert2 is not configured");
-                    return -WM_E_INVAL;
+                    goto INVAL;
                 }
                 /* Specify Client certificate2 */
                 network->security.client_cert2_len =
@@ -9286,7 +9286,7 @@ int wlan_add_network(struct wlan_network *network)
                     OSA_MemoryFree(network->security.ca_cert2_data);
 #endif
                     wlcm_e("Client cert2 is not configured");
-                    return -WM_E_INVAL;
+                    goto INVAL;
                 }
                 /* Specify Client key2 */
                 network->security.client_key2_len =
@@ -9302,7 +9302,7 @@ int wlan_add_network(struct wlan_network *network)
                     OSA_MemoryFree(network->security.client_cert2_data);
 #endif
                     wlcm_e("Client key2 is not configured");
-                    return -WM_E_INVAL;
+                    goto INVAL;
                 }
             }
         }
@@ -9317,7 +9317,7 @@ int wlan_add_network(struct wlan_network *network)
         {
             if (strlen(wlan.networks[i].name) == len && !strncmp(wlan.networks[i].name, network->name, len))
             {
-                return -WM_E_INVAL;
+                goto INVAL;
             }
         }
         else if (pos == -1)
@@ -9331,6 +9331,18 @@ int wlan_add_network(struct wlan_network *network)
 
     if (pos < 0)
     {
+        if (network->security.sae_groups)
+        {
+            OSA_MemoryFree(network->security.sae_groups);
+            network->security.sae_groups = NULL;
+        }
+#if CONFIG_DRIVER_OWE
+        if (network->security.owe_groups)
+        {
+            OSA_MemoryFree(network->security.owe_groups);
+            network->security.owe_groups = NULL;
+        }
+#endif
         return -WM_E_NOMEM;
     }
 
@@ -9409,7 +9421,7 @@ int wlan_add_network(struct wlan_network *network)
         ret = wpa_supp_add_network(netif, &wlan.networks[pos]);
         if (ret < 0)
         {
-            memset((void *)&wlan.networks[pos], 0x00, sizeof(struct wlan_network));
+            wlan_remove_network(wlan.networks[pos].name);
             return -WM_E_NOMEM;
         }
 #if CONFIG_WPA_SUPP_WPS
@@ -9429,6 +9441,21 @@ int wlan_add_network(struct wlan_network *network)
 #endif /* CONFIG_WLAN_FAST_PATH */
 
     return WM_SUCCESS;
+
+INVAL:
+    if (network->security.sae_groups)
+    {
+        OSA_MemoryFree(network->security.sae_groups);
+        network->security.sae_groups = NULL;
+    }
+#if CONFIG_DRIVER_OWE
+    if (network->security.owe_groups)
+    {
+        OSA_MemoryFree(network->security.owe_groups);
+        network->security.owe_groups = NULL;
+    }
+#endif
+    return -WM_E_INVAL;
 }
 
 #if CONFIG_WIFI_CAPA
@@ -9517,19 +9544,22 @@ int wlan_remove_network(const char *name)
         if (wlan.networks[i].name[0] != '\0' && strlen(wlan.networks[i].name) == len &&
             !strncmp(wlan.networks[i].name, name, len))
         {
-            if (wlan.running && wlan.cur_network_idx == i)
+            if (!wlan.in_reset)
             {
+                if (wlan.running && wlan.cur_network_idx == i)
+                {
 #if CONFIG_WLAN_FAST_PATH
-                /* On station network removal,
-                 * flush the FP cache since the index changes */
-                wlan.auth_cache_valid      = false;
-                wlan.fast_path_cache_valid = false;
+                    /* On station network removal,
+                     * flush the FP cache since the index changes */
+                    wlan.auth_cache_valid      = false;
+                    wlan.fast_path_cache_valid = false;
 #endif /* CONFIG_WLAN_FAST_PATH */
-                return WLAN_ERROR_STATE;
-            }
-            if (wlan.cur_uap_network_idx == i)
-            {
-            	return WLAN_ERROR_STATE;
+                    return WLAN_ERROR_STATE;
+                }
+                if (wlan.cur_uap_network_idx == i)
+                {
+                    return WLAN_ERROR_STATE;
+                }
             }
 #if CONFIG_WPA2_ENTP
             if (wlan.networks[i].security.tls_cert.ca_chain)
@@ -9558,11 +9588,7 @@ int wlan_remove_network(const char *name)
             {
                 /* Do nothing */
             }
-            ret = wpa_supp_remove_network(netif, &wlan.networks[i]);
-            if (ret < 0)
-            {
-                return WLAN_ERROR_STATE;
-            }
+            wpa_supp_remove_network(netif, &wlan.networks[i]);
 
             if (wlan.networks[i].security.sae_groups)
             {
@@ -10173,27 +10199,8 @@ int wlan_remove_all_networks(void)
      * Moreover, removing and adding net interface will increase netif_num cumulatively,
      * which will mismatch with "ua2" during creating dhcpd.
      */
-#if CONFIG_WPA2_ENTP
-    /* find all networks to free security key memory */
-    for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
-    {
-        if (wlan.networks[i].security.tls_cert.ca_chain)
-        {
-            wm_mbedtls_free_cert(wlan.networks[i].security.tls_cert.ca_chain);
-            wlan.networks[i].security.tls_cert.ca_chain = NULL;
-        }
-        if (wlan.networks[i].security.tls_cert.own_cert)
-        {
-            wm_mbedtls_free_cert(wlan.networks[i].security.tls_cert.own_cert);
-            wlan.networks[i].security.tls_cert.own_cert = NULL;
-        }
-        if (wlan.networks[i].security.tls_cert.own_key)
-        {
-            wm_mbedtls_free_key(wlan.networks[i].security.tls_cert.own_key);
-            wlan.networks[i].security.tls_cert.own_key = NULL;
-        }
-    }
-#endif
+    wlan.in_reset = 1;
+    wlan_remove_all_network_profiles();
 
     intrfc_handle = net_get_sta_handle();
     net_interface_down(intrfc_handle);
