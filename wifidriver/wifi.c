@@ -2009,12 +2009,13 @@ static int wifi_core_init(void)
         goto fail;
     }
 
-    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)wm_wifi.command_resp_sem, 1);
+    status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)wm_wifi.command_resp_sem);
     if (status != KOSA_StatusSuccess)
     {
         wifi_e("Create command resp sem failed");
         goto fail;
     }
+    OSA_SemaphorePost((osa_semaphore_handle_t)wm_wifi.command_resp_sem);
     status = OSA_MutexCreate((osa_mutex_handle_t)wm_wifi.mcastf_mutex);
     if (status != KOSA_StatusSuccess)
     {
@@ -2087,7 +2088,7 @@ static int wifi_core_init(void)
         goto fail;
     }
 
-    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)txbuf_sem, 0);
+    status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)txbuf_sem);
     if (status != KOSA_StatusSuccess)
     {
         wifi_e("Create txbuf sem failed");
@@ -2095,13 +2096,13 @@ static int wifi_core_init(void)
     }
 
     /* Semaphore to protect wmm data parameters */
-    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)wm_wifi.tx_data_sem, 1);
+    status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)wm_wifi.tx_data_sem);
     if (status != KOSA_StatusSuccess)
     {
         PRINTF("Create tx data sem failed");
         goto fail;
     }
-
+    OSA_SemaphorePost((osa_semaphore_handle_t)wm_wifi.tx_data_sem);
 #ifdef __ZEPHYR__
     status = OSA_MsgQCreate((osa_msgq_handle_t)wm_wifi.tx_data, MAX_EVENTS, sizeof(struct bus_message));
     if (status != KOSA_StatusSuccess)
@@ -2135,24 +2136,23 @@ static int wifi_core_init(void)
 
 #if CONFIG_CSI
     /* Semaphore to protect data parameters */
-    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem, 1);
+    status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem);
     if (status != KOSA_StatusSuccess)
     {
         PRINTF("Create usb data sem failed");
         goto fail;
     }
+    OSA_SemaphorePost((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem);
 #endif
 
 #if CONFIG_ECSA
     /* Semaphore to wait ECSA complete */
-    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)ecsa_status_control.ecsa_sem, 1);
+    status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)ecsa_status_control.ecsa_sem);
     if (status != KOSA_StatusSuccess)
     {
         PRINTF("Create ecsa sem failed");
         goto fail;
     }
-
-    OSA_SemaphoreWait((osa_semaphore_handle_t)ecsa_status_control.ecsa_sem, osaWaitForever_c);
 #endif
 
 #if CONFIG_FW_VDLL
@@ -2699,12 +2699,13 @@ int wifi_register_data_input_callback(void (*data_input_callback)(const uint8_t 
 
 #if CONFIG_HEAP_DEBUG
     /* Semaphore to protect os mem stat */
-    ret = OSA_SemaphoreCreate((osa_semaphore_handle_t)os_mem_stat_sem, 0);
+    ret = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)os_mem_stat_sem);
     if (ret != WM_SUCCESS)
     {
         PRINTF("Create os mem stat sem failed");
         return -WM_FAIL;
     }
+    OSA_SemaphorePost((osa_semaphore_handle_t)os_mem_stat_sem);
 #endif
 
     return WM_SUCCESS;
@@ -2731,12 +2732,13 @@ int wifi_register_gen_pbuf_from_data2_callback(void *(*gen_pbuf_from_data2)(t_u8
 
 #if CONFIG_HEAP_DEBUG
     /* Semaphore to protect os mem stat */
-    ret = OSA_SemaphoreCreate((osa_semaphore_handle_t)os_mem_stat_sem, 0);
+    ret = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)os_mem_stat_sem);
     if (ret != WM_SUCCESS)
     {
         PRINTF("Create os mem stat sem failed");
         return -WM_FAIL;
     }
+    OSA_SemaphorePost((osa_semaphore_handle_t)os_mem_stat_sem);
 #endif
 
     return WM_SUCCESS;

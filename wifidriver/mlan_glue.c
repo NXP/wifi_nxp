@@ -520,9 +520,10 @@ static mlan_status wrapper_moal_init_semaphore(IN t_void *pmoal_handle, IN const
     //    if (*((os_semaphore_t *)pplock) != MNULL)
     //        return MLAN_STATUS_SUCCESS;
 
-    if (OSA_SemaphoreCreate((osa_semaphore_handle_t)plock, 1) != KOSA_StatusSuccess)
+    if (OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)plock) != KOSA_StatusSuccess)
         return MLAN_STATUS_FAILURE;
 
+    OSA_SemaphorePost((osa_semaphore_handle_t)plock);
     return MLAN_STATUS_SUCCESS;
 }
 

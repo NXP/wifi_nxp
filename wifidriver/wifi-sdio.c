@@ -283,17 +283,11 @@ static int wlan_init_struct(void)
     }
 #endif
 
-    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)sdio_command_resp_sem, 1);
+    status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)sdio_command_resp_sem);
     if (status != KOSA_StatusSuccess)
     {
         return -WM_FAIL;
     }
-
-    /*
-     * Take the sdio cmd resp lock immediately so that we can later block on
-     * it.
-     */
-    (void)wifi_sdio_get_command_resp_sem(osaWaitForever_c);
 
     return WM_SUCCESS;
 }

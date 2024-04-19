@@ -7213,13 +7213,11 @@ static void wps_task(void *data)
 {
     osa_status_t status;
 
-    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)wlan_wps.wps_scan_done, 1);
+    status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)wlan_wps.wps_scan_done);
     if (status != KOSA_StatusSuccess)
     {
         wlcm_e("Failed to create WPS scan semaphore");
     }
-
-    OSA_SemaphoreWait((osa_semaphore_handle_t)wlan_wps.wps_scan_done, osaWaitForever_c);
 
     while (1)
     {
@@ -7382,15 +7380,16 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
     }
 
 #if CONFIG_WMM_UAPSD
-    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)uapsd_sem, 1);
+    status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)uapsd_sem);
     if (status != KOSA_StatusSuccess)
     {
         wifi_e("Create uapsd sem failed");
         return ret;
     }
+    OSA_SemaphorePost((osa_semaphore_handle_t)uapsd_sem);
 #endif
 #if CONFIG_HOST_SLEEP
-    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)wakelock, 1);
+    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)wakelock, 0);
     if (status != KOSA_StatusSuccess)
     {
         wifi_e("Failed to create wake-lock semaphore");
@@ -7778,21 +7777,23 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     }
 
 #if ((CONFIG_11MC) || (CONFIG_11AZ)) && (CONFIG_WLS_CSI_PROC)
-    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)wls_csi_sem, 1) ;
+    status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)wls_csi_sem) ;
     if (status != KOSA_StatusSuccess)
     {
         wlcm_e("unable to create wls csi lock: %d", status);
         return -WM_FAIL;
     }
+    OSA_SemaphorePost((osa_semaphore_handle_t)wls_csi_sem);
 #endif
 
-    if (OSA_SemaphoreCreate((osa_semaphore_handle_t)wlan.scan_lock, 1) != KOSA_StatusSuccess)
+    if (OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)wlan.scan_lock) != KOSA_StatusSuccess)
     {
         (void)wifi_unregister_event_queue(&wlan.events);
         OSA_MsgQDestroy((osa_msgq_handle_t)wlan.events);
         OSA_TaskDestroy((osa_task_handle_t)wlan.wlcmgr_task_Handle);
         return -WM_FAIL;
     }
+    OSA_SemaphorePost((osa_semaphore_handle_t)wlan.scan_lock);
 
 #ifdef RW610
         status = OSA_MutexCreate((osa_mutex_handle_t)reset_lock);
@@ -12088,14 +12089,11 @@ uint8_t wlan_get_dtim_period(void)
 {
     osa_status_t status;
 
-    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)wlan_dtim_sem, 1);
+    status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)wlan_dtim_sem);
     if (status != KOSA_StatusSuccess)
     {
         return 0;
     }
-
-    /* Consume so that 'get' blocks when used later */
-    (void)OSA_SemaphoreWait((osa_semaphore_handle_t)wlan_dtim_sem, osaWaitForever_c);
 
     if (wlan_pscan(pscan_cb) != 0)
     {

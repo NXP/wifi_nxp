@@ -800,14 +800,11 @@ void wps_tls(void *argv)
     int status      = WPS_STATUS_SUCCESS, rv;
     WPS_DATA *wps_s = (WPS_DATA *)&wps_global;
 
-    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)wps_s->ssl_sync_sem, 1);
-
+    status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)wps_s->ssl_sync_sem);
     if (status != KOSA_StatusSuccess)
     {
         goto fail;
     }
-    /*Take semaphore immediatly so that we can later block on it */
-    OSA_SemaphoreWait((osa_semaphore_handle_t)wps_s->ssl_sync_sem, osaWaitForever_c);
 
     wps_d("EAP: Init Session");
     wps_s->tls_session_init      = true;

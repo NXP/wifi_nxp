@@ -903,6 +903,7 @@ mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter)
                 ret = MLAN_STATUS_FAILURE;
                 goto done;
             }
+            OSA_SemaphorePost((osa_semaphore_handle_t)priv->rx_reorder_tbl_lock);
             util_init_list_head((t_void *)pmadapter->pmoal_handle, &priv->rx_reorder_tbl_ptr, MTRUE,
                                 pmadapter->callbacks.moal_init_lock);
 

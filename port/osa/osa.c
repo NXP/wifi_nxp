@@ -45,11 +45,12 @@ int OSA_RWLockCreateWithCB(osa_rw_lock_t *plock, const char *mutex_name, const c
     {
         return -WM_FAIL;
     }
-    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)plock->rw_lock, 1);
+    status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)plock->rw_lock);
     if (status != KOSA_StatusSuccess)
     {
         return -WM_FAIL;
     }
+    OSA_SemaphorePost((osa_semaphore_handle_t)plock->rw_lock);
     plock->reader_count = 0;
     plock->reader_cb    = r_fn;
     return WM_SUCCESS;
