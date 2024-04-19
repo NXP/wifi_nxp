@@ -15306,12 +15306,6 @@ int wlan_set_country_code(const char *alpha2)
 
     wlan_region_code = wlan_get_wlan_region_code();
 
-    if ((wlan.internal == 0) && (strncmp(alpha2, "WW", 2) != 0))
-    {
-        wlcm_d("%s: Not supported country code.", alpha2);
-        return -WM_FAIL;
-    }
-
     region_code[0] = alpha2[0];
     region_code[1] = alpha2[1];
 
