@@ -477,31 +477,21 @@ static void process_data_packet(const t_u8 *rcvdata,
         LINK_STATS_INC(link.drop);
         return;
     }
+
+#if !CONFIG_WPA_SUPP
     if (rxpd->rx_pkt_type == PKT_TYPE_MGMT_FRAME)
     {
 #if (CONFIG_TX_RX_ZERO_COPY) || (FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
         /* Skip interface header */
         pbuf_header(p, -(s16_t)(sizeof(mlan_buffer) + INTF_HEADER_LEN));
 #endif
-#if !CONFIG_WPA_SUPP
-#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_1AS)
-        if ((sub_type == (t_u16)SUBTYPE_ACTION) && (recv_interface == MLAN_BSS_TYPE_STA))
+        /* Bypass the management frame about Add Block Ack Request or Add Block Ack Response*/
+        if (wlan_bypass_802dot11_mgmt_pkt(p->payload) == WM_SUCCESS)
         {
-            if (wifi_event_completion(WIFI_EVENT_MGMT_FRAME, WIFI_EVENT_REASON_SUCCESS, p) != WM_SUCCESS)
-            {
-                pbuf_free(p);
-                p = NULL;
-            }
+            pbuf_free(p);
+            p = NULL;
             return;
         }
-#endif
-#endif
-#if CONFIG_WPA_SUPP
-        wifi_is_wpa_supplicant_input(recv_interface, p->payload, p->tot_len);
-#endif
-        pbuf_free(p);
-        p = NULL;
-        return;
 
 #if CONFIG_P2P
         if (recv_interface == MLAN_BSS_TYPE_WIFIDIRECT)
@@ -518,6 +508,16 @@ static void process_data_packet(const t_u8 *rcvdata,
             return;
         }
 #endif
+#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_1AS)
+        if (sub_type == (t_u16)SUBTYPE_ACTION && recv_interface == MLAN_BSS_TYPE_STA)
+        {
+            if (wifi_event_completion(WIFI_EVENT_MGMT_FRAME, WIFI_EVENT_REASON_SUCCESS, p) != WM_SUCCESS)
+            {
+                pbuf_free(p);
+                p = NULL;
+            }
+        }
+#endif
 #if MGMT_RX
         if (rx_mgmt_callback)
         {
@@ -532,6 +532,8 @@ static void process_data_packet(const t_u8 *rcvdata,
         }
 #endif
     }
+#endif
+
 #if (CONFIG_TX_RX_ZERO_COPY) || (FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
     /* Directly use rxpd from pbuf */
     rxpd = (RxPD *)(void *)((t_u8 *)p->payload + INTF_HEADER_LEN);

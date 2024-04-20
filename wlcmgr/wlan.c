@@ -391,7 +391,7 @@ static struct wifi_scan_params_t g_wifi_scan_params = {NULL,
 static void wlcmgr_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(wlcmgr_task, PRIORITY_RTOS_TO_OSA(3), 1, CONFIG_WLCMGR_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wlcmgr_task, OSA_PRIORITY_HIGH, 1, CONFIG_WLCMGR_STACK_SIZE, 0);
 
 #if CONFIG_WPS2
 #define CONFIG_WPS_STACK_SIZE (5120)
