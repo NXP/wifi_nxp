@@ -102,7 +102,7 @@ int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uin
 
     if (SDIO_IO_Read_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != KOSA_StatusSuccess)
     {
-        (void)OSA_MutexUnlock(&sdio_mutex);
+        (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
         return 0;
     }
 

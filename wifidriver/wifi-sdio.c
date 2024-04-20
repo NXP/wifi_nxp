@@ -198,7 +198,7 @@ int wifi_ind_reset_lock(void)
 
 void wifi_ind_reset_unlock(void)
 {
-    (void)OSA_MutexUnlock((osa_mutex_handle_t)txrx_mutex);
+    (void)OSA_MutexUnlock((osa_mutex_handle_t)ind_reset_mutex);
 }
 #endif
 
@@ -3027,7 +3027,7 @@ mlan_status sd_wifi_reinit(enum wlan_type type, const uint8_t *fw_start_addr, co
 
             sdio_enable_interrupt();
 
-            OSA_ENTER_CRITICAL();
+            OSA_EXIT_CRITICAL();
         }
     }
 

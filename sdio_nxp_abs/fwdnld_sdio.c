@@ -25,7 +25,7 @@ fwdnld_sdio_intf_specific sdio_intf_specific_g;
  */
 static fwdnld_intf_ret_t wlan_set_fw_dnld_size(void)
 {
-#if 0
+
     uint32_t resp;
 
     bool rv = sdio_drv_creg_write(FN1_BLOCK_SIZE_0, 0, 0, &resp);
@@ -39,7 +39,7 @@ static fwdnld_intf_ret_t wlan_set_fw_dnld_size(void)
     {
         return FWDNLD_INTF_FAIL;
     }
-#endif
+
     return FWDNLD_INTF_SUCCESS;
 }
 
