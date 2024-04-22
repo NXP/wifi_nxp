@@ -171,7 +171,7 @@ static void lwiperf_report(void *arg,
         (void)PRINTF("Unable to print iperf report\r\n");
         return;
     }
-    (void)PRINTF("-------------------------------------------------\r\n");
+    (void)PRINTF("\r-------------------------------------------------\r\n");
     if (report_type < (enum lwiperf_report_type)(sizeof(report_type_str) / sizeof(report_type_str[0])))
     {
         (void)PRINTF(" %s \r\n", report_type_str[report_type]);
