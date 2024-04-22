@@ -275,7 +275,7 @@
 
 #if !defined CONFIG_WIFI_MAX_CLIENTS_CNT
 #if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
-#define CONFIG_WIFI_MAX_CLIENTS_CNT 0
+#define CONFIG_WIFI_MAX_CLIENTS_CNT 1
 #endif
 #endif
 
