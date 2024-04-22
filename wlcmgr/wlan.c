@@ -5717,6 +5717,7 @@ static void wlcm_process_init(enum cm_sta_state *next)
 
     wlan_set_11d_state(WLAN_BSS_TYPE_UAP, 1);
     wlan_set_11d_state(WLAN_BSS_TYPE_STA, 1);
+
 }
 
 static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_sta_state *next)
@@ -6444,6 +6445,9 @@ static void wlcm_process_get_hw_spec_event(void)
     {
         CONNECTION_EVENT(WLAN_REASON_INITIALIZED, NULL);
     }
+#if CONFIG_WIFI_IND_RESET
+    wlan.ind_reset = 0;
+#endif
 }
 
 #if defined(SDK_OS_FREE_RTOS)
