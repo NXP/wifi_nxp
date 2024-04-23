@@ -351,7 +351,7 @@
  * When IPv4 *and* IPv6 are enabled, this even changes to
  * (PBUF_POOL_SIZE > 2 * IP_REASS_MAX_PBUFS)!
  */
-#define IP_REASS_MAX_PBUFS 4
+#define IP_REASS_MAX_PBUFS 7
 
 /**
  * TCP_MSS: TCP Maximum segment size. (default is 536, a conservative default,
