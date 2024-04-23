@@ -174,7 +174,8 @@ static void *wifi_11n_save_request(Event_Ext_t *evt)
         return NULL;
     }
 
-    return memcpy((void *)dot11n_eventbuf, (const void *)evt, evt->length);
+    (void)memcpy((void *)dot11n_eventbuf, (const void *)evt, evt->length);
+    return dot11n_eventbuf;
 }
 #endif /* CONFIG_11N */
 
