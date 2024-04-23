@@ -2369,47 +2369,6 @@ int wlan_is_started();
 
 #endif // RW610
 
-#if CONFIG_EU_VALIDATION
-
-typedef enum
-{
-    EU_GCMP_128_ENC = 0x05,
-    EU_GCMP_128_DEC,
-    EU_GCMP_256_ENC,
-    EU_GCMP_256_DEC,
-    EU_DUMMY_PAYLOAD,
-    EU_CRYPTO,
-    EU_CRYPTO_LARGE_PAYLOAD,
-    EU_CRYPTO_CCMP_128_ENC,
-    EU_CRYPTO_CCMP_128_DEC,
-    EU_CRYPTO_CCMP_256_ENC,
-    EU_CRYPTO_CCMP_256_DEC,
-    EU_CRYPTO_CCMP_128_MGMT_ENC,
-    EU_CRYPTO_CCMP_128_MGMT_DEC,
-    EU_GCMP_256_ENC_FIPS,
-    EU_GCMP_256_DEC_FIPS,
-    EU_GCMP_128_ENC_FIPS,
-    EU_GCMP_128_DEC_FIPS,
-    EU_TKIP_ENC_FIPS,
-    EU_TKIP_DEC_FIPS,
-    EU_OPTION_MAX = EU_TKIP_DEC_FIPS
-} eu_option;
-
-/** Execute EU validation.
- *
- *  This function is used to do EU validation.
- *
- * \param[in]  option         Specify the EU validation type, \ref eu_option.
- * \param[out] resp_buf       Buffer to save the command response data
- * \param[in]  resp_buf_size  Size of resp_buf
- * \param[out] reqd_len       Size of valid bytes in response buffer if successful otherwise invalid.
- *
- * \return WM_SUCCESS if successful otherwise failure.
- */
-int wlan_eu_validation(eu_option option, uint8_t *resp_buf, uint32_t resp_buf_size, uint32_t *reqd_len);
-
-#endif // CONFIG_EU_VALIDATION
-
 #if CONFIG_NCP_BRIDGE
 /** uap provisioning deinit callback function */
 void wlan_register_uap_prov_deinit_cb(int (*cb)(void));

@@ -5707,77 +5707,6 @@ static void test_heap_stat(int argc, char **argv)
 }
 #endif
 
-#if CONFIG_EU_VALIDATION
-static void dump_wlan_eu_validation(void)
-{
-    (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("wlan-eu-validation <value>\r\n");
-    (void)PRINTF("Values to choose:\r\n");
-    (void)PRINTF("     0x05   GCMP_128_ENC\r\n");
-    (void)PRINTF("     0x06   GCMP_128_DEC\r\n");
-    (void)PRINTF("     0x07   GCMP_256_ENC\r\n");
-    (void)PRINTF("     0x08   GCMP_256_DEC\r\n");
-    (void)PRINTF("     0x09   DUMMY_PAYLOAD\r\n");
-    (void)PRINTF("     0x0a   CRYPTO\r\n");
-    (void)PRINTF("     0x0b   CRYPTO_LARGE_PAYLOAD\r\n");
-    (void)PRINTF("     0x0c   CRYPTO_CCMP_128_ENC\r\n");
-    (void)PRINTF("     0x0d   CRYPTO_CCMP_128_DEC\r\n");
-    (void)PRINTF("     0x0e   CRYPTO_CCMP_256_ENC\r\n");
-    (void)PRINTF("     0x0f   CRYPTO_CCMP_256_DEC\r\n");
-    (void)PRINTF("     0x10   CRYPTO_CCMP_128_MGMT_ENC\r\n");
-    (void)PRINTF("     0x11   CRYPTO_CCMP_128_MGMT_DEC\r\n");
-    (void)PRINTF("     0x12   GCMP_256_ENC_FIPS\r\n");
-    (void)PRINTF("     0x13   GCMP_256_DEC_FIPS\r\n");
-    (void)PRINTF("     0x14   GCMP_128_ENC_FIPS\r\n");
-    (void)PRINTF("     0x15   GCMP_128_DEC_FIPS\r\n");
-    (void)PRINTF("     0x16   TKIP_ENC_FIPS\r\n");
-    (void)PRINTF("     0x17   TKIP_DEC_FIPS\r\n");
-}
-
-static void test_wlan_eu_validation(int argc, char **argv)
-{
-    int value;
-    int ret           = -WM_FAIL;
-    uint32_t reqd_len = 0;
-
-    if (argc != 2)
-    {
-        dump_wlan_eu_validation();
-        (void)PRINTF("Error: invalid number of arguments\r\n");
-        return;
-    }
-
-    if (argv[1][0] == '0' && (argv[1][1] == 'x' || argv[1][1] == 'X'))
-        value = a2hex_or_atoi(argv[1]);
-    else
-    {
-        dump_wlan_eu_validation();
-        (void)PRINTF("Error: invalid value format\r\n");
-        return;
-    }
-
-    if (value < 5 || value > 23)
-    {
-        dump_wlan_eu_validation();
-        (void)PRINTF("Error: invalid value\r\n");
-        return;
-    }
-
-    ret = wlan_eu_validation((eu_option)value, host_cmd_resp_buf, sizeof(host_cmd_resp_buf), &reqd_len);
-    if (ret == WM_SUCCESS)
-    {
-        (void)PRINTF("Hostcmd success, response is:\r\n");
-        for (ret = 0; ret < reqd_len; ret++)
-        {
-            (void)PRINTF("%x\t", host_cmd_resp_buf[ret]);
-            host_cmd_resp_buf[ret] = 0;
-        }
-    }
-    else
-        (void)PRINTF("Hostcmd failed error: %d", ret);
-}
-#endif /* CONFIG_EU_VALIDATION */
-
 #if CONFIG_WIFI_EU_CRYPTO
 static void dump_wlan_eu_crypto_rc4(void)
 {
@@ -12430,9 +12359,6 @@ static struct cli_command tests[] = {
 #endif
 #if CONFIG_HEAP_STAT
     {"heap-stat", NULL, test_heap_stat},
-#endif
-#if CONFIG_EU_VALIDATION
-    {"wlan-eu-validation", "<value>", test_wlan_eu_validation},
 #endif
 #if CONFIG_HEAP_DEBUG
     {"wlan-os-mem-stat", NULL, test_wlan_os_mem_stat},

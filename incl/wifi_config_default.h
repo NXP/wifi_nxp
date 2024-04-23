@@ -442,12 +442,6 @@
 #endif
 #endif
 
-#if !defined CONFIG_EU_VALIDATION
-#if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
-#define CONFIG_EU_VALIDATION 0
-#endif
-#endif
-
 #if !defined CONFIG_TSP
 #if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
 #define CONFIG_TSP 0
