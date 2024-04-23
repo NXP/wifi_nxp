@@ -123,7 +123,7 @@ Change log:
 #if defined(SD9177) && !defined(COEX_APP_SUPPORT)
 #define MLAN_STA_AMPDU_DEF_RXWINSIZE 64
 #else
-#define MLAN_STA_AMPDU_DEF_RXWINSIZE 64
+#define MLAN_STA_AMPDU_DEF_RXWINSIZE 32
 #endif
 #endif
 #endif /* STA_SUPPORT */
