@@ -42,30 +42,11 @@ static uint8_t broadcast_mac[MLAN_MAC_ADDR_LENGTH] = {0xff, 0xff, 0xff, 0xff, 0x
 #endif
 
 #if CONFIG_CSI
-wlan_csi_config_params_t g_csi_params = {
-    .bss_type           = 0,
-    .csi_enable         = 1,
-    .head_id            = 0x00010203,
-    .tail_id            = 0x00010203,
-    .csi_filter_cnt     = 0,
-    .chip_id            = 0xaa,
-    .band_config        = 0,
-    .channel            = 0,
-    .csi_monitor_enable = 0,
-    .ra4us              = 0,
-    /*				  mac_addr						  pkt_type	subtype  flags*/
-    //.csi_filter[0] = {0x00,0x00,0x00,0x00,0x00,0x00 , 0x00,     0x00,	 0}
-};
+wlan_csi_config_params_t g_csi_params;
 #endif
 
 #if CONFIG_NET_MONITOR
-wlan_net_monitor_t g_net_monitor_param = {
-    .action           = 0x01,
-    .monitor_activity = 0x01,
-    .filter_flags     = 0x07,
-    .radio_type       = 0x0,
-    .chan_number      = 0x01,
-};
+wlan_net_monitor_t g_net_monitor_param;
 #endif
 
 #if CONFIG_HOST_SLEEP
@@ -7228,6 +7209,18 @@ static void test_wlan_reset(int argc, char **argv)
         (void)PRINTF("2 to Reset WiFi\r\n");
         return;
     }
+#if CONFIG_CSI
+    if (option == 2)
+    {
+        (void)memset((void*)&g_csi_params, 0, sizeof(g_csi_params));
+    }
+#endif
+#if CONFIG_NET_MONITOR
+    if (option == 2)
+    {
+        (void)memset((void*)&g_net_monitor_param, 0, sizeof(g_net_monitor_param));
+    }
+#endif
 
     wlan_reset((cli_reset_option)option);
 }
@@ -11239,7 +11232,7 @@ static void dump_wlan_auto_null_tx_usage(void)
     (void)PRINTF("        <dst_mac> Destination MAC address\r\n");
     (void)PRINTF("                  Please specify dst_mac if bss_type is uAP, and dst_mac should be of STA which connected to uAP\r\n");
     (void)PRINTF("                  If bss_type is not uAP, no need to input dst_mac\r\n");
-    (void)PRINTF("    wlan-auto-null-tx stop\r\n");
+    (void)PRINTF("    wlan-auto-null-tx sta stop\r\n");
 }
 
 static void test_wlan_auto_null_tx(int argc, char **argv)
@@ -12555,7 +12548,7 @@ static struct cli_command tests[] = {
     {"wlan-get-temperature", NULL, test_wlan_get_temperature},
 #endif
 #if CONFIG_AUTO_NULL_TX
-    {"wlan-auto-null-tx", "<start/stop>", test_wlan_auto_null_tx},
+    {"wlan-auto-null-tx", "<sta/uap> <start/stop>", test_wlan_auto_null_tx},
 #endif
 #if defined(RW610) && (CONFIG_ANT_DETECT)
     {"wlan-detect-ant", "<detect_mode> <ant_port_count> channel <channel> ...", test_wlan_detect_ant},
