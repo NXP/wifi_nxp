@@ -6703,7 +6703,9 @@ void wifi_get_mac_address_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *
 void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *fw_ver_ext)
 {
     uint8_t comma = 0x2C, space = 0x20;
+#ifdef RW610
     uint8_t ver_str_len = resp->size - WIFI_HOST_CMD_FIXED_HEADER_LEN - sizeof(resp->params.verext.version_str_sel);
+#endif
 
     if (!resp->params.verext.version_str_sel)
     {
@@ -6718,7 +6720,13 @@ void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint
         }
         else
         {
-            (void)memcpy((void *)fw_ver_ext, (const void *)&resp->params.verext.version_str, ver_str_len);
+            (void)memcpy((void *)fw_ver_ext, (const void *)&resp->params.verext.version_str,
+#ifdef RW610
+                         ver_str_len
+#else
+                         strlen((const char *)(&resp->params.verext.version_str))
+#endif
+            );
         }
     }
     else if (resp->params.verext.version_str_sel == 3U && strlen((const char *)(&resp->params.verext.version_str)))
@@ -6726,14 +6734,26 @@ void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint
         (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)), (const void *)&comma, 1);
         (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)), (const void *)&space, 1);
         (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)),
-                     (const void *)&resp->params.verext.version_str, ver_str_len);
+                     (const void *)&resp->params.verext.version_str,
+#ifdef RW610
+                     ver_str_len
+#else
+                     strlen((const char *)(&resp->params.verext.version_str))
+#endif
+        );
     }
     else if (resp->params.verext.version_str_sel == 4U && strlen((const char *)(&resp->params.verext.version_str)))
     {
         (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)), (const void *)&comma, 1);
         (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)), (const void *)&space, 1);
         (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)),
-                     (const void *)&resp->params.verext.version_str, ver_str_len);
+                     (const void *)&resp->params.verext.version_str,
+#ifdef RW610
+                     ver_str_len
+#else
+                     strlen((const char *)(&resp->params.verext.version_str))
+#endif
+        );
     }
     else
     { /* Do Nothing */
@@ -6815,7 +6835,7 @@ void wifi_prepare_get_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
 void wifi_prepare_get_fw_ver_ext_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number, int version_str_sel)
 {
     cmd->command                       = HostCmd_CMD_VERSION_EXT;
-    cmd->size                          = sizeof(HostCmd_DS_VERSION_EXT) + S_DS_GEN;
+    cmd->size                          = sizeof(t_u8) + S_DS_GEN;
     cmd->seq_num                       = seq_number;
     cmd->result                        = 0;
     cmd->params.verext.version_str_sel = version_str_sel;
