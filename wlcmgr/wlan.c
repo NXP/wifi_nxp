@@ -2965,11 +2965,11 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
     ENH_PS_MODES action = (ENH_PS_MODES)(*((uint32_t *)msg->data));
 #if CONFIG_WIFI_PS_DEBUG
     wlcm_d("got msg data :: %x", action);
+#endif
 #if !CONFIG_MEM_POOLS
     OSA_MemoryFree(msg->data);
 #else
     OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
-#endif
 #endif
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
@@ -7678,6 +7678,9 @@ static void wlan_wait_wlmgr_ready()
 
 int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 {
+#ifdef RW610
+    static bool reset_mutex_init = 0;
+#endif
     int ret;
     osa_status_t status;
 
@@ -7800,6 +7803,8 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     OSA_SemaphorePost((osa_semaphore_handle_t)wlan.scan_lock);
 
 #ifdef RW610
+    if (!reset_mutex_init)
+    {
         status = OSA_MutexCreate((osa_mutex_handle_t)reset_lock);
         if (status != KOSA_StatusSuccess)
         {
@@ -7810,7 +7815,8 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
             OSA_SemaphoreDestroy((osa_semaphore_handle_t)wlan.scan_lock);
             return -WM_FAIL;
         }
-
+        reset_mutex_init = 1;
+    }
     if (!mon_thread_init)
     {
 #ifdef RW610

@@ -2237,6 +2237,9 @@ static void wifi_core_deinit(void)
     wm_wifi.cmd_resp_status = 0;
     memset(&wm_wifi, 0x00, sizeof(wm_wifi));
 #endif
+#if ((CONFIG_11MC) || (CONFIG_11AZ)) && (CONFIG_WLS_CSI_PROC)
+    (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)wls_csi_sem);
+#endif
 #if CONFIG_CSI
     (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem);
 #endif
@@ -2688,6 +2691,7 @@ int wifi_register_data_input_callback(void (*data_input_callback)(const uint8_t 
                                                                   const uint16_t len))
 {
 #if CONFIG_HEAP_DEBUG
+    static bool mem_stat_sem_init = 0;
     int ret;
 #endif
     if (wm_wifi.data_input_callback != NULL)
@@ -2699,13 +2703,17 @@ int wifi_register_data_input_callback(void (*data_input_callback)(const uint8_t 
 
 #if CONFIG_HEAP_DEBUG
     /* Semaphore to protect os mem stat */
-    ret = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)os_mem_stat_sem);
-    if (ret != WM_SUCCESS)
+    if (!mem_stat_sem_init)
     {
-        PRINTF("Create os mem stat sem failed");
-        return -WM_FAIL;
+        ret = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)os_mem_stat_sem);
+        if (ret != WM_SUCCESS)
+        {
+            PRINTF("Create os mem stat sem failed");
+            return -WM_FAIL;
+        }
+        OSA_SemaphorePost((osa_semaphore_handle_t)os_mem_stat_sem);
+        mem_stat_sem_init = 1;
     }
-    OSA_SemaphorePost((osa_semaphore_handle_t)os_mem_stat_sem);
 #endif
 
     return WM_SUCCESS;
@@ -2721,6 +2729,7 @@ int wifi_register_gen_pbuf_from_data2_callback(void *(*gen_pbuf_from_data2)(t_u8
                                                                             void **p_payload))
 {
 #if CONFIG_HEAP_DEBUG
+    static bool mem_stat_sem_init = 0;
     int ret;
 #endif
     if (wm_wifi.gen_pbuf_from_data2 != NULL)
@@ -2732,13 +2741,17 @@ int wifi_register_gen_pbuf_from_data2_callback(void *(*gen_pbuf_from_data2)(t_u8
 
 #if CONFIG_HEAP_DEBUG
     /* Semaphore to protect os mem stat */
-    ret = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)os_mem_stat_sem);
-    if (ret != WM_SUCCESS)
+    if (!mem_stat_sem_init)
     {
-        PRINTF("Create os mem stat sem failed");
-        return -WM_FAIL;
+        ret = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)os_mem_stat_sem);
+        if (ret != WM_SUCCESS)
+        {
+            PRINTF("Create os mem stat sem failed");
+            return -WM_FAIL;
+        }
+        OSA_SemaphorePost((osa_semaphore_handle_t)os_mem_stat_sem);
+        mem_stat_sem_init = 1;
     }
-    OSA_SemaphorePost((osa_semaphore_handle_t)os_mem_stat_sem);
 #endif
 
     return WM_SUCCESS;

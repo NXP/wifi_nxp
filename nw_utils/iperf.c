@@ -1335,6 +1335,7 @@ int iperf_cli_init(void)
     u8_t i;
     int rv = WM_SUCCESS;
     osa_status_t status;
+    static bool iperf_timer_init = 0;
 
     for (i = 0; i < sizeof(iperf) / sizeof(struct cli_command); i++)
     {
@@ -1351,17 +1352,20 @@ int iperf_cli_init(void)
 
     (void)memset(&ctx, 0, sizeof(struct iperf_test_context));
 
-    status = OSA_TimerCreate((osa_timer_handle_t)ptimer, 1U / portTICK_PERIOD_MS, timer_poll_udp_client, (void *)0,
-                             KOSA_TimerPeriodic, OSA_TIMER_NO_ACTIVATE);
-    if (status != KOSA_StatusSuccess)
+    if (!iperf_timer_init)
     {
-        (void)PRINTF("Unable to create iperf timer rv(%d)\r\n", rv);
-        while (true)
+        status = OSA_TimerCreate((osa_timer_handle_t)ptimer, 1U / portTICK_PERIOD_MS, timer_poll_udp_client, (void *)0,
+                                 KOSA_TimerPeriodic, OSA_TIMER_NO_ACTIVATE);
+        if (status != KOSA_StatusSuccess)
         {
-            ;
+            (void)PRINTF("Unable to create iperf timer rv(%d)\r\n", rv);
+            while (true)
+            {
+                ;
+            }
         }
+        iperf_timer_init = 1;
     }
-
     return WM_SUCCESS;
 }
 

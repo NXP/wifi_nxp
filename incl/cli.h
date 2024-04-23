@@ -24,7 +24,9 @@
 #define COEX_APP_SUPPORT
 #endif
 
+#ifndef RW610
 #define CONFIG_APP_FRM_CLI_HISTORY 1
+#endif
 
 /** Structure for registering CLI commands */
 struct cli_command
