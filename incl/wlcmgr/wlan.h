@@ -1249,8 +1249,7 @@ static inline int is_valid_security(int security)
         (security == WLAN_SECURITY_WPA3_FT_SAE) ||
 #endif
 #endif
-        (security == WLAN_SECURITY_WPA3_SAE_EXT_KEY) ||
-        (security == WLAN_SECURITY_WILDCARD))
+        (security == WLAN_SECURITY_WPA3_SAE_EXT_KEY) || (security == WLAN_SECURITY_WILDCARD))
     {
         return 1;
     }
@@ -7306,5 +7305,12 @@ int wlan_auto_null_tx(wlan_auto_null_tx_t *auto_null_tx, mlan_bss_type bss_type)
  *
  */
 char *wlan_string_dup(const char *s);
+
+/**
+ * Get board type.
+ *
+ * \return board type.
+ */
+uint32_t wlan_get_board_type();
 
 #endif /* __WLAN_H__ */

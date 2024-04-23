@@ -309,7 +309,7 @@ static int wlan_memrdwr_getset(int argc, char *argv[])
 static char *bw[]           = {"20 MHz", "40 MHz", "80 MHz", "160 MHz"};
 static char *rate_format[4] = {"LG", "HT", "VHT", "HE"};
 static char *lg_rate[]      = {"1 Mbps",  "2 Mbps",  "5.5 Mbps", "11 Mbps", "6 Mbps",  "9 Mbps",
-                               "12 Mbps", "18 Mbps", "24 Mbps",  "36 Mbps", "48 Mbps", "54 Mbps"};
+                          "12 Mbps", "18 Mbps", "24 Mbps",  "36 Mbps", "48 Mbps", "54 Mbps"};
 
 static void print_ds_rate(wlan_ds_rate ds_rate)
 {
@@ -1360,8 +1360,29 @@ static void print_rutxpwrlimit(wlan_rutxpwrlimit_t *txpwrlimit)
 static void test_wlan_set_rutxpwrlimit(int argc, char **argv)
 {
     int rv;
+    uint32_t board_type;
 #if CONFIG_COMPRESS_RU_TX_PWTBL
+    board_type = wlan_get_board_type();
+#ifdef RW610
+    switch (board_type)
+    {
+        case RW610_PACKAGE_TYPE_QFN:
+            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_qfn_cfg_set, sizeof(rutxpowerlimit_qfn_cfg_set));
+            break;
+        case RW610_PACKAGE_TYPE_CSP:
+            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_csp_cfg_set, sizeof(rutxpowerlimit_csp_cfg_set));
+            break;
+        case RW610_PACKAGE_TYPE_BGA:
+            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_bga_cfg_set, sizeof(rutxpowerlimit_bga_cfg_set));
+            break;
+        default:
+            PRINTF("Unknown board type, use BGA rutx power limit cfg \r\n");
+            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_bga_cfg_set, sizeof(rutxpowerlimit_bga_cfg_set));
+            break;
+    }
+#else
     rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set, sizeof(rutxpowerlimit_cfg_set));
+#endif
 
     if (rv != WM_SUCCESS)
     {

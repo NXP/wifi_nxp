@@ -15859,3 +15859,14 @@ char *wlan_string_dup(const char *s)
         (void)strcpy(snew, s);
     return snew;
 }
+
+uint32_t wlan_get_board_type()
+{
+    uint32_t board_type = 0xff;
+
+#ifdef RW610
+    board_type = wifi_get_board_type();
+#endif
+
+    return board_type;
+}
