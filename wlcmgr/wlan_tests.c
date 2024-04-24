@@ -1308,7 +1308,10 @@ static void test_wlan_add(int argc, char **argv)
                 }
                 else
                 {
-                    network.security.pwe_derivation = 2;
+                    if (network.role == WLAN_BSS_ROLE_STA)
+                    {
+                        network.security.pwe_derivation = 2;
+                    }
                 }
             }
             else
