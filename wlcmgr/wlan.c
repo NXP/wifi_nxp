@@ -8187,6 +8187,9 @@ int wlan_stop(void)
 #if CONFIG_HOST_SLEEP
     OSA_SemaphoreDestroy(wakelock);
 #endif
+#if ((CONFIG_11MC) || (CONFIG_11AZ)) && (CONFIG_WLS_CSI_PROC)
+    (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)wls_csi_sem);
+#endif
 
 #ifndef RW610
     if (wlan.sta_state > CM_STA_ASSOCIATING)

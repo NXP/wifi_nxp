@@ -2237,9 +2237,6 @@ static void wifi_core_deinit(void)
     wm_wifi.cmd_resp_status = 0;
     memset(&wm_wifi, 0x00, sizeof(wm_wifi));
 #endif
-#if ((CONFIG_11MC) || (CONFIG_11AZ)) && (CONFIG_WLS_CSI_PROC)
-    (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)wls_csi_sem);
-#endif
 #if CONFIG_CSI
     (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem);
 #endif
