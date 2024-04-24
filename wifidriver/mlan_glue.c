@@ -6836,7 +6836,7 @@ void wifi_prepare_get_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
 void wifi_prepare_get_fw_ver_ext_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number, int version_str_sel)
 {
     cmd->command                       = HostCmd_CMD_VERSION_EXT;
-    cmd->size                          = sizeof(t_u8) + S_DS_GEN;
+    cmd->size                          = sizeof(HostCmd_DS_VERSION_EXT) + S_DS_GEN;
     cmd->seq_num                       = seq_number;
     cmd->result                        = 0;
     cmd->params.verext.version_str_sel = version_str_sel;

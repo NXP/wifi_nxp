@@ -1514,7 +1514,7 @@ static void wlan_fw_init_cfg(void)
 #endif
 
 #if CONFIG_11N
-    wifi_io_d("CMD : GET_FW_VER_EXT (0xcd)");
+    wifi_io_d("CMD : 11N_CFG (0xcd)");
 
 #if CONFIG_FW_VDLL
     while (pmadapter->vdll_in_progress == MTRUE)
@@ -1526,7 +1526,7 @@ static void wlan_fw_init_cfg(void)
     wlan_set_11n_cfg();
 
 #if CONFIG_ENABLE_AMSDU_RX
-    wifi_io_d("CMD : GET_FW_VER_EXT (0xdf)");
+    wifi_io_d("CMD : AMSDU_AGGR_CTRL (0xdf)");
 
 #if CONFIG_FW_VDLL
     while (pmadapter->vdll_in_progress == MTRUE)
