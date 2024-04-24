@@ -816,9 +816,11 @@
 #endif
 #endif
 
+#if !CONFIG_WPA2_ENTP
 #if CONFIG_EAP_TLS
 #undef CONFIG_EAP_TLS
 #define CONFIG_EAP_TLS (CONFIG_WPA_SUPP && CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
+#endif
 #endif
 
 #if !defined CONFIG_EAP_PEAP

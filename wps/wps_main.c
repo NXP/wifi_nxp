@@ -1240,8 +1240,7 @@ int wps_start(struct wps_config *wps_conf)
     return WM_SUCCESS;
 
 fail:
-    if (wps_main_Handle)
-        (void)OSA_TaskDestroy((osa_task_handle_t)wps_main_Handle);
+    (void)OSA_TaskDestroy((osa_task_handle_t)wps_main_Handle);
     if (wps.cmd_queue)
         (void)OSA_MsgQDestroy((osa_msgq_handle_t)wps.cmd_queue);
     if (wps.data_queue)

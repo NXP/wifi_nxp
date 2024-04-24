@@ -33,7 +33,6 @@ extern u8 g_channel;
 extern PWPS_INFO gpwps_info;
 
 #if CONFIG_WPA2_ENTP
-#define CONFIG_EAP_TLS 1
 extern bool gpwps_info_initialized;
 #endif
 
