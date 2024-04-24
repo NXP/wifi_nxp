@@ -388,7 +388,7 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid, t_
 #if CONFIG_FW_VDLL
     while (pmadapter->vdll_in_progress == MTRUE)
     {
-        OSA_TimeDelay(1);
+        OSA_TimeDelay(50);
     }
 #endif
 }
@@ -1343,7 +1343,7 @@ static void wlan_fw_init_cfg(void)
 #if CONFIG_FW_VDLL
         while (pmadapter->vdll_in_progress == MTRUE)
         {
-            OSA_TimeDelay(1);
+            OSA_TimeDelay(50);
         }
 #endif
         wifi_io_d("CMD : LOW_POWER_MODE (0x128)");
@@ -1357,7 +1357,7 @@ static void wlan_fw_init_cfg(void)
 #if CONFIG_FW_VDLL
         while (pmadapter->vdll_in_progress == MTRUE)
         {
-            OSA_TimeDelay(1);
+            OSA_TimeDelay(50);
         }
 #endif
         wifi_io_d("CMD : SET_CAL_DATA (0x8f)");
@@ -1373,7 +1373,7 @@ static void wlan_fw_init_cfg(void)
 #if CONFIG_FW_VDLL
     while (pmadapter->vdll_in_progress == MTRUE)
     {
-        OSA_TimeDelay(1);
+        OSA_TimeDelay(50);
     }
 #endif
 
@@ -1385,7 +1385,7 @@ static void wlan_fw_init_cfg(void)
 #if CONFIG_FW_VDLL
         while (pmadapter->vdll_in_progress == MTRUE)
         {
-            OSA_TimeDelay(1);
+            OSA_TimeDelay(50);
         }
 #endif
         _wlan_set_mac_addr();
@@ -1397,7 +1397,7 @@ static void wlan_fw_init_cfg(void)
 #if CONFIG_FW_VDLL
     while (pmadapter->vdll_in_progress == MTRUE)
     {
-        OSA_TimeDelay(1);
+        OSA_TimeDelay(50);
     }
 #endif
 
@@ -1409,7 +1409,7 @@ static void wlan_fw_init_cfg(void)
 #if CONFIG_FW_VDLL
     while (pmadapter->vdll_in_progress == MTRUE)
     {
-        OSA_TimeDelay(1);
+        OSA_TimeDelay(50);
     }
 #endif
 
@@ -1418,7 +1418,7 @@ static void wlan_fw_init_cfg(void)
 #if CONFIG_FW_VDLL
     while (pmadapter->vdll_in_progress == MTRUE)
     {
-        OSA_TimeDelay(1);
+        OSA_TimeDelay(50);
     }
 #endif
 
@@ -1432,7 +1432,7 @@ static void wlan_fw_init_cfg(void)
 #if CONFIG_FW_VDLL
         while (pmadapter->vdll_in_progress == MTRUE)
         {
-            OSA_TimeDelay(1);
+            OSA_TimeDelay(50);
         }
 #endif
 
@@ -1444,7 +1444,7 @@ static void wlan_fw_init_cfg(void)
 #if CONFIG_FW_VDLL
     while (pmadapter->vdll_in_progress == MTRUE)
     {
-        OSA_TimeDelay(1);
+        OSA_TimeDelay(50);
     }
 #endif
 
@@ -1455,7 +1455,7 @@ static void wlan_fw_init_cfg(void)
 #if CONFIG_FW_VDLL
     while (pmadapter->vdll_in_progress == MTRUE)
     {
-        OSA_TimeDelay(1);
+        OSA_TimeDelay(50);
     }
 #endif
 
@@ -1469,7 +1469,7 @@ static void wlan_fw_init_cfg(void)
 #if CONFIG_FW_VDLL
         while (pmadapter->vdll_in_progress == MTRUE)
         {
-            OSA_TimeDelay(1);
+            OSA_TimeDelay(50);
         }
 #endif
 
@@ -1482,7 +1482,7 @@ static void wlan_fw_init_cfg(void)
 #if CONFIG_FW_VDLL
     while (pmadapter->vdll_in_progress == MTRUE)
     {
-        OSA_TimeDelay(1);
+        OSA_TimeDelay(50);
     }
 #endif
 
@@ -1495,7 +1495,7 @@ static void wlan_fw_init_cfg(void)
 #if CONFIG_FW_VDLL
         while (pmadapter->vdll_in_progress == MTRUE)
         {
-            OSA_TimeDelay(1);
+            OSA_TimeDelay(50);
         }
 #endif
 
@@ -1506,7 +1506,7 @@ static void wlan_fw_init_cfg(void)
 #if CONFIG_FW_VDLL
     while (pmadapter->vdll_in_progress == MTRUE)
     {
-        OSA_TimeDelay(1);
+        OSA_TimeDelay(50);
     }
 #endif
 
@@ -1519,7 +1519,7 @@ static void wlan_fw_init_cfg(void)
 #if CONFIG_FW_VDLL
     while (pmadapter->vdll_in_progress == MTRUE)
     {
-        OSA_TimeDelay(1);
+        OSA_TimeDelay(50);
     }
 #endif
 
@@ -1531,7 +1531,7 @@ static void wlan_fw_init_cfg(void)
 #if CONFIG_FW_VDLL
     while (pmadapter->vdll_in_progress == MTRUE)
     {
-        OSA_TimeDelay(1);
+        OSA_TimeDelay(50);
     }
 #endif
 
