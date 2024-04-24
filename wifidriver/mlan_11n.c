@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides functions for 11n handling.
  *
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -1654,7 +1654,12 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
             pext_cap->ext_cap.BSS_Transition = 0;
         }
 #endif
-
+#if CONFIG_11MC || CONFIG_11AZ
+        pext_cap->ext_cap.FTMI = 1;
+#endif
+#if CONFIG_11MC
+        pext_cap->ext_cap.CivicLocation = 1;
+#endif
 #if CONFIG_11AX
         SET_EXTCAP_TWT_REQ(pext_cap->ext_cap);
         pext_cap->ext_cap.TWTResp = 0;
