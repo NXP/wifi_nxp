@@ -48,10 +48,10 @@ static bool ipv6;
 #endif
 static int amount                   = IPERF_CLIENT_AMOUNT;
 static unsigned int udp_rate_factor = IPERF_UDP_DEFAULT_FACTOR;
-unsigned int buffer_len             = 0;
-unsigned int port                   = LWIPERF_TCP_PORT_DEFAULT;
+static unsigned int buffer_len      = 0;
+static unsigned int port            = LWIPERF_TCP_PORT_DEFAULT;
 #if CONFIG_WMM
-uint8_t qos = 0;
+static uint8_t qos = 0;
 #endif
 static uint8_t mcast_mac[6];
 static bool mcast_mac_valid;
