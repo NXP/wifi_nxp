@@ -8019,7 +8019,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 
 int wlan_stop(void)
 {
-    osa_status_t status;
+    osa_status_t status = KOSA_StatusIdle;
     int ret = WM_SUCCESS;
 #ifndef RW610
     int total_wait_time = 1000; /* millisecs */

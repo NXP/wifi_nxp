@@ -6428,7 +6428,7 @@ int wrapper_bssdesc_first_set(int bss_index,
     if ((d->prsnx_ie != MNULL) && (d->prsnx_ie->data[0] & (0x1 << SAE_H2E_BIT)))
     {
         *ap_pwe = 2;
-        for (i = WLAN_SUPPORTED_RATES; i > 0; i--)
+        for (i = (WLAN_SUPPORTED_RATES - 1); i >= 0; i--)
         {
             if (d->data_rates[i] == 0xFB)
             {
