@@ -4349,7 +4349,14 @@ int wifi_low_level_output(const t_u8 interface,
         {
             if (pmpriv->curr_bss_params.bss_descriptor.curr_bandwidth == BW_80MHZ)
             {
-                tx_control = (RATEID_VHT_MCS9_1SS_BW80 << 16) | TXPD_TXRATE_ENABLE;
+                if (pmpriv->curr_bss_params.bss_descriptor.phe_cap != NULL)
+                {
+                    tx_control = (RATEID_HE_MCS9_1SS_BW80 << 16) | TXPD_TXRATE_ENABLE;
+                }
+                else if (pmpriv->curr_bss_params.bss_descriptor.pvht_cap != NULL)
+                {
+                    tx_control = (RATEID_VHT_MCS9_1SS_BW80 << 16) | TXPD_TXRATE_ENABLE;
+                }
 #if CONFIG_WMM
                 /* Though TID is not used in case of TCP traffic,
                  * but making tid as voice traffic is a way to tell firmware to not to use
@@ -4361,7 +4368,14 @@ int wifi_low_level_output(const t_u8 interface,
             }
             else if (pmpriv->curr_bss_params.bss_descriptor.curr_bandwidth == BW_40MHZ)
             {
-                tx_control = (RATEID_VHT_MCS9_1SS_BW40 << 16) | TXPD_TXRATE_ENABLE;
+                if (pmpriv->curr_bss_params.bss_descriptor.phe_cap != NULL)
+                {
+                    tx_control = (RATEID_HE_MCS8_1SS_BW40 << 16) | TXPD_TXRATE_ENABLE;
+                }
+                else if (pmpriv->curr_bss_params.bss_descriptor.pvht_cap != NULL)
+                {
+                    tx_control = (RATEID_VHT_MCS8_1SS_BW40 << 16) | TXPD_TXRATE_ENABLE;
+                }
 #if CONFIG_WMM
                 /* Though TID is not used in case of TCP traffic,
                  * but making tid as voice traffic is a way to tell firmware to not to use
@@ -4372,7 +4386,16 @@ int wifi_low_level_output(const t_u8 interface,
 #endif
             }
             else if (pmpriv->curr_bss_params.bss_descriptor.curr_bandwidth == BW_20MHZ)
-                tx_control = (RATEID_VHT_MCS7_1SS_BW20 << 16) | TXPD_TXRATE_ENABLE;
+            {
+                if (pmpriv->curr_bss_params.bss_descriptor.phe_cap != NULL)
+                {
+                    tx_control = (RATEID_HE_MCS7_1SS_BW20 << 16) | TXPD_TXRATE_ENABLE;
+                }
+                else if (pmpriv->curr_bss_params.bss_descriptor.pvht_cap != NULL)
+                {
+                    tx_control = (RATEID_VHT_MCS7_1SS_BW20 << 16) | TXPD_TXRATE_ENABLE;
+                }
+            }
         }
     }
     else if (interface == MLAN_BSS_TYPE_UAP)
