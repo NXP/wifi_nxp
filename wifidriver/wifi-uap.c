@@ -4276,6 +4276,36 @@ static mlan_status wifi_uap_sta_info(mlan_private *priv, t_u16 action, mlan_ds_s
     return MLAN_STATUS_SUCCESS;
 }
 
+/**
+ *  @brief uap remove sta
+ *
+ *  @param priv             A pointer to moal_private structure
+ *  @param addr             A pointer to mac address
+ *
+ *  @return                 MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+static mlan_status wifi_uap_sta_remove(mlan_private *priv, const uint8_t *addr)
+{
+    int ret;
+    mlan_deauth_param data_buf;
+
+    ENTER();
+
+    (void)memset(&data_buf, 0x00, sizeof(data_buf));
+
+    memcpy((void *)data_buf.mac_addr, (const void *)addr, sizeof(data_buf.mac_addr));
+    data_buf.reason_code = WLAN_REASON_UNSPECIFIED;
+
+    ret = wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_STA_DEAUTH, 0, 0, NULL, &data_buf,
+                                        MLAN_BSS_TYPE_UAP, NULL);
+    if (ret != WM_SUCCESS)
+    {
+        return MLAN_STATUS_FAILURE;
+    }
+
+    return MLAN_STATUS_SUCCESS;
+}
+
 int wifi_nxp_sta_add(nxp_wifi_sta_info_t *params)
 {
     mlan_private *priv         = (mlan_private *)mlan_adap->priv[1];
@@ -4436,6 +4466,14 @@ int wifi_nxp_sta_remove(const uint8_t *addr)
         goto done;
     }
 
+    if (MLAN_STATUS_SUCCESS != wifi_uap_sta_remove(priv, addr))
+    {
+        wuap_e("uAP remove station failed");
+        ret = -WM_FAIL;
+        goto done;
+    }
+
+#if 0
     sta_info = os_mem_alloc(sizeof(mlan_ds_sta_info));
     if (!sta_info)
     {
@@ -4456,10 +4494,13 @@ int wifi_nxp_sta_remove(const uint8_t *addr)
         ret = -WM_FAIL;
         goto done;
     }
+#endif
 
 done:
+#if 0
     if (sta_info)
         os_mem_free(sta_info);
+#endif
 
     LEAVE();
     return ret;
@@ -4515,6 +4556,44 @@ int wifi_set_uap_frag(int frag_threshold)
     }
 
     return rv;
+}
+
+void wifi_nxp_uap_disconnect(mlan_private *priv, t_u16 reason_code, t_u8 *mac)
+{
+    wlan_mgmt_pkt *pmgmt_pkt_hdr    = MNULL;
+    nxp_wifi_event_mlme_t *mgmt_rx  = &wm_wifi.mgmt_rx;
+    t_u8 *pos                       = MNULL;
+    t_u16 reason;
+    t_u32 payload_len;
+
+    pmgmt_pkt_hdr = wifi_PrepDefaultMgtMsg(SUBTYPE_DEAUTH, (mlan_802_11_mac_addr *)(void *)priv->curr_addr,
+        (mlan_802_11_mac_addr *)(void *)mac, (mlan_802_11_mac_addr *)(void *)priv->curr_addr, 100);
+    if (pmgmt_pkt_hdr == MNULL)
+    {
+        wifi_e("No memory available for deauth");
+        return;
+    }
+
+    pos = (t_u8 *)pmgmt_pkt_hdr + sizeof(wlan_mgmt_pkt);
+    reason = wlan_cpu_to_le16(reason_code);
+    memcpy(pos, &reason, sizeof(reason));
+    payload_len = sizeof(reason) + sizeof(pmgmt_pkt_hdr->wlan_header);
+
+    if (payload_len <= (int)sizeof(mgmt_rx->frame.frame))
+    {
+        memset(mgmt_rx, 0, sizeof(nxp_wifi_event_mlme_t));
+        mgmt_rx->frame.frame_len = payload_len;
+        memcpy((void *)mgmt_rx->frame.frame, (const void *)(&pmgmt_pkt_hdr->wlan_header), mgmt_rx->frame.frame_len);
+        if (wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn)
+        {
+            wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn(wm_wifi.hapd_if_priv, mgmt_rx, mgmt_rx->frame.frame_len);
+        }
+    }
+    else
+    {
+        wifi_e("Insufficient frame buffer");
+    }
+    os_mem_free(pmgmt_pkt_hdr);
 }
 
 int wifi_nxp_stop_ap()

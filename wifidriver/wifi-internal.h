@@ -399,6 +399,7 @@ int wifi_set_uap_rts(int rts_threshold);
 int wifi_set_uap_frag(int frag_threshold);
 int wifi_nxp_sta_add(nxp_wifi_sta_info_t *params);
 int wifi_nxp_sta_remove(const uint8_t *addr);
+void wifi_nxp_uap_disconnect(mlan_private *priv, t_u16 reason_code, t_u8 *mac);
 int wifi_nxp_stop_ap(void);
 int wifi_nxp_set_acl(nxp_wifi_acl_info_t *acl_params);
 int wifi_nxp_set_country(unsigned int bss_type, const char *alpha2);

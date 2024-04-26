@@ -115,10 +115,8 @@ os_semaphore_t wakelock;
 int wakeup_by = 0;
 #endif
 
-#ifdef CONFIG_WIFI_RECOVERY
 bool wifi_recovery_enable = false;
 t_u16 wifi_recovery_cnt   = 0;
-#endif
 bool wifi_shutdown_enable = false;
 
 typedef enum __mlan_status
@@ -1063,6 +1061,11 @@ void wlan_process_hang(uint8_t fw_reload)
                 os_mutex_delete(&mlan_adap->priv[i]->tx_ba_stream_tbl_lock);
                 mlan_adap->priv[i]->tx_ba_stream_tbl_lock = NULL;
             }
+            if (mlan_adap->priv[i]->rx_reorder_tbl_lock != NULL)
+            {
+                os_semaphore_delete(&mlan_adap->priv[i]->rx_reorder_tbl_lock);
+                mlan_adap->priv[i]->rx_reorder_tbl_lock = NULL;
+            }
 #ifdef CONFIG_WMM
             wlan_ralist_deinit_enh(mlan_adap->priv[i]);
 #endif
@@ -1150,7 +1153,6 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         return -WM_FAIL;
     }
 
-#ifdef CONFIG_WIFI_RECOVERY
     if (wifi_recovery_enable)
     {
         wifi_w("Recovery in progress. command 0x%x skipped", cmd->command);
@@ -1160,7 +1162,6 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         wifi_put_command_lock();
         return -WM_FAIL;
     }
-#endif
     if (wifi_shutdown_enable)
     {
         wifi_w("FW shutdown in progress. command 0x%x skipped", cmd->command);
@@ -1186,12 +1187,8 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 #endif
         // wakelock_put(WL_ID_LL_OUTPUT);
         (void)wifi_put_command_lock();
-#ifdef CONFIG_WIFI_RECOVERY
         wifi_recovery_enable = true;
         return -WM_FAIL;
-#else
-        assert(0);
-#endif
     }
 #endif
 #ifdef CONFIG_WMM_UAPSD
@@ -1254,16 +1251,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         wifi_dump_firmware_info();
 #endif
 #endif
-#ifdef CONFIG_WIFI_RECOVERY
         wifi_recovery_enable = true;
-#else
-        /* assert as command flow cannot work anymore */
-#if defined(CONFIG_WIFI_IND_DNLD)
-        wlan_process_hang(FW_RELOAD_SDIO_INBAND_RESET);
-#else
-        ASSERT(0);
-#endif
-#endif
     }
 
     if (cmd->command == HostCmd_CMD_FUNC_SHUTDOWN)
@@ -2053,6 +2041,11 @@ static void wifi_core_deinit(void)
             {
                 os_mutex_delete(&mlan_adap->priv[i]->tx_ba_stream_tbl_lock);
                 mlan_adap->priv[i]->tx_ba_stream_tbl_lock = NULL;
+            }
+            if (mlan_adap->priv[i]->rx_reorder_tbl_lock != NULL)
+            {
+                os_semaphore_delete(&mlan_adap->priv[i]->rx_reorder_tbl_lock);
+                mlan_adap->priv[i]->rx_reorder_tbl_lock = NULL;
             }
 #ifdef CONFIG_WMM
             wlan_ralist_deinit_enh(mlan_adap->priv[i]);
@@ -3252,11 +3245,7 @@ void wifi_tx_card_awake_lock(void)
 #ifdef CONFIG_WIFI_PS_DEBUG
         wifi_e("Failed to wakeup card for Tx");
 #endif
-#ifdef CONFIG_WIFI_RECOVERY
         wifi_recovery_enable = true;
-#else
-        assert(0);
-#endif
     }
 }
 
@@ -4803,6 +4792,11 @@ int wifi_supp_inject_frame(const unsigned int bss_type, const uint8_t *buff, con
     return WM_SUCCESS;
 }
 #endif
+
+bool wifi_is_remain_on_channel(void)
+{
+    return (mlan_adap->remain_on_channel ? true : false);
+}
 
 int wifi_remain_on_channel(const bool status, const uint8_t channel, const uint32_t duration)
 {

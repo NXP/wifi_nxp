@@ -5337,7 +5337,10 @@ int wifi_csi_cfg(wifi_csi_config_params_t *csi_params)
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
-    cmd->seq_num = 0x0;
+    if(csi_params->bss_type == BSS_TYPE_UAP)
+        cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_UAP);
+    else
+        cmd->seq_num = 0x0;
     cmd->result  = 0x0;
 
     mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_CSI,
@@ -5581,6 +5584,45 @@ int wifi_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 w
 }
 #endif
 
+#ifdef CONFIG_EXTERNAL_COEX_PTA
+
+int wifi_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_ROBUST_COEX);
+    cmd->size    = wlan_cpu_to_le16(sizeof(HostCmd_EXTERNAL_COEX_PTA) + S_DS_GEN);
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x00;
+
+    HostCmd_EXTERNAL_COEX_PTA *external_coex_pta = (HostCmd_EXTERNAL_COEX_PTA *)&cmd->params.external_coex_pta;
+    external_coex_pta->action                    = wlan_cpu_to_le16(ACTION_SET);
+    external_coex_pta->reserved                  = 0x00;
+
+    MrvlIETypes_ExternalCoexPta_Config_t *coex_pta_cfg_data =
+        (MrvlIETypes_ExternalCoexPta_Config_t *)&external_coex_pta->coex_pta_cfg_data;
+
+    coex_pta_cfg_data->param.tlv_type = wlan_cpu_to_le16(TLV_TYPE_ROBUST_COEX);
+    coex_pta_cfg_data->param.tlv_length =
+        wlan_cpu_to_le16(sizeof(MrvlIETypes_ExternalCoexPta_Config_t) - sizeof(MrvlIETypes_Coex_params_t));
+
+    coex_pta_cfg_data->enabled                = wlan_cpu_to_le16(coex_pta_config.enabled);
+    coex_pta_cfg_data->ext_WifiBtArb          = wlan_cpu_to_le16(coex_pta_config.ext_WifiBtArb);
+    coex_pta_cfg_data->polGrantPin            = wlan_cpu_to_le16(coex_pta_config.polGrantPin);
+    coex_pta_cfg_data->enable_PriPtaInt       = wlan_cpu_to_le16(coex_pta_config.enable_PriPtaInt);
+    coex_pta_cfg_data->enable_StatusFromPta   = wlan_cpu_to_le16(coex_pta_config.enable_StatusFromPta);
+    coex_pta_cfg_data->setPriSampTiming       = wlan_cpu_to_le16(coex_pta_config.setPriSampTiming);
+    coex_pta_cfg_data->setStateInfoSampTiming = wlan_cpu_to_le16(coex_pta_config.setStateInfoSampTiming);
+    coex_pta_cfg_data->extRadioTrafficPrio    = wlan_cpu_to_le16(coex_pta_config.extRadioTrafficPrio);
+    coex_pta_cfg_data->extCoexHwIntWci2       = wlan_cpu_to_le16(coex_pta_config.extCoexHwIntWci2);
+
+    wifi_wait_for_cmdresp(NULL);
+
+    return wm_wifi.cmd_resp_status;
+}
+#endif
 
 #ifdef CONFIG_IMD3_CFG
 int wifi_imd3_cfg(t_u8 imd3_value)

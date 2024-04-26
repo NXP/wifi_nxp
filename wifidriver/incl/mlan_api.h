@@ -553,6 +553,9 @@ int wifi_tsp_cfg(const t_u16 action,
 
 int wifi_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action);
 
+#ifdef CONFIG_EXTERNAL_COEX_PTA
+int wifi_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config);
+#endif
 
 #ifdef CONFIG_IMD3_CFG
 int wifi_imd3_cfg(t_u8 imd3_value);

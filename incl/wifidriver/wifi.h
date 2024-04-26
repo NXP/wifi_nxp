@@ -116,10 +116,8 @@ extern uint8_t g_rssi;
 extern uint16_t g_data_nf_last;
 extern uint16_t g_data_snr_last;
 
-#ifdef CONFIG_WIFI_RECOVERY
 extern bool wifi_recovery_enable;
 extern t_u16 wifi_recovery_cnt;
-#endif
 extern bool wifi_shutdown_enable;
 
 /** WiFi Error Code */
@@ -1824,7 +1822,7 @@ int wifi_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 w
 #ifdef RW610
 /* get CAU module temperature and write to firmware */
 void wifi_cau_temperature_enable(void);
-void wifi_cau_temperature_write_to_firmware(void);
+int wifi_cau_temperature_write_to_firmware(void);
 int32_t wifi_get_temperature(void);
 #endif
 
@@ -1846,5 +1844,6 @@ int wifi_auto_null_tx(wifi_auto_null_tx_t *auto_null_tx);
 #ifdef CONFIG_WPA_SUPP
 void hostapd_connected_sta_list(wifi_sta_info_t *si, wifi_sta_list_t *sl);
 #endif
+bool wifi_is_remain_on_channel(void);
 
 #endif /* __WIFI_H__ */

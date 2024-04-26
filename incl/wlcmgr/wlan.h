@@ -130,7 +130,7 @@
 #include <wifi_events.h>
 #include <wifi.h>
 
-#define WLAN_DRV_VERSION "v1.3.r48.p7"
+#define WLAN_DRV_VERSION "v1.3.r48.p9"
 
 #ifdef CONFIG_WPA2_ENTP
 #include <wm_mbedtls_helper_api.h>
@@ -816,8 +816,7 @@ enum wlan_security_type
     WLAN_SECURITY_WPA3_FT_SAE,
 #endif
 #endif
-    /** The network uses WPA2/WPA3 SAE mixed security with PSK. This security mode
-     * is specific to uAP or SoftAP only */
+    /** The network uses WPA2/WPA3 SAE mixed security with PSK. */
     WLAN_SECURITY_WPA2_WPA3_SAE_MIXED,
 #ifdef CONFIG_OWE
     /** The network uses OWE only security without Transition mode support. */
@@ -1462,6 +1461,43 @@ typedef txrate_setting wlan_txrate_setting;
  */
 typedef wifi_rssi_info_t wlan_rssi_info_t;
 
+#ifdef CONFIG_EXTERNAL_COEX_PTA
+#define MIN_SAMP_TIMING              20
+#define MAX_SAMP_TIMING              200
+#define COEX_PTA_FEATURE_ENABLE      1
+#define COEX_PTA_FEATURE_DISABLE     0
+#define POL_GRANT_PIN_HIGH           0
+#define POL_GRANT_PIN_LOW            1
+#define STATE_INPUT_DISABLE          0
+#define STATE_PTA_PIN                1
+#define STATE_PRIORITY_PIN           2
+#define SAMPLE_TIMING_VALUE          100
+#define EXT_COEX_PTA_INTERFACE       5
+#define EXT_COEX_WCI2_INTERFACE      6
+#define EXT_COEX_WCI2_GPIO_INTERFACE 7
+
+typedef struct _external_coex_pta_cfg
+{
+    /** Enable: 0x01, Disable: 0x00 */
+    t_u8 enabled;
+    /** Enable ExtWifiBtArb: 0x01, Disable ExWifiBtArb: 0x00 */
+    t_u8 ext_WifiBtArb;
+    /** Active high: 0x00, Active low: 0x01 */
+    t_u8 polGrantPin;
+    /**  Enable PriPtaInt: 0x01, Disable PriPtaInt: 0x00 */
+    t_u8 enable_PriPtaInt;
+    /** State input disable: 0x00, State info is from state pin: 0x01, State info is sampled on priority pin: 0x02 */
+    t_u8 enable_StatusFromPta;
+    /** Timing to sample Priority bit */
+    t_u16 setPriSampTiming;
+    /** Timing to sample Tx/Rx info */
+    t_u16 setStateInfoSampTiming;
+    /** Enable external traffic Tx/Rx Priority: 0x01, Disable external traffic Tx/Rx Priority: 0x00 */
+    t_u8 extRadioTrafficPrio;
+    /** Enable wci-2 interface: 0x01, Disable wci-2 interface: 0x00 */
+    t_u8 extCoexHwIntWci2;
+} ext_coex_pta_cfg;
+#endif
 
 int verify_scan_duration_value(int scan_duration);
 int verify_scan_channel_value(int channel);
@@ -2069,46 +2105,6 @@ int wlan_is_started();
 
 #endif // RW610
 
-#ifdef CONFIG_EU_VALIDATION
-
-typedef enum
-{
-    EU_GCMP_128_ENC = 0x05,
-    EU_GCMP_128_DEC,
-    EU_GCMP_256_ENC,
-    EU_GCMP_256_DEC,
-    EU_DUMMY_PAYLOAD,
-    EU_CRYPTO,
-    EU_CRYPTO_LARGE_PAYLOAD,
-    EU_CRYPTO_CCMP_128_ENC,
-    EU_CRYPTO_CCMP_128_DEC,
-    EU_CRYPTO_CCMP_256_ENC,
-    EU_CRYPTO_CCMP_256_DEC,
-    EU_CRYPTO_CCMP_128_MGMT_ENC,
-    EU_CRYPTO_CCMP_128_MGMT_DEC,
-    EU_GCMP_256_ENC_FIPS,
-    EU_GCMP_256_DEC_FIPS,
-    EU_GCMP_128_ENC_FIPS,
-    EU_GCMP_128_DEC_FIPS,
-    EU_TKIP_ENC_FIPS,
-    EU_TKIP_DEC_FIPS,
-    EU_OPTION_MAX = EU_TKIP_DEC_FIPS
-} eu_option;
-
-/** Execute EU validation.
- *
- *  This function is used to do EU validation.
- *
- * \param[in]  option         Specify the EU validation type, \ref eu_option.
- * \param[out] resp_buf       Buffer to save the command response data
- * \param[in]  resp_buf_size  Size of resp_buf
- * \param[out] reqd_len       Size of valid bytes in response buffer if successful otherwise invalid.
- *
- * \return WM_SUCCESS if successful otherwise failure.
- */
-int wlan_eu_validation(eu_option option, uint8_t *resp_buf, uint32_t resp_buf_size, uint32_t *reqd_len);
-
-#endif // CONFIG_EU_VALIDATION
 
 #ifdef CONFIG_NCP_BRIDGE
 /** uap provisioning deinit callback function */
@@ -6556,6 +6552,14 @@ int wlan_single_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime);
 int wlan_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 wlanBlockTime);
 #endif
 
+#ifdef CONFIG_EXTERNAL_COEX_PTA
+/**
+ * Set external coex pta parameters.
+ * \param[in] coex_pta_config
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config);
+#endif
 
 #ifdef CONFIG_WPA_SUPP_DPP
 /** Add a DPP Configurator
@@ -6797,5 +6801,11 @@ typedef wifi_auto_null_tx_t wlan_auto_null_tx_t;
  */
 int wlan_auto_null_tx(wlan_auto_null_tx_t *auto_null_tx);
 #endif
+
+/**
+ * allocate a copy of a string
+ *
+ */
+char *wlan_string_dup(const char *s);
 
 #endif /* __WLAN_H__ */

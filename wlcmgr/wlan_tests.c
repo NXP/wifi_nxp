@@ -39,6 +39,7 @@ static uint8_t broadcast_mac[MLAN_MAC_ADDR_LENGTH] = {0xff, 0xff, 0xff, 0xff, 0x
 
 #ifdef CONFIG_CSI
 wlan_csi_config_params_t g_csi_params = {
+    .bss_type           = 0,
     .csi_enable         = 1,
     .head_id            = 0x00010203,
     .tail_id            = 0x00010203,
@@ -1157,7 +1158,7 @@ static void test_wlan_add(int argc, char **argv)
 #ifdef CONFIG_WPA_SUPP
             if (string_equal(argv[arg], "og") != false)
             {
-                network.security.owe_groups = argv[arg + 1];
+                network.security.owe_groups = string_dup(argv[arg + 1]);
                 arg += 2;
             }
 #endif
@@ -1234,7 +1235,7 @@ static void test_wlan_add(int argc, char **argv)
 #ifdef CONFIG_WPA_SUPP
                 if (string_equal(argv[arg], "sg") != false)
                 {
-                    network.security.sae_groups = argv[arg + 1];
+                    network.security.sae_groups = string_dup(argv[arg + 1]);
                     arg += 2;
                 }
 #endif
@@ -4880,77 +4881,6 @@ static void test_heap_stat(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_EU_VALIDATION
-static void dump_wlan_eu_validation(void)
-{
-    (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("wlan-eu-validation <value>\r\n");
-    (void)PRINTF("Values to choose:\r\n");
-    (void)PRINTF("     0x05   GCMP_128_ENC\r\n");
-    (void)PRINTF("     0x06   GCMP_128_DEC\r\n");
-    (void)PRINTF("     0x07   GCMP_256_ENC\r\n");
-    (void)PRINTF("     0x08   GCMP_256_DEC\r\n");
-    (void)PRINTF("     0x09   DUMMY_PAYLOAD\r\n");
-    (void)PRINTF("     0x0a   CRYPTO\r\n");
-    (void)PRINTF("     0x0b   CRYPTO_LARGE_PAYLOAD\r\n");
-    (void)PRINTF("     0x0c   CRYPTO_CCMP_128_ENC\r\n");
-    (void)PRINTF("     0x0d   CRYPTO_CCMP_128_DEC\r\n");
-    (void)PRINTF("     0x0e   CRYPTO_CCMP_256_ENC\r\n");
-    (void)PRINTF("     0x0f   CRYPTO_CCMP_256_DEC\r\n");
-    (void)PRINTF("     0x10   CRYPTO_CCMP_128_MGMT_ENC\r\n");
-    (void)PRINTF("     0x11   CRYPTO_CCMP_128_MGMT_DEC\r\n");
-    (void)PRINTF("     0x12   GCMP_256_ENC_FIPS\r\n");
-    (void)PRINTF("     0x13   GCMP_256_DEC_FIPS\r\n");
-    (void)PRINTF("     0x14   GCMP_128_ENC_FIPS\r\n");
-    (void)PRINTF("     0x15   GCMP_128_DEC_FIPS\r\n");
-    (void)PRINTF("     0x16   TKIP_ENC_FIPS\r\n");
-    (void)PRINTF("     0x17   TKIP_DEC_FIPS\r\n");
-}
-
-static void test_wlan_eu_validation(int argc, char **argv)
-{
-    int value;
-    int ret           = -WM_FAIL;
-    uint32_t reqd_len = 0;
-
-    if (argc != 2)
-    {
-        dump_wlan_eu_validation();
-        (void)PRINTF("Error: invalid number of arguments\r\n");
-        return;
-    }
-
-    if (argv[1][0] == '0' && (argv[1][1] == 'x' || argv[1][1] == 'X'))
-        value = a2hex_or_atoi(argv[1]);
-    else
-    {
-        dump_wlan_eu_validation();
-        (void)PRINTF("Error: invalid value format\r\n");
-        return;
-    }
-
-    if (value < 5 || value > 23)
-    {
-        dump_wlan_eu_validation();
-        (void)PRINTF("Error: invalid value\r\n");
-        return;
-    }
-
-    ret = wlan_eu_validation((eu_option)value, host_cmd_resp_buf,
-                                sizeof(host_cmd_resp_buf), &reqd_len);
-    if (ret == WM_SUCCESS)
-    {
-        (void)PRINTF("Hostcmd success, response is:\r\n");
-        for (ret = 0; ret < reqd_len; ret++)
-        {
-            (void)PRINTF("%x\t", host_cmd_resp_buf[ret]);
-            host_cmd_resp_buf[ret] = 0;
-        }
-    }
-    else
-        (void)PRINTF("Hostcmd failed error: %d", ret);
-}
-#endif /* CONFIG_EU_VALIDATION */
 
 #ifdef CONFIG_WIFI_EU_CRYPTO
 static void dump_wlan_eu_crypto_rc4(void)
@@ -5617,7 +5547,6 @@ static void test_wlan_rx_abort_cfg(int argc, char **argv)
 #endif
 
 #ifdef CONFIG_RX_ABORT_CFG_EXT
-int rx_abort_cfg_ext_enable = 0;
 static void dump_wlan_rx_abort_cfg_ext_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -5662,37 +5591,38 @@ static void dump_wlan_rx_abort_cfg_ext_usage()
 
 static void test_wlan_get_rx_abort_cfg_ext(int argc, char **argv)
 {
-    struct wlan_rx_abort_cfg_ext cfg;
-    (void)memset(&cfg, 0, sizeof(cfg));
+    struct wlan_rx_abort_cfg_ext *cfg = (struct wlan_rx_abort_cfg_ext*)os_mem_alloc(sizeof(struct wlan_rx_abort_cfg_ext));
+    (void)memset(cfg, 0, sizeof(*cfg));
 
-    wlan_get_rx_abort_cfg_ext(&cfg);
+    wlan_get_rx_abort_cfg_ext(cfg);
 
-    (void)PRINTF("Dynamic Rx Abort %s\r\n", rx_abort_cfg_ext_enable == 1 ? "enabled" : "disabled");
-    if (rx_abort_cfg_ext_enable == 1)
+    (void)PRINTF("Dynamic Rx Abort %s\r\n", cfg->enable == 1 ? "enabled" : "disabled");
+    if (cfg->enable == 1)
     {
         int rssi;
-        rssi = cfg.rssi_margin;
+        rssi = cfg->rssi_margin;
         if (rssi > 0x7f)
             rssi = -(256 - rssi);
         (void)PRINTF("Margin RSSI: %s%d dbm\r\n", ((rssi > 0) ? "-" : ""), rssi);
 
-        rssi = cfg.ceil_rssi_threshold;
+        rssi = cfg->ceil_rssi_threshold;
         if (rssi > 0x7f)
             rssi = -(256 - rssi);
         (void)PRINTF("Ceil RSSI threshold: %s%d dbm\r\n", ((rssi > 0) ? "-" : ""), rssi);
 
-        rssi = cfg.floor_rssi_threshold;
+        rssi = cfg->floor_rssi_threshold;
         if (rssi > 0x7f)
             rssi = -(256 - rssi);
         (void)PRINTF("Floor rssi threshold: %s%d dbm\r\n", ((rssi > 0) ? "-" : ""), rssi);
 
-        rssi = cfg.current_dynamic_rssi_threshold;
+        rssi = cfg->current_dynamic_rssi_threshold;
         if (rssi > 0x7f)
             rssi = -(256 - rssi);
         (void)PRINTF("Dynamic RSSI Threshold : %d dbm (%s)\r\n", rssi,
-                     cfg.rssi_default_config ? (cfg.edmac_enable ? "EDMAC based" : "Default") : "Config based");
+                     cfg->rssi_default_config ? (cfg->edmac_enable ? "EDMAC based" : "Default") : "Config based");
     }
     (void)PRINTF("\r\n");
+    os_mem_free(cfg);
     return;
 }
 
@@ -5740,13 +5670,11 @@ static void test_wlan_set_rx_abort_cfg_ext(int argc, char **argv)
             if (value == 0) /*Disable dynamic rx bort config*/
             {
                 cfg.enable              = 0;
-                rx_abort_cfg_ext_enable = 0;
                 break;
             }
             else /* Enable dynamic rx abort config*/
             {
                 cfg.enable              = 1;
-                rx_abort_cfg_ext_enable = 1;
             }
             arg += 2;
             info.enable = 1;
@@ -6141,12 +6069,15 @@ static void dump_wlan_set_antcfg_usage(void)
     (void)PRINTF("\t[evaluate_time]: \r\n");
     (void)PRINTF("\t           If ant mode = 0xFFFF, use this to configure\r\n");
     (void)PRINTF("\t           SAD evaluate time interval in milli seconds unit.\r\n");
-    (void)PRINTF("\t           If not specified, default value is 6000 milli seconds\r\n");
+    (void)PRINTF("\t           MAX evaluate time is 65535ms.\r\n");
+    (void)PRINTF("\t           If not specified, default value is 6000 milli seconds.\r\n");
 #ifdef RW610
     (void)PRINTF("\t<evaluate_mode>: \r\n");
-    (void)PRINTF("\t           0: PCB Ant. + Ext Ant0\r\n");
-    (void)PRINTF("\t           1: Ext Ant0 + Ext Ant1\r\n");
-    (void)PRINTF("\t           2: PCB Ant. + Ext Ant1\r\n");
+    (void)PRINTF("\t           0: Ant1 + Ant2\r\n");
+    (void)PRINTF("\t           1: Ant2 + Ant3\r\n");
+    (void)PRINTF("\t           2: Ant1 + Ant3\r\n");
+    (void)PRINTF("\t           255: invalid evaluate mode\r\n");
+    (void)PRINTF("\t           If not used, just keep this field empty.\r\n");
 #endif
     (void)PRINTF("Examples:\r\n");
     (void)PRINTF("wlan-set-antcfg 1\r\n");
@@ -6217,6 +6148,7 @@ static void wlan_antcfg_set(int argc, char *argv[])
     if (argc < 2 || argc > 4)
     {
         dump_wlan_set_antcfg_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
         return;
     }
 
@@ -6231,6 +6163,7 @@ static void wlan_antcfg_set(int argc, char *argv[])
     if ((argc == 3 || argc == 4) && (ant_mode != 0xFFFFU))
     {
         dump_wlan_set_antcfg_usage();
+        (void)PRINTF("Error: invalid ant_mode\r\n");
         return;
     }
 
@@ -6238,16 +6171,32 @@ static void wlan_antcfg_set(int argc, char *argv[])
     if (argc == 3 || argc == 4)
     {
         evaluate_time = (uint16_t)strtol(argv[2], NULL, 10);
-    }
-    if (errno != 0)
-    {
-        (void)PRINTF("Error during strtol errno:%d", errno);
-        return;
+
+        if (errno != 0)
+        {
+            (void)PRINTF("Error during strtol errno:%d", errno);
+            return;
+        }
     }
 
+    errno = 0;
     if (argc == 4)
     {
         evaluate_mode = (uint8_t)strtol(argv[3], NULL, 10);
+
+        if (errno != 0)
+        {
+            (void)PRINTF("Error during strtol errno:%d", errno);
+            return;
+        }
+
+        if ((evaluate_mode != 0) && (evaluate_mode != 1)
+            && (evaluate_mode != 2) && (evaluate_mode != 255))
+        {
+            dump_wlan_set_antcfg_usage();
+            (void)PRINTF("Error: invalid evaluate_mode\r\n");
+            return;
+        }
     }
 
     ret = wlan_set_antcfg(ant_mode, evaluate_time, evaluate_mode);
@@ -6298,18 +6247,18 @@ static void wlan_antcfg_get(int argc, char *argv[])
             (void)PRINTF("Evaluate time : %d\r\n", evaluate_time);
 #ifdef RW610
             if (evaluate_mode == 0)
-                (void)PRINTF("Evaluate mode : PCB Ant + Ext Ant0\r\n");
+                (void)PRINTF("Evaluate mode : Ant1 + Ant2\r\n");
             if (evaluate_mode == 1)
-                (void)PRINTF("Evaluate mode : Ext Ant0 + Ext Ant1\r\n");
+                (void)PRINTF("Evaluate mode : Ant2 + Ant3\r\n");
             if (evaluate_mode == 2)
-                (void)PRINTF("Evaluate mode : PCB Ant. + Ext Ant1\r\n");
+                (void)PRINTF("Evaluate mode : Ant1 + Ant3\r\n");
             if (evaluate_mode == 0xFF)
                 (void)PRINTF("Default diversity mode.\r\n");
 #endif
         }
         if (current_antenna > 0)
         {
-            (void)PRINTF("Current antenna is %d\n", current_antenna);
+            (void)PRINTF("Current antenna is Ant%d\n", current_antenna);
         }
     }
     else
@@ -7070,6 +7019,10 @@ static void dump_wlan_csi_filter_usage()
 void dump_csi_param_header()
 {
     (void)PRINTF("\r\nThe current csi_param is: \r\n");
+    if(g_csi_params.bss_type == 0)
+        (void)PRINTF("bss_type      : sta\r\n");
+    else
+        (void)PRINTF("bss_type      : uap\r\n");
     (void)PRINTF("csi_enable    : %d \r\n", g_csi_params.csi_enable);
     (void)PRINTF("head_id       : %d \r\n", g_csi_params.head_id);
     (void)PRINTF("tail_id       : %d \r\n", g_csi_params.tail_id);
@@ -7083,7 +7036,8 @@ void dump_csi_param_header()
     (void)PRINTF("\r\n");
 }
 
-void set_csi_param_header(t_u16 csi_enable,
+void set_csi_param_header(t_u8 bss_type,
+                          t_u16 csi_enable,
                           t_u32 head_id,
                           t_u32 tail_id,
                           t_u8 chip_id,
@@ -7092,6 +7046,7 @@ void set_csi_param_header(t_u16 csi_enable,
                           t_u8 csi_monitor_enable,
                           t_u8 ra4us)
 {
+    g_csi_params.bss_type           = bss_type;
     g_csi_params.csi_enable         = csi_enable;
     g_csi_params.head_id            = head_id;
     g_csi_params.tail_id            = tail_id;
@@ -7180,6 +7135,7 @@ int csi_data_recv_user(void *buffer, size_t data_len)
 
 static void test_wlan_set_csi_param_header(int argc, char **argv)
 {
+    t_u8 bss_type           = 0;
     t_u16 csi_enable        = 0;
     t_u32 head_id           = 0;
     t_u32 tail_id           = 0;
@@ -7190,11 +7146,11 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
     t_u8 ra4us              = 0;
     int ret                 = -1;
 
-    if (argc != 9)
+    if (argc != 10)
     {
         (void)PRINTF("Error: invalid number of arguments\r\n");
         (void)PRINTF(
-            "Usage: %s <csi_enable> <head_id> <tail_id> <chip_id> <band_config> <channel> <csi_monitor_enable> "
+            "Usage: %s <sta/uap> <csi_enable> <head_id> <tail_id> <chip_id> <band_config> <channel> <csi_monitor_enable> "
             "<ra4us>\r\n\r\n",
             argv[0]);
 
@@ -7217,7 +7173,7 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
             "us or other\r\n");
 
         (void)PRINTF("\r\nUsage example : \r\n");
-        (void)PRINTF("wlan-set-csi-param-header 1 66051 66051 170 0 11 1 1\r\n");
+        (void)PRINTF("wlan-set-csi-param-header sta 1 66051 66051 170 0 11 1 1\r\n");
 
         dump_csi_param_header();
 
@@ -7230,14 +7186,23 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
      * User could configure these fields and used these fields to parse CSI event buffer and do verification.
      * All the CSI filters share the same CSI param header.
      */
-    csi_enable         = (t_u16)atoi(argv[1]);
-    head_id            = (t_u32)atoi(argv[2]);
-    tail_id            = (t_u32)atoi(argv[3]);
-    chip_id            = (t_u8)atoi(argv[4]);
-    band_config        = (t_u8)atoi(argv[5]);
-    channel            = (t_u8)atoi(argv[6]);
-    csi_monitor_enable = (t_u8)atoi(argv[7]);
-    ra4us              = (t_u8)atoi(argv[8]);
+    if (string_equal("sta", argv[1]))
+        bss_type = 0;
+    else if (string_equal("uap", argv[1]))
+        bss_type = 1;
+    else
+    {
+        PRINTF("Please put sta or uap\r\n");
+        return;
+    }
+    csi_enable         = (t_u16)atoi(argv[2]);
+    head_id            = (t_u32)atoi(argv[3]);
+    tail_id            = (t_u32)atoi(argv[4]);
+    chip_id            = (t_u8)atoi(argv[5]);
+    band_config        = (t_u8)atoi(argv[6]);
+    channel            = (t_u8)atoi(argv[7]);
+    csi_monitor_enable = (t_u8)atoi(argv[8]);
+    ra4us              = (t_u8)atoi(argv[9]);
 
     if (csi_enable == 1)
     {
@@ -7248,7 +7213,7 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
         }
     }
 
-    set_csi_param_header(csi_enable, head_id, tail_id, chip_id, band_config, channel, csi_monitor_enable, ra4us);
+    set_csi_param_header(bss_type, csi_enable, head_id, tail_id, chip_id, band_config, channel, csi_monitor_enable, ra4us);
 }
 
 static void test_wlan_set_csi_filter(int argc, char **argv)
@@ -9058,6 +9023,350 @@ static void test_wlan_dual_ant_duty_cycle(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_EXTERNAL_COEX_PTA
+
+static void dump_wlan_external_coex_pta_usage()
+{
+    (void)PRINTF(
+        "Usage: wlan-external-coex-pta enable <PTA/WCI-2/WCI-2 GPIO> ExtWifiBtArb <enable/disable> PolGrantPin "
+        "<high/low> "
+        "PriPtaInt <enable/disable>  StateFromPta <state pin/ priority pin/ state input disable> SampTiming <Sample "
+        "timing> "
+        "InfoSampTiming <Sample timing> TrafficPrio <enable/disable> CoexHwIntWic <enable/disable>\r\n");
+    (void)PRINTF("    enable <enable/disable>\r\n");
+    (void)PRINTF("          Select PTA interface: 5, Select WCI-2 interface: 6, Select WCI-2 GPIO interface: 7.\r\n");
+    (void)PRINTF("    ExtWifiBtArb <enable/disable>\r\n");
+    (void)PRINTF("          Enable Ext-WifiBtArb: 1, Disbale Ext-WifiBtArb: 0.\r\n");
+    (void)PRINTF("    PolGrantPin <high/low> \r\n");
+    (void)PRINTF("          Active High: 0, Active Low: 1.\r\n");
+    (void)PRINTF("    PriPtaInt <enable/disable> \r\n");
+    (void)PRINTF("          Enable PriPta-Init: 1, Disable PriPta-Init: 0.\r\n");
+    (void)PRINTF("    StateFromPta <state pin/ priority pin/ state input disable> \r\n");
+    (void)PRINTF("          State input disbale : 0.\r\n");
+    (void)PRINTF("          State info is from state pin : 1.\r\n");
+    (void)PRINTF("          State info is sampled on priority pin: 2.\r\n");
+    (void)PRINTF("    SampTiming <Sample timing> \r\n");
+    (void)PRINTF("          Timing to sample Priority bit.\r\n");
+    (void)PRINTF("          Sample timing range [20, 200].\r\n");
+    (void)PRINTF("          Defalut value: 100.\r\n");
+    (void)PRINTF("    InfoSampTiming <Sample timing> \r\n");
+    (void)PRINTF("          Timing to sample Tx/Rx info.\r\n");
+    (void)PRINTF("          Sample timing range [20, 200].\r\n");
+    (void)PRINTF("          Defalut value: 100.\r\n");
+    (void)PRINTF("    TrafficPrio <enable/disable> \r\n");
+    (void)PRINTF("          Enable external traffic Tx/Rx Priority: 1.\r\n");
+    (void)PRINTF("          Disable external traffic Tx/Rx Priority: 0.\r\n");
+    (void)PRINTF("    CoexHwIntWic <enable/disable> \r\n");
+    (void)PRINTF("          Enable WCI-2 interface: 1.\r\n");
+    (void)PRINTF("          Disable WCI-2 interface: 0.\r\n");
+}
+
+static void test_wlan_external_coex_pta(int argc, char **argv)
+{
+    int ret = 0, arg = 0;
+    unsigned int value;
+    ext_coex_pta_cfg coex_pta_config;
+
+    if (argc < 2 || argc > 19)
+    {
+        (void)PRINTF("Error: invalid number of arguments.\r\n");
+        dump_wlan_external_coex_pta_usage();
+        return;
+    }
+
+    struct
+    {
+        unsigned enable : 1;
+        unsigned ExtWifiBtArb : 1;
+        unsigned PolGrantPin : 1;
+        unsigned PriPtaInt : 2;
+        unsigned StateFromPta : 1;
+        unsigned SampTiming : 1;
+        unsigned InfoSampTiming : 1;
+        unsigned TrafficPrio : 1;
+        unsigned CoexHwIntWic : 1;
+    } info;
+
+    arg++;
+    (void)memset(&coex_pta_config, 0x0, sizeof(ext_coex_pta_cfg));
+    (void)memset(&info, 0x0, sizeof(info));
+
+    do
+    {
+        if (!info.enable && string_equal("enable", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Invalid enable argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+
+            if (value != EXT_COEX_PTA_INTERFACE && value != EXT_COEX_WCI2_INTERFACE &&
+                value != EXT_COEX_WCI2_GPIO_INTERFACE)
+            {
+                (void)PRINTF("Invalid enable argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+            coex_pta_config.enabled = value & 0xFF;
+            info.enable             = 1;
+            arg += 2;
+        }
+        else if (!info.ExtWifiBtArb && string_equal("ExtWifiBtArb", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Invalid ExtWifiBtArb argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+
+            if (value != COEX_PTA_FEATURE_ENABLE && value != COEX_PTA_FEATURE_DISABLE)
+            {
+                (void)PRINTF("Invalid ExtWifiBtArb argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+            coex_pta_config.ext_WifiBtArb = value & 0xFF;
+            info.ExtWifiBtArb             = 1;
+            arg += 2;
+        }
+        else if (!info.PolGrantPin && string_equal("PolGrantPin", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Invalid PolGrantPin argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+
+            if (value != POL_GRANT_PIN_HIGH && value != POL_GRANT_PIN_LOW)
+            {
+                (void)PRINTF("Invalid PolGrantPin argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+            coex_pta_config.polGrantPin = value & 0x0FF;
+            info.PolGrantPin            = 1;
+            arg += 2;
+        }
+        else if (!info.PriPtaInt && string_equal("PriPtaInt", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Invalid PolGrantPin argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+
+            if (value != COEX_PTA_FEATURE_ENABLE && value != COEX_PTA_FEATURE_DISABLE)
+            {
+                (void)PRINTF("Invalid PolGrantPin argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+            coex_pta_config.enable_PriPtaInt = value & 0xFF;
+            info.PriPtaInt                   = 1;
+            arg += 2;
+        }
+        else if (!info.StateFromPta && string_equal("StateFromPta", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Invalid StateFromPta argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+
+            if (value != STATE_INPUT_DISABLE && value != STATE_PTA_PIN && value != STATE_PRIORITY_PIN)
+            {
+                (void)PRINTF("Invalid StateFromPta argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+            coex_pta_config.enable_StatusFromPta = value & 0xFF;
+            info.StateFromPta                    = 1;
+            arg += 2;
+        }
+        else if (!info.SampTiming && string_equal("SampTiming", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Invalid SampTiming argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+
+            if (value < MIN_SAMP_TIMING || value > MAX_SAMP_TIMING)
+            {
+                (void)PRINTF("Invalid SampTiming argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+            coex_pta_config.setPriSampTiming = value & 0xFFFF;
+            info.SampTiming                  = 1;
+            arg += 2;
+        }
+        else if (!info.InfoSampTiming && string_equal("InfoSampTiming", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Invalid InfoSampTiming argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+
+            if (value < MIN_SAMP_TIMING || value > MAX_SAMP_TIMING)
+            {
+                (void)PRINTF("Invalid InfoSampTiming argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+            coex_pta_config.setStateInfoSampTiming = value & 0xFFFF;
+            info.InfoSampTiming                    = 1;
+            arg += 2;
+        }
+        else if (!info.TrafficPrio && string_equal("TrafficPrio", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Invalid TrafficPrio argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+
+            if (value != COEX_PTA_FEATURE_ENABLE && value != COEX_PTA_FEATURE_DISABLE)
+            {
+                (void)PRINTF("Invalid TrafficPrio argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+            coex_pta_config.extRadioTrafficPrio = value & 0xFF;
+            info.TrafficPrio                    = 1;
+            arg += 2;
+        }
+        else if (!info.CoexHwIntWic && string_equal("CoexHwIntWic", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Invalid CoexHwIntWic argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+
+            if (value != COEX_PTA_FEATURE_ENABLE && value != COEX_PTA_FEATURE_DISABLE)
+            {
+                (void)PRINTF("Invalid CoexHwIntWic argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+            coex_pta_config.extCoexHwIntWci2 = value & 0xFF;
+            info.CoexHwIntWic                = 1;
+            arg += 2;
+        }
+        else
+        {
+            (void)PRINTF("Invalid %d argument %s\r\n", arg, argv[arg]);
+            dump_wlan_external_coex_pta_usage();
+            return;
+        }
+    } while (arg < argc);
+
+    if (info.enable != 1)
+    {
+        (void)PRINTF("Error: Missing <enable> argument.\r\n");
+        ret++;
+    }
+    if (info.ExtWifiBtArb != 1)
+    {
+        (void)PRINTF("Error: Missing <ExtWifiBtArb> argument.\r\n");
+        ret++;
+    }
+    if (info.PolGrantPin != 1)
+    {
+        (void)PRINTF("Error: Missing <PolGrantPin> argument.\r\n");
+        ret++;
+    }
+    if (info.PriPtaInt != 1)
+    {
+        (void)PRINTF("Error: Missing <PriPtaInt> argument.\r\n");
+        ret++;
+    }
+    if (info.StateFromPta != 1)
+    {
+        (void)PRINTF("Error: Missing <StateFromPta> argument.\r\n");
+        ret++;
+    }
+    if (info.SampTiming != 1)
+    {
+        coex_pta_config.setPriSampTiming = SAMPLE_TIMING_VALUE;
+        (void)PRINTF("Info: Missing <SampTiming> argument. Use default value 100.\r\n");
+    }
+    if (info.InfoSampTiming != 1)
+    {
+        coex_pta_config.setStateInfoSampTiming = SAMPLE_TIMING_VALUE;
+        (void)PRINTF("Info: Missing <InfoSampTiming> argument. Use default value 100.\r\n");
+    }
+    if (info.TrafficPrio != 1)
+    {
+        (void)PRINTF("Error: Missing <TrafficPrio> argument.\r\n");
+        ret++;
+    }
+    if (info.CoexHwIntWic != 1)
+    {
+        (void)PRINTF("Error: Missing <CoexHwIntWic> argument.\r\n");
+        ret++;
+    }
+
+    if (ret != 0)
+    {
+        dump_wlan_external_coex_pta_usage();
+        return;
+    }
+
+    ret = wlan_external_coex_pta_cfg(coex_pta_config);
+
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Success to set external coex pta config:\r\n");
+        (void)PRINTF("Enable ");
+        if (coex_pta_config.enabled == EXT_COEX_PTA_INTERFACE)
+            (void)PRINTF("PTA interface.\r\n");
+        else if (coex_pta_config.enabled == EXT_COEX_WCI2_INTERFACE)
+            (void)PRINTF("WCI-2 interface.\r\n");
+        else if (coex_pta_config.enabled == EXT_COEX_WCI2_GPIO_INTERFACE)
+            (void)PRINTF("WCI-2 GPIO interface.\r\n");
+        else
+            (void)PRINTF("Unknow interface.\r\n");
+
+        (void)PRINTF("%s WifiBtArb.\r\n",
+                     coex_pta_config.ext_WifiBtArb == COEX_PTA_FEATURE_ENABLE ? "Enable" : "Disbale");
+        (void)PRINTF("PolGrantPin active %s.\r\n", coex_pta_config.polGrantPin == POL_GRANT_PIN_HIGH ? "High" : "Low");
+        (void)PRINTF("%s PriPtaInt.\r\n",
+                     coex_pta_config.enable_PriPtaInt == COEX_PTA_FEATURE_ENABLE ? "Enable" : "Disbale");
+        if (coex_pta_config.enable_StatusFromPta == STATE_INPUT_DISABLE)
+            (void)PRINTF("State input disable.\r\n");
+        else if (coex_pta_config.enable_StatusFromPta == STATE_PTA_PIN)
+            (void)PRINTF("State info is from state pin.\r\n");
+        else if (coex_pta_config.enable_StatusFromPta == STATE_PRIORITY_PIN)
+            (void)PRINTF("State info is sampled on priority pin.\r\n");
+        else
+            (void)PRINTF("Unknow state pin info\r\n");
+
+        (void)PRINTF("Timing to sample Priority bit: %d.\r\n", coex_pta_config.setPriSampTiming);
+        (void)PRINTF("Timing to sample Tx/Rx info: %d.\r\n", coex_pta_config.setStateInfoSampTiming);
+        (void)PRINTF("%s external traffic Tx/Rx Priority.\r\n",
+                     coex_pta_config.extRadioTrafficPrio == COEX_PTA_FEATURE_ENABLE ? "Enable" : "Disbale");
+        (void)PRINTF("%s WCI-2 interface.\r\n",
+                     coex_pta_config.extCoexHwIntWci2 == COEX_PTA_FEATURE_ENABLE ? "Enable" : "Disbale");
+    }
+    else
+        (void)PRINTF("Failed to set external coex pta parameters.\r\n");
+
+    return;
+}
+#endif
 
 #ifdef CONFIG_WPA_SUPP_DPP
 static void test_wlan_dpp_configurator_add(int argc, char **argv)
@@ -10672,7 +10981,9 @@ static void wlan_start_detect_ant(void)
     }
     else
     {
-        (void)PRINTF("\nError: Failed to detect antenna\r\n");
+        ant_mode = 1;
+        ret = wlan_set_antcfg(ant_mode, evaluate_time, evaluate_mode);
+        (void)PRINTF("\nError: Failed to detect antenna, set back to Ant1\r\n");
     }
 }
 
@@ -10929,9 +11240,6 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_HEAP_STAT
     {"heap-stat", NULL, test_heap_stat},
 #endif
-#ifdef CONFIG_EU_VALIDATION
-    {"wlan-eu-validation", "<value>", test_wlan_eu_validation},
-#endif
 #ifdef CONFIG_HEAP_DEBUG
     {"wlan-os-mem-stat", NULL, test_wlan_os_mem_stat},
 #endif
@@ -10969,7 +11277,7 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_CSI
     {"wlan-csi-cfg", NULL, test_wlan_csi_cfg},
     {"wlan-set-csi-param-header",
-     " <csi_enable> <head_id> <tail_id> <chip_id> <band_config> <channel> <csi_monitor_enable> <ra4us>",
+     " <sta/uap> <csi_enable> <head_id> <tail_id> <chip_id> <band_config> <channel> <csi_monitor_enable> <ra4us>",
      test_wlan_set_csi_param_header},
     {"wlan-set-csi-filter", "<opt> <macaddr> <pkt_type> <type> <flag>", test_wlan_set_csi_filter},
 #endif
@@ -11079,6 +11387,14 @@ static struct cli_command tests[] = {
      test_wlan_single_ant_duty_cycle},
     {"wlan-dual-ant-duty-cycle", "<enable/disable> [<Ieee154Duration> <TotalDuration> <Ieee154FarRangeDuration>]",
      test_wlan_dual_ant_duty_cycle},
+#endif
+#ifdef CONFIG_EXTERNAL_COEX_PTA
+    {"wlan-external-coex-pta",
+     "enable <PTA/WCI-2/WCI-2 GPIO> ExtWifiBtArb <enable/disable> PolGrantPin <high/low> PriPtaInt <enable/disable> "
+     "StateFromPta <state pin/ priority pin/ state input disable> SampTiming <Sample timing> InfoSampTiming <Sample "
+     "timing> "
+     "TrafficPrio <enable/disable> CoexHwIntWic <enable/disable>",
+     test_wlan_external_coex_pta},
 #endif
 #ifdef CONFIG_IMD3_CFG
     {"wlan-imd3-cfg", "<enable>", test_wlan_imd3_cfg},

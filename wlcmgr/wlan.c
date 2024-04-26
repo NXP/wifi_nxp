@@ -4671,6 +4671,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     else if (strstr(buf, WPA_EVENT_DISCONNECTED))
     {
         wlcm_process_disconnected();
+        wlan_handle_disconnect_event(mlan_adap->priv[0]);
     }
     else if (strstr(buf, WPA_EVENT_NETWORK_NOT_FOUND))
     {
@@ -5418,7 +5419,18 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
             os_mem_free(msg->data);
             break;
         case WIFI_EVENT_UAP_CLIENT_DEAUTH:
+#ifdef CONFIG_WPA_SUPP_AP
+            {
+                wlan_uap_client_disassoc_t *disassoc_resp = msg->data;
+                /* BIT 14 indicate deauth is initiated by FW */
+                if(!(disassoc_resp->reason_code & MBIT(14)))
+                {
+                    wifi_nxp_sta_remove(disassoc_resp->sta_addr);
+                }
+            }
+#else
             CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_DISSOC, msg->data);
+#endif
             /* This was allocated by the sender */
             os_mem_free(msg->data);
             break;
@@ -7378,9 +7390,6 @@ int wlan_stop(void)
     /* If CONFIG_WIFI_RECOVERY is defined, 0xb2 CMD will be skipped, but dhcp_server_stop()
      * is called in 0xb2 CMD response. So it needs to be called here to stop DHCP server
      */
-#ifndef CONFIG_WIFI_RECOVERY
-    if (wlan.uap_state == CM_UAP_IP_UP)
-#endif
         dhcp_server_stop();
 #endif
     if (wlan.scan_lock)
@@ -8253,12 +8262,12 @@ int wlan_add_network(struct wlan_network *network)
 #endif
     if (network->security.sae_groups == NULL)
     {
-        network->security.sae_groups = "19";
+        network->security.sae_groups = wlan_string_dup("19");
     }
 #ifdef CONFIG_OWE
     if (network->security.owe_groups == NULL)
     {
-        network->security.owe_groups = "19";
+        network->security.owe_groups = wlan_string_dup("19");
     }
 #endif
     if (network->security.group_cipher == 0)
@@ -8811,6 +8820,18 @@ int wlan_remove_network(const char *name)
             if (ret < 0)
             {
                 return WLAN_ERROR_STATE;
+            }
+
+            if (wlan.networks[i].security.sae_groups)
+            {
+                os_mem_free(wlan.networks[i].security.sae_groups);
+                wlan.networks[i].security.sae_groups = NULL;
+            }
+
+            if (wlan.networks[i].security.owe_groups)
+            {
+                os_mem_free(wlan.networks[i].security.owe_groups);
+                wlan.networks[i].security.owe_groups = NULL;
             }
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
 #ifdef CONFIG_WIFI_USB_FILE_ACCESS
@@ -9672,13 +9693,11 @@ static void wlan_mon_thread(os_thread_arg_t data)
         }
         else
         {
-#ifdef CONFIG_WIFI_RECOVERY
             if (wifi_recovery_enable || wifi_fw_is_hang())
             {
                 wlan_reset(CLI_RESET_WIFI);
                 wifi_recovery_cnt ++;
             }
-#endif
             /*
              *  get CAU module temperature and write to firmware SMU in every 5s
              *  can also read FW power status by REG PMU->WLAN_CTRL 0x4003_1068
@@ -9695,28 +9714,6 @@ static void wlan_mon_thread(os_thread_arg_t data)
 }
 #endif // RW610
 
-#ifdef CONFIG_EU_VALIDATION
-
-int wlan_eu_validation(
-    eu_option option, uint8_t *resp_buf, uint32_t resp_buf_size, uint32_t *reqd_len)
-{
-    uint8_t cmd_eu_buf[] = { 0x34, 0x02, 0x0c, 0, 0, 0, 0, 0, 0x04, 0, option, 0 };
-
-    if (option < EU_GCMP_128_ENC || option > EU_OPTION_MAX)
-    {
-        return -WM_E_INVAL;
-    }
-
-    if (!wlan_is_started())
-    {
-        (void)PRINTF("eu validation is not allowed when WIFI is disabled\r\n");
-        return -WM_FAIL;
-    }
-
-    return wlan_send_hostcmd(cmd_eu_buf, sizeof(cmd_eu_buf), resp_buf, resp_buf_size, reqd_len);
-}
-
-#endif // CONFIG_EU_VALIDATION
 
 #ifdef CONFIG_NCP_BRIDGE
 int wlan_stop_all_networks(void)
@@ -14261,6 +14258,12 @@ int wlan_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 w
 }
 #endif
 
+#ifdef CONFIG_EXTERNAL_COEX_PTA
+int wlan_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config)
+{
+    return wifi_external_coex_pta_cfg(coex_pta_config);
+}
+#endif
 
 #ifdef CONFIG_WPA_SUPP_DPP
 int wlan_dpp_configurator_add(int is_ap, const char *cmd)
@@ -14700,3 +14703,11 @@ int wlan_auto_null_tx(wlan_auto_null_tx_t *auto_null_tx)
     return wifi_auto_null_tx(auto_null_tx);
 }
 #endif
+
+char *wlan_string_dup(const char *s)
+{
+    char *snew = (char *)os_mem_alloc(strlen(s) + 1);
+    if (snew)
+        (void)strcpy(snew, s);
+    return snew;
+}

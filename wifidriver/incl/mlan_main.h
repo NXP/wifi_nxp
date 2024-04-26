@@ -1281,6 +1281,8 @@ struct _mlan_private
 
     t_u8 ssid_filter;
 
+    /** Filter SSID */
+    mlan_802_11_ssid filter_ssid[MRVDRV_MAX_SSID_LIST_LENGTH];
     /** max amsdu size */
     t_u16 max_amsdu;
 #ifdef AMSDU_IN_AMPDU
@@ -1440,6 +1442,8 @@ struct _mlan_private
     add_ba_param_t add_ba_param;
     /** last rx_seq */
     t_u16 rx_seq[MAX_NUM_TID];
+    /** Lock to the Receive Reordering table */
+    os_semaphore_t rx_reorder_tbl_lock;
     /** Pointer to the Receive Reordering table*/
     mlan_list_head rx_reorder_tbl_ptr;
     /** Lock for Rx packets */
@@ -2254,6 +2258,8 @@ struct _mlan_adapter
     wlan_wakeup_reason wlan_wakeup;
 #endif
     bool skip_dfs;
+    /* remain on channel flag */
+    t_u8 remain_on_channel;
 };
 
 /** Ethernet packet type for EAPOL */

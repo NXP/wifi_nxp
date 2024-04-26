@@ -2195,8 +2195,7 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
 
     priv->curr_bss_params.host_mlme = 1;
 
-    __memcpy(priv->adapter, &priv->curr_bss_params.prev_bssid,
-                    assoc_info->prev_bssid, MLAN_MAC_ADDR_LENGTH);
+    __memcpy(priv->adapter, &priv->curr_bss_params.prev_bssid, assoc_info->prev_bssid, MLAN_MAC_ADDR_LENGTH);
 
     /* Reset all state variables */
     (void)memset(&priv->wpa_ie, 0, sizeof(priv->wpa_ie));
@@ -2210,7 +2209,7 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
     priv->sec_info.is_wpa_tkip = MFALSE;
 #ifdef CONFIG_11R
     priv->sec_info.is_ft = MFALSE;
-    priv->md_ie_len = 0;
+    priv->md_ie_len      = 0;
 #endif
 
     /* Reset the generic IE buffer */
@@ -2454,6 +2453,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     )
                     {
                         wm_wifi.cmd_resp_status = WM_SUCCESS;
+                        wlan_clean_txrx(pmpriv);
                         (void)wifi_event_completion(WIFI_EVENT_UAP_STOPPED, WIFI_EVENT_REASON_SUCCESS, NULL);
                     }
                 }
@@ -2676,14 +2676,16 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             break;
             case HostCmd_CMD_802_11D_DOMAIN_INFO:
             {
-                HostCmd_DS_802_11D_DOMAIN_INFO *domain_info = (HostCmd_DS_802_11D_DOMAIN_INFO *)&resp->params.domain_info;
+                HostCmd_DS_802_11D_DOMAIN_INFO *domain_info =
+                    (HostCmd_DS_802_11D_DOMAIN_INFO *)&resp->params.domain_info;
                 if (resp->result == HostCmd_RESULT_OK)
                 {
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
                 }
-                else if(domain_info->action == HostCmd_ACT_SPC_SET)
+                else if (domain_info->action == HostCmd_ACT_SPC_SET)
                 {
-                    /*FW not supported yet, always set command response status success for action code HostCmd_ACT_SPC_SET*/
+                    /*FW not supported yet, always set command response status success for action code
+                     * HostCmd_ACT_SPC_SET*/
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
                 }
                 else
@@ -3823,6 +3825,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 if (cancel_channel != NULL)
                 {
                     *cancel_channel = remain_channel->action == HostCmd_ACT_GEN_REMOVE ? MTRUE : MFALSE;
+                    mlan_adap->remain_on_channel = remain_channel->action == HostCmd_ACT_GEN_REMOVE ? MFALSE : MTRUE;
                     if (*cancel_channel)
                     {
                         if (wifi_event_completion(WIFI_EVENT_REMAIN_ON_CHANNEL, WIFI_EVENT_REASON_SUCCESS,
@@ -4041,16 +4044,16 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 }
             }
             break;
-        case HostCmd_CMD_ADD_NEW_STATION:
-            if (resp->result == HostCmd_RESULT_OK)
-            {
-                wm_wifi.cmd_resp_status = WM_SUCCESS;
-            }
-            else
-            {
-                wm_wifi.cmd_resp_status = -WM_FAIL;
-            }
-            break;
+            case HostCmd_CMD_ADD_NEW_STATION:
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                {
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                }
+                break;
 
             default:
                 /* fixme: Currently handled by the legacy code. Change this
@@ -4572,6 +4575,7 @@ static void wifi_handle_blocked_sta_report(Event_Ext_t *evt)
 #define IEEEtypes_REASON_UNSPEC             1U
 #define IEEEtypes_REASON_PRIOR_AUTH_INVALID 2U
 #define IEEEtypes_REASON_DEAUTH_LEAVING     3
+#define IEEEtypes_REASON_DISASSOC_DUE_TO_INACTIVITY 4U
 #define AP_DEAUTH_REASON_MAC_ADDR_BLOCKED   6U
 
 #ifdef CONFIG_WIFI_TX_PER_TRACK
@@ -4666,14 +4670,14 @@ int wifi_config_bgscan_and_rssi(const char *ssid)
     /* Fill scan config field for bg scan */
     strncpy((char *)pmpriv->scan_cfg.ssid_list[0].ssid, (char *)ssid, MLAN_MAX_SSID_LENGTH);
     pmpriv->scan_cfg.ssid_list[0].ssid[MLAN_MAX_SSID_LENGTH] = '\0';
-    pmpriv->scan_cfg.ssid_list[0].max_len = 0;
-    pmpriv->scan_cfg.report_condition     = BG_SCAN_SSID_RSSI_MATCH | BG_SCAN_WAIT_ALL_CHAN_DONE;
-    pmpriv->scan_cfg.rssi_threshold       = pmpriv->rssi_low;
-    pmpriv->scan_cfg.repeat_count         = DEF_REPEAT_COUNT;
-    pmpriv->scan_cfg.scan_interval        = MIN_BGSCAN_INTERVAL;
-    pmpriv->scan_cfg.chan_per_scan        = WLAN_USER_SCAN_CHAN_MAX;
-    pmpriv->scan_cfg.num_probes           = 2;
-    pmpriv->scan_cfg.scan_chan_gap        = SCAN_CHANNEL_GAP_VALUE;
+    pmpriv->scan_cfg.ssid_list[0].max_len                    = 0;
+    pmpriv->scan_cfg.report_condition                        = BG_SCAN_SSID_RSSI_MATCH | BG_SCAN_WAIT_ALL_CHAN_DONE;
+    pmpriv->scan_cfg.rssi_threshold                          = pmpriv->rssi_low;
+    pmpriv->scan_cfg.repeat_count                            = DEF_REPEAT_COUNT;
+    pmpriv->scan_cfg.scan_interval                           = MIN_BGSCAN_INTERVAL;
+    pmpriv->scan_cfg.chan_per_scan                           = WLAN_USER_SCAN_CHAN_MAX;
+    pmpriv->scan_cfg.num_probes                              = 2;
+    pmpriv->scan_cfg.scan_chan_gap = SCAN_CHANNEL_GAP_VALUE;
 
     wifi_get_band(pmpriv, &band);
     switch (band)
@@ -4722,7 +4726,9 @@ int wifi_handle_fw_event(struct bus_message *msg)
 {
     mlan_private *pmpriv     = (mlan_private *)mlan_adap->priv[0];
     mlan_private *pmpriv_uap = (mlan_private *)mlan_adap->priv[1];
-
+#ifdef CONFIG_WMM_UAPSD
+    t_u8 tx_lock_flag_org = 0;
+#endif
 #ifdef CONFIG_EXT_SCAN_SUPPORT
     mlan_status rv = MLAN_STATUS_SUCCESS;
 #endif
@@ -4770,9 +4776,10 @@ int wifi_handle_fw_event(struct bus_message *msg)
             wifi_if_ctx_rtos->associated = MFALSE;
 
             wpa_supp_handle_link_lost(pmpriv);
-#endif
+#else
             /* fixme: Should this be outside CONFIG_11N ? */
             wlan_handle_disconnect_event(pmpriv);
+#endif
             break;
         case EVENT_DEAUTHENTICATED:
 #ifdef CONFIG_WPA_SUPP
@@ -4855,19 +4862,21 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 PRINTM(MEVENT, "PPS/UAPSD mode activated\n");
             }
 
-            t_u8 tx_lock_flag_org = pmpriv->adapter->tx_lock_flag;
+            tx_lock_flag_org = pmpriv->adapter->tx_lock_flag;
 
             if (pmpriv->adapter->pps_uapsd_mode)
             {
                 os_semaphore_put(&uapsd_sem);
+                /* For the continous 0xA event handling case, wifi_driver_tx task
+                 * is not allowed to send packets until the last 0xA is processed */
+                pmpriv->adapter->tx_lock_flag = MTRUE;
                 /* As the wifi_driver task has priority of 3, so sleep 1ms to yield to the CMD sending task */
                 os_thread_sleep(os_msec_to_ticks(1));
             }
 
-            /* If original tx_lock_flag is false, and last packet is sent during
-             * 1 ms sleep, we don't change the tx_lock_flag to false again,
-             * to avoid sending two last packets to FW in one sleep period */
-            if (!(tx_lock_flag_org == MFALSE && pmpriv->adapter->tx_lock_flag == MTRUE))
+            /* If original tx_lock_flag is false, we don't change the tx_lock_flag to
+             * false again, to avoid sending two last packets to FW in one sleep period */
+            if (tx_lock_flag_org == MTRUE)
             {
                 pmpriv->adapter->tx_lock_flag = MFALSE;
             }
@@ -5136,7 +5145,6 @@ int wifi_handle_fw_event(struct bus_message *msg)
             }
             sta_addr                   = disassoc_resp->sta_addr;
             disassoc_resp->reason_code = (int)evt->reason_code;
-
             event_sta_addr = (t_u8 *)&evt->src_mac_addr;
             (void)memcpy((void *)sta_addr, (const void *)event_sta_addr, MLAN_MAC_ADDR_LENGTH);
 
@@ -5150,16 +5158,28 @@ int wifi_handle_fw_event(struct bus_message *msg)
 
             wlan_delete_station_entry(pmpriv_uap, sta_addr);
 
-#ifdef CONFIG_WPA_SUPP
-            os_mem_free((void *)disassoc_resp);
-#else
+#ifdef CONFIG_WPA_SUPP_AP
+            /* BIT 14 indicate deauth is initiated by FW */
+            if (disassoc_resp->reason_code & MBIT(14))
+            {
+                if (disassoc_resp->reason_code & MBIT(1))
+                {
+                    t_u16 reason_code = IEEEtypes_REASON_DISASSOC_DUE_TO_INACTIVITY;
+                    wifi_nxp_uap_disconnect(pmpriv_uap, reason_code, sta_addr);
+                }
+                else
+                {
+                    wifi_nxp_uap_disconnect(pmpriv_uap, 0, sta_addr);
+                }
+            }
+#endif
+
             if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_DEAUTH, WIFI_EVENT_REASON_SUCCESS, disassoc_resp) !=
                 WM_SUCCESS)
             {
                 /* If fail to send message on queue, free allocated memory ! */
                 os_mem_free((void *)disassoc_resp);
             }
-#endif /* CONFIG_WPA_SUPP */
 #ifdef CONFIG_WMM
             wlan_ralist_del_enh(mlan_adap->priv[1], evt->src_mac_addr);
 #endif
@@ -5188,6 +5208,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
         case EVENT_MICRO_AP_BSS_IDLE:
             PRINTM(MEVENT, "EVENT: MICRO_AP_BSS_IDLE\n");
             pmpriv_uap->media_connected = MFALSE;
+            wlan_clean_txrx(pmpriv_uap);
             break;
 #ifdef CONFIG_WMM
         case EVENT_TX_DATA_PAUSE:
@@ -5292,6 +5313,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             break;
 #ifdef CONFIG_WMM
         case EVENT_REMAIN_ON_CHANNEL_EXPIRED:
+            mlan_adap->remain_on_channel = MFALSE;
             /* Restore tx after remain on channel expired */
             wifi_set_tx_status(WIFI_DATA_RUNNING);
 
@@ -5618,13 +5640,13 @@ static void process_wpa_ie(t_u8 *wpa_ie,
         else
         {
             /* 2 bytes header + 4 bytes oui + 2 bytes version + 4 bytes group_cipher_suite +
-            *  2 bytes pairwise_cipher_count + pairwise_cipher_1 (4) +
-            *  pairwise_cipher_2 (4) + 2 bytes akm_suite_count +
-            *  akm_suite_count * AKM_SUITE_LEN (4)
-            *
-            *  Here move memory of 4bytes(pairwise_cipher_2) if the cipher type is not wpa_oui04,
-            *  dest = (temp + 4) and src = (temp + 8),
-            *  this memmove will keep akm data intact */
+             *  2 bytes pairwise_cipher_count + pairwise_cipher_1 (4) +
+             *  pairwise_cipher_2 (4) + 2 bytes akm_suite_count +
+             *  akm_suite_count * AKM_SUITE_LEN (4)
+             *
+             *  Here move memory of 4bytes(pairwise_cipher_2) if the cipher type is not wpa_oui04,
+             *  dest = (temp + 4) and src = (temp + 8),
+             *  this memmove will keep akm data intact */
             memmove((temp + 4), (temp + 8), (sizeof(t_u16) + 4));
         }
     }
@@ -5987,11 +6009,11 @@ void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint
         {
             (void)memcpy((void *)fw_ver_ext, (const void *)&resp->params.verext.version_str,
 #ifdef RW610
-                        ver_str_len
+                         ver_str_len
 #else
-                        strlen((const char *)(&resp->params.verext.version_str))
+                         strlen((const char *)(&resp->params.verext.version_str))
 #endif
-                        );
+            );
         }
     }
     else if (resp->params.verext.version_str_sel == 3U && strlen((const char *)(&resp->params.verext.version_str)))
@@ -6005,7 +6027,7 @@ void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint
 #else
                      strlen((const char *)(&resp->params.verext.version_str))
 #endif
-                     );
+        );
     }
     else if (resp->params.verext.version_str_sel == 4U && strlen((const char *)(&resp->params.verext.version_str)))
     {
@@ -6018,7 +6040,7 @@ void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint
 #else
                      strlen((const char *)(&resp->params.verext.version_str))
 #endif
-                     );
+        );
     }
     else
     { /* Do Nothing */
@@ -6425,6 +6447,7 @@ int wifi_set_get_rx_abort_cfg_ext(void *cfg, t_u16 action)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0, sizeof(HostCmd_DS_COMMAND));
     cmd->seq_num            = 0x0;
     cmd->result             = 0x0;
     wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_RX_ABORT_CFG_EXT, action, 0, NULL, cfg,
@@ -7306,18 +7329,19 @@ void wifi_cau_temperature_enable()
     val &= ~(0xC);
     val |= (2 << 2);
     WIFI_WRITE_REG32(WLAN_CAU_ENABLE_ADDR, val);
+    os_thread_sleep(os_msec_to_ticks(1));
 }
 
 int32_t wifi_get_temperature(void)
 {
-    int32_t val                = 0;
-    uint32_t reg_val           = 0;
+    int32_t val                   = 0;
+    uint32_t reg_val              = 0;
     uint32_t temp_Cau_Raw_Reading = 0;
-    uint32_t board_type        = 0;
+    uint32_t board_type           = 0;
 
-    reg_val           = WIFI_REG32(WLAN_CAU_TEMPERATURE_ADDR);
+    reg_val              = WIFI_REG32(WLAN_CAU_TEMPERATURE_ADDR);
     temp_Cau_Raw_Reading = ((reg_val & 0XFFC00) >> 10);
-    board_type        = wifi_get_board_type();
+    board_type           = wifi_get_board_type();
 
     switch (board_type)
     {
@@ -7342,12 +7366,13 @@ int32_t wifi_get_temperature(void)
     return val;
 }
 
-void wifi_cau_temperature_write_to_firmware()
+int wifi_cau_temperature_write_to_firmware()
 {
     int32_t val = 0;
 
     val = wifi_get_temperature();
     WIFI_WRITE_REG32(WLAN_CAU_TEMPERATURE_FW_ADDR, val);
+    return val;
 }
 #endif
 

@@ -325,6 +325,20 @@ static t_void wlan_11n_delete_rxreorder_tbl_entry(mlan_private *priv, RxReorderT
         return;
     }
 
+    /* Get and unlick the delete node using lock */
+    os_semaphore_get(&priv->rx_reorder_tbl_lock, OS_WAIT_FOREVER);
+    PRINTM(MDAT_D, "Delete rx_reor_tbl_ptr: %p\n", rx_reor_tbl_ptr);
+    rx_reor_tbl_ptr = (RxReorderTbl *)(void *)util_dequeue_list(priv->adapter->pmoal_handle, &priv->rx_reorder_tbl_ptr,
+                            priv->adapter->callbacks.moal_spin_lock,
+                            priv->adapter->callbacks.moal_spin_unlock);
+    os_semaphore_put(&priv->rx_reorder_tbl_lock);
+
+    if (rx_reor_tbl_ptr == MNULL)
+    {
+        LEAVE();
+        return;
+    }
+
     if (mlan_adap->in_reset)
         (void)wlan_11n_free_rxreorder_pkt(priv, rx_reor_tbl_ptr);
     else
@@ -340,10 +354,6 @@ static t_void wlan_11n_delete_rxreorder_tbl_entry(mlan_private *priv, RxReorderT
         }
         (void)priv->adapter->callbacks.moal_free_timer(pmadapter->pmoal_handle, &rx_reor_tbl_ptr->timer_context.timer);
     }
-
-    PRINTM(MDAT_D, "Delete rx_reor_tbl_ptr: %p\n", rx_reor_tbl_ptr);
-    util_unlink_list(pmadapter->pmoal_handle, &priv->rx_reorder_tbl_ptr, (pmlan_linked_list)(void *)rx_reor_tbl_ptr,
-                     pmadapter->callbacks.moal_spin_lock, pmadapter->callbacks.moal_spin_unlock);
 
     (void)pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)rx_reor_tbl_ptr->rx_reorder_ptr);
     (void)pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)rx_reor_tbl_ptr);

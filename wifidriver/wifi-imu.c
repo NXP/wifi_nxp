@@ -482,7 +482,7 @@ mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
             wlan_ret_get_hw_spec((mlan_private *)mlan_adap->priv[0], (HostCmd_DS_COMMAND *)cmdresp, NULL);
 #ifdef RW610
             t_u32 fw_cap_ext_rw610;
-            fw_cap_ext_rw610     = mlan_adap->priv[0]->adapter->fw_cap_ext;
+            fw_cap_ext_rw610 = mlan_adap->priv[0]->adapter->fw_cap_ext;
 #ifndef CONFIG_CUSTOM_CALDATA
             cal_data_valid_rw610 = (((fw_cap_ext_rw610 & 0x0800) == 0) ? 0 : 1);
 #else
@@ -1239,7 +1239,7 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
 #ifdef CONFIG_TX_RX_ZERO_COPY
     ret = HAL_ImuAddWlanTxPacketExt(kIMU_LinkCpu1Cpu3, tx_buf, txlen, net_tx_zerocopy_process_cb);
 #else
-    ret              = HAL_ImuAddWlanTxPacket(kIMU_LinkCpu1Cpu3, tx_buf, txlen);
+    ret = HAL_ImuAddWlanTxPacket(kIMU_LinkCpu1Cpu3, tx_buf, txlen);
 #endif
 
     if (ret != kStatus_HAL_RpmsgSuccess)
@@ -1596,6 +1596,9 @@ mlan_status imu_wifi_init(enum wlan_type type, const uint8_t *fw_ram_start_addr,
     int ret                = 0;
     int retry_cnt          = 3;
     int retry_cnt_fw_init  = 3;
+#ifdef RW610
+    int temperature_val = 0;
+#endif
 
     ret = wlan_init_struct();
     if (ret != WM_SUCCESS)
@@ -1631,13 +1634,11 @@ retry:
         }
     }
     wifi_io_d("%u WLAN FW is active.\n", os_ticks_get());
-#ifdef CONFIG_WIFI_RECOVERY
     if (wifi_recovery_enable)
     {
         wifi_w("WiFi recovery mode done!");
         wifi_recovery_enable = false;
     }
-#endif
     if (wifi_shutdown_enable)
     {
         wifi_shutdown_enable = false;
@@ -1645,7 +1646,8 @@ retry:
 
 #ifdef RW610
     wifi_cau_temperature_enable();
-    wifi_cau_temperature_write_to_firmware();
+    temperature_val = wifi_cau_temperature_write_to_firmware();
+    PRINTF("Wi-Fi cau temperature : %d\r\n", temperature_val);
 #endif
 
     wifi_init_imulink();
@@ -1716,9 +1718,7 @@ void imu_wifi_deinit(void)
     wlan_deinit_struct();
 
     flag = MBIT(1) | imu_fw_is_hang();
-#ifdef CONFIG_WIFI_RECOVERY
     flag |= wifi_recovery_enable;
-#endif
 
     mlan_deinit_wakeup_irq();
     HAL_ImuDeinit(kIMU_LinkCpu1Cpu3, flag);
