@@ -13847,22 +13847,14 @@ wlan_11ax_config_t *wlan_get_11ax_cfg(void)
 }
 
 #if CONFIG_11AX_TWT
-static wlan_btwt_config_t g_btwt_cfg_default[] = {{/* action */
-                                                   0x0001,
-                                                   /* sub_id */
-                                                   0x0125,
-                                                   /* btwt_cfg */
-                                                   0x40, 0x04, 0x0063, 0x0270,
-                                                   0x0a, 0x05}};
-
-int wlan_set_btwt_cfg(const wlan_btwt_config_t *btwt_config)
+int wlan_set_btwt_cfg(const wlan_btwt_cfg_t *btwt_cfg)
 {
-    return wifi_set_btwt_cfg(btwt_config);
+    return wifi_set_btwt_cfg(btwt_cfg);
 }
 
-wlan_btwt_config_t *wlan_get_btwt_cfg(void)
+int wlan_get_btwt_cfg(wlan_btwt_cfg_t *btwt_cfg)
 {
-    return g_btwt_cfg_default;
+    return wifi_get_btwt_cfg(btwt_cfg);
 }
 
 static wlan_twt_setup_config_t g_twt_setup_cfg_default[] = {{

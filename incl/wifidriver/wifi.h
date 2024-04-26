@@ -1303,11 +1303,19 @@ int wifi_set_11ax_cfg(wifi_11ax_config_t *ax_config);
 #if CONFIG_11AX_TWT
 /** Set btwt config params
  *
- * \param[in] btwt_config Broadcast TWT setup parameters to be sent to Firmware
+ * \param[in] btwt_cfg Broadcast TWT setup parameters to be sent to Firmware
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wifi_set_btwt_cfg(const wifi_btwt_config_t *btwt_config);
+int wifi_set_btwt_cfg(const wifi_btwt_cfg_t *btwt_cfg);
+
+/** Get btwt config params
+ *
+ * \param[in] btwt_cfg Broadcast TWT setup parameters to be sent to Firmware
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_get_btwt_cfg(wifi_btwt_cfg_t *btwt_cfg);
 
 /** Set twt setup config params
  *

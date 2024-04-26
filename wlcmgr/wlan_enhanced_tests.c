@@ -1547,7 +1547,6 @@ static wlan_11ax_config_t ax_conf;
 #if CONFIG_11AX_TWT
 static wlan_twt_setup_config_t twt_setup_conf;
 static wlan_twt_teardown_config_t teardown_conf;
-static wlan_btwt_config_t btwt_config;
 #endif /* CONFIG_11AX_TWT */
 
 /* cfg tables for 11axcfg and twt commands to FW */
@@ -1566,20 +1565,6 @@ const static test_cfg_param_t g_11ax_cfg_param[] = {
 };
 
 #if CONFIG_11AX_TWT
-static uint8_t g_btwt_cfg[12] = {0};
-
-const static test_cfg_param_t g_btwt_cfg_param[] = {
-    /* name             offset  len   notes */
-    {"action", 0, 2, "only support 1: Set"},
-    {"sub_id", 2, 2, "Broadcast TWT AP config"},
-    {"nominal_wake", 4, 1, "range 64-255"},
-    {"max_sta_support", 5, 1, "Max STA Support"},
-    {"twt_mantissa", 6, 2, NULL},
-    {"twt_offset", 8, 2, NULL},
-    {"twt_exponent", 10, 1, NULL},
-    {"sp_gap", 11, 1, NULL},
-};
-
 static uint8_t g_twt_setup_cfg[15] = {0};
 
 static test_cfg_param_t g_twt_setup_cfg_param[] = {
@@ -1616,9 +1601,68 @@ static void test_wlan_11ax_cfg(int argc, char **argv)
 }
 
 #if CONFIG_11AX_TWT
+static void dump_wlan_btwt_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-11ax-btwt get\r\n");
+    (void)PRINTF("wlan-11ax-btwt set <sta_wait> <offset> <twtli> <session_num>\
+ <id0> <mantissa0> <exponent0> <nominal_wake0> <id1> <mantissa1> <exponent1> <nominal_wake1> ...\r\n");
+    (void)PRINTF("AP BTWT setting. \r\n");
+    (void)PRINTF("Note: If set cfg, session_num, the number of TWT sessions, range: [2-5]\r\n");
+}
+
 static void test_wlan_bcast_twt(int argc, char **argv)
 {
-    test_wlan_cfg_process(TEST_WLAN_BCAST_TWT, argc, argv);
+    int ret = 0;
+    wlan_btwt_cfg_t btwt_cfg;
+
+    if (argc < 2)
+    {
+        dump_wlan_btwt_usage();
+        return;
+    }
+
+    if (0 == strncmp(argv[1], "get", 3))
+    {
+        ret = wlan_get_btwt_cfg(&btwt_cfg);
+        if (ret == WM_SUCCESS)
+        {
+            (void)PRINTF("btwt_cfg, bet_sta_wait %d, offset %d, twtli %d, count %d\r\n",
+                        btwt_cfg.bcast_bet_sta_wait, btwt_cfg.bcast_offset, 
+                        btwt_cfg.bcast_twtli, btwt_cfg.count);
+            for (t_u8 i = 0; i < btwt_cfg.count; ++i)
+            {
+                (void)PRINTF("id %d, mantissa %d, exponent %d, nominal_wake %d\r\n", 
+                        btwt_cfg.btwt_sets[i].btwt_id, btwt_cfg.btwt_sets[i].bcast_mantissa,
+                        btwt_cfg.btwt_sets[i].bcast_exponent, btwt_cfg.btwt_sets[i].nominal_wake);
+            }
+        }
+    }
+    else if (0 == strncmp(argv[1], "set", 3))
+    {
+        memset(&btwt_cfg, 0x00, sizeof(btwt_cfg));
+        btwt_cfg.bcast_bet_sta_wait  = a2hex_or_atoi(argv[2]);
+        btwt_cfg.bcast_offset        = a2hex_or_atoi(argv[3]);
+        btwt_cfg.bcast_twtli         = a2hex_or_atoi(argv[4]);
+        btwt_cfg.count               = a2hex_or_atoi(argv[5]);
+
+        if (btwt_cfg.count < 2 || argc != 6 + 4 * btwt_cfg.count)
+        {
+            dump_wlan_btwt_usage();
+            return;
+        }
+
+        for (t_u8 i = 0; i < btwt_cfg.count; ++i)
+        {
+            btwt_cfg.btwt_sets[i].btwt_id        = a2hex_or_atoi(argv[6 + i * 4 + 0]);
+            btwt_cfg.btwt_sets[i].bcast_mantissa = a2hex_or_atoi(argv[6 + i * 4 + 1]);
+            btwt_cfg.btwt_sets[i].bcast_exponent = a2hex_or_atoi(argv[6 + i * 4 + 2]);
+            btwt_cfg.btwt_sets[i].nominal_wake   = a2hex_or_atoi(argv[6 + i * 4 + 3]);
+        }
+
+        ret = wlan_set_btwt_cfg(&btwt_cfg);
+        (void)ret;
+    }
 }
 
 static void test_wlan_twt_setup(int argc, char **argv)
@@ -1717,7 +1761,6 @@ static void wlan_init_g_test_cfg_arrays()
 {
     memcpy(g_11ax_cfg, wlan_get_11ax_cfg(), 31);
 #if CONFIG_11AX_TWT
-    memcpy(g_btwt_cfg, wlan_get_btwt_cfg(), 12);
     memcpy(g_twt_setup_cfg, wlan_get_twt_setup_cfg(), 15);
     memcpy(g_twt_teardown_cfg, wlan_get_twt_teardown_cfg(), 3);
 #endif /* CONFIG_11AX_TWT */
@@ -1734,7 +1777,6 @@ static void wlan_init_g_test_cfg_arrays()
 static test_cfg_table_t g_test_cfg_table_list[] = { /*  name         data           total_len    param_list param_num*/
                                                     {"11axcfg", g_11ax_cfg, 29, g_11ax_cfg_param, 8},
 #if CONFIG_11AX_TWT
-                                                    {"twt_bcast", g_btwt_cfg, 12, g_btwt_cfg_param, 8},
                                                     {"twt_setup", g_twt_setup_cfg, 15, g_twt_setup_cfg_param, 12},
                                                     {"twt_teardown", g_twt_teardown_cfg, 3, g_twt_teardown_cfg_param,
                                                      3},
@@ -1830,10 +1872,6 @@ static void send_cfg_msg(test_cfg_table_t *cfg, uint32_t index)
             ret = wlan_set_11ax_cfg(&ax_conf);
             break;
 #if CONFIG_11AX_TWT
-        case TEST_WLAN_BCAST_TWT:
-            (void)memcpy((void *)&btwt_config, (void *)cfg->data, sizeof(btwt_config));
-            ret = wlan_set_btwt_cfg(&btwt_config);
-            break;
         case TEST_WLAN_TWT_SETUP:
             (void)memcpy((void *)&twt_setup_conf, (void *)cfg->data, sizeof(twt_setup_conf));
             ret = wlan_set_twt_setup_cfg(&twt_setup_conf);
@@ -2148,7 +2186,7 @@ static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-set-rutxpwrlimit", NULL, test_wlan_set_rutxpwrlimit},
     {"wlan-11ax-cfg", "<11ax_cfg>", test_wlan_11ax_cfg},
 #if CONFIG_11AX_TWT
-    {"wlan-11ax-bcast-twt", "<dump/set/done> [<param_id> <param_data>]", test_wlan_bcast_twt},
+    {"wlan-11ax-bcast-twt", "<set/get>", test_wlan_bcast_twt},
     {"wlan-11ax-twt-setup", "<dump/set/done> [<param_id> <param_data>]", test_wlan_twt_setup},
     {"wlan-11ax-twt-teardown", "<dump/set/done> [<param_id> <param_data>]", test_wlan_twt_teardown},
     {"wlan-11ax-twt-report", "", test_wlan_twt_report},
