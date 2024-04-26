@@ -315,7 +315,7 @@ int net_wlan_init(void)
 #if CONFIG_P2P
         g_wfd.ipaddr.addr = INADDR_ANY;
         ret               = netifapi_netif_add(&g_wfd.netif, ip_2_ip4(&g_wfd.ipaddr), ip_2_ip4(&g_wfd.ipaddr),
-                                               ip_2_ip4(&g_wfd.ipaddr), NULL, lwip_netif_wfd_init, tcpip_input);
+                                 ip_2_ip4(&g_wfd.ipaddr), NULL, lwip_netif_wfd_init, tcpip_input);
         if (ret)
         {
             net_e("P2P interface add failed\r\n");
@@ -695,10 +695,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
     interface_t *if_handle = (interface_t *)intrfc_handle;
 
 #if CONFIG_P2P
-    net_d("configuring interface %s (with %s)",
-          (if_handle == &g_mlan) ? "mlan" :
-          (if_handle == &g_uap)  ? "uap" :
-                                   "wfd",
+    net_d("configuring interface %s (with %s)", (if_handle == &g_mlan) ? "mlan" : (if_handle == &g_uap) ? "uap" : "wfd",
           (addr->ipv4.addr_type == NET_ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
 #else
     net_d("configuring interface %s (with %s)", (if_handle == &g_mlan) ? "mlan" : "uap",
@@ -957,6 +954,7 @@ static struct net_mgmt_event_callback net_event_v4_cb;
 #if CONFIG_IPV6
 static struct net_mgmt_event_callback net_event_v6_cb;
 #define MCASTV6_MASK (NET_EVENT_IPV6_MADDR_ADD | NET_EVENT_IPV6_MADDR_DEL)
+#define IPV6_MASK    (NET_EVENT_IPV6_DAD_SUCCEED | NET_EVENT_IPV6_ADDR_ADD)
 #endif
 
 interface_t g_mlan;
@@ -1698,6 +1696,25 @@ static void dhcp_timer_cb(osa_timer_arg_t arg)
 void net_interface_up(void *intrfc_handle)
 {
     net_if_up(((interface_t *)intrfc_handle)->netif);
+    /* case 1: start uap/ connect to uap firstly.
+    When init sta/uap interface, the flag of iface->if_dev->flags is initialized to NET_IF_LOWER_UP.
+    Function update_operational_state()(zephyr function) will be called by net_if_up(). Only iface->if_dev->flags
+    is NET_IF_LOWER_UP, can call notify_iface_up() to start interface.
+    iface->if_dev->oper_state will be set to NET_IF_OPER_UP.
+    Function net_eth_carrier_on() will submit carrier_work to work queue, then net_if_carrier_on() is called.
+    net_if_carrier_on() also call update_operational_state(), but don't start interface repeatedly because
+    iface->if_dev->oper_state has been NET_IF_OPER_UP.
+
+    case 2: stop uap then start uap again / disconnect to uap then connect to uap.
+    When stop uap or disconnect to uap,  net_eth_carrier_off() will be called in zephyr wifi drvier glue
+    file(nxp_wifi_drv.c). The flag of iface->if_dev->flags will be cleared. If only call net_if_up(),
+    update_operational_state() will return early. So can't start interface.
+    We can set iface->if_dev->flags to NET_IF_LOWER_UP by calling net_eth_carrier_on() to start interface.
+
+    Can't delete net_if_up() here, beacuse in addtion to start interface, net_if_up() will also perform other
+    initilization work.*/
+
+    net_eth_carrier_on(((interface_t *)intrfc_handle)->netif);
 }
 
 void net_interface_down(void *intrfc_handle)
@@ -1758,6 +1775,15 @@ static void wifi_net_event_handler(struct net_mgmt_event_callback *cb, uint32_t 
         case NET_EVENT_IPV6_MADDR_DEL:
             ipv6_mcast_delete(cb, iface);
             break;
+        case NET_EVENT_IPV6_DAD_SUCCEED:
+            net_d("Receive zephyr ipv6 dad finished event.");
+            /*Wi-Fi driver will recevie NET_EVENT_IPV6_DAD_SUCCEED from zephyr kernel after IPV6 DAD finished.
+            Can notify wlcmgr_task task to get address.*/
+            (void)wlan_wlcmgr_send_msg(WIFI_EVENT_UAP_NET_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
+            break;
+        case NET_EVENT_IPV6_ADDR_ADD:
+            net_d("Receive zephyr ipv6 address added event.");
+            break;
 #endif
         default:
             net_d("Unhandled net event: %x", mgmt_event);
@@ -1779,10 +1805,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
     interface_t *if_handle = (interface_t *)intrfc_handle;
 
 #if CONFIG_P2P
-    net_d("configuring interface %s (with %s)",
-          (if_handle == &g_mlan) ? "mlan" :
-          (if_handle == &g_uap)  ? "uap" :
-                                   "wfd",
+    net_d("configuring interface %s (with %s)", (if_handle == &g_mlan) ? "mlan" : (if_handle == &g_uap) ? "uap" : "wfd",
           (addr->ipv4.addr_type == NET_ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
 #else
     net_d("configuring interface %s (with %s)", (if_handle == &g_mlan) ? "mlan" : "uap",
@@ -1839,12 +1862,14 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
          * WD_EVENT_NET_DHCP_CONFIG, should be sent to the wlcmgr.
          */
     }
-    else if ((if_handle == &g_uap)
+    else if (
 #if CONFIG_P2P
-             || ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_UAP))
+        ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_UAP))
 #endif
     )
     {
+        /*For g_uap interface, notify wlcmgr_task task to get address only after receiving DAD finished event from
+         * zephyr.*/
         (void)wlan_wlcmgr_send_msg(WIFI_EVENT_UAP_NET_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
     }
     else
@@ -2112,7 +2137,7 @@ static void setup_mgmt_events(void)
     net_mgmt_add_event_callback(&net_event_v4_cb);
 
 #if CONFIG_IPV6
-    net_mgmt_init_event_callback(&net_event_v6_cb, wifi_net_event_handler, MCASTV6_MASK);
+    net_mgmt_init_event_callback(&net_event_v6_cb, wifi_net_event_handler, MCASTV6_MASK | IPV6_MASK);
 
     net_mgmt_add_event_callback(&net_event_v6_cb);
 #endif
