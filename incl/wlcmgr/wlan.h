@@ -126,7 +126,7 @@
 #include <wifi_events.h>
 #include <wifi.h>
 
-#define WLAN_DRV_VERSION "v1.3.r47.p22"
+#define WLAN_DRV_VERSION "v1.3.r47.p23"
 
 
 #define ARG_UNUSED(x) (void)(x)
