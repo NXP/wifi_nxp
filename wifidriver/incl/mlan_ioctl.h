@@ -718,6 +718,7 @@ typedef struct _wmm_parameter_t
 #define MLAN_11AX_TWT_TEARDOWN_SUBID    0x115
 #define MLAN_11AX_TWT_REPORT_SUBID      0x116
 #define MLAN_11AX_TWT_INFORMATION_SUBID 0x119
+#define MLAN_11AX_TWT_BTWT_SUBID        0x120
 #endif /* CONFIG_11AX_TWT */
 
 #if CONFIG_MMSF
@@ -3074,6 +3075,25 @@ typedef MLAN_PACK_START struct _mlan_ds_twt_information
     t_u8 information_state;
 } MLAN_PACK_END mlan_ds_twt_information, *pmlan_ds_twt_information;
 
+/** BTWT AP Config parameters */
+#define BTWT_AGREEMENT_MAX 5
+typedef PACK_START struct
+{
+    t_u8 btwt_id;
+    t_u16 bcast_mantissa;
+    t_u8 bcast_exponent;
+    t_u8 nominal_wake;
+} PACK_END mlan_ds_btwt_set_t;
+
+typedef MLAN_PACK_START struct _mlan_ds_ap_btwt_cfg
+{
+    t_u8 bcast_bet_sta_wait;
+    t_u16 bcast_offset;
+    t_u8 bcast_twtli;
+    t_u8 count;
+    mlan_ds_btwt_set_t btwt_sets[BTWT_AGREEMENT_MAX];
+} MLAN_PACK_END mlan_ds_btwt_cfg, *pmlan_ds_btwt_cfg;
+
 /** Type definition of mlan_ds_twtcfg for MLAN_OID_11AX_TWT_CFG */
 typedef MLAN_PACK_START struct _mlan_ds_twtcfg
 {
@@ -3090,8 +3110,10 @@ typedef MLAN_PACK_START struct _mlan_ds_twtcfg
         mlan_ds_twt_teardown twt_teardown;
         /** TWT report for Sub ID: MLAN_11AX_TWT_REPORT_SUBID */
         mlan_ds_twt_report twt_report;
-        /** TWT report for Sub ID: MLAN_11AX_TWT_INFORMATION_SUBID */
+        /** TWT information config for Sub ID: MLAN_11AX_TWT_INFORMATION_SUBID */
         mlan_ds_twt_information twt_information;
+        /** BTWT config for Sub ID: MLAN_11AX_TWT_BTWT_SUBID */
+        mlan_ds_btwt_cfg  btwt_cfg;
     } param;
 } MLAN_PACK_END mlan_ds_twtcfg, *pmlan_ds_twtcfg;
 #endif /* CONFIG_11AX_TWT */

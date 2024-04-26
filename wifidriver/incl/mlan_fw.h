@@ -4743,6 +4743,25 @@ typedef MLAN_PACK_START struct _hostcmd_twt_information
     t_u8 information_state;
 } MLAN_PACK_END hostcmd_twt_information, *phostcmd_twt_information;
 
+#define BTWT_AGREEMENT_MAX 5
+typedef PACK_START struct
+{
+    t_u8 btwt_id;
+    t_u16 bcast_mantissa;
+    t_u8 bcast_exponent;
+    t_u8 nominal_wake;
+} PACK_END hostcmd_btwt_set_t;
+/** BTWT AP Config parameters */
+
+typedef MLAN_PACK_START struct 
+{
+    t_u8 bcast_bet_sta_wait;
+    t_u16 bcast_offset;
+    t_u8 bcast_twtli;
+    t_u8 count;
+    hostcmd_btwt_set_t btwt_sets[BTWT_AGREEMENT_MAX];
+} MLAN_PACK_END hostcmd_btwt_cfg, *phostcmd_btwt_cfg;
+
 /** HostCmd_DS_TWT_CFG */
 typedef MLAN_PACK_START struct _HostCmd_DS_TWT_CFG
 {
@@ -4761,6 +4780,8 @@ typedef MLAN_PACK_START struct _HostCmd_DS_TWT_CFG
         hostcmd_twt_report twt_report;
         /** TWT report for Sub ID: MLAN_11AX_TWT_INFORMATION_SUBID */
         hostcmd_twt_information twt_information;
+        /** TWT report for Sub ID: MLAN_11AX_TWT_BTWT_SUBID */
+        hostcmd_btwt_cfg btwt_cfg;
     } param;
 } MLAN_PACK_END HostCmd_DS_TWT_CFG;
 #endif /* CONFIG_11AX_TWT */

@@ -1181,26 +1181,28 @@ typedef PACK_START struct
     t_u8 teardown_all_twt;
 } PACK_END wifi_twt_teardown_config_t;
 
-/** Wi-Fi BTWT Configuration */
+/** Wi-Fi Broadcast TWT AP config */
+#define BTWT_AGREEMENT_MAX 5
 typedef PACK_START struct
 {
-    /** Only support 1: Set*/
-    t_u16 action;
-    /** Broadcast TWT AP config */
-    t_u16 sub_id;
+    t_u8 btwt_id;
+    /** TWT Mantissa */
+    t_u16 bcast_mantissa;
+    /** TWT Exponent */
+    t_u8 bcast_exponent;
     /** Range 64-255 */
     t_u8 nominal_wake;
-    /** Max STA Support */
-    t_u8 max_sta_support;
-    /** TWT Mantissa */
-    t_u16 twt_mantissa;
+} PACK_END btwt_set_t;
+/** BTWT AP Config parameters */
+typedef PACK_START struct
+{
+    t_u8 bcast_bet_sta_wait;
     /** TWT Offset */
-    t_u16 twt_offset;
-    /** TWT Exponent */
-    t_u8 twt_exponent;
-    /** SP Gap */
-    t_u8 sp_gap;
-} PACK_END wifi_btwt_config_t;
+    t_u16 bcast_offset;
+    t_u8 bcast_twtli;
+    t_u8 count;
+    btwt_set_t btwt_sets[BTWT_AGREEMENT_MAX];
+} PACK_END wifi_btwt_cfg_t;
 
 #define WLAN_BTWT_REPORT_LEN     9
 #define WLAN_BTWT_REPORT_MAX_NUM 6

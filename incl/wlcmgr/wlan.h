@@ -1495,11 +1495,11 @@ typedef wifi_twt_setup_config_t wlan_twt_setup_config_t;
  * \ref wifi_twt_teardown_config_t
  */
 typedef wifi_twt_teardown_config_t wlan_twt_teardown_config_t;
-/** Configuration for Broadcast TWT setup
- * \ref wifi_btwt_config_t
+/** Configuration for Broadcast TWT Setup
+ * \ref wifi_btwt_cfg_t
  */
-typedef wifi_btwt_config_t wlan_btwt_config_t;
-/** Configuration for TWT report
+typedef wifi_btwt_cfg_t wlan_btwt_cfg_t;
+/** Configuration for TWT Report
  * \ref wifi_twt_report_t
  */
 typedef wifi_twt_report_t wlan_twt_report_t;
@@ -5967,17 +5967,18 @@ wlan_11ax_config_t *wlan_get_11ax_cfg(void);
 #if CONFIG_11AX_TWT
 /** Set broadcast TWT (target wake time) configuration parameters
  *
- * \param[in] btwt_config: Broadcast TWT setup parameters to be sent to firmware.
+ * \param[in] btwt_cfg Broadcast TWT Setup parameters to be sent to Firmware
  *
  * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
  */
-int wlan_set_btwt_cfg(const wlan_btwt_config_t *btwt_config);
-
-/** Get broadcast TWT configuration parameters
+int wlan_set_btwt_cfg(const wlan_btwt_cfg_t *btwt_cfg);
+/** Get broadcast TWT (target wake time) configuration parameters
  *
- * \return Broadcast TWT setup parameters default configuration array.
+ * \param[in] btwt_cfg Broadcast TWT Setup parameters to be sent to Firmware
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
  */
-wlan_btwt_config_t *wlan_get_btwt_cfg(void);
+int wlan_get_btwt_cfg(const wlan_btwt_cfg_t *btwt_cfg);
 
 /** Set TWT setup configuration parameters
  *
