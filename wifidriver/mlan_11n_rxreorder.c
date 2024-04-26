@@ -397,12 +397,8 @@ static t_void wlan_11n_delete_rxreorder_tbl_entry(mlan_private *priv, RxReorderT
         (void)wlan_11n_dispatch_pkt_until_start_win(
             priv, rx_reor_tbl_ptr, (rx_reor_tbl_ptr->start_win + rx_reor_tbl_ptr->win_size) & (MAX_TID_VALUE - 1));
 
-    if (rx_reor_tbl_ptr->timer_context.timer_is_set != MFALSE)
-    {
-        (void)priv->adapter->callbacks.moal_stop_timer(pmadapter->pmoal_handle, rx_reor_tbl_ptr->timer_context.timer);
-
-        (void)priv->adapter->callbacks.moal_free_timer(pmadapter->pmoal_handle, &rx_reor_tbl_ptr->timer_context.timer);
-    }
+    (void)priv->adapter->callbacks.moal_stop_timer(pmadapter->pmoal_handle, rx_reor_tbl_ptr->timer_context.timer);
+    (void)priv->adapter->callbacks.moal_free_timer(pmadapter->pmoal_handle, &rx_reor_tbl_ptr->timer_context.timer);
 
 #if !CONFIG_MEM_POOLS
     (void)pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)rx_reor_tbl_ptr->rx_reorder_ptr);
