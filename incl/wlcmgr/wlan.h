@@ -183,6 +183,8 @@ extern osa_msg_handle_t mon_thread_event_queue;
 #endif
 #endif
 
+#define WLAN_REASON_CODE_PREV_AUTH_NOT_VALID 2U
+
 typedef enum
 {
     BSS_INFRASTRUCTURE = 1,
@@ -7312,5 +7314,15 @@ char *wlan_string_dup(const char *s);
  * \return board type.
  */
 uint32_t wlan_get_board_type();
+
+#if UAP_SUPPORT
+/**
+ * Disconnect to sta which is connected with internal uap.
+ *
+ * \param[in]  sta_addr    sta mac address
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_uap_disconnect_sta(uint8_t *sta_addr);
+#endif
 
 #endif /* __WLAN_H__ */

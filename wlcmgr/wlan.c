@@ -15880,3 +15880,25 @@ uint32_t wlan_get_board_type()
 
     return board_type;
 }
+
+#if UAP_SUPPORT
+int wlan_uap_disconnect_sta(uint8_t *sta_addr)
+{
+    int ret;
+    t_u16 reason_code = WLAN_REASON_CODE_PREV_AUTH_NOT_VALID;
+
+#if CONFIG_WPA_SUPP
+    struct netif *netif = net_get_uap_interface();
+    ret = wpa_supp_deauth_sta(netif, sta_addr);
+#else
+    ret = wifi_sta_deauth(sta_addr, reason_code);
+#endif
+
+    if(ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Error: Failed to disconnect sta.\r\n");
+    }
+
+    return ret;
+}
+#endif

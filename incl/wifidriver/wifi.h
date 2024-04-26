@@ -600,6 +600,16 @@ int wifi_get_scan_result_count(unsigned *count);
  */
 int wifi_uap_bss_sta_list(wifi_sta_list_t **list);
 
+/**
+ * Dsiconnect ex-sta which is connected to in-uap.
+ *
+ * \param[in] mac_addr Mac address of external station.
+ * \param[in] reason_code Deauth reason code.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_sta_deauth(uint8_t *mac_addr, uint16_t reason_code);
+
 #if CONFIG_RX_ABORT_CFG
 /**
  * Set/Get Rx abort config

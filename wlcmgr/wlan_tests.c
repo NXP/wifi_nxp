@@ -2572,6 +2572,69 @@ static void test_wlan_disconnect(int argc, char **argv)
     }
 }
 
+#if UAP_SUPPORT
+static void test_wlan_uap_disconnect_sta(int argc, char **argv)
+{
+    int ret, i;
+    uint8_t raw_mac[MLAN_MAC_ADDR_LENGTH];
+    wifi_sta_list_t *sl = NULL;
+
+    if(argc != 2)
+    {
+        (void)PRINTF("Usage: %s C0:95:DA:XX:XX:XX\r\n",argv[0]);
+        return;
+    }
+
+    ret = get_mac(argv[1], (char *)raw_mac, ':');
+    if (ret != 0)
+    {
+        (void)PRINTF("Error: invalid MAC argument\r\n");
+        return;
+    }
+
+    (void)wifi_uap_bss_sta_list(&sl);
+
+    if (sl == NULL)
+    {
+        (void)PRINTF("Failed to get sta list\n\r");
+        return;
+    }
+
+    wifi_sta_info_t *si = (wifi_sta_info_t *)(void *)(((t_u8 *)&sl->count) + sizeof(int));
+
+    if(!sl->count)
+    {
+        (void)PRINTF("No station conneted. Pls connect to internal uap firstly\r\n");
+        return;
+    }
+
+    for (i = 0; i < sl->count; i++)
+    {
+        if(memcmp(raw_mac, si[i].mac, MLAN_MAC_ADDR_LENGTH)  == 0)
+        {
+            break;
+        }
+    }
+
+    if(i == sl->count)
+    {
+        (void)PRINTF("Error: There is no connected station whose mac address is %s\r\n",argv[1]);
+        (void)PRINTF("Pls enter correct mac address!\r\n");
+        return;
+    }
+
+    wlan_uap_disconnect_sta(raw_mac);
+
+#if !CONFIG_MEM_POOLS
+    OSA_MemoryFree(sl);
+#else
+    OSA_MemoryPoolFree(buf_256_MemoryPool, sl);
+#endif
+
+    return;
+}
+#endif
+
 static void test_wlan_stat(int argc, char **argv)
 {
     enum wlan_connection_state state;
@@ -12223,6 +12286,9 @@ static struct cli_command tests[] = {
     {"wlan-start-network", "<profile_name>", test_wlan_start_network},
     {"wlan-stop-network", NULL, test_wlan_stop_network},
     {"wlan-disconnect", NULL, test_wlan_disconnect},
+#if UAP_SUPPORT
+    {"wlan-uap-disconnect-sta","<mac address>",test_wlan_uap_disconnect_sta},
+#endif
     {"wlan-stat", NULL, test_wlan_stat},
     {"wlan-info", NULL, test_wlan_info},
     {"wlan-address", NULL, test_wlan_address},

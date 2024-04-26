@@ -1122,8 +1122,8 @@ int wifi_uap_bss_sta_list(wifi_sta_list_t **list)
     /* *list must have been filled now if everything went well */
 }
 
-#if !CONFIG_MLAN_WMSDK
-static int wifi_sta_deauth(uint8_t *mac_addr, uint16_t reason_code)
+
+int wifi_sta_deauth(uint8_t *mac_addr, uint16_t reason_code)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
     mlan_deauth_param deauth;
@@ -1145,7 +1145,6 @@ static int wifi_sta_deauth(uint8_t *mac_addr, uint16_t reason_code)
     return wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_STA_DEAUTH, HostCmd_ACT_GEN_SET, 0, NULL, &deauth,
                                          MLAN_BSS_TYPE_UAP, NULL);
 }
-#endif /* CONFIG_MLAN_WMSDK */
 
 int wifi_uap_stop()
 {
