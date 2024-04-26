@@ -992,6 +992,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     /* Save so we know which BSS Desc to use in the response handler */
     pmpriv->pattempted_bss_desc = pbss_desc;
 #if CONFIG_HOST_MLME
+    (void)__memcpy(pmadapter, &pmpriv->curr_bss_params.attemp_bssid, pbss_desc->mac_address, MLAN_MAC_ADDR_LENGTH);
     pmpriv->assoc_req_size = 0;
 #endif
 

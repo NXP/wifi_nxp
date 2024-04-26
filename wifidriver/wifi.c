@@ -3061,9 +3061,11 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
                 if (priv->curr_bss_params.host_mlme)
                 {
                     t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = {0};
-                    if (memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
+                    if ((memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
                                MLAN_MAC_ADDR_LENGTH) &&
                         memcmp(zero_mac, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
+                               MLAN_MAC_ADDR_LENGTH)) ||
+                        memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.attemp_bssid,
                                MLAN_MAC_ADDR_LENGTH))
                     {
                         wifi_d("Dropping Deauth frame from other bssid: type=%d " MACSTR "\r\n", sub_type,
