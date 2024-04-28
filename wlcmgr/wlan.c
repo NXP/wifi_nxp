@@ -6682,7 +6682,6 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             if (ret == WM_SUCCESS)
             {
                 wlan.pending_disconnect_request = true;
-                break;
             }
             wpa_supp_disconnect(netif);
 #endif
