@@ -10662,12 +10662,6 @@ int wlan_set_mac_addr(uint8_t *mac)
 {
     uint8_t ap_mac[MLAN_MAC_ADDR_LENGTH];
 
-    /* Only suppoprt unicast mac */
-    if (mac[0] & 0x01)
-    {
-        return -WM_FAIL;
-    }
-
     if (!is_uap_state(CM_UAP_INITIALIZING) || is_sta_connecting())
     {
         return -WM_FAIL;
