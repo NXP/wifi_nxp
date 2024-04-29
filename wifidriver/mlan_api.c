@@ -2134,7 +2134,7 @@ int wifi_get_rf_otp_cal_data(uint8_t *cal_data)
 int wifi_send_scan_cmd(t_u8 bss_mode,
                        const t_u8 *specific_bssid,
                        const char *ssid,
-                       const char *ssid2,
+                       uint8_t ssid_num,
                        const t_u8 num_channels,
                        const wifi_scan_channel_list_t *chan_list,
                        const t_u8 num_probes,
@@ -2149,6 +2149,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 {
     int ssid_len  = 0;
     int ssid2_len = 0;
+    char const *tmp_ssid = ssid;
     t_u8 i;
 #if CONFIG_COMBO_SCAN
     const char wildcard_ssid[] = "*";
@@ -2164,23 +2165,15 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     mlan_adap->wpa_supp_scan_triggered = wm_wifi.wpa_supp_scan;
     wm_wifi.wpa_supp_scan              = MFALSE;
 #endif
-
-    if (ssid != NULL)
+    if (ssid_num > MRVDRV_MAX_SSID_LIST_LENGTH)
+         return -WM_E_INVAL;
+    tmp_ssid = ssid;
+    for (i = 0; i < ssid_num; i++)
     {
-        ssid_len = strlen(ssid);
+        ssid_len = strlen(tmp_ssid);
+        tmp_ssid += ssid_len;
+        tmp_ssid++;
         if (ssid_len > MLAN_MAX_SSID_LENGTH)
-        {
-#if CONFIG_WPA_SUPP
-            mlan_adap->wpa_supp_scan_triggered = MFALSE;
-#endif
-            return -WM_E_INVAL;
-        }
-    }
-
-    if (ssid2 != NULL)
-    {
-        ssid2_len = strlen(ssid2);
-        if (ssid2_len > MLAN_MAX_SSID_LENGTH)
         {
 #if CONFIG_WPA_SUPP
             mlan_adap->wpa_supp_scan_triggered = MFALSE;
@@ -2221,16 +2214,13 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
         (void)memcpy((void *)user_scan_cfg->specific_bssid, (const void *)specific_bssid, MLAN_MAC_ADDR_LENGTH);
     }
 
-    if (ssid != NULL)
+    tmp_ssid = ssid;
+    for (i = 0; i < ssid_num; i++)
     {
-        (void)memcpy((void *)user_scan_cfg->ssid_list[0].ssid, (const void *)ssid, ssid_len);
-        /* For Wildcard SSID do not set max len */
-        /* user_scan_cfg->ssid_list[0].max_len = ssid_len; */
-    }
-
-    if (ssid2 != NULL)
-    {
-        (void)memcpy((void *)user_scan_cfg->ssid_list[1].ssid, (const void *)ssid2, ssid2_len);
+        ssid_len = strlen(tmp_ssid);
+        (void)memcpy((void *)user_scan_cfg->ssid_list[i].ssid, (const void *)tmp_ssid, ssid_len);
+        tmp_ssid += ssid_len;
+        tmp_ssid++;
     }
 
 #if CONFIG_COMBO_SCAN

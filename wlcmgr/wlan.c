@@ -1983,13 +1983,13 @@ static void do_scan(struct wlan_network *network)
                                      false, false);
 #else
 #if CONFIG_SCAN_WITH_RSSIFILTER
-            ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, 1, chan_list, 0, 0,
+            ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, 1, 1, chan_list, 0, 0,
 #if CONFIG_SCAN_CHANNEL_GAP
                                      scan_channel_gap,
 #endif
                                      false, false);
 #else
-            ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, 1, chan_list, 0,
+            ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, 1, 1, chan_list, 0,
 #if CONFIG_SCAN_CHANNEL_GAP
                                      scan_channel_gap,
 #endif
@@ -2000,13 +2000,13 @@ static void do_scan(struct wlan_network *network)
         else
         {
 #if CONFIG_SCAN_WITH_RSSIFILTER
-            ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, 0, NULL, 0, 0,
+            ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, 1, 0, NULL, 0, 0,
 #if CONFIG_SCAN_CHANNEL_GAP
                                      scan_channel_gap,
 #endif
                                      false, false);
 #else
-            ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, 0, NULL, 0,
+            ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, 1, 0, NULL, 0,
 #if CONFIG_SCAN_CHANNEL_GAP
                                      scan_channel_gap,
 #endif
@@ -2056,13 +2056,13 @@ static void do_hidden_scan(struct wlan_network *network, uint8_t num_channels, w
     wlan.sta_state = CM_STA_SCANNING;
 
 #if CONFIG_SCAN_WITH_RSSIFILTER
-    ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, num_channels, chan_list, 0, 0,
+    ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, 1, num_channels, chan_list, 0, 0,
 #if CONFIG_SCAN_CHANNEL_GAP
                              scan_channel_gap,
 #endif
                              false, true);
 #else
-    ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, num_channels, chan_list, 0,
+    ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, 1, num_channels, chan_list, 0,
 #if CONFIG_SCAN_CHANNEL_GAP
                              scan_channel_gap,
 #endif
@@ -6001,9 +6001,8 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
 
 static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
 {
-    char *ssid = NULL;
-    char *ssid2 = NULL;
-
+    char ssid[(MLAN_MAX_SSID_LENGTH + 1) * MRVDRV_MAX_SSID_LIST_LENGTH]  = {0};
+    uint8_t ssid_num = 0, ssid_off = 0;
     if (msg->data == NULL)
     {
         wlcm_w("ignoring scan request with NULL scan params");
@@ -6034,11 +6033,19 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
         return;
     }
 
+    memcpy(ssid+ssid_off, wlan_scan_param->ssid[0], strlen(wlan_scan_param->ssid[0]));
+    ssid_off += strlen(wlan_scan_param->ssid[0]);
+    ssid[ssid_off] = '\0';
+    ssid_off++;
+    ssid_num++;
 #if CONFIG_COMBO_SCAN
-    ssid = wlan_scan_param->ssid[0];
-    ssid2 = wlan_scan_param->ssid[1];
-#else
-    ssid = wlan_scan_param->ssid;
+    if (strlen(wlan_scan_param->ssid[1]))
+    {
+        memcpy(ssid+ssid_off, wlan_scan_param->ssid[1], strlen(wlan_scan_param->ssid[1]));
+        ssid_off += strlen(wlan_scan_param->ssid[1]);
+        ssid[ssid_off] = '\0';
+        ssid_num++;
+    }
 #endif
 #if CONFIG_SCAN_CHANNEL_GAP
     if (is_uap_started() || is_sta_connected())
@@ -6061,7 +6068,7 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
 
 
     int ret = wifi_send_scan_cmd((t_u8)g_wifi_scan_params.bss_type, wlan_scan_param->bssid,
-                                 ssid, ssid2,
+                                 ssid, ssid_num,
                                  wlan_scan_param->num_channels, wlan_scan_param->chan_list, wlan_scan_param->num_probes,
 #if CONFIG_SCAN_WITH_RSSIFILTER
                                  wlan_scan_param->rssi_threshold,
@@ -12731,14 +12738,21 @@ int _wlan_rrm_scan_cb(unsigned int count)
 
 void wlan_rrm_request_scan(wlan_scan_params_v2_t *wlan_scan_param, wlan_rrm_scan_cb_param *scan_cb_param)
 {
-    char *ssid = NULL;
-    char *ssid2 = NULL;
-
+    char ssid[(MLAN_MAX_SSID_LENGTH + 1) * MRVDRV_MAX_SSID_LIST_LENGTH]  = {0};
+    uint8_t ssid_num = 0, ssid_off = 0;
+    memcpy(ssid+ssid_off, wlan_scan_param->ssid[0], strlen(wlan_scan_param->ssid[0]));
+    ssid_off += strlen(wlan_scan_param->ssid[0]);
+    ssid[ssid_off] = '\0';
+    ssid_off++;
+    ssid_num++;
 #if CONFIG_COMBO_SCAN
-    ssid = wlan_scan_param->ssid[0];
-    ssid2 = wlan_scan_param->ssid[1];
-#else
-    ssid = wlan_scan_param->ssid;
+    if (strlen(wlan_scan_param->ssid[1]))
+    {
+        memcpy(ssid+ssid_off, wlan_scan_param->ssid[1], strlen(wlan_scan_param->ssid[1]));
+        ssid_off += strlen(wlan_scan_param->ssid[1]);
+        ssid[ssid_off] = '\0';
+        ssid_num++;
+    }
 #endif
 
     if (wlan_scan_param == NULL || scan_cb_param == NULL)
@@ -12762,7 +12776,7 @@ void wlan_rrm_request_scan(wlan_scan_params_v2_t *wlan_scan_param, wlan_rrm_scan
 #endif
 
     int ret = wifi_send_scan_cmd((t_u8)BSS_ANY, wlan_scan_param->bssid,
-                                 ssid, ssid2,
+                                 ssid, ssid_num,
                                  wlan_scan_param->num_channels, wlan_scan_param->chan_list, wlan_scan_param->num_probes,
 #if CONFIG_SCAN_WITH_RSSIFILTER
                                  wlan_scan_param->rssi_threshold,

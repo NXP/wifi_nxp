@@ -1837,7 +1837,7 @@ typedef struct
 #define WLAN_USER_SCAN_CHAN_MAX 50U
 
 /** Maximum length of SSID list */
-#define MRVDRV_MAX_SSID_LIST_LENGTH 2
+#define MRVDRV_MAX_SSID_LIST_LENGTH 10
 
 /** Scan all the channels in specified band */
 #define BAND_SPECIFIED 0x80U

@@ -383,7 +383,7 @@ int wifi_set_igtk_key(int bss_index, const uint8_t *pn, const uint16_t key_index
 int wifi_send_scan_cmd(t_u8 bss_mode,
                        const t_u8 *specific_bssid,
                        const char *ssid,
-                       const char *ssid2,
+                       uint8_t ssid_num,
                        const t_u8 num_channels,
                        const wifi_scan_channel_list_t *chan_list,
                        const t_u8 num_probes,

@@ -613,8 +613,7 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
     unsigned char num_chans                    = 0;
     t_u8 bss_mode                              = BSS_INFRASTRUCTURE;
     const char *ssid = NULL, *ssid2 = NULL;
-    char ssid_v[MLAN_MAX_SSID_LENGTH + 1]  = {0};
-    char ssid_v2[MLAN_MAX_SSID_LENGTH + 1] = {0};
+    char ssid_v[(MLAN_MAX_SSID_LENGTH + 1) * MRVDRV_MAX_SSID_LIST_LENGTH]  = {0};
     const t_u8 *bssid                      = NULL;
     wifi_scan_channel_list_t *chan_list    = NULL;
     t_u8 channels[WIFI_SCAN_MAX_NUM_CHAN]  = {0};
@@ -657,15 +656,16 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
     {
         num_chans = 0;
     }
-
-    if (params->num_filter_ssids > 0)
+    uint8_t ssid_off = 0;
+    for (i = 0;  i < params->num_ssids; i++)
     {
-        if (params->filter_ssids[0].ssid_len)
-        {
-            memcpy(ssid_v, (const char *)params->filter_ssids[0].ssid, params->filter_ssids[0].ssid_len);
-            ssid = (const char *)&ssid_v;
-        }
+        memcpy(ssid_v+ssid_off, (const char *)params->ssids[i].ssid, params->ssids[i].ssid_len);
+        ssid_off += params->ssids[i].ssid_len;
+        ssid_v[ssid_off] = '\0';
+        ssid_off++;
     }
+    ssid = (const char *)&ssid_v;
+#if 0
 #if CONFIG_COMBO_SCAN
     if (params->num_filter_ssids > 1)
     {
@@ -676,7 +676,7 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
         }
     }
 #endif
-
+#endif
     /*
      * no ssids means passive scan
      * refer to woal_cfg80211_scan
@@ -727,7 +727,7 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
     }
 #endif
 
-    status = wifi_send_scan_cmd(bss_mode, bssid, ssid, ssid2, num_chans, chan_list, 0,
+    status = wifi_send_scan_cmd(bss_mode, bssid, ssid, params->num_ssids, num_chans, chan_list, 0,
 #if CONFIG_SCAN_WITH_RSSIFILTER
                                 params->filter_rssi,
 #endif
