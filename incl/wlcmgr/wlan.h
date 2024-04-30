@@ -1059,12 +1059,12 @@ enum wlan_security_type
     /** The network uses WPA2 Enterprise EAP-TTLS security
      * The identity field in \ref wlan_network structure is used */
     WLAN_SECURITY_EAP_TTLS,
+#endif
 #if CONFIG_EAP_MSCHAPV2
     /** The network uses WPA2 Enterprise EAP-TTLS-MSCHAPV2 security
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_TTLS_MSCHAPV2,
-#endif
 #endif
 #endif
 #if (CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) || (CONFIG_PEAP_MSCHAPV2) || (CONFIG_WPA2_ENTP)
@@ -1391,9 +1391,9 @@ struct wlan_network_security
     unsigned wpa3_sb : 1;
     /** WPA3 Enterprise Suite B 192 mode */
     unsigned wpa3_sb_192 : 1;
-#if CONFIG_EAP_PEAP
     /** PEAP version */
     unsigned eap_ver : 1;
+#if CONFIG_EAP_PEAP
     /** PEAP label */
     unsigned peap_label : 1;
     /** crypto_binding option can be used to control \ref WLAN_SECURITY_EAP_PEAP_MSCHAPV2, \ref

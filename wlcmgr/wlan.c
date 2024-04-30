@@ -8479,7 +8479,6 @@ static bool wlan_is_eap_peap_security(enum wlan_security_type security)
 }
 #endif
 
-#if CONFIG_EAP_FAST
 static bool wlan_is_eap_fast_security(enum wlan_security_type security)
 {
 #if CONFIG_EAP_MSCHAPV2
@@ -8505,7 +8504,7 @@ static bool wlan_is_skip_cert_cfg(enum wlan_security_type security)
 
     return false;
 }
-#endif
+
 #endif
 #endif
 
@@ -9265,7 +9264,7 @@ int wlan_add_network(struct wlan_network *network)
                 }
             }
         }
-
+#ifdef CONFIG_EAP_TTLS
         if (WLAN_SECURITY_EAP_TTLS == network->security.type)
         {
             if (network->role == WLAN_BSS_ROLE_STA)
@@ -9318,6 +9317,7 @@ int wlan_add_network(struct wlan_network *network)
                 }
             }
         }
+#endif
     }
 #endif
 #endif
