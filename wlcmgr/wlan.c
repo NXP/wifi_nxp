@@ -1176,7 +1176,7 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
             return kStatus_PMNotifyEventError;
         }
 #ifdef RW610
-#if !(CONFIG_WIFI_BLE_COEX_APP)
+#if !(CONFIG_WIFI_BLE_COEX_APP) && !(CONFIG_NCP_BRIDGE)
         ret = host_sleep_pre_cfg((int)powerState);
         if(ret != 0)
         {
@@ -1199,7 +1199,7 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
                 return kStatus_PMNotifyEventError;
             /* reset hs hanshake flag after waking up */
             is_hs_handshake_done = 0;
-#if !(CONFIG_WIFI_BLE_COEX_APP)
+#if !(CONFIG_WIFI_BLE_COEX_APP) && !(CONFIG_NCP_BRIDGE)
 #ifdef RW610
             host_sleep_post_cfg((int)powerState);
 #endif
