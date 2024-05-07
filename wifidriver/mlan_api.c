@@ -3078,21 +3078,29 @@ int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr)
         return -WM_E_INVAL;
     }
 
-    mlan_multicast_list mcast_list;
-
-    (void)memcpy((void *)mcast_list.mac_list, (const void *)mlist, num_of_addr * MLAN_MAC_ADDR_LENGTH);
-    mcast_list.num_multicast_addr = num_of_addr;
+    mlan_multicast_list *mcast_list = (mlan_multicast_list *)OSA_MemoryAllocate(sizeof(mlan_multicast_list));
+    if(mcast_list == NULL)
+    {
+        return -WM_FAIL;
+    }
+	
+    (void)memset(mcast_list, 0x0, sizeof(mlan_multicast_list));
+    (void)memcpy(mcast_list->mac_list, (const void *)mlist, num_of_addr * MLAN_MAC_ADDR_LENGTH);
+    mcast_list->num_multicast_addr = num_of_addr;
     (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MAC_MULTICAST_ADR,
-                                              HostCmd_ACT_GEN_SET, 0, NULL, &mcast_list, cmd);
+                                              HostCmd_ACT_GEN_SET, 0, NULL, mcast_list, cmd);
 
     if (rv != MLAN_STATUS_SUCCESS)
     {
+        OSA_MemoryFree(mcast_list);
         return -WM_FAIL;
     }
     (void)wifi_wait_for_cmdresp(NULL);
+    OSA_MemoryFree(mcast_list);
+    
     return WM_SUCCESS;
 }
 
@@ -5927,6 +5935,28 @@ int wifi_mmsf_cfg(const t_u16 action, t_u8 *enable, t_u8 *Density, t_u8 *MMSF)
     }
 }
 #endif
+#endif
+
+#if CONFIG_WIFI_RECOVERY
+int wifi_recovery_test(void)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_DBGS_CFG);
+    cmd->size    = S_DS_GEN;
+    //HostCmd_DS_TMRC_CFG tmrc_cfg;
+
+    HostCmd_DS_TMRC_CFG *tmrc_cfg = (HostCmd_DS_TMRC_CFG *)&cmd->params.tmrc_cfg;
+    tmrc_cfg->action              = wlan_cpu_to_le16(HostCmd_ACT_GEN_GET);
+    tmrc_cfg->sub_id              = wlan_cpu_to_le16(MLAN_TIMEOUT_RECOVERY_DEBUG_SUBID);
+
+    cmd->size += sizeof(HostCmd_DS_TMRC_CFG);
+    cmd->size = wlan_cpu_to_le16(cmd->size);
+    
+    return wifi_wait_for_cmdresp(NULL);
+}
 #endif
 
 #if CONFIG_TX_AMPDU_PROT_MODE

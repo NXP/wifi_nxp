@@ -692,6 +692,10 @@ typedef struct _mlan_ssid_bssid
 #endif
 #endif /* CONFIG_11AX */
 
+#if CONFIG_WIFI_RECOVERY
+#define MLAN_RECOVERY_TEST_SUBID 0x117
+#endif
+
 #ifdef UAP_SUPPORT
 /** Maximum packet forward control value */
 #define MAX_PKT_FWD_CTRL 15

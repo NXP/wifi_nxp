@@ -4929,6 +4929,17 @@ typedef MLAN_PACK_START struct _HostCmd_DS_MMSF_CFG
 #endif
 #endif
 
+#if CONFIG_WIFI_RECOVERY
+/** Type definition of HostCmd_DS_TMRC_CFG*/
+typedef MLAN_PACK_START struct _HostCmd_DS_TMRC_CFG
+{
+    /** 1 - set; 0 - get*/
+    t_u16 action;
+    /** sub-command id*/
+    t_u16 sub_id;
+} MLAN_PACK_END HostCmd_DS_TMRC_CFG;
+#endif
+
 #if CONFIG_WIFI_CLOCKSYNC
 /** MrvlIEtypes_GPIO_TSF_LATCH_CONFIG*/
 typedef MLAN_PACK_START struct _MrvlIEtypes_GPIO_TSF_LATCH_CONFIG
@@ -7903,6 +7914,10 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_MMSF_CFG mmsf_cfg;
 #endif
 #endif /* CONFIG_11AX */
+#if CONFIG_WIFI_RECOVERY
+        /* HostCmd_DS_TMRC_CFG*/
+        HostCmd_DS_TMRC_CFG tmrc_cfg;
+#endif
         /** WMM status get */
         HostCmd_DS_WMM_GET_STATUS get_wmm_status;
         /** WMM ADDTS */

@@ -14115,6 +14115,14 @@ int wlan_get_mmsf(t_u8 *enable, t_u8 *Density, t_u8 *MMSF)
 }
 #endif
 #endif
+
+#if CONFIG_WIFI_RECOVERY
+int wlan_recovery_test(void)
+{
+    return wifi_recovery_test();
+}
+#endif
+
 #if CONFIG_SUBSCRIBE_EVENT_SUPPORT
 /**
  *  @brief This function subscribe event to firmware.

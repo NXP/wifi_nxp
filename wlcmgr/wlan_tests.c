@@ -7455,6 +7455,20 @@ static void test_wlan_get_mmsf(int argc, char **argv)
 #endif
 #endif /* CONFIG_11AX */
 
+#if CONFIG_WIFI_RECOVERY
+static void test_wlan_recovery_test(int argc, char **argv)
+{
+    int ret;
+    ret = wlan_recovery_test();
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("timeout happends.\r\n");
+    }
+    return;
+}
+#endif
+
 #if CONFIG_SUBSCRIBE_EVENT_SUPPORT
 /**
  *  @brief This function print the get subscribe event from firmware for user test.
@@ -12621,6 +12635,9 @@ static struct cli_command tests[] = {
 #endif
 #if defined(RW610) && (CONFIG_ANT_DETECT)
     {"wlan-detect-ant", "<detect_mode> <ant_port_count> channel <channel> ...", test_wlan_detect_ant},
+#endif
+#if CONFIG_WIFI_RECOVERY
+    {"wlan-recovery-test", NULL, test_wlan_recovery_test},
 #endif
 };
 

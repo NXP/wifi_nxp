@@ -6024,6 +6024,10 @@ int wlan_get_mmsf(t_u8 *enable, t_u8 *Density, t_u8 *MMSF);
 #endif
 #endif /* CONFIG_11AX */
 
+#if CONFIG_WIFI_RECOVERY
+int wlan_recovery_test(void);
+#endif
+
 #if CONFIG_WIFI_CLOCKSYNC
 /** Set Clock Sync GPIO based TSF
  *
