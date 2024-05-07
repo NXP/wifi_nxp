@@ -3105,9 +3105,10 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
                 LEAVE();
                 return ret;
             }
-            if ((category == IEEE_MGMT_ACTION_CATEGORY_PUBLIC) && (action_code == BSS_20_40_COEX))
+            if ((category == IEEE_MGMT_ACTION_CATEGORY_PUBLIC) &&
+                (action_code == BSS_20_40_COEX || action_code == FILS_DISCOVERY))
             {
-                wifi_d("Drop 20/40 BSS Coexistence Management frame");
+                wifi_d("Drop unneed public action frame %d", action_code);
                 LEAVE();
                 return ret;
             }

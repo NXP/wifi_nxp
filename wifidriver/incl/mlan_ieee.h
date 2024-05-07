@@ -1098,6 +1098,8 @@ typedef MLAN_PACK_START union
 
 /** action code for 20/40 BSS Coexsitence Management frame */
 #define BSS_20_40_COEX 0
+/** action code for FILS Discovery Management frame */
+#define FILS_DISCOVERY 34
 
 /** Data structure for subband set */
 typedef MLAN_PACK_START struct _IEEEtypes_SubbandSet_t
