@@ -654,11 +654,11 @@
 #endif
 
 #if CONFIG_DRIVER_MBO
-#define CONFIG_MBO
+#undef CONFIG_MBO
 #endif
 
 #if !CONFIG_DRIVER_MBO
-#undef CONFIG_MBO
+#define CONFIG_MBO
 #endif
 
 #if !defined CONFIG_DRIVER_OWE

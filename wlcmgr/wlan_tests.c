@@ -4301,7 +4301,7 @@ static void test_wlan_11az_rang_cfg(int argc, char **argv)
 #endif
 
 #if CONFIG_WPA_SUPP
-#if (CONFIG_11AX && CONFIG_DRIVER_MBO)
+#if (CONFIG_11AX && defined(CONFIG_MBO))
 static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
 {
     int ret;
@@ -12327,7 +12327,7 @@ static struct cli_command tests[] = {
      test_wlan_mbo_non_prefer_chs},
 #endif
 #if CONFIG_WPA_SUPP
-#if (CONFIG_11AX && CONFIG_DRIVER_MBO)
+#if (CONFIG_11AX && defined(CONFIG_MBO))
     {"wlan-mbo-nonprefer-ch", "\"<oper_class>:<chan>:<preference>:<reason> <oper_class>:<chan>:<preference>:<reason>\"",
      test_wlan_mbo_non_prefer_chs},
     {"wlan-mbo-set-cell-capa", "<cell capa: 1/2/3(default)>", test_wlan_mbo_set_cell_capa},

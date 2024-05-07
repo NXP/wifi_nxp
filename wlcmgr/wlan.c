@@ -12942,7 +12942,7 @@ int wlan_ftm_civic_cfg(location_civic_rep_t *ftm_civic_cfg)
 #endif
 
 #if CONFIG_WPA_SUPP
-#if (CONFIG_11AX && CONFIG_DRIVER_MBO)
+#if (CONFIG_11AX && defined(CONFIG_MBO))
 int wlan_mbo_peferch_cfg(const char *non_pref_chan)
 {
     struct netif *netif = net_get_sta_interface();

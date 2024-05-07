@@ -6239,7 +6239,7 @@ int wlan_ftm_civic_cfg(location_civic_rep_t *ftm_civic_cfg);
 #endif
 
 #if CONFIG_WPA_SUPP
-#if (CONFIG_11AX && CONFIG_DRIVER_MBO)
+#if (CONFIG_11AX && defined(CONFIG_MBO))
 /**
  * Multi Band Operation (MBO) non-preferred channels
  *
