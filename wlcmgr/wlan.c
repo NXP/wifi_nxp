@@ -1274,6 +1274,25 @@ int wlan_wowlan_config(t_u32 wake_up_conds)
 #endif
     {
         wlan.wakeup_conditions = wake_up_conds;
+        if (wake_up_conds & WIFI_WAKE_ON_MGMT_FRAME)
+        {
+          /* Set management frame wakeup filter config */
+          mlan_adap->mgmt_filter[0].action     = 0x3;      /* not discard packet, wakeup host */
+          mlan_adap->mgmt_filter[0].type       = 0xff;     /* management frames */
+          mlan_adap->mgmt_filter[0].frame_mask = 0x3C0F;   /* Frame-Mask bits :
+                                                              : Bit 0 - Association Request(unmask)
+                                                              : Bit 1 - Association Response(unmask)
+                                                              : Bit 2 - Re-Association Request(unmask)
+                                                              : Bit 3 - Re-Association Response(unmask)
+                                                              : Bit 4 - Probe Request(mask)
+                                                              : Bit 5 - Probe Response(mask)
+                                                              : Bit 8 - Beacon Frames(mask)
+                                                              : Bit 10 - Disassociation(unmask)
+                                                              : Bit 11 - Authentication(unmask)
+                                                              : Bit 12 - Deauthentication(unmask)
+                                                              : Bit 13 - Action Frames(unmask)
+                                                            */
+        }
 #if CONFIG_MEF_CFG
         /* Clear previous MEF entries */
         if (g_flt_cfg.nentries != 0)
