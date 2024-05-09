@@ -496,6 +496,7 @@ void wifi_ftm_process_event(void *p_data);
 #if CONFIG_WLS_CSI_PROC
 int wifi_process_wls_csi_event(void *p_data);
 void wls_csi_process_event(void *p_data);
+extern t_u8 g_csi_event_for_wls;
 #endif
 #endif
 

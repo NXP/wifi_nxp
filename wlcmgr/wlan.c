@@ -723,6 +723,10 @@ static void dbg_lock_info(void)
 #define dbg_uap_state_name(...)
 #endif /* CONFIG_WLCMGR_DEBUG */
 
+#if CONFIG_WLS_CSI_PROC
+t_u8 g_csi_event_for_wls;
+#endif
+
 /*
  * Utility Functions
  */
@@ -7412,7 +7416,10 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #if CONFIG_WLS_CSI_PROC
         case WIFI_EVENT_WLS_CSI:
             wlcm_d("got event: receive WLS csi data");
-            wlcm_process_wls_csi_event(msg->data);
+            if (g_csi_event_for_wls)
+            {
+                wlcm_process_wls_csi_event(msg->data);
+            }
             break;
 #endif
 #endif

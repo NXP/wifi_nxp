@@ -2344,7 +2344,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     wm_wifi.wpa_supp_scan              = MFALSE;
 #endif
     if (ssid_num > MRVDRV_MAX_SSID_LIST_LENGTH)
-         return -WM_E_INVAL;
+        return -WM_E_INVAL;
     tmp_ssid = ssid;
     for (i = 0; i < ssid_num; i++)
     {
@@ -3272,11 +3272,11 @@ int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr)
     }
 
     mlan_multicast_list *mcast_list = (mlan_multicast_list *)OSA_MemoryAllocate(sizeof(mlan_multicast_list));
-    if(mcast_list == NULL)
+    if (mcast_list == NULL)
     {
         return -WM_FAIL;
     }
-	
+
     (void)memset(mcast_list, 0x0, sizeof(mlan_multicast_list));
     (void)memcpy(mcast_list->mac_list, (const void *)mlist, num_of_addr * MLAN_MAC_ADDR_LENGTH);
     mcast_list->num_multicast_addr = num_of_addr;
@@ -3293,7 +3293,7 @@ int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr)
     }
     (void)wifi_wait_for_cmdresp(NULL);
     OSA_MemoryFree(mcast_list);
-    
+
     return WM_SUCCESS;
 }
 
@@ -6356,7 +6356,7 @@ int wifi_recovery_test(void)
 
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_DBGS_CFG);
     cmd->size    = S_DS_GEN;
-    //HostCmd_DS_TMRC_CFG tmrc_cfg;
+    // HostCmd_DS_TMRC_CFG tmrc_cfg;
 
     HostCmd_DS_TMRC_CFG *tmrc_cfg = (HostCmd_DS_TMRC_CFG *)&cmd->params.tmrc_cfg;
     tmrc_cfg->action              = wlan_cpu_to_le16(HostCmd_ACT_GEN_GET);
@@ -6364,7 +6364,7 @@ int wifi_recovery_test(void)
 
     cmd->size += sizeof(HostCmd_DS_TMRC_CFG);
     cmd->size = wlan_cpu_to_le16(cmd->size);
-    
+
     return wifi_wait_for_cmdresp(NULL);
 }
 #endif
@@ -6962,6 +6962,9 @@ int wifi_ftm_start_stop(const t_u16 action, const t_u8 loop_cnt, const t_u8 *mac
     {
         ftm_param.loop_cnt = 0;
         ftm_param.status   = 0;
+#if CONFIG_WLS_CSI_PROC
+        g_csi_event_for_wls = 0;
+#endif
         return wifi_ftm_stop(FTM_ACTION_STOP, ftm_param.peer_mac, ftm_param.channel);
     }
 }
