@@ -6367,7 +6367,7 @@ int wrapper_bssdesc_first_set(int bss_index,
                               t_u8 *ap_mfpr,
                               t_u8 *ap_pwe)
 {
-    int8_t i = WLAN_SUPPORTED_RATES;
+    uint8_t i = WLAN_SUPPORTED_RATES;
     if (bss_index >= (int)mlan_adap->num_in_scan_table)
     {
         wifi_w("Unable to find given entry %d in BSS table", bss_index);
@@ -6428,9 +6428,9 @@ int wrapper_bssdesc_first_set(int bss_index,
     if ((d->prsnx_ie != MNULL) && (d->prsnx_ie->data[0] & (0x1 << SAE_H2E_BIT)))
     {
         *ap_pwe = 2;
-        for (i = (WLAN_SUPPORTED_RATES - 1); i >= 0; i--)
+        for (i = WLAN_SUPPORTED_RATES; i > 0; i--)
         {
-            if (d->data_rates[i] == 0xFB)
+            if (d->data_rates[i-1] == 0xFB)
             {
                 *ap_pwe = 1;
                 break;
