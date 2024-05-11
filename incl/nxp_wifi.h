@@ -322,12 +322,21 @@ extern "C" {
 #define CONFIG_FIPS 1
 #endif
 
-#if CONFIG_NXP_WIFI_DRIVER_OWE
-#define CONFIG_DRIVER_OWE 1
+#if !defined CONFIG_DRIVER_OWE
+#define CONFIG_DRIVER_OWE 0
 #endif
 
-#if CONFIG_NXP_WIFI_OWE
-#define CONFIG_OWE 1
+#if CONFIG_DRIVER_OWE
+#undef CONFIG_DRIVER_OWE
+#define CONFIG_DRIVER_OWE CONFIG_WPA_SUPP
+#endif
+
+#if CONFIG_DRIVER_OWE
+#define CONFIG_OWE
+#endif
+
+#if !CONFIG_DRIVER_OWE
+#undef CONFIG_OWE
 #endif
 
 #if CONFIG_NXP_WIFI_11K

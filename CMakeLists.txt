@@ -275,7 +275,6 @@ zephyr_code_relocate(FILES
                      port/osa/osa.c
                      port/osa/osa_zephyr.c
                      port/net/zephyr/net.c
-                     sdio_nxp_abs/mlan_sdio_zephyr.c
                      wifidriver/mlan_11n.c
                      wifidriver/mlan_11n_aggr.c
                      wifidriver/mlan_11n_rxreorder.c
