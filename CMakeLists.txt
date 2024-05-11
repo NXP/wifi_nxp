@@ -164,7 +164,6 @@ zephyr_include_directories(
     incl
     incl/wifidriver
     incl/wlcmgr
-    incl/port/net
     incl/port/osa
     incl/port/net/zephyr
     port/osa
@@ -184,6 +183,7 @@ zephyr_include_directories(
     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/lists/
     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/wifi_bt_module/AzureWave/tx_pwr_limits/
     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/wifi_bt_module/Murata/tx_pwr_limits/
+    ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/imu_adapter/
 )
 
 # OS abstraction layer source
@@ -272,7 +272,6 @@ endif()
 if(CONFIG_SPEED_OPTIMIZATIONS OR CONFIG_SIZE_OPTIMIZATIONS)
 # critical path code relocated to SRAM
 zephyr_code_relocate(FILES
-                     port/net/net.c
                      port/osa/osa.c
                      port/osa/osa_zephyr.c
                      port/net/zephyr/net.c
@@ -298,7 +297,7 @@ zephyr_code_relocate(FILES
                      wifidriver/wifi-imu.c
                      ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/osa/fsl_os_abstraction_zephyr.c
                      ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/drivers/imu/fsl_imu.c
-                     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/rpmsg/fsl_adapter_rfimu.c
+                     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/imu_adapter/fsl_adapter_imu.c
                      LOCATION RAM_TEXT)
 endif()
 

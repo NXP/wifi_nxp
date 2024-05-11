@@ -8,6 +8,7 @@
 #if !defined WIFI_HDR_CONFIG_H
 #define WIFI_HDR_CONFIG_H
 
+#ifndef __ZEPHYR__
 /*
  * Include user defined options first. Anything not defined in these files
  * will be set to standard values. Override anything you don't like!
@@ -1095,4 +1096,5 @@
 #error "Please define supported Wi-Fi module"
 #endif
 
+#endif /*__ZEPHYR__*/
 #endif /* WIFI_HDR_CONFIG_H */

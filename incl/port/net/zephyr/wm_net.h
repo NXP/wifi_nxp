@@ -1,8 +1,8 @@
 /*
- *  Copyright 2023 NXP
+ * Copyright (c) 2016 Intel Corporation.
+ * Copyright 2008-2023 NXP
  *
- *  SPDX-License-Identifier: BSD-3-Clause
- *
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 /*! \file wm_net.h
@@ -16,13 +16,128 @@
 #ifndef _WM_NET_H_
 #define _WM_NET_H_
 
-#include <wm_net_decl.h>
+#include <string.h>
+
 #include <osa.h>
 #include <wmtypes.h>
+#include <wmerrno.h>
+
+#if defined(SDK_OS_FREE_RTOS)
+
+#include <lwip/opt.h>
+#include <lwip/sys.h>
+#include <lwip/tcpip.h>
+#include <lwip/sockets.h>
+#include <lwip/netdb.h>
+#include <lwip/stats.h>
+#include <lwip/icmp.h>
+#include <lwip/igmp.h>
+#include <lwip/ip.h>
+#include <lwip/inet_chksum.h>
+#include <lwip/pbuf.h>
+#include <lwip/api.h>
+#include <lwip/netifapi.h>
+#include <lwip/dns.h>
+#include <lwip/dhcp.h>
+#include <lwip/prot/dhcp.h>
+#include <lwip/ip_addr.h>
+#include <lwip/prot/autoip.h>
+#include <netif/etharp.h>
+
+#ifndef LWIP_TCPIP_CORE_LOCKING
+#error "LWIP TCP/IP Core Locking is not enabled"
+#endif
+
+#if CONFIG_IPV6 && !LWIP_IPV6
+#error "CONFIG_IPV6 is enabled, but LWIP_IPV6 is not, enable it from lwipopts.h"
+#elif LWIP_IPV6 && !CONFIG_IPV6
+#error "LWIP_IPV6 is enabled, but CONFIG_IPV6 is not, enable it from wifi_config.h"
+#endif
+
+#if CONFIG_IPV6 && LWIP_IPV6
+#if !CONFIG_MAX_IPV6_ADDRESSES
+#error "Define CONFIG_MAX_IPV6_ADDRESSES same as LWIP_IPV6_NUM_ADDRESSES in wifi_config.h"
+#else
+#if CONFIG_MAX_IPV6_ADDRESSES != LWIP_IPV6_NUM_ADDRESSES
+#error "CONFIG_MAX_IPV6_ADDRESSES must be equal to LWIP_IPV6_NUM_ADDRESSES"
+#endif
+#endif
+#endif
+
+#if (!defined(LWIP_NETIF_EXT_STATUS_CALLBACK) || (LWIP_NETIF_EXT_STATUS_CALLBACK == 0))
+#error "Define LWIP_NETIF_EXT_STATUS_CALLBACK as 1 in lwipopts.h"
+#endif
+
+#if CONFIG_WPA_SUPP
+#if (!defined(LWIP_NUM_NETIF_CLIENT_DATA) || (LWIP_NUM_NETIF_CLIENT_DATA < 2))
+#error "Define LWIP_NUM_NETIF_CLIENT_DATA atleast 2 in lwipopts.h"
+#endif
+#endif
+
+#elif __ZEPHYR__
+
+#include <zephyr/kernel.h>
+#include <zephyr/net/ethernet.h>
+#include <zephyr/net/net_pkt.h>
+#include <zephyr/net/net_if.h>
+#include <zephyr/net/wifi_mgmt.h>
+
+#if (CONFIG_POSIX_API)
+#include <zephyr/posix/sys/socket.h>
+#include <zephyr/posix/sys/select.h>
+#include <zephyr/posix/arpa/inet.h>
+#include <zephyr/posix/unistd.h>
+#else
+#include <zephyr/net/socket.h>
+#endif
+
+#define NETIF_NAMESIZE       6
+#define NETIF_MAX_HWADDR_LEN 6
+
+/* copy zephyr struct net if */
+struct netif
+{
+    /** The net_if_dev instance the net_if is related to */
+    struct net_if_dev *if_dev;
+#if (CONFIG_NET_STATISTICS_PER_INTERFACE)
+    /** Network statistics related to this network interface */
+    struct net_stats stats;
+#endif /* CONFIG_NET_STATISTICS_PER_INTERFACE */
+
+    /** Network interface instance configuration */
+    struct net_if_config config;
+
+#if (CONFIG_NET_POWER_MANAGEMENT)
+    /** Keep track of packets pending in traffic queues. This is
+     * needed to avoid putting network device driver to sleep if
+     * there are packets waiting to be sent.
+     */
+    int tx_pending;
+#endif
+
+    struct k_mutex lock;
+    struct k_mutex tx_lock;
+};
+
+/**
+ * Helper struct to hold private data used to operate your ethernet interface.
+ * Keeping the ethernet address of the MAC in this struct is not necessary
+ * as it is already kept in the struct netif.
+ * But this is only an example, anyway...
+ */
+struct ethernetif
+{
+    struct net_eth_addr ethaddr;
+    /* Interface to bss type identification that tells the FW wherether
+       the data is for STA for UAP */
+    uint8_t interface;
+    /* Add whatever per-interface state that is needed here. */
+};
 
 typedef struct
 {
     struct net_if *netif;
+    uint8_t mac_address[6];
     struct net_addr ipaddr;
     struct net_addr nmask;
     struct net_addr gw;
@@ -33,6 +148,12 @@ typedef struct
     scan_result_cb_t scan_cb;
     uint16_t max_bss_cnt;
 } interface_t;
+#elif defined(FSL_RTOS_THREADX)
+
+#include "nx_api.h"
+// #include "nxd_bsd.h"
+
+#endif
 
 #define NET_SUCCESS WM_SUCCESS
 #define NET_ERROR   (-WM_FAIL)
@@ -58,8 +179,10 @@ typedef struct
 #define net_read(sock, data, len)                     read(sock, data, len)
 #define net_write(sock, data, len)                    write(sock, data, len)
 
+#ifdef __ZEPHYR__
 /* directly map this to the zephyr internal functions */
 #define inet_aton(cp, addr) inet_pton(AF_INET, cp, (char *)addr)
+#endif
 
 enum net_address_types
 {
@@ -116,7 +239,7 @@ struct net_ip_config
 #if CONFIG_IPV6
     /** The network IPv6 address configuration that should be
      * associated with this interface. */
-    struct net_ipv6_config ipv6[NET_IF_MAX_IPV6_ADDR];
+    struct net_ipv6_config ipv6[CONFIG_MAX_IPV6_ADDRESSES];
     /** The network IPv6 valid addresses count */
     size_t ipv6_count;
 #endif
@@ -149,9 +272,12 @@ void net_stop_dhcp_timer(void);
  */
 static inline int net_socket_blocking(int sock, int state)
 {
-    // return ioctlsocket(sock, FIONBIO, &state);
+#if defined(SDK_OS_FREE_RTOS)
+    return ioctlsocket(sock, FIONBIO, &state);
+#elif __ZEPHYR__
     /* TODO: implement */
     return 0;
+#endif
 }
 
 /** Get error number from provided socket
@@ -163,6 +289,8 @@ static inline int net_socket_blocking(int sock, int state)
 static inline int net_get_sock_error(int sock)
 {
     int ret = 0;
+#if defined(SDK_OS_FREE_RTOS)
+
     switch (errno)
     {
         case EWOULDBLOCK:
@@ -178,6 +306,8 @@ static inline int net_get_sock_error(int sock)
             ret = errno;
             break;
     }
+#endif
+
     return ret;
 }
 
@@ -191,17 +321,14 @@ static inline int net_get_sock_error(int sock)
 static inline uint32_t net_inet_aton(const char *cp)
 {
     struct in_addr addr;
+    addr.s_addr = 0;
 
-    net_addr_pton(AF_INET, cp, &addr);
+#if defined(SDK_OS_FREE_RTOS)
+    (void)inet_aton(cp, ((void *)&addr));
+#elif __ZEPHYR__
+    (void)net_addr_pton(AF_INET, cp, &addr);
+#endif
     return addr.s_addr;
-}
-
-static inline char *inet_ntoa(struct in_addr ip)
-{
-    char str[INET6_ADDRSTRLEN], *addr_str;
-    addr_str = inet_ntop(AF_INET, &ip, str, sizeof(str));
-
-    return addr_str;
 }
 
 /** set MAC hardware address to lwip network interface
@@ -221,6 +348,11 @@ void net_wlan_set_mac_address(unsigned char *stamac, unsigned char *uapmac);
  */
 static inline uint8_t *net_stack_buffer_skip(void *buf, uint16_t in_offset)
 {
+#if defined(SDK_OS_FREE_RTOS)
+    uint16_t out_offset = 0;
+    struct pbuf *p      = pbuf_skip((struct pbuf *)buf, in_offset, &out_offset);
+    return (uint8_t *)(p->payload) + out_offset;
+#elif __ZEPHYR__
     uint16_t offset_left = in_offset;
     struct net_buf *frag = ((struct net_pkt *)buf)->frags;
     while (frag && (frag->len <= offset_left))
@@ -228,8 +360,8 @@ static inline uint8_t *net_stack_buffer_skip(void *buf, uint16_t in_offset)
         offset_left = offset_left - frag->len;
         frag        = frag->frags;
     }
-
     return (uint8_t *)(frag->data + offset_left);
+#endif
 }
 
 /** Free a buffer allocated from stack memory
@@ -239,7 +371,11 @@ static inline uint8_t *net_stack_buffer_skip(void *buf, uint16_t in_offset)
  */
 static inline void net_stack_buffer_free(void *buf)
 {
+#if defined(SDK_OS_FREE_RTOS)
+    pbuf_free((struct pbuf *)buf);
+#elif __ZEPHYR__
     net_pkt_unref((struct net_pkt *)buf);
+#endif
 }
 
 /** Copy (part of) the contents of a packet buffer to an application supplied buffer
@@ -250,7 +386,14 @@ static inline void net_stack_buffer_free(void *buf)
  * \param[in] offset offset into the stack buffer from where to begin copying
  * \return copy status based on stack definition.
  */
+#if defined(SDK_OS_FREE_RTOS)
+static inline int net_stack_buffer_copy_partial(void *stack_buffer, void *dst, uint16_t len, uint16_t offset)
+{
+    return pbuf_copy_partial((const struct pbuf *)stack_buffer, dst, len, offset);
+}
+#elif __ZEPHYR__
 int net_stack_buffer_copy_partial(void *stack_buffer, void *dst, uint16_t len, uint16_t offset);
+#endif
 
 /** Get the data payload inside the stack buffer.
  *
@@ -260,35 +403,12 @@ int net_stack_buffer_copy_partial(void *stack_buffer, void *dst, uint16_t len, u
  */
 static inline void *net_stack_buffer_get_payload(void *buf)
 {
+#if defined(SDK_OS_FREE_RTOS)
+    return ((struct pbuf *)buf)->payload;
+#elif __ZEPHYR__
     return net_pkt_data((struct net_pkt *)buf);
-}
-
-/* TODO: if it is used */
-#if 0
-/**
- * Get network host entry
- *
- * \param[in] cp Hostname or an IPv4 address in the standard dot notation.
- * \param[in] hentry Pointer to pointer of host entry structure.
- *
- * \note This function is not thread safe. If thread safety is required
- * please use lwip_getaddrinfo() - lwip_freeaddrinfo() combination.
- *
- * \return WM_SUCESS if operation successful.
- * \return -WM_FAIL if operation fails.
- */
-static inline int net_gethostbyname(const char *cp, struct hostent **hentry)
-{
-    struct hostent *he;
-    if ((he = gethostbyname(cp)) == NULL)
-    {
-        return -WM_FAIL;
-    }
-
-    *hentry = he;
-    return WM_SUCCESS;
-}
 #endif
+}
 
 /** Converts Internet host address in network byte order to a string in IPv4
  * dotted-decimal notation
@@ -299,11 +419,19 @@ static inline int net_gethostbyname(const char *cp, struct hostent **hentry)
  */
 static inline void net_inet_ntoa(unsigned long addr, char *cp)
 {
+#if defined(SDK_OS_FREE_RTOS)
+    struct ip4_addr saddr;
+    saddr.addr = addr;
+    /* No length, sigh! */
+    (void)strcpy(cp, inet_ntoa(saddr));
+#elif __ZEPHYR__
     struct in_addr saddr;
 
     saddr.s_addr = addr;
     net_addr_ntop(AF_INET, &saddr, cp, NET_IPV4_ADDR_LEN);
+#endif
 }
+#if defined(SDK_OS_FREE_RTOS)
 
 /** Check whether buffer is IPv4 or IPV6 packet type
  *
@@ -314,13 +442,20 @@ static inline void net_inet_ntoa(unsigned long addr, char *cp)
  */
 static inline bool net_is_ip_or_ipv6(const uint8_t *buffer)
 {
+#if defined(SDK_OS_FREE_RTOS)
+    if (((const struct eth_hdr *)(const void *)buffer)->type == PP_HTONS(ETHTYPE_IP) ||
+        ((const struct eth_hdr *)(const void *)buffer)->type == PP_HTONS(ETHTYPE_IPV6))
+#elif __ZEPHYR__
     if (((const struct net_eth_hdr *)(const void *)buffer)->type == htons(ETH_P_IP) ||
         ((const struct net_eth_hdr *)(const void *)buffer)->type == htons(ETH_P_IPV6))
+#endif
     {
         return true;
     }
+
     return false;
 }
+#endif
 
 /** Get interface handle from socket descriptor
  *
@@ -429,6 +564,16 @@ void net_interface_down(void *intrfc_handle);
  * \return void
  */
 void net_interface_dhcp_stop(void *intrfc_handle);
+
+/** Cleanup DHCP client on given interface
+ *
+ * Cleanup the DHCP client on given interface state. Use net_get_sta_handle(),
+ * net_get_uap_handle() to get interface handle.
+ *
+ * \param[in] intrfc_handle interface handle
+ *
+ */
+void net_interface_dhcp_cleanup(void *intrfc_handle);
 
 /** Configure IP address for interface
  *
@@ -575,11 +720,9 @@ int net_get_if_ip_mask(uint32_t *nm, void *intrfc_handle);
  */
 void net_ipv4stack_init(void);
 
+#if defined(SDK_OS_FREE_RTOS)
+
 #if CONFIG_IPV6
-
-#define CONFIG_MAX_IPV6_ADDRESSES 0
-
-#define CONFIG_MAX_IPV6_ADDRESSES NET_IF_MAX_IPV6_ADDR
 
 /** Initialize the IPv6 network stack
  *
@@ -587,6 +730,12 @@ void net_ipv4stack_init(void);
  *
  */
 void net_ipv6stack_init(struct netif *netif);
+#endif
+
+#endif
+
+#if defined(FSL_RTOS_THREADX)
+void dhcp_stat(void);
 #endif
 
 /** Display network statistics
@@ -597,8 +746,19 @@ void net_stat(void);
 int netif_get_bss_type();
 #endif
 
+#ifdef MGMT_RX
+void rx_mgmt_register_callback(int (*rx_mgmt_cb_fn)(const enum wlan_bss_type bss_type,
+                                                    const wifi_mgmt_frame_t *frame,
+                                                    const size_t len));
+
+void rx_mgmt_deregister_callback(void);
+#endif
+
+#ifdef __ZEPHYR__
 int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt);
+void nxp_wifi_internal_register_rx_cb(int (*rx_cb_fn)(struct net_if *iface, struct net_pkt *pkt));
 const struct netif *net_if_get_binding(const char *ifname);
 const struct freertos_wpa_supp_dev_ops *net_if_get_dev_config(struct netif *iface);
+#endif
 
 #endif /* _WM_NET_H_ */

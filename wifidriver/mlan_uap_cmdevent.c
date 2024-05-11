@@ -1979,7 +1979,6 @@ static mlan_status wlan_uap_cmd_report_mic(pmlan_private pmpriv, IN HostCmd_DS_C
 #endif /* CONFIG_MLAN_WMSDK */
 
 #if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR) || (CONFIG_WPA_SUPP_AP)
-
 /**
  *  @brief This function prepares command of key material
  *

@@ -454,7 +454,7 @@ static struct wps_config wps_conf = {
 static void wlcmgr_mon_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(wlcmgr_mon_task, PRIORITY_RTOS_TO_OSA(1) , 1, CONFIG_WLCMGR_MON_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wlcmgr_mon_task, OSA_PRIORITY_NORMAL , 1, CONFIG_WLCMGR_MON_STACK_SIZE, 0);
 
 /* The monitor thread event queue receives events from the power manager
  * wlan notifier when idle hook is invoked and host is ready to enter
@@ -523,11 +523,9 @@ static struct
 
     /* CM thread */
     OSA_TASK_HANDLE_DEFINE(wlcmgr_task_Handle);
-    OSA_TASK_HANDLE_DEFINE(wlcmgr_mon_task_Handle);
 
     unsigned running : 1;
     unsigned stop_request : 1;
-    bool in_reset : 1;
     wlcmgr_status_t status;
 
     /*
@@ -655,6 +653,9 @@ static struct
 #endif
     bool internal : 1;
 } wlan;
+
+OSA_TASK_HANDLE_DEFINE(wlcmgr_mon_task_Handle);
+bool wlan_in_reset = false;
 
 #if CONFIG_CLOUD_KEEP_ALIVE
 #define MIN_KEEP_ALIVE_ID 0
@@ -7870,7 +7871,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
          * mon_thread task could not be scheduled as we did not
          * enabled time slice.
          */
-        status = OSA_TaskCreate((osa_task_handle_t)wlan.wlcmgr_mon_task_Handle, OSA_TASK(wlcmgr_mon_task), NULL);
+        status = OSA_TaskCreate((osa_task_handle_t)wlcmgr_mon_task_Handle, OSA_TASK(wlcmgr_mon_task), NULL);
         if (status != KOSA_StatusSuccess)
         {
             wlan.cb = NULL;
@@ -8210,7 +8211,7 @@ int wlan_stop(void)
     }
 
 #if CONFIG_HOST_SLEEP
-    OSA_SemaphoreDestroy(wakelock);
+    OSA_SemaphoreDestroy((osa_semaphore_handle_t)wakelock);
 #endif
 #if ((CONFIG_11MC) || (CONFIG_11AZ)) && (CONFIG_WLS_CSI_PROC)
     (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)wls_csi_sem);
@@ -9582,7 +9583,7 @@ int wlan_remove_network(const char *name)
         if (wlan.networks[i].name[0] != '\0' && strlen(wlan.networks[i].name) == len &&
             !strncmp(wlan.networks[i].name, name, len))
         {
-            if (!wlan.in_reset)
+            if (false == wlan_in_reset)
             {
                 if (wlan.running && wlan.cur_network_idx == i)
                 {
@@ -10237,7 +10238,7 @@ int wlan_remove_all_networks(void)
      * Moreover, removing and adding net interface will increase netif_num cumulatively,
      * which will mismatch with "ua2" during creating dhcpd.
      */
-    wlan.in_reset = 1;
+    wlan_in_reset = true;
     wlan_remove_all_network_profiles();
 
     intrfc_handle = net_get_sta_handle();
@@ -10421,6 +10422,8 @@ void wlan_reset(cli_reset_option ResetOption)
     }
 
     OSA_MutexUnlock((osa_mutex_handle_t)reset_lock);
+	
+    wlan_in_reset = false;
     PRINTF("--- Done ---\r\n");
 }
 
@@ -10450,6 +10453,9 @@ static void wlcmgr_mon_task(void * data)
         status = OSA_MsgQGet((osa_msgq_handle_t)mon_thread_events, &msg, delay_ms);
         if (status == KOSA_StatusSuccess)
         {
+            /*Elements of wlan is not avaliable during wlan reset, so wait ending of wlan reset*/
+            while(wlan_in_reset)
+                OSA_TimeDelay(10);
 #if CONFIG_HOST_SLEEP
              wlcm_d("got mon thread event: %d", msg.id);
             if (msg.id == HOST_SLEEP_HANDSHAKE)
@@ -12115,7 +12121,7 @@ uint8_t wlan_get_dtim_period(void)
     {
         (void)PRINTF("Error: scan request failed\r\n");
         (void)OSA_SemaphorePost((osa_semaphore_handle_t)wlan_dtim_sem);
-        (void)OSA_SemaphoreDestroy(wlan_dtim_sem);
+        (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)wlan_dtim_sem);
         return 0;
     }
 
@@ -12126,7 +12132,7 @@ uint8_t wlan_get_dtim_period(void)
         wlcm_e("Do not call this API from wlan event handler\r\n");
         dtim_period = 0;
     }
-    (void)OSA_SemaphoreDestroy(wlan_dtim_sem);
+    (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)wlan_dtim_sem);
 
     return dtim_period;
 }

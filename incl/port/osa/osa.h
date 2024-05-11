@@ -11,7 +11,7 @@
 #elif defined(FSL_RTOS_THREADX)
 #include "app_config.h"
 #include <osa_threadx.h>
-#elif (CONFIG_ZEPHYR)
+#elif (__ZEPHYR__)
 #include <osa_zephyr.h>
 #else
 #error "Please define OS type"

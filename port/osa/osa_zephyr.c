@@ -12,7 +12,7 @@
 #include <osa.h>
 #include <wmlog.h>
 
-#if (CONFIG_ZEPHYR)
+#if __ZEPHYR__
 
 /*** Timer Management ***/
 static void timer_callback_work_handler(struct k_work *item)
@@ -157,7 +157,8 @@ osa_status_t OSA_TimerDestroy(osa_timer_handle_t timerHandle)
     struct timer_data *ptimer = (struct timer_data *)timerHandle;
 
     k_timer_stop(&ptimer->timer);
-
+    k_work_cancel(&ptimer->work);
+	
     return status;
 }
 
@@ -202,7 +203,7 @@ int OSA_RemoveIdleFunction(void (*func)(void))
 
 void OSA_ThreadSelfComplete(osa_task_handle_t taskHandle)
 {
-    return 0;
+    //return 0;
 }
 
 uint32_t OSA_MsgQWaiting(osa_msgq_handle_t msgqHandle)

@@ -45,6 +45,32 @@ typedef enum osa_timer_activation
     OSA_TIMER_NO_ACTIVATE,
 } osa_timer_activate_t;
 
+static inline unsigned OSA_TicksGet(void)
+{
+    return sys_clock_tick_get();
+
+}
+
+static inline uint32_t OSA_MsecToTicks(uint32_t msecs)
+{
+    return k_ms_to_ticks_floor32(msecs);
+}
+
+static inline unsigned long OSA_TicksToMsec(unsigned long ticks)
+{
+    return k_ticks_to_ms_floor32(ticks);
+}
+
+static inline void OSA_LockSchedule(void)
+{
+    k_sched_lock();
+}
+
+static inline void OSA_UnlockSchedule(void)
+{
+    k_sched_unlock();
+}
+
 static inline bool OSA_IsISR()
 {
     return k_is_in_isr();
