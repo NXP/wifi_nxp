@@ -1887,9 +1887,9 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
          * WD_EVENT_NET_DHCP_CONFIG, should be sent to the wlcmgr.
          */
     }
-    else if (
+    else if (0
 #if CONFIG_P2P
-        ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_UAP))
+        || ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_UAP))
 #endif
     )
     {
