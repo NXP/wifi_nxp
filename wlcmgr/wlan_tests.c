@@ -56,6 +56,27 @@ extern uint64_t rtc_timeout;
 extern char *net_sprint_addr(sa_family_t af, const void *addr);
 #endif
 
+static const char *print_role(enum wlan_bss_role role)
+{
+    if (role == WLAN_BSS_ROLE_STA)
+    {
+        return "Infra";
+    }
+    else if (role == WLAN_BSS_ROLE_UAP)
+    {
+        return "uAP";
+    }
+    else if (role == WLAN_BSS_ROLE_ANY)
+    {
+        return "any";
+    }
+    else
+    {
+        return "unknown";
+    }
+}
+
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 {
 // #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
@@ -146,26 +167,6 @@ out:
     }
 #endif
     return;
-}
-
-static const char *print_role(enum wlan_bss_role role)
-{
-    if (role == WLAN_BSS_ROLE_STA)
-    {
-        return "Infra";
-    }
-    else if (role == WLAN_BSS_ROLE_UAP)
-    {
-        return "uAP";
-    }
-    else if (role == WLAN_BSS_ROLE_ANY)
-    {
-        return "any";
-    }
-    else
-    {
-        return "unknown";
-    }
 }
 
 inline static const char *sec_tag(struct wlan_network *network)
@@ -1973,7 +1974,7 @@ static void test_wlan_add(int argc, char **argv)
             break;
     }
 }
-
+#endif
 #if CONFIG_WPA_SUPP_WPS
 /** Enum that indicates type of WPS session
  *   either a push button or a PIN based session is
@@ -2416,7 +2417,7 @@ static void test_wlan_scan_opt(int argc, char **argv)
         (void)PRINTF("scheduled...\r\n");
     }
 }
-
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 static void test_wlan_remove(int argc, char **argv)
 {
     int ret;
@@ -2844,7 +2845,6 @@ static void test_wlan_get_uap_channel(int argc, char **argv)
 
 static void test_wlan_get_uap_sta_list(int argc, char **argv)
 {
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     // #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
     int i;
     wifi_sta_list_t *sl = NULL;
@@ -2874,9 +2874,8 @@ static void test_wlan_get_uap_sta_list(int argc, char **argv)
 #else
     OSA_MemoryPoolFree(buf_256_MemoryPool, sl);
 #endif
-#endif
 }
-
+#endif
 static void test_wlan_ieee_ps(int argc, char **argv)
 {
     int choice             = -1;
@@ -3047,14 +3046,14 @@ static void test_wlan_deep_sleep_ps(int argc, char **argv)
         (void)PRINTF("Error: Specify 0 to Disable or 1 to Enable\r\n");
     }
 }
-
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 static void test_wlan_get_beacon_interval(int argc, char **argv)
 {
     int beacon_interval = wlan_get_beacon_period();
 
     (void)PRINTF("Beacon interval: %d\r\n", beacon_interval);
 }
-
+#endif
 #if CONFIG_WIFI_TX_PER_TRACK
 static void dump_wlan_tx_pert_usage(void)
 {
@@ -3341,7 +3340,7 @@ static void test_wlan_txrx_histogram(int argc, char **argv)
     }
 }
 #endif
-
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if CONFIG_ROAMING
 static void dump_wlan_roaming_usage(void)
 {
@@ -3411,7 +3410,7 @@ static void test_wlan_set_max_clients_count(int argc, char **argv)
     }
 }
 #endif
-
+#endif
 #if CONFIG_WIFI_RTS_THRESHOLD
 static void test_wlan_set_rts(int argc, char **argv)
 {
@@ -3484,7 +3483,7 @@ static void test_wlan_set_frag(int argc, char **argv)
     }
 }
 #endif
-
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if CONFIG_11K_OFFLOAD
 static void test_wlan_11k_cfg(int argc, char **argv)
 {
@@ -3634,7 +3633,7 @@ static void test_wlan_host_11v_bss_trans_query(int argc, char **argv)
     }
 }
 #endif
-
+#endif
 #if !CONFIG_WPA_SUPP
 #if CONFIG_DRIVER_MBO
 static void test_wlan_mbo_cfg(int argc, char **argv)
@@ -4301,7 +4300,7 @@ static void test_wlan_11az_rang_cfg(int argc, char **argv)
     return;
 }
 #endif
-
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if CONFIG_WPA_SUPP
 #if (CONFIG_11AX && defined(CONFIG_MBO))
 static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
@@ -4544,7 +4543,7 @@ static void test_wlan_set_scan_interval(int argc, char **argv)
 }
 
 #endif
-
+#endif
 #if CONFIG_UAP_STA_MAC_ADDR_FILTER
 /**
  *  @brief Show usage information for the sta_filter_table command
@@ -5505,7 +5504,7 @@ static void test_wlan_8801_ext_coex_stats(int argc, char **argv)
     }
 }
 #endif
-
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if !defined(SD8801) && !defined(RW610)
 static void test_wlan_set_uap_bandwidth(int argc, char **argv)
 {
@@ -5590,7 +5589,7 @@ static void test_wlan_set_uap_hidden_ssid(int argc, char **argv)
         (void)PRINTF("SSID broadcast control set successfully\r\n");
     }
 }
-
+#endif
 #if CONFIG_WIFI_MEM_ACCESS
 static void dump_wlan_mem_access_usage(void)
 {
@@ -5702,7 +5701,7 @@ static void test_wlan_boot_sleep(int argc, char **argv)
     }
 }
 #endif
-
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if (CONFIG_11R)
 static void dump_wlan_ft_roam_usage(void)
 {
@@ -5751,7 +5750,7 @@ static void test_wlan_ft_roam(int argc, char **argv)
 #endif
 }
 #endif
-
+#endif
 #if CONFIG_HEAP_STAT
 static void test_heap_stat(int argc, char **argv)
 {
@@ -7181,6 +7180,7 @@ static void test_wlan_wmm_tx_stats(int argc, char **argv)
 }
 #endif
 
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 static void dump_wlan_set_regioncode_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -7245,6 +7245,7 @@ static void test_wlan_get_regioncode(int argc, char **argv)
         (void)PRINTF("Region code: 0x%x\r\n", region_code);
     }
 }
+#endif
 static void test_wlan_set_mac_address(int argc, char **argv)
 {
     int ret;
@@ -7265,7 +7266,7 @@ static void test_wlan_set_mac_address(int argc, char **argv)
 
     wlan_set_mac_addr(raw_mac);
 }
-
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if defined(RW610) && (CONFIG_WIFI_RESET)
 static void test_wlan_reset(int argc, char **argv)
 {
@@ -7296,7 +7297,7 @@ static void test_wlan_reset(int argc, char **argv)
     wlan_reset((cli_reset_option)option);
 }
 #endif
-
+#endif
 #if CONFIG_ECSA
 static void test_wlan_uap_set_ecsa_cfg(int argc, char **argv)
 {
@@ -9834,6 +9835,7 @@ static void test_wlan_enable_disable_htc(int argc, char **argv)
 }
 #endif
 
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 static void dump_wlan_11d_enable_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -9976,7 +9978,7 @@ static void test_wlan_set_country_ie_ignore(int argc, char **argv)
         (void)PRINTF("Country ie \"%s\" is set\r\n", ignore == 0 ? "follow" : "ignore");
     }
 }
-
+#endif
 #if CONFIG_COEX_DUTY_CYCLE
 static void dump_wlan_single_ant_duty_cycle_usage()
 {
@@ -12296,6 +12298,7 @@ static struct cli_command tests[] = {
     {"wlan-set-mac", "<MAC_Address>", test_wlan_set_mac_address},
     {"wlan-scan", NULL, test_wlan_scan},
     {"wlan-scan-opt", "ssid <ssid> bssid ...", test_wlan_scan_opt},
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     {"wlan-add", "<profile_name> ssid <ssid> bssid...", test_wlan_add},
     {"wlan-remove", "<profile_name>", test_wlan_remove},
     {"wlan-list", NULL, test_wlan_list},
@@ -12313,15 +12316,20 @@ static struct cli_command tests[] = {
     {"wlan-address", NULL, test_wlan_address},
     {"wlan-get-uap-channel", NULL, test_wlan_get_uap_channel},
     {"wlan-get-uap-sta-list", NULL, test_wlan_get_uap_sta_list},
+#endif
     {"wlan-ieee-ps", "<0/1>", test_wlan_ieee_ps},
     {"wlan-set-ps-cfg", "<null_pkt_interval>", test_wlan_set_ps_cfg},
     {"wlan-deep-sleep-ps", "<0/1>", test_wlan_deep_sleep_ps},
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     {"wlan-get-beacon-interval", NULL, test_wlan_get_beacon_interval},
+#endif
 #if (CONFIG_WNM_PS)
     {"wlan-wnm-ps", "<0/1> <sleep_interval>", test_wlan_wnm_ps},
 #endif
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if CONFIG_WIFI_MAX_CLIENTS_CNT
     {"wlan-set-max-clients-count", "<max clients count>", test_wlan_set_max_clients_count},
+#endif
 #endif
 #if CONFIG_WIFI_RTS_THRESHOLD
     {"wlan-rts", "<sta/uap> <rts threshold>", test_wlan_set_rts},
@@ -12329,6 +12337,7 @@ static struct cli_command tests[] = {
 #if CONFIG_WIFI_FRAG_THRESHOLD
     {"wlan-frag", "<sta/uap> <fragment threshold>", test_wlan_set_frag},
 #endif
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if CONFIG_11K_OFFLOAD
     {"wlan-11k-enable", "<0/1>", test_wlan_11k_cfg},
     {"wlan-11k-neighbor-req", NULL, test_wlan_11k_neighbor_req},
@@ -12357,6 +12366,7 @@ static struct cli_command tests[] = {
     {"wlan-pmksa-flush", NULL, test_wlan_pmksa_flush},
     {"wlan-set-scan-interval", "<scan_int: in seconds>", test_wlan_set_scan_interval},
 #endif
+#endif
 #if (CONFIG_11MC) || (CONFIG_11AZ)
     {"wlan-ftm-ctrl", "<action> <loop_cnt> <peer_mac> <channel>", test_wlan_ftm_ctrl},
     {"wlan-11mc-nego-cfg", "<burst_inst> <burst_dur> <min_delta> <asap> <ftm_per_burst> <bw> <burst_period>",
@@ -12366,8 +12376,10 @@ static struct cli_command tests[] = {
     {"wlan-11az-rang-cfg", "<protocol> <format_bw> <num_measurements> <measurement_freq> <i2r_sts> <r2i_sts> <i2r_lmr>",
      test_wlan_11az_rang_cfg},
 #endif
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if CONFIG_UAP_STA_MAC_ADDR_FILTER
     {"wlan-sta-filter", " <filter mode> [<mac address list>]", test_wlan_set_sta_filter},
+#endif
 #endif
 #if CONFIG_WIFI_GET_LOG
     {"wlan-get-log", "<sta/uap> <ext>", test_wlan_get_log},
@@ -12375,8 +12387,10 @@ static struct cli_command tests[] = {
 #if CONFIG_WIFI_TX_PER_TRACK
     {"wlan-tx-pert", "<0/1> <STA/UAP> <p> <r> <n>", test_wlan_tx_pert},
 #endif
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if CONFIG_ROAMING
     {"wlan-roaming", "<0/1> <rssi_threshold>", test_wlan_roaming},
+#endif
 #endif
 #if CONFIG_MEF_CFG
     {"wlan-multi-mef", "<ping/arp/multicast/del> [<action>]", test_wlan_set_multiple_mef_config},
@@ -12411,6 +12425,7 @@ static struct cli_command tests[] = {
 #if defined(RW610) || defined(SD9177)
     {"wlan-ext-coex-uwb", NULL, test_wlan_ext_coex_uwb},
 #endif
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if !defined(SD8801) && !defined(RW610)
 #if CONFIG_11AC
     {"wlan-set-uap-bandwidth", "<1/2/3> 1:20 MHz 2:40MHz 3:80MHz", test_wlan_set_uap_bandwidth},
@@ -12419,6 +12434,7 @@ static struct cli_command tests[] = {
 #endif
 #endif
     {"wlan-set-uap-hidden-ssid", "<0/1/2>", test_wlan_set_uap_hidden_ssid},
+#endif
 #ifdef SD8801
     {"wlan-8801-enable-ext-coex", NULL, test_wlan_8801_enable_ext_coex},
     {"wlan-8801-get-ext-coex-stats", NULL, test_wlan_8801_ext_coex_stats},
@@ -12452,8 +12468,10 @@ static struct cli_command tests[] = {
      test_wlan_set_drcs_cfg},
     {"wlan-get-drcs", NULL, test_wlan_get_drcs_cfg},
 #endif
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if (CONFIG_11R)
     {"wlan-ft-roam", "<bssid> <channel>", test_wlan_ft_roam},
+#endif
 #endif
 #ifndef STREAM_2X2
 #ifndef RW610
@@ -12469,12 +12487,14 @@ static struct cli_command tests[] = {
 #if CONFIG_WMM
     {"wlan-wmm-stat", "<bss_type>", test_wlan_wmm_tx_stats},
 #endif
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if defined(RW610) && (CONFIG_WIFI_RESET)
     {"wlan-reset", NULL, test_wlan_reset},
 #endif
     {"wlan-set-regioncode", "<region-code>", test_wlan_set_regioncode},
     {"wlan-get-regioncode", NULL, test_wlan_get_regioncode},
     {"wlan-11d-enable", "<sta/uap> <0/1>", test_wlan_11d_enable},
+#endif
 #if CONFIG_ECSA
     {"wlan-uap-set-ecsa-cfg", "<block_tx> <oper_class> <new_channel> <switch_count> <bandwidth>",
      test_wlan_uap_set_ecsa_cfg},
@@ -12521,6 +12541,7 @@ static struct cli_command tests[] = {
 #if CONFIG_CCK_DESENSE_CFG
     {"wlan-cck-desense-cfg", NULL, test_wlan_cck_desense_cfg},
 #endif
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if (CONFIG_WPS2) || (CONFIG_WPA_SUPP_WPS)
     {"wlan-generate-wps-pin", NULL, test_wlan_wps_generate_pin},
     {"wlan-start-wps-pbc", NULL, test_wlan_start_wps_pbc},
@@ -12550,6 +12571,7 @@ static struct cli_command tests[] = {
     {"wlan-dpp-reconfig", "<network id> ...", test_wlan_dpp_reconfig},
     {"wlan-dpp-configurator-sign", " conf=<sta-dpp/ap-dpp> ssid=<ascii> configurator=<id>",
      test_wlan_dpp_configurator_sign},
+#endif
 #endif
 #if CONFIG_NET_MONITOR
     {"wlan-net-monitor-cfg", NULL, test_wlan_net_monitor_cfg},
@@ -12602,8 +12624,10 @@ static struct cli_command tests[] = {
     {"wlan-cloud-keep-alive", "<start/stop/reset>", test_wlan_cloud_keep_alive},
     {"wlan_tcp_client", "dst_ip <dst_ip> src_port <src_port> dst_port <dst_port>", test_wlan_tcp_client},
 #endif
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     {"wlan-set-country", "<country_code_str>", test_wlan_set_country_code},
     {"wlan-set-country-ie-ignore", "<0/1>", test_wlan_set_country_ie_ignore},
+#endif
 #if CONFIG_COEX_DUTY_CYCLE
     {"wlan-single-ant-duty-cycle", "<enable/disable> [<Ieee154Duration> <TotalDuration>]",
      test_wlan_single_ant_duty_cycle},
