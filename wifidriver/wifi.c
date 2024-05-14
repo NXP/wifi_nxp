@@ -3349,7 +3349,8 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
 #endif
                 if (wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn)
                 {
-                    wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn(wm_wifi.if_priv, mgmt_rx, mgmt_rx->frame.frame_len);
+                    wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn(wm_wifi.if_priv, mgmt_rx, mgmt_rx->frame.frame_len,
+                        prx_pd->snr - prx_pd->nf);
                 }
             }
             else
@@ -3372,7 +3373,8 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
 #endif
             if (wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn)
             {
-                wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn(wm_wifi.hapd_if_priv, mgmt_rx, mgmt_rx->frame.frame_len);
+                wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn(wm_wifi.hapd_if_priv, mgmt_rx, mgmt_rx->frame.frame_len,
+                    prx_pd->snr - prx_pd->nf);
             }
         }
         else

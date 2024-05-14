@@ -4679,7 +4679,8 @@ void wifi_nxp_uap_disconnect(mlan_private *priv, t_u16 reason_code, t_u8 *mac)
         (void)memcpy((void *)mgmt_rx->frame.frame, (const void *)(&pmgmt_pkt_hdr->wlan_header), mgmt_rx->frame.frame_len);
         if (wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn)
         {
-            wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn(wm_wifi.hapd_if_priv, mgmt_rx, mgmt_rx->frame.frame_len);
+            wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn(wm_wifi.hapd_if_priv,
+                mgmt_rx, mgmt_rx->frame.frame_len, -30);
         }
     }
     else

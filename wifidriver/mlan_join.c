@@ -1156,6 +1156,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
             if (prsn_ie_tlv->header.len <= (sizeof(pmpriv->wpa_ie) - 2))
             {
                 (void)__memcpy(pmadapter, prsn_ie_tlv->rsn_ie, &pmpriv->wpa_ie[2], prsn_ie_tlv->header.len);
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
                 if (pmpriv->sec_info.wpa2_enabled
 #if CONFIG_WPA_SUPP_DPP
                     && pmpriv->is_dpp_connect == MFALSE
@@ -1171,6 +1172,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
                     ft_akm = wlan_ft_akm_is_used(pmpriv, (t_u8 *)prsn_ie_tlv);
 #endif
                 }
+#endif
             }
             else
             {

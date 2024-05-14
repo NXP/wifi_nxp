@@ -10458,7 +10458,7 @@ static void test_wlan_external_coex_pta(int argc, char **argv)
 }
 #endif
 
-#if CONFIG_WPA_SUPP_DPP
+#if !__ZEPHYR__
 static void test_wlan_dpp_configurator_add(int argc, char **argv)
 {
     int conf_id, is_ap = 0;
@@ -12555,7 +12555,7 @@ static struct cli_command tests[] = {
     {"wlan-wps-ap-cancel", NULL, test_wlan_wps_ap_cancel},
 #endif
 #endif
-#if CONFIG_WPA_SUPP_DPP
+#if !__ZEPHYR__
     {"wlan-dpp-configurator-add", NULL, test_wlan_dpp_configurator_add},
     {"wlan-dpp-configurator-params", " conf=<sta-dpp/ap-dpp> ssid=<ascii> configurator=<id>",
      test_wlan_dpp_configurator_params},

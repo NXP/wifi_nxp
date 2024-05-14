@@ -85,9 +85,8 @@ const rtos_wpa_supp_dev_ops wpa_supp_ops = {
     .stop_ap                  = wifi_nxp_hostapd_stop_ap,
     .set_acl                  = wifi_nxp_hostapd_set_acl,
 #endif
-#if CONFIG_DPP
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT_DPP
     .dpp_listen               = wifi_nxp_wpa_dpp_listen,
-    .get_modes                = wifi_nxp_wpa_get_modes,
 #endif
 };
 
@@ -242,6 +241,10 @@ int wifi_supp_init(void)
         wifi_e("start wpa supplicant failed. status code %d", ret);
         goto out;
     }
+#endif
+
+#ifdef CONFIG_WIFI_NM_WPA_SUPPLICANT_CRYPTO_MBEDTLS_PSA
+    supp_psa_crypto_init();
 #endif
 
     if (ret == WM_SUCCESS)

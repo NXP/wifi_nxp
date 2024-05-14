@@ -5805,6 +5805,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
         wlcm_e("wifi_supp_init failed. status code %d", ret);
         return;
     }
+    wifi_set_rx_mgmt_indication(WLAN_BSS_ROLE_STA, WLAN_MGMT_ACTION);
 #if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     ret = wpa_supp_status(netif);
     if (ret != 0)
@@ -15564,7 +15565,7 @@ int wlan_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config)
 }
 #endif
 
-#if CONFIG_WPA_SUPP_DPP
+#if !__ZEPHYR__
 int wlan_dpp_configurator_add(int is_ap, const char *cmd)
 {
     struct netif *netif = net_get_sta_interface();
@@ -15702,7 +15703,7 @@ int wlan_dpp_configurator_sign(int is_ap, const char *cmd)
 
     return wpa_supp_dpp_configurator_sign(netif, is_ap, cmd);
 }
-#endif /* CONFIG_WPA_SUPP_DPP */
+#endif /* ! __ZEPHYR__ */
 
 #if CONFIG_IMD3_CFG
 int wlan_imd3_cfg(t_u8 imd3_value)
@@ -16048,5 +16049,26 @@ int wlan_uap_disconnect_sta(uint8_t *sta_addr)
     }
 
     return ret;
+}
+#endif
+
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+int wlan_supp_dpp_listen(int bss_type, int enable)
+{
+    if (bss_type == WLAN_BSS_ROLE_STA)
+    {
+        if (enable)
+        {
+            wifi_set_rx_mgmt_indication(bss_type, WLAN_MGMT_ACTION);
+            wlan_ieeeps_off();
+            wlan_deepsleepps_off();
+        }
+        else
+        {
+            wlan_ieeeps_on(wlan.wakeup_conditions);
+            wlan_deepsleepps_on();
+        }
+    }
+    return 0;
 }
 #endif

@@ -2181,10 +2181,10 @@ out:
     return ret;
 }
 
-void wifi_nxp_wpa_supp_event_proc_mgmt_rx(void *if_priv, nxp_wifi_event_mlme_t *mgmt_rx, unsigned int event_len)
+void wifi_nxp_wpa_supp_event_proc_mgmt_rx(void *if_priv, nxp_wifi_event_mlme_t *mgmt_rx,
+    unsigned int event_len, int rssi)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
-    union wpa_event_data event;
     const struct ieee80211_mgmt *mgmt = NULL;
     const unsigned char *frame        = NULL;
     unsigned int frame_len            = 0;
@@ -2207,21 +2207,17 @@ void wifi_nxp_wpa_supp_event_proc_mgmt_rx(void *if_priv, nxp_wifi_event_mlme_t *
         return;
     }
 
-    memset(&event, 0, sizeof(event));
-
-    event.rx_mgmt.frame     = (const u8 *)mgmt;
-    event.rx_mgmt.frame_len = frame_len;
-    event.rx_mgmt.freq      = mgmt_rx->frame.freq;
-
 #if CONFIG_HOSTAPD
     if (wifi_if_ctx_rtos->hostapd)
     {
-        wifi_if_ctx_rtos->hostapd_callbk_fns.mgmt_rx(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
+        wifi_if_ctx_rtos->hostapd_callbk_fns.mgmt_rx(wifi_if_ctx_rtos->hapd_drv_if_ctx,
+            frame, frame_len, mgmt_rx->frame.freq, rssi);
     }
     else
 #endif
     {
-        //wifi_if_ctx_rtos->supp_callbk_fns.mgmt_rx(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
+        wifi_if_ctx_rtos->supp_callbk_fns.mgmt_rx(wifi_if_ctx_rtos->supp_drv_if_ctx,
+            frame, frame_len, mgmt_rx->frame.freq, rssi);
     }
 }
 
@@ -3029,7 +3025,7 @@ out:
     return ret;
 }
 #endif
-#if CONFIG_DPP
+
 int wifi_nxp_wpa_dpp_listen(void *if_priv, bool enable)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
@@ -3041,22 +3037,15 @@ int wifi_nxp_wpa_dpp_listen(void *if_priv, bool enable)
     }
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
-    if (enable && (wifi_if_ctx_rtos->bss_type == BSS_TYPE_STA))
-    {
-        return wifi_set_rx_mgmt_indication(wifi_if_ctx_rtos->bss_type, WLAN_MGMT_ACTION);
-    }
-    else
-    {
-        return 0;
-    }
 
+    return wlan_supp_dpp_listen(wifi_if_ctx_rtos->bss_type, enable);
 out:
     return -1;
 }
-#endif
 
 bool wifi_nxp_wpa_get_modes(void *if_priv)
 {
     return (!ISSUPP_NO5G(mlan_adap->fw_cap_ext));
 }
+
 #endif

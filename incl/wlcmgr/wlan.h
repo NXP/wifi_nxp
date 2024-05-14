@@ -7063,7 +7063,7 @@ int wlan_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 w
 int wlan_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config);
 #endif
 
-#if CONFIG_WPA_SUPP_DPP
+#if !__ZEPHYR__
 /** Add a DPP Configurator
  *
  *  If this device is DPP Configurator, add it to get configurator ID.
@@ -7329,4 +7329,7 @@ uint32_t wlan_get_board_type();
 int wlan_uap_disconnect_sta(uint8_t *sta_addr);
 #endif
 
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+int wlan_supp_dpp_listen(int bss_type, int enable);
+#endif
 #endif /* __WLAN_H__ */
