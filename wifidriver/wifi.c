@@ -3402,7 +3402,7 @@ void wifi_is_wpa_supplicant_input(const uint8_t interface, const uint8_t *buffer
                                         pmgmt_pkt_hdr->frm_len + sizeof(wlan_mgmt_pkt) - sizeof(pmgmt_pkt_hdr->frm_len),
                                         prx_pd);
 }
-
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 void wifi_wpa_supplicant_eapol_input(const uint8_t interface,
                                      const uint8_t *src_addr,
                                      const uint8_t *buffer,
@@ -3421,27 +3421,31 @@ void wifi_wpa_supplicant_eapol_input(const uint8_t interface,
             eapol_rx->frame.frame_len);
     }
 }
-
+#endif
 #define RX_PKT_TYPE_OFFSET  5U
 #define ETH_PROTO_EAPOL     0x888EU
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #define WIFI_SIZEOF_ETH_HDR 14U
 static t_u8 rfc1042_eth_hdr[MLAN_MAC_ADDR_LENGTH] = {0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00};
+#endif
 #endif
 
 static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, const uint16_t len)
 {
 #if CONFIG_WPA_SUPP
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     RxPD *prx_pd  = (RxPD *)(void *)((t_u8 *)buffer + INTF_HEADER_LEN);
     eth_hdr *ethh = MNULL;
     t_u16 eth_proto;
     t_u8 offset = 0;
-
+#endif
     if (*((t_u16 *)buffer + RX_PKT_TYPE_OFFSET) == PKT_TYPE_MGMT_FRAME)
     {
         wifi_is_wpa_supplicant_input(interface, buffer, len);
         return WM_SUCCESS;
     }
 
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     ethh = (eth_hdr *)((t_u8 *)prx_pd + prx_pd->rx_pkt_offset);
 
     eth_proto = mlan_ntohs(ethh->h_proto);
@@ -3460,6 +3464,7 @@ static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, 
                                         prx_pd->rx_pkt_length - sizeof(eth_hdr) - offset);
         return WM_SUCCESS;
     }
+#endif
 #endif
     if (wifi_rx_status == WIFI_DATA_BLOCK)
     {
@@ -4164,7 +4169,6 @@ static void wifi_drv_tx_task(osa_task_param_t arg)
 }
 #endif /* CONFIG_WMM */
 
-#ifndef __ZEPHYR__
 #if CONFIG_11AX
 #if CONFIG_TCP_ACK_ENH
 #define ETH_PROTO_IP     0x0800U
@@ -4207,6 +4211,10 @@ static int wlan_is_tcp_ack(mlan_private *priv, const t_u8 *pmbuf)
     }
 #if CONFIG_TX_RX_ZERO_COPY
     iph = (ip_hdr *)(((outbuf_t *)pmbuf)->payload);
+    if (iph == NULL)
+    {
+        return 0;
+    }
 #else
     iph  = (ip_hdr *)((t_u8 *)ethh + sizeof(eth_hdr));
 #endif
@@ -4239,7 +4247,6 @@ static int wlan_is_tcp_ack(mlan_private *priv, const t_u8 *pmbuf)
 }
 #endif /** CONFIG_TCP_ACK_ENH */
 #endif /** CONFIG_11AX*/
-#endif
 
 #if CONFIG_WMM
 
@@ -4320,22 +4327,23 @@ int wifi_low_level_output(const t_u8 interface,
 
     /** Tx control */
     t_u32 tx_control = 0;
-#ifndef __ZEPHYR__
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[interface];
-#endif
 
     w_pkt_d("Data TX: Kernel=>Driver, if %d, len %d", interface, len);
 
     // wakelock_get(WL_ID_LL_OUTPUT);
     /* Following condition is added to check if device is not connected and data packet is being transmitted */
-#ifndef __ZEPHYR__
     if ((pmpriv->media_connected == MFALSE))
     {
 #if CONFIG_WMM
         wifi_wmm_buf_put((outbuf_t *)sd_buffer);
         wifi_wmm_drop_no_media(interface);
 #endif
+#ifdef __ZEPHYR__
+        return WM_SUCCESS;
+#else
         return -WM_E_BUSY;
+#endif
     }
 
 #if CONFIG_11AX
@@ -4443,7 +4451,6 @@ int wifi_low_level_output(const t_u8 interface,
     }
 #endif /** CONFIG_TCP_ACK_ENH */
 #endif /** CONFIG_11AX */
-#endif
 
 #if CONFIG_WMM
     /* process packet headers with interface header and TxPD */
@@ -5129,7 +5136,7 @@ int wifi_supp_inject_frame(const unsigned int bss_type, const uint8_t *buff, con
  *  If On-Chip OTP memory sets ForceRegion Rule, set country may return fail.
  *  Ignore it to not let it block AP setup.
  */
-int wifi_nxp_set_country(unsigned int bss_type, const char *alpha2)
+int wifi_nxp_set_country(const unsigned int bss_type, const char *alpha2)
 {
     (void)wifi_set_country_code(alpha2);
     return WM_SUCCESS;
@@ -5139,7 +5146,7 @@ int wifi_nxp_set_country(unsigned int bss_type, const char *alpha2)
  *  Alpha2 may has only 2 octets.
  *  Need to avoid accessing the third octet.
  */
-int wifi_nxp_get_country(unsigned int bss_type, char *alpha2)
+int wifi_nxp_get_country(const unsigned int bss_type, char *alpha2)
 {
     return wifi_get_country_code(alpha2);
 }

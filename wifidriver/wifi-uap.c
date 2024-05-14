@@ -3882,36 +3882,46 @@ t_u16 wifi_get_default_ht_capab()
     return ht_capab;
 }
 
-static void wifi_setup_channel_flag(void *channels, int num_chan, region_chan_t *region)
+static void wifi_setup_channel_flag(void *channels, int num_chan, region_chan_t *region, t_u8 band)
 {
     int i;
     int set_idx                             = 0;
     int get_idx                             = 0;
     const chan_freq_power_t *pchans_get     = region->pcfp;
-    struct hostapd_channel_data *pchans_set = (struct hostapd_channel_data *)channels;
+    struct wifi_nxp_event_channel *pchans_set = (struct wifi_nxp_event_channel *)channels;
 
     for (i = 0; i < MAX(num_chan, region->num_cfp); i++)
     {
         if (set_idx >= num_chan)
             break;
 
-        if (get_idx >= region->num_cfp || pchans_set[set_idx].chan < pchans_get[get_idx].channel)
+        if (get_idx >= region->num_cfp)
         {
-            pchans_set[set_idx].flag |= HOSTAPD_CHAN_DISABLED;
+            pchans_set[set_idx].wifi_nxp_flags |= WIFI_NXP_CHAN_FLAG_FREQUENCY_DISABLED;
 
             set_idx++;
-        }
-        else if (pchans_set[set_idx].chan == pchans_get[get_idx].channel)
-        {
-            /* set passive scan or radar detect flag */
-            if (pchans_get[get_idx].passive_scan_or_radar_detect == MTRUE)
-                pchans_set[set_idx].flag |= HOSTAPD_CHAN_RADAR;
-
-            set_idx++;
-            get_idx++;
         }
         else
         {
+            pchans_set[set_idx].center_frequency = pchans_get[get_idx].freq;
+            pchans_set[set_idx].ch_valid = 1;
+            pchans_set[set_idx].wifi_nxp_max_power = pchans_get[get_idx].max_tx_power;
+
+            if (band == BAND_2GHZ)
+            {
+                pchans_set[set_idx].wifi_nxp_flags |= WIFI_NXP_CHAN_FLAG_FREQUENCY_ATTR_NO_80MHZ;
+            }
+
+            pchans_set[set_idx].wifi_nxp_flags |= WIFI_NXP_CHAN_FLAG_FREQUENCY_ATTR_NO_160MHZ;
+
+            /* set passive scan or radar detect flag */
+            if (pchans_get[get_idx].passive_scan_or_radar_detect == MTRUE)
+            {
+                pchans_set[set_idx].wifi_nxp_flags |= WIFI_NXP_CHAN_FLAG_FREQUENCY_ATTR_RADAR;
+                pchans_set[set_idx].wifi_nxp_flags |= WIFI_NXP_CHAN_DFS_VALID;
+            }
+
+            set_idx++;
             get_idx++;
         }
     }
@@ -3931,7 +3941,7 @@ void wifi_setup_channel_info(void *channels, int num_channels, t_u8 band)
         else
             return;
 
-        wifi_setup_channel_flag(channels, num_channels, region);
+        wifi_setup_channel_flag(channels, num_channels, region, band);
     }
     else if (band == BAND_5GHZ)
     {
@@ -3942,7 +3952,7 @@ void wifi_setup_channel_info(void *channels, int num_channels, t_u8 band)
         else
             return;
 
-        wifi_setup_channel_flag(channels, num_channels, region);
+        wifi_setup_channel_flag(channels, num_channels, region, band);
     }
     else
     {
@@ -4538,8 +4548,9 @@ int wifi_nxp_sta_remove(const uint8_t *addr)
 {
     mlan_private *priv         = (mlan_private *)mlan_adap->priv[1];
     int ret                    = 0;
+#if 0
     mlan_ds_sta_info *sta_info = NULL;
-
+#endif
     ENTER();
 
     if (!addr)
@@ -4728,6 +4739,13 @@ int wifi_nxp_stop_ap()
 
 done:
     LEAVE();
+    return ret;
+}
+
+int wifi_nxp_init_ap(nxp_wifi_ap_info_t *params)
+{
+    int ret = 0;
+	/* to do */
     return ret;
 }
 

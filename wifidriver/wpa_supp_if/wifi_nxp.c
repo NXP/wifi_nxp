@@ -27,7 +27,7 @@ static t_u8 wifi_supp_init_done;
 static struct wifi_nxp_ctx_rtos *g_wifi_if_ctx_rtos = NULL;
 
 int wifi_nxp_set_mac_addr(const t_u8 *mac);
-
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 static int wifi_nxp_wpa_supp_set_mac_addr(void *if_priv, const t_u8 *addr)
 {
     if (!if_priv || !addr)
@@ -38,34 +38,42 @@ static int wifi_nxp_wpa_supp_set_mac_addr(void *if_priv, const t_u8 *addr)
 
     return wifi_nxp_set_mac_addr(addr);
 }
-
+#endif
 const rtos_wpa_supp_dev_ops wpa_supp_ops = {
     .init                     = wifi_nxp_wpa_supp_dev_init,
     .deinit                   = wifi_nxp_wpa_supp_dev_deinit,
-    .hapd_init                = wifi_nxp_hostapd_dev_init,
-    .hapd_deinit              = wifi_nxp_hostapd_dev_deinit,
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     .set_mac_addr             = wifi_nxp_wpa_supp_set_mac_addr,
-    .scan2                    = wifi_nxp_wpa_supp_scan2,
     .set_default_scan_ies     = wifi_nxp_wpa_supp_set_default_scan_ies,
     .sched_scan               = wifi_nxp_wpa_supp_sched_scan,
     .stop_sched_scan          = wifi_nxp_wpa_supp_stop_sched_scan,
+    .del_key                  = wifi_nxp_wpa_supp_del_key,
+    .set_rekey_info           = wifi_nxp_wpa_supp_set_rekey_info,
+    .set_country              = wifi_nxp_wpa_supp_set_country,
+    .get_country              = wifi_nxp_wpa_supp_get_country,
+    .remain_on_channel        = wifi_nxp_wpa_supp_remain_on_channel,
+    .cancel_remain_on_channel = wifi_nxp_wpa_supp_cancel_remain_on_channel,
+    .get_survey_results       = wifi_nxp_wpa_supp_survey_results_get,
+    .get_modes                = wifi_nxp_wpa_get_modes,
+#endif
+    .scan2                    = wifi_nxp_wpa_supp_scan2,
     .scan_abort               = wifi_nxp_wpa_supp_scan_abort,
     .get_scan_results2        = wifi_nxp_wpa_supp_scan_results_get,
     .deauthenticate           = wifi_nxp_wpa_supp_deauthenticate,
     .authenticate             = wifi_nxp_wpa_supp_authenticate,
     .associate                = wifi_nxp_wpa_supp_associate,
     .set_key                  = wifi_nxp_wpa_supp_set_key,
-    .del_key                  = wifi_nxp_wpa_supp_del_key,
-    .set_rekey_info           = wifi_nxp_wpa_supp_set_rekey_info,
-    .set_supp_port            = wifi_nxp_wpa_set_supp_port,
-    .set_country              = wifi_nxp_wpa_supp_set_country,
-    .get_country              = wifi_nxp_wpa_supp_get_country,
+    .set_supp_port            = wifi_nxp_wpa_supp_set_supp_port,
     .signal_poll              = wifi_nxp_wpa_supp_signal_poll,
-    .send_mlme                = wifi_nxp_wpa_send_mlme,
-    .remain_on_channel        = wifi_nxp_wpa_supp_remain_on_channel,
-    .cancel_remain_on_channel = wifi_nxp_wpa_supp_cancel_remain_on_channel,
-    .get_survey_results       = wifi_nxp_wpa_supp_survey_results_get,
+    .send_mlme                = wifi_nxp_wpa_supp_send_mlme,
+    .get_wiphy                = wifi_nxp_wpa_supp_get_wiphy,
+#if CONFIG_WIFI_SOFTAP_SUPPORT
+    .init_ap                  = wifi_nxp_wpa_supp_init_ap,
+#endif
+#if CONFIG_HOSTAPD
     .set_modes                = wifi_nxp_hostapd_set_modes,
+    .hapd_init                = wifi_nxp_hostapd_dev_init,
+    .hapd_deinit              = wifi_nxp_hostapd_dev_deinit,
     .do_acs                   = wifi_nxp_hostapd_do_acs,
     .set_ap                   = wifi_nxp_hostapd_set_ap,
     .sta_add                  = wifi_nxp_hostapd_sta_add,
@@ -76,8 +84,11 @@ const rtos_wpa_supp_dev_ops wpa_supp_ops = {
     .set_frag                 = wifi_nxp_hostapd_set_frag,
     .stop_ap                  = wifi_nxp_hostapd_stop_ap,
     .set_acl                  = wifi_nxp_hostapd_set_acl,
+#endif
+#if CONFIG_DPP
     .dpp_listen               = wifi_nxp_wpa_dpp_listen,
     .get_modes                = wifi_nxp_wpa_get_modes,
+#endif
 };
 
 static void wifi_nxp_event_proc_scan_start(void *if_ctx)
@@ -103,7 +114,7 @@ static void wifi_nxp_event_proc_scan_done(void *if_priv, int external_scan)
     }
     wifi_nxp_wpa_supp_event_proc_scan_done(if_priv, 0, external_scan);
 }
-
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 static void wifi_nxp_event_reamin_on_channel(void *if_priv, int cancel_channel)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
@@ -117,27 +128,30 @@ static void wifi_nxp_event_reamin_on_channel(void *if_priv, int cancel_channel)
     }
     wifi_nxp_wpa_supp_event_proc_remain_on_channel(if_priv, cancel_channel);
 }
-
+#endif
 static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
     .mac_changed_callbk_fn         = wifi_nxp_wpa_supp_event_proc_mac_changed,
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     .chan_list_changed_callbk_fn   = wifi_nxp_wpa_supp_event_proc_chan_list_changed,
-    .scan_start_callbk_fn          = wifi_nxp_event_proc_scan_start,
-    .scan_done_callbk_fn           = wifi_nxp_event_proc_scan_done,
-    .scan_abort_callbk_fn          = wifi_nxp_event_proc_scan_abort,
     .survey_res_callbk_fn          = wifi_nxp_wpa_supp_event_proc_survey_res,
-    .auth_resp_callbk_fn           = wifi_nxp_wpa_supp_event_proc_auth_resp,
-    .assoc_resp_callbk_fn          = wifi_nxp_wpa_supp_event_proc_assoc_resp,
-    .deauth_callbk_fn              = wifi_nxp_wpa_supp_event_proc_deauth,
-    .disassoc_callbk_fn            = wifi_nxp_wpa_supp_event_proc_disassoc,
     .acs_channel_sel_callbk_fn     = wifi_nxp_wpa_supp_event_acs_channel_selected,
-    .mgmt_tx_status_callbk_fn      = wifi_nxp_wpa_supp_event_mgmt_tx_status,
-    .unprot_mlme_mgmt_rx_callbk_fn = wifi_nxp_wpa_supp_event_proc_unprot_mgmt,
     .remain_on_channel_callbk_fn   = wifi_nxp_event_reamin_on_channel,
-    .mgmt_rx_callbk_fn             = wifi_nxp_wpa_supp_event_proc_mgmt_rx,
     .eapol_rx_callbk_fn            = wifi_nxp_wpa_supp_event_proc_eapol_rx,
     .ecsa_complete_callbk_fn       = wifi_nxp_wpa_supp_event_proc_ecsa_complete,
     .dfs_cac_started_callbk_fn     = wifi_nxp_wpa_supp_event_proc_dfs_cac_started,
     .dfs_cac_finished_callbk_fn    = wifi_nxp_wpa_supp_event_proc_dfs_cac_finished,
+#endif
+    .scan_start_callbk_fn          = wifi_nxp_event_proc_scan_start,
+    .scan_done_callbk_fn           = wifi_nxp_event_proc_scan_done,
+    .scan_abort_callbk_fn          = wifi_nxp_event_proc_scan_abort,
+    .auth_resp_callbk_fn           = wifi_nxp_wpa_supp_event_proc_auth_resp,
+    .assoc_resp_callbk_fn          = wifi_nxp_wpa_supp_event_proc_assoc_resp,
+    .deauth_callbk_fn              = wifi_nxp_wpa_supp_event_proc_deauth,
+    .disassoc_callbk_fn            = wifi_nxp_wpa_supp_event_proc_disassoc,
+    .mgmt_tx_status_callbk_fn      = wifi_nxp_wpa_supp_event_mgmt_tx_status,
+    .unprot_mlme_mgmt_rx_callbk_fn = wifi_nxp_wpa_supp_event_proc_unprot_mgmt,
+    .mgmt_rx_callbk_fn             = wifi_nxp_wpa_supp_event_proc_mgmt_rx,
+    .get_wiphy_callbk_fn           = wifi_nxp_wpa_supp_event_get_wiphy,
 };
 
 #ifndef __ZEPHYR__
@@ -147,7 +161,10 @@ static int g_net_idx = -1;
 int wifi_supp_init(void)
 {
     int ret = -WM_FAIL;
-    char sta_iface_name[NETIF_NAMESIZE], uap_iface_name[NETIF_NAMESIZE];
+    char sta_iface_name[NETIF_NAMESIZE];
+#ifdef CONFIG_WIFI_SOFTAP_SUPPORT
+    char uap_iface_name[NETIF_NAMESIZE];
+#endif
     struct netif *iface = NULL;
 
     if (wifi_supp_init_done != 0U)
@@ -192,6 +209,7 @@ int wifi_supp_init(void)
 
     (void)net_get_if_name_netif(sta_iface_name, iface);
 
+#if CONFIG_WIFI_SOFTAP_SUPPORT
     g_wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)OSA_MemoryAllocate(sizeof(struct wifi_nxp_ctx_rtos));
 
     if (!g_wifi_if_ctx_rtos)
@@ -215,7 +233,8 @@ int wifi_supp_init(void)
 #endif
 
     (void)net_get_if_name_netif(uap_iface_name, iface);
-
+#endif
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     ret = start_wpa_supplicant(sta_iface_name);
 
     if (ret != WM_SUCCESS)
@@ -223,6 +242,7 @@ int wifi_supp_init(void)
         wifi_e("start wpa supplicant failed. status code %d", ret);
         goto out;
     }
+#endif
 
     if (ret == WM_SUCCESS)
     {
@@ -238,18 +258,21 @@ out:
 
 void wifi_supp_deinit(void)
 {
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     int ret;
-
+#endif
     if (wifi_supp_init_done != 1U)
     {
         return;
     }
 
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     ret = stop_wpa_supplicant();
     if (ret != WM_SUCCESS)
     {
         wifi_e("stop wpa supplicant failed. status code %d", ret);
     }
+#endif
 
     if (wm_wifi.if_priv)
     {

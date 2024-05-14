@@ -250,19 +250,16 @@ zephyr_library_include_directories_ifdef(CONFIG_NXP_WIFI_SIGMA_AGENT
     sigma_agent/dut
 )
 
-file(GLOB DHCPD_SRC ./dhcpd/*.c)
-list(FILTER DHCPD_SRC EXCLUDE REGEX ".*cli*")
-
-zephyr_library_sources(${DHCPD_SRC})
-zephyr_library_include_directories(dhcpd)
-
 # nxp wifi shell
 zephyr_library_sources(cli/wifi_shell.c)
 zephyr_library_sources(cli/cli_utils.c)
 
 # macros for wpa_supplicant
-if(CONFIG_WPA_SUPP)
-zephyr_include_directories(certs)
+if(CONFIG_WIFI_NM_WPA_SUPPLICANT)
+zephyr_include_directories(
+    certs
+    wifidriver/wpa_supp_if/incl
+)
 
 zephyr_library_include_directories(wifidriver/wpa_supp_if wifidriver/wpa_supp_if/incl)
 file(GLOB WIFI_SUPP_SRC ./wifidriver/wpa_supp_if/*.c)

@@ -50,9 +50,11 @@ int wifi_nxp_wpa_supp_sched_scan(void *if_priv, struct wpa_driver_scan_params *p
 int wifi_nxp_wpa_supp_stop_sched_scan(void *if_priv);
 
 int wifi_nxp_wpa_supp_scan_abort(void *if_priv);
-
+#if defined(SDK_OS_FREE_RTOS)
 int wifi_nxp_wpa_supp_scan_results_get(void *if_priv, struct wpa_scan_results *scan_res2);
-
+#elif defined(__ZEPHYR__)
+int wifi_nxp_wpa_supp_scan_results_get(void *if_priv);
+#endif
 int wifi_nxp_wpa_supp_survey_results_get(void *if_priv);
 
 int wifi_nxp_wpa_supp_deauthenticate(void *if_priv, const char *addr, unsigned short reason_code);
@@ -61,7 +63,7 @@ int wifi_nxp_wpa_supp_authenticate(void *if_priv, struct wpa_driver_auth_params 
 
 int wifi_nxp_wpa_supp_associate(void *if_priv, struct wpa_driver_associate_params *params);
 
-int wifi_nxp_wpa_set_supp_port(void *if_priv, int authorized, char *bssid);
+int wifi_nxp_wpa_supp_set_supp_port(void *if_priv, int authorized, char *bssid);
 
 int wifi_nxp_wpa_supp_set_country(void *if_priv, const char *alpha2);
 
@@ -69,7 +71,7 @@ int wifi_nxp_wpa_supp_get_country(void *if_priv, char *alpha2);
 
 int wifi_nxp_wpa_supp_signal_poll(void *if_priv, struct wpa_signal_info *si, unsigned char *bssid);
 
-int wifi_nxp_wpa_send_mlme(void *if_priv,
+int wifi_nxp_wpa_supp_send_mlme(void *if_priv,
                            const u8 *data,
                            size_t data_len,
                            int noack,
@@ -78,6 +80,12 @@ int wifi_nxp_wpa_send_mlme(void *if_priv,
                            int offchanok,
                            unsigned int wait_time,
                            int cookie);
+
+int wifi_nxp_wpa_supp_get_wiphy(void *if_priv);
+
+int wifi_nxp_wpa_supp_get_conn_info(void *if_priv, struct wpa_conn_info *info);
+
+int wifi_nxp_wpa_supp_get_capa(void *if_priv, struct wpa_driver_capa *capa);
 
 int wifi_nxp_wpa_supp_set_key(void *if_priv,
                               const unsigned char *ifname,
@@ -102,8 +110,6 @@ int wifi_nxp_wpa_supp_cancel_remain_on_channel(void *if_priv);
 
 void wifi_nxp_wpa_supp_event_proc_mac_changed(void *if_priv);
 
-void wifi_nxp_wpa_supp_event_proc_chan_list_changed(void *if_priv, const char *alpha2);
-
 void wifi_nxp_wpa_supp_event_proc_scan_start(void *if_priv);
 
 void wifi_nxp_wpa_supp_event_proc_scan_abort(void *if_priv);
@@ -114,11 +120,6 @@ void wifi_nxp_wpa_supp_event_proc_scan_res(void *if_priv,
                                            nxp_wifi_event_new_scan_result_t *scan_res,
                                            unsigned int event_len,
                                            bool more_res);
-
-void wifi_nxp_wpa_supp_event_proc_survey_res(void *if_priv,
-                                             nxp_wifi_event_new_survey_result_t *survey_res,
-                                             unsigned int event_len,
-                                             bool more_res);
 
 void wifi_nxp_wpa_supp_event_proc_auth_resp(void *if_priv,
                                             nxp_wifi_event_mlme_t *auth_resp_event,
@@ -134,22 +135,32 @@ void wifi_nxp_wpa_supp_event_proc_disassoc(void *if_priv,
                                            nxp_wifi_event_mlme_t *disassoc_event,
                                            unsigned int event_len);
 
-void wifi_nxp_wpa_supp_event_acs_channel_selected(void *if_priv, nxp_wifi_acs_params *acs_params);
-
 void wifi_nxp_wpa_supp_event_proc_unprot_mgmt(void *if_priv,
                                               nxp_wifi_event_mlme_t *unprot_mgmt_event,
                                               unsigned int event_len);
 void wifi_nxp_wpa_supp_event_proc_remain_on_channel(void *if_priv, int cancel_channel);
 void wifi_nxp_wpa_supp_event_proc_mgmt_rx(void *if_priv, nxp_wifi_event_mlme_t *mgmt_rx, unsigned int event_len);
+void wifi_nxp_wpa_supp_event_get_wiphy(void *if_priv,
+                                              struct wifi_nxp_event_get_wiphy *wiphy_info, unsigned int event_len);
+void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t *mlme_event, unsigned int event_len);
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
+void wifi_nxp_wpa_supp_event_proc_chan_list_changed(void *if_priv, const char *alpha2);
+void wifi_nxp_wpa_supp_event_proc_survey_res(void *if_priv,
+                                             nxp_wifi_event_new_survey_result_t *survey_res,
+                                             unsigned int event_len,
+                                             bool more_res);
+void wifi_nxp_wpa_supp_event_acs_channel_selected(void *if_priv, nxp_wifi_acs_params *acs_params);
 void wifi_nxp_wpa_supp_event_proc_eapol_rx(void *if_priv,
                                            nxp_wifi_event_eapol_mlme_t *eapol_rx,
                                            unsigned int event_len);
-void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t *mlme_event, unsigned int event_len);
-
 void wifi_nxp_wpa_supp_event_proc_ecsa_complete(void *if_priv, nxp_wifi_ch_switch_info *ch_switch_info);
 void wifi_nxp_wpa_supp_event_proc_dfs_cac_started(void *if_priv, nxp_wifi_dfs_cac_info *dfs_cac_info);
 void wifi_nxp_wpa_supp_event_proc_dfs_cac_finished(void *if_priv, nxp_wifi_dfs_cac_info *dfs_cac_info);
-
+#endif
+#if CONFIG_WIFI_SOFTAP_SUPPORT
+int wifi_nxp_wpa_supp_init_ap(void *if_priv, struct wpa_driver_associate_params *params);
+#endif
+#if CONFIG_WPA_SUPP_AP
 void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
                                 const char *iface_name,
                                 rtos_hostapd_dev_callbk_fns *hostapd_callbk_fns);
@@ -165,6 +176,7 @@ int wifi_nxp_hostapd_set_rts(void *if_priv, int rts_threshold);
 int wifi_nxp_hostapd_set_frag(void *if_priv, int frag_threshold);
 int wifi_nxp_hostapd_stop_ap(void *if_priv);
 int wifi_nxp_hostapd_set_acl(void *if_priv, struct hostapd_acl_params *params);
+#endif
 int wifi_nxp_wpa_dpp_listen(void *if_priv, bool enable);
 bool wifi_nxp_wpa_get_modes(void *if_priv);
 #endif /* CONFIG_WPA_SUPP */

@@ -64,6 +64,8 @@
 #include <osa.h>
 #include <wmerrno.h>
 
+#define WIFI_NXP_EVENT_GET_WIPHY_NUM_BANDS 2
+
 #define WIFI_REG8(x)  (*(volatile unsigned char *)(x))
 #define WIFI_REG16(x) (*(volatile unsigned short *)(x))
 #define WIFI_REG32(x) (*(volatile unsigned int *)(x))
@@ -1761,7 +1763,8 @@ void wifi_wpa_supplicant_eapol_input(const uint8_t interface,
                                      const uint8_t *src_addr,
                                      const uint8_t *buffer,
                                      const uint16_t len);
-
+int wifi_nxp_get_wiphy(const unsigned int bss_type);
+int wifi_nxp_get_conn_info(uint16_t *beacon_interval, uint8_t *dtim_period, bool *twt_capable);
 t_u8 wifi_get_sec_channel_offset(unsigned int chan);
 int wifi_nxp_scan_res_get(void);
 int wifi_nxp_survey_res_get(void);

@@ -216,6 +216,8 @@ typedef struct
 #if CONFIG_WPA_SUPP
     void *if_priv;
     void *hapd_if_priv;
+    /** Supported bands info. @ref wifi_nxp_event_supported_band */
+    struct wifi_nxp_event_supported_band sband[WIFI_NXP_EVENT_GET_WIPHY_NUM_BANDS];
     wifi_nxp_callbk_fns_t *supp_if_callbk_fns;
     nxp_wifi_event_mlme_t mgmt_resp;
     nxp_wifi_assoc_event_mlme_t assoc_resp;
@@ -452,6 +454,7 @@ int wifi_setup_vht_cap(t_u32 *vht_capab, t_u8 *vht_mcs_set, t_u8 band);
 int wifi_setup_he_cap(nxp_wifi_he_capabilities *he_cap, t_u8 band);
 #endif
 int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info);
+int wifi_nxp_init_ap(nxp_wifi_ap_info_t *params);
 int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_time, const t_u8 *data, size_t data_len);
 int wifi_remain_on_channel(const bool status, const uint8_t channel, const uint32_t duration);
 int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params);

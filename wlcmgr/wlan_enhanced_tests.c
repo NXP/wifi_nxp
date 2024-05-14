@@ -1655,7 +1655,7 @@ static void test_wlan_twt_report(int argc, char **argv)
 static void dump_wlan_twt_information_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("wlan-11ax-twt-information", "<flow_id> <suspend_duration>\r\n");
+    (void)PRINTF("wlan-11ax-twt-information <flow_id> <suspend_duration>\r\n");
     (void)PRINTF("TWT information setting. \r\n");
     (void)PRINTF(
         "<flow_identifier>  TWT flow identifier, range: [0-7], must be same ID as the one got in TWT setup cmd\r\n");

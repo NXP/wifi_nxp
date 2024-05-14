@@ -2315,8 +2315,10 @@ static int wifi_set_ies_cfg(mlan_private *priv, t_u8 *ie, int ie_len)
                     ret = -WM_FAIL;
                     goto done;
                 }
+#if CONFIG_WPA_SUPP_WPS
                 wifi_d("Set VENDOR SPECIFIC IE, OUI: %02x:%02x:%02x:%02x\r\n", pvendor_ie->vend_hdr.oui[0],
                        pvendor_ie->vend_hdr.oui[1], pvendor_ie->vend_hdr.oui[2], pvendor_ie->vend_hdr.oui_type);
+#endif
                 break;
 #if CONFIG_11R
             case MOBILITY_DOMAIN:
@@ -2569,6 +2571,169 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
     bss.param.ssid_bssid.idx = (t_u32)idx + 1UL; /* + 1 req. by mlan */
     return wifi_send_bss_ioctl(&bss);
 }
+
+#define MAX_NUM_CHANNEL_2G  (14)
+#if CONFIG_5GHz_SUPPORT
+#define MAX_NUM_CHANNEL_5G  (28)
+#endif
+
+static struct wifi_nxp_event_get_wiphy wiphy;
+
+int wifi_nxp_get_wiphy(const unsigned int bss_type)
+{
+    int status = -WM_FAIL;
+    t_u8 bandwidth = wifi_uap_get_bandwidth();
+
+    wiphy.sband[0].wifi_nxp_n_channels = MAX_NUM_CHANNEL_2G;
+
+    wifi_setup_channel_info(&wiphy.sband[0].channels, wiphy.sband[0].wifi_nxp_n_channels,
+                            BAND_2GHZ);
+
+    wiphy.sband[0].wifi_nxp_n_bitrates = 12;
+
+    wiphy.sband[0].bitrates[0].wifi_nxp_bitrate = 10;
+    wiphy.sband[0].bitrates[1].wifi_nxp_bitrate = 20;
+    wiphy.sband[0].bitrates[2].wifi_nxp_bitrate = 55;
+    wiphy.sband[0].bitrates[3].wifi_nxp_bitrate = 110;
+    wiphy.sband[0].bitrates[4].wifi_nxp_bitrate = 60;
+    wiphy.sband[0].bitrates[5].wifi_nxp_bitrate = 90;
+    wiphy.sband[0].bitrates[6].wifi_nxp_bitrate = 120;
+    wiphy.sband[0].bitrates[7].wifi_nxp_bitrate = 180;
+    wiphy.sband[0].bitrates[8].wifi_nxp_bitrate = 240;
+    wiphy.sband[0].bitrates[9].wifi_nxp_bitrate = 360;
+    wiphy.sband[0].bitrates[10].wifi_nxp_bitrate = 480;
+    wiphy.sband[0].bitrates[11].wifi_nxp_bitrate = 540;
+
+    wiphy.sband[0].ht_cap.wifi_nxp_ht_supported = 1;
+
+    status = wifi_setup_ht_cap(&wiphy.sband[0].ht_cap.wifi_nxp_cap, (t_u8 *)(&wiphy.sband[0].ht_cap.mcs),
+                               &wiphy.sband[0].ht_cap.wifi_nxp_ampdu_factor, 0);
+    if (status != WM_SUCCESS)
+    {
+        wifi_e("%s: wifi nxp set 2G infra ht cap failed", __func__);
+        return -WM_FAIL;
+    }
+
+#if CONFIG_11AC
+    wiphy.sband[0].vht_cap.wifi_nxp_vht_supported = 1;
+
+    status = wifi_setup_vht_cap((t_u32 *)&wiphy.sband[0].vht_cap.wifi_nxp_cap,
+                                (t_u8 *)(&wiphy.sband[0].vht_cap.vht_mcs), 0);
+    if (status != WM_SUCCESS)
+    {
+        wifi_e("%s: wifi nxp set 2G infra vht cap failed", __func__);
+        return -WM_FAIL;
+    }
+#endif
+
+#if CONFIG_11AX
+    status = wifi_setup_he_cap((nxp_wifi_he_capabilities *)&wiphy.sband[0].he_cap, 0);
+    if (status != WM_SUCCESS)
+    {
+        wifi_e("%s: wifi nxp set 2G infra he cap failed", __func__);
+        return -WM_FAIL;
+    }
+
+    if (bandwidth == BANDWIDTH_20MHZ)
+    {
+        wiphy.sband[0].he_cap.phy_cap[HE_PHYCAP_CHANNEL_WIDTH_SET_IDX] = 0;
+    }
+#endif
+
+    wiphy.sband[0].band = 0;
+
+#if CONFIG_5GHz_SUPPORT
+    if (!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
+    {
+        wiphy.sband[1].wifi_nxp_n_channels = MAX_NUM_CHANNEL_5G;
+
+        wifi_setup_channel_info(&wiphy.sband[1].channels, wiphy.sband[1].wifi_nxp_n_channels,
+                            BAND_5GHZ);
+
+        wiphy.sband[1].wifi_nxp_n_bitrates = 8;
+
+        wiphy.sband[1].bitrates[0].wifi_nxp_bitrate = 60;
+        wiphy.sband[1].bitrates[1].wifi_nxp_bitrate = 90;
+        wiphy.sband[1].bitrates[2].wifi_nxp_bitrate = 120;
+        wiphy.sband[1].bitrates[3].wifi_nxp_bitrate = 180;
+        wiphy.sband[1].bitrates[4].wifi_nxp_bitrate = 240;
+        wiphy.sband[1].bitrates[5].wifi_nxp_bitrate = 360;
+        wiphy.sband[1].bitrates[6].wifi_nxp_bitrate = 480;
+        wiphy.sband[1].bitrates[7].wifi_nxp_bitrate = 540;
+
+        wiphy.sband[1].ht_cap.wifi_nxp_ht_supported = 1;
+
+        status = wifi_setup_ht_cap(&wiphy.sband[1].ht_cap.wifi_nxp_cap, (t_u8 *)(&wiphy.sband[1].ht_cap.mcs),
+                &wiphy.sband[1].ht_cap.wifi_nxp_ampdu_factor, 1);
+        if (status != WM_SUCCESS)
+        {
+            wifi_e("%s: wifi nxp set 2G infra ht cap failed", __func__);
+            return -WM_FAIL;
+        }
+
+#if CONFIG_11AC
+        wiphy.sband[1].vht_cap.wifi_nxp_vht_supported = 1;
+
+        status = wifi_setup_vht_cap((t_u32 *)&wiphy.sband[1].vht_cap.wifi_nxp_cap,
+                (t_u8 *)(&wiphy.sband[1].vht_cap.vht_mcs), 1);
+        if (status != WM_SUCCESS)
+        {
+            wifi_e("%s: wifi nxp set 2G infra vht cap failed", __func__);
+            return -WM_FAIL;
+        }
+#endif
+
+#if CONFIG_11AX
+        status = wifi_setup_he_cap((nxp_wifi_he_capabilities *)&wiphy.sband[1].he_cap, 1);
+        if (status != WM_SUCCESS)
+        {
+            wifi_e("%s: wifi nxp set 2G infra he cap failed", __func__);
+            return -WM_FAIL;
+        }
+
+        if (bandwidth == BANDWIDTH_20MHZ)
+        {
+            wiphy.sband[1].he_cap.phy_cap[HE_PHYCAP_CHANNEL_WIDTH_SET_IDX] = 0;
+        }
+#endif
+
+        wiphy.sband[1].band = 1;
+
+        if (status != WM_SUCCESS)
+        {
+            wifi_e("%s: wifi nxp set 5G infra ht cap failed", __func__);
+            return -WM_FAIL;
+        }
+    }
+#endif
+
+    if (wm_wifi.supp_if_callbk_fns->get_wiphy_callbk_fn)
+    {
+        if (bss_type == BSS_TYPE_STA)
+        {
+            wm_wifi.supp_if_callbk_fns->get_wiphy_callbk_fn(wm_wifi.if_priv, &wiphy, sizeof(wiphy));
+        }
+#if CONFIG_WPA_SUPP_AP
+        else if (bss_type == BSS_TYPE_UAP)
+        {
+            wm_wifi.supp_if_callbk_fns->get_wiphy_callbk_fn(wm_wifi.hapd_if_priv, &wiphy, sizeof(wiphy));
+        }
+#endif
+    }
+
+    return WM_SUCCESS;
+}
+
+int wifi_nxp_get_conn_info(uint16_t *beacon_interval, uint8_t *dtim_period, bool *twt_capable)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+
+    *beacon_interval = pmpriv->curr_bss_params.bss_descriptor.beacon_period;
+    *dtim_period = pmpriv->curr_bss_params.bss_descriptor.dtim_period;
+    *twt_capable = false;
+
+    return WM_SUCCESS;
+}
 #endif
 
 static void compute_rssi_values(HostCmd_DS_802_11_RSSI_INFO_RSP *prssi_info_rsp, wifi_rssi_info_t *rssi_info)
@@ -2797,10 +2962,6 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     {
 #if CONFIG_WPA_SUPP
                         nxp_wifi_acs_params acs_params;
-#ifndef SD8801
-                        t_u8 chan_offset;
-#endif
-
                         wm_wifi.cmd_resp_status = WM_SUCCESS;
 #ifndef SD8801
                         wifi_d("ACS scan done: bandcfg=%x, channel=%d\r\n", acs_scan->bandcfg, acs_scan->chan);
@@ -2820,6 +2981,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #endif
                         acs_params.ch_width = 20;
 #else
+                        t_u8 chan_offset;
                         acs_params.pri_freq = channel_to_frequency(acs_scan->chan, acs_scan->bandcfg.chanBand);
 
                         chan_offset = wifi_get_sec_channel_offset(acs_scan->chan);
@@ -6981,7 +7143,7 @@ void _wifi_set_mac_addr(const uint8_t *mac, mlan_bss_type bss_type)
     else if (bss_type == MLAN_BSS_TYPE_UAP)
     {
         (void)memcpy(&mlan_adap->priv[1]->curr_addr[0], &mac[0], MLAN_MAC_ADDR_LENGTH);
-#if CONFIG_WPA_SUPP
+#if CONFIG_HOSTAPD
         if (wm_wifi.supp_if_callbk_fns->mac_changed_callbk_fn)
         {
             wm_wifi.supp_if_callbk_fns->mac_changed_callbk_fn(wm_wifi.hapd_if_priv);

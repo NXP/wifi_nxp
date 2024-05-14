@@ -2148,7 +2148,6 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
                        const bool active_scan_triggered)
 {
     int ssid_len  = 0;
-    int ssid2_len = 0;
     char const *tmp_ssid = ssid;
     t_u8 i;
 #if CONFIG_COMBO_SCAN

@@ -126,6 +126,12 @@ void wlan_abort_split_scan(void)
     if (split_scan_in_progress)
     {
         abort_split_scan = true;
+#if CONFIG_WPA_SUPP
+        if (wm_wifi.supp_if_callbk_fns->scan_abort_callbk_fn)
+        {
+            wm_wifi.supp_if_callbk_fns->scan_abort_callbk_fn(wm_wifi.if_priv);
+        }
+#endif
     }
 }
 

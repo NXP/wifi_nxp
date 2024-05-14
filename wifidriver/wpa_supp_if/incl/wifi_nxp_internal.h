@@ -16,6 +16,170 @@
 #include <wifi_config_default.h>
 
 #if CONFIG_WPA_SUPP
+#define WIFI_NXP_HT_MCS_MASK_LEN 10
+#define WIFI_NXP_HT_MCS_RES_LEN 3
+
+/**
+ * @brief MCS information.
+ *
+ */
+struct wifi_nxp_event_mcs_info {
+    /** Highest supported RX rate */
+    unsigned short wifi_nxp_rx_highest;
+    /** RX mask */
+    unsigned char wifi_nxp_rx_mask[WIFI_NXP_HT_MCS_MASK_LEN];
+    /** TX parameters */
+    unsigned char wifi_nxp_tx_params;
+    /** reserved */
+    unsigned char wifi_nxp_reserved[WIFI_NXP_HT_MCS_RES_LEN];
+};
+
+/**
+ * @brief This structure represents HT capability parameters.
+ *
+ */
+struct wifi_nxp_event_sta_ht_cap {
+    /** 1 indicates HT Supported */
+    signed int wifi_nxp_ht_supported;
+    /** HT capabilities, as in the HT information IE */
+    unsigned short wifi_nxp_cap;
+    /** MCS information. @ref wifi_nxp_event_mcs_info */
+    struct wifi_nxp_event_mcs_info mcs;
+    /** A-MPDU factor, as in 11n */
+    unsigned char wifi_nxp_ampdu_factor;
+    /** A-MPDU density, as in 11n */
+    unsigned char wifi_nxp_ampdu_density;
+};
+
+#define WIFI_NXP_CHAN_FLAG_FREQUENCY_ATTR_NO_IR (1 << 0)
+#define WIFI_NXP_CHAN_FLAG_FREQUENCY_ATTR_NO_IBSS (1 << 1)
+#define WIFI_NXP_CHAN_FLAG_FREQUENCY_ATTR_RADAR (1 << 2)
+#define WIFI_NXP_CHAN_FLAG_FREQUENCY_ATTR_NO_HT40_MINUS (1 << 3)
+#define WIFI_NXP_CHAN_FLAG_FREQUENCY_ATTR_NO_HT40_PLUS (1 << 4)
+#define WIFI_NXP_CHAN_FLAG_FREQUENCY_ATTR_NO_80MHZ (1 << 5)
+#define WIFI_NXP_CHAN_FLAG_FREQUENCY_ATTR_NO_160MHZ (1 << 6)
+#define WIFI_NXP_CHAN_FLAG_FREQUENCY_ATTR_INDOOR_ONLY (1 << 7)
+#define WIFI_NXP_CHAN_FLAG_FREQUENCY_ATTR_GO_CONCURRENT (1 << 8)
+#define WIFI_NXP_CHAN_FLAG_FREQUENCY_ATTR_NO_20MHZ (1 << 9)
+#define WIFI_NXP_CHAN_FLAG_FREQUENCY_ATTR_NO_10MHZ (1 << 10)
+#define WIFI_NXP_CHAN_FLAG_FREQUENCY_DISABLED (1 << 11)
+
+#define WIFI_NXP_CHAN_DFS_VALID (1 << 12)
+#define WIFI_NXP_CHAN_DFS_CAC_TIME_VALID (1 << 13)
+
+/**
+ * @brief This structure represents channel parameters.
+ */
+struct wifi_nxp_event_channel {
+    /** channel flags WIFI_NXP_CHAN_FLAG_FREQUENCY_ATTR_NO_IBSS */
+    unsigned short wifi_nxp_flags;
+    /** maximum transmission power (in dBm) */
+    signed int wifi_nxp_max_power;
+    /** DFS state time */
+    unsigned int wifi_nxp_time;
+    /** DFS CAC time in ms */
+    unsigned int dfs_cac_msec;
+    /** Channel parameters are valid or not 1=valid */
+    signed char ch_valid;
+    /** Channel center frequency */
+    unsigned short center_frequency;
+    /** Current dfs state */
+    signed char dfs_state;
+};
+
+#define WIFI_NXP_EVENT_GET_WIPHY_FLAG_RATE_SHORT_PREAMBLE (1 << 0)
+/**
+ * @brief This structure represents rate information.
+ */
+struct wifi_nxp_event_rate {
+    /** WIFI_NXP_EVENT_GET_WIPHY_FLAG_RATE_SHORT_PREAMBLE */
+    unsigned short wifi_nxp_flags;
+    /** Bitrate in units of 100 kbps */
+    unsigned short wifi_nxp_bitrate;
+};
+
+/**
+ * @brief VHT MCS information.
+ *
+ */
+struct wifi_nxp_event_vht_mcs_info {
+    /** RX MCS map 2 bits for each stream, total 8 streams */
+    unsigned short rx_mcs_map;
+    /** Indicates highest long GI VHT PPDU data rate
+     *  STA can receive. Rate expressed in units of 1 Mbps.
+     *  If this field is 0 this value should not be used to
+     *  consider the highest RX data rate supported.
+     */
+    unsigned short rx_highest;
+    /** TX MCS map 2 bits for each stream, total 8 streams */
+    unsigned short tx_mcs_map;
+    /** Indicates highest long GI VHT PPDU data rate
+     *  STA can transmit. Rate expressed in units of 1 Mbps.
+     *  If this field is 0 this value should not be used to
+     *  consider the highest TX data rate supported.
+     */
+    unsigned short tx_highest;
+};
+
+/**
+ * @brief This structure represents VHT capability parameters.
+ *
+ */
+struct wifi_nxp_event_sta_vht_cap {
+    /** 1 indicates VHT Supported */
+    signed char wifi_nxp_vht_supported;
+    /** VHT capability info */
+    unsigned int wifi_nxp_cap;
+    /** Refer @ref wifi_nxp_event_vht_mcs_info */
+    struct wifi_nxp_event_vht_mcs_info vht_mcs;
+};
+
+#define WIFI_NXP_HE_MAX_MAC_CAPAB_SIZE  6
+#define WIFI_NXP_HE_MAX_PHY_CAPAB_SIZE  11
+#define WIFI_NXP_HE_MAX_MCS_CAPAB_SIZE  12
+#define WIFI_NXP_HE_MAX_PPET_CAPAB_SIZE 25
+
+/**
+ * @brief This structure represents HE capability parameters.
+ *
+ */
+struct wifi_nxp_event_sta_he_cap {
+    unsigned char wifi_nxp_he_supported;
+    unsigned char phy_cap[WIFI_NXP_HE_MAX_PHY_CAPAB_SIZE];
+    unsigned char mac_cap[WIFI_NXP_HE_MAX_MAC_CAPAB_SIZE];
+    unsigned char mcs[WIFI_NXP_HE_MAX_MCS_CAPAB_SIZE];
+    unsigned char ppet[WIFI_NXP_HE_MAX_PPET_CAPAB_SIZE];
+    unsigned short he_6ghz_capa;
+};
+
+/**
+ * @brief Frequency band information.
+ *
+ */
+struct wifi_nxp_event_supported_band {
+	/** No.of channels */
+	unsigned short wifi_nxp_n_channels;
+	/** No.of bitrates */
+	unsigned short wifi_nxp_n_bitrates;
+	/** Array of channels the hardware can operate in this band */
+	struct wifi_nxp_event_channel channels[29];
+	/** Array of bitrates the hardware can operate with in this band */
+	struct wifi_nxp_event_rate bitrates[13];
+	/** HT capabilities in this band */
+	struct wifi_nxp_event_sta_ht_cap ht_cap;
+	/** VHT capabilities in this band */
+	struct wifi_nxp_event_sta_vht_cap vht_cap;
+	/** HE capabilities in this band */
+	struct wifi_nxp_event_sta_he_cap he_cap;
+	/** the band this structure represents */
+	signed char band;
+};
+
+struct wifi_nxp_event_get_wiphy
+{
+    /** Supported bands info. @ref wifi_nxp_event_supported_band */
+    struct wifi_nxp_event_supported_band sband[WIFI_NXP_EVENT_GET_WIPHY_NUM_BANDS];
+};
 
 #define WIFI_HE_MAX_MAC_CAPAB_SIZE  6
 #define WIFI_HE_MAX_PHY_CAPAB_SIZE  11
@@ -439,6 +603,7 @@ typedef MLAN_PACK_START struct _wifi_nxp_callbk_fns
     void (*acs_channel_sel_callbk_fn)(void *if_priv, nxp_wifi_acs_params *acs_params);
 
     void (*mgmt_rx_callbk_fn)(void *if_priv, nxp_wifi_event_mlme_t *mgmt_rx_event, unsigned int event_len);
+    void (*get_wiphy_callbk_fn)(void *if_priv, struct wifi_nxp_event_get_wiphy *wiphy_info, unsigned int event_len);
     void (*eapol_rx_callbk_fn)(void *if_priv, nxp_wifi_event_eapol_mlme_t *mgmt_rx_event, unsigned int event_len);
     void (*unprot_mlme_mgmt_rx_callbk_fn)(void *if_priv,
                                           nxp_wifi_event_mlme_t *unprot_mlme_event,

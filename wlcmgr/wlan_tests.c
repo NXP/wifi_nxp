@@ -2844,6 +2844,7 @@ static void test_wlan_get_uap_channel(int argc, char **argv)
 
 static void test_wlan_get_uap_sta_list(int argc, char **argv)
 {
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     // #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
     int i;
     wifi_sta_list_t *sl = NULL;
@@ -2872,6 +2873,7 @@ static void test_wlan_get_uap_sta_list(int argc, char **argv)
     OSA_MemoryFree(sl);
 #else
     OSA_MemoryPoolFree(buf_256_MemoryPool, sl);
+#endif
 #endif
 }
 
@@ -5711,7 +5713,9 @@ static void dump_wlan_ft_roam_usage(void)
 
 static void test_wlan_ft_roam(int argc, char **argv)
 {
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     int ret;
+#endif
     t_u8 bssid[IEEEtypes_ADDRESS_SIZE] = {0};
     t_u8 channel                       = 0;
     if (argc != 3)
@@ -5738,12 +5742,13 @@ static void test_wlan_ft_roam(int argc, char **argv)
         dump_wlan_ft_roam_usage();
         return;
     }
-
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     ret = wlan_ft_roam(bssid, channel);
     if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Failed to start FT roaming\r\n");
     }
+#endif
 }
 #endif
 

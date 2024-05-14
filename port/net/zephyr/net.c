@@ -983,6 +983,7 @@ void deliver_packet_above(struct net_pkt *p, int recv_interface)
         case NET_ETH_PTYPE_IPV6:
 #endif
         case NET_ETH_PTYPE_ARP:
+        case NET_ETH_PTYPE_EAPOL:
             if (recv_interface >= MAX_INTERFACES_SUPPORTED)
             {
                 while (true)
@@ -998,11 +999,12 @@ void deliver_packet_above(struct net_pkt *p, int recv_interface)
                 p = NULL;
                 break;
             }
-			
+#if CONFIG_WIFI_SOFTAP_SUPPORT
             /* full packet send to tcpip_thread to process */
             if (recv_interface == WLAN_BSS_TYPE_UAP)
                 err = net_internal_rx_callback(g_uap.netif, p);
             else
+#endif
                 err = net_internal_rx_callback(g_mlan.netif, p);
             if (err != 0)
             {
@@ -1010,11 +1012,6 @@ void deliver_packet_above(struct net_pkt *p, int recv_interface)
                 (void)net_pkt_unref(p);
                 p = NULL;
             }
-            break;
-        case ETHTYPE_EAPOL:
-
-            (void)net_pkt_unref(p);
-            p = NULL;
             break;
         default:
             /* drop the packet */
@@ -1031,9 +1028,11 @@ static struct net_pkt *gen_pkt_from_data(t_u8 interface, t_u8 *payload, t_u16 da
 
 retry:
     /* We allocate a network buffer */
+#if CONFIG_WIFI_SOFTAP_SUPPORT
     if (interface == WLAN_BSS_TYPE_UAP)
         pkt = net_pkt_rx_alloc_with_buffer(g_uap.netif, datalen, AF_INET, 0, K_NO_WAIT);
     else
+#endif
         pkt = net_pkt_rx_alloc_with_buffer(g_mlan.netif, datalen, AF_INET, 0, K_NO_WAIT);
 
     if (pkt == NULL)
@@ -1064,9 +1063,11 @@ static struct net_pkt *gen_pkt_from_data_for_zerocopy(t_u8 interface, t_u8 *payl
 
 retry:
     /* We allocate a network buffer */
+#if CONFIG_WIFI_SOFTAP_SUPPORT
     if (interface == WLAN_BSS_TYPE_UAP)
         pkt = net_pkt_rx_alloc_with_buffer(g_uap.netif, datalen, AF_INET, 0, K_NO_WAIT);
     else
+#endif
         pkt = net_pkt_rx_alloc_with_buffer(g_mlan.netif, datalen, AF_INET, 0, K_NO_WAIT);
 
     if (pkt == NULL)
@@ -1206,8 +1207,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
             }
             p = NULL;
             break;
-        case ETHTYPE_EAPOL:
-
+        case NET_ETH_PTYPE_EAPOL:
             deliver_packet_above(p, recv_interface);
             break;
         default:
@@ -1276,6 +1276,7 @@ int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt)
     int retry                     = 0;
     t_u8 ra[MLAN_MAC_ADDR_LENGTH] = {0};
     bool is_tx_pause              = false;
+    t_u32 pkt_prio                = WMM_AC_BE;
 #endif
 
     t_u16 mtu = net_if_get_mtu(net_pkt_iface(pkt));
@@ -1288,10 +1289,13 @@ int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt)
     }
 
 #if CONFIG_WMM
-    t_u32 pkt_prio = wifi_wmm_get_pkt_prio(pkt, &tid);
-    if (pkt_prio == -WM_FAIL)
+    if (net_pkt_len > ETH_HDR_LEN)
     {
-        return -ENOMEM;
+        pkt_prio = wifi_wmm_get_pkt_prio(pkt, &tid);
+        if (pkt_prio == -WM_FAIL)
+        {
+            return -ENOMEM;
+        }
     }
 
     if (interface > WLAN_BSS_TYPE_UAP)
@@ -1366,7 +1370,14 @@ int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt)
     net_pkt_read(pkt, ((outbuf_t *)wmm_outbuf)->eth_header, ETH_HDR_LEN);
     ((outbuf_t *)wmm_outbuf)->buffer = pkt;
     /* Save the data payload pointer without ethernet header */
-    ((outbuf_t *)wmm_outbuf)->payload = pkt->cursor.pos;
+    if (net_pkt_len > ETH_HDR_LEN)
+    {
+        ((outbuf_t *)wmm_outbuf)->payload = pkt->cursor.pos;
+    }
+    else
+    {
+        ((outbuf_t *)wmm_outbuf)->payload = NULL;
+    }
     /* Driver will free this pbuf */
     net_pkt_ref(pkt);
 #else
@@ -2200,6 +2211,7 @@ int net_wlan_init(void)
         net_if_set_link_addr(g_mlan.netif, g_mlan.state.ethaddr.addr, NET_MAC_ADDR_LEN, NET_LINK_ETHERNET);
         ethernet_init(g_mlan.netif);
 
+#if CONFIG_WIFI_SOFTAP_SUPPORT
         /* init uAP netif */
         ret = wlan_get_mac_address_uap(g_uap.state.ethaddr.addr);
         if (ret != 0)
@@ -2210,7 +2222,7 @@ int net_wlan_init(void)
 
         net_if_set_link_addr(g_uap.netif, g_uap.state.ethaddr.addr, NET_MAC_ADDR_LEN, NET_LINK_ETHERNET);
         ethernet_init(g_uap.netif);
-
+#endif
         net_wlan_init_done = 1;
 
         status = OSA_TimerCreate((osa_timer_handle_t)dhcp_timer, DHCP_TIMEOUT, &dhcp_timer_cb, NULL, KOSA_TimerOnce,
@@ -2240,6 +2252,7 @@ void net_wlan_set_mac_address(unsigned char *sta_mac, unsigned char *uap_mac)
         net_if_set_link_addr(g_mlan.netif, g_mlan.state.ethaddr.addr, NET_MAC_ADDR_LEN, NET_LINK_ETHERNET);
     }
 
+#if CONFIG_WIFI_SOFTAP_SUPPORT
     if (uap_mac != NULL)
     {
 #if CONFIG_IPV6
@@ -2248,6 +2261,7 @@ void net_wlan_set_mac_address(unsigned char *sta_mac, unsigned char *uap_mac)
         (void)memcpy(g_uap.state.ethaddr.addr, &uap_mac[0], MLAN_MAC_ADDR_LENGTH);
         net_if_set_link_addr(g_uap.netif, g_uap.state.ethaddr.addr, NET_MAC_ADDR_LEN, NET_LINK_ETHERNET);
     }
+#endif
 }
 
 static int net_netif_deinit(struct net_if *netif)
@@ -2298,13 +2312,14 @@ int net_wlan_deinit(void)
         return -WM_FAIL;
     }
 
+#if CONFIG_WIFI_SOFTAP_SUPPORT
     ret = net_netif_deinit(g_uap.netif);
     if (ret != WM_SUCCESS)
     {
         net_e("UAP interface deinit failed");
         return -WM_FAIL;
     }
-
+#endif
     status = OSA_TimerDestroy((osa_timer_handle_t)dhcp_timer);
     if (status != KOSA_StatusSuccess)
     {
