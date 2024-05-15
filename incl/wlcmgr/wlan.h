@@ -6168,6 +6168,7 @@ void wlan_set_scan_channel_gap(unsigned scan_chan_gap);
 int wlan_host_11k_cfg(int enable_11k);
 
 bool wlan_get_host_11k_status();
+int wlan_set_host_11k_status(int enable_11k);
 
 /**
  * host send neighbor report request

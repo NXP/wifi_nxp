@@ -12965,6 +12965,16 @@ int wlan_host_11k_cfg(int enable_11k)
 #endif
 }
 
+int wlan_set_host_11k_status(int enable_11k)
+{
+    if (enable_11k)
+        wlan.enable_11k = true;
+    else
+        wlan.enable_11k = false;
+
+    return 0;
+}
+
 bool wlan_get_host_11k_status()
 {
     return wlan.enable_11k;
