@@ -453,6 +453,7 @@ static int wlan_cmd_append_wapi_ie(mlan_private *priv, t_u8 **ppBuffer)
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 /**
  *  @brief This function updates RSN IE in the association request.
  *
@@ -804,6 +805,7 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
     *rsn_ie_len = ptr - ptlv_rsn_ie->rsn_ie;
     return ret;
 }
+#endif
 
 #if CONFIG_11R
 /**
@@ -968,8 +970,10 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     t_u16 tmp_cap;
     t_u8 *pos, *auth_pos = NULL;
     t_u8 akm_type = 0;
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if CONFIG_11R
     t_u8 ft_akm = 0;
+#endif
 #endif
     MrvlIEtypes_PrevBssid_t *prev_bssid_tlv = MNULL;
     t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH]     = {0};

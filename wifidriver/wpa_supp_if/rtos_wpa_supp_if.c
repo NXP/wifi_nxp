@@ -2185,15 +2185,15 @@ void wifi_nxp_wpa_supp_event_proc_mgmt_rx(void *if_priv, nxp_wifi_event_mlme_t *
     unsigned int event_len, int rssi)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
-    const struct ieee80211_mgmt *mgmt = NULL;
-    const unsigned char *frame        = NULL;
-    unsigned int frame_len            = 0;
+    struct ieee80211_mgmt *mgmt                = NULL;
+    unsigned char *frame                       = NULL;
+    unsigned int frame_len                     = 0;
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
-    frame     = (const unsigned char *)mgmt_rx->frame.frame;
+    frame     = (unsigned char *)mgmt_rx->frame.frame;
     frame_len = mgmt_rx->frame.frame_len;
-    mgmt      = (const struct ieee80211_mgmt *)frame;
+    mgmt      = (struct ieee80211_mgmt *)frame;
 
     if (frame_len < 4 + (2 * WIFI_ETH_ADDR_LEN))
     {
