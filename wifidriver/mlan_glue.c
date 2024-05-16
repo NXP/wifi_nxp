@@ -6773,6 +6773,26 @@ int wrapper_wlan_set_regiontable(t_u8 region, t_u16 band)
     return WM_SUCCESS;
 }
 
+const chan_freq_power_t  *wlan_get_regulatory_domain(uint8_t chan_freq, int *cfp_no)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    const chan_freq_power_t *cfp;
+    uint16_t region_code = pmpriv->adapter->region_code;
+
+    if (chan_freq == 0)
+    {
+        cfp = wlan_get_region_cfp_table(pmpriv->adapter, region_code, (BAND_G | BAND_B | BAND_GN), cfp_no);
+    }
+#ifdef CONFIG_5GHz_SUPPORT
+    else
+    {
+        cfp = wlan_get_region_cfp_table(pmpriv->adapter, region_code, BAND_A, cfp_no);
+    }
+#endif
+
+    return cfp;
+}
+
 /*
  * This function is supposed to be called after scan is complete.
  */

@@ -7025,6 +7025,8 @@ int wlan_set_region_code(unsigned int region_code);
  */
 int wlan_get_region_code(unsigned int *region_code);
 
+const chan_freq_power_t  *wlan_get_regulatory_domain(uint8_t chan_freq, int *cfp_no);
+
 /** Set STA/uAP 80211d feature enable/disable
  *
  * \param[in] bss_type 0: STA, 1: uAP

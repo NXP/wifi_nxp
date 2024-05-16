@@ -144,8 +144,8 @@ void wifi_nxp_wpa_supp_event_proc_mgmt_rx(void *if_priv, nxp_wifi_event_mlme_t *
 void wifi_nxp_wpa_supp_event_get_wiphy(void *if_priv,
                                               struct wifi_nxp_event_get_wiphy *wiphy_info, unsigned int event_len);
 void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t *mlme_event, unsigned int event_len);
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 void wifi_nxp_wpa_supp_event_proc_chan_list_changed(void *if_priv, const char *alpha2);
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 void wifi_nxp_wpa_supp_event_proc_survey_res(void *if_priv,
                                              nxp_wifi_event_new_survey_result_t *survey_res,
                                              unsigned int event_len,

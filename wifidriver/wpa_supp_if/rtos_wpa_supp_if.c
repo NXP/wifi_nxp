@@ -126,6 +126,7 @@ static enum chan_width drv2supp_chan_width(int width)
 	}
 	return CHAN_WIDTH_UNKNOWN;
 }
+#endif
 
 void wifi_nxp_wpa_supp_event_proc_chan_list_changed(void *if_priv, const char *alpha2)
 {
@@ -167,7 +168,6 @@ void wifi_nxp_wpa_supp_event_proc_chan_list_changed(void *if_priv, const char *a
         wifi_if_ctx_rtos->supp_callbk_fns.chan_list_changed(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
     }
 }
-#endif
 
 void wifi_nxp_wpa_supp_event_proc_scan_start(void *if_priv)
 {

@@ -3190,6 +3190,8 @@ extern t_u16 cfp_code_index_bg[MRVDRV_MAX_CFP_CODE_BG];
 
 /** The table to keep CFP code for A */
 extern t_u16 cfp_code_index_a[MRVDRV_MAX_CFP_CODE_A];
+/** Get region cfp table*/
+const chan_freq_power_t *wlan_get_region_cfp_table(pmlan_adapter pmadapter, t_u8 region, t_u16 band, int *cfp_no);
 /** Set region table */
 mlan_status wlan_set_regiontable(mlan_private *pmpriv, t_u8 region, t_u16 band);
 /** Get radar detection requirements*/

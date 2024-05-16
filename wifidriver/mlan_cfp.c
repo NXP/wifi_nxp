@@ -764,7 +764,7 @@ static void *wlan_memchr(pmlan_adapter pmadapter, void *s, int c, int n)
  *
  *  @return           A pointer to CFP
  */
-static const chan_freq_power_t *wlan_get_region_cfp_table(pmlan_adapter pmadapter, t_u8 region, t_u16 band, int *cfp_no)
+const chan_freq_power_t *wlan_get_region_cfp_table(pmlan_adapter pmadapter, t_u8 region, t_u16 band, int *cfp_no)
 {
     t_u32 i;
     t_u8 cfp_bg;
