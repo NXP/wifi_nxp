@@ -7266,7 +7266,7 @@ static void test_wlan_set_mac_address(int argc, char **argv)
 
     wlan_set_mac_addr(raw_mac);
 }
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
+
 #if defined(RW610) && (CONFIG_WIFI_RESET)
 static void test_wlan_reset(int argc, char **argv)
 {
@@ -7297,7 +7297,7 @@ static void test_wlan_reset(int argc, char **argv)
     wlan_reset((cli_reset_option)option);
 }
 #endif
-#endif
+
 #if CONFIG_ECSA
 static void test_wlan_uap_set_ecsa_cfg(int argc, char **argv)
 {
@@ -12487,10 +12487,10 @@ static struct cli_command tests[] = {
 #if CONFIG_WMM
     {"wlan-wmm-stat", "<bss_type>", test_wlan_wmm_tx_stats},
 #endif
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if defined(RW610) && (CONFIG_WIFI_RESET)
     {"wlan-reset", NULL, test_wlan_reset},
 #endif
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     {"wlan-set-regioncode", "<region-code>", test_wlan_set_regioncode},
     {"wlan-get-regioncode", NULL, test_wlan_get_regioncode},
     {"wlan-11d-enable", "<sta/uap> <0/1>", test_wlan_11d_enable},

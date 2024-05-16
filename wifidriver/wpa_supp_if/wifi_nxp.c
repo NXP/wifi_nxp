@@ -25,6 +25,7 @@
 
 static t_u8 wifi_supp_init_done;
 static struct wifi_nxp_ctx_rtos *g_wifi_if_ctx_rtos = NULL;
+static struct wifi_nxp_ctx_rtos *g_wifi_hapd_if_ctx_rtos = NULL;
 
 int wifi_nxp_set_mac_addr(const t_u8 *mac);
 #if !CONFIG_WIFI_NM_WPA_SUPPLICANT
@@ -173,12 +174,15 @@ int wifi_supp_init(void)
 
     wm_wifi.supp_if_callbk_fns = (wifi_nxp_callbk_fns_t *)&supp_callbk_fns;
 
-    g_wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)OSA_MemoryAllocate(sizeof(struct wifi_nxp_ctx_rtos));
-
-    if (!g_wifi_if_ctx_rtos)
+    if (g_wifi_if_ctx_rtos == NULL)
     {
-        wifi_e("Interface ctx alloc failed.");
-        goto out;
+        g_wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)OSA_MemoryAllocate(sizeof(struct wifi_nxp_ctx_rtos));
+
+        if (!g_wifi_if_ctx_rtos)
+        {
+            wifi_e("Interface ctx alloc failed.");
+            goto out;
+        }
     }
 
     wm_wifi.if_priv = (void *)g_wifi_if_ctx_rtos;
@@ -209,15 +213,17 @@ int wifi_supp_init(void)
     (void)net_get_if_name_netif(sta_iface_name, iface);
 
 #if CONFIG_WIFI_SOFTAP_SUPPORT
-    g_wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)OSA_MemoryAllocate(sizeof(struct wifi_nxp_ctx_rtos));
-
-    if (!g_wifi_if_ctx_rtos)
+    if (g_wifi_hapd_if_ctx_rtos == NULL)
     {
-        wifi_e("Interface ctx alloc failed.");
-        goto out;
-    }
+        g_wifi_hapd_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)OSA_MemoryAllocate(sizeof(struct wifi_nxp_ctx_rtos));
 
-    wm_wifi.hapd_if_priv = (void *)g_wifi_if_ctx_rtos;
+        if (!g_wifi_hapd_if_ctx_rtos)
+        {
+            wifi_e("Interface ctx alloc failed.");
+            goto out;
+        }
+    }
+    wm_wifi.hapd_if_priv = (void *)g_wifi_hapd_if_ctx_rtos;
 
     iface = net_get_uap_interface();
 
@@ -277,17 +283,21 @@ void wifi_supp_deinit(void)
     }
 #endif
 
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     if (wm_wifi.if_priv)
     {
         OSA_MemoryFree(wm_wifi.if_priv);
         wm_wifi.if_priv = NULL;
+        g_wifi_if_ctx_rtos = NULL;
     }
 
     if (wm_wifi.hapd_if_priv)
     {
         OSA_MemoryFree(wm_wifi.hapd_if_priv);
         wm_wifi.hapd_if_priv = NULL;
+        g_wifi_hapd_if_ctx_rtos = NULL;
     }
+#endif
     wifi_supp_init_done = 0U;
 }
 

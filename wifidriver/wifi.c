@@ -190,7 +190,7 @@ static OSA_TASK_DEFINE(wifi_drv_tx_task, OSA_PRIORITY_HIGH, 1, CONFIG_WIFI_DRV_T
 #endif
 
 #if !CONFIG_WIFI_POWERSAVE_STACK_SIZE
-#define CONFIG_WIFI_POWERSAVE_STACK_SIZE (512)
+#define CONFIG_WIFI_POWERSAVE_STACK_SIZE (1024)
 #endif
 
 static void wifi_powersave_task(osa_task_param_t arg);

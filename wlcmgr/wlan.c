@@ -6727,8 +6727,8 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #if CONFIG_WPA_SUPP
 #if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     int ret = WM_SUCCESS;
-    struct netif *netif = net_get_sta_interface();
 #endif
+    struct netif *netif = net_get_sta_interface();
 #endif
 
     network = &wlan.networks[wlan.cur_network_idx];
@@ -6739,6 +6739,9 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlan.pending_assoc_request = false;
             if (!wlan.assoc_paused)
             {
+                if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
+                    break;
+
                 wlcm_request_connect(msg, &next, network);
             }
             else
@@ -6757,8 +6760,13 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
                 wlan.pending_disconnect_request = true;
             }
             wpa_supp_disconnect(netif);
+#else
+            supplicant_disconnect(net_if_get_device((void *)netif));
 #endif
 #endif
+            if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
+                break;
+
             wlcm_request_disconnect(&next, network);
             break;
 
@@ -6850,6 +6858,9 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 
         case WIFI_EVENT_PMK:
             wlcm_d("got event: PMK result: %s", msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
+            if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
+                break;
+
             wlcm_process_pmk_event(msg, &next, network);
             break;
             /* We have received a event from firmware whether
@@ -6871,14 +6882,23 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
                 wlan_switch_to_nondfs_channel();
 #endif
             }
+            if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
+                break;
+
             wlcm_process_authentication_event(msg, &next, network);
             break;
         case WIFI_EVENT_LINK_LOSS:
             wlcm_d("got event: link loss, code=%d", (int)msg->data);
+            if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
+                break;
+
             wlcm_process_link_loss_event(msg, &next, network);
             break;
         case WIFI_EVENT_RSSI_LOW:
             wlcm_d("got event: rssi low");
+            if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
+                break;
+
 #if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_ROAMING)
             wlcm_process_rssi_low_event(msg, &next, network);
 #else
@@ -6956,6 +6976,9 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #if (CONFIG_11K) || (CONFIG_11V)
         case WIFI_EVENT_NLIST_REPORT:
             wlcm_d("got event: neighbor list report");
+            if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
+                break;
+
             wlcm_process_neighbor_list_report_event(msg, &next, network);
             break;
 #endif
@@ -6971,16 +6994,25 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wrapper_clear_media_connected_event();
             wlan_switch_to_nondfs_channel();
 #endif
+            if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
+                break;
+
             wlcm_process_disassoc_event(msg, &next, network);
             break;
 
         case WIFI_EVENT_DEAUTHENTICATION:
             wlcm_d("got event: deauthentication");
+            if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
+                break;
+
             wlcm_process_deauthentication_event(msg, &next, network);
             break;
 
         case WIFI_EVENT_NET_STA_ADDR_CONFIG:
             wlcm_d("got event: TCP configured");
+            if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
+                break;
+
             wlcm_process_sta_addr_config_event(msg, &next, network);
             break;
 
@@ -6994,6 +7026,9 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
 
         case WIFI_EVENT_NET_DHCP_CONFIG:
+            if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
+                break;
+
             wlcm_process_net_dhcp_config(msg, &next, network);
             break;
 #if CONFIG_IPV6
@@ -7008,6 +7043,9 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 
         case WIFI_EVENT_CHAN_SWITCH_ANN:
             wlcm_d("got event: channel switch announcement");
+            if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
+                break;
+
             wlcm_process_channel_switch_ann(&next, network);
             break;
         case WIFI_EVENT_CHAN_SWITCH:
@@ -10287,10 +10325,9 @@ int wlan_stop_network(const char *name)
 #if defined(RW610)
 int wlan_remove_all_networks(void)
 {
-#if CONFIG_WPA2_ENTP
-    unsigned int i;
-#endif
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     void *intrfc_handle = NULL;
+#endif
     /* No need to remove net interfaces here, as they are added only once.
      * Moreover, removing and adding net interface will increase netif_num cumulatively,
      * which will mismatch with "ua2" during creating dhcpd.
@@ -10298,12 +10335,13 @@ int wlan_remove_all_networks(void)
     wlan_in_reset = true;
     wlan_remove_all_network_profiles();
 
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     intrfc_handle = net_get_sta_handle();
     net_interface_down(intrfc_handle);
 
     intrfc_handle = net_get_uap_handle();
     net_interface_down(intrfc_handle);
-
+#endif
     return WM_SUCCESS;
 }
 
@@ -10362,10 +10400,12 @@ void wlan_reset(cli_reset_option ResetOption)
             if (wlan.sta_state > CM_STA_ASSOCIATING)
             {
                 wlan_disconnect();
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
                 while (wlan.sta_state != CM_STA_IDLE)
                 {
                     OSA_TimeDelay(1000);
                 }
+#endif
             }
 
             /*Stop current uAP if uAP is started.*/
@@ -10462,7 +10502,11 @@ void wlan_reset(cli_reset_option ResetOption)
             }
 
             /* update the netif hwaddr after reset */
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+            wlan_set_mac_addr(&wlan.sta_mac[0]);
+#else
             net_wlan_set_mac_address(&wlan.sta_mac[0], &wlan.uap_mac[0]);
+#endif
             /* Unblock TX data */
             wifi_set_tx_status(WIFI_DATA_RUNNING);
             /* Unblock RX data */
