@@ -25,6 +25,9 @@
 
 #define MAX_MGMT_TX_FRAME_SIZE 1500
 
+static uint8_t *g_extended_capa = NULL;
+static uint8_t *g_extended_capa_mask = NULL;
+
 static unsigned char get_algo_from_auth_type(int wpa_auth_alg)
 {
     if (wpa_auth_alg & WPA_AUTH_ALG_OPEN)
@@ -524,8 +527,9 @@ void *wifi_nxp_wpa_supp_dev_init(void *supp_drv_if_ctx,
                                  rtos_wpa_supp_dev_callbk_fns *supp_callbk_fns)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
-
     const struct netif *iface = NULL;
+    u8 extended_capa[10]           = {0x00, 0x00, 0x8A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    u8 extended_capa_mask[10]      = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 #ifdef __ZEPHYR__
     iface = net_if_get_binding(iface_name);
@@ -573,6 +577,18 @@ void *wifi_nxp_wpa_supp_dev_init(void *supp_drv_if_ctx,
         return NULL;
     }
 
+    g_extended_capa = (uint8_t *)OSA_MemoryAllocate(sizeof(extended_capa));
+    if (g_extended_capa)
+    {
+        os_memcpy(g_extended_capa, extended_capa, sizeof(extended_capa));
+    }
+
+    g_extended_capa_mask = (uint8_t *)OSA_MemoryAllocate(sizeof(extended_capa_mask));
+    if (g_extended_capa_mask)
+    {
+        os_memcpy(g_extended_capa_mask, extended_capa_mask, sizeof(extended_capa_mask));
+    }
+
     memcpy(&wifi_if_ctx_rtos->supp_callbk_fns, supp_callbk_fns, sizeof(wifi_if_ctx_rtos->supp_callbk_fns));
     return wifi_if_ctx_rtos;
 }
@@ -588,6 +604,18 @@ void wifi_nxp_wpa_supp_dev_deinit(void *if_priv)
             OSA_MemoryFree(wifi_if_ctx_rtos->last_mgmt_tx_data);
         }
         memset(wifi_if_ctx_rtos, 0x00, sizeof(struct wifi_nxp_ctx_rtos));
+    }
+
+    if (g_extended_capa != NULL)
+    {
+        OSA_MemoryFree(g_extended_capa);
+        g_extended_capa = NULL;
+    }
+
+    if (g_extended_capa_mask != NULL)
+    {
+        OSA_MemoryFree(g_extended_capa_mask);
+        g_extended_capa_mask = NULL;
     }
 }
 
@@ -2009,9 +2037,6 @@ void wifi_nxp_wpa_supp_event_mgmt_rx_callbk_fn(void *if_priv,
 int wifi_nxp_wpa_supp_get_capa(void *if_priv, struct wpa_driver_capa *capa)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
-    u8 extended_capa[10]           = {0x00, 0x00, 0x8A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    u8 extended_capa_mask[10]      = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    unsigned int extended_capa_len = 10;
 
     if (!if_priv || !capa) {
         supp_e("%s: Invalid parameters", __func__);
@@ -2066,19 +2091,9 @@ int wifi_nxp_wpa_supp_get_capa(void *if_priv, struct wpa_driver_capa *capa)
     capa->max_stations         = 32;
     capa->max_acl_mac_addrs    = 32;
 
-    capa->extended_capa = os_malloc(extended_capa_len);
-    if (capa->extended_capa)
-    {
-        os_memcpy((u8 *)capa->extended_capa, extended_capa, extended_capa_len);
-    }
-
-    capa->extended_capa_mask = os_malloc(extended_capa_len);
-    if (capa->extended_capa_mask)
-    {
-        os_memcpy((u8 *)capa->extended_capa_mask, extended_capa_mask, extended_capa_len);
-    }
-
-    capa->extended_capa_len = extended_capa_len;
+    capa->extended_capa = g_extended_capa;
+    capa->extended_capa_mask = g_extended_capa_mask;
+    capa->extended_capa_len = 10;
 
 out:
     return 0;

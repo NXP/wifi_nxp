@@ -10325,9 +10325,8 @@ int wlan_stop_network(const char *name)
 #if defined(RW610)
 int wlan_remove_all_networks(void)
 {
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     void *intrfc_handle = NULL;
-#endif
+
     /* No need to remove net interfaces here, as they are added only once.
      * Moreover, removing and adding net interface will increase netif_num cumulatively,
      * which will mismatch with "ua2" during creating dhcpd.
@@ -10335,16 +10334,27 @@ int wlan_remove_all_networks(void)
     wlan_in_reset = true;
     wlan_remove_all_network_profiles();
 
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     intrfc_handle = net_get_sta_handle();
     net_interface_down(intrfc_handle);
 
     intrfc_handle = net_get_uap_handle();
     net_interface_down(intrfc_handle);
-#endif
     return WM_SUCCESS;
 }
 
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+int wlan_enable_all_networks(void)
+{
+    void *intrfc_handle = NULL;
+
+    intrfc_handle = net_get_sta_handle();
+    net_interface_up(intrfc_handle);
+
+    intrfc_handle = net_get_uap_handle();
+    net_interface_up(intrfc_handle);
+    return WM_SUCCESS;
+}
+#endif
 void wlan_destroy_all_tasks(void)
 {
     OSA_LockSchedule();
@@ -10504,6 +10514,7 @@ void wlan_reset(cli_reset_option ResetOption)
             /* update the netif hwaddr after reset */
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
             wlan_set_mac_addr(&wlan.sta_mac[0]);
+            wlan_enable_all_networks();
 #else
             net_wlan_set_mac_address(&wlan.sta_mac[0], &wlan.uap_mac[0]);
 #endif
