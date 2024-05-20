@@ -162,7 +162,7 @@ void wifi_nxp_wpa_supp_event_proc_chan_list_changed(void *if_priv, const char *a
     event.channel_list_changed.alpha2[1] = alpha2[1];
     event.channel_list_changed.alpha2[2] = alpha2[2];
 
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
     if (wifi_if_ctx_rtos->hostapd)
     {
         wifi_if_ctx_rtos->hostapd_callbk_fns.chan_list_changed(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
@@ -1639,7 +1639,6 @@ out:
     return ret;
 }
 
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 void wifi_nxp_wpa_supp_event_acs_channel_selected(void *if_priv, nxp_wifi_acs_params *acs_params)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
@@ -1668,18 +1667,17 @@ void wifi_nxp_wpa_supp_event_acs_channel_selected(void *if_priv, nxp_wifi_acs_pa
     event.acs_selected_channels.ch_width = acs_params->ch_width;
     event.acs_selected_channels.hw_mode  = (enum hostapd_hw_mode)acs_params->hw_mode;
 
-#if CONFIG_HOSTAPD
     if (wifi_if_ctx_rtos->hostapd)
     {
         wifi_if_ctx_rtos->hostapd_callbk_fns.acs_channel_sel(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
     }
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     else
-#endif
     {
         wifi_if_ctx_rtos->supp_callbk_fns.acs_channel_sel(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
     }
-}
 #endif
+}
 
 void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t *mlme_event, unsigned int event_len)
 {
@@ -1722,7 +1720,7 @@ void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t
         return;
     }
 
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
     if (wifi_if_ctx_rtos->hostapd)
     {
         wifi_if_ctx_rtos->hostapd_callbk_fns.mgmt_tx_status(wifi_if_ctx_rtos->hapd_drv_if_ctx,
@@ -1919,6 +1917,13 @@ int wifi_nxp_parse_sband( struct wifi_nxp_event_supported_band *event,
     band->vht_cap.vht_mcs.tx_mcs_map = event->vht_cap.vht_mcs.tx_mcs_map;
     band->vht_cap.vht_mcs.tx_highest = event->vht_cap.vht_mcs.tx_highest;
 
+    band->he_cap.wpa_supp_he_supported = event->he_cap.wifi_nxp_he_supported;
+    band->he_cap.he_6ghz_capa = event->he_cap.he_6ghz_capa;
+    memcpy(band->he_cap.mac_cap, event->he_cap.mac_cap, WIFI_NXP_HE_MAX_MAC_CAPAB_SIZE);
+    memcpy(band->he_cap.phy_cap, event->he_cap.phy_cap, WIFI_NXP_HE_MAX_PHY_CAPAB_SIZE);
+    memcpy(band->he_cap.mcs, event->he_cap.mcs, WIFI_NXP_HE_MAX_MCS_CAPAB_SIZE);
+    memcpy(band->he_cap.ppet, event->he_cap.ppet, WIFI_NXP_HE_MAX_PPET_CAPAB_SIZE);
+
     band->band = event->band;
 
     return WM_SUCCESS;
@@ -1944,13 +1949,31 @@ void wifi_nxp_wpa_supp_event_get_wiphy(void *if_priv,
         if (wifi_nxp_parse_sband(&wiphy_info->sband[i], &band) != WM_SUCCESS) {
             continue;
         }
-        if (wifi_if_ctx_rtos->supp_drv_if_ctx && wifi_if_ctx_rtos->supp_callbk_fns.get_wiphy_res) {
-            wifi_if_ctx_rtos->supp_callbk_fns.get_wiphy_res(wifi_if_ctx_rtos->supp_drv_if_ctx, &band);
+        if (wifi_if_ctx_rtos->bss_type == BSS_TYPE_STA)
+        {
+            if (wifi_if_ctx_rtos->supp_drv_if_ctx && wifi_if_ctx_rtos->supp_callbk_fns.get_wiphy_res) {
+                wifi_if_ctx_rtos->supp_callbk_fns.get_wiphy_res(wifi_if_ctx_rtos->supp_drv_if_ctx, &band);
+            }
+        }
+        else
+        {
+           if (wifi_if_ctx_rtos->hapd_drv_if_ctx && wifi_if_ctx_rtos->hostapd_callbk_fns.get_wiphy_res) {
+                wifi_if_ctx_rtos->hostapd_callbk_fns.get_wiphy_res(wifi_if_ctx_rtos->hapd_drv_if_ctx, &band);
+           }
         }
     }
 
-    if (wifi_if_ctx_rtos->supp_drv_if_ctx && wifi_if_ctx_rtos->supp_callbk_fns.get_wiphy_res) {
-        wifi_if_ctx_rtos->supp_callbk_fns.get_wiphy_res(wifi_if_ctx_rtos->supp_drv_if_ctx, NULL);
+    if (wifi_if_ctx_rtos->bss_type == BSS_TYPE_STA)
+    {
+        if (wifi_if_ctx_rtos->supp_drv_if_ctx && wifi_if_ctx_rtos->supp_callbk_fns.get_wiphy_res) {
+             wifi_if_ctx_rtos->supp_callbk_fns.get_wiphy_res(wifi_if_ctx_rtos->supp_drv_if_ctx, NULL);
+        }
+    }
+    else
+    {
+        if (wifi_if_ctx_rtos->hapd_drv_if_ctx && wifi_if_ctx_rtos->hostapd_callbk_fns.get_wiphy_res) {
+             wifi_if_ctx_rtos->hostapd_callbk_fns.get_wiphy_res(wifi_if_ctx_rtos->hapd_drv_if_ctx, NULL);
+        }
     }
 }
 
@@ -2227,7 +2250,7 @@ void wifi_nxp_wpa_supp_event_proc_mgmt_rx(void *if_priv, nxp_wifi_event_mlme_t *
         return;
     }
 
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
     if (wifi_if_ctx_rtos->hostapd)
     {
         wifi_if_ctx_rtos->hostapd_callbk_fns.mgmt_rx(wifi_if_ctx_rtos->hapd_drv_if_ctx,
@@ -2432,7 +2455,7 @@ out:
 }
 #endif
 
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
 void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
                                 const char *iface_name,
                                 rtos_hostapd_dev_callbk_fns *hostapd_callbk_fns)

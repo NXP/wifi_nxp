@@ -826,6 +826,13 @@ int wifi_uap_set_bandwidth(const t_u8 bandwidth)
 #endif
     )
     {
+#ifdef RW610
+        if (bandwidth != BANDWIDTH_20MHZ)
+        {
+           wuap_e("Error! RW610 only supports 20MHz");
+		   return -WM_FAIL;
+        }
+#endif
         wm_wifi.bandwidth = bandwidth;
         return WM_SUCCESS;
     }

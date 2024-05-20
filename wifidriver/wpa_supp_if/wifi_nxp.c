@@ -127,9 +127,9 @@ static void wifi_nxp_event_reamin_on_channel(void *if_priv, int cancel_channel)
 static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
     .mac_changed_callbk_fn         = wifi_nxp_wpa_supp_event_proc_mac_changed,
     .chan_list_changed_callbk_fn   = wifi_nxp_wpa_supp_event_proc_chan_list_changed,
+    .acs_channel_sel_callbk_fn     = wifi_nxp_wpa_supp_event_acs_channel_selected,
 #if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     .survey_res_callbk_fn          = wifi_nxp_wpa_supp_event_proc_survey_res,
-    .acs_channel_sel_callbk_fn     = wifi_nxp_wpa_supp_event_acs_channel_selected,
     .remain_on_channel_callbk_fn   = wifi_nxp_event_reamin_on_channel,
     .eapol_rx_callbk_fn            = wifi_nxp_wpa_supp_event_proc_eapol_rx,
     .ecsa_complete_callbk_fn       = wifi_nxp_wpa_supp_event_proc_ecsa_complete,

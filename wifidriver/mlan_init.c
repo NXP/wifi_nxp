@@ -712,6 +712,11 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->hw_dot_11ac_mcs_support   = 0;
     pmadapter->usr_dot_11ac_opermode_bw  = 0;
     pmadapter->usr_dot_11ac_opermode_nss = 0;
+#ifdef CONFIG_WIFI_NM_WPA_SUPPLICANT
+    pmadapter->usr_dot_11n_enable = MTRUE;
+    pmadapter->usr_dot_11ac_enable = MTRUE;
+    pmadapter->usr_dot_11ax_enable = MTRUE;
+#else
 #if CONFIG_WIFI_CAPA
     pmadapter->usr_dot_11n_enable = MFALSE;
 #if CONFIG_11AC
@@ -721,7 +726,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->usr_dot_11ax_enable = MFALSE;
 #endif
 #endif
-
+#endif
     /* Initialize 802.11d */
     wlan_11d_init(pmadapter);
     wlan_11h_init(pmadapter);

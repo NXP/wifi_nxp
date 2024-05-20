@@ -141,12 +141,12 @@ void wifi_nxp_wpa_supp_event_get_wiphy(void *if_priv,
                                               struct wifi_nxp_event_get_wiphy *wiphy_info, unsigned int event_len);
 void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t *mlme_event, unsigned int event_len);
 void wifi_nxp_wpa_supp_event_proc_chan_list_changed(void *if_priv, const char *alpha2);
+void wifi_nxp_wpa_supp_event_acs_channel_selected(void *if_priv, nxp_wifi_acs_params *acs_params);
 #if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 void wifi_nxp_wpa_supp_event_proc_survey_res(void *if_priv,
                                              nxp_wifi_event_new_survey_result_t *survey_res,
                                              unsigned int event_len,
                                              bool more_res);
-void wifi_nxp_wpa_supp_event_acs_channel_selected(void *if_priv, nxp_wifi_acs_params *acs_params);
 void wifi_nxp_wpa_supp_event_proc_eapol_rx(void *if_priv,
                                            nxp_wifi_event_eapol_mlme_t *eapol_rx,
                                            unsigned int event_len);

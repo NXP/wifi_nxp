@@ -853,10 +853,21 @@ static bool is_state(enum cm_sta_state state)
     return (wlan.sta_state == state);
 }
 
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+static bool is_uap_state(int state)
+{
+    struct netif *netif = net_get_uap_interface();
+    int curr_state = 0;
+
+    hapd_state(net_if_get_device((void *)netif), &curr_state);
+    return (state == curr_state);
+}
+#else
 static bool is_uap_state(enum cm_uap_state state)
 {
     return (wlan.uap_state == state);
 }
+#endif
 
 static int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
 {
@@ -5754,12 +5765,12 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
 {
     struct wlan_network *network = NULL;
     enum cm_uap_state next       = wlan.uap_state;
-    int ret                      = 0;
     void *if_handle              = NULL;
 #if CONFIG_WPA_SUPP
 #if !CONFIG_WIFI_NM_WPA_SUPPLICANT
-    struct netif *netif = net_get_uap_interface();
+    int ret                      = 0;
 #endif
+    struct netif *netif = net_get_uap_interface();
 #endif
 
     network = &wlan.networks[wlan.cur_uap_network_idx];
@@ -5775,15 +5786,16 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
             next = wlan.uap_state;
             break;
         case CM_UAP_USER_REQUEST_STOP:
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+            supplicant_ap_disable(net_if_get_device((void *)netif));
+#else
             if (wlan.uap_state < CM_UAP_CONFIGURED)
             {
                 break;
             }
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
+
             (void)do_stop(&wlan.networks[wlan.cur_uap_network_idx]);
-#endif
             next = wlan.uap_state;
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if CONFIG_WPA_SUPP
             if (wlan.status_timeout)
             {
@@ -5795,6 +5807,12 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
 #endif
             break;
         case WIFI_EVENT_UAP_STARTED:
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+            if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
+            {
+                CONNECTION_EVENT(WLAN_REASON_UAP_SUCCESS, NULL);
+            }
+#else
             if (!is_uap_state(CM_UAP_CONFIGURED))
             {
                 wlcm_w(
@@ -5817,13 +5835,11 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
                     if_handle = net_get_wfd_handle();
                 }
 #endif /* CONFIG_P2P */
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if CONFIG_WPA_SUPP
                 OSA_TimerDeactivate((osa_timer_handle_t)wlan.supp_status_timer);
                 wlan.status_timeout = 0;
 
                 wpa_supp_network_status(netif, network);
-#endif
 #endif
                 ret = net_configure_address((struct net_ip_config *)&network->ip, if_handle);
                 if (ret != 0)
@@ -5840,6 +5856,7 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
             {
                 CONNECTION_EVENT(WLAN_REASON_UAP_START_FAILED, NULL);
             }
+#endif
             break;
         case WIFI_EVENT_UAP_CLIENT_ASSOC:
 #if CONFIG_WIFI_UAP_WORKAROUND_STICKY_TIM
@@ -9673,8 +9690,17 @@ int wlan_set_rssi_threshold(int rssithr)
 
 bool is_uap_started(void)
 {
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    struct netif *netif = net_get_uap_interface();
+    int state = 0;
+
+    hapd_state(net_if_get_device((void *)netif), &state);
+    return (state == HAPD_IFACE_ENABLED);
+#else
     return is_uap_state(CM_UAP_IP_UP);
+#endif
 }
+
 bool is_sta_connected(void)
 {
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
@@ -10182,6 +10208,16 @@ void wlan_reset(cli_reset_option ResetOption)
             }
 
             /*Stop current uAP if uAP is started.*/
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+            if (is_uap_started())
+            {
+                send_user_request(CM_UAP_USER_REQUEST_STOP, 0);
+                while(!is_uap_state(HAPD_IFACE_DISABLED))
+                {
+                     OSA_TimeDelay(1000);
+                }
+            }
+#else
             if (wlan.uap_state > CM_UAP_CONFIGURED)
             {
                 wlan_stop_network(wlan.networks[wlan.cur_uap_network_idx].name);
@@ -10190,6 +10226,7 @@ void wlan_reset(cli_reset_option ResetOption)
                     OSA_TimeDelay(1000);
                 }
             }
+#endif
 #if CONFIG_CPU_LOADING
             if(cpu_loading.status != CPU_LOADING_STATUS_DEAD)
                 wlan_cpu_loading_stop();
@@ -12437,6 +12474,8 @@ int wlan_uap_set_bandwidth(const uint8_t bandwidth)
     struct netif *netif = net_get_uap_interface();
 
     wpa_supp_set_ap_bw(netif, bandwidth);
+#else
+    return wifi_uap_set_bandwidth(bandwidth);
 #endif
 #endif
 #endif

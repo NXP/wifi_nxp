@@ -47,7 +47,7 @@ struct wifi_nxp_ctx_rtos
     unsigned int remain_on_channel_freq;
     unsigned int remain_on_channel_duration;
     bool remain_on_chan_is_canceled;
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
     rtos_hostapd_dev_callbk_fns hostapd_callbk_fns;
 #endif
     int mgmt_tx_status;
