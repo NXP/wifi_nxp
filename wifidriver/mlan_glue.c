@@ -2730,7 +2730,7 @@ int wifi_nxp_get_conn_info(uint16_t *beacon_interval, uint8_t *dtim_period, bool
 
     *beacon_interval = pmpriv->curr_bss_params.bss_descriptor.beacon_period;
     *dtim_period = pmpriv->curr_bss_params.bss_descriptor.dtim_period;
-    *twt_capable = false;
+    *twt_capable = wlan_check_ap_11ax_twt_supported(&(pmpriv->curr_bss_params.bss_descriptor)) ? true : false;
 
     return WM_SUCCESS;
 }

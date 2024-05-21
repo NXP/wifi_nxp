@@ -2116,12 +2116,14 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 switch (pext_tlv->ext_id)
                 {
                     case HE_CAPABILITY:
-                        pbss_entry->phe_cap       = (IEEEtypes_HECap_t *)pcurrent_ptr;
-                        pbss_entry->he_cap_offset = (t_u16)(pcurrent_ptr - pbss_entry->pbeacon_buf);
+                        /* Save it here since we do not have beacon buffer */
+                        (void)__memcpy(NULL, &pbss_entry->he_cap_saved, pcurrent_ptr, sizeof(IEEEtypes_HECap_t));
+                        pbss_entry->phe_cap = &pbss_entry->he_cap_saved;
                         break;
                     case HE_OPERATION:
-                        pbss_entry->phe_oprat       = pext_tlv;
-                        pbss_entry->he_oprat_offset = (t_u16)(pcurrent_ptr - pbss_entry->pbeacon_buf);
+                        /* Save it here since we do not have beacon buffer */
+                        (void)__memcpy(NULL, &pbss_entry->he_oprat_saved, pcurrent_ptr, MIN(total_ie_len, sizeof(IEEEtypes_HeOp_t)));
+                        pbss_entry->phe_oprat = &pbss_entry->he_oprat_saved;
                         break;
                     default:
                         PRINTM(MINFO, "Unexpected extension id\n");
@@ -3538,6 +3540,16 @@ static void adjust_pointers_to_internal_buffers(BSSDescriptor_t *pbss_entry, BSS
         pbss_entry->pext_cap = &pbss_entry->ext_cap_saved;
     }
 #endif
+#if CONFIG_11AX
+    if (pbss_entry->pext_cap != NULL)
+    {
+        pbss_entry->phe_cap = &pbss_entry->he_cap_saved;
+    }
+    if (pbss_entry->phe_oprat != NULL)
+    {
+        pbss_entry->phe_oprat = &pbss_entry->he_oprat_saved;
+    }
+ #endif
     if (pbss_entry->pbss_co_2040 != NULL)
     {
         pbss_entry->pbss_co_2040 = &pbss_entry->bss_co_2040_saved;

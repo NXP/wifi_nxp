@@ -2040,6 +2040,115 @@ typedef MLAN_PACK_START struct _IEEEtypes_HECap_t
     t_u8 he_txrx_mcs_support[4];
     /** PPE Thresholds (optional) */
 } MLAN_PACK_END IEEEtypes_HECap_t, *pIEEEtypes_HECap_t;
+
+typedef MLAN_PACK_START struct _IEEEtypes_HeOpParam_t {
+#ifdef BIG_ENDIAN_SUPPORT
+    /** Reserved, including 6G Operation Info Pressent (bit17) */
+    t_u8  reserved : 6;                             /* bit 18-23 */
+    /* 6g operation info present */
+    t_u8  he_6g_op_info_present :1;                 /* bit 17 */
+    /** ER SU Disable */
+    t_u8  er_su_disable : 1;                        /* bit 16 */
+    /** Co-Hosted BSS */
+    t_u16 co_located_bss : 1;                       /* bit 15 */
+    /** VHT Operation Info Present */
+    t_u16 vht_op_info_present : 1;                  /* bit 14 */
+    /** TXOP Duration RTS Threshold */
+    t_u16 txop_dur_rts_threshold : 10;              /* bit 4-13 */
+    /** TWT Required */
+    t_u16 twt_req : 1;                              /* bit 3 */
+    /** Default PE Duration */
+    t_u16 default_pe_dur : 3;                       /* bit 0-2 */
+#else
+    /** Default PE Duration */
+    t_u16 default_pe_dur : 3;                       /* bit 0-2 */
+    /** TWT Required */
+    t_u16 twt_req : 1;                              /* bit 3 */
+    /** TXOP Duration RTS Threshold */
+    t_u16 txop_dur_rts_threshold : 10;              /* bit 4-13 */
+    /** VHT Operation Info Present */
+    t_u16 vht_op_info_present : 1;                  /* bit 14 */
+    /** Co-Hosted BSS */
+    t_u16 co_located_bss : 1;                       /* bit 15 */
+    /** ER SU Disable */
+    t_u8  er_su_disable : 1;                        /* bit 16 */
+    /* 6g operation info present */
+    t_u8  he_6g_op_info_present :1;                 /* bit 17 */
+    /** Reserved bit 18-23 */
+    t_u8  reserved : 6;                             /* bit 18-23 */
+#endif
+} MLAN_PACK_END IEEEtypes_HeOpParam_t;
+
+typedef MLAN_PACK_START struct _IEEEtypes_HeBssColorInfo_t {
+#ifdef BIG_ENDIAN_SUPPORT
+    /** BSS Color Disabled */
+    t_u8 bss_color_disabled : 1;                    /* bit 7 */
+    /** Partial BSS Color */
+    t_u8 partial_bss_color : 1;                     /* bit 6 */
+    /** BSS Color */
+    t_u8 bss_color : 6;                             /* bit 0-5 */
+#else
+    /** BSS Color */
+    t_u8 bss_color : 6;                             /* bit 0-5 */
+    /** Partial BSS Color */
+    t_u8 partial_bss_color : 1;                     /* bit 6 */
+    /** BSS Color Disabled */
+    t_u8 bss_color_disabled : 1;                    /* bit 7 */
+#endif
+} MLAN_PACK_END IEEEtypes_HeBssColorInfo_t;
+
+typedef MLAN_PACK_START struct _IEEEtypes_HeMcsMap_t {
+#ifdef BIG_ENDIAN_SUPPORT
+    /** Max HE-MAC for 8 SS */
+    t_u8 max_mcs_8ss: 2;
+    /** Max HE-MAC for 7 SS */
+    t_u8 max_mcs_7ss: 2;
+    /** Max HE-MAC for 6 SS */
+    t_u8 max_mcs_6ss: 2;
+    /** Max HE-MAC for 5 SS */
+    t_u8 max_mcs_5ss: 2;
+    /** Max HE-MAC for 4 SS */
+    t_u8 max_mcs_4ss: 2;
+    /** Max HE-MAC for 3 SS */
+    t_u8 max_mcs_3ss: 2;
+    /** Max HE-MAC for 2 SS */
+    t_u8 max_mcs_2ss: 2;
+    /** Max HE-MAC for 1 SS */
+    t_u8 max_mcs_1ss: 2;
+#else
+    /** Max HE-MAC for 1 SS */
+    t_u8 max_mcs_1ss: 2;
+    /** Max HE-MAC for 2 SS */
+    t_u8 max_mcs_2ss: 2;
+    /** Max HE-MAC for 3 SS */
+    t_u8 max_mcs_3ss: 2;
+    /** Max HE-MAC for 4 SS */
+    t_u8 max_mcs_4ss: 2;
+    /** Max HE-MAC for 5 SS */
+    t_u8 max_mcs_5ss: 2;
+    /** Max HE-MAC for 6 SS */
+    t_u8 max_mcs_6ss: 2;
+    /** Max HE-MAC for 7 SS */
+    t_u8 max_mcs_7ss: 2;
+    /** Max HE-MAC for 8 SS */
+    t_u8 max_mcs_8ss: 2;
+#endif
+} MLAN_PACK_END IEEEtypes_HeMcsMap_t, *pIEEEtypes_HeMcsMap_t;
+
+typedef MLAN_PACK_START struct _IEEEtypes_HeOp_t {
+    /** Generic IE header */
+    IEEEtypes_Header_t ieee_hdr;
+    /** Element id extension */
+    t_u8 ext_id;
+    /** HE Operation Parameters */
+    IEEEtypes_HeOpParam_t           he_op_param;
+    /** BSS Color Info */
+    IEEEtypes_HeBssColorInfo_t      bss_color_info;
+    /** Basic HE-MCS and NSS Set */
+    IEEEtypes_HeMcsMap_t            basic_he_mcs_nss;
+    /** Optional Field, including VHT Operation Info Max Co-Hosted BSSID Indicator, and 6Ghz Operation Info  */
+    t_u8 option[9];
+} MLAN_PACK_END IEEEtypes_HeOp_t;
 #endif
 
 /** MBO IE header */
@@ -2402,9 +2511,11 @@ typedef struct _BSSDescriptor_t
     /** HE Capability IE offset */
     t_u16 he_cap_offset;
     /** HE operation IE */
-    IEEEtypes_Extension_t *phe_oprat;
+    IEEEtypes_HeOp_t *phe_oprat;
     /** HE operation IE offset */
     t_u16 he_oprat_offset;
+    IEEEtypes_HECap_t he_cap_saved;
+    IEEEtypes_HeOp_t he_oprat_saved;
 #endif
     /*
       fixme: The legacy code used IEEEtypes_RSN_IE_t which is of 24
