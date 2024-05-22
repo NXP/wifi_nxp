@@ -900,6 +900,9 @@ static bool is_uap_state(enum cm_uap_state state)
 
 static int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
 {
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    net_get_if_ip_addr(ipv4_addr, net_get_sta_handle());
+#else
     struct wlan_network* network = NULL;
 
     if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
@@ -915,7 +918,7 @@ static int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
     }
 
     *ipv4_addr = network->ip.ipv4.address;
-
+#endif
     return WM_SUCCESS;
 }
 
@@ -9869,6 +9872,15 @@ int wlan_get_current_network_bssid(char *bssid)
         return -WM_E_INVAL;
     }
 
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    struct netif *netif = net_get_sta_interface();
+    struct wifi_iface_status status;
+
+    memset(&status, 0x0, sizeof(status));
+    supplicant_status(net_if_get_device((void *)netif), &status);
+    memcpy(bssid, status.bssid, MLAN_MAC_ADDR_LENGTH);
+    return WM_SUCCESS;
+#else
     if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
     {
         (void)memcpy((void *)bssid, (const void *)&wlan.networks[wlan.cur_network_idx].bssid, IEEEtypes_ADDRESS_SIZE);
@@ -9877,6 +9889,7 @@ int wlan_get_current_network_bssid(char *bssid)
     }
 
     return WLAN_ERROR_STATE;
+#endif
 }
 
 int wlan_get_current_uap_network(struct wlan_network *network)
@@ -9928,12 +9941,27 @@ bool is_uap_started(void)
 }
 bool is_sta_connected(void)
 {
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    struct netif *netif = net_get_sta_interface();
+    struct wifi_iface_status status;
+
+    memset(&status, 0x0, sizeof(status));
+    supplicant_status(net_if_get_device((void *)netif), &status);
+    return (status.state == WPA_COMPLETED);
+#else
     return (wlan.sta_state == CM_STA_CONNECTED);
+#endif
 }
 
 bool is_sta_ipv4_connected(void)
 {
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    int ip = 0;
+    net_get_if_ip_addr(&ip, net_get_sta_handle());
+    return (ip == 0 ? false : true);
+#else
     return (wlan.sta_ipv4_state == CM_STA_CONNECTED);
+#endif
 }
 
 #if CONFIG_IPV6
