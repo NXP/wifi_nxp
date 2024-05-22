@@ -10339,6 +10339,10 @@ int wlan_remove_all_networks(void)
 
     intrfc_handle = net_get_uap_handle();
     net_interface_down(intrfc_handle);
+#ifdef __ZEPHYR__
+    /* wait for mgmt_event handled */
+    OSA_TimeDelay(500);
+#endif
     return WM_SUCCESS;
 }
 
