@@ -3319,6 +3319,9 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
         /* Synchronize CFP code with region code */
         pmadapter->cfp_code_bg = (t_u8)pmadapter->region_code;
         pmadapter->cfp_code_a  = (t_u8)pmadapter->region_code;
+        /* Set country code */
+        (void)__memcpy(pmadapter, pmadapter->country_code,
+                wlan_11d_code_2_region(pmadapter, (t_u8)pmadapter->region_code), COUNTRY_CODE_LEN - 1);
 #ifdef OTP_CHANINFO
     }
 #endif
