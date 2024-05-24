@@ -45,6 +45,9 @@ void wifi_scan_start(struct wifi_message *msg)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.if_priv;
 
+    if (!wifi_if_ctx_rtos || !wm_wifi.supp_if_callbk_fns)
+       return;
+
     if (wifi_if_ctx_rtos->scan_in_progress)
     {
         if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
@@ -73,6 +76,9 @@ void wifi_scan_done(struct wifi_message *msg)
     {
         wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.if_priv;
     }
+
+    if (!wifi_if_ctx_rtos || !wm_wifi.supp_if_callbk_fns)
+       return;
 
     wifi_nxp_reset_scan_flag();
 
@@ -107,6 +113,10 @@ void wifi_scan_done(struct wifi_message *msg)
 void wifi_process_remain_on_channel(struct wifi_message *msg)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.if_priv;
+
+    if (!wifi_if_ctx_rtos || !wm_wifi.supp_if_callbk_fns)
+       return;
+
     if (wifi_if_ctx_rtos->supp_called_remain_on_chan == true)
     {
         if ((msg->reason == WIFI_EVENT_REASON_SUCCESS) &&

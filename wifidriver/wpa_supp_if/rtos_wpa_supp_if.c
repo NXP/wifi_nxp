@@ -94,6 +94,12 @@ void wifi_nxp_wpa_supp_event_proc_mac_changed(void *if_priv)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
+    if (!if_priv)
+    {
+        supp_e("%s: Missing interface context", __func__);
+        return;
+    }
+
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
 #ifdef CONFIG_HOSTAPD
@@ -177,6 +183,12 @@ void wifi_nxp_wpa_supp_event_proc_scan_start(void *if_priv)
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     struct os_time t;
 
+    if (!if_priv)
+    {
+        supp_e("%s: Missing interface context", __func__);
+        return;
+    }
+
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     os_get_time(&t);
@@ -195,6 +207,12 @@ void wifi_nxp_wpa_supp_event_proc_scan_abort(void *if_priv)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
+    if (!if_priv)
+    {
+        supp_e("%s: Missing interface context", __func__);
+        return;
+    }
+
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     wifi_if_ctx_rtos->scan_in_progress = false;
@@ -207,6 +225,12 @@ void wifi_nxp_wpa_supp_event_proc_scan_done(void *if_priv, int aborted, int exte
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     union wpa_event_data event;
     struct scan_info *info = NULL;
+
+    if (!if_priv)
+    {
+        supp_e("%s: Missing interface context", __func__);
+        return;
+    }
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
@@ -243,6 +267,12 @@ void wifi_nxp_wpa_supp_event_proc_survey_res(void *if_priv,
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     struct freq_survey *survey                 = NULL;
+
+    if (!if_priv)
+    {
+        supp_e("%s: Missing interface context", __func__);
+        return;
+    }
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
@@ -326,6 +356,12 @@ void wifi_nxp_wpa_supp_event_proc_auth_resp(void *if_priv, nxp_wifi_event_mlme_t
     const unsigned char *frame        = NULL;
     unsigned int frame_len            = 0;
 
+    if (!if_priv)
+    {
+        supp_e("%s: Missing interface context", __func__);
+        return;
+    }
+
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     frame     = (const unsigned char *)auth_resp->frame.frame;
@@ -376,6 +412,12 @@ void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
     unsigned int frame_len                         = 0;
     unsigned short status                          = WLAN_STATUS_UNSPECIFIED_FAILURE;
     enum sta_connect_fail_reason_codes reason_code = STA_CONNECT_FAIL_REASON_UNSPECIFIED;
+
+    if (!if_priv)
+    {
+        supp_e("%s: Missing interface context", __func__);
+        return;
+    }
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
@@ -449,6 +491,12 @@ void wifi_nxp_wpa_supp_event_proc_deauth(void *if_priv, nxp_wifi_event_mlme_t *d
     const unsigned char *frame        = NULL;
     unsigned int frame_len            = 0;
 
+    if (!if_priv)
+    {
+        supp_e("%s: Missing interface context", __func__);
+        return;
+    }
+
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     frame     = (const unsigned char *)deauth->frame.frame;
@@ -483,6 +531,12 @@ void wifi_nxp_wpa_supp_event_proc_disassoc(void *if_priv, nxp_wifi_event_mlme_t 
     const struct ieee80211_mgmt *mgmt = NULL;
     const unsigned char *frame        = NULL;
     unsigned int frame_len            = 0;
+
+    if (!if_priv)
+    {
+        supp_e("%s: Missing interface context", __func__);
+        return;
+    }
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 

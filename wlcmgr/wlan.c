@@ -1918,7 +1918,30 @@ static bool is_running(void)
 
 static bool is_sta_connecting(void)
 {
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    struct netif *netif = net_get_sta_interface();
+    struct wifi_iface_status status;
+
+    memset(&status, 0x0, sizeof(status));
+    supplicant_status(net_if_get_device((void *)netif), &status);
+    return ((status.state >= WPA_SCANNING) && (status.state <= WPA_COMPLETED));
+#else
     return ((wlan.sta_state > CM_STA_ASSOCIATING) && (wlan.sta_state <= CM_STA_CONNECTED));
+#endif
+}
+
+static bool is_sta_idle(void)
+{
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    struct netif *netif = net_get_sta_interface();
+    struct wifi_iface_status status;
+
+    memset(&status, 0x0, sizeof(status));
+    supplicant_status(net_if_get_device((void *)netif), &status);
+    return (status.state == WPA_DISCONNECTED);
+#else
+    return (wlan.sta_state == CM_STA_IDLE);
+#endif
 }
 
 /* Check whether we are allowed to start a user-requested scan right now. */
@@ -10439,15 +10462,13 @@ void wlan_reset(cli_reset_option ResetOption)
         wlan_set_sta_mac_filter(0, 0, NULL);
 #endif
             /*Disconnect form AP if station is associated with an AP.*/
-            if (wlan.sta_state > CM_STA_ASSOCIATING)
+            if (is_sta_connecting())
             {
                 wlan_disconnect();
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
-                while (wlan.sta_state != CM_STA_IDLE)
+                while (!is_sta_idle())
                 {
                     OSA_TimeDelay(1000);
                 }
-#endif
             }
 
             /*Stop current uAP if uAP is started.*/
