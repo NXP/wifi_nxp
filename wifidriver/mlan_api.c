@@ -5949,7 +5949,7 @@ int wifi_recovery_test(void)
 
     HostCmd_DS_TMRC_CFG *tmrc_cfg = (HostCmd_DS_TMRC_CFG *)&cmd->params.tmrc_cfg;
     tmrc_cfg->action              = wlan_cpu_to_le16(HostCmd_ACT_GEN_GET);
-    tmrc_cfg->sub_id              = wlan_cpu_to_le16(MLAN_TIMEOUT_RECOVERY_DEBUG_SUBID);
+    tmrc_cfg->sub_id              = wlan_cpu_to_le16(MLAN_RECOVERY_TEST_SUBID);
 
     cmd->size += sizeof(HostCmd_DS_TMRC_CFG);
     cmd->size = wlan_cpu_to_le16(cmd->size);

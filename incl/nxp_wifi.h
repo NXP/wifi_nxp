@@ -166,6 +166,10 @@ extern "C" {
 #define CONFIG_UNII4_BAND_SUPPORT 1
 #endif
 
+#if CONFIG_NXP_WIFI_RECOVERY
+#define CONFIG_WIFI_RECOVERY 1
+#endif
+
 #if CONFIG_NXP_WIFI_TSP
 #define CONFIG_TSP 1
 #endif
