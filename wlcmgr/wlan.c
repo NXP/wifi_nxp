@@ -3131,10 +3131,18 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
         }
 #endif
 #endif
+#if __ZEPHYR__
+        /*
+         * zephyr l2 mgmt scan needs scan results to clear scan callback,
+         * even if scan is failed
+         */
+        report_scan_results();
+#else
         if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
         {
             report_scan_results();
         }
+#endif
         *next = wlan.sta_return_to;
         wlcm_d("SM: returned to %s", dbg_sta_state_name(*next));
         wlcm_d("releasing scan lock (user scan)");
