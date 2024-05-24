@@ -4755,6 +4755,10 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
                                                 enum cm_sta_state *next,
                                                 struct wlan_network *network)
 {
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    struct wifi_connect_req_params *conn_params = supplicant_get_wifi_conn_params();
+#endif
+
 #if CONFIG_WPA2_ENTP
     if (wlan_get_prov_session() == PROV_ENTP_SESSION_ATTEMPT)
     {
@@ -4765,9 +4769,14 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
     wifi_wfd_event(false, false, NULL);
 #endif
 #if CONFIG_WPA_SUPP
-    if ((network->security.type == WLAN_SECURITY_WPA3_SAE ||
-         network->security.type == WLAN_SECURITY_WPA3_SAE_EXT_KEY) &&
-        (msg->reason == WLAN_REASON_PREV_AUTH_NOT_VALID ||
+    if (
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+        (conn_params->security == WIFI_SECURITY_TYPE_SAE)
+#else
+        (network->security.type == WLAN_SECURITY_WPA3_SAE ||
+         network->security.type == WLAN_SECURITY_WPA3_SAE_EXT_KEY)
+#endif
+         && (msg->reason == WLAN_REASON_PREV_AUTH_NOT_VALID ||
         msg->reason == WLAN_REASON_DISASSOC_DUE_TO_INACTIVITY ||
         msg->reason == WLAN_REASON_INVALID_IE))
     {
@@ -7036,8 +7045,6 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 
         case WIFI_EVENT_DEAUTHENTICATION:
             wlcm_d("got event: deauthentication");
-            if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
-                break;
 
             wlcm_process_deauthentication_event(msg, &next, network);
             break;
@@ -13244,12 +13251,11 @@ int wlan_pmksa_list(char *buf, size_t buflen)
 
 int wlan_pmksa_flush()
 {
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     struct netif *netif = net_get_sta_interface();
-
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     return wpa_supp_pmksa_flush(netif);
 #else
-    return 0;
+    return supplicant_pmksa_flush(net_if_get_device((void *)netif));
 #endif
 }
 
