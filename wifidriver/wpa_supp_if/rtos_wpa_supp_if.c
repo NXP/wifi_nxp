@@ -1087,7 +1087,10 @@ int wifi_nxp_wpa_supp_scan_results_get(void *if_priv)
     if (num == 0)
     {
         supp_d("%s: No networks found", __func__);
-        goto done;
+#if defined(SDK_OS_FREE_RTOS)
+        ret = 0;
+#endif
+        goto out;
     }
 
 #if defined(SDK_OS_FREE_RTOS)
@@ -1118,7 +1121,6 @@ int wifi_nxp_wpa_supp_scan_results_get(void *if_priv)
         }
     }
 
-done:
     ret = 0;
 out:
     return ret;
