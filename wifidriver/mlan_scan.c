@@ -3541,7 +3541,7 @@ static void adjust_pointers_to_internal_buffers(BSSDescriptor_t *pbss_entry, BSS
     }
 #endif
 #if CONFIG_11AX
-    if (pbss_entry->pext_cap != NULL)
+    if (pbss_entry->phe_cap != NULL)
     {
         pbss_entry->phe_cap = &pbss_entry->he_cap_saved;
     }
