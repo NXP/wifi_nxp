@@ -451,7 +451,8 @@ static struct wps_config wps_conf = {
 #endif /* CONFIG_WPS2 */
 #ifdef RW610
 
-#define CONFIG_WLCMGR_MON_STACK_SIZE (1152)
+/*wlmon_mon_task takes 2640B with supplicant control interface API*/
+#define CONFIG_WLCMGR_MON_STACK_SIZE (3072)
 
 static void wlcmgr_mon_task(osa_task_param_t arg);
 

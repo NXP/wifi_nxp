@@ -227,7 +227,7 @@ int wakelock_put(void)
 int wakelock_isheld(void)
 {
 #if CONFIG_POWER_MANAGER
-    return OSA_MsgQAvailableMsgs((osa_msgq_handle_t)wakelock);
+    return OSA_SemaphoreGetCount((osa_semaphore_handle_t)wakelock);
 #else
     return 1;
 #endif
