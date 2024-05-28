@@ -834,6 +834,41 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
 
             rate_setting = (wlan_txrate_setting *)&ds_rate.param.rate_cfg.rate_setting;
 
+#ifdef RW610
+            if(ds_rate.param.rate_cfg.rate_setting != 0xffff)
+            {
+                if(rate_setting->stbc != 0)
+                {
+                    (void)PRINTF("Invalid STBC setting\r\n");
+                    (void)PRINTF("This chip does not support STBC\r\n");
+                    goto done;
+                }
+                if(rate_setting->adv_coding != 0)
+                {
+                    (void)PRINTF("Invalid coding setting\r\n");
+                    (void)PRINTF("This chip does not support LDPC\r\n");
+                    goto done;
+                }
+                if(ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_HE && rate_setting->preamble == HE_ER_PREAMBLE)
+                {
+                    if(rate_setting->bandwidth > HE_ER_SU_BANDWIDTH_TONE106)
+                    {
+                        (void)PRINTF("Invalid BW setting for this extended rate\r\n");
+                        (void)PRINTF("This is 20MHz only chip\r\n");
+                        goto done;
+                    }
+                }
+                else
+                {
+                    if(rate_setting->bandwidth != 0)
+                    {
+                        (void)PRINTF("Invalid BW setting\r\n");
+                        (void)PRINTF("This is 20MHz only chip\r\n");
+                        goto done;
+                    }
+                }
+            }
+#endif
             if (ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_HE)
             {
                 if (rate_setting->preamble == HE_ER_PREAMBLE)
