@@ -3951,6 +3951,9 @@ int send_wifi_driver_tx_data_event(t_u8 interface)
 
     events = (1U << interface) | WIFI_EVENT_TX_DATA;
 
+    if(1 != wm_wifi.wifi_core_init_done)
+        return 0;
+
 #ifdef __ZEPHYR__
     notify_wifi_driver_tx_event(events);
 #else
