@@ -112,8 +112,6 @@ void wifi_nxp_wpa_supp_event_proc_mac_changed(void *if_priv);
 
 void wifi_nxp_wpa_supp_event_proc_scan_start(void *if_priv);
 
-void wifi_nxp_wpa_supp_event_proc_scan_abort(void *if_priv);
-
 void wifi_nxp_wpa_supp_event_proc_scan_done(void *if_priv, int aborted, int external_scan);
 
 void wifi_nxp_wpa_supp_event_proc_scan_res(void *if_priv,

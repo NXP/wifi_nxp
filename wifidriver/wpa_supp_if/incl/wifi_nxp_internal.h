@@ -583,9 +583,7 @@ typedef MLAN_PACK_START struct _wifi_nxp_callbk_fns
 
     void (*scan_start_callbk_fn)(void *if_priv);
 
-    void (*scan_done_callbk_fn)(void *if_priv, int external_scan);
-
-    void (*scan_abort_callbk_fn)(void *if_priv);
+    void (*scan_done_callbk_fn)(void *if_priv, int aborted, int external_scan);
 
     void (*survey_res_callbk_fn)(void *if_priv,
                                  nxp_wifi_event_new_survey_result_t *survey_res,

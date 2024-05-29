@@ -203,23 +203,6 @@ void wifi_nxp_wpa_supp_event_proc_scan_start(void *if_priv)
     }
 }
 
-void wifi_nxp_wpa_supp_event_proc_scan_abort(void *if_priv)
-{
-    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
-
-    if (!if_priv)
-    {
-        supp_e("%s: Missing interface context", __func__);
-        return;
-    }
-
-    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
-
-    wifi_if_ctx_rtos->scan_in_progress = false;
-
-    wifi_if_ctx_rtos->supp_callbk_fns.scan_abort(wifi_if_ctx_rtos->supp_drv_if_ctx);
-}
-
 void wifi_nxp_wpa_supp_event_proc_scan_done(void *if_priv, int aborted, int external_scan)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;

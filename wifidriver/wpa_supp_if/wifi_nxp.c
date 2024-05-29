@@ -96,12 +96,7 @@ static void wifi_nxp_event_proc_scan_start(void *if_ctx)
     wifi_nxp_wpa_supp_event_proc_scan_start(if_ctx);
 }
 
-static void wifi_nxp_event_proc_scan_abort(void *if_ctx)
-{
-    wifi_nxp_wpa_supp_event_proc_scan_abort(if_ctx);
-}
-
-static void wifi_nxp_event_proc_scan_done(void *if_priv, int external_scan)
+static void wifi_nxp_event_proc_scan_done(void *if_priv, int aborted, int external_scan)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
@@ -112,7 +107,7 @@ static void wifi_nxp_event_proc_scan_done(void *if_priv, int external_scan)
         wifi_e("%s: wifi_if_ctx_rtos is NULL", __func__);
         return;
     }
-    wifi_nxp_wpa_supp_event_proc_scan_done(if_priv, 0, external_scan);
+    wifi_nxp_wpa_supp_event_proc_scan_done(if_priv, aborted, external_scan);
 }
 #if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 static void wifi_nxp_event_reamin_on_channel(void *if_priv, int cancel_channel)
@@ -143,7 +138,6 @@ static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
 #endif
     .scan_start_callbk_fn          = wifi_nxp_event_proc_scan_start,
     .scan_done_callbk_fn           = wifi_nxp_event_proc_scan_done,
-    .scan_abort_callbk_fn          = wifi_nxp_event_proc_scan_abort,
     .auth_resp_callbk_fn           = wifi_nxp_wpa_supp_event_proc_auth_resp,
     .assoc_resp_callbk_fn          = wifi_nxp_wpa_supp_event_proc_assoc_resp,
     .deauth_callbk_fn              = wifi_nxp_wpa_supp_event_proc_deauth,

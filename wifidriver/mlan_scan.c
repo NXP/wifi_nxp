@@ -127,9 +127,9 @@ void wlan_abort_split_scan(void)
     {
         abort_split_scan = true;
 #if CONFIG_WPA_SUPP
-        if (wm_wifi.supp_if_callbk_fns->scan_abort_callbk_fn)
+        if (wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn)
         {
-            wm_wifi.supp_if_callbk_fns->scan_abort_callbk_fn(wm_wifi.if_priv);
+            wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn(wm_wifi.if_priv, 1, 0);
         }
 #endif
     }
