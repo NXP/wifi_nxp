@@ -14,10 +14,6 @@
 #include <wmtypes.h>
 #include <wlan.h>
 
-#ifndef __ZEPHYR__
-#include "fsl_debug_console.h"
-#endif
-
 #define MLAN_WMSDK_MAX_WPA_IE_LEN 64U
 #define MLAN_MAX_MDIE_LEN         10U
 #define MLAN_MAX_VENDOR_IE_LEN    100U

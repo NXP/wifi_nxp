@@ -50,11 +50,9 @@ int wifi_nxp_wpa_supp_sched_scan(void *if_priv, struct wpa_driver_scan_params *p
 int wifi_nxp_wpa_supp_stop_sched_scan(void *if_priv);
 
 int wifi_nxp_wpa_supp_scan_abort(void *if_priv);
-#if defined(SDK_OS_FREE_RTOS)
-int wifi_nxp_wpa_supp_scan_results_get(void *if_priv, struct wpa_scan_results *scan_res2);
-#elif defined(__ZEPHYR__)
+
 int wifi_nxp_wpa_supp_scan_results_get(void *if_priv);
-#endif
+
 int wifi_nxp_wpa_supp_survey_results_get(void *if_priv);
 
 int wifi_nxp_wpa_supp_deauthenticate(void *if_priv, const char *addr, unsigned short reason_code);

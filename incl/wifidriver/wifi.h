@@ -15,27 +15,7 @@
 
 #include <wifi_config_default.h>
 
-#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
-#endif
-
-#ifndef __ZEPHYR__
-#if !CONFIG_STA_AUTO_DHCPV4
-#define CONFIG_STA_AUTO_DHCPV4 1
-#endif
-#endif
-
-#ifndef __ZEPHYR__
-#if !CONFIG_WIFI_STA_RECONNECT
-#define CONFIG_WIFI_STA_RECONNECT 1
-#endif
-#endif
-
-#ifndef __ZEPHYR__
-#if !CONFIG_WIFI_AUTO_POWER_SAVE
-#define CONFIG_WIFI_AUTO_POWER_SAVE 1
-#endif
-#endif
 
 #if !(defined(SD8801) || defined(RW610))
 #define CONFIG_GTK_REKEY_OFFLOAD 1

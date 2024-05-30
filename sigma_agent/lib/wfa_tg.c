@@ -21,10 +21,7 @@
  *    Library functions for traffic generator.
  *    They are shared with both TC and DUT agent.
  */
-
-#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
-#endif
 
 #if CONFIG_SIGMA_AGENT
 #include <sys/types.h>
@@ -1082,15 +1079,11 @@ int wfaSendLongFile(int mySockfd, int streamid, BYTE *aRespBuf, int *aRespLen)
     /* initialize the destination address */
     wMEMSET(&toAddr, 0, sizeof(toAddr));
     toAddr.sin_family = AF_INET;
-#if defined(SDK_OS_FREE_RTOS)
-    toAddr.sin_addr.s_addr = inet_addr(theProf->dipaddr);
-#elif __ZEPHYR__
     int rv = inet_pton(AF_INET, theProf->dipaddr, &toAddr.sin_addr);
     if (rv != 0)
     {
         return WFA_FAILURE;
     }
-#endif
     toAddr.sin_port = htons(theProf->dport);
 
     /* if a frame rate and duration are defined, then we know
@@ -1311,41 +1304,29 @@ int wfaSendShortFile(int mySockfd, int streamid, BYTE *sendBuf, int pksize, BYTE
 
     wMEMSET(&toAddr, 0, sizeof(toAddr));
     toAddr.sin_family = AF_INET;
-#if defined(SDK_OS_FREE_RTOS)
-    toAddr.sin_addr.s_addr = inet_addr(theProf->sipaddr);
-#elif __ZEPHYR__
     int rv = inet_pton(AF_INET, theProf->sipaddr, &toAddr.sin_addr);
     if (rv != 0)
     {
         return WFA_FAILURE;
     }
-#endif
     toAddr.sin_port = htons(theProf->sport);
 
     if (gtgRecv && gtgTransac)
     {
-#if defined(SDK_OS_FREE_RTOS)
-        toAddr.sin_addr.s_addr = inet_addr(theProf->sipaddr);
-#elif __ZEPHYR__
         int rv = inet_pton(AF_INET, theProf->sipaddr, &toAddr.sin_addr);
         if (rv != 0)
         {
             return WFA_FAILURE;
         }
-#endif
         toAddr.sin_port = htons(theProf->sport);
     }
     else if (gtgSend && gtgTransac)
     {
-#if defined(SDK_OS_FREE_RTOS)
-        toAddr.sin_addr.s_addr = inet_addr(theProf->dipaddr);
-#elif __ZEPHYR__
         int rv = inet_pton(AF_INET, theProf->dipaddr, &toAddr.sin_addr);
         if (rv != 0)
         {
             return WFA_FAILURE;
         }
-#endif
         toAddr.sin_port = htons(theProf->dport);
     }
 
@@ -1408,42 +1389,32 @@ int wfaRecvFile(int mySockfd, int streamid, char *recvBuf)
 
     wMEMSET(&fromAddr, 0, sizeof(fromAddr));
     fromAddr.sin_family = AF_INET;
-#if defined(SDK_OS_FREE_RTOS)
-    fromAddr.sin_addr.s_addr = inet_addr(theProf->dipaddr);
-#elif __ZEPHYR__
     int rv = inet_pton(AF_INET, theProf->dipaddr, &fromAddr.sin_addr);
     if (rv != 0)
     {
         return WFA_FAILURE;
     }
-#endif
 
     fromAddr.sin_port = htons(theProf->dport);
 
     if (gtgRecv && gtgTransac)
     {
-#if defined(SDK_OS_FREE_RTOS)
-        fromAddr.sin_addr.s_addr = inet_addr(theProf->sipaddr);
-#elif __ZEPHYR__
         int rv = inet_pton(AF_INET, theProf->sipaddr, &fromAddr.sin_addr);
         if (rv != 0)
         {
             return WFA_FAILURE;
         }
-#endif
+
         fromAddr.sin_port = htons(theProf->sport);
     }
     else if (gtgSend && gtgTransac)
     {
-#if defined(SDK_OS_FREE_RTOS)
-        fromAddr.sin_addr.s_addr = inet_addr(theProf->dipaddr);
-#elif __ZEPHYR__
         int rv = inet_pton(AF_INET, theProf->dipaddr, &fromAddr.sin_addr);
         if (rv != 0)
         {
             return WFA_FAILURE;
         }
-#endif
+
         fromAddr.sin_port = htons(theProf->dport);
     }
 
@@ -1563,15 +1534,12 @@ int wfaSendBitrateData(int mySockfd, int streamId, BYTE *pRespBuf, int *pRespLen
     /*  initialize the destination address  */
     memset(&toAddr, 0, sizeof(toAddr));
     toAddr.sin_family = AF_INET;
-#if defined(SDK_OS_FREE_RTOS)
-    toAddr.sin_addr.s_addr = inet_addr(theProf->dipaddr);
-#elif __ZEPHYR__
     int rv = inet_pton(AF_INET, theProf->dipaddr, &toAddr.sin_addr);
     if (rv != 0)
     {
         return WFA_FAILURE;
     }
-#endif
+
     toAddr.sin_port = htons(theProf->dport);
 
     /*  set sleep time per sending */

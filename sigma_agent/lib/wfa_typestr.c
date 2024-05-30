@@ -30,10 +30,7 @@ USE OR PERFORMANCE OF THIS SOFTWARE.
  *       2007/11/07 --  02.30 Voice HSO -- qhu
  *       2007/12/10 --  02.32 Add a function to upload test results.
  */
-
-#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
-#endif
 
 #if CONFIG_SIGMA_AGENT
 #include <stdio.h>

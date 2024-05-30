@@ -53,9 +53,7 @@ static mlan_status wlan_11n_dispatch_amsdu_pkt(mlan_private *priv, pmlan_buffer 
         pmbuf->data_offset += prx_pd->rx_pkt_offset;
 
         (void)__memcpy(priv->adapter, amsdu_inbuf, pmbuf->pbuf, sizeof(RxPD));
-#if defined(SDK_OS_FREE_RTOS)
         net_stack_buffer_copy_partial(pmbuf->lwip_pbuf, amsdu_inbuf + pmbuf->data_offset, prx_pd->rx_pkt_length, 0);
-#endif
 #if !CONFIG_TX_RX_ZERO_COPY
 #if !CONFIG_MEM_POOLS
         OSA_MemoryFree(pmbuf->pbuf);
@@ -70,9 +68,7 @@ static mlan_status wlan_11n_dispatch_amsdu_pkt(mlan_private *priv, pmlan_buffer 
 
 #if CONFIG_TX_RX_ZERO_COPY
         /* Free the net stack buffer after deaggregation and delivered to stack */
-#if defined(SDK_OS_FREE_RTOS)
         net_stack_buffer_free(pmbuf->lwip_pbuf);
-#endif
 #else
 #if !CONFIG_MEM_POOLS
         OSA_MemoryFree(pmbuf);
@@ -257,9 +253,7 @@ static mlan_status wlan_11n_free_rxreorder_pkt(t_void *priv, RxReorderTbl *rx_re
         pmpriv->adapter->callbacks.moal_spin_unlock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
         if (rx_tmp_ptr != NULL)
         {
-#if defined(SDK_OS_FREE_RTOS)
             net_stack_buffer_free(((pmlan_buffer)rx_tmp_ptr)->lwip_pbuf);
-#endif
 #if !CONFIG_TX_RX_ZERO_COPY
 #if !CONFIG_MEM_POOLS
             OSA_MemoryFree(((pmlan_buffer)rx_tmp_ptr)->pbuf);

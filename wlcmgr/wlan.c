@@ -48,16 +48,6 @@
 #if CONFIG_HOST_SLEEP
 #ifdef RW610
 #include  "fsl_power.h"
-#ifndef __ZEPHYR__
-#if !(CONFIG_WIFI_BLE_COEX_APP)
-#include  "lpm.h"
-#include  "host_sleep.h"
-#endif
-#if CONFIG_POWER_MANAGER
-#include  "fsl_pm_core.h"
-#include  "fsl_pm_device.h"
-#endif
-#endif
 #endif
 #endif
 #if CONFIG_WPS2
@@ -153,19 +143,15 @@ static bool wlan_uap_scan_chan_list_set;
 wlan_flt_cfg_t g_flt_cfg;
 #endif
 #ifdef RW610
-#if (CONFIG_MONOLITHIC_WIFI) && defined(__ZEPHYR__)
+#if (CONFIG_MONOLITHIC_WIFI)
 extern const unsigned char *wlan_fw_bin;
 extern const unsigned int wlan_fw_bin_len;
 #else
 const unsigned char *wlan_fw_bin   = (const unsigned char *)(void *)0;
 const unsigned int wlan_fw_bin_len = 0;
 #endif /* CONFIG_MONOLITHIC_WIFI */
-#ifdef __ZEPHYR__
 extern int nxp_wifi_wlan_event_callback(enum wlan_event_reason reason, void *data);
 #define wlan_event_callback nxp_wifi_wlan_event_callback
-#else
-extern int wlan_event_callback(enum wlan_event_reason reason, void *data);
-#endif
 #endif
 
 static int wifi_wakeup_card_cb(osa_rw_lock_t *plock, unsigned int wait_time);
@@ -266,15 +252,6 @@ static bool mon_thread_init = 0;
 
 #if CONFIG_HOST_SLEEP
 #if CONFIG_POWER_MANAGER
-#ifndef __ZEPHYR__
-status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, void *data);
-AT_ALWAYS_ON_DATA_INIT(pm_notify_element_t wlan_notify) =
-{
-    .notifyCallback = powerManager_WlanNotify,
-    .data           = NULL,
-};
-bool is_wakeup_cond_set = false;
-#endif
 #if !(CONFIG_WIFI_BLE_COEX_APP)
 int wlan_host_sleep_state = HOST_SLEEP_DISABLE;
 #else
@@ -302,13 +279,6 @@ bool wlan_is_manual = false;
 
 #if CONFIG_SCAN_CHANNEL_GAP
 static t_u16 scan_channel_gap = (t_u16)SCAN_CHANNEL_GAP_VALUE;
-#endif
-
-#if defined(SDK_OS_FREE_RTOS)
-#ifdef SD9177
-#define POLL_TIMEOUT (20 * 1000)
-static struct udp_pcb *udp_raw_pcb;
-#endif
 #endif
 
 #if (CONFIG_11K) || (CONFIG_11V)
@@ -624,11 +594,6 @@ static struct
 #if CONFIG_WIFI_FW_DEBUG
     void (*wlan_usb_init_cb)(void);
 #endif
-#if defined(SDK_OS_FREE_RTOS)
-#ifdef SD9177
-    OSA_TIMER_HANDLE_DEFINE(poll_timer);
-#endif
-#endif
 #if CONFIG_11R
 #if CONFIG_WPA_SUPP
     OSA_TIMER_HANDLE_DEFINE(ft_roam_timer);
@@ -827,13 +792,7 @@ int get_scan_params(struct wifi_scan_params_t *wifi_scan_params)
 
 void wlan_dhcp_cleanup()
 {
-#if defined(SDK_OS_FREE_RTOS)
-    net_stop_dhcp_timer();
-#endif
     net_interface_dhcp_stop(net_get_mlan_handle());
-#ifndef __ZEPHYR__
-    net_interface_dhcp_cleanup(net_get_mlan_handle());
-#endif
 }
 
 #if CONFIG_HOST_SLEEP
@@ -1117,17 +1076,9 @@ status_t wlan_hs_send_event(int id, void *data)
     if (OSA_MsgQPut((osa_msgq_handle_t)mon_thread_events, &msg) != KOSA_StatusSuccess)
     {
         (void)PRINTF("PM: Failed to send msg to queue\r\n");
-#ifdef __ZEPHYR__
         return -WM_FAIL;
-#else
-        return kStatus_Fail;
-#endif
     }
-#ifdef __ZEPHYR__
     return WM_SUCCESS;
-#else
-    return kStatus_Success;
-#endif
 }
 #endif
 
@@ -1137,93 +1088,6 @@ static void wake_timer_cb(osa_timer_arg_t arg)
     if(wakelock_isheld())
         wakelock_put();
 }
-
-#ifndef __ZEPHYR__
-status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, void *data)
-{
-    int ret;
-
-    if (eventType == kPM_EventEnteringSleep
-#ifdef RW610
-            && powerState > PM_LP_STATE_PM0
-#endif
-            )
-    {
-        /* Entering low power mode is not allowed in any of below conditions:
-         * 1. Host sleep is disabled
-         * 2. wlan initialization is still on going
-         * 3. wakelock is held by any task
-         * 4. Host sleep handshake is on going or fail
-         * 5. UAPSD/PPS is activated
-         */
-        if (!wlan_host_sleep_state || wlan.status != WLCMGR_ACTIVATED ||
-            wakelock_isheld()
-#if CONFIG_WMM_UAPSD
-            || mlan_adap->pps_uapsd_mode
-#endif
-            )
-            return kStatus_PMPowerStateNotAllowed;
-#ifdef RW610
-        /* Skip host sleep handshake for PM1 */
-        if (powerState == PM_LP_STATE_PM1)
-            goto done;
-#endif
-        if (!is_hs_handshake_done)
-        {
-            is_hs_handshake_done = WLAN_HOSTSLEEP_IN_PROCESS;
-            ret = wlan_hs_send_event(HOST_SLEEP_HANDSHAKE, NULL);
-            if (ret != 0)
-                return kStatus_PMNotifyEventError;
-            return kStatus_PMPowerStateNotAllowed;
-        }
-        /* If hanshake is still in process, entring low power mode is not allowed */
-        if (is_hs_handshake_done == WLAN_HOSTSLEEP_IN_PROCESS)
-            return kStatus_PMPowerStateNotAllowed;
-        if (is_hs_handshake_done == WLAN_HOSTSLEEP_FAIL)
-        {
-            is_hs_handshake_done = 0;
-            return kStatus_PMNotifyEventError;
-        }
-#ifdef RW610
-#if !(CONFIG_WIFI_BLE_COEX_APP) && !(CONFIG_NCP_BRIDGE)
-        ret = host_sleep_pre_cfg((int)powerState);
-        if(ret != 0)
-        {
-            return kStatus_PMPowerStateNotAllowed;
-        }
-#endif
-#endif
-    }
-    else if (eventType == kPM_EventExitingSleep)
-    {
-#ifdef RW610
-        /* Skip host sleep handshake for PM1 */
-        if (powerState == PM_LP_STATE_PM1)
-            goto done;
-#endif
-        if (is_hs_handshake_done == WLAN_HOSTSLEEP_SUCCESS)
-        {
-            ret = wlan_hs_send_event(HOST_SLEEP_EXIT, NULL);
-            if (ret != 0)
-                return kStatus_PMNotifyEventError;
-            /* reset hs hanshake flag after waking up */
-            is_hs_handshake_done = 0;
-#if !(CONFIG_WIFI_BLE_COEX_APP) && !(CONFIG_NCP_BRIDGE)
-#ifdef RW610
-            host_sleep_post_cfg((int)powerState);
-#endif
-            /* If periodic host sleep is not enabled, reset the flag to disable host sleep */
-            if (wlan_host_sleep_state == HOST_SLEEP_ONESHOT)
-                wlan_host_sleep_state = HOST_SLEEP_DISABLE;
-#endif
-        }
-    }
-#ifdef RW610
-done:
-#endif
-    return kStatus_PMSuccess;
-}
-#endif
 #endif
 
 #if CONFIG_MEF_CFG
@@ -3132,18 +2996,11 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
         }
 #endif
 #endif
-#if __ZEPHYR__
         /*
          * zephyr l2 mgmt scan needs scan results to clear scan callback,
          * even if scan is failed
          */
         report_scan_results();
-#else
-        if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
-        {
-            report_scan_results();
-        }
-#endif
         *next = wlan.sta_return_to;
         wlcm_d("SM: returned to %s", dbg_sta_state_name(*next));
         wlcm_d("releasing scan lock (user scan)");
@@ -3907,12 +3764,6 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
             }
 #endif /* CONFIG_P2P */
             CONNECTION_EVENT(WLAN_REASON_AUTH_SUCCESS, NULL);
-
-#if defined(SDK_OS_FREE_RTOS)
-#ifdef SD9177
-            (void)OSA_TimerActivate((osa_timer_handle_t)wlan.poll_timer);
-#endif
-#endif
 
 #if CONFIG_BG_SCAN
             wlan.bgscan_attempt = 0;
@@ -4978,16 +4829,10 @@ static void wlcm_process_net_ipv6_config(struct wifi_message *msg,
     }
 
     net_get_if_ipv6_addr((struct net_ip_config *)&network->ip, if_handle);
-#ifndef __ZEPHYR__
-    for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
-    {
-        if (ip6_addr_isvalid((network->ip.ipv6[i].addr_state)) != 0U)
-#else
     for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES && i < network->ip.ipv6_count; i++)
     {
         if ((network->ip.ipv6[i].addr_state == NET_ADDR_TENTATIVE) ||
                 (network->ip.ipv6[i].addr_state == NET_ADDR_PREFERRED))
-#endif
         {
             found++;
             /* Not considering link-local address as of now */
@@ -5687,9 +5532,6 @@ static void wlcm_process_init(enum cm_sta_state *next)
     (void)wrapper_wlan_cmd_get_hw_spec();
 
 #ifndef RW610
-#ifndef __ZEPHYR__
-    wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl = WLAN_ED_MAC_CTRL;
-#else
     wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl = {
         0x01,
         CONFIG_NXP_WIFI_ED_OFFSET_2G
@@ -5699,7 +5541,6 @@ static void wlcm_process_init(enum cm_sta_state *next)
         CONFIG_NXP_WIFI_ED_OFFSET_5G
 #endif
     };
-#endif
     (void)wlan_set_ed_mac_mode(wlan_ed_mac_ctrl);
     (void)wlan_set_uap_ed_mac_mode(wlan_ed_mac_ctrl);
 #endif
@@ -6566,8 +6407,6 @@ static void wlcm_process_get_hw_spec_event(void)
 #endif
 }
 
-#if defined(SDK_OS_FREE_RTOS)
-
 static void wlcm_process_mgmt_frame(void *data)
 {
     RxPD *rxpd                   = (RxPD *)(net_stack_buffer_get_payload(data));
@@ -6583,8 +6422,6 @@ static void wlcm_process_mgmt_frame(void *data)
             pmgmt_pkt_hdr->frm_len + sizeof(wlan_mgmt_pkt) - sizeof(pmgmt_pkt_hdr->frm_len), rxpd);
     }
 }
-
-#endif
 
 #if (CONFIG_11MC) || (CONFIG_11AZ)
 static int wlcm_process_ftm_complete_event()
@@ -7008,11 +6845,6 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
                 {
                     is_hs_handshake_done = WLAN_HOSTSLEEP_SUCCESS;
 #ifdef RW610
-#ifndef __ZEPHYR__
-#if !(CONFIG_WIFI_BLE_COEX_APP)
-                    host_sleep_cli_notify();
-#endif
-#endif
 #endif
                 }
 #endif
@@ -7208,12 +7040,10 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
 #endif
         case WIFI_EVENT_MGMT_FRAME:
-#if defined(SDK_OS_FREE_RTOS)
             wlcm_d("got event: management frame");
             wlcm_process_mgmt_frame(msg->data);
             next = wlan.sta_state;
             net_stack_buffer_free(msg->data);
-#endif
             break;
 #if CONFIG_WPA_SUPP
         case WIFI_EVENT_REMAIN_ON_CHANNEL:
@@ -7739,91 +7569,6 @@ static void ft_roam_timer_cb(osa_timer_arg_t arg)
 #endif
 #endif
 
-#if defined(SDK_OS_FREE_RTOS)
-#ifdef SD9177
-
-#include "lwip/udp.h"
-
-static ip_addr_t udp_addr;
-static int udp_addr_set;
-static struct net_ip_config net_udp_addr;
-/*!
- * @brief Invokes UDP polling, to be run on tcpip_thread.
- */
-static void poll_udp_client(void *arg)
-{
-    LWIP_UNUSED_ARG(arg);
-    struct pbuf *p;
-    uint8_t udp_data[4] = {1, 2, 3, 4};
-    err_t i;
-
-    if (udp_raw_pcb == NULL)
-        udp_raw_pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
-
-    if (udp_raw_pcb != NULL)
-    {
-        p = pbuf_alloc(PBUF_TRANSPORT, sizeof(udp_data), PBUF_RAM);
-        if (p)
-        {
-            memcpy(p->payload, udp_data, sizeof(udp_data));
-            i = udp_sendto(udp_raw_pcb, p, &udp_addr, 1234);
-            if (i != ERR_OK)
-            {
-                wlcm_d("Got error %d when sending UDP packet!\r\n", i);
-            }
-            pbuf_free(p);
-        }
-        else
-        {
-            wlcm_d("Couldn't allocate a pbuf!!\r\n");
-        }
-    }
-}
-
-static void udp_remove_cb(void *arg)
-{
-    udp_remove((struct udp_pcb *)arg);
-}
-
-static void poll_timer_cb(osa_timer_arg_t arg)
-{
-    void *if_handle = NULL;
-
-    if ((is_sta_ipv4_connected() != 0) && (wlan.cm_ieeeps_configured == true))
-    {
-        if (udp_addr_set == 0)
-        {
-            if_handle = net_get_mlan_handle();
-
-            if (net_get_if_addr(&net_udp_addr, if_handle) != 0)
-            {
-                return;
-            }
-
-#if CONFIG_IPV6
-            memcpy((void *)&udp_addr.u_addr.ip4.addr, (void *)&net_udp_addr.ipv4.gw, sizeof(unsigned int));
-            udp_addr.type = IPADDR_TYPE_V4;
-#else
-            memcpy((void *)&udp_addr.addr, (void *)&net_udp_addr.ipv4.gw, sizeof(unsigned int));
-#endif
-            udp_addr_set = 1;
-        }
-
-        (void)tcpip_try_callback(poll_udp_client, NULL);
-    }
-    else
-    {
-        udp_addr_set = 0;
-        if(udp_raw_pcb != NULL)
-        {
-            (void)tcpip_try_callback(udp_remove_cb, udp_raw_pcb);
-            udp_raw_pcb = NULL;
-        }
-    }
-}
-#endif
-#endif
-
 static void wlan_wait_wlmgr_ready()
 {
     while (wlan.sta_state == CM_STA_INITIALIZING)
@@ -8078,18 +7823,6 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     }
 #endif
 
-#if defined(SDK_OS_FREE_RTOS)
-#ifdef SD9177
-    status = OSA_TimerCreate((osa_timer_handle_t)wlan.poll_timer, POLL_TIMEOUT,
-                          &poll_timer_cb, NULL, KOSA_TimerPeriodic, OSA_TIMER_NO_ACTIVATE);
-    if (status != KOSA_StatusSuccess)
-    {
-        wlcm_e("Unable to create poll timer");
-        return -WM_FAIL;
-    }
-#endif
-#endif
-
 #if CONFIG_11R
 #if CONFIG_WPA_SUPP
     status = OSA_TimerCreate((osa_timer_handle_t)wlan.ft_roam_timer, FT_ROAM_TIMEOUT,
@@ -8162,14 +7895,6 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         return 0;
     }
 #endif
-#endif
-#if (CONFIG_HOST_SLEEP) && !defined(__ZEPHYR__)
-    ret = host_sleep_cli_init();
-    if (ret != WM_SUCCESS)
-    {
-        PRINTF("Failed to initialize WLAN CLIs\r\n");
-        return 0;
-    }
 #endif
 #endif
 #endif
@@ -8287,17 +8012,6 @@ int wlan_stop(void)
 #endif
 #endif
 
-#if defined(SDK_OS_FREE_RTOS)
-#ifdef SD9177
-    status = OSA_TimerDestroy((osa_timer_handle_t)wlan.poll_timer);
-    if (status != KOSA_StatusSuccess)
-    {
-        wlcm_w("failed to delete poll timer: %d.", ret);
-        return WLAN_ERROR_STATE;
-    }
-#endif
-#endif
-
 #ifndef RW610
     /* We need to tell the AP that we're going away, however we've already
      * stopped the main thread so we can't do this by means of the state
@@ -8374,10 +8088,6 @@ int wlan_stop(void)
         return WLAN_ERROR_STATE;
     }
 
-#ifndef __ZEPHYR__
-    wlan_dhcp_cleanup();
-#endif
-
     (void)net_wlan_deinit();
 
     wlan.status = WLCMGR_INIT_DONE;
@@ -8398,11 +8108,6 @@ int wlan_stop(void)
     return ret;
 }
 
-#if defined(SDK_OS_FREE_RTOS)
-#define DEF_UAP_IP 0xc0a80a01UL /* 192.168.10.1 */
-static unsigned int uap_ip = DEF_UAP_IP;
-#endif
-
 void wlan_initialize_uap_network(struct wlan_network *net)
 {
     (void)memset(net, 0, sizeof(struct wlan_network));
@@ -8414,14 +8119,6 @@ void wlan_initialize_uap_network(struct wlan_network *net)
     net->type = WLAN_BSS_TYPE_UAP;
     /* Set network role to uAP */
     net->role = WLAN_BSS_ROLE_UAP;
-#if defined(SDK_OS_FREE_RTOS)
-    /* Set IP address to 192.168.10.1 */
-    net->ip.ipv4.address = htonl(uap_ip);
-    /* Set default gateway to 192.168.10.1 */
-    net->ip.ipv4.gw = htonl(uap_ip);
-    /* Set netmask to 255.255.255.0 */
-    net->ip.ipv4.netmask = htonl(0xffffff00UL);
-#endif
     /* Specify address type as static assignment */
     net->ip.ipv4.addr_type = ADDR_TYPE_STATIC;
 }
@@ -10408,10 +10105,8 @@ int wlan_remove_all_networks(void)
 
     intrfc_handle = net_get_uap_handle();
     net_interface_down(intrfc_handle);
-#ifdef __ZEPHYR__
     /* wait for mgmt_event handled */
     OSA_TimeDelay(500);
-#endif
     return WM_SUCCESS;
 }
 
@@ -10511,10 +10206,6 @@ void wlan_reset(cli_reset_option ResetOption)
             /* Block RX data */
             wifi_set_rx_status(WIFI_DATA_BLOCK);
 
-#ifndef __ZEPHYR__
-            /* DHCP Cleanup */
-            wlan_dhcp_cleanup();
-#endif
 #if CONFIG_NCP_BRIDGE
             /* Stop uap provisioning if it started */
             if (uap_prov_deinit_cb)
@@ -12410,10 +12101,6 @@ int wlan_set_auto_arp(void)
 
     return wifi_set_packet_filters(&flt_cfg);
 }
-
-#ifndef __ZEPHYR__
-#define DIV_ROUND_UP(n, d) (((n) + (d)-1) / (d))
-#endif
 
 #if !CONFIG_WPA_SUPP
 static inline bool is_broadcast_ether_addr(const t_u8 *addr)
@@ -15699,146 +15386,6 @@ int wlan_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config)
     return wifi_external_coex_pta_cfg(coex_pta_config);
 }
 #endif
-
-#if !__ZEPHYR__
-int wlan_dpp_configurator_add(int is_ap, const char *cmd)
-{
-    struct netif *netif = net_get_sta_interface();
-    int ret;
-
-    ret = wpa_supp_dpp_configurator_add(netif, is_ap, cmd);
-    if (ret <= 0)
-    {
-        wlcm_e("DPP add configurator failed!!");
-        return -WM_FAIL;
-    }
-    return ret;
-}
-
-void wlan_dpp_configurator_params(int is_ap, const char *cmd)
-{
-    struct netif *netif = net_get_sta_interface();
-
-    wpa_supp_dpp_configurator_params(netif, is_ap, cmd);
-}
-
-void wlan_dpp_mud_url(int is_ap, const char *cmd)
-{
-    struct netif *netif = net_get_sta_interface();
-
-    wpa_supp_dpp_mud_url(netif, is_ap, cmd);
-}
-
-int wlan_dpp_bootstrap_gen(int is_ap, const char *cmd)
-{
-    int id;
-    struct netif *netif = net_get_sta_interface();
-
-    id = wpa_supp_dpp_bootstrap_gen(netif, is_ap, cmd);
-    if (id < 0)
-    {
-        wlcm_e("DPP generate qrcode failed!!");
-        id = -WM_FAIL;
-    }
-    return id;
-}
-
-const char *wlan_dpp_bootstrap_get_uri(int is_ap, unsigned int id)
-{
-    struct netif *netif = net_get_sta_interface();
-
-    return wpa_supp_dpp_bootstrap_get_uri(netif, is_ap, id);
-}
-
-int wlan_dpp_qr_code(int is_ap, char *uri)
-{
-    int id;
-    struct netif *netif = net_get_sta_interface();
-
-    id = wpa_supp_dpp_qr_code(netif, is_ap, uri);
-    if (id < 0)
-    {
-        wlcm_e("DPP enter QR code failed!!");
-        return -WM_FAIL;
-    }
-
-    return id;
-}
-
-int wlan_dpp_auth_init(int is_ap, const char *cmd)
-{
-    int ret;
-    struct netif *netif = net_get_sta_interface();
-
-    if (!is_ap)
-    {
-        wifi_set_rx_mgmt_indication(WLAN_BSS_ROLE_STA, WLAN_MGMT_ACTION);
-    }
-    ret = wpa_supp_dpp_auth_init(netif, is_ap, cmd);
-    if (ret < 0)
-    {
-        wlcm_e("DPP Auth Init failed!!");
-        return -WM_FAIL;
-    }
-
-    return ret;
-}
-
-int wlan_dpp_listen(int is_ap, const char *cmd)
-{
-    struct netif *netif = net_get_sta_interface();
-
-    return wpa_supp_dpp_listen(netif, is_ap, cmd);
-}
-
-int wlan_dpp_stop_listen(int is_ap)
-{
-    struct netif *netif = net_get_sta_interface();
-
-    return wpa_supp_dpp_stop_listen(netif, is_ap);
-}
-
-int wlan_dpp_pkex_add(int is_ap, const char *cmd)
-{
-    struct netif *netif = net_get_sta_interface();
-
-    if (!is_ap)
-    {
-        wifi_set_rx_mgmt_indication(WLAN_BSS_ROLE_STA, WLAN_MGMT_ACTION);
-    }
-    if (wpa_supp_dpp_pkex_add(netif, is_ap, cmd) < 0)
-    {
-        wlcm_e("DPP add PKEX failed!!");
-        return -WM_FAIL;
-    }
-    return WM_SUCCESS;
-}
-
-int wlan_dpp_chirp(int is_ap, const char *cmd)
-{
-    struct netif *netif = net_get_sta_interface();
-
-    if (!is_ap)
-    {
-        wifi_set_rx_mgmt_indication(WLAN_BSS_ROLE_STA, WLAN_MGMT_ACTION);
-    }
-    return wpa_supp_dpp_chirp(netif, is_ap, cmd);
-}
-
-int wlan_dpp_reconfig(const char *cmd)
-{
-    struct netif *netif = net_get_sta_interface();
-
-    return wpa_supp_dpp_reconfig(netif, cmd);
-}
-
-int wlan_dpp_configurator_sign(int is_ap, const char *cmd)
-{
-    struct netif *netif = net_get_sta_interface();
-
-    return wpa_supp_dpp_configurator_sign(netif, is_ap, cmd);
-}
-#endif /* ! __ZEPHYR__ */
 
 #if CONFIG_IMD3_CFG
 int wlan_imd3_cfg(t_u8 imd3_value)

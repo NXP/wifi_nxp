@@ -19,9 +19,6 @@
 #ifndef WFA_DEBUG_H
 #define WFA_DEBUG_H
 
-#ifndef __ZEPHYR__
-#include "fsl_debug_console.h"
-#endif
 #include "wfa_stdincs.h"
 
 #define WFA_ERR 0x0001 /* error: can be redefined to a log file */

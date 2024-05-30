@@ -38,10 +38,7 @@ USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 // #include <sys/socket.h>
-
-#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
-#endif
 
 #if CONFIG_SIGMA_AGENT
 #include "wfa_portall.h"

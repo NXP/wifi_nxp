@@ -30,10 +30,7 @@
 #include <linux/if.h>
 #include <sys/ioctl.h>
 #endif
-
-#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
-#endif
 
 #if CONFIG_SIGMA_AGENT
 #include "wfa_portall.h"

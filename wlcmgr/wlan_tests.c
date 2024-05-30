@@ -27,11 +27,7 @@
 #endif
 
 #include <cli_utils.h>
-#ifdef __ZEPHYR__
 #include "wifi_shell.h"
-#else
-#include <cli.h>
-#endif
 
 /*
  * NXP Test Framework (MTF) functions
@@ -52,9 +48,7 @@ wlan_net_monitor_t g_net_monitor_param;
 #if CONFIG_HOST_SLEEP
 extern uint64_t rtc_timeout;
 #endif
-#ifdef __ZEPHYR__
 extern char *net_sprint_addr(sa_family_t af, const void *addr);
-#endif
 
 static const char *print_role(enum wlan_bss_role role)
 {
@@ -80,11 +74,7 @@ static const char *print_role(enum wlan_bss_role role)
 static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 {
 // #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
-#if defined(SDK_OS_FREE_RTOS)
-    struct ip4_addr ip, gw, nm, dns1, dns2;
-#elif __ZEPHYR__
     struct in_addr ip, gw, nm;
-#endif
     char addr_type[10] = {0};
 
     /* If the current network role is STA and ipv4 is not connected then do
@@ -93,17 +83,9 @@ static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
     {
         goto out;
     }
-#if defined(SDK_OS_FREE_RTOS)
-    ip.addr   = addr->ipv4.address;
-    gw.addr   = addr->ipv4.gw;
-    nm.addr   = addr->ipv4.netmask;
-    dns1.addr = addr->ipv4.dns1;
-    dns2.addr = addr->ipv4.dns2;
-#elif __ZEPHYR__
     ip.s_addr = addr->ipv4.address;
     gw.s_addr = addr->ipv4.gw;
     nm.s_addr = addr->ipv4.netmask;
-#endif
     if (addr->ipv4.addr_type == ADDR_TYPE_STATIC)
     {
         (void)strcpy(addr_type, "STATIC");
@@ -119,26 +101,9 @@ static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 
     (void)PRINTF("\r\n\tIPv4 Address\r\n");
     (void)PRINTF("\taddress: %s", addr_type);
-#if defined(SDK_OS_FREE_RTOS)
-    (void)PRINTF("\r\n\t\tIP:\t\t%s", inet_ntoa(ip));
-    (void)PRINTF("\r\n\t\tgateway:\t%s", inet_ntoa(gw));
-    (void)PRINTF("\r\n\t\tnetmask:\t%s", inet_ntoa(nm));
-    (void)PRINTF("\r\n\t\tdns1:\t\t%s", inet_ntoa(dns1));
-    (void)PRINTF("\r\n\t\tdns2:\t\t%s", inet_ntoa(dns2));
-#elif defined(FSL_RTOS_THREADX)
-    (void)PRINTF("\r\n\t\tIP:\t\t%d.%d.%d.%d", (addr->ipv4.address >> 24), (addr->ipv4.address >> 16 & 0xFF),
-                 (addr->ipv4.address >> 8 & 0xFF), (addr->ipv4.address & 0xFF));
-    (void)PRINTF("\r\n\t\tgateway:\t%d.%d.%d.%d", (addr->ipv4.gw >> 24), (addr->ipv4.gw >> 16 & 0xFF),
-                 (addr->ipv4.gw >> 8 & 0xFF), (addr->ipv4.gw & 0xFF));
-    (void)PRINTF("\r\n\t\tnetmask:\t%d.%d.%d.%d", (addr->ipv4.netmask >> 24), (addr->ipv4.netmask >> 16 & 0xFF),
-                 (addr->ipv4.netmask >> 8 & 0xFF), (addr->ipv4.netmask & 0xFF));
-//    (void)PRINTF("\r\n\t\tdns1:\t\t%s", inet_ntoa(dns1));
-//    (void)PRINTF("\r\n\t\tdns2:\t\t%s", inet_ntoa(dns2));
-#elif __ZEPHYR__
     (void)PRINTF("\r\n\t\tIP:\t\t%s", net_sprint_addr(AF_INET, &ip));
     (void)PRINTF("\r\n\t\tgateway:\t%s", net_sprint_addr(AF_INET, &gw));
     (void)PRINTF("\r\n\t\tnetmask:\t%s", net_sprint_addr(AF_INET, &nm));
-#endif
     (void)PRINTF("\r\n");
 out:
 
@@ -147,16 +112,10 @@ out:
     {
         int i;
         (void)PRINTF("\r\n\tIPv6 Addresses\r\n");
-#ifndef __ZEPHYR__
-        for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
-        {
-            if (addr->ipv6[i].addr_state != (unsigned char)IP6_ADDR_INVALID)
-#else
         for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES && i < addr->ipv6_count; i++)
         {
             if ((addr->ipv6[i].addr_state == (unsigned char)NET_ADDR_TENTATIVE) ||
                 (addr->ipv6[i].addr_state == (unsigned char)NET_ADDR_PREFERRED))
-#endif
             {
                 (void)PRINTF("\t%-13s:\t%s (%s)\r\n", ipv6_addr_type_to_desc((struct net_ipv6_config *)&addr->ipv6[i]),
                              ipv6_addr_addr_to_desc((struct net_ipv6_config *)&addr->ipv6[i]),
@@ -2195,9 +2154,6 @@ static int __scan_cb(unsigned int count)
 static void test_wlan_thread_info(int argc, char **argv)
 {
     /* TODO: implement for Zephyr */
-#ifndef __ZEPHYR__
-    OSA_DumpThreadInfo(NULL);
-#endif
 }
 
 #if CONFIG_SCHED_SWITCH_TRACE
@@ -5073,7 +5029,6 @@ static void test_wlan_host_sleep(int argc, char **argv)
 
 #ifdef RW610
 #if !(CONFIG_WIFI_BLE_COEX_APP)
-#ifdef __ZEPHYR__
 static void test_wlan_auto_host_sleep(int argc, char **argv)
 {
     bool is_manual   = MFALSE;
@@ -5116,87 +5071,6 @@ static void test_wlan_auto_host_sleep(int argc, char **argv)
     is_periodic = (t_u8)atoi(argv[2]);
     wlan_config_host_sleep(is_manual, is_periodic);
 }
-#else
-static void test_wlan_auto_host_sleep(int argc, char **argv)
-{
-    bool is_manual    = MFALSE;
-    int rtc_timeout_s = 0;
-    t_u8 is_periodic  = 0;
-    t_u8 enable       = 0;
-
-    if (argc > 5 || argc < 2)
-    {
-        (void)PRINTF("Error: invalid number of arguments\r\n");
-        (void)PRINTF("Usage:\r\n");
-        (void)PRINTF("    wlan-auto-host-sleep <enable> <mode> <rtc_timeout> <periodic>\r\n");
-        (void)PRINTF("    enable      -- enable/disable host sleep\r\n");
-        (void)PRINTF("                   0 - disable host sleep\r\n");
-        (void)PRINTF("                   1 - enable host sleep\r\n");
-        (void)PRINTF("    mode        -- Mode of how host enter low power.\r\n");
-        (void)PRINTF("                   manual - Manual mode. Need to use suspend command to enter low power.\r\n");
-        (void)PRINTF("                   pm     - Power Manager.");
-        (void)PRINTF("    rtc_timeout -- RTC timer value. Unit is second.\r\n");
-        (void)PRINTF("    periodic    -- Host enter low power periodically or oneshot\r\n");
-        (void)PRINTF(
-            "                   0 - Oneshot. Host will enter low power only once and keep full power after waking "
-            "up.\r\n");
-        (void)PRINTF("                   1 - Periodic. Host will enter low power periodically.\r\n");
-        (void)PRINTF("    Parameters <rtc_timer> and <periodic> are for Power Manager ONLY!\r\n");
-        (void)PRINTF("Examples:\r\n");
-        (void)PRINTF("    wlan-auto-host-sleep 1 pm 60 1\r\n");
-        (void)PRINTF("    wlan-auto-host-sleep 1 pm 5 0\r\n");
-        (void)PRINTF("    wlan-auto-host-sleep 1 manual\r\n");
-        (void)PRINTF("    wlan-auto-host-sleep 0\r\n");
-        return;
-    }
-
-    enable = (t_u8)atoi(argv[1]);
-    if (enable != 0 && enable != 1)
-    {
-        (void)PRINTF("Error! Invalid input of parameter <enable>\r\n");
-        return;
-    }
-    /* Disable auto host sleep */
-    if (enable == 0)
-    {
-        wlan_cancel_host_sleep();
-        wlan_clear_host_sleep_config();
-        (void)PRINTF("Auto Host Sleep disabled\r\n");
-        return;
-    }
-    if (string_equal("manual", argv[2]))
-    {
-        is_manual = MTRUE;
-    }
-    else if (string_equal("pm", argv[2]))
-    {
-        if (argc != 5)
-        {
-            (void)PRINTF("Error!Invalid number of inputs! Need to specify both <rtc_timeout> and <periodic>\r\n");
-            return;
-        }
-        rtc_timeout_s = atoi(argv[3]);
-        if (rtc_timeout_s == 0)
-        {
-            (void)PRINTF("Error!Invalid value of <rtc_timeout>!\r\n");
-            return;
-        }
-        rtc_timeout = rtc_timeout_s * 1000000;
-        is_periodic = (t_u8)atoi(argv[4]);
-    }
-    else
-    {
-        (void)PRINTF("Invalid input!\r\n");
-        (void)PRINTF("Usage:\r\n");
-        (void)PRINTF("    wlan-auto-host-sleep <enable> <mode> <rtc_timer> <periodic>\r\n");
-        return;
-    }
-    (void)PRINTF("%s is selected for host sleep\r\n", is_manual ? "Manual mode" : "Power Manager");
-    if (!is_manual)
-        (void)PRINTF("Host will enter low power %s\r\n", is_periodic ? "periodically" : "only once");
-    wlan_config_host_sleep(is_manual, is_periodic);
-}
-#endif
 #else
 static void test_wlan_ns_offload(int argc, char **argv)
 {
@@ -10458,426 +10332,6 @@ static void test_wlan_external_coex_pta(int argc, char **argv)
 }
 #endif
 
-#if !__ZEPHYR__
-static void test_wlan_dpp_configurator_add(int argc, char **argv)
-{
-    int conf_id, is_ap = 0;
-    char empty_cmd[1] = {0};
-
-    if (is_uap_started())
-    {
-        is_ap = 1;
-    }
-    if (argc >= 1)
-    {
-        conf_id = wlan_dpp_configurator_add(is_ap, argv[1]);
-    }
-    else
-    {
-        conf_id = wlan_dpp_configurator_add(is_ap, empty_cmd);
-    }
-    if (conf_id == -WM_FAIL)
-    {
-        (void)PRINTF("\r\nDPP add configurator failed!!\r\n");
-    }
-    else
-    {
-        (void)PRINTF("\r\nconf_id = %d\r\n", conf_id);
-    }
-}
-
-static void dump_dpp_configurator_params_usage(void)
-{
-    (void)PRINTF("set DPP configurator params\r\n");
-    (void)PRINTF("Usage: wlan-dpp-configurator-params \" conf=....\"\r\n");
-    (void)PRINTF("\r\nUsage example : \r\n");
-    (void)PRINTF("wlan-dpp-configurator-params \" conf=sta-dpp ssid=4450505f54455354 configurator=1\"\r\n");
-    (void)PRINTF("#space character exists between \" & conf word.\r\n");
-}
-
-static void test_wlan_dpp_configurator_params(int argc, char **argv)
-{
-    int is_ap = 0;
-
-    if (argc < 1)
-    {
-        (void)PRINTF("Error: invalid number of arguments\r\n");
-        dump_dpp_configurator_params_usage();
-        return;
-    }
-    if (is_uap_started())
-    {
-        is_ap = 1;
-    }
-    wlan_dpp_configurator_params(is_ap, argv[1]);
-}
-
-static void dump_dpp_mud_url_usage(void)
-{
-    (void)PRINTF("MUD URL for Enrollee's DPP Configuration Request\r\n");
-    (void)PRINTF("Usage: wlan-dpp-mud-url \"https://....\"\r\n");
-    (void)PRINTF("\r\nUsage example : \r\n");
-    (void)PRINTF("wlan-dpp-mud-url \"https://example.com/mud\"\r\n");
-}
-
-static void test_wlan_dpp_mud_url(int argc, char **argv)
-{
-    int is_ap = 0;
-
-    if (argc < 1)
-    {
-        (void)PRINTF("Error: invalid number of arguments\r\n");
-        dump_dpp_mud_url_usage();
-        return;
-    }
-    if (is_uap_started())
-    {
-        is_ap = 1;
-    }
-    wlan_dpp_mud_url(is_ap, argv[1]);
-}
-
-static void dump_dpp_bootstrap_gen_usage(void)
-{
-    (void)PRINTF("Generate QR code\r\n");
-    (void)PRINTF("Usage: wlan-dpp-bootstrap-gen \" type=....\"\r\n");
-    (void)PRINTF("\r\nUsage example : \r\n");
-    (void)PRINTF("wlan-dpp-bootstrap-gen \"type=qrcode chan=115/36 mac=00:50:43:02:11:22\"\r\n");
-}
-
-static void test_wlan_dpp_bootstrap_gen(int argc, char **argv)
-{
-    int is_ap = 0, id;
-
-    if (argc < 2)
-    {
-        (void)PRINTF("Error: invalid number of arguments\r\n");
-        dump_dpp_bootstrap_gen_usage();
-        return;
-    }
-    if (is_uap_started())
-    {
-        is_ap = 1;
-    }
-    id = wlan_dpp_bootstrap_gen(is_ap, argv[1]);
-    if (id == -WM_FAIL)
-    {
-        (void)PRINTF("\r\n DPP bootstrap generate failed!!\r\n");
-    }
-    else
-    {
-        (void)PRINTF("\r\n bootstrap generate id = %d\r\n", id);
-    }
-}
-
-static void dump_dpp_bootstrap_get_uri_usage(void)
-{
-    (void)PRINTF("Get QR code string by <bootstrap-id>\r\n");
-    (void)PRINTF("Usage: wlan-dpp-bootstrap-get-uri <bootstrap-id>\r\n");
-    (void)PRINTF("\r\nUsage example : \r\n");
-    (void)PRINTF("wlan-dpp-bootstrap-get-uri 1\r\n");
-}
-
-static void test_wlan_dpp_bootstrap_get_uri(int argc, char **argv)
-{
-    int is_ap       = 0, id;
-    const char *uri = NULL;
-
-    if (argc < 2)
-    {
-        (void)PRINTF("Error: invalid number of arguments\r\n");
-        dump_dpp_bootstrap_get_uri_usage();
-        return;
-    }
-    if (is_uap_started())
-    {
-        is_ap = 1;
-    }
-    id = (int)atoi(argv[1]);
-
-    uri = wlan_dpp_bootstrap_get_uri(is_ap, id);
-    if (uri)
-    {
-        OSA_TimeDelay(1000);
-        (void)PRINTF("\r\nBootstrapping QR Code URI:\r\n");
-        (void)PRINTF("\r\n%s\r\n\r\n", uri);
-    }
-    else
-    {
-        (void)PRINTF("Error: generate bootstrapping QR Code URI failed!!\r\n");
-    }
-}
-
-static void dump_dpp_qr_code_usage(void)
-{
-    (void)PRINTF("Enter the QR code\r\n");
-    (void)PRINTF("Usage: wlan-dpp-qr-code <URI-from-QR-Code-read-from-enrollee>\r\n");
-}
-
-static void test_wlan_dpp_qr_code(int argc, char **argv)
-{
-    int id;
-    int is_ap = 0;
-
-    if (argc < 2)
-    {
-        (void)PRINTF("Error: invalid number of arguments\r\n");
-        dump_dpp_qr_code_usage();
-        return;
-    }
-    if (is_uap_started())
-    {
-        is_ap = 1;
-    }
-    id = wlan_dpp_qr_code(is_ap, argv[1]);
-    if (id == -WM_FAIL)
-    {
-        (void)PRINTF("\r\n DPP bootstrap generate failed!!\r\n");
-    }
-    else
-    {
-        (void)PRINTF("\r\n DPP qr code id = %d\r\n", id);
-    }
-}
-
-static void dump_dpp_auth_init_usage(void)
-{
-    (void)PRINTF("Send provisioning Auth request to responder\r\n");
-    (void)PRINTF("Usage: wlan-dpp-auth-init \"peer=...\"\r\n");
-    (void)PRINTF("\r\nUsage example : \r\n");
-    (void)PRINTF("wlan-dpp-auth-init  \"peer=1 role=enrollee\"\r\n");
-}
-
-static void test_wlan_dpp_auth_init(int argc, char **argv)
-{
-    int ret;
-    int is_ap = 0;
-
-    if (argc < 2)
-    {
-        (void)PRINTF("Error: invalid number of arguments\r\n");
-        dump_dpp_auth_init_usage();
-        return;
-    }
-    if (is_uap_started())
-    {
-        is_ap = 1;
-    }
-    (void)wlan_ieeeps_off();
-    (void)wlan_deepsleepps_off();
-    ret = wlan_dpp_auth_init(is_ap, argv[1]);
-    if (ret == -WM_FAIL)
-    {
-        (void)PRINTF("\r\n DPP Auth Init failed!!\r\n");
-    }
-    else
-    {
-        (void)PRINTF("\r\n DPP Auth Init OK!\r\n");
-    }
-}
-
-static void dump_dpp_listen_usage(void)
-{
-    (void)PRINTF("Make device listen to DPP request.\r\n");
-    (void)PRINTF("Usage: wlan-dpp-listen \"<frequency>...\"\r\n");
-    (void)PRINTF("\r\nUsage example : \r\n");
-    (void)PRINTF("wlan-dpp-listen 5180\r\n");
-}
-
-static void test_wlan_dpp_listen(int argc, char **argv)
-{
-    int ret;
-    int is_ap = 0;
-
-    if (argc < 2)
-    {
-        (void)PRINTF("Error: invalid number of arguments\r\n");
-        dump_dpp_listen_usage();
-        return;
-    }
-    if (is_uap_started())
-    {
-        is_ap = 1;
-    }
-    (void)wlan_ieeeps_off();
-    (void)wlan_deepsleepps_off();
-    ret = wlan_dpp_listen(is_ap, argv[1]);
-    if (ret == -WM_FAIL)
-    {
-        (void)PRINTF("\r\n DPP Listen failed!!\r\n");
-    }
-    else
-    {
-        (void)PRINTF("\r\n DPP Listen OK!\r\n");
-    }
-}
-
-static void test_wlan_dpp_stop_listen(int argc, char **argv)
-{
-    int ret;
-    int is_ap = 0;
-
-    if (is_uap_started())
-    {
-        is_ap = 1;
-    }
-    ret = wlan_dpp_stop_listen(is_ap);
-    if (ret == -WM_FAIL)
-    {
-        (void)PRINTF("\r\n DPP Listen STOP failed!!\r\n");
-    }
-    else
-    {
-        (void)PRINTF("\r\n DPP Listen STOP OK!\r\n");
-    }
-}
-
-static void dump_dpp_pkex_add_usage(void)
-{
-    (void)PRINTF("Set DPP bootstrapping through PKEX(Public Key Exchange)\r\n");
-    (void)PRINTF("Usage: wlan-dpp-pkex-add \"own=<bootstrap_id> identifier=<string> code=<string>...\"\r\n");
-    (void)PRINTF("\r\nUsage example : \r\n");
-    (void)PRINTF("wlan-dpp-pkex-add \"own=1 identifier=test code=DPP_Device_PKEX\"\r\n");
-}
-
-static void test_wlan_dpp_pkex_add(int argc, char **argv)
-{
-    int ret;
-    int is_ap = 0;
-
-    if (argc < 2)
-    {
-        (void)PRINTF("Error: invalid number of arguments\r\n");
-        dump_dpp_pkex_add_usage();
-        return;
-    }
-    if (is_uap_started())
-    {
-        is_ap = 1;
-    }
-
-    (void)wlan_ieeeps_off();
-    (void)wlan_deepsleepps_off();
-    ret = wlan_dpp_pkex_add(is_ap, argv[1]);
-    if (ret == -WM_FAIL)
-    {
-        (void)PRINTF("\r\n DPP add PKEX failed!!\r\n");
-    }
-    else
-    {
-        (void)PRINTF("\r\n DPP add PKEX OK!\r\n");
-    }
-}
-
-static void dump_dpp_chirp_usage(void)
-{
-    (void)PRINTF("sends DPP presence announcement.\r\n");
-    (void)PRINTF("Usage: wlan-dpp-chirp \"own=<bootstrap id> listen=<freq>...\"\r\n");
-    (void)PRINTF("\r\nUsage example : \r\n");
-    (void)PRINTF("wlan-dpp-chirp \"own=1 listen=2412\"\r\n");
-}
-
-static void test_wlan_dpp_chirp(int argc, char **argv)
-{
-    int ret;
-    int is_ap = 0;
-
-    if (argc < 2)
-    {
-        (void)PRINTF("Error: invalid number of arguments\r\n");
-        dump_dpp_chirp_usage();
-        return;
-    }
-    if (is_uap_started())
-    {
-        is_ap = 1;
-    }
-
-    (void)wlan_ieeeps_off();
-    (void)wlan_deepsleepps_off();
-    ret = wlan_dpp_chirp(is_ap, argv[1]);
-    if (ret == -WM_FAIL)
-    {
-        (void)PRINTF("\r\n DPP chirping failed!!\r\n");
-    }
-    else
-    {
-        (void)PRINTF("\r\n DPP chirping OK!\r\n");
-    }
-}
-
-static void dump_dpp_reconfig_usage(void)
-{
-    (void)PRINTF("Make STA device do DPP reconfig.\r\n");
-    (void)PRINTF("Usage: wlan-dpp-reconfig \"<network_id> ...\"\r\n");
-    (void)PRINTF("\r\nUsage example : \r\n");
-    (void)PRINTF("wlan-dpp-reconfig 1\r\n");
-}
-
-static void test_wlan_dpp_reconfig(int argc, char **argv)
-{
-    int ret;
-
-    if (argc < 2)
-    {
-        (void)PRINTF("Error: invalid number of arguments\r\n");
-        dump_dpp_reconfig_usage();
-        return;
-    }
-    if (is_uap_started())
-    {
-        (void)PRINTF("\r\n Only support STA to do DPP reconfig\r\n");
-    }
-    (void)wlan_ieeeps_off();
-    (void)wlan_deepsleepps_off();
-    ret = wlan_dpp_reconfig(argv[1]);
-    if (ret == -WM_FAIL)
-    {
-        (void)PRINTF("\r\n DPP reconfig failed!!\r\n");
-    }
-    else
-    {
-        (void)PRINTF("\r\n DPP reconfig OK!\r\n");
-    }
-}
-
-static void dump_dpp_configurator_sign_usage(void)
-{
-    (void)PRINTF("Configurator configures itself as an Enrollee AP/STA\r\n");
-    (void)PRINTF("Usage: wlan-dpp-configurator-sign \" conf=....\"\r\n");
-    (void)PRINTF("\r\nUsage example : \r\n");
-    (void)PRINTF("wlan-dpp-configurator-sign \" conf=sta-dpp ssid=4450505f54455354 configurator=1\"\r\n");
-    (void)PRINTF("#space character exists between \" & conf word.\r\n");
-}
-
-static void test_wlan_dpp_configurator_sign(int argc, char **argv)
-{
-    int ret;
-    int is_ap = 0;
-
-    if (argc < 2)
-    {
-        (void)PRINTF("Error: invalid number of arguments\r\n");
-        dump_dpp_configurator_sign_usage();
-        return;
-    }
-    if (is_uap_started())
-    {
-        is_ap = 1;
-    }
-
-    ret = wlan_dpp_configurator_sign(is_ap, argv[1]);
-    if (ret == -WM_FAIL)
-    {
-        (void)PRINTF("\r\n DPP chirping failed!!\r\n");
-    }
-    else
-    {
-        (void)PRINTF("\r\n DPP chirping OK!\r\n");
-    }
-}
-#endif
-
 #if CONFIG_IMD3_CFG
 
 static void dump_wlan_imd3_cfg_usage(void)
@@ -12403,11 +11857,7 @@ static struct cli_command tests[] = {
     {"wlan-wakeup-condition", "<wowlan wake_up_conds>", test_wlan_wakeup_condition},
 #endif /*CONFIG_MEF_CFG*/
 #if !defined(CONFIG_WIFI_BLE_COEX_APP)
-#ifdef __ZEPHYR__
     {"wlan-auto-host-sleep", "<enable> <periodic>", test_wlan_auto_host_sleep},
-#else
-    {"wlan-auto-host-sleep", "<enable> <mode> <rtc_timer> <periodic>", test_wlan_auto_host_sleep},
-#endif
 #endif
 #else
     {"enable-ns-offload", NULL, test_wlan_ns_offload},
@@ -12554,23 +12004,6 @@ static struct cli_command tests[] = {
     {"wlan-start-ap-wps-pin", "<8 digit pin>", test_wlan_start_ap_wps_pin},
     {"wlan-wps-ap-cancel", NULL, test_wlan_wps_ap_cancel},
 #endif
-#endif
-#if !__ZEPHYR__
-    {"wlan-dpp-configurator-add", NULL, test_wlan_dpp_configurator_add},
-    {"wlan-dpp-configurator-params", " conf=<sta-dpp/ap-dpp> ssid=<ascii> configurator=<id>",
-     test_wlan_dpp_configurator_params},
-    {"wlan-dpp-mud-url", "https://...", test_wlan_dpp_mud_url},
-    {"wlan-dpp-bootstrap-gen", "type=<qrcode> chan=<op>/<ch> mac=<addr>", test_wlan_dpp_bootstrap_gen},
-    {"wlan-dpp-bootstrap-get-uri", "<bootstrap_gen id>", test_wlan_dpp_bootstrap_get_uri},
-    {"wlan-dpp-qr-code", "<DPP:...>", test_wlan_dpp_qr_code},
-    {"wlan-dpp-auth-init", " peer=<id> role=<enrollee/configurator>", test_wlan_dpp_auth_init},
-    {"wlan-dpp-listen", "<frequency>...", test_wlan_dpp_listen},
-    {"wlan-dpp-stop-listen", NULL, test_wlan_dpp_stop_listen},
-    {"wlan-dpp-pkex-add", " own=<bootstrap_id> identifier=<string> code=<string>", test_wlan_dpp_pkex_add},
-    {"wlan-dpp-chirp", " own=<bootstrap id> listen=<freq>...", test_wlan_dpp_chirp},
-    {"wlan-dpp-reconfig", "<network id> ...", test_wlan_dpp_reconfig},
-    {"wlan-dpp-configurator-sign", " conf=<sta-dpp/ap-dpp> ssid=<ascii> configurator=<id>",
-     test_wlan_dpp_configurator_sign},
 #endif
 #endif
 #if CONFIG_NET_MONITOR

@@ -45,11 +45,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <wlan.h>
 #include <wifi.h>
 #include <wifi-decl.h>
-
-#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
-#endif
-
 #if CONFIG_SIGMA_AGENT
 #include "wfa_portall.h"
 #include "wfa_debug.h"
@@ -386,31 +382,6 @@ int wfaStaGetIpConfig(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
     addr = &network.ip;
 
-#if defined(SDK_OS_FREE_RTOS)
-
-    struct ip4_addr ip, nm, dns1, dns2;
-
-    ip.addr = addr->ipv4.address;
-    // ip_address = addr->ipv4.address;
-    //    gw.addr   = addr->ipv4.gw;
-    nm.addr   = addr->ipv4.netmask;
-    dns1.addr = addr->ipv4.dns1;
-    dns2.addr = addr->ipv4.dns2;
-    if (addr->ipv4.addr_type == ADDR_TYPE_STATIC)
-    {
-        ifinfo->isDhcp = 0;
-    }
-    else
-    {
-        ifinfo->isDhcp = 1;
-    }
-
-    sprintf(ifinfo->ipaddr, "%s", inet_ntoa(ip));
-    sprintf(ifinfo->mask, "%s", inet_ntoa(nm));
-
-    sprintf(ifinfo->dns[0], "%s", inet_ntoa(dns1));
-    sprintf(ifinfo->dns[1], "%s", inet_ntoa(dns2));
-#elif __ZEPHYR__
     struct in_addr ip, nm; //, dns1, dns2;
 
     ip.s_addr = addr->ipv4.address;
@@ -419,7 +390,6 @@ int wfaStaGetIpConfig(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
     net_addr_ntop(AF_INET, &ip, ifinfo->ipaddr, sizeof(ifinfo->ipaddr));
     net_addr_ntop(AF_INET, &nm, ifinfo->mask, sizeof(ifinfo->mask));
 
-#endif
     /*
      * Report back the results
      */
@@ -520,18 +490,11 @@ int wfaStaVerifyIpConnection(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBu
 {
     dutCommand_t *verip            = (dutCommand_t *)caCmdBuf;
     dutCmdResponse_t *verifyIpResp = &gGenericResp;
-#if defined(SDK_OS_FREE_RTOS)
-    ip_addr_t addr;
-#endif
     uint16_t size    = PING_DEFAULT_SIZE;
     uint16_t count   = PING_DEFAULT_COUNT;
     uint32_t timeout = PING_DEFAULT_TIMEOUT_SEC;
     int intval       = PING_INTERVAL;
     int ret          = -1;
-
-#if defined(SDK_OS_FREE_RTOS)
-    (void)memset(&addr, 0, sizeof(addr));
-#endif
 
 #ifndef WFA_PING_UDP_ECHO_ONLY
     // char strout[64], *pcnt;
@@ -577,25 +540,7 @@ int wfaStaVerifyIpConnection(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBu
 
     fclose(tmpfile);
 #endif
-#if defined(SDK_OS_FREE_RTOS)
-#if CONFIG_IPV6
-    if (inet_pton(AF_INET6, verip->cmdsu.verifyIp.dipaddr, &addr) != 0)
-    {
-        addr.type = IPADDR_TYPE_V6;
-        ret       = ping(count, intval, size, timeout, &addr);
-    }
-    else
-#endif
-        if (inet_pton(AF_INET, verip->cmdsu.verifyIp.dipaddr, &addr) != 0)
-    {
-#if CONFIG_IPV6
-        addr.type = IPADDR_TYPE_V4;
-#endif
-        ret = ping(count, intval, size, timeout, &addr);
-    }
-#elif __ZEPHYR__
     ret = ping(count, intval, size, timeout, &verip->cmdsu.verifyIp.dipaddr[0]);
-#endif
 
     if (ret == WM_SUCCESS)
         verifyIpResp->cmdru.connected = 1;
@@ -2812,17 +2757,11 @@ void wfaSendPing(tgPingStart_t *staPing, float *interval, int streamid)
 #else
 //    char bflag[] = "  ";
 #endif
-#if defined(SDK_OS_FREE_RTOS)
-    ip_addr_t addr;
-#endif
     uint16_t size    = PING_DEFAULT_SIZE;
     uint16_t count   = PING_DEFAULT_COUNT;
     uint32_t timeout = PING_DEFAULT_TIMEOUT_SEC;
     int intval       = PING_INTERVAL / staPing->frameRate;
 
-#if defined(SDK_OS_FREE_RTOS)
-    (void)memset(&addr, 0, sizeof(addr));
-#endif
 
     // totalpkts = (int)(staPing->duration * staPing->frameRate);
 
@@ -2871,32 +2810,7 @@ void wfaSendPing(tgPingStart_t *staPing, float *interval, int streamid)
     count = staPing->duration * staPing->frameRate;
     size  = staPing->frameSize;
 
-#if defined(SDK_OS_FREE_RTOS)
-#if CONFIG_IPV6
-    if (staPing->iptype == 2)
-    {
-        if (inet_pton(AF_INET6, staPing->dipaddr, &addr) != 0)
-        {
-            addr.type = IPADDR_TYPE_V6;
-            DPRINT_INFO(WFA_OUT, "\nInfo: IPv6 Ping\n");
-            return_flag = ping(count, intval, size, timeout, &addr);
-        }
-    }
-    else
-#endif
-    {
-        if (inet_pton(AF_INET, staPing->dipaddr, &addr) != 0)
-        {
-#if CONFIG_IPV6
-            addr.type = IPADDR_TYPE_V4;
-#endif
-            DPRINT_INFO(WFA_OUT, "\nInfo: IPv4 Ping\n");
-            return_flag = ping(count, intval, size, timeout, &addr);
-        }
-    }
-#elif __ZEPHYR__
     return_flag = ping(count, intval, size, timeout, &staPing->dipaddr[0]);
-#endif
 
 #if 0
     if (staPing->iptype == 2)

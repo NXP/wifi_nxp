@@ -26,10 +26,7 @@
  *       reference the architecture documents.
  *
  */
-
-#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
-#endif
 
 #if CONFIG_SIGMA_AGENT
 
@@ -305,10 +302,8 @@ static tgThrData_t tdata[WFA_THREADS_NUM];
 
 extern tgWMM_t *wfa_get_wmm_thr();
 
-#ifdef __ZEPHYR__
 #define STACK_SIZE (2048)
 K_THREAD_STACK_ARRAY_DEFINE(stack, WFA_THREADS_NUM, STACK_SIZE);
-#endif
 
 void cmd_wfa_dut(int argc, char **argv)
 {
@@ -407,12 +402,8 @@ void cmd_wfa_dut(int argc, char **argv)
 
     pthread_attr_init(&ptAttr);
 
-#if defined(SDK_OS_FREE_RTOS)
-    pthread_attr_setstacksize(&ptAttr, 2048);
-    ptSchedParam.sched_priority = 2;
-#elif __ZEPHYR__
     ptSchedParam.sched_priority = 12;
-#endif
+
     pthread_attr_setschedparam(&ptAttr, &ptSchedParam);
     pthread_attr_getschedpolicy(&ptAttr, &ptPolicy);
     pthread_attr_setschedpolicy(&ptAttr, 2); // SCHED_RR);
@@ -426,9 +417,7 @@ void cmd_wfa_dut(int argc, char **argv)
     for (i = 0; i < WFA_THREADS_NUM; i++)
     {
         tdata[i].tid = i;
-#ifdef __ZEPHYR__
         pthread_attr_setstack(&ptAttr, &stack[i], STACK_SIZE);
-#endif
         pthread_mutex_init(&wmm_thr[i].thr_flag_mutex, NULL);
         pthread_cond_init(&wmm_thr[i].thr_flag_cond, NULL);
         wmm_thr[i].thr_id = pthread_create(&wmm_thr[i].thr, &ptAttr, wfa_wmm_thread, &tdata[i]);
@@ -455,11 +444,8 @@ void cmd_wfa_dut(int argc, char **argv)
 
     maxfdn1 = gagtSockfd + 1;
 
-#if defined(SDK_OS_FREE_RTOS)
-    ret = os_thread_create(&wfa_dut_thread, "wfa_dut", wfa_dut_task, 0, &wfa_dut_stack, OS_PRIO_2);
-#elif __ZEPHYR__
     ret = os_thread_create(&wfa_dut_thread, "wfa_dut", wfa_dut_task, 0, &wfa_dut_stack, OS_PRIO_1);
-#endif
+
     if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Error: Failed to create cli thread: %d\r\n", ret);
@@ -469,11 +455,7 @@ void cmd_wfa_dut(int argc, char **argv)
 }
 
 static struct cli_command wfa_dut_cli[] = {
-#if defined(SDK_OS_FREE_RTOS)
-    {"wfa_dut", "[-v|-h|<interface> <port>] ", cmd_wfa_dut},
-#elif __ZEPHYR__
     {"wlan-wfa_dut", "[-v|-h|<interface> <port>] ", cmd_wfa_dut},
-#endif
 };
 
 int wfa_dut_cli_init(void)

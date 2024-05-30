@@ -16,11 +16,6 @@
 #include <wm_net.h>
 #include <cli.h>
 #include <cli_utils.h>
-#if defined(SDK_OS_FREE_RTOS)
-#include <dhcp-server.h>
-
-#include "dhcp-priv.h"
-#endif
 
 /*
  * Command-Line Interface

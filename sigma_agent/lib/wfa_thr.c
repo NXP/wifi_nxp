@@ -24,11 +24,7 @@
  *      here 0x88 for UPSD, will be implemented later
  *    all other/default     ----> WME_AC_BE;
  */
-
-#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
-#endif
-
 #if CONFIG_SIGMA_AGENT
 #include <sys/types.h>
 #include <pthread.h>

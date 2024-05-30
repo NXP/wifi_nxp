@@ -2283,12 +2283,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     }
 
     wm_wifi.g_user_scan_cfg = user_scan_cfg;
-
-#ifdef __ZEPHYR__
     (void)OSA_EventNotifyPost(wm_wifi.wifi_scan_task_Handle);
-#else
-    (void)OSA_EventSet((osa_event_handle_t)wm_wifi.wifi_event_Handle, WIFI_EVENT_SCAN);
-#endif
 
     return WM_SUCCESS;
 }

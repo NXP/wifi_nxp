@@ -13,11 +13,6 @@
  */
 #include <string.h>
 #include <stdlib.h>
-
-#ifndef __ZEPHYR__
-#include <fsl_debug_console.h>
-#include <cli.h>
-#endif
 #include <wm_utils.h>
 #include <cli_utils.h>
 #include <ctype.h>

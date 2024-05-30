@@ -22,10 +22,7 @@
  * TLV stands for Tag, Length, Value.
  *
  */
-
-#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
-#endif
 
 #if CONFIG_SIGMA_AGENT
 #include "wfa_portall.h"

@@ -19,9 +19,6 @@
 #ifndef __WFA_PORTALL_H__
 #define __WFA_PORTALL_H__
 
-#ifndef __ZEPHYR__
-#include <fsl_debug_console.h>
-#endif
 #include <stdio.h>
 #include <wlan.h>
 #include <wifi.h>

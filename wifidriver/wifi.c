@@ -407,9 +407,6 @@ void wifi_dump_firmware_info()
     int tries;
     t_u8 data[8], i;
     uint32_t resp;
-#ifndef __ZEPHYR__
-    wifi_d("==== DEBUG MODE OUTPUT START: %d ====", OSA_GetTimestamp());
-#endif
     if (wm_wifi.wifi_usb_file_open_cb != NULL)
     {
         ret = wm_wifi.wifi_usb_file_open_cb(itcm_dump_file_name);
@@ -424,9 +421,6 @@ void wifi_dump_firmware_info()
         wifi_e("File open callback is not registered");
         goto done;
     }
-#ifndef __ZEPHYR__
-    wifi_d("Start ITCM output %d, please wait...", OSA_GetTimestamp());
-#endif
     reg_start = DEBUG_DUMP_START_REG;
     reg_end   = DEBUG_DUMP_END_REG;
     do
@@ -528,9 +522,6 @@ void wifi_dump_firmware_info()
                         wifi_e("File opening failed");
                         goto done;
                     }
-#ifndef __ZEPHYR__
-                    wifi_d("Start DTCM output %d, please wait...", OSA_GetTimestamp());
-#endif
                 }
                 else
                 {
@@ -561,9 +552,6 @@ void wifi_dump_firmware_info()
                         wifi_e("File opening failed");
                         goto done;
                     }
-#ifndef __ZEPHYR__
-                    wifi_d("Start SQRAM output %u.%06u, please wait...", OSA_GetTimestamp());
-#endif
                 }
                 else
                 {
@@ -597,9 +585,6 @@ void wifi_dump_firmware_info()
     wifi_d("The output ITCM/DTCM/SQRAM have been saved to files successfully!");
     /* end dump fw memory */
 done:
-#ifndef __ZEPHYR__
-    wifi_d("==== DEBUG MODE OUTPUT END: %d ====\n", OSA_GetTimestamp());
-#endif
 
     while (1)
         ;
@@ -819,9 +804,6 @@ void wifi_dump_firmware_info()
     dbg_dump_start_reg = DEBUG_DUMP_START_REG;
     dbg_dump_end_reg   = DEBUG_DUMP_END_REG;
 
-#ifndef __ZEPHYR__
-    wifi_d("==== DEBUG MODE OUTPUT START: %d.%06u ====", OSA_GetTimestamp());
-#endif
     /* read the number of the memories which will dump */
     if (RDWR_STATUS_FAILURE == wifi_cmd52_rdwr_firmware(doneflag))
         goto done;
@@ -865,9 +847,6 @@ void wifi_dump_firmware_info()
     }
 
     doneflag = pmem_type_mapping_tbl->done_flag;
-#ifndef __ZEPHYR__
-    wifi_d("Start %s output %d, please wait...", pmem_type_mapping_tbl->mem_name, OSA_GetTimestamp());
-#endif
     do
     {
         stat = wifi_cmd52_rdwr_firmware(doneflag);
@@ -922,9 +901,6 @@ void wifi_dump_firmware_info()
         }
     } while (1);
 
-#ifndef __ZEPHYR__
-    wifi_d("==== DEBUG MODE OUTPUT END: %d ====\n", OSA_GetTimestamp());
-#endif
     /* end dump fw memory */
 done:
     while (1)
@@ -1813,11 +1789,6 @@ static void wifi_drv_task(void *argv)
 static void wifi_core_task(void *argv)
 {
     OSA_SR_ALLOC();
-#ifndef __ZEPHYR__
-    osa_event_flags_t flagsToWait = WIFI_EVENT_SDIO;
-    osa_event_flags_t pSetFlags;
-#endif
-
     for (;;)
     {
         OSA_ENTER_CRITICAL();
@@ -1832,18 +1803,7 @@ static void wifi_core_task(void *argv)
 
         OSA_EXIT_CRITICAL();
 
-#ifdef __ZEPHYR__
         (void)OSA_EventNotifyGet(osaWaitForever_c);
-#else
-        /* Wait till we receive a packet from SDIO */
-        (void)OSA_EventWait((osa_event_handle_t)wm_wifi.wifi_event_Handle, flagsToWait, false, osaWaitForever_c,
-                            &pSetFlags);
-
-        if ((pSetFlags & WIFI_EVENT_SDIO) == 0U)
-        {
-            continue;
-        }
-#endif
 
         // wakelock_get(WL_ID_WIFI_CORE_INPUT);
 
@@ -1896,27 +1856,9 @@ void wifi_scan_stop(void)
 static void wifi_scan_task(void *argv)
 {
     mlan_status rv;
-#ifndef __ZEPHYR__
-    osa_event_flags_t flagsToWait = WIFI_EVENT_SCAN;
-    osa_event_flags_t pSetFlags;
-#endif
-
     for (;;)
     {
-#ifdef __ZEPHYR__
         (void)OSA_EventNotifyGet(osaWaitForever_c);
-#else
-        /* Wait till we receive scan command */
-        (void)OSA_EventWait((osa_event_handle_t)wm_wifi.wifi_event_Handle, flagsToWait, false, osaWaitForever_c,
-                            &pSetFlags);
-
-        OSA_EventClear((osa_event_handle_t)wm_wifi.wifi_event_Handle, WIFI_EVENT_SCAN);
-
-        if ((pSetFlags & WIFI_EVENT_SCAN) == 0U)
-        {
-            continue;
-        }
-#endif
         if (wm_wifi.scan_stop == true)
         {
             wm_wifi.scan_stop = false;
@@ -2103,14 +2045,12 @@ static int wifi_core_init(void)
         goto fail;
     }
     OSA_SemaphorePost((osa_semaphore_handle_t)wm_wifi.tx_data_sem);
-#ifdef __ZEPHYR__
     status = OSA_MsgQCreate((osa_msgq_handle_t)wm_wifi.tx_data, MAX_EVENTS, sizeof(struct bus_message));
     if (status != KOSA_StatusSuccess)
     {
         wifi_e("Create tx_data queue failed");
         goto fail;
     }
-#endif
 
     status = OSA_TaskCreate((osa_task_handle_t)wm_wifi.wifi_drv_tx_task_Handle, OSA_TASK(wifi_drv_tx_task), NULL);
     if (status != KOSA_StatusSuccess)
@@ -2205,9 +2145,7 @@ static void wifi_core_deinit(void)
     (void)OSA_MsgQDestroy((osa_msgq_handle_t)wm_wifi.powersave_queue);
 
 #if CONFIG_WMM
-#ifdef __ZEPHYR__
     (void)OSA_MsgQDestroy((osa_msgq_handle_t)wm_wifi.tx_data);
-#endif
     wifi_wmm_buf_pool_deinit();
     wifi_bypass_txq_deinit();
 
@@ -3908,7 +3846,6 @@ typedef enum _wifi_tx_event
     TX_TYPE_BYPASS_DATA,
 } wifi_tx_event_t;
 
-#ifdef __ZEPHYR__
 static void notify_wifi_driver_tx_event(uint32_t events)
 {
     struct bus_message msg;
@@ -3943,7 +3880,6 @@ static void notify_wifi_driver_tx_event(uint32_t events)
         }
     }
 }
-#endif
 
 int send_wifi_driver_tx_data_event(t_u8 interface)
 {
@@ -3954,15 +3890,7 @@ int send_wifi_driver_tx_data_event(t_u8 interface)
     if(1 != wm_wifi.wifi_core_init_done)
         return 0;
 
-#ifdef __ZEPHYR__
     notify_wifi_driver_tx_event(events);
-#else
-    (void)OSA_EventSet((osa_event_handle_t)wm_wifi.wifi_event_Handle, events);
-    if (!__get_IPSR())
-    {
-        OSA_TaskYield();
-    }
-#endif
 
     return 0;
 }
@@ -3973,15 +3901,7 @@ int send_wifi_driver_tx_null_data_event(t_u8 interface)
 
     events = (1U << interface) | WIFI_EVENT_TX_NULL_DATA;
 
-#ifdef __ZEPHYR__
     notify_wifi_driver_tx_event(events);
-#else
-    (void)OSA_EventSet((osa_event_handle_t)wm_wifi.wifi_event_Handle, events);
-    if (!__get_IPSR())
-    {
-        OSA_TaskYield();
-    }
-#endif
 
     return 0;
 }
@@ -3992,15 +3912,7 @@ int send_wifi_driver_bypass_data_event(t_u8 interface)
 
     events = (1U << interface) | WIFI_EVENT_TX_BYPASS_DATA;
 
-#ifdef __ZEPHYR__
     notify_wifi_driver_tx_event(events);
-#else
-    (void)OSA_EventSet((osa_event_handle_t)wm_wifi.wifi_event_Handle, events);
-    if (!__get_IPSR())
-    {
-        OSA_TaskYield();
-    }
-#endif
 
     return 0;
 }
@@ -4012,14 +3924,8 @@ static void wifi_drv_tx_task(osa_task_param_t arg)
     t_u8 i;
     t_u16 event    = 0;
     t_u8 interface = 0;
-#ifdef __ZEPHYR__
     struct bus_message msg;
     osa_status_t status;
-#else
-    osa_event_flags_t flagsToWait =
-        WIFI_EVENT_STA | WIFI_EVENT_UAP | WIFI_EVENT_TX_DATA | WIFI_EVENT_TX_NULL_DATA | WIFI_EVENT_TX_BYPASS_DATA;
-    osa_event_flags_t pSetFlags;
-#endif
 
     for (;;)
     {
@@ -4035,57 +3941,12 @@ static void wifi_drv_tx_task(osa_task_param_t arg)
             OSA_TimeDelay(wm_wifi.beacon_period);
         }
 #endif
-#ifdef __ZEPHYR__
         status = OSA_MsgQGet((osa_msgq_handle_t)wm_wifi.tx_data, &msg, osaWaitForever_c);
         if (status == KOSA_StatusSuccess)
         {
             event     = msg.event;
             interface = msg.reason;
         }
-#else
-        (void)OSA_EventWait((osa_event_handle_t)wm_wifi.wifi_event_Handle, flagsToWait, false, osaWaitForever_c,
-                            &pSetFlags);
-
-        OSA_EventClear((osa_event_handle_t)wm_wifi.wifi_event_Handle, WIFI_EVENT_STA | WIFI_EVENT_UAP |
-                                                                          WIFI_EVENT_TX_DATA | WIFI_EVENT_TX_NULL_DATA |
-                                                                          WIFI_EVENT_TX_BYPASS_DATA);
-
-        if ((pSetFlags & (WIFI_EVENT_STA | WIFI_EVENT_UAP | WIFI_EVENT_TX_DATA | WIFI_EVENT_TX_NULL_DATA |
-                          WIFI_EVENT_TX_BYPASS_DATA)) == 0U)
-        {
-            continue;
-        }
-
-        if (pSetFlags & WIFI_EVENT_STA)
-        {
-            interface = MLAN_BSS_TYPE_STA;
-        }
-
-        if (pSetFlags & WIFI_EVENT_UAP)
-        {
-            interface = MLAN_BSS_TYPE_UAP;
-        }
-
-        if ((interface != MLAN_BSS_TYPE_STA) && (interface != MLAN_BSS_TYPE_UAP))
-        {
-            continue;
-        }
-
-        if (pSetFlags & WIFI_EVENT_TX_DATA)
-        {
-            event = MLAN_TYPE_DATA;
-        }
-
-        if (pSetFlags & WIFI_EVENT_TX_NULL_DATA)
-        {
-            event = MLAN_TYPE_NULL_DATA;
-        }
-
-        if (pSetFlags & WIFI_EVENT_TX_BYPASS_DATA)
-        {
-            event = MLAN_TYPE_BYPASS_DATA;
-        }
-#endif
         pmadapter = mlan_adap;
 
 #if CONFIG_HOST_SLEEP
@@ -4344,11 +4205,7 @@ int wifi_low_level_output(const t_u8 interface,
         wifi_wmm_buf_put((outbuf_t *)sd_buffer);
         wifi_wmm_drop_no_media(interface);
 #endif
-#ifdef __ZEPHYR__
         return WM_SUCCESS;
-#else
-        return -WM_E_BUSY;
-#endif
     }
 
 #if CONFIG_11AX

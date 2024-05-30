@@ -31,10 +31,6 @@ void OSA_DumpThreadInfo(char *name)
     if (task_info_buf == NULL)
         return;
 
-#ifndef __ZEPHYR__
-    vTaskList(task_info_buf);
-#endif
-
     PRINTF("Name                  State   Priority Stack  Num\r\n");
     PRINTF("==================================================\r\n");
     PRINTF("%s\r\n", task_info_buf);

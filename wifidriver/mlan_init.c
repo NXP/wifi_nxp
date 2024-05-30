@@ -19,11 +19,6 @@ Change log:
 #include <wmerrno.h>
 #include <osa.h>
 #include "fsl_common.h"
-#ifndef __ZEPHYR__
-#ifndef RW610
-#include "sdmmc_config.h"
-#endif
-#endif
 
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
@@ -31,9 +26,7 @@ Change log:
         Global Variables
 ********************************************************/
 
-#ifdef __ZEPHYR__
 #define BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE 32
-#endif
 
 //_IOBUFS_ALIGNED(SDIO_DMA_ALIGNMENT)
 #if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177)

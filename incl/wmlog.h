@@ -12,17 +12,12 @@
 #define __WMLOG_H__
 
 #include <osa.h>
-
-#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
 #ifndef PRINTF
 #define PRINTF printk
-#endif
-#else
-#include "fsl_debug_console.h"
 #endif
 
 #if CONFIG_ENABLE_ERROR_LOGS

@@ -14,10 +14,6 @@
 #include "wifi.h"
 #include <wm_net.h>
 
-#ifndef __ZEPHYR__
-#include "fsl_debug_console.h"
-#endif
-
 #if CONFIG_WPA_SUPP
 
 #include "rtos_wpa_supp_if.h"
@@ -568,13 +564,7 @@ void *wifi_nxp_wpa_supp_dev_init(void *supp_drv_if_ctx,
     u8 extended_capa[10]           = {0x00, 0x00, 0x8A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     u8 extended_capa_mask[10]      = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-#ifdef __ZEPHYR__
     iface = net_if_get_binding(iface_name);
-#else
-    LOCK_TCPIP_CORE();
-    iface = netif_find(iface_name);
-    UNLOCK_TCPIP_CORE();
-#endif
 
     if (!iface)
     {
@@ -1041,15 +1031,9 @@ struct wpa_scan_res *wifi_nxp_wpa_supp_proc_scan_res(nxp_wifi_event_new_scan_res
     return r;
 }
 
-#if defined(SDK_OS_FREE_RTOS)
-int wifi_nxp_wpa_supp_scan_results_get(void *if_priv, struct wpa_scan_results *scan_res2)
-#elif defined(__ZEPHYR__)
 int wifi_nxp_wpa_supp_scan_results_get(void *if_priv)
-#endif
 {
-#if defined(__ZEPHYR__)
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
-#endif
     int ret = -1;
     unsigned int i, num;
     nxp_wifi_event_new_scan_result_t scan_res;
@@ -1061,29 +1045,15 @@ int wifi_nxp_wpa_supp_scan_results_get(void *if_priv)
         goto out;
     }
 
-#if defined(__ZEPHYR__)
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
-#endif
 
     num = wifi_nxp_scan_res_num();
 
     if (num == 0)
     {
         supp_d("%s: No networks found", __func__);
-#if defined(SDK_OS_FREE_RTOS)
-        ret = 0;
-#endif
         goto out;
     }
-
-#if defined(SDK_OS_FREE_RTOS)
-    scan_res2->res = (struct wpa_scan_res **)OSA_MemoryAllocate(num * sizeof(struct wpa_scan_res *));
-    if (!scan_res2->res)
-    {
-        supp_e("%s: Failed to calloc scan result array", __func__);
-        goto out;
-    }
-#endif
 
     for (i = 0; i < num; i++)
     {
@@ -1094,13 +1064,9 @@ int wifi_nxp_wpa_supp_scan_results_get(void *if_priv)
 
         if (sr)
         {
-#if defined(SDK_OS_FREE_RTOS)
-            scan_res2->res[scan_res2->num++] = sr;
-#elif defined(__ZEPHYR__)
             wifi_if_ctx_rtos->supp_callbk_fns.scan_res(wifi_if_ctx_rtos->supp_drv_if_ctx, sr, i == num -1 ? false : true);
             OSA_MemoryFree((void *)sr);
             sr = NULL;
-#endif
         }
     }
 
@@ -2475,13 +2441,7 @@ void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
 
     const struct netif *iface = NULL;
 
-#ifdef __ZEPHYR__
     iface = net_if_get_binding(iface_name);
-#else
-    LOCK_TCPIP_CORE();
-    iface = netif_find(iface_name);
-    UNLOCK_TCPIP_CORE();
-#endif
 
     if (!iface)
     {

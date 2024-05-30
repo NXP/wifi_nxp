@@ -11,9 +11,6 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-
-#if defined(SDK_OS_FREE_RTOS)
-
 #if !defined(IP_ADDR) && !defined(IP_MASK) && !defined(GW_ADDR)
 #define IP_USE_DHCP
 #endif
@@ -31,8 +28,6 @@
 /* Gateway address configuration. */
 #ifndef GW_ADDR
 #define GW_ADDR "192.168.250.10"
-#endif
-
 #endif
 
 #endif /* _NETWORK_CFG_H_ */

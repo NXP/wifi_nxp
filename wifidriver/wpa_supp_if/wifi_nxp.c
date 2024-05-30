@@ -148,10 +148,6 @@ static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
     .get_wiphy_callbk_fn           = wifi_nxp_wpa_supp_event_get_wiphy,
 };
 
-#ifndef __ZEPHYR__
-static int g_net_idx = -1;
-#endif
-
 int wifi_supp_init(void)
 {
     int ret = -WM_FAIL;
@@ -189,21 +185,6 @@ int wifi_supp_init(void)
         goto out;
     }
 
-#ifndef __ZEPHYR__
-    if (g_net_idx == -1)
-    {
-        g_net_idx = net_alloc_client_data_id();
-
-        if (g_net_idx == -1)
-        {
-            wifi_e("net_alloc_client_data_id failed. net idx %d", g_net_idx);
-            goto out;
-        }
-    }
-
-    netif_set_client_data(iface, LWIP_NETIF_CLIENT_DATA_INDEX_MAX, (void *)&wpa_supp_ops);
-#endif
-
     (void)net_get_if_name_netif(sta_iface_name, iface);
 
 #if CONFIG_WIFI_SOFTAP_SUPPORT
@@ -226,10 +207,6 @@ int wifi_supp_init(void)
         wifi_e("net_get_uap_interface failed. status code %d", ret);
         goto out;
     }
-
-#ifndef __ZEPHYR__
-    netif_set_client_data(iface, LWIP_NETIF_CLIENT_DATA_INDEX_MAX, (void *)&wpa_supp_ops);
-#endif
 
     (void)net_get_if_name_netif(uap_iface_name, iface);
 #endif

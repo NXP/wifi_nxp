@@ -117,10 +117,8 @@ typedef struct
 #if CONFIG_WMM
     /** Semaphore to protect data parameters */
     OSA_SEMAPHORE_HANDLE_DEFINE(tx_data_sem);
-#ifdef __ZEPHYR__
     /** Queue for sending data packets to fw */
     OSA_MSGQ_HANDLE_DEFINE(tx_data, MAX_EVENTS, sizeof(struct bus_message));
-#endif
 #endif
     unsigned last_sent_cmd_msec;
 

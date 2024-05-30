@@ -32,10 +32,7 @@
 #include <sys/mman.h>
 #include <sched.h>
 #endif
-
-#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
-#endif
 
 #if CONFIG_SIGMA_AGENT
 #include "wfa_portall.h"
@@ -336,29 +333,6 @@ int wfaTrafficRecv(int sock, char *buf, struct sockaddr *from)
 
 int wfaGetifAddr(char *ifname, struct sockaddr_in *sa)
 {
-#if defined(SDK_OS_FREE_RTOS)
-
-    const struct netif *device = NULL;
-
-    LOCK_TCPIP_CORE();
-    device = netif_find(ifname);
-    UNLOCK_TCPIP_CORE();
-
-    if (!device)
-    {
-        DPRINT_ERR(WFA_ERR, "%s: Interface %s not found", __func__, ifname);
-        return WFA_FAILURE;
-    }
-
-#if CONFIG_IPV6
-    sa->sin_addr.s_addr = device->ip_addr.u_addr.ip4.addr;
-#else
-    sa->sin_addr.s_addr = device->ip_addr.addr;
-#endif
-
-    //    (void)PRINTF("\r\nIP:\t\t%s", ipaddr_ntoa(&device->ip_addr));
-#elif __ZEPHYR__
-
     static struct net_if *iface;
 
     iface = net_if_get_first_by_type(&NET_L2_GET_NAME(ETHERNET));
@@ -370,7 +344,6 @@ int wfaGetifAddr(char *ifname, struct sockaddr_in *sa)
 
     sa->sin_addr.s_addr = iface->config.ip.ipv4->unicast[0].address.in_addr.s_addr;
 
-#endif
     return WFA_SUCCESS;
 #if 0
     struct ifreq ifr;

@@ -13,10 +13,6 @@
 
 #include <wifi_config_default.h>
 
-#if defined(FSL_RTOS_THREADX)
-#include <errno.h>
-#endif
-
 /* Get the module index number from error code (4th byte from LSB)*/
 #define get_module_base(code) ((code & 0xF000) >> 12)
 

@@ -7,10 +7,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  *
  */
-
-#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
-#endif
 
 #if CONFIG_SIGMA_AGENT
 

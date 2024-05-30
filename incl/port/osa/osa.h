@@ -3,20 +3,8 @@
 #define _OSA_H_
 
 #include <wifi_config_default.h>
-
 #include "fsl_os_abstraction.h"
-
-#if defined(SDK_OS_FREE_RTOS)
-#include <osa_freertos.h>
-#elif defined(FSL_RTOS_THREADX)
-#include "app_config.h"
-#include <osa_threadx.h>
-#elif (__ZEPHYR__)
 #include <osa_zephyr.h>
-#else
-#error "Please define OS type"
-#endif
-
 #include <wmerrno.h>
 #include <wm_utils.h>
 

@@ -12,8 +12,6 @@
 #include <osa.h>
 #include <wmlog.h>
 
-#if __ZEPHYR__
-
 /*** Timer Management ***/
 static void timer_callback_work_handler(struct k_work *item)
 {
@@ -210,5 +208,3 @@ uint32_t OSA_MsgQWaiting(osa_msgq_handle_t msgqHandle)
 {
     return 0;
 }
-
-#endif

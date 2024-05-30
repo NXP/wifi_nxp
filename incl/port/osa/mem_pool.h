@@ -15,8 +15,6 @@
  */
 #define POOL_OVERHEAD (sizeof(uint32_t))
 
-#if defined(SDK_OS_FREE_RTOS)
-
 #include "stack_simple.h"
 
 /**
@@ -52,12 +50,6 @@ typedef struct MemPool_t_
     unsigned char Buffer[1];
 
 } MemPool_t;
-
-#elif defined(FSL_RTOS_THREADX)
-
-typedef TX_BLOCK_POOL MemPool_t;
-
-#endif
 
 /**
  *  Create a MemoryPool

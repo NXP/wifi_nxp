@@ -7,12 +7,6 @@
  *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
-
-#ifndef __ZEPHYR__
-#include <wmerrno.h>
-#include <wm_utils.h>
-#endif
-
 #include <osa.h>
 #include <mlan_sdio_api.h>
 
@@ -25,11 +19,6 @@
 #include "mlan_main_defs.h"
 #include "mlan_sdio_defs.h"
 #include "type_decls.h"
-#ifndef __ZEPHYR__
-#include "fsl_sdmmc_common.h"
-#include "fsl_sdmmc_host.h"
-#include "sdmmc_config.h"
-#endif
 #include "fsl_common.h"
 #include "sdio.h"
 #include "firmware_dnld.h"
@@ -49,9 +38,7 @@
  * At the same time buffer address/size should be aligned to the cache line size if cache is supported.
  */
 
-#ifdef __ZEPHYR__
 #define BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE 32
-#endif
 /*! @brief Data written to the card */
 #if CONFIG_SDIO_MULTI_PORT_TX_AGGR
 SDK_ALIGN(uint8_t outbuf[SDIO_MP_AGGR_DEF_PKT_LIMIT * 2 * DATA_BUFFER_SIZE], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);

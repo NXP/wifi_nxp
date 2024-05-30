@@ -14,19 +14,6 @@
 #include <stdio.h>
 #include <wm_net.h>
 #if CONFIG_WPA_SUPP
-
-#if defined(SDK_OS_FREE_RTOS)
-#include <drivers/driver_freertos.h>
-
-typedef struct freertos_wpa_supp_dev_callbk_fns rtos_wpa_supp_dev_callbk_fns;
-
-#if CONFIG_WPA_SUPP_AP
-typedef struct freertos_hostapd_dev_callbk_fns rtos_hostapd_dev_callbk_fns;
-#endif
-
-typedef struct freertos_wpa_supp_dev_ops rtos_wpa_supp_dev_ops;
-
-#elif defined(__ZEPHYR__)
 #include <drivers/driver_zephyr.h>
 
 typedef struct zep_wpa_supp_dev_callbk_fns rtos_wpa_supp_dev_callbk_fns;
@@ -36,9 +23,6 @@ typedef struct zep_hostapd_dev_callbk_fns rtos_hostapd_dev_callbk_fns;
 #endif
 
 typedef struct zep_wpa_supp_dev_ops rtos_wpa_supp_dev_ops;
-#else
-#error "Define WPA Supplicant driver interface structs for your RTOS here"
-#endif
 
 struct wifi_nxp_ctx_rtos
 {

@@ -21,61 +21,6 @@
 #include <osa.h>
 #include <wmtypes.h>
 #include <wmerrno.h>
-
-#if defined(SDK_OS_FREE_RTOS)
-
-#include <lwip/opt.h>
-#include <lwip/sys.h>
-#include <lwip/tcpip.h>
-#include <lwip/sockets.h>
-#include <lwip/netdb.h>
-#include <lwip/stats.h>
-#include <lwip/icmp.h>
-#include <lwip/igmp.h>
-#include <lwip/ip.h>
-#include <lwip/inet_chksum.h>
-#include <lwip/pbuf.h>
-#include <lwip/api.h>
-#include <lwip/netifapi.h>
-#include <lwip/dns.h>
-#include <lwip/dhcp.h>
-#include <lwip/prot/dhcp.h>
-#include <lwip/ip_addr.h>
-#include <lwip/prot/autoip.h>
-#include <netif/etharp.h>
-
-#ifndef LWIP_TCPIP_CORE_LOCKING
-#error "LWIP TCP/IP Core Locking is not enabled"
-#endif
-
-#if CONFIG_IPV6 && !LWIP_IPV6
-#error "CONFIG_IPV6 is enabled, but LWIP_IPV6 is not, enable it from lwipopts.h"
-#elif LWIP_IPV6 && !CONFIG_IPV6
-#error "LWIP_IPV6 is enabled, but CONFIG_IPV6 is not, enable it from wifi_config.h"
-#endif
-
-#if CONFIG_IPV6 && LWIP_IPV6
-#if !CONFIG_MAX_IPV6_ADDRESSES
-#error "Define CONFIG_MAX_IPV6_ADDRESSES same as LWIP_IPV6_NUM_ADDRESSES in wifi_config.h"
-#else
-#if CONFIG_MAX_IPV6_ADDRESSES != LWIP_IPV6_NUM_ADDRESSES
-#error "CONFIG_MAX_IPV6_ADDRESSES must be equal to LWIP_IPV6_NUM_ADDRESSES"
-#endif
-#endif
-#endif
-
-#if (!defined(LWIP_NETIF_EXT_STATUS_CALLBACK) || (LWIP_NETIF_EXT_STATUS_CALLBACK == 0))
-#error "Define LWIP_NETIF_EXT_STATUS_CALLBACK as 1 in lwipopts.h"
-#endif
-
-#if CONFIG_WPA_SUPP
-#if (!defined(LWIP_NUM_NETIF_CLIENT_DATA) || (LWIP_NUM_NETIF_CLIENT_DATA < 2))
-#error "Define LWIP_NUM_NETIF_CLIENT_DATA atleast 2 in lwipopts.h"
-#endif
-#endif
-
-#elif __ZEPHYR__
-
 #include <zephyr/kernel.h>
 #include <zephyr/net/ethernet.h>
 #include <zephyr/net/net_pkt.h>
@@ -148,12 +93,6 @@ typedef struct
     scan_result_cb_t scan_cb;
     uint16_t max_bss_cnt;
 } interface_t;
-#elif defined(FSL_RTOS_THREADX)
-
-#include "nx_api.h"
-// #include "nxd_bsd.h"
-
-#endif
 
 #define NET_SUCCESS WM_SUCCESS
 #define NET_ERROR   (-WM_FAIL)
@@ -179,10 +118,8 @@ typedef struct
 #define net_read(sock, data, len)                     read(sock, data, len)
 #define net_write(sock, data, len)                    write(sock, data, len)
 
-#ifdef __ZEPHYR__
 /* directly map this to the zephyr internal functions */
 #define inet_aton(cp, addr) inet_pton(AF_INET, cp, (char *)addr)
-#endif
 
 enum net_address_types
 {
@@ -272,12 +209,8 @@ void net_stop_dhcp_timer(void);
  */
 static inline int net_socket_blocking(int sock, int state)
 {
-#if defined(SDK_OS_FREE_RTOS)
-    return ioctlsocket(sock, FIONBIO, &state);
-#elif __ZEPHYR__
     /* TODO: implement */
     return 0;
-#endif
 }
 
 /** Get error number from provided socket
@@ -289,24 +222,6 @@ static inline int net_socket_blocking(int sock, int state)
 static inline int net_get_sock_error(int sock)
 {
     int ret = 0;
-#if defined(SDK_OS_FREE_RTOS)
-
-    switch (errno)
-    {
-        case EWOULDBLOCK:
-            ret = -WM_E_AGAIN;
-            break;
-        case EBADF:
-            ret = -WM_E_BADF;
-            break;
-        case ENOBUFS:
-            ret = -WM_E_NOMEM;
-            break;
-        default:
-            ret = errno;
-            break;
-    }
-#endif
 
     return ret;
 }
@@ -323,11 +238,7 @@ static inline uint32_t net_inet_aton(const char *cp)
     struct in_addr addr;
     addr.s_addr = 0;
 
-#if defined(SDK_OS_FREE_RTOS)
-    (void)inet_aton(cp, ((void *)&addr));
-#elif __ZEPHYR__
     (void)net_addr_pton(AF_INET, cp, &addr);
-#endif
     return addr.s_addr;
 }
 
@@ -348,11 +259,6 @@ void net_wlan_set_mac_address(unsigned char *stamac, unsigned char *uapmac);
  */
 static inline uint8_t *net_stack_buffer_skip(void *buf, uint16_t in_offset)
 {
-#if defined(SDK_OS_FREE_RTOS)
-    uint16_t out_offset = 0;
-    struct pbuf *p      = pbuf_skip((struct pbuf *)buf, in_offset, &out_offset);
-    return (uint8_t *)(p->payload) + out_offset;
-#elif __ZEPHYR__
     uint16_t offset_left = in_offset;
     struct net_buf *frag = ((struct net_pkt *)buf)->frags;
     while (frag && (frag->len <= offset_left))
@@ -361,7 +267,6 @@ static inline uint8_t *net_stack_buffer_skip(void *buf, uint16_t in_offset)
         frag        = frag->frags;
     }
     return (uint8_t *)(frag->data + offset_left);
-#endif
 }
 
 /** Free a buffer allocated from stack memory
@@ -371,11 +276,7 @@ static inline uint8_t *net_stack_buffer_skip(void *buf, uint16_t in_offset)
  */
 static inline void net_stack_buffer_free(void *buf)
 {
-#if defined(SDK_OS_FREE_RTOS)
-    pbuf_free((struct pbuf *)buf);
-#elif __ZEPHYR__
     net_pkt_unref((struct net_pkt *)buf);
-#endif
 }
 
 /** Copy (part of) the contents of a packet buffer to an application supplied buffer
@@ -386,14 +287,7 @@ static inline void net_stack_buffer_free(void *buf)
  * \param[in] offset offset into the stack buffer from where to begin copying
  * \return copy status based on stack definition.
  */
-#if defined(SDK_OS_FREE_RTOS)
-static inline int net_stack_buffer_copy_partial(void *stack_buffer, void *dst, uint16_t len, uint16_t offset)
-{
-    return pbuf_copy_partial((const struct pbuf *)stack_buffer, dst, len, offset);
-}
-#elif __ZEPHYR__
 int net_stack_buffer_copy_partial(void *stack_buffer, void *dst, uint16_t len, uint16_t offset);
-#endif
 
 /** Get the data payload inside the stack buffer.
  *
@@ -403,11 +297,7 @@ int net_stack_buffer_copy_partial(void *stack_buffer, void *dst, uint16_t len, u
  */
 static inline void *net_stack_buffer_get_payload(void *buf)
 {
-#if defined(SDK_OS_FREE_RTOS)
-    return ((struct pbuf *)buf)->payload;
-#elif __ZEPHYR__
     return net_pkt_data((struct net_pkt *)buf);
-#endif
 }
 
 /** Converts Internet host address in network byte order to a string in IPv4
@@ -419,19 +309,11 @@ static inline void *net_stack_buffer_get_payload(void *buf)
  */
 static inline void net_inet_ntoa(unsigned long addr, char *cp)
 {
-#if defined(SDK_OS_FREE_RTOS)
-    struct ip4_addr saddr;
-    saddr.addr = addr;
-    /* No length, sigh! */
-    (void)strcpy(cp, inet_ntoa(saddr));
-#elif __ZEPHYR__
     struct in_addr saddr;
 
     saddr.s_addr = addr;
     net_addr_ntop(AF_INET, &saddr, cp, NET_IPV4_ADDR_LEN);
-#endif
 }
-#if defined(SDK_OS_FREE_RTOS)
 
 /** Check whether buffer is IPv4 or IPV6 packet type
  *
@@ -442,20 +324,14 @@ static inline void net_inet_ntoa(unsigned long addr, char *cp)
  */
 static inline bool net_is_ip_or_ipv6(const uint8_t *buffer)
 {
-#if defined(SDK_OS_FREE_RTOS)
-    if (((const struct eth_hdr *)(const void *)buffer)->type == PP_HTONS(ETHTYPE_IP) ||
-        ((const struct eth_hdr *)(const void *)buffer)->type == PP_HTONS(ETHTYPE_IPV6))
-#elif __ZEPHYR__
     if (((const struct net_eth_hdr *)(const void *)buffer)->type == htons(ETH_P_IP) ||
         ((const struct net_eth_hdr *)(const void *)buffer)->type == htons(ETH_P_IPV6))
-#endif
     {
         return true;
     }
 
     return false;
 }
-#endif
 
 /** Get interface handle from socket descriptor
  *
@@ -720,24 +596,6 @@ int net_get_if_ip_mask(uint32_t *nm, void *intrfc_handle);
  */
 void net_ipv4stack_init(void);
 
-#if defined(SDK_OS_FREE_RTOS)
-
-#if CONFIG_IPV6
-
-/** Initialize the IPv6 network stack
- *
- * \param[in] netif network interface on which ipv6 stack is initialized.
- *
- */
-void net_ipv6stack_init(struct netif *netif);
-#endif
-
-#endif
-
-#if defined(FSL_RTOS_THREADX)
-void dhcp_stat(void);
-#endif
-
 /** Display network statistics
  */
 void net_stat(void);
@@ -754,11 +612,7 @@ void rx_mgmt_register_callback(int (*rx_mgmt_cb_fn)(const enum wlan_bss_type bss
 void rx_mgmt_deregister_callback(void);
 #endif
 
-#ifdef __ZEPHYR__
 int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt);
 void nxp_wifi_internal_register_rx_cb(int (*rx_cb_fn)(struct net_if *iface, struct net_pkt *pkt));
 const struct netif *net_if_get_binding(const char *ifname);
-const struct freertos_wpa_supp_dev_ops *net_if_get_dev_config(struct netif *iface);
-#endif
-
 #endif /* _WM_NET_H_ */
