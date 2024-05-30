@@ -6165,7 +6165,8 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
 
     wlcm_d("initiating wlan-scan (return to %s)", dbg_sta_state_name(wlan.sta_state));
 
-
+    wlan.scan_cb       = (int (*)(unsigned int count))(wlan_scan_param->cb);
+	
     int ret = wifi_send_scan_cmd((t_u8)g_wifi_scan_params.bss_type, wlan_scan_param->bssid,
                                  ssid, ssid_num,
                                  wlan_scan_param->num_channels, wlan_scan_param->chan_list, wlan_scan_param->num_probes,
@@ -6179,6 +6180,8 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
     if (ret != WM_SUCCESS)
     {
         wlcm_e("wifi send scan cmd failed");
+        (void)wlan.scan_cb(0);
+        wlan.scan_cb = NULL;
         *next = wlan.sta_state;
 #if CONFIG_WPA_SUPP
         wm_wifi.wpa_supp_scan = false;
@@ -6190,7 +6193,6 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
     }
     else
     {
-        wlan.scan_cb       = (int (*)(unsigned int count))(wlan_scan_param->cb);
         wlan.sta_return_to = wlan.sta_state;
         *next              = CM_STA_SCANNING_USER;
     }
