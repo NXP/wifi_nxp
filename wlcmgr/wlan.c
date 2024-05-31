@@ -2932,7 +2932,7 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
 #if (CONFIG_WNM_PS)
 static void wlcm_process_wnmps_event(struct wifi_message *msg)
 {
-    uint16_t action                      = (uint16_t)(uint32_t)msg->data;
+    uint16_t action                      = (uint16_t)(*((uint32_t *)msg->data));
     wnm_sleep_result_t *wnm_sleep_result = (wnm_sleep_result_t *)&action;
 
 #if !CONFIG_MEM_POOLS
@@ -6682,7 +6682,15 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
 #endif
         case CM_STA_USER_REQUEST_PS_ENTER:
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+            struct netif *netif = net_get_sta_interface();
+            int state = 0;
+
+            supplicant_wpa_state(net_if_get_device((void *)netif), &state);
+            if ((state >= WPA_SCANNING) && (state < WPA_COMPLETED))
+#else
             if (wlan.sta_state >= CM_STA_SCANNING && wlan.sta_state <= CM_STA_OBTAINING_ADDRESS)
+#endif
             {
                 wlcm_w("ignoring ps enter in invalid state");
                 wlcm_e("Error entering power save mode");

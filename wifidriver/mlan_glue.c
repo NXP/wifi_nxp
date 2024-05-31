@@ -5628,9 +5628,29 @@ int wifi_handle_fw_event(struct bus_message *msg)
             break;
 #if (CONFIG_WNM_PS)
         case EVENT_WNM_PS:
-            wlan_update_wnm_ps_status((wnm_ps_result *)&evt->reason_code);
-            (void)wifi_event_completion(WIFI_EVENT_WNM_PS, WIFI_EVENT_REASON_SUCCESS,
-                                        (void *)((uint32_t)evt->reason_code));
+#if !CONFIG_MEM_POOLS
+            t_u16 *wnm_action_p = (t_u16 *)OSA_MemoryAllocate(sizeof(t_u16));
+#else
+            t_u16 *wnm_action_p = (t_u16 *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+#endif
+            if (!wnm_action_p)
+            {
+                wifi_w("No mem. Cannot process wnm ps event");
+                break;
+            }
+
+            *wnm_action_p = evt->reason_code;
+            wlan_update_wnm_ps_status((wnm_ps_result *)wnm_action_p);
+            if (wifi_event_completion(WIFI_EVENT_WNM_PS, WIFI_EVENT_REASON_SUCCESS,
+                                       (void *)((t_u32)wnm_action_p)) != WM_SUCCESS)
+            {
+                /* If fail to send message on queue, free allocated memory ! */
+#if !CONFIG_MEM_POOLS
+                OSA_MemoryFree((void *)wnm_action_p);
+#else
+                OSA_MemoryPoolFree(buf_32_MemoryPool, wnm_action_p);
+#endif
+            }
             break;
 #endif
         case EVENT_MIC_ERR_MULTICAST:
