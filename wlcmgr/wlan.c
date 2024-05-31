@@ -1785,11 +1785,10 @@ static bool is_sta_connecting(void)
 {
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
     struct netif *netif = net_get_sta_interface();
-    struct wifi_iface_status status;
+    int state = 0;
 
-    memset(&status, 0x0, sizeof(status));
-    supplicant_status(net_if_get_device((void *)netif), &status);
-    return ((status.state >= WPA_SCANNING) && (status.state <= WPA_COMPLETED));
+    supplicant_wpa_state(net_if_get_device((void *)netif), &state);
+    return ((state >= WPA_SCANNING) && (state <= WPA_COMPLETED));
 #else
     return ((wlan.sta_state > CM_STA_ASSOCIATING) && (wlan.sta_state <= CM_STA_CONNECTED));
 #endif
@@ -1799,11 +1798,10 @@ static bool is_sta_idle(void)
 {
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
     struct netif *netif = net_get_sta_interface();
-    struct wifi_iface_status status;
+    int state = 0;
 
-    memset(&status, 0x0, sizeof(status));
-    supplicant_status(net_if_get_device((void *)netif), &status);
-    return (status.state == WPA_DISCONNECTED);
+    supplicant_wpa_state(net_if_get_device((void *)netif), &state);
+    return (state == WPA_DISCONNECTED);
 #else
     return (wlan.sta_state == CM_STA_IDLE);
 #endif
@@ -9681,11 +9679,10 @@ bool is_sta_connected(void)
 {
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
     struct netif *netif = net_get_sta_interface();
-    struct wifi_iface_status status;
+    int state = 0;
 
-    memset(&status, 0x0, sizeof(status));
-    supplicant_status(net_if_get_device((void *)netif), &status);
-    return (status.state == WPA_COMPLETED);
+    supplicant_wpa_state(net_if_get_device((void *)netif), &state);
+    return (state == WPA_COMPLETED);
 #else
     return (wlan.sta_state == CM_STA_CONNECTED);
 #endif
