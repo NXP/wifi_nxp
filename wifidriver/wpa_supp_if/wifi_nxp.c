@@ -220,10 +220,6 @@ int wifi_supp_init(void)
     }
 #endif
 
-#ifdef CONFIG_WIFI_NM_WPA_SUPPLICANT_CRYPTO_MBEDTLS_PSA
-    supp_psa_crypto_init();
-#endif
-
     if (ret == WM_SUCCESS)
     {
         wifi_supp_init_done = 1U;
