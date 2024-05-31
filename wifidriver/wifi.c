@@ -4765,6 +4765,7 @@ int wifi_nxp_scan_res_get2(t_u32 table_idx, nxp_wifi_event_new_scan_result_t *sc
         scan_res->ies.ie     = bss_new_entry->ies;
         bss_new_entry->ies   = NULL;
         scan_res->ies.ie_len = (t_u16)bss_new_entry->ies_len;
+        bss_new_entry->ies_len = 0;
     }
     else
     {
