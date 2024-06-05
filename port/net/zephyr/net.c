@@ -1356,7 +1356,7 @@ int net_wlan_init(void)
 #endif
         net_wlan_init_done = 1;
 
-        status = OSA_TimerCreate((osa_timer_handle_t)dhcp_timer, DHCP_TIMEOUT, &dhcp_timer_cb, NULL, KOSA_TimerOnce,
+        status = OSA_TimerCreate((osa_timer_handle_t)dhcp_timer, MSEC_TO_TICK(DHCP_TIMEOUT), &dhcp_timer_cb, NULL, KOSA_TimerOnce,
                                  OSA_TIMER_NO_ACTIVATE);
         if (status != KOSA_StatusSuccess)
         {

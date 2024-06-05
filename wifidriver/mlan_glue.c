@@ -390,7 +390,7 @@ static mlan_status wrapper_moal_init_timer(IN t_void *pmoal_handle,
      */
 #define DUMMY_TIME_PARAM 10
 
-    osa_status_t status = OSA_TimerCreate((osa_timer_handle_t)ptimer, DUMMY_TIME_PARAM, callback, pcontext,
+    osa_status_t status = OSA_TimerCreate((osa_timer_handle_t)ptimer, MSEC_TO_TICK(DUMMY_TIME_PARAM), callback, pcontext,
                                           KOSA_TimerOnce, OSA_TIMER_NO_ACTIVATE);
     if (status != KOSA_StatusSuccess)
     {

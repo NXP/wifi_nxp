@@ -7786,7 +7786,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     cpu_loading.sampling_period = CPU_LOADING_PERIOD;
 #endif
 
-    status = OSA_TimerCreate((osa_timer_handle_t)wlan.assoc_timer, BAD_MIC_TIMEOUT, &assoc_timer_cb, NULL,
+    status = OSA_TimerCreate((osa_timer_handle_t)wlan.assoc_timer, MSEC_TO_TICK(BAD_MIC_TIMEOUT), &assoc_timer_cb, NULL,
                           KOSA_TimerOnce, OSA_TIMER_NO_ACTIVATE);
     if (status != KOSA_StatusSuccess)
     {
@@ -7796,7 +7796,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 
 #if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if CONFIG_WPA_SUPP
-    status = OSA_TimerCreate((osa_timer_handle_t)wlan.supp_status_timer, SUPP_STATUS_TIMEOUT,
+    status = OSA_TimerCreate((osa_timer_handle_t)wlan.supp_status_timer, MSEC_TO_TICK(SUPP_STATUS_TIMEOUT),
                           &supp_status_timer_cb, NULL, KOSA_TimerPeriodic, OSA_TIMER_NO_ACTIVATE);
     if (status != KOSA_StatusSuccess)
     {
@@ -7812,7 +7812,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 #endif
 
 #if (CONFIG_11K) || (CONFIG_11V)
-    status = OSA_TimerCreate((osa_timer_handle_t)wlan.neighbor_req_timer, NEIGHBOR_REQ_TIMEOUT,
+    status = OSA_TimerCreate((osa_timer_handle_t)wlan.neighbor_req_timer, MSEC_TO_TICK(NEIGHBOR_REQ_TIMEOUT),
                           &neighbor_req_timer_cb, NULL, KOSA_TimerOnce, OSA_TIMER_NO_ACTIVATE);
     if (status != KOSA_StatusSuccess)
     {
@@ -7823,7 +7823,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 
 #if CONFIG_11R
 #if CONFIG_WPA_SUPP
-    status = OSA_TimerCreate((osa_timer_handle_t)wlan.ft_roam_timer, FT_ROAM_TIMEOUT,
+    status = OSA_TimerCreate((osa_timer_handle_t)wlan.ft_roam_timer, MSEC_TO_TICK(FT_ROAM_TIMEOUT),
                           &ft_roam_timer_cb, NULL, KOSA_TimerOnce, OSA_TIMER_NO_ACTIVATE);
     if (status != KOSA_StatusSuccess)
     {
@@ -10314,7 +10314,7 @@ static void wlcmgr_mon_task(void * data)
 #endif
 
 #if CONFIG_POWER_MANAGER
-    status = OSA_TimerCreate((osa_timer_handle_t)wake_timer, WAKE_TIMEOUT,
+    status = OSA_TimerCreate((osa_timer_handle_t)wake_timer, MSEC_TO_TICK(WAKE_TIMEOUT),
                           &wake_timer_cb, NULL, KOSA_TimerOnce, OSA_TIMER_NO_ACTIVATE);
     if (status != KOSA_StatusSuccess)
     {
@@ -15595,7 +15595,7 @@ static int wlan_cpu_loading_start(uint32_t number, uint8_t period)
         else
             cpu_loading.sampling_period = period * (CPU_LOADING_PERIOD / 2);
 
-        status = OSA_TimerCreate((osa_timer_handle_t)cpu_loading.cpu_loading_timer, cpu_loading.sampling_period,
+        status = OSA_TimerCreate((osa_timer_handle_t)cpu_loading.cpu_loading_timer, MSEC_TO_TICK(cpu_loading.sampling_period),
                           &cpu_loading_cb, NULL, KOSA_TimerPeriodic, OSA_TIMER_NO_ACTIVATE);
         if (status != KOSA_StatusSuccess)
         {

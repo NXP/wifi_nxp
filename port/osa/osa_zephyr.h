@@ -45,6 +45,10 @@ typedef enum osa_timer_activation
     OSA_TIMER_NO_ACTIVATE,
 } osa_timer_activate_t;
 
+/*! @brief Converts milliseconds to ticks*/
+#define MSEC_TO_TICK(msec) k_ms_to_ticks_floor32(msec)
+
+
 static inline unsigned OSA_TicksGet(void)
 {
     return sys_clock_tick_get();
