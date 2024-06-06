@@ -406,6 +406,9 @@ void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
 
     mgmt = (const struct ieee80211_mgmt *)frame;
 
+    memset(&event, 0, sizeof(event));
+    memset(&wifi_if_ctx_rtos->assoc_bssid, 0, ETH_ALEN);
+
     if (frame_len < 24 + sizeof(mgmt->u.assoc_resp))
     {
         supp_d("%s: Association response frame too short", __func__);
@@ -413,9 +416,6 @@ void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
         reason_code = STA_CONNECT_FAIL_REASON_ASSOC_NO_RESP_RECEIVED;
         goto fail;
     }
-
-    memset(&event, 0, sizeof(event));
-    memset(&wifi_if_ctx_rtos->assoc_bssid, 0, ETH_ALEN);
 
     status = le_to_host16(mgmt->u.assoc_resp.status_code);
 
