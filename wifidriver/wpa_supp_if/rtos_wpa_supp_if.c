@@ -2264,6 +2264,34 @@ void wifi_nxp_wpa_supp_event_proc_mgmt_rx(void *if_priv, nxp_wifi_event_mlme_t *
     }
 }
 
+void wifi_nxp_wpa_supp_event_proc_ecsa_complete(void *if_priv, nxp_wifi_ch_switch_info *ch_switch_info)
+{
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    union wpa_event_data event;
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+    memset(&event, 0, sizeof(event));
+
+    event.ch_switch.freq       = ch_switch_info->center_freq;
+    event.ch_switch.ht_enabled = ch_switch_info->ht_enabled;
+    event.ch_switch.ch_offset  = ch_switch_info->ch_offset;
+    event.ch_switch.ch_width   = (enum chan_width)ch_switch_info->ch_width;
+    event.ch_switch.cf1        = ch_switch_info->center_freq1;
+    event.ch_switch.cf2        = ch_switch_info->center_freq2;
+
+#if CONFIG_WPA_SUPP_AP
+    if (wifi_if_ctx_rtos->hostapd)
+    {
+        wifi_if_ctx_rtos->hostapd_callbk_fns.ecsa_complete(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
+    }
+    else
+#endif
+    {
+        wifi_if_ctx_rtos->supp_callbk_fns.ecsa_complete(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
+    }
+}
+
 #if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 void wifi_nxp_wpa_supp_event_proc_eapol_rx(void *if_priv, nxp_wifi_event_eapol_mlme_t *eapol_rx, unsigned int event_len)
 {
@@ -2287,34 +2315,6 @@ void wifi_nxp_wpa_supp_event_proc_eapol_rx(void *if_priv, nxp_wifi_event_eapol_m
 #endif
     {
         wifi_if_ctx_rtos->supp_callbk_fns.eapol_rx(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
-    }
-}
-
-void wifi_nxp_wpa_supp_event_proc_ecsa_complete(void *if_priv, nxp_wifi_ch_switch_info *ch_switch_info)
-{
-    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
-    union wpa_event_data event;
-
-    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
-
-    memset(&event, 0, sizeof(event));
-
-    event.ch_switch.freq       = ch_switch_info->center_freq;
-    event.ch_switch.ht_enabled = ch_switch_info->ht_enabled;
-    event.ch_switch.ch_offset  = ch_switch_info->ch_offset;
-    event.ch_switch.ch_width   = (enum chan_width)ch_switch_info->ch_width;
-    event.ch_switch.cf1        = ch_switch_info->center_freq1;
-    event.ch_switch.cf2        = ch_switch_info->center_freq2;
-
-#if CONFIG_HOSTAPD
-    if (wifi_if_ctx_rtos->hostapd)
-    {
-        wifi_if_ctx_rtos->hostapd_callbk_fns.ecsa_complete(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
-    }
-    else
-#endif
-    {
-        wifi_if_ctx_rtos->supp_callbk_fns.ecsa_complete(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
     }
 }
 
