@@ -600,6 +600,12 @@ void net_ipv4stack_init(void);
  */
 void net_stat(void);
 
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+/** Get supplicant ready state
+ */
+bool get_supp_ready_state(void);
+#endif
+
 #if CONFIG_P2P
 int netif_get_bss_type();
 #endif

@@ -1797,8 +1797,9 @@ static bool is_sta_connecting(void)
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
     struct netif *netif = net_get_sta_interface();
     int state = 0;
+    if (get_supp_ready_state())
+        supplicant_wpa_state(net_if_get_device((void *)netif), &state);
 
-    supplicant_wpa_state(net_if_get_device((void *)netif), &state);
     return ((state >= WPA_SCANNING) && (state <= WPA_COMPLETED));
 #else
     return ((wlan.sta_state > CM_STA_ASSOCIATING) && (wlan.sta_state <= CM_STA_CONNECTED));
@@ -1810,8 +1811,9 @@ static bool is_sta_idle(void)
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
     struct netif *netif = net_get_sta_interface();
     int state = 0;
+    if (get_supp_ready_state())
+        supplicant_wpa_state(net_if_get_device((void *)netif), &state);
 
-    supplicant_wpa_state(net_if_get_device((void *)netif), &state);
     return (state == WPA_DISCONNECTED);
 #else
     return (wlan.sta_state == CM_STA_IDLE);
@@ -6685,8 +6687,9 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
             struct netif *netif = net_get_sta_interface();
             int state = 0;
+            if (get_supp_ready_state())
+                supplicant_wpa_state(net_if_get_device((void *)netif), &state);
 
-            supplicant_wpa_state(net_if_get_device((void *)netif), &state);
             if ((state >= WPA_SCANNING) && (state < WPA_COMPLETED))
 #else
             if (wlan.sta_state >= CM_STA_SCANNING && wlan.sta_state <= CM_STA_OBTAINING_ADDRESS)
@@ -9715,7 +9718,9 @@ bool is_sta_connected(void)
     struct netif *netif = net_get_sta_interface();
     int state = 0;
 
-    supplicant_wpa_state(net_if_get_device((void *)netif), &state);
+    if (get_supp_ready_state())
+        supplicant_wpa_state(net_if_get_device((void *)netif), &state);
+
     return (state == WPA_COMPLETED);
 #else
     return (wlan.sta_state == CM_STA_CONNECTED);

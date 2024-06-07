@@ -12,6 +12,9 @@
 #include <osa.h>
 #include "netif_decl.h"
 #include <wm_net.h>
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+#include <supp_events.h>
+#endif
 
 #define net_e(...) wmlog_e("net", ##__VA_ARGS__)
 
@@ -94,12 +97,28 @@ static struct net_mgmt_event_callback net_event_v6_cb;
 #define IPV6_MASK    (NET_EVENT_IPV6_DAD_SUCCEED | NET_EVENT_IPV6_ADDR_ADD)
 #endif
 
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+static struct net_mgmt_event_callback net_event_supp_cb;
+#define NET_SUPP_MASK (NET_EVENT_SUPPLICANT_READY | NET_EVENT_SUPPLICANT_NOT_READY)
+static bool g_supp_ready = 0;
+#endif
 interface_t g_mlan;
 interface_t g_uap;
 
 static int net_wlan_init_done = 0;
 OSA_TIMER_HANDLE_DEFINE(dhcp_timer);
 static void dhcp_timer_cb(osa_timer_arg_t arg);
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+static void set_supp_ready_state(bool ready)
+{
+    g_supp_ready = ready;
+}
+
+bool get_supp_ready_state(void)
+{
+    return g_supp_ready;
+}
+#endif
 
 void deliver_packet_above(struct net_pkt *p, int recv_interface)
 {
@@ -952,6 +971,14 @@ static void wifi_net_event_handler(struct net_mgmt_event_callback *cb, uint32_t 
             net_d("Receive zephyr ipv6 address added event.");
             break;
 #endif
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+        case NET_EVENT_SUPPLICANT_READY:
+            set_supp_ready_state(1);
+            break;
+        case NET_EVENT_SUPPLICANT_NOT_READY:
+            set_supp_ready_state(0);
+            break;
+#endif
         default:
             net_d("Unhandled net event: %x", mgmt_event);
             break;
@@ -1308,6 +1335,12 @@ static void setup_mgmt_events(void)
 
     net_mgmt_add_event_callback(&net_event_v6_cb);
 #endif
+
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    net_mgmt_init_event_callback(&net_event_supp_cb, wifi_net_event_handler, NET_SUPP_MASK);
+
+    net_mgmt_add_event_callback(&net_event_supp_cb);
+#endif
 }
 
 static void cleanup_mgmt_events(void)
@@ -1317,6 +1350,11 @@ static void cleanup_mgmt_events(void)
 #if CONFIG_IPV6
     net_mgmt_del_event_callback(&net_event_v6_cb);
 #endif
+
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    net_mgmt_del_event_callback(&net_event_supp_cb);
+#endif
+
 }
 
 int net_wlan_init(void)
