@@ -66,7 +66,7 @@
 #endif
 #endif
 
-#if (CONFIG_WPA2_ENTP) || ((CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) && !(CONFIG_WIFI_USB_FILE_ACCESS))
+#if (CONFIG_WPA2_ENTP) || ((CONFIG_WIFI_NM_WPA_SUPPLICANT_CRYPTO_ENTERPRISE) && !(CONFIG_WIFI_USB_FILE_ACCESS))
 #include "ca-cert.h"
 #include "client-cert.h"
 #include "client-key.h"
@@ -5506,6 +5506,20 @@ static void wlcm_process_init_params()
     wlan.cur_uap_network_idx = -1;
 }
 
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT_CRYPTO_ENTERPRISE
+void wlcm_add_enterprise_file(void)
+{
+    struct wpa_supp_enterprise_file en_file;
+    en_file.ca_cert = (uint8_t *)ca_der;
+    en_file.ca_cert_len = ca_der_len;
+    en_file.client_cert = (uint8_t *)client_der;
+    en_file.client_cert_len = client_der_len;
+    en_file.client_key = (uint8_t *)client_key_der;
+    en_file.client_key_len = client_key_der_len;
+    supplicant_add_enterprise_file(&en_file);
+}
+#endif
+
 static void wlcm_process_init(enum cm_sta_state *next)
 {
     int ret;
@@ -5660,7 +5674,9 @@ static void wlcm_process_init(enum cm_sta_state *next)
 
     wlan_set_11d_state(WLAN_BSS_TYPE_UAP, 1);
     wlan_set_11d_state(WLAN_BSS_TYPE_STA, 1);
-
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT_CRYPTO_ENTERPRISE
+    wlcm_add_enterprise_file();
+#endif
 }
 
 static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_sta_state *next)
