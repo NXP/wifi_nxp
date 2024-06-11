@@ -3913,6 +3913,7 @@ static void wifi_setup_channel_flag(void *channels, int num_chan, region_chan_t 
             pchans_set[set_idx].center_frequency = pchans_get[get_idx].freq;
             pchans_set[set_idx].ch_valid = 1;
             pchans_set[set_idx].wifi_nxp_max_power = pchans_get[get_idx].max_tx_power;
+            pchans_set[set_idx].wifi_nxp_flags &= (~WIFI_NXP_CHAN_FLAG_FREQUENCY_DISABLED);
 
             if (band == BAND_2GHZ)
             {
