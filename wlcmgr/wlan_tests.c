@@ -783,7 +783,7 @@ static void dump_wlan_add_usage(void)
 #endif
         ">]]\r\n");
 #if CONFIG_WPA_SUPP
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
 #if CONFIG_11R
     (void)PRINTF("    [ft-psk <secret>] [wpa3 ft-sae <secret>]\r\n");
 #endif

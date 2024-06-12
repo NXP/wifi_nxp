@@ -27,7 +27,7 @@ void wifi_survey_result_get(struct wifi_message *msg)
 {
     nxp_wifi_trigger_op_t *wifi_survey_params = (nxp_wifi_trigger_op_t *)msg->data;
 
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
     wm_wifi.hostapd_op = false;
 
     if (wifi_survey_params->hostapd)
@@ -64,7 +64,7 @@ void wifi_scan_done(struct wifi_message *msg)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
     if (wm_wifi.hostapd_op)
     {
         wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.hapd_if_priv;
@@ -94,7 +94,7 @@ void wifi_scan_done(struct wifi_message *msg)
     {
         if (wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn)
         {
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
             if (wifi_if_ctx_rtos->hostapd)
             {
                 wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn(wm_wifi.hapd_if_priv, 0, wm_wifi.external_scan);

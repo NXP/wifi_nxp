@@ -98,7 +98,7 @@ void wifi_nxp_wpa_supp_event_proc_mac_changed(void *if_priv)
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
-#ifdef CONFIG_HOSTAPD
+#ifdef CONFIG_WPA_SUPP_AP
     if (wifi_if_ctx_rtos->hostapd)
     {
         wifi_if_ctx_rtos->hostapd_callbk_fns.mac_changed(wifi_if_ctx_rtos->hapd_drv_if_ctx);
@@ -226,7 +226,7 @@ void wifi_nxp_wpa_supp_event_proc_scan_done(void *if_priv, int aborted, int exte
 
     wifi_if_ctx_rtos->scan_in_progress = false;
 
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
     if (wifi_if_ctx_rtos->hostapd)
     {
         wifi_if_ctx_rtos->hostapd_callbk_fns.scan_done(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
@@ -257,7 +257,7 @@ void wifi_nxp_wpa_supp_event_proc_survey_res(void *if_priv,
 
     if (survey_res == NULL)
     {
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
         if (wifi_if_ctx_rtos->hostapd)
         {
             wifi_if_ctx_rtos->hostapd_callbk_fns.survey_res(wifi_if_ctx_rtos->hapd_drv_if_ctx, survey, more_res);
@@ -314,7 +314,7 @@ void wifi_nxp_wpa_supp_event_proc_survey_res(void *if_priv,
         survey->filled |= SURVEY_HAS_CHAN_TIME_TX;
     }
 
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
     if (wifi_if_ctx_rtos->hostapd)
     {
         wifi_if_ctx_rtos->hostapd_callbk_fns.survey_res(wifi_if_ctx_rtos->hapd_drv_if_ctx, survey, more_res);
@@ -777,7 +777,7 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
     wm_wifi.external_scan = false;
     wm_wifi.wpa_supp_scan = true;
 
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
     wm_wifi.hostapd_op = false;
 
     if (wifi_if_ctx_rtos->hostapd)
@@ -2306,7 +2306,7 @@ void wifi_nxp_wpa_supp_event_proc_eapol_rx(void *if_priv, nxp_wifi_event_eapol_m
     event.eapol_rx.data     = (const unsigned char *)eapol_rx->frame.frame;
     event.eapol_rx.data_len = eapol_rx->frame.frame_len;
 
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
     if (wifi_if_ctx_rtos->hostapd)
     {
         wifi_if_ctx_rtos->hostapd_callbk_fns.eapol_rx(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
@@ -2334,7 +2334,7 @@ void wifi_nxp_wpa_supp_event_proc_dfs_cac_started(void *if_priv, nxp_wifi_dfs_ca
     event.dfs_event.cf1         = dfs_cac_info->center_freq1;
     event.dfs_event.cf2         = dfs_cac_info->center_freq2;
 
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
     if (wifi_if_ctx_rtos->hostapd)
     {
         wifi_if_ctx_rtos->hostapd_callbk_fns.dfs_cac_started(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
@@ -2362,7 +2362,7 @@ void wifi_nxp_wpa_supp_event_proc_dfs_cac_finished(void *if_priv, nxp_wifi_dfs_c
     event.dfs_event.cf1         = dfs_cac_info->center_freq1;
     event.dfs_event.cf2         = dfs_cac_info->center_freq2;
 
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
     if (wifi_if_ctx_rtos->hostapd)
     {
         wifi_if_ctx_rtos->hostapd_callbk_fns.dfs_cac_finished(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);

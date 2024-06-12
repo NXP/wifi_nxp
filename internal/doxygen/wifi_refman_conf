@@ -2455,7 +2455,6 @@ PREDEFINED             = "PACK_END=" \
                          ENABLE_OFFLOAD=1 \
                          CONFIG_WIFI_EU_CRYPTO=1 \
                          CONFIG_WPA_SUPP=1 \
-                         CONFIG_HOSTAPD=1 \
                          CONFIG_WPA_SUPP_AP=1 \
                          CONFIG_WPA_SUPP_WPS=1 \
                          CONFIG_WPA_SUPP_WPA3=1 \

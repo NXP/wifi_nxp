@@ -7183,7 +7183,7 @@ void _wifi_set_mac_addr(const uint8_t *mac, mlan_bss_type bss_type)
     else if (bss_type == MLAN_BSS_TYPE_UAP)
     {
         (void)memcpy(&mlan_adap->priv[1]->curr_addr[0], &mac[0], MLAN_MAC_ADDR_LENGTH);
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
         if (wm_wifi.supp_if_callbk_fns->mac_changed_callbk_fn)
         {
             wm_wifi.supp_if_callbk_fns->mac_changed_callbk_fn(wm_wifi.hapd_if_priv);

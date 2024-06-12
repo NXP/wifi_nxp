@@ -1451,7 +1451,7 @@ struct wlan_network_security
     size_t client_key2_len;
     /** Client key2 password */
     char client_key2_passwd[PASSWORD_MAX_LENGTH];
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     /** DH params blob */
     unsigned char *dh_data;
@@ -6729,7 +6729,7 @@ int wlan_wps_ap_cancel(void);
 #define FILE_TYPE_ENTP_CLIENT_CERT2 5
 #define FILE_TYPE_ENTP_CLIENT_KEY2  6
 
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
 #define FILE_TYPE_ENTP_SERVER_CERT 8
 #define FILE_TYPE_ENTP_SERVER_KEY  9
 #define FILE_TYPE_ENTP_DH_PARAMS   10

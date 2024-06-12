@@ -71,7 +71,7 @@
 #include "client-cert.h"
 #include "client-key.h"
 #include "dh-param.h"
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
 #include "server-cert.h"
 #include "server-key.h"
@@ -555,7 +555,7 @@ static struct
     t_u32 client_cert2_len;
     t_u8 *client_key2_data;
     t_u32 client_key2_len;
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     t_u8 *dh_data;
     t_u32 dh_len;
@@ -7689,7 +7689,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     wlan.client_cert_len  = 0;
     wlan.client_key_data  = NULL;
     wlan.client_key_len   = 0;
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     wlan.dh_data          = NULL;
     wlan.dh_len           = 0;
@@ -9056,7 +9056,7 @@ int wlan_add_network(struct wlan_network *network)
 #endif
             false)
     {
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
         if (network->role == WLAN_BSS_ROLE_UAP)
         {
@@ -9548,7 +9548,7 @@ int wlan_remove_network(const char *name)
                     OSA_MemoryFree(wlan.networks[i].security.client_key2_data);
                 }
             }
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
             else if (wlan.networks[i].role == WLAN_BSS_ROLE_UAP)
             {
@@ -14847,7 +14847,7 @@ static void wlan_entp_cert_cleanup()
         OSA_MemoryFree(wlan.client_key2_data);
     }
 
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     if (wlan.dh_data != NULL)
     {
@@ -14939,7 +14939,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
         memcpy(wlan.client_key2_data, data, data_len);
         wlan.client_key2_len = data_len;
     }
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     else if (cert_type == FILE_TYPE_ENTP_DH_PARAMS)
     {
@@ -14955,7 +14955,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
     }
 #endif
 #endif
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     else if (cert_type == FILE_TYPE_ENTP_SERVER_CERT)
     {
@@ -14983,7 +14983,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
     }
 #endif
 #endif
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     else if (cert_type == FILE_TYPE_ENTP_SERVER_CERT)
     {
@@ -15114,7 +15114,7 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
 #endif
         wlan.client_key2_data = NULL;
     }
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     else if (cert_type == FILE_TYPE_ENTP_DH_PARAMS)
     {
@@ -15131,7 +15131,7 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
     }
 #endif
 #endif
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     else if (cert_type == FILE_TYPE_ENTP_SERVER_CERT)
     {
@@ -15198,7 +15198,7 @@ void wlan_free_entp_cert_files(void)
         wlan.client_key2_data = NULL;
         wlan.client_key2_len  = 0;
     }
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     if (wlan.dh_data != NULL)
     {

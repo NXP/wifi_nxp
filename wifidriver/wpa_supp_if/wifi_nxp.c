@@ -56,6 +56,12 @@ const rtos_wpa_supp_dev_ops wpa_supp_ops = {
     .cancel_remain_on_channel = wifi_nxp_wpa_supp_cancel_remain_on_channel,
     .get_survey_results       = wifi_nxp_wpa_supp_survey_results_get,
     .get_modes                = wifi_nxp_wpa_get_modes,
+    .set_modes                = wifi_nxp_hostapd_set_modes,
+    .hapd_send_eapol          = wifi_nxp_hostapd_send_eapol,
+    .set_freq                 = wifi_nxp_hostapd_set_freq,
+    .set_rts                  = wifi_nxp_hostapd_set_rts,
+    .set_frag                 = wifi_nxp_hostapd_set_frag,
+    .set_acl                  = wifi_nxp_hostapd_set_acl,
 #endif
     .scan2                    = wifi_nxp_wpa_supp_scan2,
     .scan_abort               = wifi_nxp_wpa_supp_scan_abort,
@@ -71,20 +77,14 @@ const rtos_wpa_supp_dev_ops wpa_supp_ops = {
 #if CONFIG_WIFI_SOFTAP_SUPPORT
     .init_ap                  = wifi_nxp_wpa_supp_init_ap,
 #endif
-#if CONFIG_HOSTAPD
-    .set_modes                = wifi_nxp_hostapd_set_modes,
+#if CONFIG_WPA_SUPP_AP
     .hapd_init                = wifi_nxp_hostapd_dev_init,
     .hapd_deinit              = wifi_nxp_hostapd_dev_deinit,
     .do_acs                   = wifi_nxp_hostapd_do_acs,
     .set_ap                   = wifi_nxp_hostapd_set_ap,
     .sta_add                  = wifi_nxp_hostapd_sta_add,
     .sta_remove               = wifi_nxp_hostapd_sta_remove,
-    .hapd_send_eapol          = wifi_nxp_hostapd_send_eapol,
-    .set_freq                 = wifi_nxp_hostapd_set_freq,
-    .set_rts                  = wifi_nxp_hostapd_set_rts,
-    .set_frag                 = wifi_nxp_hostapd_set_frag,
     .stop_ap                  = wifi_nxp_hostapd_stop_ap,
-    .set_acl                  = wifi_nxp_hostapd_set_acl,
 #endif
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT_DPP
     .dpp_listen               = wifi_nxp_wpa_dpp_listen,

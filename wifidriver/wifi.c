@@ -4822,7 +4822,7 @@ int wifi_nxp_survey_res_get(void)
         {
             if (wm_wifi.supp_if_callbk_fns->survey_res_callbk_fn)
             {
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
                 if (wm_wifi.hostapd_op)
                 {
                     wm_wifi.supp_if_callbk_fns->survey_res_callbk_fn(wm_wifi.hapd_if_priv, NULL, 0, false);
@@ -4852,7 +4852,7 @@ int wifi_nxp_survey_res_get(void)
         }
         if (wm_wifi.supp_if_callbk_fns->survey_res_callbk_fn)
         {
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
             if (wm_wifi.hostapd_op)
             {
                 wm_wifi.supp_if_callbk_fns->survey_res_callbk_fn(wm_wifi.hapd_if_priv, &survey_res,
@@ -4871,7 +4871,7 @@ int wifi_nxp_survey_res_get(void)
 #else
     if (wm_wifi.supp_if_callbk_fns->survey_res_callbk_fn)
     {
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
         if (wm_wifi.hostapd_op)
         {
             wm_wifi.supp_if_callbk_fns->survey_res_callbk_fn(wm_wifi.hapd_if_priv, NULL, 0, false);

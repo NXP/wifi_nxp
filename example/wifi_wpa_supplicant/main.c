@@ -488,7 +488,7 @@ static void test_wlan_read_usb_file(int argc, char **argv)
         usb_f_type = FILE_TYPE_ENTP_CLIENT_CERT2;
     else if (string_equal("client-key2", argv[1]))
         usb_f_type = FILE_TYPE_ENTP_CLIENT_KEY2;
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
     else if (string_equal("server-cert", argv[1]))
         usb_f_type = FILE_TYPE_ENTP_SERVER_CERT;
     else if (string_equal("server-key", argv[1]))
@@ -555,7 +555,7 @@ static void test_wlan_dump_usb_file(int argc, char **argv)
         usb_f_type = FILE_TYPE_ENTP_CLIENT_CERT2;
     else if (string_equal("client-key2", argv[1]))
         usb_f_type = FILE_TYPE_ENTP_CLIENT_KEY2;
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
     else if (string_equal("server-cert", argv[1]))
         usb_f_type = FILE_TYPE_ENTP_SERVER_CERT;
     else if (string_equal("server-key", argv[1]))
