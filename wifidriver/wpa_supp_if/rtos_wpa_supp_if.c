@@ -2880,6 +2880,8 @@ int wifi_nxp_hostapd_sta_add(void *if_priv, struct hostapd_sta_add_params *param
     {
         supp_e("%s: wifi nxp sta add failed", __func__);
     }
+
+    wifi_uap_client_assoc(sta_params->addr, params->ht_capabilities ? 1 : 0);
 out:
     if (sta_params != NULL)
     {
@@ -2903,6 +2905,8 @@ int wifi_nxp_hostapd_sta_remove(void *if_priv, const u8 *addr)
     {
         supp_e("%s: wifi nxp sta remove failed", __func__);
     }
+
+    wifi_uap_client_deauth((t_u8 *)addr);
 out:
     return status;
 }
