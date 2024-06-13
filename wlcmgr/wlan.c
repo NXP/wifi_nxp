@@ -896,6 +896,9 @@ static int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
 #if (CONFIG_HOST_SLEEP) || (CONFIG_MEF_CFG)
 static int wlan_get_uap_ipv4_addr(unsigned int *ipv4_addr)
 {
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    net_get_if_ip_addr(ipv4_addr, net_get_uap_handle());
+#else
     struct wlan_network* network = NULL;
 
     if (wlan.running && (is_uap_state(CM_UAP_IP_UP) || is_uap_state(CM_UAP_STARTED)))
@@ -913,6 +916,7 @@ static int wlan_get_uap_ipv4_addr(unsigned int *ipv4_addr)
     *ipv4_addr = network->ip.ipv4.address;
 
     return WM_SUCCESS;
+#endif
 }
 #endif
 
