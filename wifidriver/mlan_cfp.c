@@ -480,6 +480,10 @@ static chan_freq_power_t channel_freq_power_Custom_A[] = {
     {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE}, {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE},
     {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE}, {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE},
     {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE},
+#if CONFIG_UNII4_BAND_SUPPORT
+    {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE}, {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE},
+    {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE},
+#endif
 };
 
 #if !CONFIG_MLAN_WMSDK
@@ -2239,11 +2243,11 @@ mlan_status wlan_set_custom_cfp_table(wifi_chanlist_t *chanlist, t_u8 *cfp_no_bg
         else
         {
 #if CONFIG_5GHz_SUPPORT
-            PRINTM(MERROR, "Error in configuring custom CFP table. ch %d, idx_bg\r\n", chanlist->chan_info[i].chan_num,
-                   idx_bg);
-#else
-            PRINTM(MERROR, "Error in configuring custom CFP table. ch %d, idx_bg, idx_a\r\n",
+            PRINTM(MERROR, "Error in configuring custom CFP table. ch %d, idx_bg %d, idx_a %d\r\n",
                    chanlist->chan_info[i].chan_num, idx_bg, idx_a);
+#else
+            PRINTM(MERROR, "Error in configuring custom CFP table. ch %d, idx_bg %d\r\n", chanlist->chan_info[i].chan_num,
+                   idx_bg);
 #endif
             return MLAN_STATUS_FAILURE;
         }
