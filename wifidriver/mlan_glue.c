@@ -5626,6 +5626,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             break;
 #if (CONFIG_WNM_PS)
         case EVENT_WNM_PS:
+        {
 #if !CONFIG_MEM_POOLS
             t_u16 *wnm_action_p = (t_u16 *)OSA_MemoryAllocate(sizeof(t_u16));
 #else
@@ -5649,7 +5650,8 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 OSA_MemoryPoolFree(buf_32_MemoryPool, wnm_action_p);
 #endif
             }
-            break;
+        }
+        break;
 #endif
         case EVENT_MIC_ERR_MULTICAST:
             (void)wifi_event_completion(WIFI_EVENT_ERR_MULTICAST, WIFI_EVENT_REASON_SUCCESS, NULL);
