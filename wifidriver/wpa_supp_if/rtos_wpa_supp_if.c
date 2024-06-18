@@ -3089,4 +3089,23 @@ bool wifi_nxp_wpa_get_modes(void *if_priv)
     return (!ISSUPP_NO5G(mlan_adap->fw_cap_ext));
 }
 
+void wifi_nxp_wpa_supp_cancel_action_wait(void *if_priv)
+{
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+
+    if (!if_priv)
+    {
+        supp_e("%s: Invalid params", __func__);
+        goto out;
+    }
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+    if (wifi_if_ctx_rtos->bss_type == BSS_TYPE_STA)
+    {
+        (void)wifi_remain_on_channel(false, 0, 0);
+    }
+
+out:
+    return;
+}
 #endif
