@@ -132,9 +132,9 @@ static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
     .survey_res_callbk_fn          = wifi_nxp_wpa_supp_event_proc_survey_res,
     .remain_on_channel_callbk_fn   = wifi_nxp_event_reamin_on_channel,
     .eapol_rx_callbk_fn            = wifi_nxp_wpa_supp_event_proc_eapol_rx,
+#endif
     .dfs_cac_started_callbk_fn     = wifi_nxp_wpa_supp_event_proc_dfs_cac_started,
     .dfs_cac_finished_callbk_fn    = wifi_nxp_wpa_supp_event_proc_dfs_cac_finished,
-#endif
     .ecsa_complete_callbk_fn       = wifi_nxp_wpa_supp_event_proc_ecsa_complete,
     .scan_start_callbk_fn          = wifi_nxp_event_proc_scan_start,
     .scan_done_callbk_fn           = wifi_nxp_event_proc_scan_done,

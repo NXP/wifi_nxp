@@ -1744,7 +1744,7 @@ t_bool wlan_11h_radar_detect_required(mlan_private *priv, t_u8 channel)
 mlan_status wlan_get_non_dfs_chan(mlan_private *priv, t_u8 *chan)
 {
     mlan_status ret = MLAN_STATUS_FAILURE;
-    t_u32 i;
+    t_u32 band              = 0;
     t_u32 entry;
     t_u8 def_chan           = 0;
     region_chan_t *chn_tbl  = MNULL;
@@ -1752,32 +1752,35 @@ mlan_status wlan_get_non_dfs_chan(mlan_private *priv, t_u8 *chan)
 
     ENTER();
 
-    /* get the channel table first */
-    for (i = 0; i < MAX_REGION_CHANNEL_NUM; i++)
+    if(!chan || *chan == 0)
     {
-        if (pmadapter->region_channel[i].valid)
+        PRINTM(MERROR, "11h: Invalid channel\n");
+        goto done;
+    }
+
+    if (*chan > 14)
+        band = BAND_5GHZ;
+    else
+        band = BAND_2GHZ;
+    /* get the channel table first */
+    chn_tbl = &pmadapter->region_channel[band];
+    if (!chn_tbl || !chn_tbl->pcfp)
+    {
+        goto done;
+    }
+
+    for (entry = 0; entry < chn_tbl->num_cfp; entry++)
+    {
+        if (chn_tbl->pcfp[entry].passive_scan_or_radar_detect == MFALSE)
         {
-            chn_tbl = &pmadapter->region_channel[i];
-
-            if (!chn_tbl || !chn_tbl->pcfp)
-            {
-                goto done;
-            }
-
-            for (entry = 0; entry < chn_tbl->num_cfp; entry++)
-            {
-                if (chn_tbl->pcfp[entry].passive_scan_or_radar_detect == MFALSE)
-                {
-                    def_chan = (t_u8)chn_tbl->pcfp[entry].channel;
-                    break;
-                }
-            }
-
-            if (entry == chn_tbl->num_cfp)
-            {
-                goto done;
-            }
+            def_chan = (t_u8)chn_tbl->pcfp[entry].channel;
+            break;
         }
+    }
+
+    if (entry == chn_tbl->num_cfp)
+    {
+       goto done;
     }
 
     *chan = def_chan;

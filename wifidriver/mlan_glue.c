@@ -3253,9 +3253,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #endif
             case HostCmd_CMD_802_11_DEAUTHENTICATE:
                 (void)wlan_ret_802_11_deauthenticate(pmpriv, resp, NULL);
-#if !CONFIG_WPA_SUPP
                 (void)wifi_event_completion(WIFI_EVENT_DEAUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
-#endif
                 break;
             case HostCmd_CMD_802_11_HS_CFG_ENH:
 #if CONFIG_HOST_SLEEP

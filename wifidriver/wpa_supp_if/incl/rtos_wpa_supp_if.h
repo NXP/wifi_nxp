@@ -151,9 +151,9 @@ void wifi_nxp_wpa_supp_event_proc_survey_res(void *if_priv,
 void wifi_nxp_wpa_supp_event_proc_eapol_rx(void *if_priv,
                                            nxp_wifi_event_eapol_mlme_t *eapol_rx,
                                            unsigned int event_len);
+#endif
 void wifi_nxp_wpa_supp_event_proc_dfs_cac_started(void *if_priv, nxp_wifi_dfs_cac_info *dfs_cac_info);
 void wifi_nxp_wpa_supp_event_proc_dfs_cac_finished(void *if_priv, nxp_wifi_dfs_cac_info *dfs_cac_info);
-#endif
 #if CONFIG_WIFI_SOFTAP_SUPPORT
 int wifi_nxp_wpa_supp_init_ap(void *if_priv, struct wpa_driver_associate_params *params);
 #endif

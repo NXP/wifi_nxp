@@ -914,9 +914,9 @@ static int wlan_get_uap_ipv4_addr(unsigned int *ipv4_addr)
     }
 
     *ipv4_addr = network->ip.ipv4.address;
+#endif
 
     return WM_SUCCESS;
-#endif
 }
 #endif
 
@@ -4420,7 +4420,11 @@ static void wlan_switch_to_nondfs_channel(void)
 
     if (is_uap_started())
     {
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+        uap_channel = mlan_adap->priv[1]->uap_channel;
+#else
         uap_channel = (t_u8)wlan.networks[wlan.cur_uap_network_idx].channel;
+#endif
 
         if (MTRUE == wlan_11h_radar_detect_required(pmpriv, uap_channel))
         {
@@ -4654,6 +4658,15 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
          */
         wlan_pmksa_flush();
     }
+
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    if(is_uap_started())
+    {
+        while (is_sta_connected())
+            OSA_TimeDelay(100);
+        wlan_switch_to_nondfs_channel();
+    }
+#endif
 #endif
 }
 
