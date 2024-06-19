@@ -4752,7 +4752,7 @@ int wifi_nxp_scan_res_get2(t_u32 table_idx, nxp_wifi_event_new_scan_result_t *sc
 {
     mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[0];
     mlan_adapter *pmadapter = pmpriv->adapter;
-    struct os_time t;
+    struct os_reltime t;
     BSSDescriptor_t *bss_new_entry;
 
     bss_new_entry = &pmadapter->pscan_table[table_idx];
@@ -4762,7 +4762,7 @@ int wifi_nxp_scan_res_get2(t_u32 table_idx, nxp_wifi_event_new_scan_result_t *sc
     scan_res->beacon_interval = bss_new_entry->beacon_period;
     memcpy(&scan_res->capability, &bss_new_entry->cap_info, sizeof(unsigned short));
     memcpy(&scan_res->ies_tsf, bss_new_entry->time_stamp, sizeof(bss_new_entry->time_stamp));
-    os_get_time(&t);
+    os_get_reltime(&t);
     scan_res->seen_ms_ago = t.sec * 1000 - bss_new_entry->scan_result_tsf / 1000000 * 1000;
     if (bss_new_entry->ies_len > 0)
     {
