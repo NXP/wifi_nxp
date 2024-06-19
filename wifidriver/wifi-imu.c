@@ -20,7 +20,7 @@
 #include "wifi-imu.h"
 #include "wifi-internal.h"
 #include "fsl_common.h"
-#include "fsl_adapter_imu.h"
+#include "fsl_adapter_rfimu.h"
 #include "fsl_imu.h"
 #include "fsl_loader.h"
 
@@ -110,10 +110,10 @@ SDK_ALIGN(uint8_t inbuf[SDIO_MP_AGGR_DEF_PKT_LIMIT * 2 * DATA_BUFFER_SIZE], 32);
 SDK_ALIGN(uint8_t amsdu_outbuf[MAX_SUPPORT_AMSDU_SIZE], 32);
 #endif
 
-hal_imumc_status_t imumc_cmdrsp_handler(IMU_Msg_t *pImuMsg, uint32_t length);
-hal_imumc_status_t imumc_event_handler(IMU_Msg_t *pImuMsg, uint32_t length);
-hal_imumc_status_t imumc_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length);
-hal_imumc_status_t imumc_ctrl_handler(IMU_Msg_t *pImuMsg, uint32_t length);
+hal_rpmsg_status_t rpmsg_cmdrsp_handler(IMU_Msg_t *pImuMsg, uint32_t length);
+hal_rpmsg_status_t rpmsg_event_handler(IMU_Msg_t *pImuMsg, uint32_t length);
+hal_rpmsg_status_t rpmsg_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length);
+hal_rpmsg_status_t rpmsg_ctrl_handler(IMU_Msg_t *pImuMsg, uint32_t length);
 
 /* Remove me: This structure is not present in mlan and can be removed later */
 typedef MLAN_PACK_START struct
@@ -147,13 +147,13 @@ static void wifi_init_imulink(void)
 }
 
 uint8_t cmd_seqno = 0;
-static hal_imumc_status_t wifi_send_fw_cmd(t_u16 cmd_type, t_u8 *cmd_payload, t_u32 length)
+static hal_rpmsg_status_t wifi_send_fw_cmd(t_u16 cmd_type, t_u8 *cmd_payload, t_u32 length)
 {
     IMUPkt *imu_cmd         = (IMUPkt *)cmd_payload;
     HostCmd_DS_COMMAND *cmd = NULL;
 
     if (cmd_payload == NULL || length == 0)
-        return kStatus_HAL_ImumcError;
+        return kStatus_HAL_RpmsgError;
 
     cmd          = &(imu_cmd->hostcmd);
     cmd->seq_num = (cmd->seq_num & 0xFF00) | cmd_seqno;
@@ -169,17 +169,17 @@ static hal_imumc_status_t wifi_send_fw_cmd(t_u16 cmd_type, t_u8 *cmd_payload, t_
     dump_hex(cmd_payload, length);
 #endif /* CONFIG_WIFI_IO_DUMP */
 
-    while (kStatus_HAL_ImumcSuccess != HAL_ImuSendCommand(kIMU_LinkCpu1Cpu3, cmd_payload, length))
+    while (kStatus_HAL_RpmsgSuccess != HAL_ImuSendCommand(kIMU_LinkCpu1Cpu3, cmd_payload, length))
     {
         OSA_TimeDelay(1);
     }
-    return kStatus_HAL_ImumcSuccess;
+    return kStatus_HAL_RpmsgSuccess;
 }
 
-static hal_imumc_status_t wifi_send_fw_data(t_u8 *data, t_u32 length)
+static hal_rpmsg_status_t wifi_send_fw_data(t_u8 *data, t_u32 length)
 {
     if (data == NULL || length == 0)
-        return kStatus_HAL_ImumcError;
+        return kStatus_HAL_RpmsgError;
     w_pkt_d("Data TX SIG: Driver=>FW, len %d", length);
     return HAL_ImuSendTxData(kIMU_LinkCpu1Cpu3, data, length);
 }
@@ -1145,7 +1145,7 @@ mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx_co
     /* send tx data via imu */
     ret = wifi_send_fw_data(buffer, txlen);
 
-    if (ret != kStatus_HAL_ImumcSuccess)
+    if (ret != kStatus_HAL_RpmsgSuccess)
     {
         wifi_io_e("Send tx data via imu failed (%d)", ret);
 #if CONFIG_WIFI_FW_DEBUG
@@ -1179,7 +1179,7 @@ mlan_status wlan_xmit_bypass_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface)
     /* send tx data via imu */
     ret = wifi_send_fw_data(buffer, txlen);
 
-    if (ret != kStatus_HAL_ImumcSuccess)
+    if (ret != kStatus_HAL_RpmsgSuccess)
     {
         wifi_io_e("Send tx data via imu failed (%d)", ret);
 #if CONFIG_WIFI_FW_DEBUG
@@ -1237,7 +1237,7 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
     ret              = HAL_ImuAddWlanTxPacket(kIMU_LinkCpu1Cpu3, tx_buf, txlen);
 #endif
 
-    if (ret != kStatus_HAL_ImumcSuccess)
+    if (ret != kStatus_HAL_RpmsgSuccess)
     {
 #if CONFIG_WMM_UAPSD
         if (last_packet)
@@ -1277,7 +1277,7 @@ mlan_status wlan_flush_wmm_pkt(int pkt_cnt)
 
     ret = HAL_ImuSendMultiTxData(kIMU_LinkCpu1Cpu3);
     ;
-    if (ret != kStatus_HAL_ImumcSuccess)
+    if (ret != kStatus_HAL_RpmsgSuccess)
     {
         wifi_io_e("wlan_flush_wmm_pkt failed (%d)", ret);
 #if CONFIG_WIFI_FW_DEBUG
@@ -1342,7 +1342,7 @@ mlan_status wlan_xmit_wmm_amsdu_pkt(mlan_wmm_ac_e ac, t_u8 interface, t_u32 txle
 
     ret = HAL_ImuAddWlanTxPacket(kIMU_LinkCpu1Cpu3, tx_buf, txlen);
 
-    if (ret != kStatus_HAL_ImumcSuccess)
+    if (ret != kStatus_HAL_RpmsgSuccess)
     {
 #if CONFIG_WMM_UAPSD
         if (last_packet)
@@ -1382,7 +1382,7 @@ mlan_status wlan_send_null_packet(pmlan_private priv, t_u8 flags)
     ptxpd->pkt_delay_2ms = 0;
 
     ret = wifi_send_fw_data(pbuf, sizeof(TxPD) + INTF_HEADER_LEN);
-    if (ret != kStatus_HAL_ImumcSuccess)
+    if (ret != kStatus_HAL_RpmsgSuccess)
     {
         wifi_io_e("imu_drv_write failed (%d)", ret);
         return MLAN_STATUS_FAILURE;
@@ -1391,7 +1391,7 @@ mlan_status wlan_send_null_packet(pmlan_private priv, t_u8 flags)
     return MLAN_STATUS_SUCCESS;
 }
 
-hal_imumc_status_t imumc_cmdrsp_handler(IMU_Msg_t *pImuMsg, uint32_t length)
+hal_rpmsg_status_t rpmsg_cmdrsp_handler(IMU_Msg_t *pImuMsg, uint32_t length)
 {
     assert(NULL != pImuMsg);
     assert(0 != length);
@@ -1410,10 +1410,10 @@ hal_imumc_status_t imumc_cmdrsp_handler(IMU_Msg_t *pImuMsg, uint32_t length)
 
     wlan_decode_rx_packet((t_u8 *)pImuMsg->PayloadPtr[0], MLAN_TYPE_CMD);
 
-    return kStatus_HAL_ImumcSuccess;
+    return kStatus_HAL_RpmsgSuccess;
 }
 
-hal_imumc_status_t imumc_event_handler(IMU_Msg_t *pImuMsg, uint32_t length)
+hal_rpmsg_status_t rpmsg_event_handler(IMU_Msg_t *pImuMsg, uint32_t length)
 {
     assert(NULL != pImuMsg);
     assert(0 != length);
@@ -1439,10 +1439,10 @@ hal_imumc_status_t imumc_event_handler(IMU_Msg_t *pImuMsg, uint32_t length)
 
     wlan_decode_rx_packet((t_u8 *)pImuMsg->PayloadPtr[0], MLAN_TYPE_EVENT);
 
-    return kStatus_HAL_ImumcSuccess;
+    return kStatus_HAL_RpmsgSuccess;
 }
 
-hal_imumc_status_t imumc_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length)
+hal_rpmsg_status_t rpmsg_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length)
 {
     IMUPkt *inimupkt;
     t_u32 size;
@@ -1475,7 +1475,7 @@ hal_imumc_status_t imumc_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length)
             wakelock_put();
 #endif
             wifi_io_e("pImuMsg->PayloadPtr[%u] has invalid size=%u", i, size);
-            return kStatus_HAL_ImumcError;
+            return kStatus_HAL_RpmsgError;
         }
 
 #if !CONFIG_TX_RX_ZERO_COPY
@@ -1500,7 +1500,7 @@ hal_imumc_status_t imumc_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length)
     wakelock_put();
 #endif
     /*! To be the last action of the handler*/
-    return kStatus_HAL_ImumcSuccess;
+    return kStatus_HAL_RpmsgSuccess;
 }
 
 static bool imu_fw_is_hang(void)
@@ -1513,7 +1513,7 @@ static bool imu_fw_is_hang(void)
         return false;
 }
 
-hal_imumc_status_t imumc_ctrl_handler(IMU_Msg_t *pImuMsg, uint32_t length)
+hal_rpmsg_status_t rpmsg_ctrl_handler(IMU_Msg_t *pImuMsg, uint32_t length)
 {
     t_u32 imuControlType;
 
@@ -1548,7 +1548,7 @@ hal_imumc_status_t imumc_ctrl_handler(IMU_Msg_t *pImuMsg, uint32_t length)
         default:
             break;
     }
-    return kStatus_HAL_ImumcSuccess;
+    return kStatus_HAL_RpmsgSuccess;
 }
 
 void imu_wakeup_card()
@@ -1640,13 +1640,13 @@ retry:
 
     wifi_init_imulink();
 
-    HAL_ImuInstallCallback(kIMU_LinkCpu1Cpu3, imumc_cmdrsp_handler, IMU_MSG_COMMAND_RESPONSE);
+    HAL_ImuInstallCallback(kIMU_LinkCpu1Cpu3, rpmsg_cmdrsp_handler, IMU_MSG_COMMAND_RESPONSE);
 
-    HAL_ImuInstallCallback(kIMU_LinkCpu1Cpu3, imumc_event_handler, IMU_MSG_EVENT);
+    HAL_ImuInstallCallback(kIMU_LinkCpu1Cpu3, rpmsg_event_handler, IMU_MSG_EVENT);
 
-    HAL_ImuInstallCallback(kIMU_LinkCpu1Cpu3, imumc_rxpkt_handler, IMU_MSG_RX_DATA);
+    HAL_ImuInstallCallback(kIMU_LinkCpu1Cpu3, rpmsg_rxpkt_handler, IMU_MSG_RX_DATA);
 
-    HAL_ImuInstallCallback(kIMU_LinkCpu1Cpu3, imumc_ctrl_handler, IMU_MSG_CONTROL);
+    HAL_ImuInstallCallback(kIMU_LinkCpu1Cpu3, rpmsg_ctrl_handler, IMU_MSG_CONTROL);
 
     /* If we're running a Manufacturing image, start the tasks.
        If not, initialize and setup the firmware */
