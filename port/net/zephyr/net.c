@@ -1021,7 +1021,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
             NET_IPV4_ADDR_U32(if_handle->gw)     = addr->ipv4.gw;
             net_if_ipv4_addr_add(if_handle->netif, &if_handle->ipaddr.in_addr, NET_ADDR_MANUAL, 0);
             net_if_ipv4_set_gw(if_handle->netif, &if_handle->gw.in_addr);
-            net_if_ipv4_set_netmask(if_handle->netif, &if_handle->nmask.in_addr);
+            net_if_ipv4_set_netmask_by_addr(if_handle->netif, &if_handle->ipaddr.in_addr, &if_handle->nmask.in_addr);
             net_if_up(if_handle->netif);
             break;
         case NET_ADDR_TYPE_DHCP:
@@ -1078,8 +1078,8 @@ int net_get_if_addr(struct net_ip_config *addr, void *intrfc_handle)
     interface_t *if_handle   = (interface_t *)intrfc_handle;
     struct net_if_ipv4 *ipv4 = if_handle->netif->config.ip.ipv4;
 
-    addr->ipv4.address = NET_IPV4_ADDR_U32(ipv4->unicast[0].address);
-    addr->ipv4.netmask = ipv4->netmask.s_addr;
+    addr->ipv4.address = NET_IPV4_ADDR_U32(ipv4->unicast[0].ipv4.address);
+    addr->ipv4.netmask = ipv4->unicast[0].netmask.s_addr;
     addr->ipv4.gw      = ipv4->gw.s_addr;
 
 #if (CONFIG_DNS_RESOLVER)
@@ -1276,7 +1276,7 @@ int net_get_if_ip_addr(uint32_t *ip, void *intrfc_handle)
     interface_t *if_handle   = (interface_t *)intrfc_handle;
     struct net_if_ipv4 *ipv4 = if_handle->netif->config.ip.ipv4;
 
-    *ip = NET_IPV4_ADDR_U32(ipv4->unicast[0].address);
+    *ip = NET_IPV4_ADDR_U32(ipv4->unicast[0].ipv4.address);
     return WM_SUCCESS;
 }
 
@@ -1285,7 +1285,7 @@ int net_get_if_ip_mask(uint32_t *nm, void *intrfc_handle)
     interface_t *if_handle   = (interface_t *)intrfc_handle;
     struct net_if_ipv4 *ipv4 = if_handle->netif->config.ip.ipv4;
 
-    *nm = ipv4->netmask.s_addr;
+    *nm = ipv4->unicast[0].netmask.s_addr;
     return WM_SUCCESS;
 }
 

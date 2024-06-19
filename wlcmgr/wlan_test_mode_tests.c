@@ -9,7 +9,7 @@
  */
 
 #include <wlan.h>
-#include <cli.h>
+#include <wifi_shell.h>
 #include <cli_utils.h>
 #include <string.h>
 #include <wm_net.h> /* for net_inet_aton */

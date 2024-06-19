@@ -143,13 +143,13 @@ static bool wlan_uap_scan_chan_list_set;
 wlan_flt_cfg_t g_flt_cfg;
 #endif
 #ifdef RW610
-#if (CONFIG_MONOLITHIC_WIFI)
+#if (CONFIG_NXP_MONOLITHIC_WIFI)
 extern const unsigned char *wlan_fw_bin;
 extern const unsigned int wlan_fw_bin_len;
 #else
 const unsigned char *wlan_fw_bin   = (const unsigned char *)(void *)0;
 const unsigned int wlan_fw_bin_len = 0;
-#endif /* CONFIG_MONOLITHIC_WIFI */
+#endif /* CONFIG_NXP_MONOLITHIC_WIFI */
 extern int nxp_wifi_wlan_event_callback(enum wlan_event_reason reason, void *data);
 #define wlan_event_callback nxp_wifi_wlan_event_callback
 #endif
@@ -898,6 +898,7 @@ static int wlan_get_uap_ipv4_addr(unsigned int *ipv4_addr)
 {
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
     net_get_if_ip_addr(ipv4_addr, net_get_uap_handle());
+    return WM_SUCCESS;
 #else
     struct wlan_network* network = NULL;
 

@@ -144,7 +144,7 @@ int initNetwork(void)
 
         net_if_ipv4_addr_add(iface, &addr, NET_ADDR_MANUAL, 0);
         net_if_ipv4_set_gw(iface, &gw);
-        net_if_ipv4_set_netmask(iface, &nmask);
+        net_if_ipv4_set_netmask_by_addr(iface, &addr, &nmask);
 
         net_if_carrier_on(iface);
 

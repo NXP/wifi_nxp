@@ -183,7 +183,7 @@ zephyr_include_directories(
     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/lists/
     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/wifi_bt_module/AzureWave/tx_pwr_limits/
     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/wifi_bt_module/Murata/tx_pwr_limits/
-    ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/imu_adapter/
+    ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/rpmsg/
 )
 
 # OS abstraction layer source
@@ -293,7 +293,7 @@ zephyr_code_relocate(FILES
                      wifidriver/wifi-imu.c
                      ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/osa/fsl_os_abstraction_zephyr.c
                      ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/drivers/imu/fsl_imu.c
-                     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/imu_adapter/fsl_adapter_imu.c
+                     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/rpmsg/fsl_adapter_rfimu.c
                      LOCATION RAM_TEXT)
 endif()
 
@@ -332,3 +332,4 @@ zephyr_code_relocate(FILES
 endif()
 
 zephyr_library_link_libraries_ifdef(CONFIG_MBEDTLS mbedTLS)
+zephyr_library_link_libraries_ifdef(CONFIG_WIFI_NM_WPA_SUPPLICANT hostap)
