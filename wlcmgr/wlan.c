@@ -10653,7 +10653,12 @@ int wlan_set_mac_addr(uint8_t *mac)
 {
     uint8_t ap_mac[MLAN_MAC_ADDR_LENGTH];
 
-    if (!is_uap_state(CM_UAP_INITIALIZING) || is_sta_connecting())
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    if (!is_uap_state(HAPD_IFACE_DISABLED)
+#else
+    if (!is_uap_state(CM_UAP_INITIALIZING)
+#endif
+      || is_sta_connecting())
     {
         return -WM_FAIL;
     }
@@ -10694,7 +10699,11 @@ int wlan_set_uap_mac_addr(uint8_t *mac)
         return -WM_FAIL;
     }
 
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    if (!is_uap_state(HAPD_IFACE_DISABLED)
+#else
     if (!is_uap_state(CM_UAP_INITIALIZING))
+#endif
     {
         return -WM_FAIL;
     }
