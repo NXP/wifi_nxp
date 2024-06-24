@@ -80,8 +80,6 @@ void wifi_scan_done(struct wifi_message *msg)
     if (!wifi_if_ctx_rtos || !wm_wifi.supp_if_callbk_fns)
        return;
 
-    wifi_nxp_reset_scan_flag();
-
     if (msg->reason == WIFI_EVENT_REASON_FAILURE)
     {
         if (wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn)

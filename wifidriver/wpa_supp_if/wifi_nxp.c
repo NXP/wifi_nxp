@@ -124,28 +124,45 @@ static void wifi_nxp_event_reamin_on_channel(void *if_priv, int cancel_channel)
     wifi_nxp_wpa_supp_event_proc_remain_on_channel(if_priv, cancel_channel);
 }
 #endif
+
+static int wifi_nxp_wpa_is_supp_scan_in_progress(void *if_priv)
+{
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+    
+    if (wifi_if_ctx_rtos == NULL)
+    {
+        wifi_e("%s: wifi_if_ctx_rtos is NULL", __func__);
+        return -WM_FAIL;
+    }
+
+    return wifi_if_ctx_rtos->scan_in_progress;
+}
+
 static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
-    .mac_changed_callbk_fn         = wifi_nxp_wpa_supp_event_proc_mac_changed,
-    .chan_list_changed_callbk_fn   = wifi_nxp_wpa_supp_event_proc_chan_list_changed,
-    .acs_channel_sel_callbk_fn     = wifi_nxp_wpa_supp_event_acs_channel_selected,
+    .mac_changed_callbk_fn              = wifi_nxp_wpa_supp_event_proc_mac_changed,
+    .chan_list_changed_callbk_fn        = wifi_nxp_wpa_supp_event_proc_chan_list_changed,
+    .acs_channel_sel_callbk_fn          = wifi_nxp_wpa_supp_event_acs_channel_selected,
 #if !CONFIG_WIFI_NM_WPA_SUPPLICANT
-    .survey_res_callbk_fn          = wifi_nxp_wpa_supp_event_proc_survey_res,
-    .remain_on_channel_callbk_fn   = wifi_nxp_event_reamin_on_channel,
-    .eapol_rx_callbk_fn            = wifi_nxp_wpa_supp_event_proc_eapol_rx,
+    .survey_res_callbk_fn               = wifi_nxp_wpa_supp_event_proc_survey_res,
+    .remain_on_channel_callbk_fn        = wifi_nxp_event_reamin_on_channel,
+    .eapol_rx_callbk_fn                 = wifi_nxp_wpa_supp_event_proc_eapol_rx,
 #endif
-    .dfs_cac_started_callbk_fn     = wifi_nxp_wpa_supp_event_proc_dfs_cac_started,
-    .dfs_cac_finished_callbk_fn    = wifi_nxp_wpa_supp_event_proc_dfs_cac_finished,
-    .ecsa_complete_callbk_fn       = wifi_nxp_wpa_supp_event_proc_ecsa_complete,
-    .scan_start_callbk_fn          = wifi_nxp_event_proc_scan_start,
-    .scan_done_callbk_fn           = wifi_nxp_event_proc_scan_done,
-    .auth_resp_callbk_fn           = wifi_nxp_wpa_supp_event_proc_auth_resp,
-    .assoc_resp_callbk_fn          = wifi_nxp_wpa_supp_event_proc_assoc_resp,
-    .deauth_callbk_fn              = wifi_nxp_wpa_supp_event_proc_deauth,
-    .disassoc_callbk_fn            = wifi_nxp_wpa_supp_event_proc_disassoc,
-    .mgmt_tx_status_callbk_fn      = wifi_nxp_wpa_supp_event_mgmt_tx_status,
-    .unprot_mlme_mgmt_rx_callbk_fn = wifi_nxp_wpa_supp_event_proc_unprot_mgmt,
-    .mgmt_rx_callbk_fn             = wifi_nxp_wpa_supp_event_proc_mgmt_rx,
-    .get_wiphy_callbk_fn           = wifi_nxp_wpa_supp_event_get_wiphy,
+    .dfs_cac_started_callbk_fn          = wifi_nxp_wpa_supp_event_proc_dfs_cac_started,
+    .dfs_cac_finished_callbk_fn         = wifi_nxp_wpa_supp_event_proc_dfs_cac_finished,
+    .ecsa_complete_callbk_fn            = wifi_nxp_wpa_supp_event_proc_ecsa_complete,
+    .scan_start_callbk_fn               = wifi_nxp_event_proc_scan_start,
+    .scan_done_callbk_fn                = wifi_nxp_event_proc_scan_done,
+    .auth_resp_callbk_fn                = wifi_nxp_wpa_supp_event_proc_auth_resp,
+    .assoc_resp_callbk_fn               = wifi_nxp_wpa_supp_event_proc_assoc_resp,
+    .deauth_callbk_fn                   = wifi_nxp_wpa_supp_event_proc_deauth,
+    .disassoc_callbk_fn                 = wifi_nxp_wpa_supp_event_proc_disassoc,
+    .mgmt_tx_status_callbk_fn           = wifi_nxp_wpa_supp_event_mgmt_tx_status,
+    .unprot_mlme_mgmt_rx_callbk_fn      = wifi_nxp_wpa_supp_event_proc_unprot_mgmt,
+    .mgmt_rx_callbk_fn                  = wifi_nxp_wpa_supp_event_proc_mgmt_rx,
+    .get_wiphy_callbk_fn                = wifi_nxp_wpa_supp_event_get_wiphy,
+    .is_supp_scan_in_progress_callbk_fn = wifi_nxp_wpa_is_supp_scan_in_progress,
 };
 
 int wifi_supp_init(void)
