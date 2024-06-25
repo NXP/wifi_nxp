@@ -5488,12 +5488,8 @@ int wifi_handle_fw_event(struct bus_message *msg)
             wifi_if_ctx_rtos->associated = MFALSE;
 
             wpa_supp_handle_link_lost(pmpriv);
-#else
-#if CONFIG_11N
-            /* fixme: Should this be outside CONFIG_11N ? */
+#endif
             wlan_handle_disconnect_event(pmpriv);
-#endif
-#endif
             break;
         case EVENT_DEAUTHENTICATED:
 #if CONFIG_WPA_SUPP
@@ -5509,11 +5505,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 (void)wifi_event_completion(WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_FAILURE,
                                             (void *)&evt->reason_code);
             }
-
-#if CONFIG_11N
-            /* fixme: Should this be outside CONFIG_11N ? */
             wlan_handle_disconnect_event(pmpriv);
-#endif
             break;
         case EVENT_DISASSOCIATED:
 #if CONFIG_WPA_SUPP
@@ -5527,11 +5519,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             (void)wifi_event_completion(WIFI_EVENT_DISASSOCIATION, WIFI_EVENT_REASON_SUCCESS,
                                         (void *)&evt->reason_code);
 #endif
-
-#if CONFIG_11N
-            /* fixme: Should this be outside CONFIG_11N ? */
             wlan_handle_disconnect_event(pmpriv);
-#endif
             break;
         case EVENT_PORT_RELEASE:
 #if !CONFIG_WPA_SUPP
