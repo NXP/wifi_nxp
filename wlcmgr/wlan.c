@@ -5526,6 +5526,9 @@ static void wlcm_process_init_params()
 void wlcm_add_enterprise_file(void)
 {
     struct wpa_supp_enterprise_file en_file;
+
+    memset((void *)&en_file, 0, sizeof(struct wpa_supp_enterprise_file));
+
     en_file.ca_cert = (uint8_t *)ca_der;
     en_file.ca_cert_len = ca_der_len;
     en_file.client_cert = (uint8_t *)client_der;
