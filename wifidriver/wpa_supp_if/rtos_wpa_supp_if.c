@@ -2654,6 +2654,55 @@ out:
     return status;
 }
 
+static void wifi_nxp_set_acs_params(nxp_wifi_acs_params *acs_params)
+{
+    mlan_private *pmpriv = mlan_adap->priv[0];
+    unsigned int channel = pmpriv->curr_bss_params.bss_descriptor.channel;
+
+    memset(acs_params, 0, sizeof(nxp_wifi_acs_params));
+    acs_params->pri_freq = pmpriv->curr_bss_params.bss_descriptor.freq;
+    acs_params->hw_mode  = channel <= MAX_CHANNELS_BG ? 1 : 2;
+#if defined(RW610)
+    acs_params->ch_width = 20;
+#else
+    t_u8 chan_offset;
+
+    chan_offset = wifi_get_sec_channel_offset(channel);
+    if (chan_offset == SEC_CHAN_ABOVE)
+    {
+        acs_params->sec_freq = acs_params->pri_freq + 20;
+    }
+    else if (chan_offset == SEC_CHAN_BELOW)
+    {
+        acs_params->sec_freq = acs_params->pri_freq - 20;
+    }
+    else
+    {
+        acs_params->sec_freq = acs_params->pri_freq;
+    }
+#if CONFIG_5GHz_SUPPORT
+    if (channel > MAX_CHANNELS_BG)
+    {
+#if CONFIG_11AC
+        if (wm_wifi.bandwidth == BANDWIDTH_80MHZ)
+        {
+            acs_params->ch_width = 80;
+        }
+#endif
+    }
+#endif
+    if (wm_wifi.bandwidth == BANDWIDTH_40MHZ)
+    {
+        acs_params->ch_width = 40;
+    }
+    else
+    {
+        acs_params->sec_freq = 0;
+        acs_params->ch_width = 20;
+    }
+#endif
+}
+
 int wifi_nxp_hostapd_do_acs(void *if_priv, struct drv_acs_params *params)
 {
     int status = -WM_FAIL;
@@ -2663,6 +2712,21 @@ int wifi_nxp_hostapd_do_acs(void *if_priv, struct drv_acs_params *params)
         supp_e("%s: Invalid params", __func__);
         goto out;
     }
+
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    if(mlan_adap->priv[0]->media_connected)
+    {
+        nxp_wifi_acs_params acs_params;
+
+        wifi_nxp_set_acs_params(&acs_params);
+        if (wm_wifi.supp_if_callbk_fns->acs_channel_sel_callbk_fn)
+        {
+            wm_wifi.supp_if_callbk_fns->acs_channel_sel_callbk_fn(wm_wifi.hapd_if_priv, &acs_params);
+        }
+       status = WM_SUCCESS;
+       goto out;
+    }
+#endif
 
     status = wifi_uap_do_acs(params->freq_list);
     if (status != WM_SUCCESS)

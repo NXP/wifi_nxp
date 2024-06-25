@@ -3249,42 +3249,38 @@ static void wlcm_process_channel_switch_supp(struct wifi_message *msg)
             bss_type = pchan_info->bss_type;
             pmpriv = mlan_adap->priv[bss_type];
             pmadapter = pmpriv->adapter;
-            channel= pchan_info->channel;
+            channel = pchan_info->channel;
 
             if(is_uap_started())
             {
-                wlan.networks[wlan.cur_uap_network_idx].channel = channel;
                 pmpriv->uap_channel = channel;
-        		pmpriv->uap_state_chan_cb.channel = channel;
-        		pmpriv->uap_state_chan_cb.band_config = pchan_info->band_config;
-
+                pmpriv->uap_state_chan_cb.channel = channel;
+                pmpriv->uap_state_chan_cb.band_config = pchan_info->band_config;
                 pchan_band_info.is_11n_enabled = pmpriv->is_11n_enabled;
             }
 
             if (is_sta_connected())
             {
-                wlan.networks[wlan.cur_network_idx].channel = channel;
-                wifi_set_curr_bss_channel(wlan.networks[wlan.cur_network_idx].channel);
-
+                wifi_set_curr_bss_channel(channel);
 #define MAX_CHANNEL_BAND_B 14
-			if (channel <= MAX_CHANNEL_BAND_B)
-				cfp = wlan_find_cfp_by_band_and_channel(pmadapter, BAND_B, channel);
+                if (channel <= MAX_CHANNEL_BAND_B)
+                    cfp = wlan_find_cfp_by_band_and_channel(pmadapter, BAND_B, channel);
 #if CONFIG_5GHz_SUPPORT
-			else
-				cfp = wlan_find_cfp_by_band_and_channel(pmadapter, BAND_A, channel);
+                else
+                    cfp = wlan_find_cfp_by_band_and_channel(pmadapter, BAND_A, channel);
 #endif
-			if (cfp)
-				pmpriv->curr_bss_params.bss_descriptor.freq = cfp->freq;
-			else
-				pmpriv->curr_bss_params.bss_descriptor.freq = 0;
+                if (cfp)
+                    pmpriv->curr_bss_params.bss_descriptor.freq = cfp->freq;
+                else
+                    pmpriv->curr_bss_params.bss_descriptor.freq = 0;
             }
 
             /* Handle Host-based DFS and non-DFS(normal uap) case */
             memcpy((t_u8 *)&pchan_band_info.bandcfg,(t_u8 *)&pchan_info->band_config, sizeof(pchan_info->band_config));
 		    pchan_band_info.channel = channel;
 #if (CONFIG_11AC)
-		    if (pchan_band_info.bandcfg.chanWidth == CHAN_BW_80MHZ)
-			pchan_band_info.center_chan = wlan_get_center_freq_idx(pmpriv, BAND_AAC,channel,CHANNEL_BW_80MHZ);
+            if (pchan_band_info.bandcfg.chanWidth == CHAN_BW_80MHZ)
+                pchan_band_info.center_chan = wlan_get_center_freq_idx(pmpriv, BAND_AAC,channel,CHANNEL_BW_80MHZ);
 #endif
 
             /*Get freq and width info*/
@@ -5799,6 +5795,37 @@ static void wlcm_process_fw_reset_event(struct wifi_message *msg, enum cm_sta_st
 }
 #endif
 
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+static void wlan_notify_uap_chan_switch(t_u8 channel)
+{
+    wifi_ecsa_info *pecsa_info = NULL;
+
+#if !CONFIG_MEM_POOLS
+     pecsa_info = OSA_MemoryAllocate(sizeof(wifi_ecsa_info));
+#else
+     pecsa_info = OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+#endif
+     if (!pecsa_info)
+     {
+         wlcm_w("No mem. Cannot process new channel from channel switch");
+         return;
+     }
+     pecsa_info->bss_type    = WLAN_BSS_TYPE_UAP;
+     pecsa_info->channel     = channel;
+     pecsa_info->band_config = (channel > 14) ? BAND_5GHZ: BAND_2GHZ;
+
+    if (wifi_event_completion(WIFI_EVENT_CHAN_SWITCH, WIFI_EVENT_REASON_SUCCESS, pecsa_info) != WM_SUCCESS)
+    {
+        /* If fail to send message on queue, free allocated memory ! */
+#if !CONFIG_MEM_POOLS
+        OSA_MemoryFree((void *)pecsa_info);
+#else
+        OSA_MemoryPoolFree(buf_32_MemoryPool, pecsa_info);
+#endif
+    }
+}
+#endif
+
 static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
 {
     struct wlan_network *network = NULL;
@@ -5848,7 +5875,17 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
             if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
             {
+                t_u8 sta_channel = mlan_adap->priv[0]->curr_bss_params.bss_descriptor.channel;
+                t_u8 uap_channel = mlan_adap->priv[1]->uap_channel;
+
                 CONNECTION_EVENT(WLAN_REASON_UAP_SUCCESS, NULL);
+                if(is_sta_connected() && uap_channel != sta_channel)
+                {
+                    while(!is_uap_started())
+                        OSA_TimeDelay(10);
+                    PRINTF("Station has connection on channel %d, switch to this channel\r\n", sta_channel);
+                    wlan_notify_uap_chan_switch(sta_channel);
+                }
             }
 #else
             if (!is_uap_state(CM_UAP_CONFIGURED))
