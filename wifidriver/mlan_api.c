@@ -2283,7 +2283,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     }
 
     wm_wifi.g_user_scan_cfg = user_scan_cfg;
-    (void)OSA_EventNotifyPost(wm_wifi.wifi_scan_task_Handle);
+    (void)OSA_TaskNotifyPost(wm_wifi.wifi_scan_task_Handle);
 
     return WM_SUCCESS;
 }

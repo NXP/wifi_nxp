@@ -152,6 +152,8 @@ zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_BT_USE_M2_INTERFACE
 
 zephyr_library_compile_definitions(
     FSL_OSA_TASK_ENABLE=1
+    CONFIG_FSL_RTOS_ZEPHYR=1
+    CONFIG_OSA_DEBUG_ASSERT_ENABLED=1
 )
 
 zephyr_library_sources(${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/utilities/misc_utilities/fsl_memcpy.S)

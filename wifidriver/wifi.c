@@ -1803,7 +1803,7 @@ static void wifi_core_task(void *argv)
 
         OSA_EXIT_CRITICAL();
 
-        (void)OSA_EventNotifyGet(osaWaitForever_c);
+        (void)OSA_TaskNotifyGet(osaWaitForever_c);
 
         // wakelock_get(WL_ID_WIFI_CORE_INPUT);
 
@@ -1858,7 +1858,7 @@ static void wifi_scan_task(void *argv)
     mlan_status rv;
     for (;;)
     {
-        (void)OSA_EventNotifyGet(osaWaitForever_c);
+        (void)OSA_TaskNotifyGet(osaWaitForever_c);
         if (wm_wifi.scan_stop == true)
         {
             wm_wifi.scan_stop = false;
