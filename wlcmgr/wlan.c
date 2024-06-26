@@ -4546,9 +4546,6 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
         wlcm_request_reconnect(next, network);
     }
 #endif
-#ifdef CONFIG_WIFI_NM_WPA_SUPPLICANT
-    wlan_handle_disconnect_event(mlan_adap->priv[0]);
-#endif
 }
 
 #if CONFIG_WLAN_BRIDGE
@@ -4659,6 +4656,8 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
     }
 
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    wlan_handle_disconnect_event(mlan_adap->priv[0]);
+
     if(is_uap_started())
     {
         while (is_sta_connected())
