@@ -10700,7 +10700,7 @@ int wlan_set_uap_mac_addr(uint8_t *mac)
     }
 
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
-    if (!is_uap_state(HAPD_IFACE_DISABLED)
+    if (!is_uap_state(HAPD_IFACE_DISABLED))
 #else
     if (!is_uap_state(CM_UAP_INITIALIZING))
 #endif
