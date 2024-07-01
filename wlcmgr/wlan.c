@@ -869,6 +869,19 @@ static bool is_uap_state(enum cm_uap_state state)
 }
 #endif
 
+static bool is_uap_starting(void)
+{
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    struct netif *netif = net_get_uap_interface();
+    int state = 0;
+
+    hapd_state(net_if_get_device((void *)netif), &state);
+    return ((state > HAPD_IFACE_DISABLED) && (state <= HAPD_IFACE_ENABLED));
+#else
+    return ((wlan.uap_state > CM_UAP_INITIALIZING) && (wlan.sta_state <= CM_UAP_IP_UP));
+#endif
+}
+
 static int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
 {
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
@@ -10693,12 +10706,7 @@ int wlan_set_mac_addr(uint8_t *mac)
 {
     uint8_t ap_mac[MLAN_MAC_ADDR_LENGTH];
 
-#if CONFIG_WIFI_NM_WPA_SUPPLICANT
-    if (!is_uap_state(HAPD_IFACE_DISABLED)
-#else
-    if (!is_uap_state(CM_UAP_INITIALIZING)
-#endif
-      || is_sta_connecting())
+    if (is_uap_starting() || is_sta_connecting())
     {
         return -WM_FAIL;
     }
@@ -10739,11 +10747,7 @@ int wlan_set_uap_mac_addr(uint8_t *mac)
         return -WM_FAIL;
     }
 
-#if CONFIG_WIFI_NM_WPA_SUPPLICANT
-    if (!is_uap_state(HAPD_IFACE_DISABLED))
-#else
-    if (!is_uap_state(CM_UAP_INITIALIZING))
-#endif
+    if (is_uap_starting())
     {
         return -WM_FAIL;
     }
