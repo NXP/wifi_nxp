@@ -2343,7 +2343,7 @@ static mlan_status wlan_cmd_csi(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t
             csi_cfg_cmd->chip_id        = csi_params->chip_id;
             csi_cfg_cmd->csi_filter_cnt = csi_params->csi_filter_cnt;
 
-            csi_cfg_cmd->channel_bandconfig.header.type        = wlan_cpu_to_le16(TLV_TYPE_UAP_CHAN_BAND_CONFIG);
+            csi_cfg_cmd->channel_bandconfig.header.type        = wlan_cpu_to_le16(TLV_TYPE_CSI_MONITOR_CFG);
             csi_cfg_cmd->channel_bandconfig.header.len         = 4;
             csi_cfg_cmd->channel_bandconfig.bandconfig         = csi_params->band_config;
             csi_cfg_cmd->channel_bandconfig.channel            = csi_params->channel;
