@@ -2996,29 +2996,27 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
             if (priv->bss_role == MLAN_BSS_ROLE_STA)
             {
 #if CONFIG_HOST_MLME
-                if (priv->curr_bss_params.host_mlme)
+
+                t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = {0};
+                if ((memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
+                           MLAN_MAC_ADDR_LENGTH) &&
+                    memcmp(zero_mac, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
+                           MLAN_MAC_ADDR_LENGTH)) ||
+                    memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.attemp_bssid,
+                           MLAN_MAC_ADDR_LENGTH))
                 {
-                    t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = {0};
-                    if ((memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
-                               MLAN_MAC_ADDR_LENGTH) &&
-                        memcmp(zero_mac, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
-                               MLAN_MAC_ADDR_LENGTH)) ||
-                        memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.attemp_bssid,
-                               MLAN_MAC_ADDR_LENGTH))
-                    {
-                        wifi_d("Dropping Deauth frame from other bssid: type=%d " MACSTR "\r\n", sub_type,
-                               MAC2STR(pieee_pkt_hdr->addr3));
-                        LEAVE();
-                        return ret;
-                    }
-                    wifi_d("wlan: HostMlme Disconnected: sub_type=%d\n", sub_type);
+                    wifi_d("Dropping Deauth frame from other bssid: type=%d " MACSTR "\r\n", sub_type,
+                           MAC2STR(pieee_pkt_hdr->addr3));
+                    LEAVE();
+                    return ret;
+                }
+                wifi_d("wlan: HostMlme Disconnected: sub_type=%d\n", sub_type);
 #if 0
 				pmadapter->pending_disconnect_priv = priv;
 				wlan_recv_event(
 					priv, MLAN_EVENT_ID_DRV_DEFER_HANDLING,
 					MNULL);
 #endif
-                }
 #endif
             }
             break;
