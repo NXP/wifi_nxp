@@ -15870,6 +15870,35 @@ int wlan_uap_disconnect_sta(uint8_t *sta_addr)
 
     return ret;
 }
+
+int wlan_uap_set_sta_ageout_timer(uint32_t sta_ageout_time)
+{
+    int ret = WM_SUCCESS;
+
+    if (is_uap_started() != 0)
+    {
+        wlcm_e(
+            "Cannot set the max inactivity duration for stations "
+            "as the uAP is already running");
+        return -WM_FAIL;
+    }
+
+    ret = wifi_uap_sta_ageout_timer_getset(ACTION_SET, (uint32_t *)&sta_ageout_time);
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("Failed to set STA ageout timer");
+        return ret;
+    }
+
+    ret = wifi_uap_ps_sta_ageout_timer_getset(ACTION_SET, (uint32_t *)&sta_ageout_time);
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("Failed to set PS STA ageout timer");
+        return ret;
+    }
+
+    return ret;
+}
 #endif
 
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT

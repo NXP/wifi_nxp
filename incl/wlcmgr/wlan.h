@@ -7175,6 +7175,14 @@ uint32_t wlan_get_board_type();
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_uap_disconnect_sta(uint8_t *sta_addr);
+
+/**
+ * Set ageout timer for sta
+ *
+ * \param[in]  sta_ageout_time    sta ageout time (100ms)
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_uap_set_sta_ageout_timer(uint32_t sta_ageout_time);
 #endif
 
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
