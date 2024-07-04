@@ -3045,6 +3045,19 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
         }
 
         wifi_scan_done(msg);
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+        /*
+        * Zephyr l2 mgmt scan needs call report_scan_results() to clear scan callback.
+        *
+        * If wlan.sta_state is modified to non-CM_STA_SCANNING_USER before receiving
+        * scan report, also should call this function to clear scan callback function.
+        *
+        * Otherwise scan_cb can't be cleared and will failed to do l2 mgmt scan next time.
+        */
+        if(wlan.scan_cb != NULL)
+            report_scan_results();
+#endif
+
         return;
 #else
         if (wlan.roam_reassoc == true)
