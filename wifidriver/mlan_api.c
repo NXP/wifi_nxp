@@ -4275,12 +4275,22 @@ int wifi_set_rts(int rts, mlan_bss_type bss_type)
         if (!is_uap_started())
         {
             wifi_e("uap isn't up\n\r");
+#if !CONFIG_MEM_POOLS
+            OSA_MemoryFree(mib);
+#else
+            OSA_MemoryPoolFree(buf_128_MemoryPool, mib);
+#endif
             return -WM_FAIL;
         }
         wifi_uap_bss_sta_list(&sl);
         if (!sl)
         {
             wifi_e("Failed to get sta list\n\r");
+#if !CONFIG_MEM_POOLS
+            OSA_MemoryFree(mib);
+#else
+            OSA_MemoryPoolFree(buf_128_MemoryPool, mib);
+#endif
             return -WM_FAIL;
         }
         if (sl->count >= 1)
@@ -4363,12 +4373,22 @@ int wifi_set_frag(int frag, mlan_bss_type bss_type)
         if (!is_uap_started())
         {
             wifi_e("uap isn't up\n\r");
+#if !CONFIG_MEM_POOLS
+            OSA_MemoryFree(mib);
+#else
+            OSA_MemoryPoolFree(buf_128_MemoryPool, mib);
+#endif
             return -WM_FAIL;
         }
         wifi_uap_bss_sta_list(&sl);
         if (!sl)
         {
             wifi_e("Failed to get sta list\n\r");
+#if !CONFIG_MEM_POOLS
+            OSA_MemoryFree(mib);
+#else
+            OSA_MemoryPoolFree(buf_128_MemoryPool, mib);
+#endif
             return -WM_FAIL;
         }
 
