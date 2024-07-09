@@ -6797,6 +6797,9 @@ int wlan_register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer, 
  * \return  WM_SUCCESS if successful
  */
 int wlan_unregister_csi_user_callback(void);
+wlan_csi_config_params_t * wlan_get_csi_cfg_param_default(void);
+int wlan_set_csi_cfg_param_default(wlan_csi_config_params_t *in_csi_cfg);
+void wlan_reset_csi_filter_data(void);
 
 #if CONFIG_CSI_AMI
 /** This function set Ambient Motion Index configuration.

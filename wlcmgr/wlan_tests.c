@@ -4977,8 +4977,11 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
         }
     }
 
+    memcpy((void *)&g_csi_params, (void *)wlan_get_csi_cfg_param_default(),
+            sizeof(wlan_csi_config_params_t));
     set_csi_param_header(bss_type, csi_enable, head_id, tail_id, chip_id, band_config, channel, csi_monitor_enable,
                          ra4us);
+    wlan_set_csi_cfg_param_default(&g_csi_params);
 }
 
 static void test_wlan_set_csi_filter(int argc, char **argv)
@@ -5043,7 +5046,10 @@ static void test_wlan_set_csi_filter(int argc, char **argv)
         return;
     }
 
+    memcpy((void *)&g_csi_params, (void *)wlan_get_csi_cfg_param_default(),
+            sizeof(wlan_csi_config_params_t));
     set_csi_filter(pkt_type, subtype, flags, op_index, raw_mac);
+    wlan_set_csi_cfg_param_default(&g_csi_params);
 }
 
 static void test_wlan_csi_cfg(int argc, char **argv)

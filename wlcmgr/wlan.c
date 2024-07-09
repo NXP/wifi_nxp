@@ -646,6 +646,10 @@ wlan_cloud_keep_alive_t cloud_keep_alive_param[MAX_KEEP_ALIVE_ID];
 
 void wlan_wake_up_card(void);
 
+#if CONFIG_CSI
+wlan_csi_config_params_t g_csi_params_default = {0};
+#endif
+
 #if CONFIG_WLCMGR_DEBUG
 static char *dbg_sta_state_name(enum cm_sta_state state)
 {
@@ -7837,6 +7841,9 @@ void wlan_deinit(int action)
     {
         wlcm_deinit(action);
     }
+#if CONFIG_CSI
+    wlan_reset_csi_filter_data();
+#endif
 #ifndef RW610
     OSA_RWLockDestroy(&sleep_rwlock);
 #endif
@@ -15106,6 +15113,27 @@ int wlan_config_mef(int type, t_u8 mef_action)
 #endif
 
 #if CONFIG_CSI
+wlan_csi_config_params_t * wlan_get_csi_cfg_param_default(void)
+{
+    return &g_csi_params_default;
+}
+
+int wlan_set_csi_cfg_param_default(wlan_csi_config_params_t *in_csi_cfg)
+{
+    if (in_csi_cfg)
+    {
+        memcpy((void *)&g_csi_params_default, (void *)in_csi_cfg, sizeof(wlan_csi_config_params_t));
+        return MTRUE;
+    }
+    else
+        return MFALSE;
+}
+
+void wlan_reset_csi_filter_data(void)
+{
+    (void)memset((void*)&g_csi_params_default, 0, sizeof(wlan_csi_config_params_t));
+}
+
 int wlan_register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer, size_t len))
 {
     return register_csi_user_callback(csi_data_recv_callback);
