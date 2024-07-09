@@ -130,7 +130,7 @@
 #include <wifi_events.h>
 #include <wifi.h>
 
-#define WLAN_DRV_VERSION "v1.3.r48.p15"
+#define WLAN_DRV_VERSION "v1.3.r48.p16"
 
 #if CONFIG_WPA2_ENTP
 #include <wm_mbedtls_helper_api.h>

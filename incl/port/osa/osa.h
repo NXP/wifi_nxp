@@ -333,7 +333,7 @@ static inline void OSA_Srand(uint32_t seed)
  */
 static inline uint32_t OSA_Rand()
 {
-    if (wm_rand_seed == -1)
+    if (wm_rand_seed == 0xFFFFFFFFU)
         OSA_Srand(OSA_TimeGetMsec());
     wm_rand_seed = (uint32_t)((((uint64_t)wm_rand_seed * 279470273UL) % 4294967291UL) & 0xFFFFFFFFUL);
     return wm_rand_seed;

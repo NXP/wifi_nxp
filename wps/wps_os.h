@@ -58,8 +58,8 @@ typedef struct wps_loop_s
 struct wps_thread_t
 {
     int initialized;
-    osa_msgq_handle_t cmd_queue;
-    osa_msgq_handle_t data_queue;
+    OSA_MSGQ_HANDLE_DEFINE(cmd_queue, MAX_EVENTS, sizeof(struct bus_message));
+    OSA_MSGQ_HANDLE_DEFINE(data_queue, MAX_EVENTS, sizeof(struct bus_message));
     int (*cb)(enum wps_event event, void *data, uint16_t len);
 };
 

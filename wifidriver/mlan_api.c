@@ -2068,7 +2068,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
         mlan_adap->wpa_supp_scan_triggered = MFALSE;
         return -WM_E_BUSY;
 #else
-        return WM_SUCCESS;
+        return -WM_E_BUSY;
 #endif
     }
 

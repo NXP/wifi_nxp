@@ -1557,6 +1557,11 @@ static void test_wlan_add(int argc, char **argv)
             if (string_equal(argv[arg + 1], "aid") != false)
             {
                 /* Set Client Anonymous Identity */
+                if (strlen(argv[arg + 2]) > IDENTITY_MAX_LENGTH)
+                {
+                   (void)PRINTF("Error: Aid name exceeded the max length %d\r\n", IDENTITY_MAX_LENGTH);
+                   return;
+                }
                 strcpy(network.security.anonymous_identity, argv[arg + 2]);
                 arg += 2;
             }
@@ -1564,6 +1569,12 @@ static void test_wlan_add(int argc, char **argv)
             while (string_equal(argv[arg + 1], "id") != false)
             {
                 /* For Station Set Client Identity */
+                if (strlen(argv[arg + 2]) > IDENTITY_MAX_LENGTH)
+                {
+                    (void)PRINTF("Error: id exceeded the max length %d\r\n", IDENTITY_MAX_LENGTH);
+                    return;
+                }
+
                 strcpy(network.security.identity, argv[arg + 2]);
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
                 /* For uAP Set External Client Identity */
@@ -1575,6 +1586,12 @@ static void test_wlan_add(int argc, char **argv)
                 if (string_equal(argv[arg + 1], "pass") != false)
                 {
                     /* Set Client Password */
+                    if (strlen(argv[arg + 2]) > PASSWORD_MAX_LENGTH)
+                    {
+                        (void)PRINTF("Error: passwd exceeded the max length %d\r\n", PASSWORD_MAX_LENGTH);
+                        return;
+                    }
+
                     strcpy(network.security.eap_password, argv[arg + 2]);
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
                     /* For uAP Set External Client Identity */
@@ -1589,6 +1606,11 @@ static void test_wlan_add(int argc, char **argv)
 
             if (string_equal(argv[arg + 1], "key_passwd") != false)
             {
+                if (strlen(argv[arg + 2]) > PASSWORD_MAX_LENGTH)
+                {
+                   (void)PRINTF("Error: key_passwd exceeded the maximum length %d\n", PASSWORD_MAX_LENGTH);
+                   return;
+                }
                 /* Set Client/Server Key password */
                 strcpy(network.security.client_key_passwd, argv[arg + 2]);
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
@@ -1603,6 +1625,11 @@ static void test_wlan_add(int argc, char **argv)
             if (string_equal(argv[arg + 1], "pac_opa_enc_key") != false)
             {
                 /* Encryption key for EAP-FAST PAC-Opaque values. */
+                if (strlen(argv[arg + 2]) > PAC_OPAQUE_ENCR_KEY_MAX_LENGTH)
+                {
+                   (void)PRINTF("Error: pac_opa_enc_key exceeded the maximum length %d.\r\n", PAC_OPAQUE_ENCR_KEY_MAX_LENGTH);
+                   return;
+                }
                 strcpy(network.security.pac_opaque_encr_key, argv[arg + 2]);
                 arg += 2;
             }
@@ -1610,6 +1637,11 @@ static void test_wlan_add(int argc, char **argv)
             if (string_equal(argv[arg + 1], "a_id") != false)
             {
                 /* EAP-FAST authority identity (A-ID) */
+                if (strlen(argv[arg + 2]) > A_ID_MAX_LENGTH)
+                {
+                   (void)PRINTF("Error: a_id exceeded the maximum length %d\r\n", A_ID_MAX_LENGTH);
+                   return;
+                }
                 strcpy(network.security.a_id, argv[arg + 2]);
                 arg += 2;
             }
@@ -1639,6 +1671,12 @@ static void test_wlan_add(int argc, char **argv)
             if (string_equal(argv[arg + 1], "hash") != false)
             {
                 /* CA Cert hash */
+                if (strlen(argv[arg + 2]) > HASH_MAX_LENGTH)
+                {
+                   (void)PRINTF("Error: hash exceeded the maximum length %d\r\n", HASH_MAX_LENGTH);
+                   return;
+                }
+
                 strcpy(network.security.ca_cert_hash, argv[arg + 2]);
                 arg += 2;
             }
@@ -1646,6 +1684,12 @@ static void test_wlan_add(int argc, char **argv)
             if (string_equal(argv[arg + 1], "domain_match") != false)
             {
                 /* Domain match */
+                if (strlen(argv[arg + 2]) > DOMAIN_MATCH_MAX_LENGTH)
+                {
+                   (void)PRINTF("Error: domain_match exceeded the maximum length %d\r\n", DOMAIN_MATCH_MAX_LENGTH);
+                   return;
+                }
+
                 strcpy(network.security.domain_match, argv[arg + 2]);
                 arg += 2;
             }
@@ -1653,6 +1697,11 @@ static void test_wlan_add(int argc, char **argv)
             if (string_equal(argv[arg + 1], "domain_suffix_match") != false)
             {
                 /* Domain match */
+                if (strlen(argv[arg + 2]) > DOMAIN_MATCH_MAX_LENGTH)
+                {
+                   (void)PRINTF("Error: domain_suffix_match exceeded the maximum length %d\r\n", DOMAIN_MATCH_MAX_LENGTH);
+                   return;
+                }
                 strcpy(network.security.domain_suffix_match, argv[arg + 2]);
                 arg += 2;
             }

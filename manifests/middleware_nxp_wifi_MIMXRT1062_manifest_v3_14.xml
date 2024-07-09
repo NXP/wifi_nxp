@@ -12,6 +12,7 @@
     <definition extID="middleware.lwip.MIMXRT1062"/>
     <definition extID="middleware.lwip.apps.lwiperf.MIMXRT1062"/>
     <definition extID="utility.debug_console.MIMXRT1062"/>
+    <definition extID="utility.debug_console_lite.MIMXRT1062"/>
     <definition extID="middleware.sdmmc.sdio.MIMXRT1062"/>
     <definition extID="middleware.sdmmc.host.usdhc.MIMXRT1062"/>
     <definition extID="middleware.sdmmc.host.usdhc.freertos.MIMXRT1062"/>
@@ -432,10 +433,23 @@
       <dependencies>
         <all>
           <any_of>
+            <all>
+              <not>
+                <component_dependency value="utility.debug_console_lite.MIMXRT1062"/>
+              </not>
+              <component_dependency value="utility.debug_console.MIMXRT1062"/>
+            </all>
+            <all>
+              <not>
+                <component_dependency value="utility.debug_console.MIMXRT1062"/>
+              </not>
+              <component_dependency value="utility.debug_console_lite.MIMXRT1062"/>
+            </all>
+          </any_of>
+          <any_of>
             <device_dependency value="MIMXRT1062xxxxA"/>
             <device_dependency value="MIMXRT1062xxxxB"/>
           </any_of>
-          <component_dependency value="utility.debug_console.MIMXRT1062"/>
           <component_dependency value="middleware.wifi.template.MIMXRT1062"/>
           <component_dependency value="middleware.wifi.osa.MIMXRT1062"/>
           <component_dependency value="middleware.wifi.net.MIMXRT1062"/>
@@ -558,10 +572,23 @@
       <dependencies>
         <all>
           <any_of>
+            <all>
+              <not>
+                <component_dependency value="utility.debug_console_lite.MIMXRT1062"/>
+              </not>
+              <component_dependency value="utility.debug_console.MIMXRT1062"/>
+            </all>
+            <all>
+              <not>
+                <component_dependency value="utility.debug_console.MIMXRT1062"/>
+              </not>
+              <component_dependency value="utility.debug_console_lite.MIMXRT1062"/>
+            </all>
+          </any_of>
+          <any_of>
             <device_dependency value="MIMXRT1062xxxxA"/>
             <device_dependency value="MIMXRT1062xxxxB"/>
           </any_of>
-          <component_dependency value="utility.debug_console.MIMXRT1062"/>
           <component_dependency value="middleware.wifi.template.MIMXRT1062"/>
           <component_dependency value="middleware.wifi.wifidriver.MIMXRT1062"/>
         </all>

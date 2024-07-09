@@ -3008,6 +3008,12 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 
                 IEEEtypes_AssocRsp_t *passoc_rsp1 = (IEEEtypes_AssocRsp_t *)(void *)&resp->params;
 
+                if (passoc_rsp1->status_code == WLAN_STATUS_UNSPECIFIED_FAILURE)
+                {
+                    result = WIFI_EVENT_REASON_FAILURE;
+                    goto assoc_resp_ret;
+                }
+
                 IEEEtypes_AssocRsp_t *passoc_rsp =
                     (IEEEtypes_AssocRsp_t *)((t_u8 *)(&resp->params) + sizeof(IEEEtypes_MgmtHdr_t));
 
@@ -5075,10 +5081,32 @@ int wifi_handle_fw_event(struct bus_message *msg)
             }
             break;
         case EVENT_WNM_PS:
-            wlan_update_wnm_ps_status((wnm_ps_result *)&evt->reason_code);
-            (void)wifi_event_completion(WIFI_EVENT_WNM_PS, WIFI_EVENT_REASON_SUCCESS,
-                                        (void *)((uint32_t)evt->reason_code));
-            break;
+        {
+#if !CONFIG_MEM_POOLS
+            t_u16 *wnm_action_p = (t_u16 *)OSA_MemoryAllocate(sizeof(t_u16));
+#else
+            t_u16 *wnm_action_p = (t_u16 *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+#endif
+            if (!wnm_action_p)
+            {
+                wifi_w("No mem. Cannot process wnm ps event");
+                break;
+            }
+
+            *wnm_action_p = evt->reason_code;
+            wlan_update_wnm_ps_status((wnm_ps_result *)wnm_action_p);
+            if (wifi_event_completion(WIFI_EVENT_WNM_PS, WIFI_EVENT_REASON_SUCCESS, (void *)((t_u32)wnm_action_p)) !=
+                WM_SUCCESS)
+            {
+                /* If fail to send message on queue, free allocated memory ! */
+#if !CONFIG_MEM_POOLS
+                OSA_MemoryFree((void *)wnm_action_p);
+#else
+                OSA_MemoryPoolFree(buf_32_MemoryPool, wnm_action_p);
+#endif
+            }
+        }
+        break;
         case EVENT_MIC_ERR_MULTICAST:
             (void)wifi_event_completion(WIFI_EVENT_ERR_MULTICAST, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
@@ -5494,8 +5522,11 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #if CONFIG_WLS_CSI_PROC
             // wifi_get_wls_csi_sem(); // Get wls csi sem to prevent CSI event raw data from being overwritten before
             //  processing.
-            memcpy(wls_data, (t_u8 *)msg->data, WLS_CSI_DATA_LEN);
-            wifi_event_completion(WIFI_EVENT_WLS_CSI, WIFI_EVENT_REASON_SUCCESS, wls_data);
+            if (g_csi_event_for_wls)
+            {
+                memcpy(wls_data, (t_u8 *)msg->data, WLS_CSI_DATA_LEN);
+                wifi_event_completion(WIFI_EVENT_WLS_CSI, WIFI_EVENT_REASON_SUCCESS, wls_data);
+            }
 #endif
 #endif
         }
@@ -5969,7 +6000,7 @@ int wrapper_bssdesc_first_set(int bss_index,
         *ap_pwe = 2;
         for (i = WLAN_SUPPORTED_RATES; i > 0; i--)
         {
-            if (d->data_rates[i-1] == 0xFB)
+            if (d->data_rates[i - 1] == 0xFB)
             {
                 *ap_pwe = 1;
                 break;

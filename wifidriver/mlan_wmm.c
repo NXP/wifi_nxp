@@ -692,8 +692,21 @@ static raListTbl *wlan_wmm_get_queue_raptr_enh(pmlan_private priv, t_u8 ac, t_u8
     if (ra_list != MNULL)
         return ra_list;
 
+#if CONFIG_WPA_SUPP
+    if ((GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP) &&
+         (0 != memcmp(ra_addr, bcast_addr, sizeof(bcast_addr))))
+    {
+        if (MNULL == wlan_get_station_entry(priv, ra_addr))
+        {
+            PRINTM(MERROR, "Drop packets to unknow station " MACSTR "\n",  MAC2STR(ra_addr));
+            LEAVE();
+            return MNULL;
+        }
+    }
+#else
     if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP && __memcmp(priv->adapter, ra_addr, bcast_addr, MLAN_MAC_ADDR_LENGTH))
         return MNULL;
+#endif
 
     /* wlan_ralist_add_enh will hold wmm lock, so need to unlock first */
     priv->adapter->callbacks.moal_semaphore_put(priv->adapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[ac].ra_list.plock);

@@ -452,7 +452,7 @@ static void process_data_packet(const t_u8 *rcvdata,
     {
 #if (CONFIG_TX_RX_ZERO_COPY) || (FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
         /* Skip interface header */
-        pbuf_header(p, -(s16_t)(sizeof(mlan_buffer) + INTF_HEADER_LEN));
+        pbuf_header(p, -(s16_t)(INTF_HEADER_LEN));
 #endif
         /* Bypass the management frame about Add Block Ack Request or Add Block Ack Response*/
         if (wlan_bypass_802dot11_mgmt_pkt(p->payload) == WM_SUCCESS)

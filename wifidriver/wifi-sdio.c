@@ -104,6 +104,14 @@ static mlan_status wifi_send_fw_data(t_u8 *data, t_u32 txlen)
     int ret_cb;
 #endif
 
+#if CONFIG_WIFI_IND_RESET
+    /* IR is in progress so any data sent during progress should be ignored */
+    if (wifi_ind_reset_in_progress() == true)
+    {
+        return WM_SUCCESS;
+    }
+#endif
+
     if (data == NULL || txlen == 0)
         return MLAN_STATUS_FAILURE;
 
@@ -634,6 +642,15 @@ static t_u8 *wlan_read_rcv_packet(t_u32 port, t_u32 rxlen, t_u32 rx_blocks, t_u3
     t_u32 blksize = MLAN_SDIO_BLOCK_SIZE;
     uint32_t resp;
     int ret;
+
+#if CONFIG_WIFI_IND_RESET
+    /* IR is in progress so any data received during progress should be ignored */
+    if (wifi_ind_reset_in_progress() == true)
+    {
+        return WM_SUCCESS;
+    }
+#endif
+
 #if CONFIG_SDIO_MULTI_PORT_RX_AGGR
     int i = 0;
 
@@ -1541,6 +1558,14 @@ static mlan_status wifi_tx_data(t_u8 start_port, t_u8 ports, t_u8 pkt_cnt, t_u32
     t_u32 port_count = 0;
 #endif
 
+#if CONFIG_WIFI_IND_RESET
+    /* IR is in progress so any data sent during progress should be ignored */
+    if (wifi_ind_reset_in_progress() == true)
+    {
+        return WM_SUCCESS;
+    }
+#endif
+
     calculate_sdio_write_params(txlen, &tx_blocks, &buflen);
 
     if (pkt_cnt == 1)
@@ -1656,6 +1681,14 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
 mlan_status wlan_flush_wmm_pkt(t_u8 pkt_count)
 {
     int ret;
+
+#if CONFIG_WIFI_IND_RESET
+    /* IR is in progress so any data sent during progress should be ignored */
+    if (wifi_ind_reset_in_progress() == true)
+    {
+        return WM_SUCCESS;
+    }
+#endif
 
     if (pkt_count == 0)
         return MLAN_STATUS_SUCCESS;
@@ -1907,8 +1940,8 @@ t_void wlan_interrupt(mlan_adapter *pmadapter)
         if (mlan_adap->wait_txbuf == true)
         {
             OSA_SemaphorePost((osa_semaphore_handle_t)txbuf_sem);
-            send_wifi_driver_tx_data_event(0);
         }
+        send_wifi_driver_tx_data_event(0);
     }
 #endif
 

@@ -10,6 +10,7 @@
     <definition extID="middleware.lwip.MIMXRT1189"/>
     <definition extID="middleware.lwip.apps.lwiperf.MIMXRT1189"/>
     <definition extID="utility.debug_console.MIMXRT1189"/>
+    <definition extID="utility.debug_console_lite.MIMXRT1189"/>
     <definition extID="middleware.sdmmc.sdio.MIMXRT1189"/>
     <definition extID="middleware.sdmmc.host.usdhc.MIMXRT1189"/>
     <definition extID="middleware.sdmmc.host.usdhc.freertos.MIMXRT1189"/>
@@ -346,7 +347,20 @@
     <component id="middleware.wifi.wifidriver.MIMXRT1189" name="nxp_wifi_driver" brief="NXP Wi-Fi driver" version="1.3.46" full_name="NXP Wi-Fi driver" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
       <dependencies>
         <all>
-          <component_dependency value="utility.debug_console.MIMXRT1189"/>
+          <any_of>
+            <all>
+              <not>
+                <component_dependency value="utility.debug_console_lite.MIMXRT1189"/>
+              </not>
+              <component_dependency value="utility.debug_console.MIMXRT1189"/>
+            </all>
+            <all>
+              <not>
+                <component_dependency value="utility.debug_console.MIMXRT1189"/>
+              </not>
+              <component_dependency value="utility.debug_console_lite.MIMXRT1189"/>
+            </all>
+          </any_of>
           <component_dependency value="middleware.wifi.template.MIMXRT1189"/>
           <component_dependency value="middleware.wifi.osa.MIMXRT1189"/>
           <component_dependency value="middleware.wifi.net.MIMXRT1189"/>
@@ -469,7 +483,20 @@
     <component id="middleware.wifi.MIMXRT1189" name="wifi_nxp" brief="NXP Wi-Fi functionality enables customers to quickly develop applications of interest to add connectivity to different sensors and appliances" version="1.3.46" full_name="NXP Wi-Fi" category="Wireless/NXP Wi-Fi" user_visible="true" type="middleware" package_base_path=".././" project_base_path="wifi">
       <dependencies>
         <all>
-          <component_dependency value="utility.debug_console.MIMXRT1189"/>
+          <any_of>
+            <all>
+              <not>
+                <component_dependency value="utility.debug_console_lite.MIMXRT1189"/>
+              </not>
+              <component_dependency value="utility.debug_console.MIMXRT1189"/>
+            </all>
+            <all>
+              <not>
+                <component_dependency value="utility.debug_console.MIMXRT1189"/>
+              </not>
+              <component_dependency value="utility.debug_console_lite.MIMXRT1189"/>
+            </all>
+          </any_of>
           <component_dependency value="middleware.wifi.template.MIMXRT1189"/>
           <component_dependency value="middleware.wifi.wifidriver.MIMXRT1189"/>
           <device_dependency value="MIMXRT1189xxxxx"/>

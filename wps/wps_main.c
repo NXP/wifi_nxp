@@ -72,10 +72,6 @@ short assoc_ie_index  = 0x0002;
 short ap_assocresp_ie_index;
 
 
-static OSA_QueuePoolDefine(wps_cmd_queue_data, sizeof(struct prov_command **) * MAX_COMMANDS);
-
-static OSA_QueuePoolDefine(wps_data_queue_data, sizeof(struct wps_msg) * MAX_MSGS);
-
 struct wps_thread_t wps;
 struct wps_config *local_wcc = NULL;
 

@@ -78,7 +78,7 @@ SDK_ALIGN(uint8_t outbuf_arr[MAX_WMM_BUF_NUM][OUTBUF_WMM_LEN], BOARD_DATA_BUFFER
 #define RXPD_CHAN_MASK 0x3FE0
 
 /* Global variable wm_rand_seed */
-uint32_t wm_rand_seed = -1;
+uint32_t wm_rand_seed = 0xFFFFFFFFU;
 
 #if CONFIG_WMM
 OSA_SEMAPHORE_HANDLE_DEFINE(txbuf_sem);
@@ -1121,10 +1121,6 @@ void wlan_process_hang(uint8_t fw_reload)
     mlan_adap->in_reset = false;
     wifi_tx_block_cnt   = 0;
     wifi_rx_block_cnt   = 0;
-
-#if CONFIG_WIFI_IND_RESET
-    wifi_ind_reset_stop();
-#endif
 
     (void)wifi_event_completion(WIFI_EVENT_FW_RESET, WIFI_EVENT_REASON_SUCCESS, NULL);
 
@@ -2268,6 +2264,9 @@ static int wifi_reinit(uint8_t fw_reload)
     int ret = WM_SUCCESS;
 
     ret = (int)sd_wifi_reinit(WLAN_TYPE_NORMAL, wm_wifi.fw_start_addr, wm_wifi.size, fw_reload);
+#if CONFIG_WIFI_IND_RESET
+    wifi_ind_reset_stop();
+#endif
     if (ret != WM_SUCCESS)
     {
         if (ret != MLAN_STATUS_FW_DNLD_SKIP)
@@ -3929,6 +3928,7 @@ static void wifi_drv_tx_task(osa_task_param_t arg)
 
 #define RATEID_HE_MCS9_1SS_BW80 94
 #define RATEID_HE_MCS8_1SS_BW40 81
+#define RATEID_HE_MCS4_1SS_BW40 77
 #define RATEID_HE_MCS7_1SS_BW20 68
 
 static int wlan_is_tcp_ack(mlan_private *priv, const t_u8 *pmbuf)
@@ -4118,7 +4118,7 @@ int wifi_low_level_output(const t_u8 interface,
             {
                 if (pmpriv->curr_bss_params.bss_descriptor.phe_cap != NULL)
                 {
-                    tx_control = (RATEID_HE_MCS8_1SS_BW40 << 16) | TXPD_TXRATE_ENABLE;
+                    tx_control = (RATEID_HE_MCS4_1SS_BW40 << 16) | TXPD_TXRATE_ENABLE;
                 }
                 else if (pmpriv->curr_bss_params.bss_descriptor.pvht_cap != NULL)
                 {

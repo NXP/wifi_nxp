@@ -2867,7 +2867,7 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
 
 static void wlcm_process_wnmps_event(struct wifi_message *msg)
 {
-    uint16_t action                      = (uint16_t)(uint32_t)msg->data;
+    uint16_t action                      = (uint16_t)(*((uint32_t *)msg->data));
     wnm_sleep_result_t *wnm_sleep_result = (wnm_sleep_result_t *)&action;
 
 #if !CONFIG_MEM_POOLS
@@ -8567,7 +8567,7 @@ int wlan_add_network(struct wlan_network *network)
         }
         else if (network->security.wpa3_sb == 1U)
         {
-            network->security.group_cipher = WLAN_CIPHER_CCMP_256;
+            network->security.group_cipher = WLAN_CIPHER_GCMP;
         }
         else
 #endif
@@ -8588,7 +8588,7 @@ int wlan_add_network(struct wlan_network *network)
         }
         else if (network->security.wpa3_sb == 1U)
         {
-            if ((network->security.group_cipher != WLAN_CIPHER_GCMP_256) && (network->security.group_cipher != WLAN_CIPHER_CCMP_256) && (network->security.group_cipher != WLAN_CIPHER_GCMP) && (network->security.group_cipher != WLAN_CIPHER_CCMP))
+            if (network->security.group_cipher != WLAN_CIPHER_GCMP)
             {
                 wlcm_e("Group cipher configuration not allowed");
                 goto INVAL;
@@ -8620,7 +8620,7 @@ int wlan_add_network(struct wlan_network *network)
         }
         else if (network->security.wpa3_sb == 1U)
         {
-            network->security.pairwise_cipher = WLAN_CIPHER_CCMP_256;
+            network->security.pairwise_cipher = WLAN_CIPHER_GCMP;
         }
         else
 #endif
@@ -8641,7 +8641,7 @@ int wlan_add_network(struct wlan_network *network)
         }
         else if (network->security.wpa3_sb == 1U)
         {
-            if ((network->security.pairwise_cipher != WLAN_CIPHER_GCMP_256) && (network->security.pairwise_cipher != WLAN_CIPHER_CCMP_256) && (network->security.pairwise_cipher != WLAN_CIPHER_GCMP) && (network->security.pairwise_cipher != WLAN_CIPHER_CCMP))
+            if (network->security.pairwise_cipher != WLAN_CIPHER_GCMP)
             {
                 wlcm_e("Pairwise cipher configuration not allowed");
                 goto INVAL;
@@ -8673,7 +8673,7 @@ int wlan_add_network(struct wlan_network *network)
         }
         else if (network->security.wpa3_sb == 1U)
         {
-            network->security.group_mgmt_cipher = WLAN_CIPHER_BIP_CMAC_256;
+            network->security.group_mgmt_cipher = WLAN_CIPHER_BIP_GMAC_128;
         }
         else
 #endif
@@ -8694,7 +8694,7 @@ int wlan_add_network(struct wlan_network *network)
         }
         else if (network->security.wpa3_sb == 1U)
         {
-            if ((network->security.group_mgmt_cipher != WLAN_CIPHER_BIP_GMAC_256) && (network->security.group_mgmt_cipher != WLAN_CIPHER_BIP_CMAC_256) && (network->security.group_mgmt_cipher != WLAN_CIPHER_BIP_GMAC_128) && (network->security.group_mgmt_cipher != WLAN_CIPHER_AES_128_CMAC))
+            if (network->security.group_mgmt_cipher != WLAN_CIPHER_BIP_GMAC_128)
             {
                 wlcm_e("Group mgmt cipher configuration not allowed");
                 goto INVAL;
