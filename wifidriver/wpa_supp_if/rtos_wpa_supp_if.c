@@ -1193,6 +1193,13 @@ int wifi_nxp_wpa_supp_authenticate(void *if_priv, struct wpa_driver_auth_params 
         goto out;
     }
 
+    if (params->local_state_change)
+    {
+        /* This is just a notify info */
+        ret = 0;
+        goto out;
+    }
+
     auth_alg = get_algo_from_auth_type(params->auth_alg);
 
     if (params->auth_alg == WPA_AUTH_ALG_FT)
