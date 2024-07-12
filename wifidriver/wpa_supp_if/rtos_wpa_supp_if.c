@@ -1564,6 +1564,9 @@ int wifi_nxp_wpa_supp_set_supp_port(void *if_priv, int authorized, char *bssid)
         wifi_user_scan_config_cleanup();
     }
 
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    wlan_subscribe_rssi_low_event();
+#endif
     ret = 0;
 out:
     return ret;
@@ -2383,6 +2386,25 @@ void wifi_nxp_wpa_supp_event_proc_dfs_cac_finished(void *if_priv, nxp_wifi_dfs_c
     {
         wifi_if_ctx_rtos->supp_callbk_fns.dfs_cac_finished(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
     }
+}
+
+void wifi_nxp_wpa_supp_event_signal_change(void *if_priv, t_s16 *curr_rssi)
+{
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    union wpa_event_data event;
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+    if (wifi_if_ctx_rtos == NULL)
+    {
+        wifi_e("%s: wifi_if_ctx_rtos is NULL", __func__);
+        return;
+    }
+    memset(&event, 0, sizeof(event));
+    event.signal_change.above_threshold = 0;
+    event.signal_change.current_signal = abs(*curr_rssi);
+
+    wifi_if_ctx_rtos->supp_callbk_fns.signal_change(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
 }
 
 #if CONFIG_WIFI_SOFTAP_SUPPORT

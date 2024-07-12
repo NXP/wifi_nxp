@@ -3296,7 +3296,7 @@ static void test_wlan_txrx_histogram(int argc, char **argv)
     }
 }
 #endif
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
+
 #if CONFIG_ROAMING
 static void dump_wlan_roaming_usage(void)
 {
@@ -3344,6 +3344,7 @@ static void test_wlan_roaming(int argc, char **argv)
 }
 #endif
 
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if CONFIG_WIFI_MAX_CLIENTS_CNT
 static void test_wlan_set_max_clients_count(int argc, char **argv)
 {
@@ -11841,10 +11842,8 @@ static struct cli_command tests[] = {
 #if CONFIG_WIFI_TX_PER_TRACK
     {"wlan-tx-pert", "<0/1> <STA/UAP> <p> <r> <n>", test_wlan_tx_pert},
 #endif
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #if CONFIG_ROAMING
     {"wlan-roaming", "<0/1> <rssi_threshold>", test_wlan_roaming},
-#endif
 #endif
 #if CONFIG_MEF_CFG
     {"wlan-multi-mef", "<ping/arp/multicast/del> [<action>]", test_wlan_set_multiple_mef_config},

@@ -3379,6 +3379,10 @@ void wlan_set_txrx_histogram(struct wlan_txrx_histogram_info *txrx_histogram, t_
 int wlan_set_roaming(const int enable, const uint8_t rssi_low_threshold);
 
 int wlan_get_roaming_status();
+
+/** Subscribe RSSI LOW event in firmware if roaming is enabled.
+ */
+void wlan_subscribe_rssi_low_event();
 #endif
 
 #if CONFIG_HOST_SLEEP

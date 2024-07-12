@@ -5712,7 +5712,31 @@ int wifi_handle_fw_event(struct bus_message *msg)
             break;
 #endif
         case EVENT_RSSI_LOW:
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+#if !CONFIG_MEM_POOLS
+            t_s16 *curr_rssi = (t_s16 *)OSA_MemoryAllocate(sizeof(t_s16));
+#else
+            t_s16 *curr_rssi = (t_s16 *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+#endif
+            if (curr_rssi == MNULL)
+            {
+                wifi_w("No mem. Failed to alloc memory for EVENT_RSSI_LOW");
+                break;
+            }
+            *curr_rssi = (t_s16)evt->reason_code;
+            if(wifi_event_completion(WIFI_EVENT_RSSI_LOW,
+                                     WIFI_EVENT_REASON_SUCCESS,
+                                     (void *)curr_rssi) != WM_SUCCESS)
+            {
+#if !CONFIG_MEM_POOLS
+                OSA_MemoryFree((void *)curr_rssi);
+#else
+                OSA_MemoryPoolFree(buf_32_MemoryPool, curr_rssi);
+#endif
+            }
+#else
             (void)wifi_event_completion(WIFI_EVENT_RSSI_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
+#endif
             break;
 #if CONFIG_SUBSCRIBE_EVENT_SUPPORT
         case EVENT_RSSI_HIGH:

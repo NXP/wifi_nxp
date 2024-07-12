@@ -139,7 +139,6 @@ static int wifi_nxp_wpa_is_supp_scan_in_progress(void *if_priv)
 
     return wifi_if_ctx_rtos->scan_in_progress;
 }
-
 static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
     .mac_changed_callbk_fn              = wifi_nxp_wpa_supp_event_proc_mac_changed,
     .chan_list_changed_callbk_fn        = wifi_nxp_wpa_supp_event_proc_chan_list_changed,
@@ -163,6 +162,7 @@ static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
     .mgmt_rx_callbk_fn                  = wifi_nxp_wpa_supp_event_proc_mgmt_rx,
     .get_wiphy_callbk_fn                = wifi_nxp_wpa_supp_event_get_wiphy,
     .is_supp_scan_in_progress_callbk_fn = wifi_nxp_wpa_is_supp_scan_in_progress,
+    .signal_change_callbk_fn            = wifi_nxp_wpa_supp_event_signal_change,
 };
 
 int wifi_supp_init(void)
