@@ -1307,7 +1307,7 @@ int wifi_set_11ax_cfg(wifi_11ax_config_t *ax_config);
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wifi_set_btwt_cfg(const wifi_btwt_cfg_t *btwt_cfg);
+int wifi_set_btwt_cfg(const wifi_btwt_config_t *btwt_cfg);
 
 /** Get btwt config params
  *
@@ -1315,7 +1315,7 @@ int wifi_set_btwt_cfg(const wifi_btwt_cfg_t *btwt_cfg);
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wifi_get_btwt_cfg(wifi_btwt_cfg_t *btwt_cfg);
+int wifi_get_btwt_cfg(wifi_btwt_config_t *btwt_cfg);
 
 /** Set twt setup config params
  *
