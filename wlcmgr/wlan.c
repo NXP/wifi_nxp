@@ -66,17 +66,13 @@
 #endif
 #endif
 
-#if (CONFIG_WPA2_ENTP) || ((CONFIG_WIFI_NM_WPA_SUPPLICANT_CRYPTO_ENTERPRISE) && !(CONFIG_WIFI_USB_FILE_ACCESS))
+#if (CONFIG_WPA2_ENTP) || ((CONFIG_WIFI_NM_WPA_SUPPLICANT_CRYPTO_ENTERPRISE || CONFIG_WIFI_NM_HOSTAPD_CRYPTO_ENTERPRISE) && !(CONFIG_WIFI_USB_FILE_ACCESS))
 #include "ca-cert.h"
 #include "client-cert.h"
 #include "client-key.h"
 #include "dh-param.h"
-#if CONFIG_WPA_SUPP_AP
-#if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
 #include "server-cert.h"
 #include "server-key.h"
-#endif
-#endif
 #endif
 #include "mlan_decl.h"
 
@@ -5561,6 +5557,14 @@ void wlcm_add_enterprise_file(void)
     en_file.client_cert_len = client_der_len;
     en_file.client_key = (uint8_t *)client_key_der;
     en_file.client_key_len = client_key_der_len;
+
+    en_file.server_cert = (uint8_t *)server_der;
+    en_file.server_cert_len = server_der_len;
+    en_file.server_key = (uint8_t *)server_key_der;
+    en_file.server_key_len = server_key_der_len;
+    en_file.dh_param = (uint8_t *)dh_der;
+    en_file.dh_param_len = dh_der_len;
+
     supplicant_add_enterprise_file(&en_file);
 }
 #endif
