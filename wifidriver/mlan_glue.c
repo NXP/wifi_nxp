@@ -7469,7 +7469,7 @@ int wifi_set_11ax_cfg(wifi_11ax_config_t *ax_config)
 }
 
 #if CONFIG_11AX_TWT
-int wifi_set_btwt_cfg(const wifi_btwt_cfg_t *btwt_cfg)
+int wifi_set_btwt_cfg(const wifi_btwt_config_t *btwt_cfg)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -7504,7 +7504,7 @@ int wifi_set_btwt_cfg(const wifi_btwt_cfg_t *btwt_cfg)
     return WM_SUCCESS;
 }
 
-int wifi_get_btwt_cfg(wifi_btwt_cfg_t *btwt_cfg)
+int wifi_get_btwt_cfg(wifi_btwt_config_t *btwt_cfg)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();

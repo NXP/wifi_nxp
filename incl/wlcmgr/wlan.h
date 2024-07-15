@@ -1496,9 +1496,9 @@ typedef wifi_twt_setup_config_t wlan_twt_setup_config_t;
  */
 typedef wifi_twt_teardown_config_t wlan_twt_teardown_config_t;
 /** Configuration for Broadcast TWT Setup
- * \ref wifi_btwt_cfg_t
+ * \ref wifi_btwt_config_t
  */
-typedef wifi_btwt_cfg_t wlan_btwt_cfg_t;
+typedef wifi_btwt_config_t wlan_btwt_cfg_t;
 /** Configuration for TWT Report
  * \ref wifi_twt_report_t
  */

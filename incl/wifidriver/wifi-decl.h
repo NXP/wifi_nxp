@@ -1202,7 +1202,7 @@ typedef PACK_START struct
     t_u8 bcast_twtli;
     t_u8 count;
     btwt_set_t btwt_sets[BTWT_AGREEMENT_MAX];
-} PACK_END wifi_btwt_cfg_t;
+} PACK_END wifi_btwt_config_t;
 
 #define WLAN_BTWT_REPORT_LEN     9
 #define WLAN_BTWT_REPORT_MAX_NUM 6
