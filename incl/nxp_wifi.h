@@ -31,7 +31,7 @@ extern "C" {
 #define CONFIG_UAP_AMPDU_TX       1
 #define CONFIG_UAP_AMPDU_RX       1
 #define CONFIG_WIFIDRIVER_PS_LOCK 1
-#define CONFIG_WNM_PS             1
+#define CONFIG_WNM_PS             0
 #define CONFIG_SCAN_CHANNEL_GAP   1
 #define CONFIG_COMBO_SCAN         1
 #define CONFIG_BG_SCAN            1
