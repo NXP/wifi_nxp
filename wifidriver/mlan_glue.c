@@ -9431,7 +9431,7 @@ void wifi_ftm_process_event(void *p_data)
     wls_event_t *ftm_event = (wls_event_t *)p_data;
     double distance        = 0.0;
 
-    wevt_d("[INFO] EventID: 0x%x SubeventID:%d \r\n", ftm_event->event_id, ftm_event->sub_event_id);
+    PRINTF("[INFO] EventID: 0x%x SubeventID:%d \r\n", ftm_event->event_id, ftm_event->sub_event_id);
 
     switch (ftm_event->sub_event_id)
     {
@@ -9452,6 +9452,10 @@ void wifi_ftm_process_event(void *p_data)
             break;
         case WLS_SUB_EVENT_ANQP_RESP_RECEIVED:
             wifi_d("WLS_SUB_EVENT_ANQP_RESP_RECEIVED\n");
+            break;
+        case WLS_SUB_EVENT_FTM_FAIL:
+            wifi_d("WLS_SUB_EVENT_ANQP_RESP_RECEIVED\n");
+            PRINTF("\nFTM Session Failed!\r\n");
             break;
         default:
             wifi_d("[ERROR] Unknown sub event\n");

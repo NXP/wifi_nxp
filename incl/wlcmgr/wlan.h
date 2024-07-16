@@ -6348,6 +6348,8 @@ int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1);
 #endif
 
 #if (CONFIG_11MC) || (CONFIG_11AZ)
+int wlan_unassoc_ftm_cfg(const t_u16 action, const t_u16 config);
+
 /**
  * Start or stop FTM (Wi-Fi fine time measurement) based on the command from CLI.
  * \param[in] action: 1: start FTM  2: stop FTM.

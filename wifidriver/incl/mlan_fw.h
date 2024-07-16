@@ -1493,8 +1493,9 @@ typedef enum _ENH_PS_MODES
 
 #if (CONFIG_11MC) || (CONFIG_11AZ)
 /** Host Command ID : FTM session config and control */
-#define HostCmd_CMD_FTM_SESSION_CFG  0x024d
-#define HostCmd_CMD_FTM_SESSION_CTRL 0x024e
+#define HostCmd_CMD_FTM_SESSION_CFG         0x024d
+#define HostCmd_CMD_FTM_SESSION_CTRL        0x024e
+#define HostCmd_CMD_DOT11MC_UNASSOC_FTM_CFG 0x0275
 #endif
 
 /* Define action or option for HostCmd_CMD_802_11_SCAN */
@@ -1773,6 +1774,8 @@ typedef enum _ENH_PS_MODES
 #define WLS_SUB_EVENT_RADIO_RECEIVED     1
 #define WLS_SUB_EVENT_RADIO_RPT_RECEIVED 2
 #define WLS_SUB_EVENT_ANQP_RESP_RECEIVED 3
+#define WLS_SUB_EVENT_RTT_RESULTS        4
+#define WLS_SUB_EVENT_FTM_FAIL           5
 
 #endif
 
@@ -7564,6 +7567,15 @@ typedef MLAN_PACK_START struct _HostCmd_FTM_SESSION_CFG
     } tlv;
 } MLAN_PACK_END HostCmd_FTM_SESSION_CFG;
 
+/** Type definition for hostcmd_unassoc_ftm_cfg */
+typedef MLAN_PACK_START struct _Hostcmd_DOT11MC_UNASSOC_FTM_CFG
+{
+    /** 0: Get, 1: Set */
+    t_u16 action;
+    /** 0: Disable, 1: Enable */
+    t_u16 config;
+} MLAN_PACK_END HostCmd_DOT11MC_UNASSOC_FTM_CFG;
+
 /** Type definition for hostcmd_ftm_session_ctrl */
 typedef MLAN_PACK_START struct _Hostcmd_FTM_SESSION_CTRL
 {
@@ -8181,6 +8193,8 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_HOST_CLOCK_CFG host_clock_cfg;
 #endif
 #if (CONFIG_11MC) || (CONFIG_11AZ)
+        /** hostcmd for unassociated FTM configuration user command */
+        HostCmd_DOT11MC_UNASSOC_FTM_CFG unassoc_ftm_cfg;
         /** hostcmd for session_ctrl user command */
         HostCmd_FTM_SESSION_CTRL ftm_session_ctrl;
         /** hostcmd for session_cfg user command */

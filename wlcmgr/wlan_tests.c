@@ -1104,6 +1104,56 @@ static void test_wlan_set_frag(int argc, char **argv)
 #endif
 
 #if (CONFIG_11MC) || (CONFIG_11AZ)
+
+static void dump_wlan_unassoc_ftm_cfg_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-unassoc-ftm-cfg <action> config <1/0>\r\n");
+    (void)PRINTF("action: 1 -> Set; 0 -> Get \r\n");
+    (void)PRINTF("config: 1 -> Enable; 0 -> Disable \r\n");
+}
+
+static void test_wlan_unassoc_ftm_cfg(int argc, char **argv)
+{
+    unsigned int action, config;
+    int arg = 2;
+
+    if (argc < 2 || argc > 4)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_unassoc_ftm_cfg_usage();
+        return;
+    }
+
+    action = a2hex_or_atoi(argv[1]);
+    if (action < 0 && action > 1)
+    {
+        dump_wlan_unassoc_ftm_cfg_usage();
+        return;
+    }
+
+    while (arg < argc)
+    {
+        if (string_equal("config", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &config, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid config argument\r\n");
+                dump_wlan_unassoc_ftm_cfg_usage();
+                return;
+            }
+        }
+        else
+        {
+            (void)PRINTF("Error: invalid [%s] argument\r\n", argv[arg]);
+            dump_wlan_unassoc_ftm_cfg_usage();
+            return;
+        }
+        arg += 2;
+    }
+    wlan_unassoc_ftm_cfg(action, config);
+}
+
 static void dump_wlan_ftm_ctrl_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -1140,7 +1190,7 @@ static void test_wlan_ftm_ctrl(int argc, char **argv)
     }
 
     action = a2hex_or_atoi(argv[1]);
-    if (action != 1 && action != 2)
+    if (action < 1 && action > 6)
     {
         dump_wlan_ftm_ctrl_usage();
         return;
@@ -3944,13 +3994,13 @@ static void test_wlan_reset(int argc, char **argv)
 #if CONFIG_CSI
     if (option == 2)
     {
-        (void)memset((void*)&g_csi_params, 0, sizeof(g_csi_params));
+        (void)memset((void *)&g_csi_params, 0, sizeof(g_csi_params));
     }
 #endif
 #if CONFIG_NET_MONITOR
     if (option == 2)
     {
-        (void)memset((void*)&g_net_monitor_param, 0, sizeof(g_net_monitor_param));
+        (void)memset((void *)&g_net_monitor_param, 0, sizeof(g_net_monitor_param));
     }
 #endif
 
@@ -8037,15 +8087,17 @@ static void dump_wlan_auto_null_tx_usage(void)
     (void)PRINTF("        <interval> bit15:14 unit: 00-s 01-us 10-ms 11-one_shot  bit13-0: interval\r\n");
     (void)PRINTF("                   Please set interval Hexadecimal value. For example: 0x8064\r\n");
     (void)PRINTF("        <dst_mac> Destination MAC address\r\n");
-    (void)PRINTF("                  Please specify dst_mac if bss_type is uAP, and dst_mac should be of STA which connected to uAP\r\n");
+    (void)PRINTF(
+        "                  Please specify dst_mac if bss_type is uAP, and dst_mac should be of STA which connected to "
+        "uAP\r\n");
     (void)PRINTF("                  If bss_type is not uAP, no need to input dst_mac\r\n");
     (void)PRINTF("    wlan-auto-null-tx sta stop\r\n");
 }
 
 static void test_wlan_auto_null_tx(int argc, char **argv)
 {
-    int ret = -WM_FAIL;
-    int arg = 2;
+    int ret                = -WM_FAIL;
+    int arg                = 2;
     mlan_bss_type bss_type = (mlan_bss_type)0;
 
     wlan_auto_null_tx_t auto_null_tx;
@@ -8127,7 +8179,7 @@ static void test_wlan_auto_null_tx(int argc, char **argv)
                 if (string_equal("dst_mac", argv[arg]))
                 {
                     unsigned int mac_matched = 0;
-                    ret = get_mac(argv[arg + 1], (char *)&auto_null_tx.dst_mac, ':');
+                    ret                      = get_mac(argv[arg + 1], (char *)&auto_null_tx.dst_mac, ':');
                     if (ret != 0)
                     {
                         dump_wlan_auto_null_tx_usage();
@@ -8864,7 +8916,7 @@ static void wlan_start_detect_ant(void)
     else
     {
         ant_mode = 1;
-        ret = wlan_set_antcfg(ant_mode, evaluate_time, evaluate_mode);
+        ret      = wlan_set_antcfg(ant_mode, evaluate_time, evaluate_mode);
         (void)PRINTF("\nFailed to detect antenna\r\n");
     }
 }
@@ -9074,6 +9126,7 @@ static struct cli_command tests[] = {
     {"wlan-frag", "<sta/uap> <fragment threshold>", test_wlan_set_frag},
 #endif
 #if (CONFIG_11MC) || (CONFIG_11AZ)
+    {"wlan-unassoc-ftm-cfg", "<set_get> <on_off>", test_wlan_unassoc_ftm_cfg},
     {"wlan-ftm-ctrl", "<action> <loop_cnt> <peer_mac> <channel>", test_wlan_ftm_ctrl},
     {"wlan-11mc-nego-cfg", "<burst_inst> <burst_dur> <min_delta> <asap> <ftm_per_burst> <bw> <burst_period>",
      test_wlan_11mc_nego_cfg},

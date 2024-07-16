@@ -6931,15 +6931,32 @@ int wlan_get_set_turbo_mode(t_u16 action, t_u8 *mode, mlan_bss_type bss_type)
 #endif
 
 #if (CONFIG_11MC) || (CONFIG_11AZ)
+int wifi_unassoc_ftm_cfg(const t_u16 action, const t_u16 config)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->command                       = wlan_cpu_to_le16(HostCmd_CMD_DOT11MC_UNASSOC_FTM_CFG);
+    cmd->size                          = S_DS_GEN + sizeof(HostCmd_DOT11MC_UNASSOC_FTM_CFG);
+    cmd->size                          = wlan_cpu_to_le16(cmd->size);
+    cmd->params.unassoc_ftm_cfg.action = wlan_cpu_to_le16(action);
+    cmd->params.unassoc_ftm_cfg.config = wlan_cpu_to_le16(config);
+
+    return wifi_wait_for_cmdresp(NULL);
+}
+
 int wifi_ftm_start_stop(const t_u16 action, const t_u8 loop_cnt, const t_u8 *mac, const t_u8 channel)
 {
-    if (action == FTM_ACTION_START)
+    if (action != FTM_ACTION_STOP)
     {
         ftm_param.channel = channel;
         (void)memcpy(ftm_param.peer_mac, mac, MLAN_MAC_ADDR_LENGTH);
         ftm_param.loop_cnt = loop_cnt;
         ftm_param.status   = (ftm_param.loop_cnt == 0) ? 1 : 0;
-        return wifi_ftm_start(FTM_ACTION_START, mac, channel);
+#if CONFIG_WLS_CSI_PROC
+        g_csi_event_for_wls = 1;
+#endif
+        return wifi_ftm_start(action, mac, channel);
     }
     else
     {
@@ -6951,24 +6968,31 @@ int wifi_ftm_start_stop(const t_u16 action, const t_u8 loop_cnt, const t_u8 *mac
 
 int wifi_ftm_start(const t_u16 action, const t_u8 *mac, const t_u8 channel)
 {
-    if (!is_sta_connected())
+    /*if (is_sta_connected() || is_sta_ipv4_connected()
+#if CONFIG_IPV6
+        || is_sta_ipv6_connected()
+#endif
+    )*/
     {
-        PRINTF("Cannot Start FTM, STA not associated !\r\n");
-        return -WM_FAIL;
+        wifi_get_command_lock();
+        HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+        cmd->command                             = wlan_cpu_to_le16(HostCmd_CMD_FTM_SESSION_CTRL);
+        cmd->size                                = S_DS_GEN + sizeof(HostCmd_FTM_SESSION_CTRL);
+        cmd->size                                = wlan_cpu_to_le16(cmd->size);
+        cmd->params.ftm_session_ctrl.action      = wlan_cpu_to_le16(action);
+        cmd->params.ftm_session_ctrl.for_ranging = wlan_cpu_to_le16(FOR_RANGING);
+        (void)memcpy(cmd->params.ftm_session_ctrl.peer_mac, mac, MLAN_MAC_ADDR_LENGTH);
+        cmd->params.ftm_session_ctrl.chan     = wlan_cpu_to_le16(channel);
+        cmd->params.ftm_session_ctrl.chanBand = (cmd->params.ftm_session_ctrl.chan < 32) ? 0 : 1;
+
+        return wifi_wait_for_cmdresp(NULL);
     }
-    wifi_get_command_lock();
-    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-
-    cmd->command                             = wlan_cpu_to_le16(HostCmd_CMD_FTM_SESSION_CTRL);
-    cmd->size                                = S_DS_GEN + sizeof(HostCmd_FTM_SESSION_CTRL);
-    cmd->size                                = wlan_cpu_to_le16(cmd->size);
-    cmd->params.ftm_session_ctrl.action      = wlan_cpu_to_le16(action);
-    cmd->params.ftm_session_ctrl.for_ranging = wlan_cpu_to_le16(FOR_RANGING);
-    (void)memcpy(cmd->params.ftm_session_ctrl.peer_mac, mac, MLAN_MAC_ADDR_LENGTH);
-    cmd->params.ftm_session_ctrl.chan = wlan_cpu_to_le16(channel);
-
-    dump_hex(cmd, cmd->size);
-    return wifi_wait_for_cmdresp(NULL);
+    /*    else
+        {
+            PRINTF("Cannot Start FTM, STA not associated !\r\n");
+            return -WM_FAIL;
+        }*/
 }
 
 int wifi_ftm_stop(const t_u16 action, const t_u8 *mac, const t_u8 channel)

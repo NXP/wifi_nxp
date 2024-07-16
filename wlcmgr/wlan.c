@@ -13294,9 +13294,13 @@ int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
 #endif
 
 #if (CONFIG_11MC) || (CONFIG_11AZ)
+int wlan_unassoc_ftm_cfg(const t_u16 action, const t_u16 config)
+{
+	return wifi_unassoc_ftm_cfg(action, config);
+}
+
 int wlan_ftm_start_stop(const t_u16 action, const t_u8 loop_cnt, const t_u8 *mac, const t_u8 channel)
 {
-
 	return wifi_ftm_start_stop(action, loop_cnt, mac, channel);
 }
 
