@@ -749,6 +749,20 @@ void wrapper_wlan_update_uap_rxrate_info(RxPD *rxpd)
 #endif
 }
 
+static t_u8 wlan_is_ampdu_allowed(mlan_private *priv, TxBAStreamTbl *ptx_tbl, int tid)
+{
+    if (priv->port_ctrl_mode == MTRUE)
+    {
+        if (priv->port_open == MFALSE)
+            return MFALSE;
+    }
+
+    if (!ptx_tbl->ampdu_stat[tid] && ptx_tbl->ampdu_supported[tid] && (ptx_tbl->txpkt_cnt >= ptx_tbl->txba_thresh))
+        return MTRUE;
+    else
+        return MFALSE;
+}
+
 int wrapper_wlan_uap_ampdu_enable(uint8_t *addr
 #if CONFIG_WMM
                                   ,
@@ -767,13 +781,13 @@ int wrapper_wlan_uap_ampdu_enable(uint8_t *addr
     wlan_11n_update_txbastream_tbl_tx_cnt(pmpriv_uap, addr);
     if ((ptx_tbl = wlan_11n_get_txbastream_tbl(pmpriv_uap, addr)))
     {
-        if (
+        if (wlan_is_ampdu_allowed(pmpriv_uap, ptx_tbl,
 #if CONFIG_WMM
-            !ptx_tbl->ampdu_stat[tid] && ptx_tbl->ampdu_supported[tid]
+                                  tid
 #else
-            !ptx_tbl->ampdu_stat[0] && ptx_tbl->ampdu_supported[0]
+                                  0
 #endif
-            && ptx_tbl->txpkt_cnt >= ptx_tbl->txba_thresh)
+                                 ))
         {
             ptx_tbl->ba_status = BA_STREAM_SETUP_INPROGRESS;
             wlan_release_ralist_lock(pmpriv_uap);
@@ -912,17 +926,6 @@ static mlan_status do_wlan_ret_11n_delba(mlan_private *priv, HostCmd_DS_COMMAND 
     return MLAN_STATUS_SUCCESS;
 }
 
-#if !CONFIG_MLAN_WMSDK
-static t_u8 wlan_is_ampdu_allowed(mlan_private *priv, int tid)
-{
-    if ((priv->aggr_prio_tbl[tid].ampdu_ap != BA_STREAM_NOT_ALLOWED) &&
-        (priv->aggr_prio_tbl[tid].txpkt_cnt >= priv->aggr_prio_tbl[tid].txba_thresh))
-        return MTRUE;
-    else
-        return MFALSE;
-}
-#endif
-
 // Only Enable AMPDU for station interface
 int wrapper_wlan_sta_ampdu_enable(
 #if CONFIG_WMM
@@ -967,11 +970,13 @@ int wrapper_wlan_sta_ampdu_enable(
 
     wlan_11n_update_txbastream_tbl_tx_cnt(pmpriv, cur_mac);
 
+    if (wlan_is_ampdu_allowed(pmpriv, ptx_tbl,
 #if CONFIG_WMM
-    if (!ptx_tbl->ampdu_stat[tid] && ptx_tbl->ampdu_supported[tid] && (ptx_tbl->txpkt_cnt >= ptx_tbl->txba_thresh))
+                              tid
 #else
-    if (!ptx_tbl->ampdu_stat[0] && ptx_tbl->ampdu_supported[0] && (ptx_tbl->txpkt_cnt >= ptx_tbl->txba_thresh))
+                              0
 #endif
+                              ))
     {
         ptx_tbl->ba_status = BA_STREAM_SETUP_INPROGRESS;
         wlan_release_ralist_lock(pmpriv);
@@ -5522,6 +5527,12 @@ int wifi_handle_fw_event(struct bus_message *msg)
             wlan_handle_disconnect_event(pmpriv);
             break;
         case EVENT_PORT_RELEASE:
+            /* Open the port */
+            if (pmpriv->port_ctrl_mode == MTRUE)
+            {
+                PRINTM(MINFO, "PORT_REL: port_status = OPEN\n");
+                pmpriv->port_open = MTRUE;
+            }
 #if !CONFIG_WPA_SUPP
             (void)wifi_event_completion(WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
 #endif

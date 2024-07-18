@@ -1625,12 +1625,6 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 
     pmpriv->curr_bss_params.band = (t_u8)pbss_desc->bss_band;
 
-    if (!pmpriv->adapter->country_ie_ignore)
-    {
-        wifi_event_completion(WIFI_EVENT_SYNC_REGION_CODE, WIFI_EVENT_REASON_SUCCESS,
-                              pbss_desc->country_info.country_code);
-    }
-
 #if !CONFIG_MLAN_WMSDK
     /*
      * Adjust the timestamps in the scan table to be relative to the newly

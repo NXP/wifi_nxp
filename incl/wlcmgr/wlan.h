@@ -400,6 +400,9 @@ enum wlan_event_reason
     /** The WLAN Connection Manager has successfully authenticated to a network and
      *  is now in the \ref WLAN_ASSOCIATED state. */
     WLAN_REASON_AUTH_SUCCESS,
+    /** The WLAN Connection Manager has successfully associated to a network and
+     *  is now in the \ref WLAN_ASSOCIATED state. */
+    WLAN_REASON_ASSOC_SUCCESS,
     /** The WLAN Connection Manager failed to connect before actual
      * connection attempt with AP due to incorrect wlan network profile.
      * or The WLAN Connection Manager failed to reconnect to previously connected
@@ -425,6 +428,8 @@ enum wlan_event_reason
     WLAN_REASON_ADDRESS_FAILED,
     /** The WLAN Connection Manager has lost the link to the current network. */
     WLAN_REASON_LINK_LOST,
+    /** The WLAN Connection Manager has received a deauthentication or disassociation frame */
+    WLAN_REASON_DISCONNECTED,
     /** The WLAN Connection Manager has received the channel switch
      * announcement from the current network. */
     WLAN_REASON_CHAN_SWITCH,

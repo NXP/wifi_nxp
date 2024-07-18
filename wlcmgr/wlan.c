@@ -3571,8 +3571,31 @@ static void wlcm_process_ba_stream_timeout_request(struct wifi_message *msg)
 }
 #endif
 
+static void wlcm_process_sync_region_code(t_u8 *code)
+{
+    int ret;
+    t_u8 country_code[COUNTRY_CODE_LEN + 1] = {0};
+    unsigned char country3                  = 0x20;
+    t_u8 region_code;
+
+    country_code[0] = code[0];
+    country_code[1] = code[1];
+    country_code[2] = country3;
+
+    ret = wlan_11d_region_2_code(mlan_adap, country_code, &region_code);
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_d("%s, Can't find '%s' in region code mapping table. Keep region code unchanged.", __func__, country_code);
+        return;
+    }
+
+    wlan_set_country_code((const char *)country_code);
+}
+
 static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta_state *next)
 {
+    mlan_private *pmpriv         = (mlan_private *)mlan_adap->priv[0];
+    BSSDescriptor_t *pbss_desc   = NULL;
 #if CONFIG_WPA2_ENTP
     int ret;
     struct wlan_network *network = &wlan.networks[wlan.cur_network_idx];
@@ -3627,6 +3650,11 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
         }
 #endif
         wlan.scan_count = 0;
+        if (!pmpriv->adapter->country_ie_ignore)
+        {
+            pbss_desc = &pmpriv->curr_bss_params.bss_descriptor;
+            wlcm_process_sync_region_code(pbss_desc->country_info.country_code);
+        }
     }
 #if !CONFIG_WPA_SUPP
     else if (wlan.scan_count < WLAN_RESCAN_LIMIT)
@@ -4460,6 +4488,7 @@ static void wlan_switch_to_nondfs_channel(void)
 }
 #endif
 
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 static void wlcm_process_link_loss_event(struct wifi_message *msg,
                                          enum cm_sta_state *next,
                                          struct wlan_network *network)
@@ -4570,6 +4599,7 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
     }
 #endif
 }
+#endif
 
 #if CONFIG_WLAN_BRIDGE
 static void wlcm_process_network_switch_event(struct wifi_message *msg,
@@ -6589,27 +6619,6 @@ int wifi_put_wls_csi_sem(void)
 
 #endif
 
-static void wlcm_process_sync_region_code(t_u8 *code)
-{
-    int ret;
-    t_u8 country_code[COUNTRY_CODE_LEN + 1] = {0};
-    unsigned char country3                  = 0x20;
-    t_u8 region_code;
-
-    country_code[0] = code[0];
-    country_code[1] = code[1];
-    country_code[2] = country3;
-
-    ret = wlan_11d_region_2_code(mlan_adap, country_code, &region_code);
-    if (ret != WM_SUCCESS)
-    {
-        wlcm_d("%s, Can't find '%s' in region code mapping table. Keep region code unchanged.", __func__, country_code);
-        return;
-    }
-
-    wlan_set_country_code((const char *)country_code);
-}
-
 static void wlcm_process_region_power_cfg(struct wifi_message *msg)
 {
     t_u8 *country_code = (t_u8 *)msg->data;
@@ -6856,7 +6865,12 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case WIFI_EVENT_ASSOCIATION:
             wlcm_d("got event: association result: %s",
                     msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
-
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+            if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
+            {
+                CONNECTION_EVENT(WLAN_REASON_ASSOC_SUCCESS, NULL);
+            }
+#endif
             wlcm_process_association_event(msg, &next);
             break;
 
@@ -6904,10 +6918,21 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
         case WIFI_EVENT_LINK_LOSS:
             wlcm_d("got event: link loss, code=%d", (int)msg->data);
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+            if (is_sta_connected())
+            {
+                CONNECTION_EVENT(WLAN_REASON_LINK_LOST, NULL);
+#if CONFIG_ECSA
+                wrapper_clear_media_connected_event();
+                wlan_switch_to_nondfs_channel();
+#endif
+            }
+#else
             if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
                 break;
 
             wlcm_process_link_loss_event(msg, &next, network);
+#endif
             break;
         case WIFI_EVENT_RSSI_LOW:
             wlcm_d("got event: rssi low");
@@ -7012,7 +7037,9 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 
         case WIFI_EVENT_DEAUTHENTICATION:
             wlcm_d("got event: deauthentication");
-
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+            CONNECTION_EVENT(WLAN_REASON_DISCONNECTED, NULL);
+#endif
             wlcm_process_deauthentication_event(msg, &next, network);
             break;
 
@@ -7197,9 +7224,6 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
 #endif
 #endif
-        case WIFI_EVENT_SYNC_REGION_CODE:
-            wlcm_process_sync_region_code((t_u8 *)msg->data);
-            break;
         case WIFI_EVENT_REGION_POWER_CFG:
             wlcm_process_region_power_cfg(msg);
             break;

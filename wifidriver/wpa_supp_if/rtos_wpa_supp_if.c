@@ -1549,9 +1549,7 @@ int wifi_nxp_wpa_supp_set_supp_port(void *if_priv, int authorized, char *bssid)
 #endif
             if (authorized)
             {
-#if CONFIG_WIFI_NM_WPA_SUPPLICANT
-                net_interface_up(net_get_mlan_handle());
-#else
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
                 (void)wifi_event_completion(WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
 #endif
             }
