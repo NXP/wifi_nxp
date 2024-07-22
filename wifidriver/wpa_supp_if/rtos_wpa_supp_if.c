@@ -951,7 +951,8 @@ out:
     return status;
 }
 
-struct wpa_scan_res *wifi_nxp_wpa_supp_proc_scan_res(nxp_wifi_event_new_scan_result_t *scan_res)
+struct wpa_scan_res *wifi_nxp_wpa_supp_proc_scan_res(nxp_wifi_event_new_scan_result_t *scan_res,
+                   struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos)
 {
     struct wpa_scan_res *r  = NULL;
     const unsigned char *ie = NULL;
@@ -1011,7 +1012,7 @@ struct wpa_scan_res *wifi_nxp_wpa_supp_proc_scan_res(nxp_wifi_event_new_scan_res
 
     (void)memcpy((void *)&r->parent_tsf, (const void *)&scan_res->ies_tsf, sizeof(r->parent_tsf));
 
-    memcpy(r->tsf_bssid, scan_res->mac_addr, ETH_ALEN);
+    memcpy(r->tsf_bssid, wifi_if_ctx_rtos->scan_start_tsf_bssid, ETH_ALEN);
 
     r->ie_len = ie_len;
 
@@ -1063,7 +1064,7 @@ int wifi_nxp_wpa_supp_scan_results_get(void *if_priv)
         memset(&scan_res, 0, sizeof(nxp_wifi_event_new_scan_result_t));
         (void)wifi_nxp_scan_res_get2(i, &scan_res);
 
-        sr = wifi_nxp_wpa_supp_proc_scan_res(&scan_res);
+        sr = wifi_nxp_wpa_supp_proc_scan_res(&scan_res, wifi_if_ctx_rtos);
 
         if (sr)
         {
