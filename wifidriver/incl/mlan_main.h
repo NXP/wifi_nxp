@@ -2702,6 +2702,7 @@ struct _mlan_adapter
     bool skip_dfs;
     /* remain on channel flag */
     t_u8 remain_on_channel;
+    t_u8 remain_bss_index;
 };
 
 /** Ethernet packet type for EAPOL */

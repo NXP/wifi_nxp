@@ -3422,6 +3422,7 @@ static void wifi_set_uap_dfs_cac(mlan_private *priv, Band_Config_t *bandcfg, t_u
 int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
 {
     mlan_private *priv = (mlan_private *)mlan_adap->priv[1];
+    mlan_private *remain_priv = NULL;
     // mlan_adapter *pmadapter = priv->adapter;
 
     const t_u8 *ie                 = NULL;
@@ -3465,6 +3466,12 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
 
     ie     = (const t_u8 *)params->tail_ie.ie;
     ie_len = params->tail_ie.ie_len;
+    remain_priv = priv->adapter->priv[priv->adapter->remain_bss_index];
+    if (wifi_is_remain_on_channel() && remain_priv)
+    {
+        wuap_d("Cancel Remain on Channel before Starting AP");
+        wifi_remain_on_channel(false, 0, 0);
+    }
 
     if (params->beacon_set)
     {
