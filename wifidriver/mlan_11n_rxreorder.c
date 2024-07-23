@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides handling of RxReordering in wlan
  *
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *

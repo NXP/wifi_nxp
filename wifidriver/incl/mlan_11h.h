@@ -3,7 +3,7 @@
  *  @brief This header file contains data structures and
  *  function declarations of 802.11h
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *

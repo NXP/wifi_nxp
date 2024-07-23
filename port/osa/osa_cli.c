@@ -2,7 +2,7 @@
  *
  *  @brief OSA CLI Interface
  *
- *  Copyright 2023 NXP
+ *  Copyright 2023-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *

@@ -2,7 +2,7 @@
  *
  * @brief This file provides Core Wi-Fi definition for wpa supplicant RTOS driver.
  *
- * Copyright 2008-2023 NXP
+ * Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *

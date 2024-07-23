@@ -2,7 +2,7 @@
  *
  *  @brief This file declares the generic data structures and APIs.
  *
- *  Copyright 2022 NXP
+ *  Copyright 2022-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *

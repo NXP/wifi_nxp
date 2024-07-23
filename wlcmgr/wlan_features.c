@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides WLAN Features API
  *
- *  Copyright 2021-2023 NXP
+ *  Copyright 2021-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *

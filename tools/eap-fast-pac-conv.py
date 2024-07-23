@@ -3,7 +3,7 @@
 # This file provides the support for EAP FAST pac binary data creation
 # using pac file
 #
-# Copyright 2023 NXP
+# Copyright 2023-2024 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 #

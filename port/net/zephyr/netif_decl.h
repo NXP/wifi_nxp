@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to

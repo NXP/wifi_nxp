@@ -3,7 +3,7 @@
  *  @brief This file contains wrappers for linked-list,
  *  spinlock and timer defines.
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *

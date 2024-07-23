@@ -2,7 +2,7 @@
  *
  *  @brief This file contains redefinition of memory routines
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *

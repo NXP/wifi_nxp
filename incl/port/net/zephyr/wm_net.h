@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016 Intel Corporation.
- * Copyright 2008-2023 NXP
+ * Copyright 2008-2024 NXP
  *
  * SPDX-License-Identifier: Apache-2.0
  */

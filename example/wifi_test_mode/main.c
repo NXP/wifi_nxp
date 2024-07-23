@@ -2,7 +2,7 @@
  *
  *  @brief main file
  *
- *  Copyright 2020 NXP
+ *  Copyright 2020-2024 NXP
  *  All rights reserved.
  *
  *  SPDX-License-Identifier: BSD-3-Clause

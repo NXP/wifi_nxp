@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2004-2005, Jouni Malinen <jkmaline@cc.hut.fi>
  *
- * Copyright 2006-2020 NXP
+ * Copyright 2006-2024 NXP
  *
  * 1. Redistributions in binary form must reproduce the above copyright
  * notice, this list of conditions and the following disclaimer in the

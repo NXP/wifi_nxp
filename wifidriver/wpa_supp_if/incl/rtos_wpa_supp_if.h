@@ -3,7 +3,7 @@
  *  @brief  This file provides RTOS WPA Supplicant interface wifi APIs
  *
  *
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *

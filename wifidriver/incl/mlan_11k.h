@@ -5,7 +5,7 @@
  *  Driver interface functions and type declarations for the process RRM data
  *    module implemented in mlan_11k.c.
  *
- *  Copyright 2022 NXP
+ *  Copyright 2022-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *

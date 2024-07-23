@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2022 NXP
+# Copyright 2022-2024 NXP
 
 # define part number for this driver
 

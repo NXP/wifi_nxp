@@ -1,7 +1,7 @@
 /** @file  includes.h
  * @brief This file contains definition for include files
  *
- * Copyright 2003-2020 NXP
+ * Copyright 2003-2024 NXP
  */
 
 #ifndef INCLUDES_H

@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides functions for 802.11H
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *

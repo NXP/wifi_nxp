@@ -3,7 +3,7 @@
  *  @brief This file defines the FW initialization data
  *  structures.
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *

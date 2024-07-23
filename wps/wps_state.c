@@ -2,7 +2,7 @@
  *
  *  @brief This file contains functions for WPS state machine.
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *

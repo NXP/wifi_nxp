@@ -1,7 +1,7 @@
 /** @file  type_def.h
  * @brief This file contains definition for general data types
  *
- * Copyright 2003-2020 NXP
+ * Copyright 2003-2024 NXP
  */
 
 #ifndef _TYPE_DEF_H
