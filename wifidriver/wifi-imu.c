@@ -1705,7 +1705,7 @@ void imu_wifi_deinit(void)
 #endif
     wlan_deinit_struct();
 
-    flag = MBIT(1) | imu_fw_is_hang();
+    flag = MBIT(1) | MBIT(0);
 #if CONFIG_WIFI_RECOVERY
     flag |= wifi_recovery_enable;
 #endif
