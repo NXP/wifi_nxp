@@ -1109,7 +1109,7 @@ static void dump_wlan_unassoc_ftm_cfg_usage()
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-unassoc-ftm-cfg <action> config <1/0>\r\n");
-    (void)PRINTF("action: 1 -> Set; 0 -> Get \r\n");
+    (void)PRINTF("action: 1 -> Set\r\n");
     (void)PRINTF("config: 1 -> Enable; 0 -> Disable \r\n");
 }
 
@@ -1126,7 +1126,7 @@ static void test_wlan_unassoc_ftm_cfg(int argc, char **argv)
     }
 
     action = a2hex_or_atoi(argv[1]);
-    if (action < 0 && action > 1)
+    if (action != 1)
     {
         dump_wlan_unassoc_ftm_cfg_usage();
         return;
@@ -1158,14 +1158,25 @@ static void dump_wlan_ftm_ctrl_usage()
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-ftm-ctrl <action> loop_cnt <count> channel <channel> mac <peer_mac>\r\n");
-    (void)PRINTF("action: 1 start 2: stop \r\n");
+    (void)PRINTF("action:\r\n");
+    (void)PRINTF(" 1: Start non-secure 11mc/11az FTM with associated Peer AP\r\n");
+    (void)PRINTF(" 2: Stop FTM session\r\n");
+    (void)PRINTF(" 3: Start secure 11az FTM with associated Peer AP\r\n");
+    (void)PRINTF(" 4: Start non-secure 11az/11mc FTM with unassoc Peer\r\n");
+    (void)PRINTF(" 5: Start secure 11az FTM with unassociated & pre-authenticated Peer\r\n");
     (void)PRINTF("loop_cnt: number of ftm sessions to run repeatedly (default:1, 0:non-stop, n:times>)\r\n");
     (void)PRINTF("channel: Channel on which FTM must be started\r\n");
-    (void)PRINTF("mac: Mac address of the peer with whom FTM session is required\r\n");
+    (void)PRINTF("mac: Mac address of the peer with whom FTM session is required\r\n\r\n");
     (void)PRINTF("Example:\r\n");
-    (void)PRINTF("Start ftm:\r\n");
-    (void)PRINTF("wlan-ftm-ctrl 1 loop_cnt 2 channel 36 mac 00:50:43:20:bc:44\r\n");
-    (void)PRINTF("Stop ftm:\r\n");
+    (void)PRINTF("Run non-secure FTM session:\r\n");
+    (void)PRINTF("wlan-ftm-ctrl 1 loop_cnt 1 channel 36 mac 00:50:43:20:bc:44\r\n");
+    (void)PRINTF("Runs secure 11az FTM session:\r\n");
+    (void)PRINTF("wlan-ftm-ctrl 3 loop_cnt 1 channel 36 mac 00:50:43:20:bc:44\r\n");
+    (void)PRINTF("Runs non-secure FTM session with unassoc peer until user terminate:\r\n");
+    (void)PRINTF("wlan-ftm-ctrl 4 loop_cnt 1 channel 36 mac 00:50:43:20:bc:44\r\n");
+    (void)PRINTF("Runs Secure FTM session with unassociated Peer AP:\r\n");
+    (void)PRINTF("wlan-ftm-ctrl 5 loop_cnt 1 channel 36 mac 00:50:43:20:bc:44\r\n");
+    (void)PRINTF("Stop the FTM session:\r\n");
     (void)PRINTF("wlan-ftm-ctrl 2\r\n");
 }
 static void test_wlan_ftm_ctrl(int argc, char **argv)
@@ -1190,7 +1201,7 @@ static void test_wlan_ftm_ctrl(int argc, char **argv)
     }
 
     action = a2hex_or_atoi(argv[1]);
-    if (action < 1 && action > 6)
+    if (action < 1 && action > 5)
     {
         dump_wlan_ftm_ctrl_usage();
         return;
