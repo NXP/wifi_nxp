@@ -291,6 +291,11 @@ static t_u16 scan_channel_gap = (t_u16)SCAN_CHANNEL_GAP_VALUE;
 #define WAKE_TIMEOUT (5 * 1000)
 #endif
 
+#ifdef RW610
+#define TEMPERATURE_MON_TIMEOUT (5 * 1000)
+OSA_TIMER_HANDLE_DEFINE(temperature_mon_timer);
+#endif
+
 enum user_request_type
 {
     /* we append our user-generated events to the wifi interface events and
@@ -7030,6 +7035,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
                 {
                     is_hs_handshake_done = WLAN_HOSTSLEEP_SUCCESS;
 #ifdef RW610
+                    (void)OSA_TimerDeactivate((osa_timer_handle_t)temperature_mon_timer);
 #endif
                 }
 #endif
@@ -7753,6 +7759,35 @@ static void ft_roam_timer_cb(osa_timer_arg_t arg)
 #endif
 #endif
 
+#ifdef RW610
+static void temperature_mon_cb(osa_timer_arg_t arg)
+{
+#if CONFIG_WIFI_RECOVERY
+    if (wifi_recovery_enable || wifi_fw_is_hang())
+    {
+        struct wlan_message msg;
+        (void)memset(&msg, 0U, sizeof(struct wlan_message));
+        msg.data = NULL;
+        msg.id  = WIFI_RECOVERY_REQ;
+        if (OSA_MsgQPut((osa_msgq_handle_t)mon_thread_events, &msg) != KOSA_StatusSuccess)
+        {
+            (void)PRINTF("Failed to send wifi recovery msg to queue\r\n");
+        }
+        return;
+    }
+#endif
+    /*
+     *  get CAU module temperature and write to firmware SMU in every 5s
+     *  can also read FW power status by REG PMU->WLAN_CTRL 0x4003_1068
+     *  bit[3:2] == 3 means FW is in sleep status
+     */
+    if ((mlan_adap != NULL) && (mlan_adap->ps_state == PS_STATE_AWAKE))
+    {
+        wifi_cau_temperature_write_to_firmware();
+    }
+}
+#endif
+
 static void wlan_wait_wlmgr_ready()
 {
     while (wlan.sta_state == CM_STA_INITIALIZING)
@@ -7905,10 +7940,6 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     }
     if (!mon_thread_init)
     {
-#ifdef RW610
-        wifi_cau_temperature_enable();
-#endif
-
         status = OSA_MsgQCreate((osa_msgq_handle_t)mon_thread_events, MAX_EVENTS, sizeof(struct wlan_message));
         if (status != KOSA_StatusSuccess)
         {
@@ -7943,6 +7974,13 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
             return -WM_FAIL;
         }
         mon_thread_init = 1;
+    }
+    wifi_cau_temperature_enable();
+    status = OSA_TimerCreate((osa_timer_handle_t)temperature_mon_timer, TEMPERATURE_MON_TIMEOUT,
+                             &temperature_mon_cb, NULL, KOSA_TimerPeriodic, OSA_TIMER_AUTO_ACTIVATE);
+    if (status != KOSA_StatusSuccess)
+    {
+        wlcm_e("Unable to create temperature monitor timer");
     }
 #endif
 
@@ -8196,7 +8234,14 @@ int wlan_stop(void)
 #endif
 #endif
 
-#ifndef RW610
+#ifdef RW610
+    status = OSA_TimerDestroy((osa_timer_handle_t)temperature_mon_timer);
+    if (status != KOSA_StatusSuccess)
+    {
+        wlcm_w("failed to delete temperature monitor timer: %d.", ret);
+        return WLAN_ERROR_STATE;
+    }
+#else
     /* We need to tell the AP that we're going away, however we've already
      * stopped the main thread so we can't do this by means of the state
      * machine.  Unregister from the wifi interface and explicitly send a
@@ -10510,16 +10555,11 @@ void wlan_reset(cli_reset_option ResetOption)
 
 static void wlcmgr_mon_task(void * data)
 {
-    unsigned long delay_ms = 5000;
 #if CONFIG_HOST_SLEEP
     int ret = 0;
 #endif
     osa_status_t status;
     struct wlan_message msg;
-
-#if CONFIG_PALLADIUM_SUPPORT
-    delay_ms = 10;
-#endif
 
 #if CONFIG_POWER_MANAGER
     status = OSA_TimerCreate((osa_timer_handle_t)wake_timer, MSEC_TO_TICK(WAKE_TIMEOUT),
@@ -10531,7 +10571,7 @@ static void wlcmgr_mon_task(void * data)
 #endif
     while (1)
     {
-        status = OSA_MsgQGet((osa_msgq_handle_t)mon_thread_events, &msg, delay_ms);
+        status = OSA_MsgQGet((osa_msgq_handle_t)mon_thread_events, &msg, osaWaitForever_c);
         if (status == KOSA_StatusSuccess)
         {
             /*Elements of wlan is not avaliable during wlan reset, so wait ending of wlan reset*/
@@ -10557,29 +10597,22 @@ static void wlcmgr_mon_task(void * data)
                 }
 #endif
                 wlan_cancel_host_sleep();
+                /* Check fw status and write temperature to firmware after waking up */
+                temperature_mon_cb(NULL);
+                (void)OSA_TimerActivate((osa_timer_handle_t)temperature_mon_timer);
             }
 #endif
-        }
-        else
-        {
 #if CONFIG_WIFI_RECOVERY
-            if (wifi_recovery_enable || wifi_fw_is_hang())
+            else if (msg.id == WIFI_RECOVERY_REQ)
             {
                 wlan_reset(CLI_RESET_WIFI);
                 wifi_recovery_cnt ++;
             }
 #endif
-            /*
-             *  get CAU module temperature and write to firmware SMU in every 5s
-             *  can also read FW power status by REG PMU->WLAN_CTRL 0x4003_1068
-             *  bit[3:2] == 3 means FW is in sleep status
-             */
-            if ((mlan_adap != NULL) && (mlan_adap->ps_state == PS_STATE_AWAKE))
-            {
-#ifdef RW610
-                wifi_cau_temperature_write_to_firmware();
-#endif
-            }
+        }
+        else
+        {
+            wlcm_e("Failed to get events from monitor task queue");
         }
     }
 }

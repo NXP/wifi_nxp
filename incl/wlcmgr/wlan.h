@@ -2094,13 +2094,14 @@ typedef enum
 } cli_reset_option;
 #endif
 
-#if CONFIG_HOST_SLEEP
-enum wlan_hostsleep_event
+enum wlan_mon_task_event
 {
     HOST_SLEEP_HANDSHAKE = 1,
     HOST_SLEEP_EXIT,
+    WIFI_RECOVERY_REQ,
 };
 
+#if CONFIG_HOST_SLEEP
 enum wlan_hostsleep_state
 {
     HOST_SLEEP_DISABLE,
