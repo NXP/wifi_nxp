@@ -3587,27 +3587,6 @@ static void wlcm_process_ba_stream_timeout_request(struct wifi_message *msg)
 }
 #endif
 
-static void wlcm_process_sync_region_code(t_u8 *code)
-{
-    int ret;
-    t_u8 country_code[COUNTRY_CODE_LEN + 1] = {0};
-    unsigned char country3                  = 0x20;
-    t_u8 region_code;
-
-    country_code[0] = code[0];
-    country_code[1] = code[1];
-    country_code[2] = country3;
-
-    ret = wlan_11d_region_2_code(mlan_adap, country_code, &region_code);
-    if (ret != WM_SUCCESS)
-    {
-        wlcm_d("%s, Can't find '%s' in region code mapping table. Keep region code unchanged.", __func__, country_code);
-        return;
-    }
-
-    wlan_set_country_code((const char *)country_code);
-}
-
 static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta_state *next)
 {
     mlan_private *pmpriv         = (mlan_private *)mlan_adap->priv[0];
@@ -3666,11 +3645,6 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
         }
 #endif
         wlan.scan_count = 0;
-        if (!pmpriv->adapter->country_ie_ignore)
-        {
-            pbss_desc = &pmpriv->curr_bss_params.bss_descriptor;
-            wlcm_process_sync_region_code(pbss_desc->country_info.country_code);
-        }
     }
 #if !CONFIG_WPA_SUPP
     else if (wlan.scan_count < WLAN_RESCAN_LIMIT)
