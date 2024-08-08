@@ -3077,13 +3077,13 @@ typedef MLAN_PACK_START struct _mlan_ds_twt_information
 
 /** BTWT AP Config parameters */
 #define BTWT_AGREEMENT_MAX 5
-typedef PACK_START struct
+typedef MLAN_PACK_START struct _mlan_ds_btwt_set_t
 {
     t_u8 btwt_id;
     t_u16 bcast_mantissa;
     t_u8 bcast_exponent;
     t_u8 nominal_wake;
-} PACK_END mlan_ds_btwt_set_t;
+} MLAN_PACK_END mlan_ds_btwt_set_t;
 
 typedef MLAN_PACK_START struct _mlan_ds_ap_btwt_cfg
 {
