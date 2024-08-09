@@ -4714,9 +4714,15 @@ int wifi_set_country_code(const char *alpha2)
     if (wm_wifi.supp_if_callbk_fns->chan_list_changed_callbk_fn)
     {
 #if CONFIG_WPA_SUPP_AP
-        wm_wifi.supp_if_callbk_fns->chan_list_changed_callbk_fn(wm_wifi.hapd_if_priv, alpha2);
-#else
-        wm_wifi.supp_if_callbk_fns->chan_list_changed_callbk_fn(wm_wifi.if_priv, alpha2);
+        if ((wm_wifi.hostapd_op) || mlan_adap->priv[1]->uap_bss_started)
+        {
+            wm_wifi.supp_if_callbk_fns->chan_list_changed_callbk_fn(wm_wifi.hapd_if_priv, alpha2);
+        }
+        if(!wm_wifi.hostapd_op)
+        {
+            wm_wifi.supp_if_callbk_fns->chan_list_changed_callbk_fn(wm_wifi.if_priv, alpha2);
+        }
+        wm_wifi.hostapd_op = false;
 #endif
     }
 #endif

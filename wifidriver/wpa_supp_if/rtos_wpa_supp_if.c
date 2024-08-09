@@ -1588,6 +1588,16 @@ int wifi_nxp_wpa_supp_set_country(void *if_priv, const char *alpha2)
     }
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+#if CONFIG_WPA_SUPP_AP
+    wm_wifi.hostapd_op = false;
+
+    if (wifi_if_ctx_rtos->hostapd)
+    {
+        wm_wifi.hostapd_op = true;
+    }
+#endif
+
     ret              = wifi_nxp_set_country(wifi_if_ctx_rtos->bss_type, alpha2);
 
     if (ret == WM_SUCCESS)
