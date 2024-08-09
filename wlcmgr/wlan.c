@@ -3589,8 +3589,6 @@ static void wlcm_process_ba_stream_timeout_request(struct wifi_message *msg)
 
 static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta_state *next)
 {
-    mlan_private *pmpriv         = (mlan_private *)mlan_adap->priv[0];
-    BSSDescriptor_t *pbss_desc   = NULL;
 #if CONFIG_WPA2_ENTP
     int ret;
     struct wlan_network *network = &wlan.networks[wlan.cur_network_idx];
