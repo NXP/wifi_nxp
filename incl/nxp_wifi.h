@@ -37,6 +37,7 @@ extern "C" {
 #define CONFIG_BG_SCAN            1
 #define CONFIG_HOST_MLME          1
 #define UAP_HOST_MLME             1
+#define CONFIG_STA_AUTO_DHCPV4    1
 
 #if CONFIG_NXP_WIFI_SHELL
 #define CONFIG_WIFI_SHELL 1
@@ -76,10 +77,6 @@ extern "C" {
 
 #if CONFIG_NXP_WIFI_OFFLOAD
 #define CONFIG_OFFLOAD CONFIG_NXP_WIFI_OFFLOAD
-#endif
-
-#if CONFIG_NXP_WIFI_STA_AUTO_DHCPV4
-#define CONFIG_STA_AUTO_DHCPV4 1
 #endif
 
 #if CONFIG_NXP_WIFI_STA_RECONNECT

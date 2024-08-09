@@ -3,23 +3,23 @@
 
 # define part number for this driver
 
-zephyr_compile_definitions_ifdef(CONFIG_88W8987
+zephyr_compile_definitions_ifdef(CONFIG_NXP_88W8987
     SD8987
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_IW416
+zephyr_compile_definitions_ifdef(CONFIG_NXP_IW416
     SD8978
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_IW61X
+zephyr_compile_definitions_ifdef(CONFIG_NXP_IW61X
     SD9177
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_88W8801
+zephyr_compile_definitions_ifdef(CONFIG_NXP_88W8801
     SD8801
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_RW610
+zephyr_compile_definitions_ifdef(CONFIG_NXP_RW610
     RW610
     WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW_rw610.h"
 )
@@ -201,7 +201,7 @@ list(FILTER WIFI_SRC EXCLUDE REGEX ".*imu.c$")
 list(FILTER WIFI_SRC EXCLUDE REGEX ".*sdio.c$")
 list(FILTER WIFI_SRC EXCLUDE REGEX ".*firmware_dnld.c$")
 
-zephyr_library_sources_ifdef(CONFIG_RW610
+zephyr_library_sources_ifdef(CONFIG_NXP_RW610
     wifidriver/wifi-imu.c
 )
 
@@ -268,6 +268,10 @@ file(GLOB WIFI_SUPP_SRC ./wifidriver/wpa_supp_if/*.c)
 zephyr_library_sources(${WIFI_SUPP_SRC})
 endif()
 
+zephyr_include_directories_ifdef(CONFIG_WIFI_NM_WPA_SUPPLICANT_CRYPTO_ALT
+    incl/port/mbedtls
+)
+
 if(CONFIG_SPEED_OPTIMIZATIONS OR CONFIG_SIZE_OPTIMIZATIONS)
 # critical path code relocated to SRAM
 zephyr_code_relocate(FILES
@@ -288,7 +292,7 @@ zephyr_code_relocate(FILES
                      LOCATION RAM_TEXT)
 endif()
 
-if(CONFIG_RW610)
+if(CONFIG_NXP_RW610)
 zephyr_code_relocate(FILES
                      # fsl_cache.c
                      # ${ZEPHYR_BASE}/modules/hal_nxp/fsl_memcpy.S

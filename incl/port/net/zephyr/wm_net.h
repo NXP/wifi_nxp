@@ -79,7 +79,7 @@ struct ethernetif
     /* Add whatever per-interface state that is needed here. */
 };
 
-typedef struct
+struct interface
 {
     struct net_if *netif;
     uint8_t mac_address[6];
@@ -92,7 +92,9 @@ typedef struct
 #endif
     scan_result_cb_t scan_cb;
     uint16_t max_bss_cnt;
-} interface_t;
+};
+
+typedef struct interface interface_t;
 
 #define NET_SUCCESS WM_SUCCESS
 #define NET_ERROR   (-WM_FAIL)
