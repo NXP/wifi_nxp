@@ -14,11 +14,37 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
 
+#include <wifi_config_default.h>
 #include <wmtypes.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <ctype.h>
+#ifdef __ZEPHYR__
+#include <zephyr/kernel.h>
+#include <strings.h>
+#else
 #include "fsl_debug_console.h"
+#endif
+
+#if CONFIG_WIFI_SMOKE_TESTS
+#if defined(SDK_OS_FREE_RTOS)
+
+#undef PRINTF
+extern void sm_printf(const char *fmt, ...);
+
+#define PRINTF sm_printf
+#elif __ZEPHYR__
+#endif
+#endif
+
+#ifdef __ZEPHYR__
+#ifndef PRINTF
+#define PRINTF printk
+#endif
+#ifndef SDK_DEBUGCONSOLE
+#define SDK_DEBUGCONSOLE CONFIG_WIFI_EXTRA_DEBUG
+#endif
+#endif
 
 #define ffs __builtin_ffs
 
@@ -85,8 +111,9 @@ NORETURN void wmpanic(void);
  *
  * @return length of the binary string
  */
-static inline unsigned int hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsigned max_olen)
+static inline unsigned int wm_hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsigned max_olen)
 {
+#ifndef __ZEPHYR__
     unsigned int i;      /* loop iteration variable */
     unsigned int j  = 0; /* current character */
     unsigned int by = 0; /* byte value for conversion */
@@ -126,68 +153,12 @@ static inline unsigned int hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsigned 
         }
     }
     return j + 1U;
+#else
+    return hex2bin(ibuf, strlen(ibuf), obuf, max_olen);
+#endif
 }
 
-/**
- *    @brief isdigit for String.
- *
- *    @param x            Char string
- *    @return             0 for non-digit.
- *                        1 for digit
- */
-static inline int ISDIGIT(char *x)
-{
-    unsigned int i;
-    for (i = 0; i < strlen(x); i++)
-        if (isdigit((unsigned char)x[i]) == 0)
-            return 0;
-    return 1;
-}
-
-/**
- *  @brief      Hex to number
- *
- *  @param c    Hex value
- *  @return     Integer value or -1
- */
-static inline int HEX2NUM(char c)
-{
-    if (c >= '0' && c <= '9')
-        return c - '0';
-    if (c >= 'a' && c <= 'f')
-        return c - 'a' + 10;
-    if (c >= 'A' && c <= 'F')
-        return c - 'A' + 10;
-
-    return -1;
-}
-
-/**
- *  @brief              Check hex string
- *
- *  @param hex          A pointer to hex string
- *  @return             1 or 0
- */
-static inline int ISHEXSTRING(void *hex)
-{
-    int i, a;
-    char *p = hex;
-    int len = strlen(p);
-    if (!strncasecmp("0x", p, 2))
-    {
-        p += 2;
-        len -= 2;
-    }
-    for (i = 0; i < len; i++)
-    {
-        a = HEX2NUM(*p);
-        if (a < 0)
-            return 0;
-        p++;
-    }
-    return 1;
-}
-
+#ifndef __ZEPHYR__
 /**
  * Convert given binary array to equivalent hex representation.
  *
@@ -196,9 +167,9 @@ static inline int ISHEXSTRING(void *hex)
  * @param[in] src_len Length of the input buffer
  * @param[in] dest_len Length of the output buffer
  *
- * @return void
  */
-void bin2hex(uint8_t *src, char *dest, unsigned int src_len, unsigned int dest_len);
+void wm_bin2hex(uint8_t *src, char *dest, unsigned int src_len, unsigned int dest_len);
+#endif /* ! __ZEPHYR__ */
 
 /** Function prototype for a random entropy/seed generator
  *
@@ -301,7 +272,7 @@ uint32_t sample_initialise_random_seed(void);
  */
 void get_random_sequence(void *buf, unsigned int size);
 
-#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
+#if (SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE) || defined(__ZEPHYR__)
 #define DUMP_WRAPAROUND 16U
 
 /** Dump buffer in hex format on console
@@ -380,6 +351,27 @@ static inline int wm_frac_part_of(float x, short precision)
     return (x < 0 ? (int)(((int)x - x) * scale) : (int)((x - (int)x) * scale));
 }
 
+#if CONFIG_SIGMA_AGENT
+#if defined(SDK_OS_FREE_RTOS)
+#if (defined(__MCUXPRESSO) || defined(__GNUC__)) && !defined(__ARMCC_VERSION)
+static inline int strcasecmp(const char *a, const char *b)
+{
+    int ca, cb;
+    do
+    {
+        ca = *(unsigned char *)a;
+        cb = *(unsigned char *)b;
+        ca = tolower(toupper(ca));
+        cb = tolower(toupper(cb));
+        a++;
+        b++;
+    } while (ca == cb && ca != '\0');
+    return ca - cb;
+}
+#endif
+#endif
+#endif
+
 #ifndef __linux__
 /** Returns a pointer to a new string which is a duplicate of the
  *  input string s.
@@ -424,7 +416,6 @@ float wm_strtof(const char *str, char **endptr);
  * @param[in] first_byte This is the value of first byte in the sequential
  * pattern.
  *
- * @return void
  */
 void fill_sequential_pattern(void *buffer, int size, uint8_t first_byte);
 

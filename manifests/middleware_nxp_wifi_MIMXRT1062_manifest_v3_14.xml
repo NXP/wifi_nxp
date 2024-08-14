@@ -1,0 +1,985 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ksdk:manifest xmlns:ksdk="http://nxp.com/ksdk/2.0/ksdk_manifest_v3.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="SDK_2.x_middleware_nxp_wifi_MIMXRT1062_manifest_v3_14" name="NXP Wi-Fi" brief="NXP Wi-Fi" format_version="3.14" api_version="2.0.0" xsi:schemaLocation="http://nxp.com/ksdk/2.0/ksdk_manifest_v3.0.xsd http://nxp.com/mcuxpresso/sdk/sdk_manifest_v3.14.xsd">
+
+  <externalDefinitions>
+    <definition extID="MIMXRT1062xxxxA"/>
+    <definition extID="MIMXRT1062xxxxB"/>
+    <definition extID="armgcc"/>
+    <definition extID="component.wifi_bt_module.tx_pwr_limits.MIMXRT1062"/>
+    <definition extID="component.wifi_bt_module.config.MIMXRT1062"/>
+    <definition extID="component.osa_free_rtos.MIMXRT1062"/>
+    <definition extID="component.osa_thread.MIMXRT1062"/>
+    <definition extID="middleware.lwip.MIMXRT1062"/>
+    <definition extID="middleware.lwip.apps.lwiperf.MIMXRT1062"/>
+    <definition extID="utility.debug_console.MIMXRT1062"/>
+    <definition extID="utility.debug_console_lite.MIMXRT1062"/>
+    <definition extID="middleware.sdmmc.sdio.MIMXRT1062"/>
+    <definition extID="middleware.sdmmc.host.usdhc.MIMXRT1062"/>
+    <definition extID="middleware.sdmmc.host.usdhc.freertos.MIMXRT1062"/>
+    <definition extID="middleware.sdmmc.host.usdhc.azurertos.MIMXRT1062"/>
+    <definition extID="middleware.freertos-kernel.MIMXRT1062"/>
+  </externalDefinitions>
+  <ksdk id="MCUXpressoSDK216000_middleware_nxp_wifi_MIMXRT1062_manifest_v3_14" name="MCUXpressoSDK216000_middleware_nxp_wifi_MIMXRT1062_manifest_v3_14" version="2.16.000" revision="2.16.000"/>
+  <components>
+    <component id="middleware.wifi.wifi_bt_config.template.MIMXRT1062" name="Wi-Fi configuration template" brief="Template configuration file to be edited by user." version="1.0.0" full_name="Wi-Fi configuration template" category="Wireless/NXP Wi-Fi" user_visible="false" type="project_template" package_base_path="../../../components/wifi_bt_module/template" project_base_path="wifi/template">
+      <defines>
+        <define name="SDIO_ENABLED" value=""/>
+      </defines>
+      <dependencies>
+        <any_of>
+          <device_dependency value="MIMXRT1062xxxxA"/>
+          <device_dependency value="MIMXRT1062xxxxB"/>
+        </any_of>
+      </dependencies>
+      <source relative_path="./" config="true" type="c_include">
+        <files mask="wifi_bt_config.h"/>
+      </source>
+      <source relative_path="./" config="true" type="src">
+        <files mask="wifi_bt_config.c"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_wifi_bt_config_template.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.fwdnld_intf_abs.MIMXRT1062" name="wifi_nxp_fwdnld_intf_abs" brief="NXP Wi-Fi Interface Abstraction Layer" version="1.3.46" full_name="NXP Firmware Download abstraction layer" category="Wireless/NXP Wi-Fi" user_visible="true" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <any_of>
+          <device_dependency value="MIMXRT1062xxxxA"/>
+          <device_dependency value="MIMXRT1062xxxxB"/>
+        </any_of>
+      </dependencies>
+      <source relative_path="./fwdnld_intf_abs" project_relative_path="fwdnld_intf_abs" type="src">
+        <files mask="fwdnld_intf_abs.c"/>
+      </source>
+      <source relative_path="./fwdnld_intf_abs" project_relative_path="fwdnld_intf_abs" type="c_include">
+        <files mask="fwdnld_intf_abs.h"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_fwdnld_intf_abs.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./fwdnld_intf_abs" project_relative_path="fwdnld_intf_abs" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.template.MIMXRT1062" name="Wi-Fi configuration template" brief="Template configuration file to be edited by user." version="1.0.0" full_name="Wi-Fi configuration template" category="Wireless/NXP Wi-Fi" user_visible="false" type="project_template" package_base_path="../../../components/wifi_bt_module/template" project_base_path="wifi/template">
+      <defines>
+        <define name="OSA_USED" value=""/>
+        <define name="FSL_OSA_TASK_ENABLE" value="1"/>
+        <define name="LWIP_DNS" value="1"/>
+        <define name="LWIP_NETIF_HOSTNAME" value="1"/>
+        <define name="LWIP_IGMP" value="1"/>
+        <define name="_XOPEN_SOURCE" value="500"/>
+      </defines>
+      <dependencies>
+        <all>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+          <component_dependency value="component.wifi_bt_module.tx_pwr_limits.MIMXRT1062"/>
+          <component_dependency value="component.wifi_bt_module.config.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.wifi_bt_config.template.MIMXRT1062"/>
+        </all>
+      </dependencies>
+      <source relative_path="./" config="true" type="c_include">
+        <files mask="app_config.h"/>
+        <files mask="wifi_config.h"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_template.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.osa_free_rtos.MIMXRT1062" name="nxp wifi osa free_rtos" brief="NXP WLAN OSA" version="1.0.0" full_name="NXP WLAN OSA" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+          <component_dependency value="component.osa_free_rtos.MIMXRT1062"/>
+        </all>
+      </dependencies>
+      <source relative_path="./port/osa" project_relative_path="port/osa" type="c_include">
+        <files mask="osa_freertos.h"/>
+      </source>
+      <source relative_path="./port/osa" project_relative_path="port/osa" type="src">
+        <files mask="osa_freertos.c"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_osa_free_rtos.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./" type="c_include"/>
+        <include_path relative_path="./incl" project_relative_path="incl" type="c_include"/>
+        <include_path relative_path="./incl/port/osa" project_relative_path="incl/port/osa" type="c_include"/>
+        <include_path relative_path="./port/osa" project_relative_path="port/osa" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.osa_thread.MIMXRT1062" name="nxp wifi osa thread" brief="NXP WLAN OSA" version="1.0.0" full_name="NXP WLAN OSA" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+          <component_dependency value="component.osa_thread.MIMXRT1062"/>
+        </all>
+      </dependencies>
+      <source relative_path="./port/osa" project_relative_path="port/osa" type="c_include">
+        <files mask="osa_threadx.h"/>
+      </source>
+      <source relative_path="./port/osa" project_relative_path="port/osa" type="src">
+        <files mask="osa_threadx.c"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_osa_thread.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./" type="c_include"/>
+        <include_path relative_path="./incl/port/osa" project_relative_path="incl/port/osa" type="c_include"/>
+        <include_path relative_path="./port/osa" project_relative_path="port/osa" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.osa.MIMXRT1062" name="nxp wifi osa" brief="NXP WLAN OSA" version="1.0.0" full_name="NXP WLAN OSA" category="Wireless/NXP Wi-Fi" user_visible="true" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <component_dependency value="middleware.wifi.osa_free_rtos.MIMXRT1062"/>
+            <component_dependency value="middleware.wifi.osa_thread.MIMXRT1062"/>
+          </any_of>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+        </all>
+      </dependencies>
+      <source relative_path="./incl/port/osa" project_relative_path="incl/port/osa" type="c_include">
+        <files mask="osa.h"/>
+        <files mask="mem_pool.h"/>
+        <files mask="mem_pool_config.h"/>
+        <files mask="slist.h"/>
+        <files mask="stack_simple.h"/>
+      </source>
+      <source relative_path="./port/osa" project_relative_path="port/osa" type="src">
+        <files mask="osa.c"/>
+        <files mask="mem_pool.c"/>
+        <files mask="mem_pool_config.c"/>
+        <files mask="slist.c"/>
+        <files mask="stack_simple.c"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_osa.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./" type="c_include"/>
+        <include_path relative_path="./incl/port/osa" project_relative_path="incl/port/osa" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.common_files.MIMXRT1062" name="nxp_wireless_common_files" brief="NXP WLAN common files" version="1.0.0" full_name="NXP WLAN common files" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+          <component_dependency value="middleware.wifi.osa.MIMXRT1062"/>
+        </all>
+      </dependencies>
+      <source relative_path="./incl" project_relative_path="incl" type="c_include">
+        <files mask="wifi_config_default.h"/>
+        <files mask="wifi_cal_data_ext.h"/>
+        <files mask="wm_utils.h"/>
+        <files mask="wmerrno.h"/>
+        <files mask="wmlog.h"/>
+        <files mask="wmtypes.h"/>
+      </source>
+      <source relative_path="./incl/wifidriver" project_relative_path="incl/wifidriver" type="c_include">
+        <files mask="wifi-decl.h"/>
+        <files mask="wifi.h"/>
+        <files mask="wifi_events.h"/>
+      </source>
+      <source relative_path="./wifidriver/incl" project_relative_path="wifidriver/incl" type="c_include">
+        <files mask="mlan_decl.h"/>
+        <files mask="mlan_ioctl.h"/>
+        <files mask="type_decls.h"/>
+      </source>
+      <source relative_path="./wifi_bt_firmware" project_relative_path="wifi_bt_firmware" type="c_include">
+        <files mask="wlan_bt_fw.h"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_common_files.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./incl" project_relative_path="incl" type="c_include"/>
+        <include_path relative_path="./incl/port/osa" project_relative_path="incl/port/osa" type="c_include"/>
+        <include_path relative_path="./incl/wifidriver" project_relative_path="incl/wifidriver" type="c_include"/>
+        <include_path relative_path="./wifi_bt_firmware" project_relative_path="wifi_bt_firmware" type="c_include"/>
+        <include_path relative_path="./wifidriver" project_relative_path="wifidriver" type="c_include"/>
+        <include_path relative_path="./wifidriver/incl" project_relative_path="wifidriver/incl" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.fwdnld.MIMXRT1062" name="nxp_wireless_fwdnld" brief="NXP WLAN f/w dnld driver" version="1.0.0" full_name="NXP WLAN f/w dnld driver" category="Wireless/NXP Wi-Fi" user_visible="true" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+          <component_dependency value="middleware.wifi.template.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.mlan_sdio.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.common_files.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.fwdnld_intf_abs.MIMXRT1062"/>
+        </all>
+      </dependencies>
+      <source relative_path="./incl" project_relative_path="incl" type="c_include">
+        <files mask="WIFI_IW416_BOARD_AW_AM457_CAL_DATA_EXT.h"/>
+      </source>
+      <source relative_path="./wifidriver/incl" project_relative_path="wifidriver/incl" type="c_include">
+        <files mask="mlan_main_defs.h"/>
+      </source>
+      <source relative_path="./wifi_bt_firmware/8801" project_relative_path="wifi_bt_firmware/8801" type="asm_include">
+        <files mask="sd8801_wlan.bin.inc"/>
+      </source>
+      <source relative_path="./wifi_bt_firmware/8801" project_relative_path="wifi_bt_firmware/8801" type="c_include">
+        <files mask="sd8801_wlan.h"/>
+      </source>
+      <source relative_path="./wifi_bt_firmware/8801" project_relative_path="wifi_bt_firmware/8801" type="src">
+        <files mask="8801_cpu1.c"/>
+      </source>
+      <source relative_path="./wifi_bt_firmware/IW416" project_relative_path="wifi_bt_firmware/IW416" type="asm_include">
+        <files mask="sduartIW416_wlan_bt.bin.inc"/>
+        <files mask="sdIW416_wlan.bin.inc"/>
+        <files mask="uartIW416_bt.bin.inc"/>
+      </source>
+      <source relative_path="./wifi_bt_firmware/IW416" project_relative_path="wifi_bt_firmware/IW416" type="c_include">
+        <files mask="sduartIW416_wlan_bt.h"/>
+        <files mask="sdIW416_wlan.h"/>
+        <files mask="uartIW416_bt.h"/>
+      </source>
+      <source relative_path="./wifi_bt_firmware/IW416" project_relative_path="wifi_bt_firmware/IW416" type="src">
+        <files mask="IW416_cpu12.c"/>
+        <files mask="IW416_cpu1.c"/>
+        <files mask="IW416_cpu2.c"/>
+      </source>
+      <source relative_path="./wifi_bt_firmware/8987" project_relative_path="wifi_bt_firmware/8987" type="asm_include">
+        <files mask="sduart8987_wlan_bt.bin.inc"/>
+        <files mask="sd8987_wlan.bin.inc"/>
+        <files mask="uart8987_bt.bin.inc"/>
+      </source>
+      <source relative_path="./wifi_bt_firmware/8987" project_relative_path="wifi_bt_firmware/8987" type="c_include">
+        <files mask="sduart8987_wlan_bt.h"/>
+        <files mask="sd8987_wlan.h"/>
+        <files mask="uart8987_bt.h"/>
+      </source>
+      <source relative_path="./wifi_bt_firmware/8987" project_relative_path="wifi_bt_firmware/8987" type="src">
+        <files mask="8987_cpu12.c"/>
+        <files mask="8987_cpu1.c"/>
+        <files mask="8987_cpu2.c"/>
+      </source>
+      <source relative_path="./wifi_bt_firmware/nw61x" project_relative_path="wifi_bt_firmware/nw61x" type="asm_include">
+        <files mask="sduart_nw61x.bin.se.inc"/>
+        <files mask="sd_nw61x.bin.se.inc"/>
+        <files mask="uart_nw61x.bin.se.inc"/>
+      </source>
+      <source relative_path="./wifi_bt_firmware/nw61x" project_relative_path="wifi_bt_firmware/nw61x" type="c_include">
+        <files mask="sduart_nw61x_se.h"/>
+        <files mask="sd_nw61x_se.h"/>
+        <files mask="uart_nw61x_se.h"/>
+      </source>
+      <source relative_path="./wifi_bt_firmware/nw61x" project_relative_path="wifi_bt_firmware/nw61x" type="src">
+        <files mask="nw61x_cpu12_se.c"/>
+        <files mask="nw61x_cpu1_se.c"/>
+        <files mask="nw61x_cpu2_se.c"/>
+      </source>
+      <source relative_path="./wifidriver" project_relative_path="wifidriver" type="src">
+        <files mask="sdio.c"/>
+      </source>
+      <source relative_path="./wifidriver" project_relative_path="wifidriver" type="c_include">
+        <files mask="sdio.h"/>
+      </source>
+      <source relative_path="./firmware_dnld" project_relative_path="firmware_dnld" type="src">
+        <files mask="firmware_dnld.c"/>
+      </source>
+      <source relative_path="./firmware_dnld" project_relative_path="firmware_dnld" type="c_include">
+        <files mask="firmware_dnld.h"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_fwdnld.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./incl" project_relative_path="incl" type="c_include"/>
+        <include_path relative_path="./wifi_bt_firmware" project_relative_path="wifi_bt_firmware" type="c_include"/>
+        <include_path relative_path="./wifi_bt_firmware/8801" project_relative_path="wifi_bt_firmware/8801" type="c_include"/>
+        <include_path relative_path="./wifi_bt_firmware/IW416" project_relative_path="wifi_bt_firmware/IW416" type="c_include"/>
+        <include_path relative_path="./wifi_bt_firmware/8987" project_relative_path="wifi_bt_firmware/8987" type="c_include"/>
+        <include_path relative_path="./wifi_bt_firmware/nw61x" project_relative_path="wifi_bt_firmware/nw61x" type="c_include"/>
+        <include_path relative_path="./wifidriver" project_relative_path="wifidriver" type="c_include"/>
+        <include_path relative_path="./wifidriver/incl" project_relative_path="wifidriver/incl" type="c_include"/>
+        <include_path relative_path="./firmware_dnld" project_relative_path="firmware_dnld" type="c_include"/>
+        <include_path relative_path="./sdio_nxp_abs" project_relative_path="sdio_nxp_abs" type="c_include"/>
+        <include_path relative_path="./sdio_nxp_abs/incl" project_relative_path="sdio_nxp_abs/incl" type="c_include"/>
+        <include_path relative_path="./fwdnld_intf_abs" project_relative_path="fwdnld_intf_abs" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.net_free_rtos.MIMXRT1062" name="nxp wifi osa free_rtos" brief="NXP WLAN OSA" version="1.0.0" full_name="NXP WLAN OSA" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+          <component_dependency value="component.osa_free_rtos.MIMXRT1062"/>
+          <component_dependency value="middleware.lwip.MIMXRT1062"/>
+          <component_dependency value="middleware.lwip.apps.lwiperf.MIMXRT1062"/>
+        </all>
+      </dependencies>
+      <source relative_path="./incl/port/net" project_relative_path="incl/port/net" type="c_include">
+        <files mask="wm_net.h"/>
+      </source>
+      <source relative_path="./port/net" project_relative_path="port/net" type="src">
+        <files mask="net.c"/>
+        <files mask="wifi_netif.c"/>
+      </source>
+      <source relative_path="./port/net" project_relative_path="port/net" type="c_include">
+        <files mask="netif_decl.h"/>
+      </source>
+      <source relative_path="./incl/port/net/hooks" project_relative_path="incl/port/net/hooks" type="c_include">
+        <files mask="lwip_default_hooks.h"/>
+      </source>
+      <source relative_path="./port/net/hooks" project_relative_path="port/net/hooks" type="src">
+        <files mask="lwip_default_hooks.c"/>
+      </source>
+      <source relative_path="./dhcpd" project_relative_path="dhcpd" type="c_include">
+        <files mask="dhcp-bootp.h"/>
+        <files mask="dhcp-priv.h"/>
+        <files mask="dns.h"/>
+      </source>
+      <source relative_path="./dhcpd" project_relative_path="dhcpd" type="src">
+        <files mask="dhcp-server-main.c"/>
+        <files mask="dhcp-server.c"/>
+        <files mask="dns-server.c"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_net_free_rtos.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./" type="c_include"/>
+        <include_path relative_path="./incl" project_relative_path="incl" type="c_include"/>
+        <include_path relative_path="./incl/port/osa" project_relative_path="incl/port/osa" type="c_include"/>
+        <include_path relative_path="./port/osa" project_relative_path="port/osa" type="c_include"/>
+        <include_path relative_path="./incl/port/net" project_relative_path="incl/port/net" type="c_include"/>
+        <include_path relative_path="./incl/port/net/hooks" project_relative_path="incl/port/net/hooks" type="c_include"/>
+        <include_path relative_path="./dhcpd" project_relative_path="dhcpd" type="c_include"/>
+        <include_path relative_path="./incl/wlcmgr" project_relative_path="incl/wlcmgr" type="c_include"/>
+        <include_path relative_path="./incl/wifidriver" project_relative_path="incl/wifidriver" type="c_include"/>
+        <include_path relative_path="./wifidriver/incl" project_relative_path="wifidriver/incl" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.net_thread.MIMXRT1062" name="nxp wifi osa thread" brief="NXP WLAN OSA" version="1.0.0" full_name="NXP WLAN OSA" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+          <component_dependency value="component.osa_thread.MIMXRT1062"/>
+        </all>
+      </dependencies>
+      <source relative_path="./incl/port/net" project_relative_path="incl/port/net" type="c_include">
+        <files mask="wm_net.h"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_net_thread.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./" type="c_include"/>
+        <include_path relative_path="./incl/port/osa" project_relative_path="incl/port/osa" type="c_include"/>
+        <include_path relative_path="./port/osa" project_relative_path="port/osa" type="c_include"/>
+        <include_path relative_path="./incl/port/net" project_relative_path="incl/port/net" type="c_include"/>
+        <include_path relative_path="./port/net/netxduo" project_relative_path="port/net/netxduo" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.net.MIMXRT1062" name="nxp wifi osa" brief="NXP WLAN OSA" version="1.0.0" full_name="NXP WLAN OSA" category="Wireless/NXP Wi-Fi" user_visible="true" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <component_dependency value="middleware.wifi.net_free_rtos.MIMXRT1062"/>
+            <component_dependency value="middleware.wifi.net_thread.MIMXRT1062"/>
+          </any_of>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+        </all>
+      </dependencies>
+      <source relative_path="./incl/port/net" project_relative_path="incl/port/net" type="c_include">
+        <files mask="wm_net.h"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_net.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./" type="c_include"/>
+        <include_path relative_path="./incl/port/osa" project_relative_path="incl/port/osa" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.wifidriver.MIMXRT1062" name="nxp_wifi_driver" brief="NXP Wi-Fi driver" version="1.3.46" full_name="NXP Wi-Fi driver" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <all>
+              <not>
+                <component_dependency value="utility.debug_console_lite.MIMXRT1062"/>
+              </not>
+              <component_dependency value="utility.debug_console.MIMXRT1062"/>
+            </all>
+            <all>
+              <not>
+                <component_dependency value="utility.debug_console.MIMXRT1062"/>
+              </not>
+              <component_dependency value="utility.debug_console_lite.MIMXRT1062"/>
+            </all>
+          </any_of>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+          <component_dependency value="middleware.wifi.template.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.osa.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.net.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.sdio.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.fwdnld.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.fwdnld_intf_abs.MIMXRT1062"/>
+        </all>
+      </dependencies>
+      <source relative_path="./incl" project_relative_path="incl" type="c_include">
+        <files mask="dhcp-server.h"/>
+        <files mask="nxp_wifi.h"/>
+      </source>
+      <source relative_path="./incl/wlcmgr" project_relative_path="incl/wlcmgr" type="c_include">
+        <files mask="wlan.h"/>
+        <files mask="wlan_11d.h"/>
+      </source>
+      <source relative_path="./incl/wifidriver" project_relative_path="incl/wifidriver" type="c_include">
+        <files mask="wifi_nxp.h"/>
+      </source>
+      <source relative_path="./wifidriver/incl" project_relative_path="wifidriver/incl" type="c_include">
+        <files mask="mlan.h"/>
+        <files mask="mlan_11ac.h"/>
+        <files mask="mlan_11ax.h"/>
+        <files mask="mlan_11h.h"/>
+        <files mask="mlan_11n.h"/>
+        <files mask="mlan_11n_aggr.h"/>
+        <files mask="mlan_11n_rxreorder.h"/>
+        <files mask="mlan_11v.h"/>
+        <files mask="mlan_action.h"/>
+        <files mask="mlan_11k.h"/>
+        <files mask="mlan_mbo.h"/>
+        <files mask="mlan_api.h"/>
+        <files mask="mlan_fw.h"/>
+        <files mask="mlan_ieee.h"/>
+        <files mask="mlan_init.h"/>
+        <files mask="mlan_join.h"/>
+        <files mask="mlan_main.h"/>
+        <files mask="mlan_meas.h"/>
+        <files mask="mlan_remap_mem_operations.h"/>
+        <files mask="mlan_uap.h"/>
+        <files mask="mlan_util.h"/>
+        <files mask="mlan_wmm.h"/>
+      </source>
+      <source relative_path="./wifidriver" project_relative_path="wifidriver" type="src">
+        <files mask="mlan_11ac.c"/>
+        <files mask="mlan_11ax.c"/>
+        <files mask="mlan_11d.c"/>
+        <files mask="mlan_11h.c"/>
+        <files mask="mlan_11n.c"/>
+        <files mask="mlan_11n_aggr.c"/>
+        <files mask="mlan_11n_rxreorder.c"/>
+        <files mask="mlan_11v.c"/>
+        <files mask="mlan_action.c"/>
+        <files mask="mlan_11k.c"/>
+        <files mask="mlan_mbo.c"/>
+        <files mask="mlan_api.c"/>
+        <files mask="mlan_cfp.c"/>
+        <files mask="mlan_cmdevt.c"/>
+        <files mask="mlan_glue.c"/>
+        <files mask="mlan_init.c"/>
+        <files mask="mlan_join.c"/>
+        <files mask="mlan_misc.c"/>
+        <files mask="mlan_scan.c"/>
+        <files mask="mlan_shim.c"/>
+        <files mask="mlan_sta_cmd.c"/>
+        <files mask="mlan_sta_cmdresp.c"/>
+        <files mask="mlan_sta_event.c"/>
+        <files mask="mlan_sta_ioctl.c"/>
+        <files mask="mlan_sta_rx.c"/>
+        <files mask="mlan_txrx.c"/>
+        <files mask="mlan_uap_cmdevent.c"/>
+        <files mask="mlan_uap_ioctl.c"/>
+        <files mask="mlan_wmm.c"/>
+        <files mask="wifi-debug.c"/>
+        <files mask="wifi-mem.c"/>
+        <files mask="wifi-uap.c"/>
+        <files mask="wifi.c"/>
+        <files mask="wifi_pwrmgr.c"/>
+        <files mask="wifi-wps.c"/>
+      </source>
+      <source relative_path="./wifidriver" project_relative_path="wifidriver" type="c_include">
+        <files mask="wifi-debug.h"/>
+        <files mask="wifi-internal.h"/>
+        <files mask="wifi_common.h"/>
+      </source>
+      <source relative_path="./wifidriver/wpa_supp_if/incl" project_relative_path="wifidriver/wpa_supp_if/incl" type="c_include">
+        <files mask="rtos_wpa_supp_if.h"/>
+        <files mask="wifi_nxp_internal.h"/>
+      </source>
+      <source relative_path="./wifidriver/wpa_supp_if" project_relative_path="wifidriver/wpa_supp_if" type="src">
+        <files mask="wifi_nxp.c"/>
+        <files mask="rtos_wpa_supp_if.c"/>
+        <files mask="wifi_nxp_internal.c"/>
+      </source>
+      <source relative_path="./certs" project_relative_path="certs" type="c_include">
+        <files mask="ca-cert.h"/>
+        <files mask="client-cert.h"/>
+        <files mask="client-key.h"/>
+        <files mask="server-cert.h"/>
+        <files mask="server-key.h"/>
+        <files mask="dh-param.h"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_wifidriver.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./incl" project_relative_path="incl" type="c_include"/>
+        <include_path relative_path="./incl/wlcmgr" project_relative_path="incl/wlcmgr" type="c_include"/>
+        <include_path relative_path="./wifidriver" project_relative_path="wifidriver" type="c_include"/>
+        <include_path relative_path="./wifidriver/incl" project_relative_path="wifidriver/incl" type="c_include"/>
+        <include_path relative_path="./wifidriver/wpa_supp_if" project_relative_path="wifidriver/wpa_supp_if" type="c_include"/>
+        <include_path relative_path="./wifidriver/wpa_supp_if/incl" project_relative_path="wifidriver/wpa_supp_if/incl" type="c_include"/>
+        <include_path relative_path="./certs" project_relative_path="certs" type="c_include"/>
+        <include_path relative_path="./firmware_dnld" project_relative_path="firmware_dnld" type="c_include"/>
+        <include_path relative_path="./sdio_nxp_abs" project_relative_path="sdio_nxp_abs" type="c_include"/>
+        <include_path relative_path="./sdio_nxp_abs/incl" project_relative_path="sdio_nxp_abs/incl" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.MIMXRT1062" name="wifi_nxp" brief="NXP Wi-Fi functionality enables customers to quickly develop applications of interest to add connectivity to different sensors and appliances" version="1.3.46" full_name="NXP Wi-Fi" category="Wireless/NXP Wi-Fi" user_visible="true" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <all>
+              <not>
+                <component_dependency value="utility.debug_console_lite.MIMXRT1062"/>
+              </not>
+              <component_dependency value="utility.debug_console.MIMXRT1062"/>
+            </all>
+            <all>
+              <not>
+                <component_dependency value="utility.debug_console.MIMXRT1062"/>
+              </not>
+              <component_dependency value="utility.debug_console_lite.MIMXRT1062"/>
+            </all>
+          </any_of>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+          <component_dependency value="middleware.wifi.template.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.wifidriver.MIMXRT1062"/>
+        </all>
+      </dependencies>
+      <source relative_path="./dhcpd" project_relative_path="dhcpd" type="c_include">
+        <files mask="dhcp-bootp.h"/>
+        <files mask="dhcp-priv.h"/>
+        <files mask="dns.h"/>
+      </source>
+      <source relative_path="./dhcpd" project_relative_path="dhcpd" type="src">
+        <files mask="dhcp-server-main.c"/>
+        <files mask="dhcp-server.c"/>
+        <files mask="dns-server.c"/>
+      </source>
+      <source relative_path="./incl/port/net" project_relative_path="incl/port/net" type="c_include">
+        <files mask="wm_net.h"/>
+      </source>
+      <source relative_path="./incl" project_relative_path="incl" type="c_include">
+        <files mask="wmstats.h"/>
+      </source>
+      <source relative_path="./port/net" project_relative_path="port/net" type="src">
+        <files mask="net.c"/>
+        <files mask="wifi_netif.c"/>
+      </source>
+      <source relative_path="./port/net" project_relative_path="port/net" type="c_include">
+        <files mask="netif_decl.h"/>
+      </source>
+      <source relative_path="./wlcmgr" project_relative_path="wlcmgr" type="src">
+        <files mask="wlan.c"/>
+        <files mask="wlan_txpwrlimit_cfg.c"/>
+      </source>
+      <source relative_path="./" type="doc">
+        <files mask="ChangeLogKSDK.txt"/>
+        <files mask="CMakeLists.txt"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./incl" project_relative_path="incl" type="c_include"/>
+        <include_path relative_path="./incl/wifidriver" project_relative_path="incl/wifidriver" type="c_include"/>
+        <include_path relative_path="./incl/port/net" project_relative_path="incl/port/net" type="c_include"/>
+        <include_path relative_path="./port/net" project_relative_path="port/net" type="c_include"/>
+        <include_path relative_path="./incl/port/net/hooks" project_relative_path="incl/port/net/hooks" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.sdio.MIMXRT1062" name="wifi_nxp_sdio" brief="NXP Wi-Fi SDIO driver" version="1.3.46" full_name="NXP Wi-Fi SDIO" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+          <component_dependency value="middleware.wifi.mlan_sdio.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.wifidriver.MIMXRT1062"/>
+        </all>
+      </dependencies>
+      <source relative_path="./wifidriver" project_relative_path="wifidriver" type="src">
+        <files mask="wifi-sdio.c"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_sdio.cmake" hidden="true"/>
+      </source>
+    </component>
+    <component id="middleware.wifi.mlan_sdio.MIMXRT1062" name="wifi_nxp_mlan_sdio" brief="NXP Wi-Fi SDIO driver" version="1.3.46" full_name="NXP Wi-Fi SDIO" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <component_dependency value="middleware.sdmmc.host.usdhc.freertos.MIMXRT1062"/>
+            <component_dependency value="middleware.sdmmc.host.usdhc.azurertos.MIMXRT1062"/>
+          </any_of>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+          <component_dependency value="middleware.wifi.template.MIMXRT1062"/>
+          <component_dependency value="middleware.sdmmc.sdio.MIMXRT1062"/>
+          <component_dependency value="middleware.sdmmc.host.usdhc.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.common_files.MIMXRT1062"/>
+        </all>
+      </dependencies>
+      <source relative_path="./sdio_nxp_abs" project_relative_path="sdio_nxp_abs" type="src">
+        <files mask="mlan_sdio.c"/>
+        <files mask="fwdnld_sdio.c"/>
+      </source>
+      <source relative_path="./sdio_nxp_abs/incl" project_relative_path="sdio_nxp_abs/incl" type="c_include">
+        <files mask="fwdnld_sdio.h"/>
+        <files mask="mlan_sdio_defs.h"/>
+        <files mask="mlan_sdio.h"/>
+        <files mask="mlan_sdio_api.h"/>
+      </source>
+      <source relative_path="./wifidriver" project_relative_path="wifidriver" type="c_include">
+        <files mask="wifi-sdio.h"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_mlan_sdio.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./wifidriver" project_relative_path="wifidriver" type="c_include"/>
+        <include_path relative_path="./sdio_nxp_abs/incl" project_relative_path="sdio_nxp_abs/incl" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.cli.MIMXRT1062" name="wifi_nxp_cli" brief="Middlware Wi-Fi CLI" version="1.3.46" full_name="NXP Wi-Fi CLI" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+          <component_dependency value="middleware.wifi.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.wifidriver.MIMXRT1062"/>
+          <component_dependency value="utility.debug_console.MIMXRT1062"/>
+        </all>
+      </dependencies>
+      <source relative_path="./cli" project_relative_path="cli" type="c_include">
+        <files mask="cli_mem.h"/>
+        <files mask="wifi_shell.h"/>
+      </source>
+      <source relative_path="./cli" project_relative_path="cli" type="src">
+        <files mask="cli.c"/>
+        <files mask="cli_mem_simple.c"/>
+        <files mask="cli_utils.c"/>
+        <files mask="wifi_shell.c"/>
+      </source>
+      <source relative_path="./incl" project_relative_path="incl" type="c_include">
+        <files mask="cli.h"/>
+        <files mask="cli_utils.h"/>
+        <files mask="iperf.h"/>
+        <files mask="wifi_ping.h"/>
+      </source>
+      <source relative_path="./port/osa" project_relative_path="port/osa" type="src">
+        <files mask="osa_cli.c"/>
+      </source>
+      <source relative_path="./dhcpd" project_relative_path="dhcpd" type="src">
+        <files mask="dhcp-server-cli.c"/>
+      </source>
+      <source relative_path="./nw_utils" project_relative_path="nw_utils" type="src">
+        <files mask="wifi_ping.c"/>
+        <files mask="iperf.c"/>
+        <files mask="init_enet.c"/>
+      </source>
+      <source relative_path="./nw_utils" project_relative_path="nw_utils" type="c_include">
+        <files mask="network_cfg.h"/>
+      </source>
+      <source relative_path="./nw_utils/telnet" project_relative_path="nw_utils/telnet" type="c_include">
+        <files mask="telnet_server.h"/>
+      </source>
+      <source relative_path="./nw_utils/telnet" project_relative_path="nw_utils/telnet" type="src">
+        <files mask="telnet_server.c"/>
+      </source>
+      <source relative_path="./wlcmgr" project_relative_path="wlcmgr" type="src">
+        <files mask="wlan_basic_cli.c"/>
+        <files mask="wlan_enhanced_tests.c"/>
+        <files mask="wlan_tests.c"/>
+        <files mask="wlan_test_mode_tests.c"/>
+      </source>
+      <source relative_path="./incl/wlcmgr" project_relative_path="incl/wlcmgr" type="c_include">
+        <files mask="wlan_tests.h"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_cli.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./cli" project_relative_path="cli" type="c_include"/>
+        <include_path relative_path="./incl" project_relative_path="incl" type="c_include"/>
+        <include_path relative_path="./incl/wlcmgr" project_relative_path="incl/wlcmgr" type="c_include"/>
+        <include_path relative_path="./nw_utils" project_relative_path="nw_utils" type="c_include"/>
+        <include_path relative_path="./nw_utils/telnet" project_relative_path="nw_utils/telnet" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.wmcrypto.MIMXRT1062" name="wifi_nxp_wmcrypto" brief="Middlware Wi-Fi WMCRYPTO" version="1.0.0" full_name="NXP Wi-Fi WMCRYPTO" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+          <component_dependency value="middleware.wifi.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.wifidriver.MIMXRT1062"/>
+        </all>
+      </dependencies>
+      <source relative_path="./wmcrypto" project_relative_path="wmcrypto" type="src">
+        <files mask="wmcrypto.c"/>
+        <files mask="wmcrypto_mem.c"/>
+        <files mask="wm_mbedtls_entropy.c"/>
+        <files mask="wm_mbedtls_mem.c"/>
+        <files mask="wm_mbedtls_net.c"/>
+        <files mask="wm_mbedtls_helper_api.c"/>
+        <files mask="wm_utils.c"/>
+      </source>
+      <source relative_path="./incl/wmcrypto" project_relative_path="incl/wmcrypto" type="c_include">
+        <files mask="wmcrypto.h"/>
+      </source>
+      <source relative_path="./wmcrypto" project_relative_path="wmcrypto" type="c_include">
+        <files mask="wmcrypto_mem.h"/>
+        <files mask="wm_mbedtls_debug.h"/>
+        <files mask="wm_mbedtls_entropy.h"/>
+        <files mask="wm_mbedtls_mem.h"/>
+        <files mask="wm_mbedtls_net.h"/>
+        <files mask="wm_mbedtls_helper_api.h"/>
+      </source>
+      <source relative_path="./wmcrypto/aescrypto" project_relative_path="wmcrypto/aescrypto" type="c_include">
+        <files mask="aes.h"/>
+        <files mask="aes_siv.h"/>
+        <files mask="aes_wrap.h"/>
+        <files mask="common.h"/>
+        <files mask="crypto.h"/>
+        <files mask="includes.h"/>
+        <files mask="type_def.h"/>
+      </source>
+      <source relative_path="./wmcrypto/aescrypto" project_relative_path="wmcrypto/aescrypto" type="src">
+        <files mask="aes-siv.c"/>
+        <files mask="aes-ctr.c"/>
+        <files mask="aes-omac1.c"/>
+        <files mask="aes-wrap.c"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_wmcrypto.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./wmcrypto" project_relative_path="wmcrypto" type="c_include"/>
+        <include_path relative_path="./incl/wmcrypto" project_relative_path="incl/wmcrypto" type="c_include"/>
+        <include_path relative_path="./wmcrypto/aescrypto" project_relative_path="wmcrypto/aescrypto" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.wmtime.MIMXRT1062" name="wifi_nxp_wmtime" brief="Middlware Wi-Fi WMTIME" version="1.0.0" full_name="NXP Wi-Fi WMTIME" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+          <component_dependency value="middleware.wifi.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.wifidriver.MIMXRT1062"/>
+        </all>
+      </dependencies>
+      <source relative_path="./wmtime" project_relative_path="wmtime" type="src">
+        <files mask="wmtime.c"/>
+      </source>
+      <source relative_path="./incl" project_relative_path="incl" type="c_include">
+        <files mask="wmtime.h"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_wmtime.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./wmtime" project_relative_path="wmtime" type="c_include"/>
+        <include_path relative_path="./incl" project_relative_path="incl" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.wps.MIMXRT1062" name="wifi_nxp_wps" brief="Middlware Wi-Fi WPS" version="1.0.0" full_name="NXP Wi-Fi WPS" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+          <component_dependency value="middleware.wifi.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.wifidriver.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.wmtime.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.wmcrypto.MIMXRT1062"/>
+        </all>
+      </dependencies>
+      <source relative_path="./incl/wps" project_relative_path="incl/wps" type="c_include">
+        <files mask="wifi_nxp_wps.h"/>
+      </source>
+      <source relative_path="./wps" project_relative_path="wps" type="c_include">
+        <files mask="wps_def.h"/>
+        <files mask="wps_eapol.h"/>
+        <files mask="wps_l2.h"/>
+        <files mask="wps_mem.h"/>
+        <files mask="wps_msg.h"/>
+        <files mask="wps_os.h"/>
+        <files mask="wps_wlan.h"/>
+      </source>
+      <source relative_path="./wps" project_relative_path="wps" type="src">
+        <files mask="wps_eapol.c"/>
+        <files mask="wps_l2.c"/>
+        <files mask="wps_main.c"/>
+        <files mask="wps_mem.c"/>
+        <files mask="wps_msg.c"/>
+        <files mask="wps_os.c"/>
+        <files mask="wps_start.c"/>
+        <files mask="wps_state.c"/>
+        <files mask="wps_wlan.c"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_wps.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./wps" project_relative_path="wps" type="c_include"/>
+        <include_path relative_path="./incl/wps" project_relative_path="incl/wps" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.ncp_supp_wmcrypto.MIMXRT1062" name="ncp_supp_wmcrypto" brief="Middlware Wi-Fi NCP_SUPP_WMCRYPTO" version="1.0.0" full_name="NXP Wi-Fi NCP_SUPP_WMCRYPTO" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+          <component_dependency value="middleware.wifi.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.wifidriver.MIMXRT1062"/>
+        </all>
+      </dependencies>
+      <source relative_path="./incl/wmcrypto" project_relative_path="incl/wmcrypto" type="c_include">
+        <files mask="wmcrypto.h"/>
+      </source>
+      <source relative_path="./wmcrypto" project_relative_path="wmcrypto" type="src">
+        <files mask="wmcrypto_mem.c"/>
+        <files mask="wm_mbedtls_entropy.c"/>
+        <files mask="wm_mbedtls_mem.c"/>
+        <files mask="wm_mbedtls_net.c"/>
+        <files mask="wm_mbedtls_helper_api.c"/>
+        <files mask="wm_utils.c"/>
+      </source>
+      <source relative_path="./wmcrypto" project_relative_path="wmcrypto" type="c_include">
+        <files mask="wmcrypto_mem.h"/>
+        <files mask="wm_mbedtls_debug.h"/>
+        <files mask="wm_mbedtls_entropy.h"/>
+        <files mask="wm_mbedtls_mem.h"/>
+        <files mask="wm_mbedtls_net.h"/>
+        <files mask="wm_mbedtls_helper_api.h"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_ncp_supp_wmcrypto.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./wmcrypto" project_relative_path="wmcrypto" type="c_include"/>
+        <include_path relative_path="./incl/wmcrypto" project_relative_path="incl/wmcrypto" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.wifi.wls.MIMXRT1062" name="wifi_nxp_wls" brief="Middlware Wi-Fi Location Service" version="1.3.46" full_name="NXP Wi-Fi WLS" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+          <component_dependency value="middleware.wifi.MIMXRT1062"/>
+          <component_dependency value="middleware.wifi.wifidriver.MIMXRT1062"/>
+        </all>
+      </dependencies>
+      <source relative_path="./wls" project_relative_path="wls" type="c_include">
+        <files mask="range_kalman.h"/>
+        <files mask="wls_api.h"/>
+        <files mask="wls_param_defines.h"/>
+        <files mask="wls_processing.h"/>
+        <files mask="wls_QR_algorithm.h"/>
+        <files mask="wls_radix4Fft.h"/>
+        <files mask="wls_structure_defs.h"/>
+        <files mask="wls_subspace_processing.h"/>
+      </source>
+      <source relative_path="./wls" project_relative_path="wls" type="src">
+        <files mask="range_kalman.c"/>
+        <files mask="wls_api.c"/>
+        <files mask="wls_processing.c"/>
+        <files mask="wls_QR_algorithm.c"/>
+        <files mask="wls_radix4Fft.c"/>
+        <files mask="wls_subspace_processing.c"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_wifi_wls.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="./wls" project_relative_path="wls" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.edgefast_wifi_nxp.MIMXRT1062" name="edgefast_wifi_nxp" brief="Edgefast Wi-Fi NXP is a blocking layer for Wi-Fi NXP" version="1.0.0" full_name="Edgefast Wi-Fi NXP" category="Wireless/Edgefast Wi-Fi" user_visible="true" type="middleware" package_base_path="../../../components/edgefast_wifi" project_base_path="edgefast_wifi">
+      <dependencies>
+        <all>
+          <any_of>
+            <device_dependency value="MIMXRT1062xxxxA"/>
+            <device_dependency value="MIMXRT1062xxxxB"/>
+          </any_of>
+          <component_dependency value="middleware.wifi.MIMXRT1062"/>
+          <component_dependency value="middleware.freertos-kernel.MIMXRT1062"/>
+        </all>
+      </dependencies>
+      <source relative_path="../../../../source" project_relative_path="source" type="src">
+        <files mask="wpl_nxp.c"/>
+      </source>
+      <source relative_path="../../../../include" project_relative_path="include" type="c_include">
+        <files mask="wpl.h"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_edgefast_wifi_nxp.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="../../../../include" project_relative_path="include" type="c_include"/>
+      </include_paths>
+    </component>
+  </components>
+</ksdk:manifest>

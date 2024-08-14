@@ -17,8 +17,8 @@ Change log:
 #define _MLAN_DECL_H_
 
 #include "type_decls.h"
-#include <wm_os.h>
-#ifdef CONFIG_WPA_SUPP
+#include <osa.h>
+#if CONFIG_WPA_SUPP
 #include <ieee802_11_defs.h>
 #endif
 
@@ -110,22 +110,38 @@ Change log:
 
 /** Default Win size attached during ADDBA request */
 #ifndef MLAN_STA_AMPDU_DEF_TXWINSIZE
-#define MLAN_STA_AMPDU_DEF_TXWINSIZE 16
+#if defined(SD9177) && defined(COEX_APP_SUPPORT)
+#define MLAN_STA_AMPDU_DEF_TXWINSIZE 32
+#else
+#define MLAN_STA_AMPDU_DEF_TXWINSIZE 64
+#endif
 #endif
 
 /** Default Win size attached during ADDBA response */
 #ifndef MLAN_STA_AMPDU_DEF_RXWINSIZE
+#if defined(SD9177) && !defined(COEX_APP_SUPPORT)
+#define MLAN_STA_AMPDU_DEF_RXWINSIZE 64
+#else
 #define MLAN_STA_AMPDU_DEF_RXWINSIZE 32
+#endif
 #endif
 
 /** Default Win size attached during ADDBA request */
 #ifndef MLAN_UAP_AMPDU_DEF_TXWINSIZE
-#define MLAN_UAP_AMPDU_DEF_TXWINSIZE 16
+#if defined(SD9177) && defined(COEX_APP_SUPPORT)
+#define MLAN_UAP_AMPDU_DEF_TXWINSIZE 32
+#else
+#define MLAN_UAP_AMPDU_DEF_TXWINSIZE 64
+#endif
 #endif
 
 /** Default Win size attached during ADDBA response */
 #ifndef MLAN_UAP_AMPDU_DEF_RXWINSIZE
+#if defined(SD9177) && !defined(COEX_APP_SUPPORT)
+#define MLAN_UAP_AMPDU_DEF_RXWINSIZE 64
+#else
 #define MLAN_UAP_AMPDU_DEF_RXWINSIZE 32
+#endif
 #endif
 
 
@@ -152,13 +168,19 @@ Change log:
 #define MLAN_RATE_INDEX_MCS4 4U
 /** Rate index for MCS 7 */
 #define MLAN_RATE_INDEX_MCS7 7U
+/** Rate index for MCS 8 */
+#define MLAN_RATE_INDEX_MCS8 8U
 /** Rate index for MCS 9 */
 #define MLAN_RATE_INDEX_MCS9 9U
+#if CONFIG_11AX
+/** Rate index for MCS11 */
+#define MLAN_RATE_INDEX_MCS11 11U
+#endif
 /** Rate index for MCS 32 */
 #define MLAN_RATE_INDEX_MCS32 32U
 /** Rate index for MCS 127 */
 #define MLAN_RATE_INDEX_MCS127 127U
-#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
+#if (CONFIG_11AC) || (CONFIG_11AX)
 #define MLAN_RATE_NSS1 1
 #define MLAN_RATE_NSS2 2
 #endif
@@ -171,7 +193,7 @@ Change log:
 #define MLAN_RATE_BITMAP_MCS0 32U
 /** Rate bitmap for MCS 127 */
 #define MLAN_RATE_BITMAP_MCS127 159
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
 #define MLAN_RATE_BITMAP_NSS1_MCS0 160
 #define MLAN_RATE_BITMAP_NSS1_MCS9 169
 #define MLAN_RATE_BITMAP_NSS2_MCS0 176
@@ -180,6 +202,12 @@ Change log:
 
 /** MU beamformer */
 #define DEFALUT_11AC_CAP_BEAMFORMING_RESET_MASK (MBIT(19))
+#ifdef RW610
+/** Short GI for 80MHz/TVHT_MODE_4C */
+#define DEFALUT_11AC_CAP_SHORTGI_80MHZ_RESET_MASK (MBIT(5))
+/** HE Phy Cap Info(40MHz in 2.4GHz band) */
+#define DEFAULT_11AX_CAP_40MHZIH2_4GHZBAND_RESET_MASK (MBIT(1))
+#endif
 
 /** Size of rx data buffer */
 #define MLAN_RX_DATA_BUF_SIZE (4 * 1024)
@@ -235,6 +263,8 @@ typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 /** BIT value */
 #define MBIT(x) (((t_u32)1) << (x))
 
+#define MRVL_PKT_TYPE_MGMT_FRAME 0xE5
+
 /** Buffer flag for requeued packet */
 #define MLAN_BUF_FLAG_REQUEUED_PKT MBIT(0)
 /** Buffer flag for transmit buf from moal */
@@ -244,6 +274,9 @@ typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 
 /** Buffer flag for bridge packet */
 #define MLAN_BUF_FLAG_BRIDGE_BUF MBIT(3)
+
+/** Buffer flag for TX_STATUS */
+#define MLAN_BUF_FLAG_TX_STATUS MBIT(10)
 
 #ifdef DEBUG_LEVEL1
 /** Debug level bit definition */
@@ -273,6 +306,17 @@ typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 
 /** Default memory allocation flag */
 #define MLAN_MEM_DEF 0U
+
+#if CONFIG_WIFI_IND_DNLD
+/** driver initial the fw reset */
+#define FW_RELOAD_SDIO_INBAND_RESET 1
+/** out band reset trigger reset, no interface re-emulation */
+#define FW_RELOAD_NO_EMULATION 2
+/** out band reset with interface re-emulation */
+#define FW_RELOAD_WITH_EMULATION 3
+/** sdio hw reset */
+#define FW_RELOAD_SDIO_HW_RESET 5
+#endif
 
 /** MrvlExtIEtypesHeader_t */
 typedef MLAN_PACK_START struct _MrvlExtIEtypesHeader
@@ -442,6 +486,10 @@ typedef struct _mlan_fw_image
     t_u8 *pfw_buf;
     /** Firmware image length */
     t_u32 fw_len;
+#if CONFIG_WIFI_IND_DNLD
+    /** Firmware reload flag */
+    t_u8 fw_reload;
+#endif
 } mlan_fw_image, *pmlan_fw_image;
 
 /** Custom data structure */
@@ -514,7 +562,7 @@ typedef struct _mlan_event
 } mlan_event, *pmlan_event;
 
 
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#if CONFIG_EXT_SCAN_SUPPORT
 /** mlan_event_scan_result data structure */
 typedef MLAN_PACK_START struct _mlan_event_scan_result
 {
@@ -756,7 +804,66 @@ typedef MLAN_PACK_START struct _Band_Config_t
     t_u8 scanMode : 2;
 } MLAN_PACK_END Band_Config_t;
 
+/** channel_band_t */
+typedef MLAN_PACK_START struct _chan_band_info
+{
+    /** Band Configuration */
+    Band_Config_t bandcfg;
+    /** channel */
+    t_u8 channel;
+    /** 11n flag */
+    t_u8 is_11n_enabled;
+    /** center channel */
+    t_u8 center_chan;
+#if defined(ENABLE_802_11H) && defined(DFS_SUPPORT)
+    /** dfs channel flag */
+    t_u8 is_dfs_chan;
+#endif
+} MLAN_PACK_END chan_band_info;
+
 /** csi event data structure */
+#if CONFIG_CSI
+typedef MLAN_PACK_START struct _csi_record_ds
+{
+    /** Length in DWORDS, including header */
+    t_u16 Len;
+    /** CSI signature. 0xABCD fixed */
+    t_u16 CSI_Sign;
+    /** User defined HeaderID  */
+    t_u32 CSI_HeaderID;
+    /** Packet info field */
+    t_u16 PKT_info;
+    /** Frame control field for the received packet*/
+    t_u16 FCF;
+    /** Timestamp when packet received */
+    t_u64 TSF;
+    /** Received Packet Destination MAC Address */
+    t_u8 Dst_MAC[6];
+    /** Received Packet Source MAC Address */
+    t_u8 Src_MAC[6];
+    /** RSSI for antenna A */
+    t_u8 Rx_RSSI_A;
+    /** RSSI for antenna B */
+    t_u8 Rx_RSSI_B;
+    /** Noise floor for antenna A */
+    t_u8 Rx_NF_A;
+    /** Noise floor for antenna A */
+    t_u8 Rx_NF_B;
+    /** Rx signal strength above noise floor */
+    t_u8 Rx_SINR;
+    /** Channel */
+    t_u8 channel;
+    /** user defined Chip ID */
+    t_u16 chip_id;
+    /** Reserved */
+    t_u32 rsvd;
+    /** CSI data length in DWORDs */
+    t_u32 CSI_Data_Length;
+    /** Start of CSI data */
+    t_u8 CSI_Data[0];
+    /** At the end of CSI raw data, user defined TailID of 4 bytes*/
+} MLAN_PACK_END csi_record_ds, *pcsi_record_ds;
+#endif
 
 #ifdef PRAGMA_PACK
 #pragma pack(pop)
@@ -849,32 +956,34 @@ typedef struct _mlan_callbacks
 
     /** moal_init_timer*/
     mlan_status (*moal_init_timer)(IN t_void *pmoal_handle,
-                                   OUT t_void **pptimer,
-                                   IN t_void (*callback)(os_timer_arg_t arg),
+                                   OUT t_void *ptimer,
+                                   IN t_void (*callback)(osa_timer_arg_t arg),
                                    IN t_void *pcontext);
     /** moal_free_timer */
-    mlan_status (*moal_free_timer)(IN t_void *pmoal_handle, IN t_void **pptimer);
+    mlan_status (*moal_free_timer)(IN t_void *pmoal_handle, IN t_void *ptimer);
     /** moal_start_timer*/
     mlan_status (*moal_start_timer)(IN t_void *pmoal_handle, IN t_void *ptimer, IN bool periodic, IN t_u32 msec);
+    /** moal_reset_timer*/
+    mlan_status (*moal_reset_timer)(IN t_void *pmoal_handle, IN t_void *ptimer);
     /** moal_stop_timer*/
     mlan_status (*moal_stop_timer)(IN t_void *pmoal_handle, IN t_void *ptimer);
     /** moal_init_lock */
-    mlan_status (*moal_init_lock)(IN t_void *pmoal_handle, OUT t_void **pplock);
+    mlan_status (*moal_init_lock)(IN t_void *pmoal_handle, OUT t_void *plock);
     /** moal_free_lock */
     mlan_status (*moal_free_lock)(IN t_void *pmoal_handle, IN t_void *plock);
     /** moal_spin_lock */
     mlan_status (*moal_spin_lock)(IN t_void *pmoal_handle, IN t_void *plock);
     /** moal_spin_unlock */
     mlan_status (*moal_spin_unlock)(IN t_void *pmoal_handle, IN t_void *plock);
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
     /** moal_init_semaphore */
-    mlan_status (*moal_init_semaphore)(IN t_void *pmoal_handle, IN const char *name, OUT t_void **pplock);
+    mlan_status (*moal_init_semaphore)(IN t_void *pmoal_handle, IN const char *name, OUT t_void *plock);
     /** moal_free_semaphore */
-    mlan_status (*moal_free_semaphore)(IN t_void *pmoal_handle, IN t_void **pplock);
+    mlan_status (*moal_free_semaphore)(IN t_void *pmoal_handle, IN t_void *plock);
     /** moal_semaphore_get */
-    mlan_status (*moal_semaphore_get)(IN t_void *pmoal_handle, IN t_void **pplock);
+    mlan_status (*moal_semaphore_get)(IN t_void *pmoal_handle, IN t_void *plock);
     /** moal_semaphore_put */
-    mlan_status (*moal_semaphore_put)(IN t_void *pmoal_handle, IN t_void **pplock);
+    mlan_status (*moal_semaphore_put)(IN t_void *pmoal_handle, IN t_void *plock);
 #endif
 #if 0
     /** moal_print */

@@ -13,29 +13,29 @@
 
 #include <stdio.h>
 #include <wm_net.h>
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
 
-#if defined(USE_RTOS) && defined(SDK_OS_FREE_RTOS)
 #include <drivers/driver_freertos.h>
 
 typedef struct freertos_wpa_supp_dev_callbk_fns rtos_wpa_supp_dev_callbk_fns;
 
-#ifdef CONFIG_WPA_SUPP_AP
+#if CONFIG_WPA_SUPP_AP
 typedef struct freertos_hostapd_dev_callbk_fns rtos_hostapd_dev_callbk_fns;
 #endif
 
 typedef struct freertos_wpa_supp_dev_ops rtos_wpa_supp_dev_ops;
-#elif defined(CONFIG_ZEPHYR)
+
+#if 0
+/* current zephyr implement uses freertos structures */
 #include <drivers/driver_zephyr.h>
 
 typedef struct zep_wpa_supp_dev_callbk_fns rtos_wpa_supp_dev_callbk_fns;
 
-#ifdef CONFIG_WPA_SUPP_AP
+#if CONFIG_WPA_SUPP_AP
 typedef struct zep_hostapd_dev_callbk_fns rtos_hostapd_dev_callbk_fns;
 #endif
 
 typedef struct zep_wpa_supp_dev_ops rtos_wpa_supp_dev_ops;
-#else
 #error "Define WPA Supplicant driver interface structs for your RTOS here"
 #endif
 
@@ -61,9 +61,10 @@ struct wifi_nxp_ctx_rtos
     bool supp_called_remain_on_chan;
     unsigned int remain_on_channel_freq;
     unsigned int remain_on_channel_duration;
-#ifdef CONFIG_WPA_SUPP_AP
+    bool remain_on_chan_is_canceled;
+#if CONFIG_WPA_SUPP_AP
     rtos_hostapd_dev_callbk_fns hostapd_callbk_fns;
-    int assoc_resp;
+    int mgmt_tx_status;
     uint8_t *last_mgmt_tx_data;
     size_t last_mgmt_tx_data_len;
 #endif

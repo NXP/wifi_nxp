@@ -11,12 +11,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <wm_os.h>
+#include <osa.h>
 #include <wm_net.h>
 #include <wifi.h>
 #include <wifi-debug.h>
 
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
 
 #include <wifi_nxp.h>
 #include <rtos_wpa_supp_if.h>
@@ -39,7 +39,7 @@ static int wifi_nxp_wpa_supp_set_mac_addr(void *if_priv, const t_u8 *addr)
     return wifi_nxp_set_mac_addr(addr);
 }
 
-static const rtos_wpa_supp_dev_ops wpa_supp_ops = {
+const rtos_wpa_supp_dev_ops wpa_supp_ops = {
     .init                     = wifi_nxp_wpa_supp_dev_init,
     .deinit                   = wifi_nxp_wpa_supp_dev_deinit,
     .hapd_init                = wifi_nxp_hostapd_dev_init,
@@ -55,6 +55,8 @@ static const rtos_wpa_supp_dev_ops wpa_supp_ops = {
     .authenticate             = wifi_nxp_wpa_supp_authenticate,
     .associate                = wifi_nxp_wpa_supp_associate,
     .set_key                  = wifi_nxp_wpa_supp_set_key,
+    .del_key                  = wifi_nxp_wpa_supp_del_key,
+    .set_rekey_info           = wifi_nxp_wpa_supp_set_rekey_info,
     .set_supp_port            = wifi_nxp_wpa_set_supp_port,
     .set_country              = wifi_nxp_wpa_supp_set_country,
     .get_country              = wifi_nxp_wpa_supp_get_country,
@@ -74,6 +76,8 @@ static const rtos_wpa_supp_dev_ops wpa_supp_ops = {
     .set_frag                 = wifi_nxp_hostapd_set_frag,
     .stop_ap                  = wifi_nxp_hostapd_stop_ap,
     .set_acl                  = wifi_nxp_hostapd_set_acl,
+    .dpp_listen               = wifi_nxp_wpa_dpp_listen,
+    .get_modes                = wifi_nxp_wpa_get_modes,
 };
 
 static void wifi_nxp_event_proc_scan_start(void *if_ctx)
@@ -86,7 +90,7 @@ static void wifi_nxp_event_proc_scan_abort(void *if_ctx)
     wifi_nxp_wpa_supp_event_proc_scan_abort(if_ctx);
 }
 
-static void wifi_nxp_event_proc_scan_done(void *if_priv)
+static void wifi_nxp_event_proc_scan_done(void *if_priv, int external_scan)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
@@ -97,7 +101,7 @@ static void wifi_nxp_event_proc_scan_done(void *if_priv)
         wifi_e("%s: wifi_if_ctx_rtos is NULL", __func__);
         return;
     }
-    wifi_nxp_wpa_supp_event_proc_scan_done(if_priv, 0);
+    wifi_nxp_wpa_supp_event_proc_scan_done(if_priv, 0, external_scan);
 }
 
 static void wifi_nxp_event_reamin_on_channel(void *if_priv, int cancel_channel)
@@ -131,9 +135,14 @@ static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
     .remain_on_channel_callbk_fn   = wifi_nxp_event_reamin_on_channel,
     .mgmt_rx_callbk_fn             = wifi_nxp_wpa_supp_event_proc_mgmt_rx,
     .eapol_rx_callbk_fn            = wifi_nxp_wpa_supp_event_proc_eapol_rx,
+    .ecsa_complete_callbk_fn       = wifi_nxp_wpa_supp_event_proc_ecsa_complete,
+    .dfs_cac_started_callbk_fn     = wifi_nxp_wpa_supp_event_proc_dfs_cac_started,
+    .dfs_cac_finished_callbk_fn    = wifi_nxp_wpa_supp_event_proc_dfs_cac_finished,
 };
 
+#ifndef __ZEPHYR__
 static int g_net_idx = -1;
+#endif
 
 int wifi_supp_init(void)
 {
@@ -148,7 +157,7 @@ int wifi_supp_init(void)
 
     wm_wifi.supp_if_callbk_fns = (wifi_nxp_callbk_fns_t *)&supp_callbk_fns;
 
-    g_wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)os_mem_alloc(sizeof(struct wifi_nxp_ctx_rtos));
+    g_wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)OSA_MemoryAllocate(sizeof(struct wifi_nxp_ctx_rtos));
 
     if (!g_wifi_if_ctx_rtos)
     {
@@ -166,6 +175,7 @@ int wifi_supp_init(void)
         goto out;
     }
 
+#ifndef __ZEPHYR__
     if (g_net_idx == -1)
     {
         g_net_idx = net_alloc_client_data_id();
@@ -178,10 +188,11 @@ int wifi_supp_init(void)
     }
 
     netif_set_client_data(iface, LWIP_NETIF_CLIENT_DATA_INDEX_MAX, (void *)&wpa_supp_ops);
+#endif
 
     (void)net_get_if_name_netif(sta_iface_name, iface);
 
-    g_wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)os_mem_alloc(sizeof(struct wifi_nxp_ctx_rtos));
+    g_wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)OSA_MemoryAllocate(sizeof(struct wifi_nxp_ctx_rtos));
 
     if (!g_wifi_if_ctx_rtos)
     {
@@ -199,7 +210,9 @@ int wifi_supp_init(void)
         goto out;
     }
 
+#ifndef __ZEPHYR__
     netif_set_client_data(iface, LWIP_NETIF_CLIENT_DATA_INDEX_MAX, (void *)&wpa_supp_ops);
+#endif
 
     (void)net_get_if_name_netif(uap_iface_name, iface);
 
@@ -240,13 +253,13 @@ void wifi_supp_deinit(void)
 
     if (wm_wifi.if_priv)
     {
-        os_mem_free(wm_wifi.if_priv);
+        OSA_MemoryFree(wm_wifi.if_priv);
         wm_wifi.if_priv = NULL;
     }
 
     if (wm_wifi.hapd_if_priv)
     {
-        os_mem_free(wm_wifi.hapd_if_priv);
+        OSA_MemoryFree(wm_wifi.hapd_if_priv);
         wm_wifi.hapd_if_priv = NULL;
     }
     wifi_supp_init_done = 0U;

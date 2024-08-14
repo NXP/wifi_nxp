@@ -8,10 +8,12 @@
  *
  */
 
+#ifndef __ZEPHYR__
 #include <wmerrno.h>
 #include <wm_utils.h>
+#endif
 
-#include <fsl_os_abstraction.h>
+#include <osa.h>
 #include <mlan_sdio_api.h>
 
 
@@ -19,10 +21,12 @@
 #include "mlan_main_defs.h"
 #include "mlan_sdio_defs.h"
 #include "type_decls.h"
+#ifndef __ZEPHYR__
 #include "fsl_sdmmc_common.h"
 #include "fsl_sdmmc_host.h"
-#include "fsl_common.h"
 #include "sdmmc_config.h"
+#endif
+#include "fsl_common.h"
 #include "sdio.h"
 #include "firmware_dnld.h"
 
@@ -41,15 +45,18 @@
  * At the same time buffer address/size should be aligned to the cache line size if cache is supported.
  */
 
+#ifdef __ZEPHYR__
+#define BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE 32
+#endif
 /*! @brief Data written to the card */
-#ifdef CONFIG_SDIO_MULTI_PORT_TX_AGGR
+#if CONFIG_SDIO_MULTI_PORT_TX_AGGR
 SDK_ALIGN(uint8_t outbuf[SDIO_MP_AGGR_DEF_PKT_LIMIT * 2 * DATA_BUFFER_SIZE], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
 #else
 SDK_ALIGN(uint8_t outbuf[DATA_BUFFER_SIZE + DATA_BUFFER_SIZE / 2], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
 #endif
 
 /*! @brief Data read from the card */
-#ifdef CONFIG_SDIO_MULTI_PORT_RX_AGGR
+#if (CONFIG_SDIO_MULTI_PORT_RX_AGGR) && !(FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
 SDK_ALIGN(uint8_t inbuf[SDIO_MP_AGGR_DEF_PKT_LIMIT * 2 * DATA_BUFFER_SIZE], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
 #else
 SDK_ALIGN(uint8_t inbuf[2 * DATA_BUFFER_SIZE], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
@@ -69,6 +76,10 @@ WEAK void set_ioport_inmlan(t_u32 port)
     return;
 }
 
+unsigned int wifi_get_sdio_ioport()
+{
+    return ioport_g;
+}
 uint8_t *wifi_get_sdio_outbuf(uint32_t *outbuf_len)
 {
     *outbuf_len = sizeof(outbuf);
@@ -134,10 +145,12 @@ static void wlan_sdio_init_ioport(void)
     uint32_t resp = 0;
     t_u8 data;
 
-#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177)
     ioport_g = MEM_PORT;
 
     sdio_io_d("IOPORT : (0x%x)", ioport_g);
+
+    (void)sdio_drv_creg_write(HOST_INT_MASK_REG, 1, 0x0, &resp);
 
     /* Enable sdio cmd53 new mode */
     (void)sdio_drv_creg_read(CARD_CONFIG_2_1_REG, 1, &resp);
@@ -159,6 +172,8 @@ static void wlan_sdio_init_ioport(void)
     (void)sdio_drv_creg_write(CMD_CONFIG_1, 1, data, &resp);
     (void)sdio_drv_creg_read(CMD_CONFIG_1, 1, &resp);
 #elif defined(SD8801)
+    sdio_drv_creg_write(HOST_INT_MASK_REG, 1, 0x0, &resp);
+
     /* Read the PORT regs for IOPORT address */
     sdio_drv_creg_read(IO_PORT_0_REG, 1, &resp);
     ioport_g = (resp & 0xff);

@@ -12,7 +12,7 @@
  */
 #include <string.h>
 
-#include <wm_os.h>
+#include <osa.h>
 #include <wm_net.h>
 #include <dhcp-server.h>
 #include <wlan.h>
@@ -176,7 +176,7 @@ static int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr)
         hdr->flags.fields.aa    = 1;
         hdr->flags.fields.rcode = 0;
         hdr->flags.num          = htons(hdr->flags.num);
-        hdr->answer_rrs         = htons((u16_t)i);
+        hdr->answer_rrs         = htons((uint16_t)i);
         /* the response consists of:
          * - 1 x DNS header
          * - num_questions x query fields from the message we're parsing
@@ -222,7 +222,7 @@ void dhcp_enable_dns_server(char **domain_names)
         {
             dnss.count_qnames++;
         }
-        dnss.list_qnames = os_mem_alloc(dnss.count_qnames * sizeof(struct dns_qname));
+        dnss.list_qnames = OSA_MemoryAllocate(dnss.count_qnames * sizeof(struct dns_qname));
 
         for (i = 0; i < dnss.count_qnames; i++)
         {
@@ -262,7 +262,7 @@ void dns_process_packet(void)
     socklen_t flen = sizeof(caddr);
     int len;
     len = recvfrom(dnss.dnssock, dhcps.msg, sizeof(dhcps.msg), 0, (struct sockaddr *)(void *)&caddr, &flen);
-    if (len > 0)
+    if (len > 0 && len < SERVER_BUFFER_SIZE)
     {
         dhcp_d("recved msg on dns sock len: %d", len);
         (void)dhcp_dns_server_handler(dhcps.msg, len, &caddr);
@@ -301,7 +301,7 @@ void dns_free_allocations(void)
     if (dnss.list_qnames != NULL)
     {
         dnss.count_qnames = 0;
-        os_mem_free(dnss.list_qnames);
+        OSA_MemoryFree(dnss.list_qnames);
         dnss.list_qnames = NULL;
     }
     if (dnss.dnssock != -1)

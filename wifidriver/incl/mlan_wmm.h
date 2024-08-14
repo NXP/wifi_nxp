@@ -75,7 +75,7 @@ static INLINE t_void wlan_request_ralist_lock(pmlan_private priv)
 
     ENTER();
 
-    os_mutex_get(&priv->tx_ba_stream_tbl_lock, OS_WAIT_FOREVER);
+    OSA_MutexLock((osa_mutex_handle_t)priv->tx_ba_stream_tbl_lock, osaWaitForever_c);
 
     LEAVE();
     return;
@@ -93,7 +93,8 @@ static INLINE t_void wlan_release_ralist_lock(pmlan_private priv)
 
     ENTER();
 
-    os_mutex_put(&priv->tx_ba_stream_tbl_lock);
+    OSA_MutexUnlock((osa_mutex_handle_t)priv->tx_ba_stream_tbl_lock);
+
 
     LEAVE();
     return;
@@ -192,7 +193,7 @@ mlan_status wlan_cmd_wmm_param_config(pmlan_private pmpriv,
 /* process wmm_param_config command response */
 mlan_status wlan_ret_wmm_param_config(pmlan_private pmpriv, const HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);
 
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
 /* wmm enhance buffer pool */
 #define MAX_WMM_BUF_NUM 16
 #define WMM_DATA_LEN    1580
@@ -203,8 +204,27 @@ typedef struct
     mlan_linked_list entry;
     t_u8 intf_header[INTF_HEADER_LEN];
     TxPD tx_pd;
+#if CONFIG_TX_RX_ZERO_COPY
+    t_u8 eth_header[ETH_HDR_LEN];
+#if CONFIG_AMSDU_IN_AMPDU
+    t_u8 llc_header[LLC_SNAP_LEN];
+#endif
+    /* Data payload pointer */
+    t_u8 *payload;
+    /* Packet buffer structure pointer */
+    void *buffer;
+#else
     t_u8 data[WMM_DATA_LEN];
+#endif
 } outbuf_t;
+
+typedef struct
+{
+    mlan_linked_list entry;
+    t_u8 intf_header[INTF_HEADER_LEN];
+    TxPD tx_pd;
+    t_u8 data[1];
+} bypass_outbuf_t;
 
 /* transfer destination address to receive address */
 void wifi_wmm_da_to_ra(uint8_t *da, uint8_t *ra);
@@ -236,6 +256,14 @@ void wifi_wmm_drop_no_media(const uint8_t interface);
 void wifi_wmm_drop_retried_drop(const uint8_t interface);
 void wifi_wmm_drop_pause_drop(const uint8_t interface);
 void wifi_wmm_drop_pause_replaced(const uint8_t interface);
+
+int wifi_bypass_txq_init(void);
+void wifi_bypass_txq_deinit(void);
+void wlan_get_bypass_lock(uint8_t interface);
+void wlan_put_bypass_lock(uint8_t interface);
+void wlan_add_buf_bypass_txq(const uint8_t *buffer, const uint8_t interface);
+t_u8 wlan_bypass_txq_empty(uint8_t interface);
+void wlan_cleanup_bypass_txq(uint8_t interface);
 #endif
 
 #endif /* !_MLAN_WMM_H_ */

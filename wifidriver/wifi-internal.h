@@ -13,18 +13,29 @@
 
 #include <limits.h>
 
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
 #include "wifi_nxp_internal.h"
 #endif
 
 #include <mlan_api.h>
 
-#include <wm_os.h>
+#include <osa.h>
 #include <wifi_events.h>
 #include <wifi-decl.h>
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
 #include <ieee802_11_defs.h>
 #endif
+
+/* We don't see events coming in quick succession,
+ * MAX_EVENTS = 20 is fairly big value */
+#define MAX_EVENTS 20
+
+struct bus_message
+{
+    uint16_t event;
+    uint16_t reason;
+    void *data;
+};
 
 typedef struct
 {
@@ -46,35 +57,68 @@ typedef struct _hostcmd_cfg
     bool is_hostcmd;
 } hostcmd_cfg_t;
 
+/** This enum defines various thread events
+ * for which thread processing will occur */
+enum wifi_thread_event_t
+{
+    WIFI_EVENT_STA            = 1,
+    WIFI_EVENT_UAP            = 1 << 1,
+    WIFI_EVENT_SDIO           = 1 << 2,
+    WIFI_EVENT_SCAN           = 1 << 3,
+    WIFI_EVENT_TX_DATA        = 1 << 4,
+    WIFI_EVENT_TX_NULL_DATA   = 1 << 5,
+    WIFI_EVENT_TX_BYPASS_DATA = 1 << 6,
+};
+
 typedef struct
 {
-    os_thread_t wm_wifi_main_thread;
-    os_thread_t wm_wifi_core_thread;
-    os_thread_t wm_wifi_scan_thread;
-#ifdef CONFIG_WMM
-    /** Thread handle for sending data */
-    os_thread_t wm_wifi_driver_tx;
-#endif
-    os_queue_t *wlc_mgr_event_queue;
+    const uint8_t *fw_start_addr;
+    size_t size;
+    t_u8 wifi_init_done;
+    t_u8 wifi_core_init_done;
+    OSA_TASK_HANDLE_DEFINE(wifi_drv_task_Handle);
 
-    void (*data_intput_callback)(const uint8_t interface, const uint8_t *buffer, const uint16_t len);
-    void (*amsdu_data_intput_callback)(uint8_t interface, uint8_t *buffer, uint16_t len);
+#ifndef RW610
+    OSA_TASK_HANDLE_DEFINE(wifi_core_task_Handle);
+#endif
+    OSA_TASK_HANDLE_DEFINE(wifi_scan_task_Handle);
+#if CONFIG_WMM
+    /** Thread handle for sending data */
+    OSA_TASK_HANDLE_DEFINE(wifi_drv_tx_task_Handle);
+#endif
+    OSA_TASK_HANDLE_DEFINE(wifi_powersave_task_Handle);
+
+    OSA_EVENT_HANDLE_DEFINE(wifi_event_Handle);
+
+    osa_msgq_handle_t *wlc_mgr_event_queue;
+
+    void (*data_input_callback)(const uint8_t interface, const uint8_t *buffer, const uint16_t len);
+#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+    void *(*wifi_get_rxbuf_desc)(t_u16 rx_len);
+#endif
+    void (*amsdu_data_input_callback)(uint8_t interface, uint8_t *buffer, uint16_t len);
     void (*deliver_packet_above_callback)(void *rxpd, t_u8 interface, t_void *lwip_pbuf);
     bool (*wrapper_net_is_ip_or_ipv6_callback)(const t_u8 *buffer);
 
-    os_mutex_t command_lock;
-    os_semaphore_t command_resp_sem;
-    os_mutex_t mcastf_mutex;
-#ifdef CONFIG_WMM
+    OSA_MUTEX_HANDLE_DEFINE(command_lock);
+
+    OSA_SEMAPHORE_HANDLE_DEFINE(command_resp_sem);
+
+    OSA_MUTEX_HANDLE_DEFINE(mcastf_mutex);
+
+#if CONFIG_WMM
     /** Semaphore to protect data parameters */
-    os_semaphore_t tx_data_sem;
+    OSA_SEMAPHORE_HANDLE_DEFINE(tx_data_sem);
+#ifdef __ZEPHYR__
+    /** Queue for sending data packets to fw */
+    OSA_MSGQ_HANDLE_DEFINE(tx_data, MAX_EVENTS, sizeof(struct bus_message));
+#endif
 #endif
     unsigned last_sent_cmd_msec;
 
     /* Queue for events/data from low level interface driver */
-    os_queue_t io_events;
-
-    os_queue_pool_t io_events_queue_data;
+    OSA_MSGQ_HANDLE_DEFINE(io_events, MAX_EVENTS, sizeof(struct bus_message));
+    OSA_MSGQ_HANDLE_DEFINE(powersave_queue, MAX_EVENTS, sizeof(struct bus_message));
 
     mcast_filter *start_list;
 
@@ -121,7 +165,7 @@ typedef struct
     t_u16 ht_cap_info;
     /** HTTX Cfg */
     t_u16 ht_tx_cfg;
-#ifdef CONFIG_WIFI_FW_DEBUG
+#if CONFIG_WIFI_FW_DEBUG
     /** This function mount USB device.
      *
      * return WM_SUCCESS on success
@@ -161,7 +205,7 @@ typedef struct
     wlan_user_scan_cfg *g_user_scan_cfg;
 
     bool scan_stop;
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
     void *if_priv;
     void *hapd_if_priv;
     wifi_nxp_callbk_fns_t *supp_if_callbk_fns;
@@ -170,7 +214,8 @@ typedef struct
     nxp_wifi_event_mlme_t mgmt_rx;
     nxp_wifi_event_eapol_mlme_t eapol_rx;
     bool wpa_supp_scan;
-#ifdef CONFIG_HOSTAPD
+    bool external_scan;
+#if CONFIG_HOSTAPD
     bool hostapd_op;
 #endif
 #endif
@@ -178,13 +223,6 @@ typedef struct
 
 extern wm_wifi_t wm_wifi;
 extern bool split_scan_in_progress;
-
-struct bus_message
-{
-    uint16_t event;
-    uint16_t reason;
-    void *data;
-};
 
 /* fixme: This structure seems to have been removed from mlan. This was
    copied from userif_ext.h file temporarily. Change the handling of events to
@@ -252,13 +290,19 @@ bool is_split_scan_complete(void);
  * Waits for Command processing to complete and waits for command response
  */
 int wifi_wait_for_cmdresp(void *cmd_resp_priv);
+#if CONFIG_FW_VDLL
+/**
+ * Waits for Command processing to complete and waits for command response for VDLL
+ */
+int wifi_wait_for_vdllcmdresp(void *cmd_resp_priv);
+#endif
 /**
  * Register an event queue
  *
  * This queue is used to send events and command responses to the wifi
  * driver from the stack dispatcher thread.
  */
-int bus_register_event_queue(os_queue_t *event_queue);
+int bus_register_event_queue(osa_msgq_handle_t event_queue);
 
 /**
  * De-register the event queue.
@@ -287,12 +331,30 @@ void bus_deregister_data_input_funtion(void);
  */
 int wifi_get_command_lock(void);
 
+int wifi_put_command_resp_sem(void);
+
 /*
  * @internal
  *
  *
  */
 int wifi_put_command_lock(void);
+
+#if ((CONFIG_11MC) || (CONFIG_11AZ)) && (CONFIG_WLS_CSI_PROC)
+/*
+ * @internal
+ *
+ *
+ */
+int wifi_get_wls_csi_sem(void);
+
+/*
+ * @internal
+ *
+ *
+ */
+int wifi_put_wls_csi_sem(void);
+#endif
 
 /*
  * Process the command reponse received from the firmware.
@@ -322,8 +384,19 @@ void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp);
 mlan_status wrapper_moal_malloc(t_void *pmoal_handle, t_u32 size, t_u32 flag, t_u8 **ppbuf);
 mlan_status wrapper_moal_mfree(t_void *pmoal_handle, t_u8 *pbuf);
 
+#if defined(RW610)
+int wifi_imu_lock(void);
+void wifi_imu_unlock(void);
+#else
 int wifi_sdio_lock(void);
 void wifi_sdio_unlock(void);
+#endif
+
+#if CONFIG_WIFI_IND_RESET
+bool wifi_ind_reset_in_progress(void);
+void wifi_ind_reset_start(void);
+void wifi_ind_reset_stop(void);
+#endif
 
 mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int len, t_u16 action);
 
@@ -339,21 +412,24 @@ void wifi_user_scan_config_cleanup(void);
  *
  */
 void wifi_scan_stop(void);
-#ifdef CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP
 void wpa_supp_handle_link_lost(mlan_private *priv);
 
 int wifi_set_scan_ies(void *ie, size_t ie_len);
-#ifdef CONFIG_WPA_SUPP_WPS
+#if CONFIG_WPA_SUPP_WPS
 bool wifi_nxp_wps_session_enable(void);
 #endif
 
 int wifi_setup_ht_cap(t_u16 *ht_capab, t_u8 *mcs_set, t_u8 *a_mpdu_params, t_u8 band);
 void wifi_setup_channel_info(void *channels, int num_channels, t_u8 band);
 
-#ifdef CONFIG_11AC
+#if CONFIG_11AC
 int wifi_setup_vht_cap(t_u32 *vht_capab, t_u8 *vht_mcs_set, t_u8 band);
 #endif
 
+#if CONFIG_11AX
+int wifi_setup_he_cap(nxp_wifi_he_capabilities *he_cap, t_u8 band);
+#endif
 int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info);
 int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_time, const t_u8 *data, size_t data_len);
 int wifi_remain_on_channel(const bool status, const uint8_t channel, const uint32_t duration);
@@ -362,6 +438,7 @@ int wifi_set_uap_rts(int rts_threshold);
 int wifi_set_uap_frag(int frag_threshold);
 int wifi_nxp_sta_add(nxp_wifi_sta_info_t *params);
 int wifi_nxp_sta_remove(const uint8_t *addr);
+void wifi_nxp_uap_disconnect(mlan_private *priv, t_u16 reason_code, t_u8 *mac);
 int wifi_nxp_stop_ap(void);
 int wifi_nxp_set_acl(nxp_wifi_acl_info_t *acl_params);
 int wifi_nxp_set_country(unsigned int bss_type, const char *alpha2);
@@ -372,7 +449,7 @@ int wifi_nxp_scan_res_get2(t_u32 table_idx, nxp_wifi_event_new_scan_result_t *sc
 #endif /* CONFIG_WPA_SUPP */
 
 
-#ifdef CONFIG_WMM
+#if CONFIG_WMM
 int send_wifi_driver_tx_data_event(t_u8 interface);
 int send_wifi_driver_tx_null_data_event(t_u8 interface);
 #endif
