@@ -899,6 +899,16 @@ static mlan_status do_wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMM
             }
             wlan_release_ralist_lock(priv);
         }
+        else
+        {
+            wlan_request_ralist_lock(priv);
+            if ((ptx_ba_tbl = wlan_11n_get_txbastream_tbl(priv, padd_ba_rsp->peer_mac_addr)))
+            {
+                /* Clear txpkt_cnt to avoid collision between our STA and our uAP */
+                ptx_ba_tbl->txpkt_cnt = 0;
+            }
+            wlan_release_ralist_lock(priv);
+        }
         wifi_d("Failed: ADDBA req: %d", padd_ba_rsp->add_rsp_result);
     }
 
