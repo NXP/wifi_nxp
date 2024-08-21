@@ -725,6 +725,21 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
         ssid_v[ssid_off] = '\0';
         ssid_off++;
     }
+#if CONFIG_ROAMING
+    if (wlan_get_roaming_status() && mlan_adap->priv[0]->media_connected)
+    {
+        if (params->num_ssids == 1 && params->ssids[0].ssid_len == 0)
+        {
+             ssid_off = 0;
+             memcpy(ssid_v+ssid_off,
+                    mlan_adap->priv[0]->curr_bss_params.bss_descriptor.ssid.ssid,
+                    mlan_adap->priv[0]->curr_bss_params.bss_descriptor.ssid.ssid_len);
+             ssid_off += mlan_adap->priv[0]->curr_bss_params.bss_descriptor.ssid.ssid_len;
+             ssid_v[ssid_off] = '\0';
+             ssid_off++;
+        }
+    }
+#endif
     ssid = (const char *)&ssid_v;
 #if 0
 #if CONFIG_COMBO_SCAN

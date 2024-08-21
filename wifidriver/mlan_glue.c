@@ -5362,11 +5362,6 @@ int wifi_set_rssi_low_threshold(uint8_t *low_rssi)
                              cmd);
     wifi_wait_for_cmdresp(NULL);
 
-    if ((*low_rssi + RSSI_HYSTERESIS) <= LOWEST_RSSI_THRESHOLD)
-    {
-        *low_rssi += RSSI_HYSTERESIS;
-    }
-
     return wm_wifi.cmd_resp_status;
 #else
     return 0;
