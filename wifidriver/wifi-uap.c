@@ -2082,6 +2082,7 @@ static t_u8 wifi_check_rsn_ie(IEEEtypes_Rsn_t *rsn_ie, mlan_uap_bss_param *sys_c
         switch (key_mgmt->list[i].type)
         {
             case RSN_AKM_8021X:
+            case RSN_AKM_8021X_SHA256:
             case RSN_AKM_8021X_SUITEB:
             case RSN_AKM_8021X_SUITEB_192:
 #if CONFIG_11R
