@@ -851,6 +851,8 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
         {
             tlv_wmm_parameter->wmm_para.ac_params[ac].aci_aifsn.aifsn =
                 bss->param.bss_config.wmm_para.ac_params[ac].aci_aifsn.aifsn;
+            tlv_wmm_parameter->wmm_para.ac_params[ac].aci_aifsn.acm =
+                bss->param.bss_config.wmm_para.ac_params[ac].aci_aifsn.acm;
             tlv_wmm_parameter->wmm_para.ac_params[ac].aci_aifsn.aci =
                 bss->param.bss_config.wmm_para.ac_params[ac].aci_aifsn.aci;
             tlv_wmm_parameter->wmm_para.ac_params[ac].ecw.ecw_max =
