@@ -2,7 +2,7 @@
  *
  *  @brief This file contains definition for timer and socket read functions
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -58,8 +58,13 @@ typedef struct wps_loop_s
 struct wps_thread_t
 {
     int initialized;
-    OSA_MSGQ_HANDLE_DEFINE(cmd_queue, MAX_EVENTS, sizeof(struct bus_message));
-    OSA_MSGQ_HANDLE_DEFINE(data_queue, MAX_EVENTS, sizeof(struct bus_message));
+#if CONFIG_P2P
+    OSA_MUTEX_HANDLE_DEFINE(p2p_session);
+    osa_msgq_handle_t peer_event_queue;
+    osa_msgq_handle_t event_queue;
+#endif
+    osa_msgq_handle_t cmd_queue;
+    osa_msgq_handle_t data_queue;
     int (*cb)(enum wps_event event, void *data, uint16_t len);
 };
 
@@ -158,4 +163,7 @@ int wps_start_timer(unsigned int secs, unsigned int usecs, void (*handler)(void 
  */
 int wps_cancel_timer(void (*handler)(void *timeout_ctx), void *callback_data);
 void wps_peer_event_receive();
+#if CONFIG_P2P
+void wps_event_receive(WPS_DATA *wps_s, WFD_DATA *pwfd_data);
+#endif
 #endif /* _WPS_OS_H_ */

@@ -4,7 +4,7 @@
  *  structures and declares global function prototypes used
  *  in MLAN module.
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -24,6 +24,10 @@ t_u16 wlan_convert_mcsmap_to_maxrate(mlan_private *priv, t_u8 bands, t_u16 mcs_m
 void wlan_fill_vht_cap_tlv(mlan_private *priv, MrvlIETypes_VHTCap_t *pvht_cap, t_u16 bands, t_u8 flag);
 #if 0
 void wlan_fill_vht_cap_ie(mlan_private *priv, IEEEtypes_VHTCap_t *pvht_cap, t_u16 bands);
+#endif
+#ifdef HOST_TDLS_SUPPORT
+void wlan_fill_tdls_vht_oprat_ie(mlan_private *priv, IEEEtypes_VHTOprat_t *vht_oprat, sta_node *sta_ptr);
+t_u8 wlan_is_ap_in_11ac_mode(mlan_private *priv);
 #endif
 int wlan_cmd_append_11ac_tlv(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc, t_u8 **ppbuffer);
 #if 0

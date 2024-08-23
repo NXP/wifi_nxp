@@ -2,7 +2,7 @@
  *
  *  @brief Consolidated Header for Data types
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -15,9 +15,5 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <wifi_config_default.h>
-
-#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
-#endif
-
 #endif /* ! _WMTYPES_H_ */

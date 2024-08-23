@@ -2,14 +2,14 @@
  *
  *  @brief  This file provides WLAN ENHANCED Test API
  *
- *  Copyright 2008-2020, 2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
 #include <wlan.h>
-#include <cli.h>
+#include <wifi_shell.h>
 #include <cli_utils.h>
 #include <string.h>
 #include <wm_net.h> /* for net_inet_aton */
@@ -738,8 +738,6 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
         if (errno != 0)
             (void)PRINTF("Error during strtoul errno:%d", errno);
     }
-#else
-    ds_rate.param.rate_cfg.rate_setting = 0xffff;
 #endif
 #if CONFIG_AUTO_NULL_TX
 #if (CONFIG_11AC) || (CONFIG_11AX)
@@ -778,10 +776,16 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
     {
         if (((ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_LG) &&
              (ds_rate.param.rate_cfg.rate_index > MLAN_RATE_INDEX_OFDM7))
+#if CONFIG_11N
             || ((ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_HT) &&
                 (ds_rate.param.rate_cfg.rate_index != 32U) &&
+#ifdef STREAM_2X2
+                (ds_rate.param.rate_cfg.rate_index > 15U)
+#else
                 (ds_rate.param.rate_cfg.rate_index > 7U)
+#endif
                     )
+#endif /* CONFIG_11N */
 #if CONFIG_11AC
             || ((ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_VHT) &&
 #ifndef RW610
@@ -1353,14 +1357,48 @@ static void dump_wlan_set_txomi_usage()
     (void)PRINTF("\t It specifies the number of consecutive data frames containing the OMI\r\n");
 }
 
+#if !CONFIG_MLAN_WMSDK
+static void print_rutxpwrlimit(wlan_rutxpwrlimit_t *txpwrlimit)
+{
+    unsigned char i, j;
+    t_s16 rupwr;
+
+    (void)PRINTF("--------------------------------------------------------------------------------\r\n");
+    for (i = 0; i < txpwrlimit->num_chans; i++)
+    {
+        (void)PRINTF("StartFreq: %d\r\n", txpwrlimit->rupwrlimit_config[i].start_freq);
+        (void)PRINTF("ChanWidth: %d\r\n", txpwrlimit->rupwrlimit_config[i].width);
+        (void)PRINTF("ChanNum:   %d\r\n", txpwrlimit->rupwrlimit_config[i].chan_num);
+        (void)PRINTF("RU Pwr:");
+        for (j = 0; j < 6; j++)
+        {
+            rupwr = txpwrlimit->rupwrlimit_config[i].ruPower[j];
+            /*  UART is giving issue with printing of s8 values and s8 negative number is not printed properly (printed
+             * as positive number).
+             *  TODO : This still need to be debugged.
+             *  Next piece of code is written as a work-around for this issue of UART
+             */
+            if (rupwr & 0x80)
+            {
+                rupwr = -rupwr;
+                (void)PRINTF("-%d,", (t_s8)rupwr);
+            }
+            else
+                (void)PRINTF("%d,", (t_s8)rupwr);
+        }
+        (void)PRINTF("\r\n");
+    }
+    (void)PRINTF("\r\n");
+}
+#endif
 
 static void test_wlan_set_rutxpwrlimit(int argc, char **argv)
 {
     int rv;
-#if CONFIG_COMPRESS_RU_TX_PWTBL
-#ifdef RW610
     uint32_t board_type;
+#if CONFIG_COMPRESS_RU_TX_PWTBL
     board_type = wlan_get_board_type();
+#ifdef RW610
     switch (board_type)
     {
         case RW610_PACKAGE_TYPE_QFN:
@@ -1404,6 +1442,23 @@ static void test_wlan_set_rutxpwrlimit(int argc, char **argv)
 #endif /* CONFIG_COMPRESS_RU_TX_PWTBL */
 }
 
+#if !CONFIG_MLAN_WMSDK
+static void test_wlan_get_rutxpwrlimit(int argc, char **argv)
+{
+    wlan_rutxpwrlimit_t chrupwr;
+
+    int rv = wlan_get_11ax_rutxpowerlimit(&chrupwr);
+
+    if (rv != WM_SUCCESS)
+    {
+        (void)PRINTF("Unable to get TX PWR Limit configuration\r\n");
+    }
+    else
+    {
+        print_rutxpwrlimit(&chrupwr);
+    }
+}
+#endif
 
 static void test_wlan_set_tx_omi(int argc, char **argv)
 {
@@ -1635,7 +1690,7 @@ static void test_wlan_twt_report(int argc, char **argv)
 static void dump_wlan_twt_information_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("wlan-11ax-twt-information", "<flow_id> <suspend_duration>\r\n");
+    (void)PRINTF("wlan-11ax-twt-information <flow_id> <suspend_duration>\r\n");
     (void)PRINTF("TWT information setting. \r\n");
     (void)PRINTF(
         "<flow_identifier>  TWT flow identifier, range: [0-7], must be same ID as the one got in TWT setup cmd\r\n");
@@ -1971,6 +2026,99 @@ static void test_set_clocksync_cfg(int argc, char **argv)
 }
 #endif /* CONFIG_WIFI_CLOCKSYNC */
 
+#if CONFIG_1AS
+static void test_wlan_get_fw_time(int argc, char **argv)
+{
+    int ret;
+    wlan_correlated_time_t time;
+
+    ret = wlan_get_fw_timestamp(&time);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("get fw timestamp fail\r\n");
+        return;
+    }
+
+    (void)PRINTF("host time in ns 0x%x%08x\r\n", (t_u32)(time.time >> 32), (t_u32)time.time);
+    (void)PRINTF("fw time in ns 0x%x%08x\r\n", (t_u32)(time.fw_time >> 32), (t_u32)time.fw_time);
+}
+
+static void test_wlan_send_tm_req(int argc, char **argv)
+{
+    int ret;
+    int bss_type;
+    uint8_t raw_mac[6];
+
+    if (string_equal("sta", argv[1]))
+    {
+        bss_type = (int)WLAN_BSS_TYPE_STA;
+    }
+    else if (string_equal("uap", argv[1]))
+    {
+        bss_type = (int)WLAN_BSS_TYPE_UAP;
+    }
+    else
+    {
+        (void)PRINTF("Error: invalid [sta/uap] argument\r\n");
+        return;
+    }
+
+    ret = (int)get_mac(argv[2], (char *)raw_mac, ':');
+    if (ret != 0)
+    {
+        (void)PRINTF("Error: invalid MAC argument\r\n");
+        return;
+    }
+
+    wlan_request_timing_measurement(bss_type, &raw_mac[0], 1);
+}
+
+static void test_wlan_send_tm(int argc, char **argv)
+{
+    int ret;
+    int bss_type;
+    uint8_t raw_mac[6];
+    uint8_t number_of_tm = 2; /* 2 by default */
+
+    if (string_equal("sta", argv[1]))
+    {
+        bss_type = (int)WLAN_BSS_TYPE_STA;
+    }
+    else if (string_equal("uap", argv[1]))
+    {
+        bss_type = (int)WLAN_BSS_TYPE_UAP;
+    }
+    else
+    {
+        (void)PRINTF("Error: invalid [sta/uap] argument\r\n");
+        return;
+    }
+
+    ret = (int)get_mac(argv[2], (char *)raw_mac, ':');
+    if (ret != 0)
+    {
+        (void)PRINTF("Error: invalid MAC argument\r\n");
+        return;
+    }
+
+    if (argv[3] != NULL)
+    {
+        errno        = 0;
+        number_of_tm = (uint8_t)strtol(argv[3], NULL, 10);
+        if (errno != 0)
+        {
+            (void)PRINTF("Error during wlan_send_tm arg_3 strtoul errno:%d", errno);
+        }
+    }
+
+    ret = wlan_start_timing_measurement(bss_type, &raw_mac[0], number_of_tm);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Error: start timing measurement fail\r\n");
+        return;
+    }
+}
+#endif
 
 static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-get-txpwrlimit", "<subband>", test_wlan_get_txpwrlimit},
@@ -1999,6 +2147,9 @@ static struct cli_command wlan_enhanced_commands[] = {
 #if CONFIG_11AX
     {"wlan-set-tx-omi", "<interface> <tx-omi> <tx-option> <num_data_pkts>", test_wlan_set_tx_omi},
     {"wlan-set-toltime", "<value>", test_wlan_set_toltime},
+#if !CONFIG_MLAN_WMSDK
+    {"wlan-get-rutxpwrlimit", NULL, test_wlan_get_rutxpwrlimit},
+#endif
     {"wlan-set-rutxpwrlimit", NULL, test_wlan_set_rutxpwrlimit},
     {"wlan-11ax-cfg", "<11ax_cfg>", test_wlan_11ax_cfg},
 #if CONFIG_11AX_TWT
@@ -2013,6 +2164,11 @@ static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-get-tsfinfo", "<format-type>", test_get_tsf_info},
     {"wlan-set-clocksync", "<mode> <role> <gpio_pin> <gpio_level> <pulse width>", test_set_clocksync_cfg},
 #endif /* CONFIG_WIFI_CLOCKSYNC */
+#if CONFIG_1AS
+    {"wlan-get-fw-time", NULL, test_wlan_get_fw_time},
+    {"wlan-tm-req", "<sta/uap> <mac_addr>", test_wlan_send_tm_req},
+    {"wlan-tm", "<sta/uap> <mac_addr> <num_of_tm_frame>", test_wlan_send_tm},
+#endif
 };
 
 int wlan_enhanced_cli_init(void)

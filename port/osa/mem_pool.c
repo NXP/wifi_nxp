@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 NXP
+ *  Copyright 2023-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -9,9 +9,6 @@
 #include "mem_pool.h"
 
 #if CONFIG_MEM_POOLS
-
-#if defined(SDK_OS_FREE_RTOS)
-
 static int CalculateAndVerifyAlignment(int Alignment)
 {
     /*********************************/
@@ -164,44 +161,5 @@ void OSA_MemoryPoolFree(MemoryPool_t pool, void *memory)
 
     OSA_MutexUnlock((osa_mutex_handle_t)MemPool->Lock);
 }
-
-#elif defined(FSL_RTOS_THREADX)
-
-MemoryPool_t OSA_MemoryPoolCreate(
-    MemPool_t *MemPool, int ItemSize, void *PreallocatedMemory, int PreallocatedMemorySize, int Alignment)
-{
-    int ret;
-
-    ret = tx_block_pool_create(MemPool, "BlkPool", ItemSize, PreallocatedMemory, PreallocatedMemorySize);
-
-    if (ret != TX_SUCCESS)
-    {
-        return NULL;
-    }
-
-    return (MemoryPool_t)MemPool;
-}
-
-void *OSA_MemoryPoolAllocate(MemoryPool_t pool)
-{
-    int ret;
-    void *memory;
-
-    ret = tx_block_allocate(pool, &memory, osaWaitNone_c);
-
-    if (ret != TX_SUCCESS)
-    {
-        return NULL;
-    }
-
-    return memory;
-}
-
-void OSA_MemoryPoolFree(MemoryPool_t pool, void *memory)
-{
-    tx_block_release(memory);
-}
-
-#endif
 
 #endif

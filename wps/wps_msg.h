@@ -2,7 +2,7 @@
  *
  *  @brief This file contains definition for WPS Messages
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -842,8 +842,13 @@ typedef enum
 #define WPS_MSG_MAX_RESENT 30
 /** PBC Walk time */
 #define PBC_WALK_TIME 120 /* sec */
+#if CONFIG_P2P
+/** WPS Registration Protocol Timeout */
+#define WPS_REGISTRATION_TIME 30  /* sec */
+#else
 /** WPS Registration Protocol Timeout */
 #define WPS_REGISTRATION_TIME 120 /* sec */
+#endif
 /** WFD peer ageout time */
 #define WFD_PEER_AGEOUT_TIME 3 /* sec */
 /** WFD peer selected ageout time */
@@ -943,6 +948,10 @@ extern int wfdcmd_config_download(char *filename);
 extern int wfdcmd_start_find_phase(void);
 extern int wfdcmd_start_group_owner(void);
 extern int wfd_peer_device_selected();
+#if CONFIG_P2P
+extern void wfd_start_peer_ageout_timer(WFD_DATA *pwfd_data);
+extern void wfd_start_peer_selected_ageout_timer(WFD_DATA *pwfd_data);
+#endif
 int wps_eap_tls_response_send(const uint8_t *buf, const size_t len);
 
 /**

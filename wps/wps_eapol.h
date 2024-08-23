@@ -7,7 +7,7 @@
  */
 
 /**
- *  Copyright 2003-2022 NXP
+ *  Copyright 2003-2024 NXP
  */
 
 #ifndef _WPS_EAPOL_H_

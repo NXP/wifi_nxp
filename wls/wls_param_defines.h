@@ -3,7 +3,7 @@
  *
  * @brief This file contains global header file for configuring fft processing of CSI.
  *
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  *

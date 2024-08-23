@@ -2,7 +2,7 @@
  *
  *  @brief This file contains functions for WPS state machine.
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -29,8 +29,18 @@
 #include "wps_os.h"
 #include "wps_mem.h"
 #include <wifi.h>
+#if CONFIG_P2P
+#include "wlan_hostcmd.h"
+#include "wlan_wfd.h"
+#endif
 
 extern struct wps_thread_t wps;
+#if CONFIG_P2P
+extern struct wlan_network p2p_uap_network;
+extern struct wlan_network p2p_network;
+char ipaddr[16];
+extern u8 auto_go;
+#endif
 
 #if CONFIG_WPA2_ENTP
 #define SSL_WAIT             5000
@@ -2377,6 +2387,7 @@ int wps_maximum_nack_handler(PWPS_INFO pwps_info, WPS_DATA *wps_s)
         pwps_info->set_timer = WPS_CANCEL;
         pwps_info->wps_msg_resent_count = 0;
     }
+#ifdef UAP_SUPPORT
     if (pwps_info->role == WPS_ENROLLEE) {
 
         /* clear IE buffer for registrar */
@@ -2452,6 +2463,7 @@ int wps_maximum_nack_handler(PWPS_INFO pwps_info, WPS_DATA *wps_s)
         wps_print_uap_role_menu(pwps_info);
 
     }
+#endif
 #endif
     LEAVE();
     return status;
@@ -2804,6 +2816,11 @@ void wps_message_handler(u8 *buffer, u8 *src_addr)
                             /*
                              * Registration complete with M8 received.
                              */
+#if CONFIG_P2P
+                            wps_d(
+                                "Registration Protocol"
+                                " Completed Successfully !");
+#else
                             assoc_ie_index = 0x0002;
                             ret            = wps_wlan_ie_config(CLEAR_STA_WPS_IE, &assoc_ie_index);
                             if (ret != WPS_STATUS_SUCCESS)
@@ -2813,6 +2830,7 @@ void wps_message_handler(u8 *buffer, u8 *src_addr)
                             wps_d(
                                 "WPS Registration Protocol"
                                 " Completed Successfully !");
+#endif
                             pwps_info->wps_session = 0;
 
                             ret = wlan_disconnect();
@@ -2843,9 +2861,17 @@ void wps_message_handler(u8 *buffer, u8 *src_addr)
 
                             wps_d("Cancelling registration timer!");
                             wps_cancel_timer(wps_registration_time_handler, pwps_info);
+#if CONFIG_P2P
+                            /* Read network data to connect to */
+                            (void)memset(&p2p_network, 0, sizeof(struct wlan_network));
+                            (void)memcpy(&p2p_network, &wps_global.wps_conn_network, sizeof(struct wlan_network));
+                            if (wps.cb(P2P_SESSION_SUCCESSFUL, &p2p_network, sizeof(struct wlan_network)) == -WM_FAIL)
+                                P2P_LOG("Callback failed for event: %d", P2P_SESSION_SUCCESSFUL);
+#else
                             if (wps.cb(WPS_SESSION_SUCCESSFUL, &wps_global.wps_conn_network,
                                        sizeof(struct wlan_network)) == -WM_FAIL)
                                 wps_d("Callback failed for event: %d", WPS_SESSION_SUCCESSFUL);
+#endif
                             wps_shutdown();
                         }
                         else
@@ -2869,11 +2895,22 @@ void wps_message_handler(u8 *buffer, u8 *src_addr)
                                 "Cancelling "
                                 "registration timer!");
                             wps_cancel_timer(wps_registration_time_handler, pwps_info);
+#if CONFIG_P2P
+                            wfd_reset();
+
+                            if (wps.cb(P2P_SESSION_FAILED, NULL, 0) == -WM_FAIL)
+                                P2P_LOG(
+                                    "P2P Callback failed for event:"
+                                    "%d",
+                                    P2P_SESSION_FAILED);
+
+#else
                             if (wps.cb(WPS_SESSION_FAILED, NULL, 0) == -WM_FAIL)
                                 wps_d(
                                     "WPS Callback failed for event:"
                                     "%d\r\n",
                                     WPS_SESSION_FAILED);
+#endif
                         }
                     } /* EAP_FAILURE */
                 }
@@ -3066,6 +3103,12 @@ int wps_uap_session_complete_handler(PWPS_INFO pwps_info, WPS_DATA *wps_s)
         if (pwps_info->register_completed == WPS_SET)
         {
             pwps_info->wps_session = 0;
+#if CONFIG_P2P
+            P2P_LOG("Registration Process Completed Successfully !");
+
+            if (wps.cb(P2P_AP_SESSION_SUCCESSFUL, NULL, 0) == -WM_FAIL)
+                P2P_LOG("Callback failed for event: %d", P2P_AP_SESSION_SUCCESSFUL);
+#endif
             if (wps.cb(WPS_SESSION_SUCCESSFUL, NULL, 0) == -WM_FAIL)
                 wps_d("Callback failed for event: %d", WPS_SESSION_SUCCESSFUL);
 
@@ -3091,9 +3134,11 @@ int wps_uap_session_complete_handler(PWPS_INFO pwps_info, WPS_DATA *wps_s)
 
 static int wps_sta_check_link_active(WPS_DATA *wps_s, PWPS_INFO pwps_info, int *reconnected)
 {
+#if !(CONFIG_P2P) // && !(CONFIG_WPA2_ENTP)
     int ret       = WPS_STATUS_SUCCESS;
     int retry_cnt = 2;
     int connect_retry;
+#endif
     int link_active = 0;
     enum wlan_connection_state state;
 
@@ -3113,6 +3158,9 @@ static int wps_sta_check_link_active(WPS_DATA *wps_s, PWPS_INFO pwps_info, int *
         return link_active;
     }
 
+#if (CONFIG_P2P)
+    wps_d("Connection with AP lost..... ");
+#else
     if (pwps_info->prov_session == PROV_ENTP_SESSION_ATTEMPT)
     {
         wps_d("Connection with AP lost..... ");
@@ -3162,6 +3210,7 @@ static int wps_sta_check_link_active(WPS_DATA *wps_s, PWPS_INFO pwps_info, int *
         } while (retry_cnt != 0);
     }
 done:
+#endif
     return link_active;
 }
 
@@ -3235,6 +3284,24 @@ void wps_txTimer_handler(void *user_data)
         wps_cancel_timer(wps_txTimer_handler, pwps_info);
         pwps_info->set_timer = WPS_CANCEL;
     }
+#if CONFIG_P2P
+    if (wps_s->bss_type == BSS_TYPE_UAP && (pwps_info->wps_msg_resent_count >= pwps_info->wps_msg_max_retry))
+    {
+        switch (pwps_info->role)
+        {
+            case WPS_ENROLLEE:
+                status = WPS_STATUS_FAIL;
+                break;
+            case WPS_REGISTRAR:
+                if (pwps_info->eap_msg_sent == WPS_MSG_NACK)
+                    status = WPS_STATUS_FAIL;
+                else
+                    status = WPS_STATUS_SUCCESS;
+                break;
+        }
+        goto done;
+    }
+#endif
     /*
      * Some AP/External Registrar will disconnect after EAP-FAIL
      * packet sent without M2D being sent before that.
@@ -3271,6 +3338,13 @@ void wps_txTimer_handler(void *user_data)
                     wps_d("Failed to remove network");
             }
 
+#if CONFIG_P2P
+            if (wps.cb(P2P_SESSION_FAILED, NULL, 0) == -WM_FAIL)
+                wps_d(
+                    "P2P Callback failed for event:"
+                    "%d",
+                    P2P_SESSION_FAILED);
+#else
             if (pwps_info->prov_session != PROV_ENTP_SESSION_ATTEMPT)
             {
                 if (wps.cb(WPS_SESSION_FAILED, NULL, 0) == -WM_FAIL)
@@ -3279,6 +3353,7 @@ void wps_txTimer_handler(void *user_data)
                         "%d",
                         WPS_SESSION_FAILED);
             }
+#endif
             status = WPS_STATUS_FAIL;
             goto done;
         }
@@ -3323,6 +3398,9 @@ void wps_txTimer_handler(void *user_data)
 done:
     if (status != WPS_STATUS_SUCCESS)
     {
+#if CONFIG_P2P
+        wfd_reset();
+#endif
         if (wps_s->bss_type == BSS_TYPE_UAP)
         {
             pwps_info->wps_session = 0;
@@ -3436,11 +3514,16 @@ void wps_registration_time_handler(void *user_data)
 
     if ((wps_s->bss_type == BSS_TYPE_STA && pwps_info->role == WPS_ENROLLEE) || (IS_DISCOVERY_ENROLLEE(pwps_info)))
     {
+#if CONFIG_P2P
+        if (wps.cb(P2P_SESSION_TIMEOUT, NULL, 0) == -WM_FAIL)
+            wps_d("P2P Callback failed for event: %d", P2P_SESSION_TIMEOUT);
+#else
         if (pwps_info->prov_session != PROV_ENTP_SESSION_ATTEMPT)
         {
             if (wps.cb(WPS_SESSION_TIMEOUT, NULL, 0) == -WM_FAIL)
                 wps_d("WPS Callback failed for event: %d", WPS_SESSION_TIMEOUT);
         }
+#endif
 
         if (pwps_info->prov_session != PROV_ENTP_SESSION_ATTEMPT)
         {
@@ -3451,6 +3534,9 @@ void wps_registration_time_handler(void *user_data)
             ret = wlan_remove_network(wps_network.name);
             if (ret != 0)
                 wps_d("Failed to remove network");
+#if CONFIG_P2P
+            wfd_reset();
+#endif
             wps_d("WPS registration timer time-out.");
             wps_d("WPS Registration Protocol Not Completed!");
 
@@ -3478,8 +3564,20 @@ void wps_registration_time_handler(void *user_data)
 
         /* shutdown the main processing loop */
         wps_main_loop_shutdown();
+#if CONFIG_P2P
+        if (!auto_go)
+        {
+            ret = wlan_remove_network(p2p_uap_network.name);
+            if (ret != 0)
+                wps_d("Failed to remove network");
+        }
+
+        if (wps.cb(P2P_SESSION_TIMEOUT, NULL, 0) == -WM_FAIL)
+            wps_d("P2P Callback failed for event: %d", P2P_SESSION_TIMEOUT);
+#else
         if (wps.cb(WPS_SESSION_TIMEOUT, NULL, 0) == -WM_FAIL)
             wps_d("WPS Callback failed for event: %d", WPS_SESSION_TIMEOUT);
+#endif
 
             /* Shutdown main loop will cause registrar restart */
 #if 0

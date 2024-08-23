@@ -2,7 +2,7 @@
  *
  *  @brief This file provides  Convenience functions for the CLI
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -13,11 +13,6 @@
  */
 #include <string.h>
 #include <stdlib.h>
-
-#ifndef __ZEPHYR__
-#include <fsl_debug_console.h>
-#include <cli.h>
-#endif
 #include <wm_utils.h>
 #include <cli_utils.h>
 #include <ctype.h>

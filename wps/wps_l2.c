@@ -2,7 +2,7 @@
  *
  *  @brief This file contains functions handling layer 2 socket read/write
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -164,6 +164,16 @@ WPS_L2_INFO *wps_l2_init(const char *ifname,
     (void)memset(l2, 0, sizeof(*l2));
     strncpy(l2->ifname, ifname, sizeof(l2->ifname));
     l2->ifname[(sizeof(l2->ifname) / sizeof(l2->ifname[0])) - 1] = '\0';
+#if CONFIG_P2P
+    if (wlan_get_wfd_mac_address(mac))
+    {
+        wps_d("Error: unable to retrieve MAC address\r\n");
+        wps_mem_free(l2);
+        return NULL;
+    }
+    else
+        wps_d("%02X:%02X:%02X:%02X:%02X:%02X\r\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+#else
     if (wlan_get_mac_address(mac))
     {
         wps_d("Error: unable to retrieve MAC address\r\n");
@@ -173,6 +183,7 @@ WPS_L2_INFO *wps_l2_init(const char *ifname,
     else
         wps_d("%02X:%02X:%02X:%02X:%02X:%02X\r\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
+#endif
 
     (void)memcpy(l2->my_mac_addr, mac, ETH_ALEN);
 

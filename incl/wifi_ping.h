@@ -3,7 +3,7 @@
  *  @brief  This file provides the support for network utility ping
  */
 /*
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -40,11 +40,8 @@
 
 int ping_cli_init(void);
 
-#if defined(SDK_OS_FREE_RTOS)
-int ping(uint16_t count, int interval, unsigned short size, unsigned int r_timeout, ip_addr_t *addr);
-#elif __ZEPHYR__
 int ping(uint16_t count, int interval, unsigned short size, unsigned int r_timeout, const char *addr);
-#endif
+
 void ping_stats(int *total, int *recvd);
 
 /** Unregister Network Utility CLI commands.

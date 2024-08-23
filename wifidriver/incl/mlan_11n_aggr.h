@@ -3,7 +3,7 @@
  *  @brief This file contains related macros, enum, and struct
  *  of 11n aggregation functionalities
  *
- *  Copyright 2008-2021, 2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *

@@ -3,7 +3,7 @@
  *  @brief This file defines the FW initialization data
  *  structures.
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -63,7 +63,16 @@ typedef struct _FWSyncHeader
     t_u32 seq_num;
 } FWSyncHeader;
 
+#ifdef BIG_ENDIAN_SUPPORT
+/** Convert sequence number and command fields of fwheader to correct endian format */
+#define endian_convert_syncfwheader(x)                 \
+    {                                                  \
+        (x)->cmd     = wlan_le32_to_cpu((x)->cmd);     \
+        (x)->seq_num = wlan_le32_to_cpu((x)->seq_num); \
+    }
+#else
 /** Convert sequence number and command fields of fwheader to correct endian format */
 #define endian_convert_syncfwheader(x)
+#endif /* BIG_ENDIAN_SUPPORT */
 
 #endif /* _MLAN_INIT_H_ */

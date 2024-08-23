@@ -2,7 +2,7 @@
  *
  *  @brief This file contains functions for EAPOL packet Tx/Rx.
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -416,6 +416,53 @@ void WPSEAPoLRxDataHandler(const u8 *buf, const size_t len)
                     }
 #endif
                     break;
+#if CONFIG_P2P
+                case EAP_RESPONSE:
+#ifdef WPS_RX_EOPAL_DEBUG
+                    wps_d("EAP_RESPONSE received");
+#endif
+                    if (peap->type == EAP_TYPE_IDENTITY)
+                    {
+#ifdef WPS_RX_EOPAL_DEBUG
+                        wps_debug_print_msgtype("RX WPS Message Type", WPS_EAP_MSG_RESPONSE_IDENTITY);
+#endif
+                        new_msg_type = WPS_EAP_MSG_RESPONSE_IDENTITY;
+                    }
+                    else if (peap->type == EAP_TYPE_WPS)
+                    {
+                        switch (peap->op_code)
+                        {
+                            case WPS_Start:
+                            {
+                                new_msg_type = WPS_EAP_START;
+                            }
+                            break;
+                            case WPS_Ack:
+                            case WPS_Nack:
+                            case WPS_Msg:
+                            case WPS_Done:
+                                mbuffer = (u8 *)peap;
+                                mbuffer += SZ_EAP_WPS_FRAME_HEADER;
+                                ptlv   = (PTLV_DATA_HEADER)mbuffer;
+                                length = ntohs(ptlv->length);
+                                mbuffer += (SZ_TLV_HEADER + length);
+                                ptlv = (PTLV_DATA_HEADER)mbuffer;
+                                type = ntohs(ptlv->type);
+                                if (type == SC_Message_Type)
+                                {
+                                    mbuffer += SZ_TLV_HEADER;
+                                    new_msg_type = (u8)*mbuffer;
+                                }
+                                break;
+                            default:
+#ifdef WPS_RX_EOPAL_DEBUG
+                                wps_d("Unknown opcode: 0x%x", peap->op_code);
+#endif
+                                return;
+                        }
+                    }
+                    break;
+#endif
 #if CONFIG_WPA2_ENTP
                 case EAP_SUCCESS:
                     new_msg_type = WPS_EAP_MSG_SUCCESS;

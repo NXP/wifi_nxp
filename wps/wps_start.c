@@ -3,7 +3,7 @@
  *  @brief This file contains WPS application program entry function
  *  and functions for initialization setting.
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -207,6 +207,10 @@ static int prov_wps_enrollee_start(PWPS_INFO pwps_info, WPS_DATA *wps_s)
         wps_network.bssid_specific = 1;
 
     wps_network.security.type = WLAN_SECURITY_NONE;
+#if CONFIG_P2P
+    wps_network.type = WLAN_BSS_TYPE_WIFIDIRECT;
+    wps_network.role = WLAN_BSS_ROLE_STA;
+#endif
     ret = wlan_add_network(&wps_network);
 
     if (ret != 0)
@@ -244,8 +248,15 @@ static int prov_wps_enrollee_start(PWPS_INFO pwps_info, WPS_DATA *wps_s)
 
             if (state == WLAN_ASSOCIATED || connect_retry == 0)
                 break;
+#if CONFIG_P2P
+            connect_retry--;
+#endif
         }
+#if CONFIG_P2P
+        while (state != WLAN_DISCONNECTED);
+#else
         while (connect_retry--);
+#endif
 
         if (state != WLAN_ASSOCIATED)
         {
@@ -276,12 +287,16 @@ static int prov_wps_enrollee_start(PWPS_INFO pwps_info, WPS_DATA *wps_s)
             else
                 (void)memcpy(pwps_info->registrar.mac_address, wps_network.bssid, ETH_ALEN);
         }
+#if CONFIG_P2P
+        wps_d("Registration Process Started....");
+#else
         wps_d("WPS Registration Protocol Started .....");
 
         if (wps.cb(WPS_SESSION_STARTED, NULL, 0) == -WM_FAIL)
         {
             wps_d("WPS Callback failed for event: %d\r\n", WPS_SESSION_STARTED);
         }
+#endif
         /* Start WPS registration timer */
         wps_start_registration_timer(pwps_info);
 
@@ -304,7 +319,11 @@ static int prov_wps_enrollee_start(PWPS_INFO pwps_info, WPS_DATA *wps_s)
     fail:
         OSA_TimeDelay(500);
 
+#if CONFIG_P2P
+        wps_d("Registration Protocol Failed !");
+#else
         wps_d("WPS Registration Protocol Failed !");
+#endif
 
         ret = wlan_disconnect();
         if (ret != 0)
@@ -313,8 +332,17 @@ static int prov_wps_enrollee_start(PWPS_INFO pwps_info, WPS_DATA *wps_s)
         ret = wlan_remove_network(wps_network.name);
         if (ret != 0)
             wps_d("Failed to remove network %d\r\n", ret);
+#if CONFIG_P2P
+        wfd_reset();
+
+        gpwps_info->wps_session = 0;
+
+        if (wps.cb(P2P_SESSION_FAILED, NULL, 0) == -WM_FAIL)
+            wps_d("P2P Callback failed for event: %d\r\n", P2P_SESSION_FAILED);
+#else
         if (wps.cb(WPS_SESSION_FAILED, NULL, 0) == -WM_FAIL)
             wps_d("WPS Callback failed for event: %d\r\n", WPS_SESSION_FAILED);
+#endif
         return WPS_STATUS_FAIL;
     }
     LEAVE();
@@ -432,7 +460,11 @@ int wps_registrar_start(PWPS_INFO pwps_info, WPS_DATA *wps_s)
             pwps_info->enrollee.updated_device_password_id = DEVICE_PASSWORD_REG_SPECIFIED;
         }
     }
+#if CONFIG_P2P
+    wps_d("Registration Process Started....");
+#else
     wps_d("WPS Registration Protocol Started .....");
+#endif
 
     /* Start WPS registration timer */
     wps_start_registration_timer(pwps_info);

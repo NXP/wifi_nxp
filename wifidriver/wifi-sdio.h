@@ -2,7 +2,7 @@
  *
  *  @brief WLAN on SDIO
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -34,16 +34,15 @@
 
 #define WLAN_MAGIC_NUM (('W' << 0) | ('L' << 8) | ('F' << 16) | ('W' << 24))
 
-#if CONFIG_RF_TEST_MODE
-/* sizeof(HostCmd_DS_COMMAND) in worst case is 2828 where HostCmd_DS_MFG_CMD_OTP_CAL_DATA_T size is 2820 */
-#define WIFI_FW_CMDBUF_SIZE 2832U
-#else
 #define WIFI_FW_CMDBUF_SIZE 2100U
-#endif
 
 #define WIFI_RESP_WAIT_TIME 10
 
+#if CONFIG_ENABLE_AMSDU_RX
 #define SDIO_INBUF_LEN (2048 * 2)
+#else  /* ! CONFIG_ENABLE_AMSDU_RX */
+#define SDIO_INBUF_LEN 2048
+#endif /* CONFIG_ENABLE_AMSDU_RX */
 
 #define SDIO_OUTBUF_LEN 2048U
 
@@ -60,11 +59,7 @@
 /*! @brief Data block count accessed in card */
 #define DATA_BLOCK_COUNT (4U)
 /*! @brief Data buffer size. */
-#ifndef __ZEPHYR__
-#define DATA_BUFFER_SIZE (FSL_SDMMC_DEFAULT_BLOCK_SIZE * DATA_BLOCK_COUNT)
-#else
 #define DATA_BUFFER_SIZE (SDMMC_DEFAULT_BLOCK_SIZE * DATA_BLOCK_COUNT)
-#endif
 
 /* Duplicated in wlan.c. keep in sync till we can be included directly */
 typedef struct __nvram_backup_struct

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -12,10 +12,6 @@
 #define WM_ERRNO_H
 
 #include <wifi_config_default.h>
-
-#if defined(FSL_RTOS_THREADX)
-#include <errno.h>
-#endif
 
 /* Get the module index number from error code (4th byte from LSB)*/
 #define get_module_base(code) ((code & 0xF000) >> 12)

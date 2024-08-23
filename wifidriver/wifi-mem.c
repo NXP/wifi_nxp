@@ -2,7 +2,7 @@
  *
  *  @brief This file provides WIFI dymanic memory allocation APIs.
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -63,6 +63,9 @@ mlan_status wrapper_moal_malloc(IN t_void *pmoal_handle, IN t_u32 size, IN t_u32
 {
     *ppbuf = OSA_MemoryAllocate(size);
 
+#ifdef DEBUG_11N_ALLOC
+
+#endif /* DEBUG_11N_ALLOC */
 
     if (*ppbuf != NULL)
     {

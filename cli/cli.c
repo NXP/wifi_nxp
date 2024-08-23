@@ -2,7 +2,7 @@
  *
  *  @brief This file provides  CLI: command-line interface
  *
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -23,12 +23,6 @@
 #include "board.h"
 
 #include "cli_mem.h"
-#if defined(SDK_OS_FREE_RTOS)
-#if CONFIG_UART_INTERRUPT
-#include "fsl_usart_freertos.h"
-#include "fsl_usart.h"
-#endif
-#endif
 #define END_CHAR      '\r'
 #define PROMPT        "\r\n# "
 #define HALT_MSG      "CLI_HALT"
@@ -38,35 +32,6 @@
 #define ITEM_SIZE     sizeof(void *)
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-#if defined(SDK_OS_FREE_RTOS)
-#if CONFIG_UART_INTERRUPT
-
-#define CONFIG_UART_STACK_SIZE (1024)
-
-static void uart_task(osa_task_param_t arg);
-
-#if CONFIG_UART_INTERACTIVE
-static OSA_TASK_DEFINE(uart_task, PRIORITY_RTOS_TO_OSA(3), 1, CONFIG_UART_STACK_SIZE, 0);
-#else
-#if CONFIG_NCP
-static OSA_TASK_DEFINE(uart_task, PRIORITY_RTOS_TO_OSA(1), 1, CONFIG_UART_STACK_SIZE, 0);
-#else
-static OSA_TASK_DEFINE(uart_task, PRIORITY_RTOS_TO_OSA(0), 1, CONFIG_UART_STACK_SIZE, 0);
-#endif
-#endif
-#endif
-#elif defined(FSL_RTOS_THREADX)
-
-#define CONFIG_UART_STACK_SIZE (4 * 1024)
-#define DATA_LENGTH            (32)
-
-static uint8_t rx_buffer[DATA_LENGTH];
-static tx_uart_context_t uart_context;
-
-static void uart_task(osa_task_param_t arg);
-
-static OSA_TASK_DEFINE(uart_task, OSA_PRIORITY_BELOW_NORMAL, 1, CONFIG_UART_STACK_SIZE, 0);
-#endif
 OSA_TASK_HANDLE_DEFINE(uart_task_Handle);
 
 #define CONFIG_CLI_STACK_SIZE (5376)
@@ -99,36 +64,19 @@ static struct
     OSA_MSGQ_HANDLE_DEFINE(msgqHandle, IN_QUEUE_SIZE, ITEM_SIZE);
 } cli;
 
-#if defined(SDK_OS_FREE_RTOS)
-#if CONFIG_UART_INTERRUPT
-#define USART_INPUT_SIZE 1
-#define USART_NVIC_PRIO  5
-uint8_t background_buffer[32];
-uint8_t recv_buffer[USART_INPUT_SIZE];
-static usart_rtos_handle_t ur_handle;
-struct _usart_handle t_u_handle;
-
-struct rtos_usart_config usart_config = {
-    .baudrate    = BOARD_DEBUG_UART_BAUDRATE,
-    .parity      = kUSART_ParityDisabled,
-    .stopbits    = kUSART_OneStopBit,
-    .buffer      = background_buffer,
-    .buffer_size = sizeof(background_buffer),
-};
-#if CONFIG_HOST_SLEEP
-#if CONFIG_POWER_MANAGER
-extern bool usart_suspend_flag;
-#endif
-#endif
-#endif
-#endif
-
 #if CONFIG_APP_FRM_CLI_HISTORY
 #define MAX_CMDS_IN_HISTORY 20
 static char *cmd_hist_arr[MAX_CMDS_IN_HISTORY];
 static int total_hist_cmds, last_cmd_num;
 static int console_loop_num;
 static bool hist_inited;
+#if CONFIG_CLI_PSM_SUPPORT
+#define CMD_HIST_VAR_NAME       "cmd-%d"
+#define CMD_HIST_VAR_NAME_MAXSZ 8
+
+static cli_name_val_get g_get_cb;
+static cli_name_val_set g_set_cb;
+#endif
 
 static char *cli_strdup(const char *s, int len)
 {
@@ -172,6 +120,16 @@ static int get_cmd_from_hist(int cmd_no, char *buf, int max_len)
         return WM_SUCCESS;
     }
 
+#if CONFIG_CLI_PSM_SUPPORT
+    char var_name[CMD_HIST_VAR_NAME_MAXSZ];
+    snprintf(var_name, CMD_HIST_VAR_NAME_MAXSZ, CMD_HIST_VAR_NAME, cmd_no);
+
+    int rv = g_get_cb(var_name, buf, max_len);
+    if (rv <= 0)
+        return -WM_FAIL;
+
+    cmd_hist_arr[cmd_no] = cli_strdup(buf); /* ignore failure silently */
+#endif
     return WM_SUCCESS;
 }
 
@@ -195,6 +153,14 @@ static int store_cmd_to_hist(int cmd_no, const char *buf, int len)
         }
     }
 
+#if CONFIG_CLI_PSM_SUPPORT
+    char var_name[CMD_HIST_VAR_NAME_MAXSZ];
+    snprintf(var_name, CMD_HIST_VAR_NAME_MAXSZ, CMD_HIST_VAR_NAME, cmd_no);
+
+    int rv = g_set_cb(var_name, buf);
+    if (rv != WM_SUCCESS)
+        return rv;
+#endif
 
     cmd_hist_arr[cmd_no] = cli_strdup(buf, len); /* ignore failure silently */
 
@@ -216,6 +182,24 @@ static int get_total_cmds()
 {
     int cmd_no = 0;
 
+#if CONFIG_CLI_PSM_SUPPORT
+    void *tmpbuf = OSA_MemoryAllocate(INBUF_SIZE);
+    if (!tmpbuf)
+        return -WM_FAIL;
+
+    for (; cmd_no < MAX_CMDS_IN_HISTORY; ++cmd_no)
+    {
+        char var_name[CMD_HIST_VAR_NAME_MAXSZ];
+        snprintf(var_name, CMD_HIST_VAR_NAME_MAXSZ, CMD_HIST_VAR_NAME, cmd_no);
+        if (get_cmd_from_hist(cmd_no, tmpbuf, INBUF_SIZE) != WM_SUCCESS)
+        {
+            /* No more cmds */
+            break;
+        }
+    }
+
+    OSA_MemoryFree(tmpbuf);
+#endif
     return cmd_no;
 }
 
@@ -272,7 +256,11 @@ static int cmd_hist_is_duplicate(const char *cmd)
     return false;
 }
 
+#if CONFIG_CLI_PSM_SUPPORT
+static int cmd_hist_init()
+#else
 int cmd_hist_init()
+#endif
 {
     console_loop_num = -1;
     last_cmd_num     = -1;
@@ -288,6 +276,18 @@ int cmd_hist_init()
     return WM_SUCCESS;
 }
 
+#if CONFIG_CLI_PSM_SUPPORT
+int cli_add_history_hook(cli_name_val_get get_cb, cli_name_val_set set_cb)
+{
+    if (!get_cb || !set_cb)
+        return -WM_E_INVAL;
+
+    g_get_cb = get_cb;
+    g_set_cb = set_cb;
+
+    return cmd_hist_init();
+}
+#endif
 
 static void cmd_hist_add(const char *cmd, int len)
 {
@@ -592,14 +592,6 @@ static int get_input(char *get_inbuf, unsigned int *bp)
 #if CONFIG_APP_FRM_CLI_HISTORY
     int rv = -WM_FAIL;
 #endif /* CONFIG_APP_FRM_CLI_HISTORY */
-#if defined(SDK_OS_FREE_RTOS)
-#if CONFIG_UART_INTERRUPT
-    int ret;
-    size_t n;
-#endif
-#elif defined(FSL_RTOS_THREADX)
-    UINT status;
-#endif
 
     if (get_inbuf == NULL)
     {
@@ -610,39 +602,6 @@ static int get_input(char *get_inbuf, unsigned int *bp)
 
     while (true)
     {
-#if defined(SDK_OS_FREE_RTOS)
-#if CONFIG_UART_INTERRUPT
-#if CONFIG_HOST_SLEEP
-#if CONFIG_POWER_MANAGER
-        if (usart_suspend_flag)
-        {
-            OSA_TimeDelay(1000);
-            continue;
-        }
-#endif
-#endif
-        ret = USART_RTOS_Receive(&ur_handle, recv_buffer, sizeof(recv_buffer), &n);
-        if (ret == kStatus_USART_RxRingBufferOverrun)
-        {
-            /* Notify about hardware buffer overrun and un-received buffer content */
-            background_buffer[31] = 0;
-            PRINTF("\r\nRing buffer overrun: %s\r\n", background_buffer);
-            PRINTF("\r\nPlease do not input during throughput tests\r\n");
-            vTaskSuspend(NULL);
-        }
-        get_inbuf[*bp] = recv_buffer[0];
-#else
-        get_inbuf[*bp] = (char)GETCHAR();
-#endif
-#elif defined(FSL_RTOS_THREADX)
-
-        status = tx_uart_recv(&uart_context, rx_buffer, 1);
-
-        if (status == TX_SUCCESS)
-        {
-            get_inbuf[*bp] = rx_buffer[0];
-        }
-#endif
         if (state == EXT_KEY_SECOND_SYMBOL)
         {
             if (second_char == (char)(0x4F))
@@ -903,39 +862,12 @@ static void cli_task(void *arg)
     }
 }
 
-#if defined(SDK_OS_FREE_RTOS)
-#if !CONFIG_UART_INTERRUPT
-/* Automatically bind an input processor to the console */
-static int cli_install_UART_Tick(void)
-{
-    return OSA_SetupIdleFunction(console_tick);
-}
-
-static int cli_remove_UART_Tick(void)
-{
-    return OSA_RemoveIdleFunction(console_tick);
-}
-#endif
-#endif
-
 /* Internal cleanup function. */
 static int __cli_cleanup(void)
 {
     int ret, final = WM_SUCCESS;
     char *halt_msg = HALT_MSG;
     osa_status_t status;
-
-#if defined(SDK_OS_FREE_RTOS)
-#if !CONFIG_UART_INTERRUPT
-    if (cli_remove_UART_Tick() != WM_SUCCESS)
-    {
-        (void)PRINTF(
-            "Error: could not remove UART Tick function."
-            "\r\n");
-        final = -WM_FAIL;
-    }
-#endif
-#endif
 
     ret = cli_submit_cmd_buffer(&halt_msg);
     if (ret != WM_SUCCESS)
@@ -962,16 +894,7 @@ static int __cli_cleanup(void)
     {
         final = -WM_FAIL;
     }
-#if defined(SDK_OS_FREE_RTOS)
-#if CONFIG_UART_INTERRUPT
-    status = OSA_TaskDestroy((osa_task_handle_t)uart_task_Handle);
-    if (status != KOSA_StatusSuccess)
-    {
-        (void)PRINTF("Warning: failed to delete uart thread.\r\n");
-        final = -WM_FAIL;
-    }
-#endif
-#endif
+
     status = OSA_TaskDestroy((osa_task_handle_t)cli_task_Handle);
     if (status != KOSA_StatusSuccess)
     {
@@ -1135,11 +1058,59 @@ static void echo_cmd_handler(int argc, char **argv)
 }
 #endif
 
+#if CONFIG_CLI_ECHO_MODE
+bool cli_get_echo_mode()
+{
+    return !cli.echo_disabled;
+}
 
+void cli_set_echo_mode(bool enabled)
+{
+    if (enabled)
+        cli.echo_disabled = false;
+    else
+        cli.echo_disabled = true;
+}
+#endif /*CONFIG_CLI_ECHO_MODE*/
+
+#if CONFIG_CLI_TESTS
+static void test_getopt(int argc, char **argv)
+{
+    int c;
+    cli_optind = 1;
+
+    while ((c = cli_getopt(argc, argv, "abc:d")) != -1)
+    {
+        switch (c)
+        {
+            case 'a':
+            case 'b':
+            case 'd':
+                (void)PRINTF("got option %c\r\n", c);
+                break;
+            case 'c':
+                (void)PRINTF("got option %c with arg %s\r\n", c, cli_optarg);
+                break;
+            default:
+                (void)PRINTF("ERROR: unexpected option: %c\r\n", c);
+                return;
+        }
+    }
+
+    while (cli_optind < argc)
+    {
+        (void)PRINTF("got extra arg %s\r\n", argv[cli_optind]);
+        cli_optind++;
+    }
+}
+#endif
 
 static struct cli_command built_ins[] = {
     {"help", NULL, help_command},
     {"clear", NULL, clear_command},
+#if CONFIG_CLI_TESTS
+    {"getopt_test", NULL, test_getopt},
+#endif
 };
 
 /*
@@ -1227,68 +1198,6 @@ int cli_unregister_commands(const struct cli_command *commands, int num_commands
     return 0;
 }
 
-#if defined(SDK_OS_FREE_RTOS)
-#if CONFIG_UART_INTERRUPT
-static void uart_task(void *pvParameters)
-{
-    usart_config.srcclk = BOARD_DEBUG_UART_CLK_FREQ;
-    usart_config.base   = BOARD_DEBUG_UART;
-
-    NVIC_SetPriority(BOARD_UART_IRQ, USART_NVIC_PRIO);
-
-    if (USART_RTOS_Init(&ur_handle, &t_u_handle, &usart_config) != WM_SUCCESS)
-    {
-        vTaskSuspend(NULL);
-    }
-
-    /* Receive user input and send it back to terminal. */
-    while (1)
-    {
-        console_tick();
-    }
-}
-
-#if CONFIG_HOST_SLEEP
-int cli_uart_reinit()
-{
-    return USART_RTOS_Init(&ur_handle, &t_u_handle, &usart_config);
-}
-
-int cli_uart_deinit()
-{
-    return USART_RTOS_Deinit(&ur_handle);
-}
-
-void cli_uart_notify()
-{
-    xEventGroupSetBits(ur_handle.rxEvent, RTOS_USART_COMPLETE);
-}
-#endif
-#endif
-#endif
-
-#if defined(FSL_RTOS_THREADX)
-
-static void uart_task(void *pvParameters)
-{
-    UINT status;
-
-    TX_THREAD_NOT_USED(pvParameters);
-
-    status = tx_uart_init(&uart_context);
-
-    if (status != TX_SUCCESS)
-        return;
-
-    do
-    {
-        console_tick();
-
-    } while (1);
-}
-
-#endif
-
 int cli_init(void)
 {
     static bool cli_init_done;
@@ -1309,39 +1218,13 @@ int cli_init(void)
     {
         return -WM_FAIL;
     }
-#if defined(SDK_OS_FREE_RTOS)
-#if !CONFIG_UART_INTERRUPT
-    if (cli_install_UART_Tick() != WM_SUCCESS)
-    {
-        (void)PRINTF(
-            "Error: could not install UART Tick function."
-            "\r\n");
-        return -WM_FAIL;
-    }
-#endif
-#endif
+
     int ret = cli_start();
     if (ret == WM_SUCCESS)
     {
         cli_init_done = true;
     }
-#if defined(SDK_OS_FREE_RTOS)
-#if CONFIG_UART_INTERRUPT
-    osa_status_t status = OSA_TaskCreate((osa_task_handle_t)uart_task_Handle, OSA_TASK(uart_task), NULL);
-    if (status != KOSA_StatusSuccess)
-    {
-        (void)PRINTF("Error: Failed to create uart thread: %d\r\n", status);
-        return -WM_FAIL;
-    }
-#endif
-#elif defined(FSL_RTOS_THREADX)
-    osa_status_t status = OSA_TaskCreate((osa_task_handle_t)uart_task_Handle, OSA_TASK(uart_task), NULL);
-    if (status != KOSA_StatusSuccess)
-    {
-        (void)PRINTF("Error: Failed to create uart thread: %d\r\n", status);
-        return -WM_FAIL;
-    }
-#endif
+
 #ifdef BOARD_NAME
     PRINTF("MCU Board: %s\r\n", BOARD_NAME);
     PRINTF("========================================\r\n");

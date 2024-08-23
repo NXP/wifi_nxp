@@ -2,14 +2,14 @@
  *
  *  @brief  This file provides WLAN Test Mode APIs
  *
- *  Copyright 2008-2020, 2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
 #include <wlan.h>
-#include <cli.h>
+#include <wifi_shell.h>
 #include <cli_utils.h>
 #include <string.h>
 #include <wm_net.h> /* for net_inet_aton */

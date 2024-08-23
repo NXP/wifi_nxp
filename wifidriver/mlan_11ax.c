@@ -4,7 +4,7 @@
  *  structures and declares global function prototypes used
  *  in MLAN module.
  *
- *  Copyright 2021-2023 NXP
+ *  Copyright 2021-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -395,6 +395,11 @@ mlan_status wlan_11ax_cfg_ioctl(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_
         case MLAN_OID_11AX_CMD_CFG:
             status = wlan_11ax_ioctl_cmd(pmadapter, pioctl_req);
             break;
+#if !CONFIG_MLAN_WMSDK
+        case MLAN_OID_11AX_HE_CFG:
+            status = wlan_11ax_ioctl_hecfg(pmadapter, pioctl_req);
+            break;
+#endif
         default:
             pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
             status                  = MLAN_STATUS_FAILURE;
@@ -616,6 +621,13 @@ mlan_status wlan_cmd_11ax_cmd(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u
     mlan_ds_11ax_txomi_cmd *txomi_cmd     = (mlan_ds_11ax_txomi_cmd *)&ds_11ax_cmd->param;
     mlan_ds_11ax_toltime_cmd *toltime_cmd = (mlan_ds_11ax_toltime_cmd *)&ds_11ax_cmd->param;
 
+#if !CONFIG_MLAN_WMSDK
+    mlan_ds_11ax_sr_cmd *sr_cmd     = (mlan_ds_11ax_sr_cmd *)&ds_11ax_cmd->param;
+    mlan_ds_11ax_beam_cmd *beam_cmd = (mlan_ds_11ax_beam_cmd *)&ds_11ax_cmd->param;
+    mlan_ds_11ax_htc_cmd *htc_cmd   = (mlan_ds_11ax_htc_cmd *)&ds_11ax_cmd->param;
+    mlan_ds_11ax_txop_cmd *txop_cmd = (mlan_ds_11ax_txop_cmd *)&ds_11ax_cmd->param;
+    MrvlIEtypes_Data_t *tlv         = MNULL;
+#endif /* CONFIG_MLAN_WMSDK */
 
     ENTER();
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_11AX_CMD);
@@ -633,6 +645,27 @@ mlan_status wlan_cmd_11ax_cmd(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u
             (void)__memcpy(pmpriv->adapter, axcmd->val, &toltime_cmd->tol_time, sizeof(t_u32));
             cmd->size += sizeof(t_u32);
             break;
+#if !CONFIG_MLAN_WMSDK
+        case MLAN_11AXCMD_SR_SUBID:
+            tlv              = (MrvlIEtypes_Data_t *)axcmd->val;
+            tlv->header.type = wlan_cpu_to_le16(sr_cmd->type);
+            tlv->header.len  = wlan_cpu_to_le16(sr_cmd->len);
+            (void)__memcpy(pmpriv->adapter, tlv->data, &sr_cmd->param.obss_pd_offset.offset, sr_cmd->len);
+            cmd->size += sizeof(MrvlIEtypesHeader_t) + sr_cmd->len;
+            break;
+        case MLAN_11AXCMD_BEAM_SUBID:
+            axcmd->val[0] = beam_cmd->value;
+            cmd->size += sizeof(t_u8);
+            break;
+        case MLAN_11AXCMD_HTC_SUBID:
+            axcmd->val[0] = htc_cmd->value;
+            cmd->size += sizeof(t_u8);
+            break;
+        case MLAN_11AXCMD_TXOPRTS_SUBID:
+            (void)__memcpy(pmpriv->adapter, axcmd->val, &txop_cmd->rts_thres, sizeof(t_u16));
+            cmd->size += sizeof(t_u16);
+            break;
+#endif /* CONFIG_MLAN_WMSDK */
         default:
             PRINTM(MERROR, "Unknown subcmd %x\n", ds_11ax_cmd->sub_id);
             break;

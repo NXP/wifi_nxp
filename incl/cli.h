@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -147,6 +147,20 @@ typedef int (*cli_name_val_set)(const char *name, const char *value);
 int cli_add_history_hook(cli_name_val_get get_cb, cli_name_val_set set_cb);
 #endif /* CONFIG_APP_FRM_CLI_HISTORY */
 
+#if CONFIG_CLI_ECHO_MODE
+/** Get the 'echo' mode for CLI
+ *
+ * \return true if echo is enabled
+ * \return false if echo is disabled
+ */
+bool cli_get_echo_mode(void);
+
+/** Set the 'echo' mode for CLI
+ *
+ * \param[in] enabled Set 'true' to enable echo and 'false' to disable.
+ */
+void cli_set_echo_mode(bool enabled);
+#endif /*CONFIG_CLI_ECHO_MODE*/
 
 /**
  * @internal

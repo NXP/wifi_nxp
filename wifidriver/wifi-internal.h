@@ -2,7 +2,7 @@
  *
  *  @brief WLAN Internal API
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -92,14 +92,22 @@ typedef struct
 
     osa_msgq_handle_t *wlc_mgr_event_queue;
 
+#if !CONFIG_WIFI_RX_REORDER
     void (*data_input_callback)(const uint8_t interface, const uint8_t *buffer, const uint16_t len);
+#endif
 #if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
     void *(*wifi_get_rxbuf_desc)(t_u16 rx_len);
 #endif
     void (*amsdu_data_input_callback)(uint8_t interface, uint8_t *buffer, uint16_t len);
     void (*deliver_packet_above_callback)(void *rxpd, t_u8 interface, t_void *lwip_pbuf);
     bool (*wrapper_net_is_ip_or_ipv6_callback)(const t_u8 *buffer);
+#if CONFIG_WIFI_RX_REORDER
+    void *(*gen_pbuf_from_data2)(t_u8 *payload, t_u16 datalen, void **p_payload);
+#endif
 
+#if CONFIG_P2P
+    osa_msgq_handle_t *wfd_event_queue;
+#endif
     OSA_MUTEX_HANDLE_DEFINE(command_lock);
 
     OSA_SEMAPHORE_HANDLE_DEFINE(command_resp_sem);
@@ -109,10 +117,8 @@ typedef struct
 #if CONFIG_WMM
     /** Semaphore to protect data parameters */
     OSA_SEMAPHORE_HANDLE_DEFINE(tx_data_sem);
-#ifdef __ZEPHYR__
     /** Queue for sending data packets to fw */
     OSA_MSGQ_HANDLE_DEFINE(tx_data, MAX_EVENTS, sizeof(struct bus_message));
-#endif
 #endif
     unsigned last_sent_cmd_msec;
 
@@ -208,6 +214,8 @@ typedef struct
 #if CONFIG_WPA_SUPP
     void *if_priv;
     void *hapd_if_priv;
+    /** Supported bands info. @ref wifi_nxp_event_supported_band */
+    struct wifi_nxp_event_supported_band sband[WIFI_NXP_EVENT_GET_WIPHY_NUM_BANDS];
     wifi_nxp_callbk_fns_t *supp_if_callbk_fns;
     nxp_wifi_event_mlme_t mgmt_resp;
     nxp_wifi_assoc_event_mlme_t assoc_resp;
@@ -215,7 +223,7 @@ typedef struct
     nxp_wifi_event_eapol_mlme_t eapol_rx;
     bool wpa_supp_scan;
     bool external_scan;
-#if CONFIG_HOSTAPD
+#if CONFIG_WPA_SUPP_AP
     bool hostapd_op;
 #endif
 #endif
@@ -308,6 +316,17 @@ int bus_register_event_queue(osa_msgq_handle_t event_queue);
  * De-register the event queue.
  */
 void bus_deregister_event_queue(void);
+#if CONFIG_P2P
+/**
+ * Register a special queue for WPS
+ */
+int bus_register_special_queue(osa_msgq_handle_t special_queue);
+
+/**
+ * Deregister special queue
+ */
+void bus_deregister_special_queue(void);
+#endif
 
 /**
  * Register DATA input function with SDIO driver.
@@ -396,6 +415,8 @@ void wifi_sdio_unlock(void);
 bool wifi_ind_reset_in_progress(void);
 void wifi_ind_reset_start(void);
 void wifi_ind_reset_stop(void);
+int wifi_ind_reset_lock(void);
+void wifi_ind_reset_unlock(void);
 #endif
 
 mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int len, t_u16 action);
@@ -431,6 +452,7 @@ int wifi_setup_vht_cap(t_u32 *vht_capab, t_u8 *vht_mcs_set, t_u8 band);
 int wifi_setup_he_cap(nxp_wifi_he_capabilities *he_cap, t_u8 band);
 #endif
 int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info);
+int wifi_nxp_init_ap(nxp_wifi_ap_info_t *params);
 int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_time, const t_u8 *data, size_t data_len);
 int wifi_remain_on_channel(const bool status, const uint8_t channel, const uint32_t duration);
 int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params);
@@ -448,6 +470,9 @@ int wifi_nxp_scan_res_num(void);
 int wifi_nxp_scan_res_get2(t_u32 table_idx, nxp_wifi_event_new_scan_result_t *scan_res);
 #endif /* CONFIG_WPA_SUPP */
 
+#if CONFIG_WIFI_RX_REORDER
+int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payload);
+#endif
 
 #if CONFIG_WMM
 int send_wifi_driver_tx_data_event(t_u8 interface);

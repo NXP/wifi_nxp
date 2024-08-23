@@ -2,7 +2,7 @@
  *
  *  @brief This file contains definitions for WPS global information.
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -152,6 +152,64 @@ typedef struct wps_l2_info
     u8 my_mac_addr[6];
 } WPS_L2_INFO;
 
+#if CONFIG_P2P
+/** Maximum no of channels in channel list */
+#define MAX_CHANNELS 14
+
+/** chan_list data structure */
+typedef struct _channel_list
+{
+    /** Number of channel */
+    u32 num_of_chan;
+    /** Channel number*/
+    u16 chan[MAX_CHANNELS];
+} channel_list;
+
+/** Wfd Device Information to display */
+typedef struct wfd_device_results
+{
+    /** Group capability */
+    u8 group_capability;
+    /** Device Identifier ; Interface address */
+    u8 device_id[ETH_ALEN];
+    /** Device address in deviceInfo */
+    u8 device_address[ETH_ALEN];
+    /** WFD GO SSID */
+    u8 go_ssid[MAX_SSID_LEN + 1];
+    /** Intended address from Peer */
+    u8 intended_address[ETH_ALEN];
+    /** is device valid */
+    u8 is_valid;
+    /** Operating channel */
+    int op_channel;
+    /** Listen channel */
+    int listen_channel;
+    /** Peer channel list */
+    channel_list peer_channel_list;
+    /** Last event timestamp */
+    time_t timestamp;
+} WFD_DEVICE_RESULTS, *PWFD_DEVICE_RESULTS;
+
+typedef struct wfd_data
+{
+    /** Find Results */
+    WFD_DEVICE_RESULTS find_results[WFD_MAX_FIND_DEVICES];
+    /** Valid Find Results */
+    struct p2p_scan_result valid_find_results[WFD_MAX_VALID_FIND_DEVICES];
+    /** number of find results */
+    int num_find_results;
+    /** current Device index */
+    int dev_index;
+    /** Self channel list */
+    channel_list self_channel_list;
+    /** Device found or not */
+    int dev_found;
+    /** Default scan */
+    int default_scan;
+    /** Valid devices */
+    int valid_devices;
+} WFD_DATA, *PWFD_DATA;
+#endif
 
 #define TLS_KEY_LEN 32
 
@@ -169,6 +227,10 @@ typedef struct wps_data
     void *evt_msg_head;
     /** event destination address */
     void *evt_dest_addr;
+#if CONFIG_P2P
+    /** WFD data pointer */
+    WFD_DATA wfd_data;
+#endif
     /** MAC Address */
     u8 my_mac_addr[ETH_ALEN];
     /** Interface name */
@@ -212,6 +274,37 @@ typedef struct wps_data
     struct wlan_network wps_conn_network;
 } WPS_DATA, *PWPS_DATA;
 
+#if CONFIG_P2P
+/** Maximum Persistent peers possible in a group */
+#define WFD_MAX_PERSISTENT_PEERS (2)
+/** PSK max len */
+#define WFD_PSK_LEN_MAX (64)
+
+/** User Persistent record format  */
+typedef struct
+{
+    /* Index of record */
+    s8 index;
+    /* Device role */
+    u8 dev_role;
+    /* BSSID */
+    u8 bssid[ETH_ALEN];
+    /* Group device ID */
+    u8 groupdevid[ETH_ALEN];
+    /* SSID length */
+    u8 ssid_len;
+    /* SSID */
+    u8 ssid[MAX_SSID_LEN];
+    /* PSK length */
+    u8 psk_len;
+    /* PSK */
+    u8 psk[WFD_PSK_LEN_MAX];
+    /* Number of Peers */
+    u8 num_peers;
+    /* List of Peers */
+    u8 peers[WFD_MAX_PERSISTENT_PEERS][ETH_ALEN];
+} wfd_persistent_record;
+#endif
 
 struct wps_msg
 {
@@ -249,5 +342,16 @@ struct prov_command
     } cmd;
 };
 
+#if CONFIG_P2P
+struct wfd_wlan_event
+{
+    bool peer_event;
+    bool action_frame;
+    void *buffer;
+};
+
+void wfd_cfg_cmd_provisioning_params(u16 action, u16 config_method, u16 dev_password);
+void wfd_cfg_cmd_wps_params(u16 action, char *wps_param);
+#endif
 
 #endif /* _WPS_DEF_H_ */

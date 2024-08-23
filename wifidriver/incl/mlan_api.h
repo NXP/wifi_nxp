@@ -2,7 +2,7 @@
  *
  *  @brief MLAN Interface
  *
- *  Copyright 2008-2022, 2024 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -13,10 +13,6 @@
 #include <string.h>
 #include <wmtypes.h>
 #include <wlan.h>
-
-#ifndef __ZEPHYR__
-#include "fsl_debug_console.h"
-#endif
 
 #define MLAN_WMSDK_MAX_WPA_IE_LEN 64U
 #define MLAN_MAX_MDIE_LEN         10U
@@ -186,10 +182,16 @@ extern OSA_SEMAPHORE_HANDLE_DEFINE(uapsd_sem);
 extern OSA_SEMAPHORE_HANDLE_DEFINE(txbuf_sem);
 #endif
 
+#if CONFIG_STA_AMPDU_RX
 extern bool sta_ampdu_rx_enable;
+#endif
 #ifdef DUMP_PACKET_MAC
 void dump_mac_addr(const char *msg, unsigned char *addr);
 #endif /* DUMP_PACKET_MAC */
+#ifdef DEBUG_11N_ASSOC
+void dump_htcap_info(const MrvlIETypes_HTCap_t *htcap);
+void dump_ht_info(const MrvlIETypes_HTInfo_t *htinfo);
+#endif /* DEBUG_11N_ASSOC */
 mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
                                       IN t_u16 cmd_no,
                                       IN t_u16 cmd_action,
@@ -268,9 +270,11 @@ static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *p
     return MLAN_STATUS_SUCCESS;
 }
 #endif
+#if CONFIG_BG_SCAN
 int wifi_request_bgscan_query(mlan_private *pmpriv);
 int wifi_send_scan_query(void);
 void wifi_get_band(mlan_private *pmpriv, int *band);
+#endif
 
 int wifi_send_hostcmd(
     const void *cmd_buf, uint32_t cmd_buf_len, void *resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len);
@@ -314,7 +318,7 @@ int wifi_mmsf_cfg(const t_u16 action, t_u8 *enable, t_u8 *Density, t_u8 *MMSF);
 #endif
 #endif
 
-#if CONFIG_WIFI_RECOVERY
+#if CONFIG_WIFI_RECOVERY 
 int wifi_recovery_test(void);
 #endif
 
@@ -386,7 +390,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 #if CONFIG_SCAN_WITH_RSSIFILTER
                        const t_s16 rssi_threshold,
 #endif
+#if CONFIG_SCAN_CHANNEL_GAP
                        const t_u16 scan_chan_gap,
+#endif
                        const bool keep_previous_scan,
                        const bool active_scan_triggered);
 int wifi_stop_smart_mode(void);
@@ -455,7 +461,6 @@ void wifi_ftm_process_event(void *p_data);
 #if CONFIG_WLS_CSI_PROC
 int wifi_process_wls_csi_event(void *p_data);
 void wls_csi_process_event(void *p_data);
-extern t_u8 g_csi_event_for_wls;
 #endif
 #endif
 
@@ -539,7 +544,9 @@ int wifi_get_mgmt_ie2(mlan_bss_type bss_type, void *buf, unsigned int *buf_len);
 int wifi_set_mgmt_ie2(mlan_bss_type bss_type, unsigned short mask, void *buf, unsigned int buf_len);
 int wifi_clear_mgmt_ie2(mlan_bss_type bss_type, int mgmt_bitmap_index);
 
+#if CONFIG_BG_SCAN
 int wifi_request_bgscan(mlan_private *pmpriv);
+#endif
 
 #if CONFIG_WPA_SUPP
 int wifi_send_sched_scan_cmd(nxp_wifi_trigger_sched_scan_t *params);
@@ -591,7 +598,9 @@ int wifi_tsp_cfg(const t_u16 action,
                  int *currRFUTemp);
 #endif
 
+#if CONFIG_TX_AMPDU_PROT_MODE
 int wifi_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action);
+#endif
 
 #if CONFIG_EXTERNAL_COEX_PTA
 int wifi_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config);

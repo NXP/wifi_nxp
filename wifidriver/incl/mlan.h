@@ -3,7 +3,7 @@
  *  @brief This file declares all APIs that will be called from MOAL module.
  *  It also defines the data structures used for APIs between MLAN and MOAL.
  *
- *  Copyright 2008-2021, 2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -20,37 +20,22 @@ Change log:
 
 #include <wifi_config_default.h>
 
-#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
+
+#if !CONFIG_WIFI_INTERNAL
+#define CONFIG_WIFI_INTERNAL 1
 #endif
 
-
-
-#ifndef __ZEPHYR__
-#if !CONFIG_STA_AUTO_DHCPV4
-#define CONFIG_STA_AUTO_DHCPV4 1
+#if !(defined(SD8801) || defined(RW610))
+#define CONFIG_GTK_REKEY_OFFLOAD 1
 #endif
-#endif
-
-#ifndef __ZEPHYR__
-#if !CONFIG_WIFI_STA_RECONNECT
-#define CONFIG_WIFI_STA_RECONNECT 1
-#endif
-#endif
-
-#ifndef __ZEPHYR__
-#if !CONFIG_WIFI_AUTO_POWER_SAVE
-#define CONFIG_WIFI_AUTO_POWER_SAVE 1
-#endif
-#endif
-
-
-#define CONFIG_GTK_REKEY_OFFLOAD 0
-
 
 #if defined(SD9177)
 #define CONFIG_TCP_ACK_ENH 1
 #define CONFIG_FW_VDLL     1
+#if !CONFIG_WIFI_CAPA
+#define CONFIG_WIFI_CAPA 1
+#endif
 
 #if CONFIG_11AX
 #if !CONFIG_11K

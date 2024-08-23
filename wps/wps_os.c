@@ -2,7 +2,7 @@
  *
  *  @brief This file contains timer and socket read functions
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -28,6 +28,10 @@
 #include "wps_eapol.h"
 #include "wps_os.h"
 #include "wps_wlan.h"
+#if CONFIG_P2P
+#include "wlan_hostcmd.h"
+#include "wlan_wfd.h"
+#endif
 
 #if CONFIG_WPA2_ENTP
 void wpa2_session_complete();
@@ -51,6 +55,9 @@ extern short ie_index;
 /** IE buffer index */
 extern short ap_assocresp_ie_index;
 
+#if CONFIG_P2P
+extern void wfd_peer_ageout_time_handler(void *user_data);
+#endif
 
 /** Global pwps information */
 extern PWPS_INFO gpwps_info;
@@ -84,6 +91,142 @@ static void wps_main_loop_free(void)
 /********************************************************
         Global Functions
 ********************************************************/
+#if CONFIG_P2P
+/**
+ *  @brief Process reception of event from wlan
+ *
+ *  @param fd           File descriptor for reading
+ *  @param context      A pointer to user private information
+ *  @return             None
+ */
+void wps_peer_event_receive()
+{
+    u8 evt_buffer[EVENT_MAX_BUF_SIZE];
+    int ret;
+    WPS_DATA *wps_s = (WPS_DATA *)&wps_global;
+    struct wfd_wlan_event event;
+    u16 event_len;
+    u32 action_event_len;
+    event_header *event_hdr;
+
+    ENTER();
+
+    while (1)
+    {
+        ret = OSA_MsgQGet((osa_msgq_handle_t)wps.peer_event_queue, &event, OS_WAIT_FOREVER);
+
+        if (ret == WM_SUCCESS)
+        {
+            if (event.action_frame)
+            {
+                (void)memcpy(&action_event_len, event.buffer, sizeof(action_event_len));
+
+                (void)memcpy(evt_buffer, event.buffer + sizeof(action_event_len), action_event_len);
+
+                wfd_process_action_frame_request(evt_buffer, action_event_len);
+
+                OSA_MemoryFree(event.buffer);
+            }
+            if (event.peer_event)
+            {
+                (void)memcpy(&event_len, event.buffer + 2 * sizeof(u16), sizeof(event_len));
+
+                event_len += 2 * sizeof(u16);
+
+                (void)memcpy(evt_buffer, event.buffer, event_len);
+
+                wps_wlan_peer_event_parser(wps_s, (char *)evt_buffer, event_len);
+            }
+            else
+            {
+                event_hdr = (event_header *)evt_buffer;
+                if (!event.buffer)
+                    event_hdr->event_id = EV_ID_WFD_PEER_LINK_LOST;
+                else
+                    event_hdr->event_id = EV_ID_WFD_PEER_CONNECTED;
+                event_len = 4;
+                wps_wlan_peer_event_parser(wps_s, (char *)evt_buffer, event_len);
+            }
+        }
+    }
+    LEAVE();
+    return;
+}
+
+/**
+ *  @brief Process reception of event from wlan
+ *
+ *  @param fd           File descriptor for reading
+ *  @param context      A pointer to user private information
+ *  @return             None
+ */
+void wps_event_receive(WPS_DATA *wps_s, WFD_DATA *pwfd_data)
+{
+    struct timeval tv, now;
+    u8 evt_buffer[EVENT_MAX_BUF_SIZE];
+    int ret;
+    struct wfd_wlan_event event;
+    u16 event_len;
+
+    ENTER();
+
+    wps_cancel_timer(wfd_peer_ageout_time_handler, pwfd_data);
+
+    while (!gpwps_info->wps_session && wps_loop.timeout)
+    {
+        if (wps_loop.timeout)
+        {
+            now.tv_sec  = OSA_TicksToMsec(OSA_TicksGet()) / 1000;
+            now.tv_usec = (OSA_TicksToMsec(OSA_TicksGet()) % 1000) * 1000;
+
+            if (timer_cmp(&now, &wps_loop.timeout->time))
+                timersub(&wps_loop.timeout->time, &now, &tv);
+            else
+                tv.tv_sec = tv.tv_usec = 0;
+        }
+
+        /* check if some registered timeouts have occurred */
+        if (wps_loop.timeout)
+        {
+            struct wps_timeout_s *tmp;
+
+            now.tv_sec  = OSA_TicksToMsec(OSA_TicksGet()) / 1000;
+            now.tv_usec = (OSA_TicksToMsec(OSA_TicksGet()) % 1000) * 1000;
+
+            if (!timer_cmp(&now, &wps_loop.timeout->time))
+            {
+                tmp              = wps_loop.timeout;
+                wps_loop.timeout = wps_loop.timeout->next;
+                tmp->handler(tmp->callback_data);
+                wps_mem_free(tmp);
+            }
+        }
+
+        ret = OSA_MsgQGet((osa_msgq_handle_t)wps.event_queue, &event, 50);
+
+        if (ret == WM_SUCCESS)
+        {
+            (void)memcpy(&event_len, event.buffer, sizeof(event_len));
+
+            (void)memcpy(evt_buffer, event.buffer, event_len);
+
+            wps_wlan_event_parser(evt_buffer, event_len);
+        }
+    }
+
+    wps_cancel_timer(wfd_peer_selected_ageout_time_handler, pwfd_data);
+
+    if (!auto_go)
+    {
+        wfd_start_peer_ageout_timer(pwfd_data);
+        p2p_scan_on = 1;
+    }
+
+    LEAVE();
+    return;
+}
+
+#endif
 
 /**
  *  @brief Process main loop initialization

@@ -2,7 +2,7 @@
   *
   * @brief This file contains source code to calculate fine timing using sub-space methods (ESPRIT)
   *
-  * Copyright 2023 NXP
+  * Copyright 2023-2024 NXP
   *
   * SPDX-License-Identifier: BSD-3-Clause
   *

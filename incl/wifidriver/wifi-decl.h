@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2022, 2024 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -38,10 +38,12 @@
 #define OWE_TRANS_MODE_OWE 2U
 #endif
 
+#if CONFIG_WIFI_CAPA
 #define WIFI_SUPPORT_11AX   (1 << 3)
 #define WIFI_SUPPORT_11AC   (1 << 2)
 #define WIFI_SUPPORT_11N    (1 << 1)
 #define WIFI_SUPPORT_LEGACY (1 << 0)
+#endif
 
 #if 0
 /** channel_field.flags */
@@ -184,6 +186,14 @@ struct wifi_message
     void *data;
 };
 
+#if CONFIG_P2P
+struct wifi_wfd_event
+{
+    bool peer_event;
+    bool action_frame;
+    void *data;
+};
+#endif
 
 /* Wlan Cipher structure */
 typedef struct
@@ -1242,6 +1252,62 @@ typedef PACK_START struct
     t_s32 tsf_offset;
 } PACK_END wifi_tsf_info_t;
 #endif /* CONFIG_WIFI_CLOCKSYNC */
+#if CONFIG_WLAN_BRIDGE
+/**
+ * Data structure for Bridge Autolink Configuration
+ */
+typedef struct
+{
+    /** Auto Link Periodical scan interval */
+    uint32_t scan_timer_interval;
+    /** The condition triggers Auto Link periodical scan
+     *  0: trigger scan when current link is not good
+     *  1: trigger scan by host setting(always periodical scan)
+     */
+    uint8_t scan_timer_condition;
+    /** Auto Link periodical scan channel list:
+     *  0: only scan with previous In-STA associated channel
+     *  1: 2.4G all channels
+     */
+    uint8_t scan_channel_list;
+} wifi_autolink_cfg_t;
+
+/**
+ * Data structure for Bridge Configuration
+ */
+#define ENABLE_AUTOLINK_BIT 1
+#define HIDDEN_SSID_BIT     2
+typedef struct
+{
+    /** Bit 0: Enable/Disable bridge mode,
+     *  Bit 1: Enable/Disable auto link,
+     *  Bit 2: Enable/Disable hidden ssid
+     */
+    uint8_t enable;
+    /** Auto Link */
+    bool auto_link;
+    /** Hideen Bridge SSID */
+    bool hidden_ssid;
+    /** EX-AP SSID Length */
+    uint8_t ex_ap_ssid_len;
+    /** EX-AP SSID */
+    char ex_ap_ssid[MLAN_MAX_SSID_LENGTH];
+    /** EX-AP Passphrase length */
+    uint8_t ex_ap_pass_len;
+    /** EX-AP Passphrase */
+    char ex_ap_pass[MLAN_MAX_PASS_LENGTH];
+    /** Bridge SSID Length */
+    uint8_t bridge_ssid_len;
+    /** Bridge SSID */
+    char bridge_ssid[MLAN_MAX_SSID_LENGTH];
+    /** Bridge Passphrase length */
+    uint8_t bridge_pass_len;
+    /** Bridge Passphrase */
+    char bridge_pass[MLAN_MAX_PASS_LENGTH];
+    /**auto link configuration*/
+    wifi_autolink_cfg_t autolink;
+} wifi_bridge_cfg_t;
+#endif
 
 #if CONFIG_NET_MONITOR
 typedef t_u8 wifi_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
@@ -1354,6 +1420,35 @@ typedef struct
     uint8_t mfpr;
 } wifi_pmf_params_t;
 
+#if !CONFIG_MLAN_WMSDK
+/** mix rate information structure */
+typedef PACK_START struct _mix_rate_info
+{
+    /**  bit0: LGI: gi=0, SGI: gi= 1 */
+    /**  bit1-2: 20M: bw=0, 40M: bw=1, 80M: bw=2, 160M: bw=3  */
+    /**  bit3-4: LG: format=0, HT: format=1, VHT: format=2 */
+    /**  bit5: LDPC: 0-not support,  1-support */
+    /**  bit6-7:reserved */
+    t_u8 rate_info;
+    /** MCS index */
+    t_u8 mcs_index;
+    /** bitrate, in 500Kbps */
+    t_u16 bitrate;
+} PACK_END mix_rate_info, *pmix_rate_info;
+
+/** rxpd extra information structure */
+typedef PACK_START struct _rxpd_extra_info
+{
+    /** flags */
+    t_u8 flags;
+    /** channel.flags */
+    t_u16 channel_flags;
+    /** mcs.known */
+    t_u8 mcs_known;
+    /** mcs.flags */
+    t_u8 mcs_flags;
+} PACK_END rxpd_extra_info, *prxpd_extra_info;
+#endif
 
 /** Channel scan parameters */
 typedef struct
@@ -1441,7 +1536,9 @@ typedef PACK_START struct _wifi_scan_channel_list_t
 #define ANT_DETECT_MAX_CHANNEL_LIST 50U
 #endif
 #define MAX_CHANNEL_LIST 6
+#if CONFIG_COMBO_SCAN
 #define MAX_NUM_SSID 2
+#endif
 /** V2 scan parameters */
 typedef PACK_START struct _wifi_scan_params_v2_t
 {
@@ -1456,7 +1553,11 @@ typedef PACK_START struct _wifi_scan_params_v2_t
     /** BSSID to scan */
     t_u8 bssid[MLAN_MAC_ADDR_LENGTH];
     /** SSID to scan */
+#if CONFIG_COMBO_SCAN
     char ssid[MAX_NUM_SSID][MLAN_MAX_SSID_LENGTH + 1];
+#else
+    char ssid[MLAN_MAX_SSID_LENGTH + 1];
+#endif
     /** Number of channels */
     t_u8 num_channels;
     /** Channel list with channel information */
@@ -1471,8 +1572,10 @@ typedef PACK_START struct _wifi_scan_params_v2_t
     /** Threshold of rssi */
     t_s16 rssi_threshold;
 #endif
+#if CONFIG_SCAN_CHANNEL_GAP
     /** scan channel gap */
     t_u16 scan_chan_gap;
+#endif
     /** Callback to be called when scan is completed */
     int (*cb)(unsigned int count);
 } PACK_END wifi_scan_params_v2_t;
@@ -1537,23 +1640,7 @@ typedef PACK_START struct _wifi_mfg_cmd_tx_frame
     /** STBC */
     t_u32 stbc;
     /** power id */
-    t_u32 rsvd[1];
-    /**signal bw*/
-    t_u32 signal_bw;
-    /** NumPkt */
-    t_u32 NumPkt;
-    /** MaxPE */
-    t_u32 MaxPE;
-    /** BeamChange */
-    t_u32 BeamChange;
-    /** Dcm */
-    t_u32 Dcm;
-    /** Doppler */
-    t_u32 Doppler;
-    /** MidP */
-    t_u32 MidP;
-    /** QNum */
-    t_u32 QNum;
+    t_u32 rsvd[2];
 } PACK_END wifi_mfg_cmd_tx_frame_t;
 
 /** Configuration for Manufacturing command Tx Continuous */
@@ -1700,6 +1787,68 @@ typedef PACK_START struct
 } PACK_END wifi_drcs_cfg_t;
 #endif
 
+#if CONFIG_1AS
+#define DOT1AS_TM_ROLE_TRANSMITTER 0
+#define DOT1AS_TM_ROLE_RECEIVER    1
+
+#define DOT1AS_TM_STATUS_COMPLETE   0
+#define DOT1AS_TM_STATUS_INPROGRESS 1
+
+typedef struct
+{
+    /* host time in nano secs */
+    t_u64 time;
+    /* fw time in nano secs */
+    t_u64 fw_time;
+} wifi_correlated_time_t;
+
+typedef struct _wifi_dot1as_info_t
+{
+    /* 0 - completed or unstarted, 1 - in progress */
+    t_u8 status;
+    /* 0 - master(transmitter, send TM), 1 - slave(receiver, receive TM) */
+    t_u8 role;
+    /* current number of TM frame, used in master mode */
+    t_u8 tm_num;
+    /* max number of TM frames, used in master mode */
+    t_u8 max_tm_num;
+    /* peer addr */
+    t_u8 peer_addr[MLAN_MAC_ADDR_LENGTH];
+    /* dialog_token */
+    t_u8 dialog_token;
+    /* prev_dialog_token */
+    t_u8 prev_dialog_token;
+    /* time of TX TM frame depart */
+    t_u32 t1;
+    /* time of TX TM frame acked */
+    t_u32 t4;
+    /* time of RX TM frame receive */
+    t_u32 t2;
+    /* time of RX TM frame ack */
+    t_u32 t3;
+    /* fw status error of t1 in 10ns */
+    t_u8 t1_err;
+    /* fw status error of t4 in 10ns */
+    t_u8 t4_err;
+    /* max error of t1 in 10ns */
+    t_u8 max_t1_err;
+    /* max error of t4 in 10ns */
+    t_u8 max_t4_err;
+    /* error of t2 in 10ns */
+    t_u8 t2_err;
+    /* error of t3 in 10ns */
+    t_u8 t3_err;
+    /* max error of t2 in 10ns */
+    t_u8 max_t2_err;
+    /* max error of t3 in 10ns */
+    t_u8 max_t3_err;
+    /* egress time of TX TM frame */
+    t_u64 egress_time;
+    /* ingress time of RX TM frame */
+    t_u64 ingress_time;
+} wifi_dot1as_info_t;
+
+#endif
 
 #if CONFIG_SUBSCRIBE_EVENT_SUPPORT
 /** Type definition of mlan_ds_subscribe_evt for subscribe events */

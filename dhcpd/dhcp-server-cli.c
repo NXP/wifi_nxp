@@ -2,7 +2,7 @@
  *
  *  @brief This file provides CLI based APIs for the DHCP Server
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -16,11 +16,6 @@
 #include <wm_net.h>
 #include <cli.h>
 #include <cli_utils.h>
-#if defined(SDK_OS_FREE_RTOS)
-#include <dhcp-server.h>
-
-#include "dhcp-priv.h"
-#endif
 
 /*
  * Command-Line Interface

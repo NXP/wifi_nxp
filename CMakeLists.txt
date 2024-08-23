@@ -1,25 +1,25 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2022 NXP
+# Copyright 2022-2024 NXP
 
 # define part number for this driver
 
-zephyr_compile_definitions_ifdef(CONFIG_88W8987
+zephyr_compile_definitions_ifdef(CONFIG_NXP_88W8987
     SD8987
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_IW416
+zephyr_compile_definitions_ifdef(CONFIG_NXP_IW416
     SD8978
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_IW61X
+zephyr_compile_definitions_ifdef(CONFIG_NXP_IW61X
     SD9177
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_88W8801
+zephyr_compile_definitions_ifdef(CONFIG_NXP_88W8801
     SD8801
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_RW610
+zephyr_compile_definitions_ifdef(CONFIG_NXP_RW610
     RW610
     WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW_rw610.h"
 )
@@ -152,6 +152,8 @@ zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_BT_USE_M2_INTERFACE
 
 zephyr_library_compile_definitions(
     FSL_OSA_TASK_ENABLE=1
+    CONFIG_FSL_RTOS_ZEPHYR=1
+    CONFIG_OSA_DEBUG_ASSERT_ENABLED=1
 )
 
 zephyr_library_sources(${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/utilities/misc_utilities/fsl_memcpy.S)
@@ -164,7 +166,6 @@ zephyr_include_directories(
     incl
     incl/wifidriver
     incl/wlcmgr
-    incl/port/net
     incl/port/osa
     incl/port/net/zephyr
     port/osa
@@ -184,6 +185,7 @@ zephyr_include_directories(
     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/lists/
     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/wifi_bt_module/AzureWave/tx_pwr_limits/
     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/wifi_bt_module/Murata/tx_pwr_limits/
+    ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/rpmsg/
 )
 
 # OS abstraction layer source
@@ -199,7 +201,7 @@ list(FILTER WIFI_SRC EXCLUDE REGEX ".*imu.c$")
 list(FILTER WIFI_SRC EXCLUDE REGEX ".*sdio.c$")
 list(FILTER WIFI_SRC EXCLUDE REGEX ".*firmware_dnld.c$")
 
-zephyr_library_sources_ifdef(CONFIG_RW610
+zephyr_library_sources_ifdef(CONFIG_NXP_RW610
     wifidriver/wifi-imu.c
 )
 
@@ -250,33 +252,32 @@ zephyr_library_include_directories_ifdef(CONFIG_NXP_WIFI_SIGMA_AGENT
     sigma_agent/dut
 )
 
-file(GLOB DHCPD_SRC ./dhcpd/*.c)
-list(FILTER DHCPD_SRC EXCLUDE REGEX ".*cli*")
-
-zephyr_library_sources(${DHCPD_SRC})
-zephyr_library_include_directories(dhcpd)
-
 # nxp wifi shell
 zephyr_library_sources(cli/wifi_shell.c)
 zephyr_library_sources(cli/cli_utils.c)
 
 # macros for wpa_supplicant
-if(CONFIG_WPA_SUPP)
-zephyr_include_directories(certs)
+if(CONFIG_WIFI_NM_WPA_SUPPLICANT)
+zephyr_include_directories(
+    certs
+    wifidriver/wpa_supp_if/incl
+)
 
 zephyr_library_include_directories(wifidriver/wpa_supp_if wifidriver/wpa_supp_if/incl)
 file(GLOB WIFI_SUPP_SRC ./wifidriver/wpa_supp_if/*.c)
 zephyr_library_sources(${WIFI_SUPP_SRC})
 endif()
 
+zephyr_include_directories_ifdef(CONFIG_WIFI_NM_WPA_SUPPLICANT_CRYPTO_ALT
+    incl/port/mbedtls
+)
+
 if(CONFIG_SPEED_OPTIMIZATIONS OR CONFIG_SIZE_OPTIMIZATIONS)
 # critical path code relocated to SRAM
 zephyr_code_relocate(FILES
-                     port/net/net.c
                      port/osa/osa.c
                      port/osa/osa_zephyr.c
                      port/net/zephyr/net.c
-                     sdio_nxp_abs/mlan_sdio_zephyr.c
                      wifidriver/mlan_11n.c
                      wifidriver/mlan_11n_aggr.c
                      wifidriver/mlan_11n_rxreorder.c
@@ -291,7 +292,7 @@ zephyr_code_relocate(FILES
                      LOCATION RAM_TEXT)
 endif()
 
-if(CONFIG_RW610)
+if(CONFIG_NXP_RW610)
 zephyr_code_relocate(FILES
                      # fsl_cache.c
                      # ${ZEPHYR_BASE}/modules/hal_nxp/fsl_memcpy.S
@@ -337,3 +338,4 @@ zephyr_code_relocate(FILES
 endif()
 
 zephyr_library_link_libraries_ifdef(CONFIG_MBEDTLS mbedTLS)
+zephyr_library_link_libraries_ifdef(CONFIG_WIFI_NM_WPA_SUPPLICANT hostap)

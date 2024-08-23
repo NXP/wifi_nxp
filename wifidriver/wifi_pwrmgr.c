@@ -2,7 +2,7 @@
  *
  *  @brief This file provides all power management code for WIFI.
  *
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -26,7 +26,11 @@
 #define pwr_e(...) wmlog_e("pwr", ##__VA_ARGS__)
 #define pwr_w(...) wmlog_w("pwr", ##__VA_ARGS__)
 
+#if CONFIG_PWR_DEBUG
+#define pwr_d(...) wmlog("pwr", ##__VA_ARGS__)
+#else
 #define pwr_d(...)
+#endif /* ! CONFIG_PWR_DEBUG */
 
 #define MAX_LISTEN_INTERVAL_IN_BCON     49
 #define MIN_LISTEN_INTERVAL_IN_TU       50
@@ -272,6 +276,7 @@ int wifi_exit_ieee_power_save(void)
     return wifi_send_power_save_command(DIS_AUTO_PS, BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
 }
 
+#if (CONFIG_WNM_PS)
 int wifi_enter_wnm_power_save(t_u16 wnm_sleep_time)
 {
     ((mlan_private *)mlan_adap->priv[0])->wnm_set = true;
@@ -283,6 +288,7 @@ int wifi_exit_wnm_power_save(void)
 {
     return wifi_send_power_save_command(DIS_WNM_PS, BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
 }
+#endif
 
 int wifi_enter_deepsleep_power_save(void)
 {
@@ -412,6 +418,9 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
 #if CONFIG_HOST_SLEEP
     pmlan_adapter pmadapter = ((mlan_private *)mlan_adap->priv[0])->adapter;
 #endif
+#if CONFIG_PWR_DEBUG
+    MrvlIEtypes_ps_param_t *ps_tlv = NULL;
+#endif /*  CONFIG_PWR_DEBUG*/
     HostCmd_DS_802_11_PS_MODE_ENH *ps_mode = (HostCmd_DS_802_11_PS_MODE_ENH *)(void *)(cmd_res_buffer + S_DS_GEN);
 
     *ps_event = (t_u16)WIFI_EVENT_PS_INVALID;
@@ -442,6 +451,9 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
                 mrvl_tlv =
                     (MrvlIEtypesHeader_t *)(void *)((uint8_t *)mrvl_tlv + mrvl_tlv->len + sizeof(MrvlIEtypesHeader_t));
             }
+#if CONFIG_PWR_DEBUG
+            ps_tlv = (MrvlIEtypes_ps_param_t *)mrvl_tlv;
+#endif /*  CONFIG_PWR_DEBUG*/
             pwr_d(
                 "pscfg: %u %u %u %u "
                 "%u %u",
@@ -471,6 +483,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         }
         return WIFI_EVENT_REASON_SUCCESS;
     }
+#if (CONFIG_WNM_PS)
     else if (ps_mode->action == EN_WNM_PS)
     {
         if ((ps_mode->params.auto_ps.ps_bitmap & BITMAP_STA_PS) != 0)
@@ -511,6 +524,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         *ps_event = (t_u16)WIFI_EVENT_WNM_PS;
         return WIFI_EVENT_REASON_SUCCESS;
     }
+#endif
     else if (ps_mode->action == (t_u16)GET_PS)
     {
         if ((ps_mode->params.ps_bitmap & BITMAP_AUTO_DS) != 0U)
@@ -532,6 +546,9 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
                 mrvl_tlv =
                     (MrvlIEtypesHeader_t *)(void *)((uint8_t *)mrvl_tlv + mrvl_tlv->len + sizeof(MrvlIEtypesHeader_t));
             }
+#if CONFIG_PWR_DEBUG
+            ps_tlv = (MrvlIEtypes_ps_param_t *)mrvl_tlv;
+#endif /*  CONFIG_PWR_DEBUG*/
             pwr_d(
                 "pscfg: %u %u %u %u "
                 "%u %u\r\n",
@@ -549,10 +566,12 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         {
             *ps_event = (t_u16)WIFI_EVENT_IEEE_DEEP_SLEEP;
         }
+#if (CONFIG_WNM_PS)
         else if ((((mlan_private *)mlan_adap->priv[0])->wnm_set) && (deepsleepps_enabled))
         {
             *ps_event = (t_u16)WIFI_EVENT_WNM_DEEP_SLEEP;
         }
+#endif
         else if (ieeeps_enabled)
         {
             *ps_event = (t_u16)WIFI_EVENT_IEEE_PS;
@@ -561,17 +580,21 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         {
             *ps_event = (t_u16)WIFI_EVENT_DEEP_SLEEP;
         }
+#if (CONFIG_WNM_PS)
         else if (((mlan_private *)mlan_adap->priv[0])->wnm_set)
         {
             *ps_event = (t_u16)WIFI_EVENT_WNM_PS;
         }
+#endif
         else
         {
             return WIFI_EVENT_REASON_FAILURE;
         }
 
         if (ieeeps_enabled || deepsleepps_enabled
+#if CONFIG_WNM_PS
             || (((mlan_private *)mlan_adap->priv[0])->wnm_set)
+#endif
         )
         {
             /* sleep confirm response needs to get the sleep_rwlock, for this lock
@@ -636,3 +659,28 @@ int wifi_get_wakeup_reason(t_u16 *hs_wakeup_reason)
 }
 #endif
 
+#if CONFIG_P2P
+int wifi_wfd_ps_inactivity_sleep_enter(unsigned int ctrl_bitmap,
+                                       unsigned int inactivity_to,
+                                       unsigned int min_sleep,
+                                       unsigned int max_sleep,
+                                       unsigned int min_awake,
+                                       unsigned int max_awake)
+{
+    mlan_ds_ps_mgmt data_buff;
+    data_buff.sleep_param.ctrl_bitmap   = ctrl_bitmap;
+    data_buff.sleep_param.min_sleep     = min_sleep;
+    data_buff.sleep_param.max_sleep     = max_sleep;
+    data_buff.inact_param.min_awake     = min_awake;
+    data_buff.inact_param.max_awake     = max_awake;
+    data_buff.inact_param.inactivity_to = inactivity_to;
+    data_buff.flags                     = PS_FLAG_INACT_SLEEP_PARAM | PS_FLAG_SLEEP_PARAM;
+
+    return wifi_send_power_save_command(EN_AUTO_PS, BITMAP_UAP_INACT_PS, MLAN_BSS_TYPE_WIFIDIRECT, &data_buff);
+}
+
+int wifi_wfd_ps_inactivity_sleep_exit(void)
+{
+    return wifi_send_power_save_command(DIS_AUTO_PS, BITMAP_UAP_INACT_PS, MLAN_BSS_TYPE_WIFIDIRECT, NULL);
+}
+#endif /*  CONFIG_P2P*/

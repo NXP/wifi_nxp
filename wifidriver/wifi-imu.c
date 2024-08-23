@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides WLAN Card related API
  *
- *  Copyright 2022 NXP
+ *  Copyright 2022-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -20,7 +20,7 @@
 #include "wifi-imu.h"
 #include "wifi-internal.h"
 #include "fsl_common.h"
-#include "fsl_adapter_imu.h"
+#include "fsl_adapter_rfimu.h"
 #include "fsl_imu.h"
 #include "fsl_loader.h"
 
@@ -110,10 +110,10 @@ SDK_ALIGN(uint8_t inbuf[SDIO_MP_AGGR_DEF_PKT_LIMIT * 2 * DATA_BUFFER_SIZE], 32);
 SDK_ALIGN(uint8_t amsdu_outbuf[MAX_SUPPORT_AMSDU_SIZE], 32);
 #endif
 
-hal_imumc_status_t imumc_cmdrsp_handler(IMU_Msg_t *pImuMsg, uint32_t length);
-hal_imumc_status_t imumc_event_handler(IMU_Msg_t *pImuMsg, uint32_t length);
-hal_imumc_status_t imumc_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length);
-hal_imumc_status_t imumc_ctrl_handler(IMU_Msg_t *pImuMsg, uint32_t length);
+hal_rpmsg_status_t rpmsg_cmdrsp_handler(IMU_Msg_t *pImuMsg, uint32_t length);
+hal_rpmsg_status_t rpmsg_event_handler(IMU_Msg_t *pImuMsg, uint32_t length);
+hal_rpmsg_status_t rpmsg_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length);
+hal_rpmsg_status_t rpmsg_ctrl_handler(IMU_Msg_t *pImuMsg, uint32_t length);
 
 /* Remove me: This structure is not present in mlan and can be removed later */
 typedef MLAN_PACK_START struct
@@ -147,13 +147,13 @@ static void wifi_init_imulink(void)
 }
 
 uint8_t cmd_seqno = 0;
-static hal_imumc_status_t wifi_send_fw_cmd(t_u16 cmd_type, t_u8 *cmd_payload, t_u32 length)
+static hal_rpmsg_status_t wifi_send_fw_cmd(t_u16 cmd_type, t_u8 *cmd_payload, t_u32 length)
 {
     IMUPkt *imu_cmd         = (IMUPkt *)cmd_payload;
     HostCmd_DS_COMMAND *cmd = NULL;
 
     if (cmd_payload == NULL || length == 0)
-        return kStatus_HAL_ImumcError;
+        return kStatus_HAL_RpmsgError;
 
     cmd          = &(imu_cmd->hostcmd);
     cmd->seq_num = (cmd->seq_num & 0xFF00) | cmd_seqno;
@@ -169,17 +169,17 @@ static hal_imumc_status_t wifi_send_fw_cmd(t_u16 cmd_type, t_u8 *cmd_payload, t_
     dump_hex(cmd_payload, length);
 #endif /* CONFIG_WIFI_IO_DUMP */
 
-    while (kStatus_HAL_ImumcSuccess != HAL_ImuSendCommand(kIMU_LinkCpu1Cpu3, cmd_payload, length))
+    while (kStatus_HAL_RpmsgSuccess != HAL_ImuSendCommand(kIMU_LinkCpu1Cpu3, cmd_payload, length))
     {
         OSA_TimeDelay(1);
     }
-    return kStatus_HAL_ImumcSuccess;
+    return kStatus_HAL_RpmsgSuccess;
 }
 
-static hal_imumc_status_t wifi_send_fw_data(t_u8 *data, t_u32 length)
+static hal_rpmsg_status_t wifi_send_fw_data(t_u8 *data, t_u32 length)
 {
     if (data == NULL || length == 0)
-        return kStatus_HAL_ImumcError;
+        return kStatus_HAL_RpmsgError;
     w_pkt_d("Data TX SIG: Driver=>FW, len %d", length);
     return HAL_ImuSendTxData(kIMU_LinkCpu1Cpu3, data, length);
 }
@@ -1145,7 +1145,7 @@ mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx_co
     /* send tx data via imu */
     ret = wifi_send_fw_data(buffer, txlen);
 
-    if (ret != kStatus_HAL_ImumcSuccess)
+    if (ret != kStatus_HAL_RpmsgSuccess)
     {
         wifi_io_e("Send tx data via imu failed (%d)", ret);
 #if CONFIG_WIFI_FW_DEBUG
@@ -1179,7 +1179,7 @@ mlan_status wlan_xmit_bypass_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface)
     /* send tx data via imu */
     ret = wifi_send_fw_data(buffer, txlen);
 
-    if (ret != kStatus_HAL_ImumcSuccess)
+    if (ret != kStatus_HAL_RpmsgSuccess)
     {
         wifi_io_e("Send tx data via imu failed (%d)", ret);
 #if CONFIG_WIFI_FW_DEBUG
@@ -1237,7 +1237,7 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
     ret              = HAL_ImuAddWlanTxPacket(kIMU_LinkCpu1Cpu3, tx_buf, txlen);
 #endif
 
-    if (ret != kStatus_HAL_ImumcSuccess)
+    if (ret != kStatus_HAL_RpmsgSuccess)
     {
 #if CONFIG_WMM_UAPSD
         if (last_packet)
@@ -1277,7 +1277,7 @@ mlan_status wlan_flush_wmm_pkt(int pkt_cnt)
 
     ret = HAL_ImuSendMultiTxData(kIMU_LinkCpu1Cpu3);
     ;
-    if (ret != kStatus_HAL_ImumcSuccess)
+    if (ret != kStatus_HAL_RpmsgSuccess)
     {
         wifi_io_e("wlan_flush_wmm_pkt failed (%d)", ret);
 #if CONFIG_WIFI_FW_DEBUG
@@ -1342,7 +1342,7 @@ mlan_status wlan_xmit_wmm_amsdu_pkt(mlan_wmm_ac_e ac, t_u8 interface, t_u32 txle
 
     ret = HAL_ImuAddWlanTxPacket(kIMU_LinkCpu1Cpu3, tx_buf, txlen);
 
-    if (ret != kStatus_HAL_ImumcSuccess)
+    if (ret != kStatus_HAL_RpmsgSuccess)
     {
 #if CONFIG_WMM_UAPSD
         if (last_packet)
@@ -1382,7 +1382,7 @@ mlan_status wlan_send_null_packet(pmlan_private priv, t_u8 flags)
     ptxpd->pkt_delay_2ms = 0;
 
     ret = wifi_send_fw_data(pbuf, sizeof(TxPD) + INTF_HEADER_LEN);
-    if (ret != kStatus_HAL_ImumcSuccess)
+    if (ret != kStatus_HAL_RpmsgSuccess)
     {
         wifi_io_e("imu_drv_write failed (%d)", ret);
         return MLAN_STATUS_FAILURE;
@@ -1391,7 +1391,7 @@ mlan_status wlan_send_null_packet(pmlan_private priv, t_u8 flags)
     return MLAN_STATUS_SUCCESS;
 }
 
-hal_imumc_status_t imumc_cmdrsp_handler(IMU_Msg_t *pImuMsg, uint32_t length)
+hal_rpmsg_status_t rpmsg_cmdrsp_handler(IMU_Msg_t *pImuMsg, uint32_t length)
 {
     assert(NULL != pImuMsg);
     assert(0 != length);
@@ -1410,10 +1410,10 @@ hal_imumc_status_t imumc_cmdrsp_handler(IMU_Msg_t *pImuMsg, uint32_t length)
 
     wlan_decode_rx_packet((t_u8 *)pImuMsg->PayloadPtr[0], MLAN_TYPE_CMD);
 
-    return kStatus_HAL_ImumcSuccess;
+    return kStatus_HAL_RpmsgSuccess;
 }
 
-hal_imumc_status_t imumc_event_handler(IMU_Msg_t *pImuMsg, uint32_t length)
+hal_rpmsg_status_t rpmsg_event_handler(IMU_Msg_t *pImuMsg, uint32_t length)
 {
     assert(NULL != pImuMsg);
     assert(0 != length);
@@ -1439,10 +1439,10 @@ hal_imumc_status_t imumc_event_handler(IMU_Msg_t *pImuMsg, uint32_t length)
 
     wlan_decode_rx_packet((t_u8 *)pImuMsg->PayloadPtr[0], MLAN_TYPE_EVENT);
 
-    return kStatus_HAL_ImumcSuccess;
+    return kStatus_HAL_RpmsgSuccess;
 }
 
-hal_imumc_status_t imumc_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length)
+hal_rpmsg_status_t rpmsg_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length)
 {
     IMUPkt *inimupkt;
     t_u32 size;
@@ -1475,7 +1475,7 @@ hal_imumc_status_t imumc_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length)
             wakelock_put();
 #endif
             wifi_io_e("pImuMsg->PayloadPtr[%u] has invalid size=%u", i, size);
-            return kStatus_HAL_ImumcError;
+            return kStatus_HAL_RpmsgError;
         }
 
 #if !CONFIG_TX_RX_ZERO_COPY
@@ -1500,7 +1500,7 @@ hal_imumc_status_t imumc_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length)
     wakelock_put();
 #endif
     /*! To be the last action of the handler*/
-    return kStatus_HAL_ImumcSuccess;
+    return kStatus_HAL_RpmsgSuccess;
 }
 
 static bool imu_fw_is_hang(void)
@@ -1513,7 +1513,7 @@ static bool imu_fw_is_hang(void)
         return false;
 }
 
-hal_imumc_status_t imumc_ctrl_handler(IMU_Msg_t *pImuMsg, uint32_t length)
+hal_rpmsg_status_t rpmsg_ctrl_handler(IMU_Msg_t *pImuMsg, uint32_t length)
 {
     t_u32 imuControlType;
 
@@ -1548,7 +1548,7 @@ hal_imumc_status_t imumc_ctrl_handler(IMU_Msg_t *pImuMsg, uint32_t length)
         default:
             break;
     }
-    return kStatus_HAL_ImumcSuccess;
+    return kStatus_HAL_RpmsgSuccess;
 }
 
 void imu_wakeup_card()
@@ -1570,19 +1570,10 @@ void WL_MCI_WAKEUP_DONE0_DriverIRQHandler(void)
 
 void mlan_init_wakeup_irq()
 {
-#ifndef __ZEPHYR__
-    /* Enable WLAN wakeup done interrupt */
-    NVIC_SetPriority(WL_MCI_WAKEUP_DONE0_IRQn, MCI_WAKEUP_DONE_PRIORITY);
-    NVIC_EnableIRQ(WL_MCI_WAKEUP_DONE0_IRQn);
-#endif
 }
 
 void mlan_deinit_wakeup_irq()
 {
-#ifndef __ZEPHYR__
-    NVIC_DisableIRQ(WL_MCI_WAKEUP_DONE0_IRQn);
-    NVIC_ClearPendingIRQ(WL_MCI_WAKEUP_DONE0_IRQn);
-#endif
 }
 
 mlan_status imu_wifi_init(enum wlan_type type, const uint8_t *fw_ram_start_addr, const size_t size)
@@ -1649,13 +1640,13 @@ retry:
 
     wifi_init_imulink();
 
-    HAL_ImuInstallCallback(kIMU_LinkCpu1Cpu3, imumc_cmdrsp_handler, IMU_MSG_COMMAND_RESPONSE);
+    HAL_ImuInstallCallback(kIMU_LinkCpu1Cpu3, rpmsg_cmdrsp_handler, IMU_MSG_COMMAND_RESPONSE);
 
-    HAL_ImuInstallCallback(kIMU_LinkCpu1Cpu3, imumc_event_handler, IMU_MSG_EVENT);
+    HAL_ImuInstallCallback(kIMU_LinkCpu1Cpu3, rpmsg_event_handler, IMU_MSG_EVENT);
 
-    HAL_ImuInstallCallback(kIMU_LinkCpu1Cpu3, imumc_rxpkt_handler, IMU_MSG_RX_DATA);
+    HAL_ImuInstallCallback(kIMU_LinkCpu1Cpu3, rpmsg_rxpkt_handler, IMU_MSG_RX_DATA);
 
-    HAL_ImuInstallCallback(kIMU_LinkCpu1Cpu3, imumc_ctrl_handler, IMU_MSG_CONTROL);
+    HAL_ImuInstallCallback(kIMU_LinkCpu1Cpu3, rpmsg_ctrl_handler, IMU_MSG_CONTROL);
 
     /* If we're running a Manufacturing image, start the tasks.
        If not, initialize and setup the firmware */
@@ -1714,7 +1705,7 @@ void imu_wifi_deinit(void)
 #endif
     wlan_deinit_struct();
 
-    flag = MBIT(1) | imu_fw_is_hang();
+    flag = MBIT(1) | MBIT(0);
 #if CONFIG_WIFI_RECOVERY
     flag |= wifi_recovery_enable;
 #endif
@@ -1744,6 +1735,118 @@ bus_operations imu_ops = {
     .intf_header_len = INTF_HEADER_LEN,
 };
 
+#if !CONFIG_MLAN_WMSDK
+#define EVENT_PAYLOAD_OFFSET 8
+
+/* access cpu registers, only write(1)/read(0) actions are valid */
+static void wifi_handle_event_access_reg(event_access_t *info, t_u8 *dst)
+{
+    if (info->action == EVENT_ACCESS_ACTION_WRITE)
+    {
+        switch (info->size)
+        {
+            case 1:
+                WIFI_WRITE_REG8(info->addr, info->data[0]);
+                break;
+            case 2:
+                WIFI_WRITE_REG16(info->addr, *((t_u16 *)(&info->data[0])));
+                break;
+            case 4:
+                WIFI_WRITE_REG32(info->addr, *((t_u32 *)(&info->data[0])));
+                break;
+            default:
+                wifi_e("unknown access reg size %hu", info->size);
+                break;
+        }
+    }
+    else if (info->action == EVENT_ACCESS_ACTION_READ)
+    {
+        switch (info->size)
+        {
+            case 1:
+                *dst = WIFI_REG8(info->addr);
+                break;
+            case 2:
+                *((t_u16 *)dst) = WIFI_REG16(info->addr);
+                break;
+            case 4:
+                *((t_u32 *)dst) = WIFI_REG32(info->addr);
+                break;
+            default:
+                wifi_e("unknown access reg size %hu", info->size);
+                break;
+        }
+    }
+    else
+    {
+        wifi_e("unknown access reg action %hhu", info->action);
+    }
+}
+
+/* TODO: implement */
+static void wifi_handle_event_access_eeprom(event_access_t *info, t_u8 *dst)
+{
+    switch (info->action)
+    {
+        case EVENT_ACCESS_ACTION_READ:
+            /* TODO: read eeprom mem */
+            break;
+        case EVENT_ACCESS_ACTION_WRITE:
+            /* TODO: write eeprom mem */
+            break;
+        default:
+            wifi_e("unknown access eeprom action %hhu", info->action);
+            break;
+    }
+}
+
+/* use local buffer to handle access event from FW, copy data back to IMU in read action */
+static void wifi_handle_event_access_by_host(t_u8 *evt_buff)
+{
+    IMUPkt *evt_pkt          = (IMUPkt *)evt_buff;
+    event_access_t *local    = MNULL;
+    t_u16 payload_size       = evt_pkt->size - EVENT_PAYLOAD_OFFSET;
+    t_u16 max_data_size      = payload_size - MLAN_FIELD_OFFSET(event_access_t, data);
+    t_u8 *payload_start_addr = evt_buff + EVENT_PAYLOAD_OFFSET;
+
+    if (payload_size < sizeof(event_access_t))
+    {
+        wifi_e("event access by host invalid payload size %d", payload_size);
+        return;
+    }
+
+    local = (event_access_t *)OSA_MemoryAllocate(payload_size);
+    if (local == MNULL)
+    {
+        wifi_e("event access by host malloc fail size %hu", payload_size);
+        return;
+    }
+
+    memcpy(local, payload_start_addr, payload_size);
+
+    if (local->size > max_data_size)
+    {
+        wifi_e("event access by host invalid size %hu, max_size %hu", local->size, max_data_size);
+        OSA_MemoryFree(local);
+        return;
+    }
+
+    switch (local->type)
+    {
+        case EVENT_ACCESS_TYPE_REG:
+            wifi_handle_event_access_reg(local, payload_start_addr + MLAN_FIELD_OFFSET(event_access_t, data));
+            break;
+        case EVENT_ACCESS_TYPE_EEPROM:
+            wifi_handle_event_access_eeprom(local, payload_start_addr + MLAN_FIELD_OFFSET(event_access_t, data));
+            break;
+        default:
+            wifi_e("event access by host unknown type %hhu", local->type);
+            break;
+    }
+
+    OSA_MemoryFree(local);
+}
+#endif
 int imu_create_task_lock(void)
 {
     int ret = 0;

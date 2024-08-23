@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2020, 2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -148,6 +148,10 @@ enum wifi_event
     /** IPv6 address state change */
     WIFI_EVENT_NET_IPV6_CONFIG,
 #endif
+#if CONFIG_WLAN_BRIDGE
+    /** Auto link switch network */
+    WIFI_EVENT_AUTOLINK_NETWORK_SWITCHED,
+#endif
     /* Background Scan Report */
     WIFI_EVENT_BG_SCAN_REPORT,
     /* Background Scan Stop */
@@ -169,8 +173,6 @@ enum wifi_event
     WIFI_EVENT_WLS_CSI,
 #endif
 #endif
-    /** Event to sync region code with connected AP*/
-    WIFI_EVENT_SYNC_REGION_CODE,
     /** Event to set region power*/
     WIFI_EVENT_REGION_POWER_CFG,
     /** Event to indicate end of Wi-Fi events */
@@ -197,6 +199,10 @@ enum wlan_bss_type
     WLAN_BSS_TYPE_STA = 0,
     /** uAP */
     WLAN_BSS_TYPE_UAP = 1,
+#if CONFIG_P2P
+    /** WiFi Direct */
+    WLAN_BSS_TYPE_WIFIDIRECT = 2,
+#endif
     /** Any */
     WLAN_BSS_TYPE_ANY = 0xff,
 };

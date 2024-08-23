@@ -2,7 +2,7 @@
  *
  *  @brief This file contains WPS Messages processing functions
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -713,6 +713,10 @@ int output_supp_config(PWPS_INFO pwps_info, int index, int nCred)
     (void)memset(&(wps_global.wps_conn_network), 0, sizeof(struct wlan_network));
     wps_global.wps_conn_network.ssid_specific     = 1;
     wps_global.wps_conn_network.ip.ipv4.addr_type = ADDR_TYPE_DHCP;
+#if CONFIG_P2P
+    wps_global.wps_conn_network.type = WLAN_BSS_TYPE_WIFIDIRECT;
+    wps_global.wps_conn_network.role = WLAN_BSS_ROLE_STA;
+#endif
 
     if ((wps_s->bss_type == BSS_TYPE_STA) && (pwps_info->read_ap_config_only == WPS_SET))
     {
@@ -745,6 +749,9 @@ int output_supp_config(PWPS_INFO pwps_info, int index, int nCred)
 
         (void)memcpy(wps_global.wps_conn_network.name, pCredential->ssid, pCredential->ssid_length);
         (void)memcpy(wps_global.wps_conn_network.ssid, pCredential->ssid, pCredential->ssid_length);
+#if CONFIG_P2P
+        wps_global.wps_conn_network.channel = g_channel;
+#endif
 
         /* proto */
         for (i = 0; i < nCred; i++)
@@ -5171,6 +5178,10 @@ int wps_eap_M8_frame_process(PWPS_INFO pwps_info, u8 *buf, u16 size)
     u8 *plast_byte, *data, *wps_frm_body = NULL;
     u16 len, wps_frm_body_len, tlv_type, tlv_length;
     u16 data16;
+#if CONFIG_P2P
+    WPS_DATA *wps_s = (WPS_DATA *)&wps_global;
+    int ret;
+#endif
     int cred_ind, num_invalid_cred = 0;
 
     ENTER();
@@ -5269,6 +5280,17 @@ int wps_eap_M8_frame_process(PWPS_INFO pwps_info, u8 *buf, u16 size)
 
                 wps_hexdump("M8_process Wrap Raw Data", (u8 *)pwps_info->registrar.wrap_raw_data,
                             pwps_info->registrar.encrypted_data_len);
+#if CONFIG_P2P
+                if (wps_s->bss_type == BSS_TYPE_UAP)
+                {
+                    ret = wps_process_ap_settings_from_registrar(pwps_info, (u8 *)pes,
+                                                                 (pwps_info->registrar.encrypted_data_len));
+                    if (ret != WPS_STATUS_SUCCESS)
+                        return WPS_STATUS_FAIL;
+                    else
+                        break;
+                }
+#endif
                 while (((u8 *)pes - pwps_info->registrar.wrap_raw_data) <
                        (pwps_info->registrar.encrypted_data_len - 16))
                 {

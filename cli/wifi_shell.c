@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2024 NXP
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -161,7 +161,6 @@ static char nxp_wifi_cmd_name[32];
  */
 int nxp_wifi_request(size_t argc, char **argv)
 {
-    int ret;
     const struct cli_command *command = NULL;
 
     if (argc < 2)

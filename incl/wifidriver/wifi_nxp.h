@@ -2,7 +2,7 @@
  *
  * @brief This file provides Core Wi-Fi definition for wpa supplicant RTOS driver.
  *
- * Copyright 2008-2023 NXP
+ * Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -14,19 +14,6 @@
 #include <stdio.h>
 #include <wm_net.h>
 #if CONFIG_WPA_SUPP
-
-#include <drivers/driver_freertos.h>
-
-typedef struct freertos_wpa_supp_dev_callbk_fns rtos_wpa_supp_dev_callbk_fns;
-
-#if CONFIG_WPA_SUPP_AP
-typedef struct freertos_hostapd_dev_callbk_fns rtos_hostapd_dev_callbk_fns;
-#endif
-
-typedef struct freertos_wpa_supp_dev_ops rtos_wpa_supp_dev_ops;
-
-#if 0
-/* current zephyr implement uses freertos structures */
 #include <drivers/driver_zephyr.h>
 
 typedef struct zep_wpa_supp_dev_callbk_fns rtos_wpa_supp_dev_callbk_fns;
@@ -36,8 +23,6 @@ typedef struct zep_hostapd_dev_callbk_fns rtos_hostapd_dev_callbk_fns;
 #endif
 
 typedef struct zep_wpa_supp_dev_ops rtos_wpa_supp_dev_ops;
-#error "Define WPA Supplicant driver interface structs for your RTOS here"
-#endif
 
 struct wifi_nxp_ctx_rtos
 {
@@ -64,10 +49,10 @@ struct wifi_nxp_ctx_rtos
     bool remain_on_chan_is_canceled;
 #if CONFIG_WPA_SUPP_AP
     rtos_hostapd_dev_callbk_fns hostapd_callbk_fns;
+#endif
     int mgmt_tx_status;
     uint8_t *last_mgmt_tx_data;
     size_t last_mgmt_tx_data_len;
-#endif
 };
 
 int wifi_supp_init(void);
