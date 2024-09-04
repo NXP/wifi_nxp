@@ -2152,8 +2152,10 @@ static int do_start(struct wlan_network *network)
                 wpa_supp_set_ap_bw(netif, 1);
             }
 #else
-            wifi_get_active_channel_list(active_chan_list, &active_num_chans,
-                                                 wlan.networks[wlan.cur_uap_network_idx].acs_band);
+            if (network->channel > MAX_CHANNELS_BG)
+                wifi_get_active_channel_list(active_chan_list, &active_num_chans, BAND_5GHZ);
+            else
+                wifi_get_active_channel_list(active_chan_list, &active_num_chans, BAND_2GHZ);
 
             for (i = 0; i < active_num_chans; i++)
             {
@@ -4570,7 +4572,7 @@ static int wlan_set_uap_ecsa_cfg(
     }
     else
     {
-        wlcm_e("uap isn't up");
+        wlcm_e("uap isn't up OR station is connected");
         return -WM_FAIL;
     }
 }
