@@ -15,7 +15,7 @@
     <definition extID="component.wireless_imu_adapter.RW612"/>
     <definition extID="middleware.freertos-kernel.RW612"/>
   </externalDefinitions>
-  <ksdk id="MCUXpressoSDK216000_middleware_nxp_wifi_RW612_manifest_v3_14" name="MCUXpressoSDK216000_middleware_nxp_wifi_RW612_manifest_v3_14" version="2.16.000" revision="2.16.000"/>
+  <ksdk id="MCUXpressoSDK216100_middleware_nxp_wifi_RW612_manifest_v3_14" name="MCUXpressoSDK216100_middleware_nxp_wifi_RW612_manifest_v3_14" version="2.16.100" revision="2.16.100"/>
   <components>
     <component id="middleware.wifi.wifi_bt_config.template.RW612" name="Wi-Fi configuration template" brief="Template configuration file to be edited by user." version="1.0.0" full_name="Wi-Fi configuration template" category="Wireless/NXP Wi-Fi" user_visible="false" type="project_template" package_base_path="../../../components/wifi_bt_module/template" project_base_path="wifi/template">
       <defines>
@@ -113,7 +113,6 @@
       </source>
       <source relative_path="../../../script" project_relative_path="script" type="other">
         <files mask="build_rw612"/>
-        <files mask="make-pretty"/>
       </source>
       <source relative_path="../../../src/common" project_relative_path="src/common" type="doc">
         <files mask="CMakeLists.txt"/>
@@ -165,11 +164,7 @@
       <source relative_path="../../../third_party" project_relative_path="third_party" type="doc">
         <files mask="CMakeLists.txt"/>
       </source>
-      <source relative_path="../../../third_party/mcu-sdk" project_relative_path="third_party/mcu-sdk" type="doc">
-        <files mask="readme.md"/>
-      </source>
       <source relative_path="./" type="other">
-        <files mask=".gitmodules"/>
         <files mask="add_coex_v3.yml"/>
         <files mask="LICENSE"/>
       </source>

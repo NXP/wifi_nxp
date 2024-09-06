@@ -45,6 +45,7 @@ SDK_ALIGN(uint8_t mp_regs_buffer[MAX_MP_REGS], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZ
 /* We are allocating BSS list globally as we need heap for other purposes */
 SDK_ALIGN(BSSDescriptor_t BSS_List[MRVDRV_MAX_BSSID_LIST], 32);
 
+#if CONFIG_SCAN_CHANNEL_GAP
 
 #if !CONFIG_5GHz_SUPPORT
 static ChanStatistics_t Chan_Stats[14];
@@ -52,6 +53,7 @@ static ChanStatistics_t Chan_Stats[14];
 static ChanStatistics_t Chan_Stats[48];
 #endif
 
+#endif
 
 /********************************************************
         Local Functions
@@ -74,6 +76,7 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
     (void)__memset(MNULL, &BSS_List, 0x00, sizeof(BSS_List));
 
     pmadapter->pscan_table = BSS_List;
+#if CONFIG_SCAN_CHANNEL_GAP
 
 #if !CONFIG_5GHz_SUPPORT
     pmadapter->num_in_chan_stats = 14;
@@ -81,6 +84,7 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
     pmadapter->num_in_chan_stats = 48;
 #endif
     pmadapter->pchan_stats = Chan_Stats;
+#endif
 
        /* wmsdk: Use a statically allocated DMA aligned buffer */
 #if defined(SD8801)
@@ -338,12 +342,14 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->hw_dot_11ac_mcs_support   = 0;
     pmadapter->usr_dot_11ac_opermode_bw  = 0;
     pmadapter->usr_dot_11ac_opermode_nss = 0;
+#if CONFIG_WIFI_CAPA
     pmadapter->usr_dot_11n_enable = MFALSE;
 #if CONFIG_11AC
     pmadapter->usr_dot_11ac_enable = MFALSE;
 #endif
 #if CONFIG_11AX
     pmadapter->usr_dot_11ax_enable = MFALSE;
+#endif
 #endif
 
     /* Initialize 802.11d */

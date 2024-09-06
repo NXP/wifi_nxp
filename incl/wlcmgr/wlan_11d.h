@@ -1,12 +1,12 @@
 /*
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
 /*! \file wlan_11d.h
- * \brief WLAN module 11d API
+ * \brief This file provides 802.11d interfaces.
  */
 
 #ifndef __WLAN_11D_H__

@@ -632,11 +632,11 @@ static void dump_wlan_set_txratecfg_usage(void)
     (void)PRINTF("\t        2       NSS2\r\n");
 #endif
 #endif
+#if CONFIG_11AC
     (void)PRINTF("\t<rate_setting> - This parameter can only specifies the GI types now.\r\n");
     (void)PRINTF("\tIf <format> is 1 (HT),\r\n");
     (void)PRINTF("\t        0x0000  Long GI\r\n");
     (void)PRINTF("\t        0x0020  Short GI\r\n");
-#if CONFIG_11AC
     (void)PRINTF("\tIf <format> is 2 (VHT),\r\n");
     (void)PRINTF("\t        0x0000  Long GI\r\n");
     (void)PRINTF("\t        0x0020  Short GI\r\n");
@@ -1088,8 +1088,11 @@ static void test_wlan_get_txpwrlimit(int argc, char **argv)
         dump_wlan_get_txpwrlimit_usage();
         return;
     }
-
+#if !CONFIG_MEM_POOLS
     txpwrlimit = OSA_MemoryAllocate(sizeof(wlan_txpwrlimit_t));
+#else
+    txpwrlimit = (wlan_txpwrlimit_t *)OSA_MemoryPoolAllocate(buf_2048_MemoryPool);
+#endif
     if (txpwrlimit == NULL)
     {
         (void)PRINTF("Cannot allocate memory\r\n");
@@ -1105,7 +1108,11 @@ static void test_wlan_get_txpwrlimit(int argc, char **argv)
     {
         print_txpwrlimit(txpwrlimit);
     }
+#if !CONFIG_MEM_POOLS
     OSA_MemoryFree(txpwrlimit);
+#else
+    OSA_MemoryPoolFree(buf_2048_MemoryPool, txpwrlimit);
+#endif
 }
 
 #if !CONFIG_COMPRESS_TX_PWTBL
@@ -1114,7 +1121,12 @@ static void test_wlan_set_txpwrlimit(int argc, char **argv)
 {
     wlan_txpwrlimit_t *txpwrlimit = NULL;
 
+#if !CONFIG_MEM_POOLS
     txpwrlimit = OSA_MemoryAllocate(sizeof(wlan_txpwrlimit_t));
+#else
+    txpwrlimit = (wlan_txpwrlimit_t *)OSA_MemoryPoolAllocate(buf_2048_MemoryPool);
+#endif
+
     if (txpwrlimit == NULL)
     {
         (void)PRINTF("Cannot allocate memory\r\n");
@@ -1181,14 +1193,22 @@ static void test_wlan_set_txpwrlimit(int argc, char **argv)
         }
 #endif
     }
+#if !CONFIG_MEM_POOLS
     OSA_MemoryFree(txpwrlimit);
+#else
+    OSA_MemoryPoolFree(buf_2048_MemoryPool, txpwrlimit);
+#endif
 }
 
 static void test_wlan_set_chanlist_and_txpwrlimit(int argc, char **argv)
 {
     wlan_txpwrlimit_t *txpwrlimit = NULL;
 
+#if !CONFIG_MEM_POOLS
     txpwrlimit = OSA_MemoryAllocate(sizeof(wlan_txpwrlimit_t));
+#else
+    txpwrlimit = (wlan_txpwrlimit_t *)OSA_MemoryPoolAllocate(buf_2048_MemoryPool);
+#endif
     if (txpwrlimit == NULL)
     {
         (void)PRINTF("Cannot allocate memory\r\n");
@@ -1267,7 +1287,11 @@ static void test_wlan_set_chanlist_and_txpwrlimit(int argc, char **argv)
             print_chanlist(chanlist);
         }
     }
+#if !CONFIG_MEM_POOLS
     OSA_MemoryFree(txpwrlimit);
+#else
+    OSA_MemoryPoolFree(buf_2048_MemoryPool, txpwrlimit);
+#endif
 }
 #endif
 

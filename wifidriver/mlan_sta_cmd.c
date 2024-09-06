@@ -112,6 +112,7 @@ static mlan_status wlan_cmd_mfg_tx_frame(pmlan_private pmpriv, HostCmd_DS_COMMAN
         mcmd->short_preamble    = wlan_cpu_to_le32(cfg->short_preamble);
         mcmd->act_sub_ch        = wlan_cpu_to_le32(cfg->act_sub_ch);
         mcmd->short_gi          = wlan_cpu_to_le32(cfg->short_gi);
+        mcmd->adv_coding        = wlan_cpu_to_le32(cfg->adv_coding);
         mcmd->tx_bf             = wlan_cpu_to_le32(cfg->tx_bf);
         mcmd->gf_mode           = wlan_cpu_to_le32(cfg->gf_mode);
         mcmd->stbc              = wlan_cpu_to_le32(cfg->stbc);
@@ -453,6 +454,7 @@ static mlan_status wlan_cmd_802_11_snmp_mib(
 
     switch (cmd_oid)
     {
+#if CONFIG_WIFI_FRAG_THRESHOLD
         case FragThresh_i:
             psnmp_mib->oid = wlan_cpu_to_le16((t_u16)FragThresh_i);
             if (cmd_action == HostCmd_ACT_GEN_SET)
@@ -464,6 +466,7 @@ static mlan_status wlan_cmd_802_11_snmp_mib(
                 cmd->size += sizeof(t_u16);
             }
             break;
+#endif
         case RtsThresh_i:
             psnmp_mib->oid = wlan_cpu_to_le16((t_u16)RtsThresh_i);
             if (cmd_action == HostCmd_ACT_GEN_SET)
@@ -1840,6 +1843,7 @@ static mlan_status wlan_cmd_otp_user_data(IN pmlan_private pmpriv,
 }
 
 
+#if CONFIG_TX_AMPDU_PROT_MODE
 /**
  *  @brief This function handles the command response of Tx ampdu prot mode
  *
@@ -1872,6 +1876,7 @@ static mlan_status wlan_cmd_tx_ampdu_prot_mode(IN pmlan_private pmpriv,
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
+#endif
 
 #if CONFIG_CSI
 /**
@@ -1903,7 +1908,7 @@ static mlan_status wlan_cmd_csi(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t
             csi_cfg_cmd->chip_id        = csi_params->chip_id;
             csi_cfg_cmd->csi_filter_cnt = csi_params->csi_filter_cnt;
 
-            csi_cfg_cmd->channel_bandconfig.header.type        = wlan_cpu_to_le16(TLV_TYPE_UAP_CHAN_BAND_CONFIG);
+            csi_cfg_cmd->channel_bandconfig.header.type        = wlan_cpu_to_le16(TLV_TYPE_CSI_MONITOR_CFG);
             csi_cfg_cmd->channel_bandconfig.header.len         = 4;
             csi_cfg_cmd->channel_bandconfig.bandconfig         = csi_params->band_config;
             csi_cfg_cmd->channel_bandconfig.channel            = csi_params->channel;
@@ -2148,9 +2153,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_region_power_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
 #endif
+#if CONFIG_TX_AMPDU_PROT_MODE
         case HostCmd_CMD_TX_AMPDU_PROT_MODE:
             ret = wlan_cmd_tx_ampdu_prot_mode(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
+#endif
 #if CONFIG_CSI
         case HostCmd_CMD_CSI:
             ret = wlan_cmd_csi(pmpriv, cmd_ptr, cmd_action, pdata_buf);

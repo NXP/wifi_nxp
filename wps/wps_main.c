@@ -80,7 +80,7 @@ extern int wpa2_failure;
 static void wps_main(osa_task_param_t arg);
 OSA_TASK_HANDLE_DEFINE(wps_main_Handle);
 
-static OSA_TASK_DEFINE(wps_main, PRIORITY_RTOS_TO_OSA(2), 1, 10240, 0);
+static OSA_TASK_DEFINE(wps_main, WLAN_TASK_PRI_NORMAL, 1, 10240, 0);
 
 extern void wps_register_rx_callback(void (*WPSEAPoLRxDataHandler)(const u8 *buf, const size_t len));
 extern void wps_deregister_rx_callback();

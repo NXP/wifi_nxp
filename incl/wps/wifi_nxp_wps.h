@@ -1,13 +1,12 @@
 /*
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2022, 2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
-/** @file wifi_nxp_wps.h
- *
- *  @brief WPS - WiFi Protected Setup
+/*!\file wifi_nxp_wps.h
+ *\brief This file provides interfaces for WPS(Wi-Fi protected Setup).
  *
  *  Wi-Fi Protected Setup (WPS) is a standard for easy and secure wireless
  *  network set up and connections. Using this standard, wireless clients
@@ -192,7 +191,7 @@ enum wps_session_types
  */
 struct wps_config
 {
-    /** Enrollee: 1, Registrar: 2, WiFi Direct mode:4 */
+    /** Enrollee: 1, Registrar: 2, Wi-Fi Direct mode:4 */
     uint8_t role;
     /** PIN Generator - Enrollee or Registrar */
     uint8_t pin_generator;

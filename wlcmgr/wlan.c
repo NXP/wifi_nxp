@@ -47,7 +47,11 @@
 #include  "fsl_power.h"
 #ifndef __ZEPHYR__
 #if !(CONFIG_WIFI_BLE_COEX_APP)
+#if CONFIG_NCP
+#include  "ncp_lpm.h"
+#else
 #include  "lpm.h"
+#endif
 #include  "host_sleep.h"
 #endif
 #if CONFIG_POWER_MANAGER
@@ -64,6 +68,7 @@
 #if CONFIG_WPA_SUPP
 #include <supp_main.h>
 #include <supp_api.h>
+#include <supp_crypto.h>
 #include <wifi_nxp.h>
 #include "utils/common.h"
 #if CONFIG_WIFI_SHELL
@@ -144,7 +149,7 @@ static bool wlan_uap_scan_chan_list_set;
 
 wlan_flt_cfg_t g_flt_cfg;
 #ifdef RW610
-#if (CONFIG_MONOLITHIC_WIFI) && defined(__ZEPHYR__)
+#if CONFIG_MONOLITHIC_WIFI
 extern const unsigned char *wlan_fw_bin;
 extern const unsigned int wlan_fw_bin_len;
 #else
@@ -194,7 +199,7 @@ OSA_SEMAPHORE_HANDLE_DEFINE(uapsd_sem);
 static void cpu_loading_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(cpu_loading_task, OSA_PRIORITY_HIGH, 1, CONFIG_CPU_LOADING_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(cpu_loading_task, WLAN_TASK_PRI_HIGH, 1, CONFIG_CPU_LOADING_STACK_SIZE, 0);
 
 static struct
 {
@@ -278,7 +283,9 @@ int wlan_host_sleep_state = HOST_SLEEP_PERIODIC;
  */
 bool usart_suspend_flag = false;
 #endif
+#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE)
 OSA_TIMER_HANDLE_DEFINE(wake_timer);
+#endif
 #endif
 int is_hs_handshake_done = 0;
 
@@ -288,7 +295,9 @@ extern int wakeup_by;
 bool wlan_is_manual = false;
 #endif
 
+#if CONFIG_SCAN_CHANNEL_GAP
 static t_u16 scan_channel_gap = (t_u16)SCAN_CHANNEL_GAP_VALUE;
+#endif
 
 #if defined(SDK_OS_FREE_RTOS)
 #ifdef SD9177
@@ -309,6 +318,11 @@ static struct udp_pcb *udp_raw_pcb;
 
 #if CONFIG_POWER_MANAGER
 #define WAKE_TIMEOUT (5 * 1000)
+#endif
+
+#ifdef RW610
+#define TEMPERATURE_MON_TIMEOUT (5 * 1000)
+OSA_TIMER_HANDLE_DEFINE(temperature_mon_timer);
 #endif
 
 enum user_request_type
@@ -379,7 +393,7 @@ static struct wifi_scan_params_t g_wifi_scan_params = {NULL,
 static void wlcmgr_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(wlcmgr_task, OSA_PRIORITY_HIGH, 1, CONFIG_WLCMGR_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wlcmgr_task, WLAN_TASK_PRI_HIGH, 1, CONFIG_WLCMGR_STACK_SIZE, 0);
 
 #if CONFIG_WPS2
 #define CONFIG_WPS_STACK_SIZE (5120)
@@ -387,7 +401,7 @@ static OSA_TASK_DEFINE(wlcmgr_task, OSA_PRIORITY_HIGH, 1, CONFIG_WLCMGR_STACK_SI
 static void wps_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(wps_task, OSA_PRIORITY_NORMAL, 1, CONFIG_WPS_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wps_task, WLAN_TASK_PRI_HIGH, 1, CONFIG_WPS_STACK_SIZE, 0);
 
 static int wlcm_wps_callback(enum wps_event event, void *data, uint16_t len);
 
@@ -437,12 +451,12 @@ static struct wps_config wps_conf = {
 #endif /* CONFIG_WPS2 */
 #ifdef RW610
 
-#define CONFIG_WLCMGR_MON_STACK_SIZE (1152)
+#define CONFIG_WLCMGR_MON_STACK_SIZE (2048)
 
 static void wlcmgr_mon_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(wlcmgr_mon_task, PRIORITY_RTOS_TO_OSA(1) , 1, CONFIG_WLCMGR_MON_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wlcmgr_mon_task, WLAN_TASK_PRI_LOW , 1, CONFIG_WLCMGR_MON_STACK_SIZE, 0);
 
 /* The monitor thread event queue receives events from the power manager
  * wlan notifier when idle hook is invoked and host is ready to enter
@@ -508,11 +522,9 @@ static struct
 
     /* CM thread */
     OSA_TASK_HANDLE_DEFINE(wlcmgr_task_Handle);
-    OSA_TASK_HANDLE_DEFINE(wlcmgr_mon_task_Handle);
 
     unsigned running : 1;
     unsigned stop_request : 1;
-    bool in_reset : 1;
     wlcmgr_status_t status;
 
     /*
@@ -528,8 +540,10 @@ static struct
     bool is_hs_configured : 1;
 #endif
     bool is_mef_enabled : 1;
+#if (CONFIG_WNM_PS)
     bool cm_wnmps_configured;
     t_u16 wnm_sleep_time;
+#endif
     wifi_fw_version_ext_t fw_ver_ext;
 
     int uap_rsn_ie_index;
@@ -628,6 +642,9 @@ static struct
     bool internal : 1;
 } wlan;
 
+OSA_TASK_HANDLE_DEFINE(wlcmgr_mon_task_Handle);
+bool wlan_in_reset = false;
+
 #if CONFIG_CLOUD_KEEP_ALIVE
 #define MIN_KEEP_ALIVE_ID 0
 #define MAX_KEEP_ALIVE_ID 4
@@ -635,6 +652,10 @@ wlan_cloud_keep_alive_t cloud_keep_alive_param[MAX_KEEP_ALIVE_ID];
 #endif
 
 void wlan_wake_up_card(void);
+
+#if CONFIG_CSI
+wlan_csi_config_params_t g_csi_params_default = {0};
+#endif
 
 #if CONFIG_WLCMGR_DEBUG
 static char *dbg_sta_state_name(enum cm_sta_state state)
@@ -844,7 +865,7 @@ static uint32_t wlan_map_to_wifi_wakeup_condtions(const uint32_t wlan_wakeup_con
 }
 #endif
 
-int wlan_is_started()
+int wlan_is_started(void)
 {
     return ((wlan.running == 1) && (wlan.status == WLCMGR_ACTIVATED));
 }
@@ -1093,11 +1114,13 @@ status_t wlan_hs_send_event(int id, void *data)
 #endif
 
 #if CONFIG_POWER_MANAGER
+#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE)
 static void wake_timer_cb(osa_timer_arg_t arg)
 {
     if(wakelock_isheld())
         wakelock_put();
 }
+#endif
 
 #ifndef __ZEPHYR__
 status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, void *data)
@@ -1297,11 +1320,13 @@ void wlan_config_host_sleep(bool is_manual, t_u8 is_periodic)
 #if CONFIG_POWER_MANAGER
         /* Reset flag and stop timer if manual mode is selected without cancel periodic sleep */
         wlan_host_sleep_state = HOST_SLEEP_DISABLE;
+#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE)
         if (OSA_TimerIsRunning((osa_timer_handle_t)wake_timer))
         {
             OSA_TimerDeactivate((osa_timer_handle_t)wake_timer);
             wakelock_put();
         }
+#endif
 #endif
         if (wlan.status == WLCMGR_ACTIVATED)
         {
@@ -1321,7 +1346,7 @@ void wlan_config_host_sleep(bool is_manual, t_u8 is_periodic)
     }
 }
 
-void wlan_cancel_host_sleep()
+void wlan_cancel_host_sleep(void)
 {
     int ret = 0;
     enum wlan_bss_type type = WLAN_BSS_TYPE_STA;
@@ -1342,7 +1367,7 @@ void wlan_cancel_host_sleep()
     }
 }
 
-void wlan_clear_host_sleep_config()
+void wlan_clear_host_sleep_config(void)
 {
     wlan_is_manual = MFALSE;
 #if CONFIG_POWER_MANAGER
@@ -1350,11 +1375,13 @@ void wlan_clear_host_sleep_config()
 #if CONFIG_UART_INTERRUPT
     usart_suspend_flag = MFALSE;
 #endif
+#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE)
     if (OSA_TimerIsRunning((osa_timer_handle_t)wake_timer))
     {
         OSA_TimerDeactivate((osa_timer_handle_t)wake_timer);
         wakelock_put();
     }
+#endif
     is_hs_handshake_done = 0;
 #endif
     memset(&g_flt_cfg, 0x0, sizeof(wlan_flt_cfg_t));
@@ -1926,11 +1953,15 @@ static void do_scan(struct wlan_network *network)
             chan_list[0].scan_time   = 120;
 #if CONFIG_SCAN_WITH_RSSIFILTER
             ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, 1, 1, chan_list, 0, 0,
+#if CONFIG_SCAN_CHANNEL_GAP
                                      scan_channel_gap,
+#endif
                                      false, false);
 #else
             ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, 1, 1, chan_list, 0,
+#if CONFIG_SCAN_CHANNEL_GAP
                                      scan_channel_gap,
+#endif
                                      false, false);
 #endif
         }
@@ -1938,11 +1969,15 @@ static void do_scan(struct wlan_network *network)
         {
 #if CONFIG_SCAN_WITH_RSSIFILTER
             ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, 1, 0, NULL, 0, 0,
+#if CONFIG_SCAN_CHANNEL_GAP
                                      scan_channel_gap,
+#endif
                                      false, false);
 #else
             ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, 1, 0, NULL, 0,
+#if CONFIG_SCAN_CHANNEL_GAP
                                      scan_channel_gap,
+#endif
                                      false, false);
 #endif
         }
@@ -1990,11 +2025,15 @@ static void do_hidden_scan(struct wlan_network *network, uint8_t num_channels, w
 
 #if CONFIG_SCAN_WITH_RSSIFILTER
     ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, 1, num_channels, chan_list, 0, 0,
+#if CONFIG_SCAN_CHANNEL_GAP
                              scan_channel_gap,
+#endif
                              false, true);
 #else
     ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, 1, num_channels, chan_list, 0,
+#if CONFIG_SCAN_CHANNEL_GAP
                              scan_channel_gap,
+#endif
                              false, true);
 #endif
     if (ret != 0)
@@ -2088,7 +2127,9 @@ static int do_start(struct wlan_network *network)
             if (bandwidth == BANDWIDTH_80MHZ)
             {
                 if ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 0)
+#if CONFIG_WIFI_CAPA
                         || ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 1) && (!(network->wlan_capa & (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC))))
+#endif
                    )
                 {
                     wlcm_e("uAP configured bandwidth not allowed");
@@ -2125,8 +2166,30 @@ static int do_start(struct wlan_network *network)
 #endif
         }
 
+        if (network->channel_specific == 0U)
+        {
+#if CONFIG_11AC
+            t_u8 bandwidth = wifi_uap_get_bandwidth();
+            if (bandwidth == BANDWIDTH_80MHZ)
+            {
+                if ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 0)
+#if CONFIG_WIFI_CAPA
+                        || ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 1) && (!(network->wlan_capa & (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC))))
+#endif
+                   )
+                {
+                    wlcm_e("uAP configured bandwidth not allowed");
+                    CONNECTION_EVENT(WLAN_REASON_UAP_START_FAILED, NULL);
+                    wlan.cur_uap_network_idx = -1;
+                    return -WM_FAIL;
+                }
+            }
+#endif
+        }
+
         wlcm_d("starting our own network");
 
+#if CONFIG_WIFI_CAPA
         if (network->channel == 14)
         {
             wifi_uap_config_wifi_capa(WIFI_SUPPORT_LEGACY);
@@ -2135,6 +2198,7 @@ static int do_start(struct wlan_network *network)
         {
             wifi_uap_config_wifi_capa(network->wlan_capa);
         }
+#endif
 
 #if CONFIG_WPA_SUPP
         if (network->bssid_specific == 0U)
@@ -2338,15 +2402,6 @@ static void update_network_params(struct wlan_network *network, const struct wif
             (void)wlan_set_pmfcfg((t_u8)network->security.mfpc, (t_u8)network->security.mfpr);
         }
     }
-
-    network->dot11n = res->phtcap_ie_present;
-
-#if CONFIG_11AC
-    network->dot11ac = res->pvhtcap_ie_present;
-#endif
-#if CONFIG_11AX
-    network->dot11ax = res->phecap_ie_present;
-#endif
 
 #if CONFIG_11R
 
@@ -2753,10 +2808,12 @@ static void wlan_disable_power_save(int action)
             wlcm_d("stopping IEEE ps mode");
             (void)wifi_exit_ieee_power_save();
             break;
+#if (CONFIG_WNM_PS)
         case WLAN_WNM:
             wlcm_d("stopping WNM ps mode");
             (void)wifi_exit_wnm_power_save();
             break;
+#endif
         default:
             wlcm_d("Unexpected disable ps action");
             break;
@@ -2775,10 +2832,12 @@ static void wlan_enable_power_save(int action)
             wlcm_d("starting IEEE ps mode");
             (void)wifi_enter_ieee_power_save();
             break;
+#if (CONFIG_WNM_PS)
         case WLAN_WNM:
             wlcm_d("starting WNM ps mode");
             (void)wifi_enter_wnm_power_save(wlan.wnm_sleep_time);
             break;
+#endif
         default:
             wlcm_d("Unexpected ps mode");
             break;
@@ -2865,6 +2924,7 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
     }
 }
 
+#if (CONFIG_WNM_PS)
 static void wlcm_process_wnmps_event(struct wifi_message *msg)
 {
     uint16_t action                      = (uint16_t)(*((uint32_t *)msg->data));
@@ -2904,6 +2964,7 @@ static void wlcm_process_wnmps_event(struct wifi_message *msg)
         }
     }
 }
+#endif
 
 #define WL_ID_STA_DISCONN "sta_disconnected"
 
@@ -2949,6 +3010,12 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
     }
     else
     {
+#if CONFIG_NCP
+        if(wlan.scan_cb != NULL)
+        {
+            report_scan_results();
+        }
+#endif
 #if CONFIG_WPA_SUPP
         if (wlan.is_scan_lock)
         {
@@ -3647,6 +3714,14 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
             wlan.status_timeout = 0;
 
             wpa_supp_network_status(netif, network);
+#else
+            network->dot11n = wlan_11n_allowed(network);
+#if CONFIG_11AC
+            network->dot11ac = wlan_11ac_allowed(network);
+#endif
+#if CONFIG_11AX
+            network->dot11ax = wlan_11ax_allowed(network);
+#endif
 #endif
 
 #if CONFIG_WPA_SUPP
@@ -4010,7 +4085,9 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
 #if CONFIG_SCAN_WITH_RSSIFILTER
                              0,
 #endif
+#if CONFIG_SCAN_CHANNEL_GAP
                              scan_channel_gap,
+#endif
                              false, false);
     if (ret != WM_SUCCESS)
     {
@@ -4127,7 +4204,9 @@ int wlan_ft_roam(const t_u8 *bssid, const t_u8 channel)
 #if CONFIG_SCAN_WITH_RSSIFILTER
                                  0,
 #endif
+#if CONFIG_SCAN_CHANNEL_GAP
                                  scan_channel_gap,
+#endif
                                  false, false);
         if (ret != WM_SUCCESS)
         {
@@ -4158,8 +4237,11 @@ static int wlan_check_valid_channel_operclass(t_u8 channel, t_u8 oper_class)
     mlan_status status     = MLAN_STATUS_SUCCESS;
 
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
-
+#if !CONFIG_MEM_POOLS
     misc = OSA_MemoryAllocate(sizeof(mlan_ds_misc_cfg));
+#else
+    misc = OSA_MemoryPoolAllocate(buf_3072_MemoryPool);
+#endif
     if (misc == NULL)
     {
         return -WM_FAIL;
@@ -4177,11 +4259,19 @@ static int wlan_check_valid_channel_operclass(t_u8 channel, t_u8 oper_class)
     if (status != MLAN_STATUS_SUCCESS)
     {
         PRINTM(MERROR, "Failed to get operclass\n");
+#if !CONFIG_MEM_POOLS
         OSA_MemoryFree(misc);
+#else
+        OSA_MemoryPoolFree(buf_3072_MemoryPool, misc);
+#endif
         return -WM_FAIL;
     }
 
-    OSA_MemoryFree(misc);
+#if !CONFIG_MEM_POOLS
+        OSA_MemoryFree(misc);
+#else
+        OSA_MemoryPoolFree(buf_3072_MemoryPool, misc);
+#endif
 
     return ret;
 }
@@ -4333,6 +4423,10 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
             *next = CM_STA_IDLE;
         }
 
+#if CONFIG_11MC
+        g_ftm_civic_cfg.civic_req = 0;
+        g_ftm_location_cfg.lci_req = 0;
+#endif
         CONNECTION_EVENT(WLAN_REASON_LINK_LOST, NULL);
 #if CONFIG_ECSA
         wrapper_clear_media_connected_event();
@@ -4437,6 +4531,7 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
         wlan_pmksa_flush();
     }
 #endif
+    wlan_handle_disconnect_event(mlan_adap->priv[0]);
 }
 
 static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
@@ -5234,8 +5329,10 @@ static void wlcm_process_init_params()
 
     wlan.cm_deepsleepps_configured = false;
 
+#if (CONFIG_WNM_PS)
     wlan.cm_wnmps_configured = false;
     wlan.wnm_sleep_time      = 0;
+#endif
 #if (CONFIG_11K) || (CONFIG_11V)
     memset(&wlan.nlist_rep_param, 0x00, sizeof(wlan_nlist_report_param));
 #endif
@@ -5656,11 +5753,13 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
         return;
     }
 
+#if CONFIG_COMBO_SCAN
     memcpy(ssid+ssid_off, wlan_scan_param->ssid[0], strlen(wlan_scan_param->ssid[0]));
     ssid_off += strlen(wlan_scan_param->ssid[0]);
     ssid[ssid_off] = '\0';
     ssid_off++;
     ssid_num++;
+
     if (strlen(wlan_scan_param->ssid[1]))
     {
         memcpy(ssid+ssid_off, wlan_scan_param->ssid[1], strlen(wlan_scan_param->ssid[1]));
@@ -5668,10 +5767,19 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
         ssid[ssid_off] = '\0';
         ssid_num++;
     }
+#else
+    memcpy(ssid + ssid_off, wlan_scan_param->ssid, strlen(wlan_scan_param->ssid));
+    ssid_off += strlen(wlan_scan_param->ssid);
+    ssid[ssid_off] = '\0';
+    ssid_off++;
+    ssid_num++;
+#endif
+#if CONFIG_SCAN_CHANNEL_GAP
     if (is_uap_started() || is_sta_connected())
         wlan_scan_param->scan_chan_gap = scan_channel_gap;
     else
         wlan_scan_param->scan_chan_gap = 0;
+#endif
 
 #if CONFIG_WPA_SUPP
 #if CONFIG_11K
@@ -5692,7 +5800,9 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
 #if CONFIG_SCAN_WITH_RSSIFILTER
                                  wlan_scan_param->rssi_threshold,
 #endif
+#if CONFIG_SCAN_CHANNEL_GAP
                                  wlan_scan_param->scan_chan_gap,
+#endif
                                  false, false);
     if (ret != WM_SUCCESS)
     {
@@ -5705,6 +5815,12 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
         wlcm_d("releasing scan lock");
         (void)OSA_SemaphorePost((osa_semaphore_handle_t)wlan.scan_lock);
         wlan.is_scan_lock = 0;
+#if CONFIG_NCP
+        if(wlan_scan_param->cb != NULL)
+        {
+            app_notify_event(APP_EVT_SCAN_RESULT, ret, NULL, 0);
+        }
+#endif
     }
     else
     {
@@ -6120,27 +6236,6 @@ int wifi_put_wls_csi_sem(void)
 
 #endif
 
-static void wlcm_process_sync_region_code(t_u8 *code)
-{
-    int ret;
-    t_u8 country_code[COUNTRY_CODE_LEN + 1] = {0};
-    unsigned char country3                  = 0x20;
-    t_u8 region_code;
-
-    country_code[0] = code[0];
-    country_code[1] = code[1];
-    country_code[2] = country3;
-
-    ret = wlan_11d_region_2_code(mlan_adap, country_code, &region_code);
-    if (ret != WM_SUCCESS)
-    {
-        wlcm_d("%s, Can't find '%s' in region code mapping table. Keep region code unchanged.", __func__, country_code);
-        return;
-    }
-
-    wlan_set_country_code((const char *)country_code);
-}
-
 static void wlcm_process_region_power_cfg(struct wifi_message *msg)
 {
     t_u8 *country_code = (t_u8 *)msg->data;
@@ -6475,6 +6570,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
                 {
                     is_hs_handshake_done = WLAN_HOSTSLEEP_SUCCESS;
 #ifdef RW610
+                    (void)OSA_TimerDeactivate((osa_timer_handle_t)temperature_mon_timer);
 #ifndef __ZEPHYR__
 #if !(CONFIG_WIFI_BLE_COEX_APP)
                     host_sleep_cli_notify();
@@ -6568,12 +6664,14 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_process_deepsleep_event(msg, &next);
 
             break;
+#if (CONFIG_WNM_PS)
         case WIFI_EVENT_WNM_PS:
 #if CONFIG_WIFI_PS_DEBUG
             wlcm_d("got event: WNM ps result: %s", msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
 #endif
             wlcm_process_wnmps_event(msg);
             break;
+#endif
         case WIFI_EVENT_IEEE_DEEP_SLEEP:
 #if CONFIG_WIFI_PS_DEBUG
             wlcm_d("got event: IEEE deep sleep result: %s",
@@ -6677,9 +6775,6 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
 #endif
 #endif
-        case WIFI_EVENT_SYNC_REGION_CODE:
-            wlcm_process_sync_region_code((t_u8 *)msg->data);
-            break;
         case WIFI_EVENT_REGION_POWER_CFG:
             wlcm_process_region_power_cfg(msg);
             break;
@@ -7044,6 +7139,13 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
     else
         wifi_d("USB init callback is not registered");
 #endif
+
+#if CONFIG_WPA_SUPP
+#ifdef RW610
+    supp_set_mbedtls_set_time();
+#endif
+#endif
+
     return ret;
 }
 
@@ -7057,6 +7159,9 @@ void wlan_deinit(int action)
     {
         wlcm_deinit(action);
     }
+#if CONFIG_CSI
+    wlan_reset_csi_filter_data();
+#endif
 #ifndef RW610
     OSA_RWLockDestroy(&sleep_rwlock);
 #endif
@@ -7173,6 +7278,35 @@ static void ft_roam_timer_cb(osa_timer_arg_t arg)
     wlan.roam_reassoc = false;
 }
 #endif
+#endif
+
+#ifdef RW610
+static void temperature_mon_cb(osa_timer_arg_t arg)
+{
+#if CONFIG_WIFI_RECOVERY
+    if (wifi_recovery_enable || wifi_fw_is_hang())
+    {
+        struct wlan_message msg;
+        (void)memset(&msg, 0U, sizeof(struct wlan_message));
+        msg.data = NULL;
+        msg.id  = WIFI_RECOVERY_REQ;
+        if (OSA_MsgQPut((osa_msgq_handle_t)mon_thread_events, &msg) != KOSA_StatusSuccess)
+        {
+            (void)PRINTF("Failed to send wifi recovery msg to queue\r\n");
+        }
+        return;
+    }
+#endif
+    /*
+     *  get CAU module temperature and write to firmware SMU in every 5s
+     *  can also read FW power status by REG PMU->WLAN_CTRL 0x4003_1068
+     *  bit[3:2] == 3 means FW is in sleep status
+     */
+    if ((mlan_adap != NULL) && (mlan_adap->ps_state == PS_STATE_AWAKE))
+    {
+        wifi_cau_temperature_write_to_firmware();
+    }
+}
 #endif
 
 #if defined(SDK_OS_FREE_RTOS)
@@ -7311,12 +7445,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 #endif
 
 #ifdef RW610
-#if (CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)
-    wlan.wakeup_conditions = (unsigned int)WAKE_ON_UNICAST | (unsigned int)WAKE_ON_MAC_EVENT |
-                             (unsigned int)WAKE_ON_MULTICAST | (unsigned int)WAKE_ON_ARP_BROADCAST;
-#else
     wlan.wakeup_conditions = 0;
-#endif
 #else
     wlan.wakeup_conditions = (unsigned int)WAKE_ON_UNICAST | (unsigned int)WAKE_ON_MAC_EVENT |
                              (unsigned int)WAKE_ON_MULTICAST | (unsigned int)WAKE_ON_ARP_BROADCAST;
@@ -7412,9 +7541,6 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     }
     if (!mon_thread_init)
     {
-#ifdef RW610
-        wifi_cau_temperature_enable();
-#endif
 
         status = OSA_MsgQCreate((osa_msgq_handle_t)mon_thread_events, MAX_EVENTS, sizeof(struct wlan_message));
         if (status != KOSA_StatusSuccess)
@@ -7438,7 +7564,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
          * mon_thread task could not be scheduled as we did not
          * enabled time slice.
          */
-        status = OSA_TaskCreate((osa_task_handle_t)wlan.wlcmgr_mon_task_Handle, OSA_TASK(wlcmgr_mon_task), NULL);
+        status = OSA_TaskCreate((osa_task_handle_t)wlcmgr_mon_task_Handle, OSA_TASK(wlcmgr_mon_task), NULL);
         if (status != KOSA_StatusSuccess)
         {
             wlan.cb = NULL;
@@ -7450,6 +7576,13 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
             return -WM_FAIL;
         }
         mon_thread_init = 1;
+    }
+    wifi_cau_temperature_enable();
+    status = OSA_TimerCreate((osa_timer_handle_t)temperature_mon_timer, TEMPERATURE_MON_TIMEOUT,
+                             &temperature_mon_cb, NULL, KOSA_TimerPeriodic, OSA_TIMER_AUTO_ACTIVATE);
+    if (status != KOSA_StatusSuccess)
+    {
+        wlcm_e("Unable to create temperature monitor timer");
     }
 #endif
 
@@ -7619,6 +7752,7 @@ int wlan_stop(void)
     int check_interval  = 200;  /* millisecs */
     int num_iterations  = total_wait_time / check_interval;
 #endif
+
     if (wlan.status != WLCMGR_ACTIVATED)
     {
         wlcm_e("cannot stop wlcmgr. unexpected status: %d", wlan.status);
@@ -7728,7 +7862,14 @@ int wlan_stop(void)
 #endif
 #endif
 
-#ifndef RW610
+#ifdef RW610
+    status = OSA_TimerDestroy((osa_timer_handle_t)temperature_mon_timer);
+    if (status != KOSA_StatusSuccess)
+    {
+        wlcm_w("failed to delete temperature monitor timer: %d.", ret);
+        return WLAN_ERROR_STATE;
+    }
+#else
     /* We need to tell the AP that we're going away, however we've already
      * stopped the main thread so we can't do this by means of the state
      * machine.  Unregister from the wifi interface and explicitly send a
@@ -7824,6 +7965,10 @@ int wlan_stop(void)
 
 #if CONFIG_WMM_UAPSD
     OSA_SemaphoreDestroy((osa_semaphore_handle_t)uapsd_sem);
+#endif
+#if CONFIG_11MC
+    g_ftm_civic_cfg.civic_req = 0;
+    g_ftm_location_cfg.lci_req = 0;
 #endif
     return ret;
 }
@@ -8293,8 +8438,17 @@ int wlan_add_network(struct wlan_network *network)
         return -WM_E_INVAL;
     }
 
-    /* Always set PMF capable bt default */
-    network->security.mfpc = 1;
+    /* Always set PMF capable by default for sae conditions */
+    if(network->security.type != WLAN_SECURITY_WPA2 || network->security.mfpc == -1)
+        network->security.mfpc = 1;
+
+    /* Always set mfpc 0  by default for WPA/OPEN/WPA-WPA2 Mixed conditions */
+    if(network->security.type == WLAN_SECURITY_NONE || network->security.type == WLAN_SECURITY_WPA
+        || network->security.type == WLAN_SECURITY_WPA_WPA2_MIXED)
+        network->security.mfpc = 0;
+
+    if(network->security.mfpr == -1)
+        network->security.mfpr = 0;
 
     if (((network->role == WLAN_BSS_ROLE_UAP) || (network->role == WLAN_BSS_ROLE_STA)) &&
         ((network->security.type == WLAN_SECURITY_WPA3_SAE)
@@ -8485,6 +8639,7 @@ int wlan_add_network(struct wlan_network *network)
 
     if (network->role == WLAN_BSS_ROLE_UAP)
     {
+#if CONFIG_WIFI_CAPA
         if (network->channel != 14)
         {
         /* If no capability was configured, set capa up to 11ax by default */
@@ -8504,21 +8659,24 @@ int wlan_add_network(struct wlan_network *network)
         }
 
 #if CONFIG_11AX
-        if (network->wlan_capa & WIFI_SUPPORT_11AX)
-        {
-            network->dot11ax = 1;
-        }
+        network->dot11ax = wlan_11ax_allowed(network);
 #endif
 #if CONFIG_11AC
-        if (network->wlan_capa & WIFI_SUPPORT_11AC)
+        network->dot11ac = wlan_11ac_allowed(network);
+#endif
+        network->dot11n = wlan_11n_allowed(network);
+#else
+        if (network->channel != 14)
         {
-            network->dot11ac = 1;
+#if CONFIG_11AX
+        network->dot11ax = 1;
+#endif
+#if CONFIG_11AC
+        network->dot11ac = 1;
+#endif
+        network->dot11n = 1;
         }
 #endif
-        if (network->wlan_capa & WIFI_SUPPORT_11N)
-        {
-            network->dot11n = 1;
-        }
     }
 
 #if CONFIG_WPA_SUPP
@@ -8921,7 +9079,7 @@ int wlan_add_network(struct wlan_network *network)
         { /* Do Nothing */
         }
     }
-
+#if CONFIG_WPA_SUPP
     if (pos < 0)
     {
         if (network->security.sae_groups)
@@ -8938,6 +9096,7 @@ int wlan_add_network(struct wlan_network *network)
 #endif
         return -WM_E_NOMEM;
     }
+#endif
 
     wlan.networks[pos].dtim_period = network->dtim_period;
     wlan.networks[pos].acs_band    = network->acs_band;
@@ -8998,6 +9157,7 @@ int wlan_add_network(struct wlan_network *network)
     return WM_SUCCESS;
 
 INVAL:
+#if CONFIG_WPA_SUPP
     if (network->security.sae_groups)
     {
         OSA_MemoryFree(network->security.sae_groups);
@@ -9010,9 +9170,11 @@ INVAL:
         network->security.owe_groups = NULL;
     }
 #endif
+#endif
     return -WM_E_INVAL;
 }
 
+#if CONFIG_WIFI_CAPA
 uint8_t wlan_check_11n_capa(unsigned int channel)
 {
     uint8_t enable_11n = false;
@@ -9070,6 +9232,7 @@ uint8_t wlan_check_11ax_capa(unsigned int channel)
 #endif
     return enable_11ax;
 }
+#endif
 
 int wlan_remove_network(const char *name)
 {
@@ -9097,7 +9260,7 @@ int wlan_remove_network(const char *name)
         if (wlan.networks[i].name[0] != '\0' && strlen(wlan.networks[i].name) == len &&
             !strncmp(wlan.networks[i].name, name, len))
         {
-            if (!wlan.in_reset)
+            if (false == wlan_in_reset)
             {
                 if (wlan.running && wlan.cur_network_idx == i)
                 {
@@ -9586,7 +9749,7 @@ int wlan_connect_opt(char *name, bool skip_dfs)
     return ret;
 }
 
-int wlan_reassociate()
+int wlan_reassociate(void)
 {
     int ret;
 
@@ -9743,7 +9906,7 @@ int wlan_remove_all_networks(void)
      * Moreover, removing and adding net interface will increase netif_num cumulatively,
      * which will mismatch with "ua2" during creating dhcpd.
      */
-    wlan.in_reset = 1;
+    wlan_in_reset = true;
     wlan_remove_all_network_profiles();
 
     intrfc_handle = net_get_sta_handle();
@@ -9927,23 +10090,21 @@ void wlan_reset(cli_reset_option ResetOption)
     }
 
     OSA_MutexUnlock((osa_mutex_handle_t)reset_lock);
+
+    wlan_in_reset = false;
     PRINTF("--- Done ---\r\n");
 }
 
 static void wlcmgr_mon_task(void * data)
 {
-    unsigned long delay_ms = 5000;
 #if CONFIG_HOST_SLEEP
     int ret = 0;
 #endif
     osa_status_t status;
     struct wlan_message msg;
 
-#if CONFIG_PALLADIUM_SUPPORT
-    delay_ms = 10;
-#endif
-
 #if CONFIG_POWER_MANAGER
+#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE)
     status = OSA_TimerCreate((osa_timer_handle_t)wake_timer, WAKE_TIMEOUT,
                           &wake_timer_cb, NULL, KOSA_TimerOnce, OSA_TIMER_NO_ACTIVATE);
     if (status != KOSA_StatusSuccess)
@@ -9951,13 +10112,19 @@ static void wlcmgr_mon_task(void * data)
         wlcm_e("Unable to create wake timer");
     }
 #endif
+#endif
     while (1)
     {
-        status = OSA_MsgQGet((osa_msgq_handle_t)mon_thread_events, &msg, delay_ms);
+        status = OSA_MsgQGet((osa_msgq_handle_t)mon_thread_events, &msg, osaWaitForever_c);
         if (status == KOSA_StatusSuccess)
         {
+            /*Elements of wlan is not avaliable during wlan reset, so wait ending of wlan reset*/
+            while(wlan_in_reset)
+            {
+                OSA_TimeDelay(10);
+            }
 #if CONFIG_HOST_SLEEP
-             wlcm_d("got mon thread event: %d", msg.id);
+            wlcm_d("got mon thread event: %d", msg.id);
             if (msg.id == HOST_SLEEP_HANDSHAKE)
             {
                 ret = wlan_send_host_sleep_int(wlan.wakeup_conditions, MFALSE);
@@ -9969,36 +10136,31 @@ static void wlcmgr_mon_task(void * data)
             else if (msg.id == HOST_SLEEP_EXIT)
             {
 #if CONFIG_POWER_MANAGER
+#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE)
                 if(!wlan_is_manual && wlan_host_sleep_state == HOST_SLEEP_PERIODIC)
                 {
                     wakelock_get();
                     (void)OSA_TimerActivate((osa_timer_handle_t)wake_timer);
                 }
 #endif
+#endif
                 wlan_cancel_host_sleep();
+                /* Check fw status and write temperature to firmware after waking up */
+                temperature_mon_cb(NULL);
+                (void)OSA_TimerActivate((osa_timer_handle_t)temperature_mon_timer);
             }
 #endif
-        }
-        else
-        {
 #if CONFIG_WIFI_RECOVERY
-            if (wifi_recovery_enable || wifi_fw_is_hang())
+            else if (msg.id == WIFI_RECOVERY_REQ)
             {
                 wlan_reset(CLI_RESET_WIFI);
                 wifi_recovery_cnt ++;
             }
 #endif
-            /*
-             *  get CAU module temperature and write to firmware SMU in every 5s
-             *  can also read FW power status by REG PMU->WLAN_CTRL 0x4003_1068
-             *  bit[3:2] == 3 means FW is in sleep status
-             */
-            if ((mlan_adap != NULL) && (mlan_adap->ps_state == PS_STATE_AWAKE))
-            {
-#ifdef RW610
-                wifi_cau_temperature_write_to_firmware();
-#endif
-            }
+        }
+        else
+        {
+            wlcm_e("Failed to get events from monitor task queue");
         }
     }
 }
@@ -10514,6 +10676,7 @@ int wlan_get_ps_mode(enum wlan_ps_mode *ps_mode)
             *ps_mode = WLAN_DEEP_SLEEP;
         }
     }
+#if CONFIG_WNM_PS
     else if (wlan.cm_wnmps_configured && wlan.cm_deepsleepps_configured)
     {
         if (is_state(CM_STA_CONNECTED))
@@ -10529,6 +10692,7 @@ int wlan_get_ps_mode(enum wlan_ps_mode *ps_mode)
     {
         *ps_mode = WLAN_WNM;
     }
+#endif
     else if (wlan.cm_deepsleepps_configured)
     {
         *ps_mode = WLAN_DEEP_SLEEP;
@@ -10684,20 +10848,22 @@ void wlan_configure_delay_to_ps(unsigned int timeout_ms)
     wifi_configure_delay_to_ps(timeout_ms);
 }
 
-unsigned short wlan_get_listen_interval()
+unsigned short wlan_get_listen_interval(void)
 {
     return wifi_get_listen_interval();
 }
 
-unsigned int wlan_get_delay_to_ps()
+unsigned int wlan_get_delay_to_ps(void)
 {
     return wifi_get_delay_to_ps();
 }
 
-bool wlan_is_power_save_enabled()
+bool wlan_is_power_save_enabled(void)
 {
     if (wlan.cm_ieeeps_configured
+#if CONFIG_WNM_PS
         || wlan.cm_wnmps_configured
+#endif
         || wlan.cm_deepsleepps_configured)
     {
         return true;
@@ -10721,15 +10887,19 @@ int wlan_ieeeps_on(unsigned int wakeup_conditions)
     }
 
     if (wlan.cm_ieeeps_configured
+#if CONFIG_WNM_PS
         || wlan.cm_wnmps_configured
+#endif
        )
     {
+#if CONFIG_WNM_PS
         if (wlan.cm_wnmps_configured == true)
         {
             wlcm_d("wnm ps already enabled: %d, ieee ps could not be enabled", wlan.cm_wnmps_configured);
             return -WM_FAIL;
         }
         else
+#endif
         {
             wlcm_d("ieee ps already enabled");
         }
@@ -10753,6 +10923,7 @@ int wlan_ieeeps_off(void)
 }
 
 #if !CONFIG_WPA_SUPP
+#if (CONFIG_WNM_PS)
 int wlan_wnmps_on(unsigned int wakeup_conditions, t_u16 wnm_sleep_time)
 {
     enum wlan_connection_state state;
@@ -10793,6 +10964,7 @@ int wlan_wnmps_off()
     CONNECTION_EVENT(WLAN_REASON_PS_EXIT, (void *)WLAN_WNM);
     return WM_SUCCESS;
 }
+#endif
 #endif
 
 int wlan_deepsleepps_on(void)
@@ -11177,7 +11349,7 @@ int wlan_get_txpwrlimit(wifi_SubBand_t subband, wifi_txpwrlimit_t *txpwrlimit)
 }
 
 #if WLAN_LOW_POWER_ENABLE
-int wlan_enable_low_pwr_mode()
+int wlan_enable_low_pwr_mode(void)
 {
     if (wlan.status == WLCMGR_INACTIVE)
     {
@@ -11782,7 +11954,7 @@ int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg)
 }
 
 
-int wlan_set_ipv6_ns_offload()
+int wlan_set_ipv6_ns_offload(void)
 {
     wlan_flt_cfg_t flt_cfg;
 
@@ -12000,6 +12172,7 @@ int wlan_set_uap_rts(int rts)
     return wifi_set_rts(rts, MLAN_BSS_TYPE_UAP);
 }
 
+#if CONFIG_WIFI_FRAG_THRESHOLD
 int wlan_set_frag(int frag)
 {
     return wifi_set_frag(frag, MLAN_BSS_TYPE_STA);
@@ -12009,6 +12182,7 @@ int wlan_set_uap_frag(int frag)
 {
     return wifi_set_frag(frag, MLAN_BSS_TYPE_UAP);
 }
+#endif
 
 #if CONFIG_11K
 int _wlan_rrm_scan_cb(unsigned int count)
@@ -12105,11 +12279,13 @@ void wlan_rrm_request_scan(wlan_scan_params_v2_t *wlan_scan_param, wlan_rrm_scan
 {
     char ssid[(MLAN_MAX_SSID_LENGTH + 1) * MRVDRV_MAX_SSID_LIST_LENGTH]  = {0};
     uint8_t ssid_num = 0, ssid_off = 0;
+#if CONFIG_COMBO_SCAN
     memcpy(ssid+ssid_off, wlan_scan_param->ssid[0], strlen(wlan_scan_param->ssid[0]));
     ssid_off += strlen(wlan_scan_param->ssid[0]);
     ssid[ssid_off] = '\0';
     ssid_off++;
     ssid_num++;
+
     if (strlen(wlan_scan_param->ssid[1]))
     {
         memcpy(ssid+ssid_off, wlan_scan_param->ssid[1], strlen(wlan_scan_param->ssid[1]));
@@ -12117,6 +12293,13 @@ void wlan_rrm_request_scan(wlan_scan_params_v2_t *wlan_scan_param, wlan_rrm_scan
         ssid[ssid_off] = '\0';
         ssid_num++;
     }
+#else
+    memcpy(ssid + ssid_off, wlan_scan_param->ssid, strlen(wlan_scan_param->ssid));
+    ssid_off += strlen(wlan_scan_param->ssid);
+    ssid[ssid_off] = '\0';
+    ssid_off++;
+    ssid_num++;
+#endif
 
     if (wlan_scan_param == NULL || scan_cb_param == NULL)
     {
@@ -12131,10 +12314,12 @@ void wlan_rrm_request_scan(wlan_scan_params_v2_t *wlan_scan_param, wlan_rrm_scan
 
     (void)memcpy(&wlan.rrm_scan_cb_param, scan_cb_param, sizeof(wlan_rrm_scan_cb_param));
 
+#if CONFIG_SCAN_CHANNEL_GAP
     if (is_uap_started() || is_sta_connected())
         wlan_scan_param->scan_chan_gap = scan_channel_gap;
     else
         wlan_scan_param->scan_chan_gap = (t_u16)0U;
+#endif
 
     int ret = wifi_send_scan_cmd((t_u8)BSS_ANY, wlan_scan_param->bssid,
                                  ssid, ssid_num,
@@ -12142,7 +12327,9 @@ void wlan_rrm_request_scan(wlan_scan_params_v2_t *wlan_scan_param, wlan_rrm_scan
 #if CONFIG_SCAN_WITH_RSSIFILTER
                                  wlan_scan_param->rssi_threshold,
 #endif
+#if CONFIG_SCAN_CHANNEL_GAP
                                  wlan_scan_param->scan_chan_gap,
+#endif
                                  false, false);
     if (ret == WM_SUCCESS)
     {
@@ -12158,11 +12345,13 @@ void wlan_rrm_request_scan(wlan_scan_params_v2_t *wlan_scan_param, wlan_rrm_scan
 #endif
 
 
+#if CONFIG_SCAN_CHANNEL_GAP
 void wlan_set_scan_channel_gap(unsigned scan_chan_gap)
 {
     scan_channel_gap = (t_u16)scan_chan_gap;
     return;
 }
+#endif
 
 #if CONFIG_11K
 int wlan_host_11k_cfg(int enable_11k)
@@ -12175,7 +12364,7 @@ int wlan_host_11k_cfg(int enable_11k)
 #endif
 }
 
-bool wlan_get_host_11k_status()
+bool wlan_get_host_11k_status(void)
 {
     return wlan.enable_11k;
 }
@@ -12260,9 +12449,13 @@ int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
 #endif
 
 #if (CONFIG_11MC) || (CONFIG_11AZ)
+int wlan_unassoc_ftm_cfg(const t_u16 action, const t_u16 config)
+{
+	return wifi_unassoc_ftm_cfg(action, config);
+}
+
 int wlan_ftm_start_stop(const t_u16 action, const t_u8 loop_cnt, const t_u8 *mac, const t_u8 channel)
 {
-
 	return wifi_ftm_start_stop(action, loop_cnt, mac, channel);
 }
 
@@ -12342,7 +12535,7 @@ int wlan_pmksa_list(char *buf, size_t buflen)
     return wpa_supp_pmksa_list(netif, buf, buflen);
 }
 
-int wlan_pmksa_flush()
+int wlan_pmksa_flush(void)
 {
     struct netif *netif = net_get_sta_interface();
 
@@ -12357,6 +12550,7 @@ int wlan_set_scan_interval(int scan_int)
 }
 #endif
 
+#if CONFIG_UAP_STA_MAC_ADDR_FILTER
 int wlan_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr)
 {
 #if CONFIG_WPA_SUPP
@@ -12365,9 +12559,10 @@ int wlan_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_a
     return wifi_set_sta_mac_filter(filter_mode, mac_count, mac_addr);
 #endif
 }
+#endif
 
 #if CONFIG_WPA2_ENTP
-void wlan_enable_wpa2_enterprise_ap_only()
+void wlan_enable_wpa2_enterprise_ap_only(void)
 {
     wlan.allow_wpa2_enterprise_ap_only = true;
     wifi_scan_enable_wpa2_enterprise_ap_only();
@@ -12428,7 +12623,7 @@ int wlan_set_roaming(const int enable, const uint8_t rssi_low_threshold)
     return wifi_config_roaming(enable, &wlan.rssi_low_threshold);
 }
 
-int wlan_get_roaming_status()
+int wlan_get_roaming_status(void)
 {
     return wlan.roaming_enabled;
 }
@@ -12851,7 +13046,7 @@ int wlan_set_11ax_cfg(wlan_11ax_config_t *ax_config)
     return wifi_set_11ax_cfg(ax_config);
 }
 
-uint8_t * wlan_get_11ax_cfg()
+uint8_t * wlan_get_11ax_cfg(void)
 {
     return g_11ax_cfg_default;
 }
@@ -12869,7 +13064,7 @@ int wlan_set_btwt_cfg(const wlan_btwt_config_t *btwt_config)
     return wifi_set_btwt_cfg(btwt_config);
 }
 
-uint8_t * wlan_get_btwt_cfg()
+uint8_t * wlan_get_btwt_cfg(void)
 {
     return g_btwt_cfg_default;
 }
@@ -12891,7 +13086,7 @@ int wlan_set_twt_setup_cfg(const wlan_twt_setup_config_t *twt_setup)
     return wifi_set_twt_setup_cfg(twt_setup);
 }
 
-uint8_t * wlan_get_twt_setup_cfg()
+uint8_t * wlan_get_twt_setup_cfg(void)
 {
     return g_twt_setup_cfg_default;
 }
@@ -12903,7 +13098,7 @@ int wlan_set_twt_teardown_cfg(const wlan_twt_teardown_config_t *teardown_config)
     return wifi_set_twt_teardown_cfg(teardown_config);
 }
 
-uint8_t * wlan_get_twt_teardown_cfg()
+uint8_t * wlan_get_twt_teardown_cfg(void)
 {
     return g_twt_teardown_cfg_default;
 }
@@ -13581,6 +13776,9 @@ int wlan_wmm_uapsd_qosinfo(t_u8 *qos_info, t_u8 action)
 
 int wlan_set_wmm_uapsd(t_u8 uapsd_enable)
 {
+#if !CONFIG_WNM_PS
+    unsigned int condition = 0;
+#endif
 
     if (!is_uap_state(CM_UAP_INITIALIZING) || is_sta_connecting())
     {
@@ -13592,6 +13790,9 @@ int wlan_set_wmm_uapsd(t_u8 uapsd_enable)
     {
         (void)wifi_wmm_qos_cfg(&uapsd_qos_info, 1);
         (void)wifi_sleep_period(&uapsd_sleep_period, 1);
+#if !CONFIG_WNM_PS
+        (void)wlan_ieeeps_on(condition);
+#endif
     }
     else
     {
@@ -13620,10 +13821,12 @@ t_u8 wlan_is_wmm_uapsd_enabled(void)
 }
 #endif
 
+#if CONFIG_TX_AMPDU_PROT_MODE
 int wlan_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action)
 {
     return wifi_tx_ampdu_prot_mode(prot_mode, action);
 }
+#endif
 
 int wlan_mef_set_auto_arp(t_u8 mef_action)
 {
@@ -13926,6 +14129,27 @@ int wlan_config_mef(int type, t_u8 mef_action)
 }
 
 #if CONFIG_CSI
+wlan_csi_config_params_t * wlan_get_csi_cfg_param_default(void)
+{
+    return &g_csi_params_default;
+}
+
+int wlan_set_csi_cfg_param_default(wlan_csi_config_params_t *in_csi_cfg)
+{
+    if (in_csi_cfg)
+    {
+        memcpy((void *)&g_csi_params_default, (void *)in_csi_cfg, sizeof(wlan_csi_config_params_t));
+        return MTRUE;
+    }
+    else
+        return MFALSE;
+}
+
+void wlan_reset_csi_filter_data(void)
+{
+    (void)memset((void*)&g_csi_params_default, 0, sizeof(wlan_csi_config_params_t));
+}
+
 int wlan_register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer, size_t len))
 {
     return register_csi_user_callback(csi_data_recv_callback);
@@ -14504,7 +14728,7 @@ void wlan_register_monitor_user_callback(int (*monitor_data_recv_callback)(void 
     register_monitor_user_callback(monitor_data_recv_callback);
 }
 
-void wlan_deregister_net_monitor_user_callback()
+void wlan_deregister_net_monitor_user_callback(void)
 {
     deregister_monitor_user_callback();
 }
@@ -14561,6 +14785,17 @@ int wlan_get_signal_info(wlan_rssi_info_t *signal)
     return wifi_send_rssi_info_cmd(signal);
 }
 
+int wlan_set_bandcfg(wlan_bandcfg_t *bandcfg)
+{
+    return wifi_get_set_bandcfg(bandcfg, MLAN_ACT_SET);
+}
+
+int wlan_get_bandcfg(wlan_bandcfg_t *bandcfg)
+{
+    return wifi_get_set_bandcfg(bandcfg, MLAN_ACT_GET);
+}
+
+#if CONFIG_TURBO_MODE
 int wlan_get_turbo_mode(t_u8 *mode)
 {
     return wifi_get_turbo_mode(mode);
@@ -14580,6 +14815,7 @@ int wlan_set_uap_turbo_mode(t_u8 mode)
 {
     return wifi_set_uap_turbo_mode(mode);
 }
+#endif
 
 void wlan_set_ps_cfg(t_u16 multiple_dtims,
                      t_u16 bcn_miss_timeout,
@@ -14869,6 +15105,7 @@ int wlan_imd3_cfg(t_u8 imd3_value)
 #endif
 
 #if CONFIG_WPA_SUPP
+#if CONFIG_UAP_STA_MAC_ADDR_FILTER
 int wlan_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr)
 {
     int ret = 0;
@@ -14879,6 +15116,7 @@ int wlan_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *
     else
         return WM_SUCCESS;
 }
+#endif
 #endif
 
 #if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
@@ -14915,7 +15153,7 @@ static int wlan_trigger_oob_ind_reset()
     return wifi_trigger_oob_indrst();
 }
 
-int wlan_independent_reset()
+int wlan_independent_reset(void)
 {
     if (wlan.ir_mode == 1)
     {
@@ -15168,7 +15406,7 @@ char *wlan_string_dup(const char *s)
     return snew;
 }
 
-uint32_t wlan_get_board_type()
+uint32_t wlan_get_board_type(void)
 {
     uint32_t board_type = 0xff;
 
@@ -15198,3 +15436,85 @@ int wlan_uap_disconnect_sta(uint8_t *sta_addr)
 
     return ret;
 }
+
+int wlan_11n_allowed(struct wlan_network *network)
+{
+    mlan_private *pmpriv       = (mlan_private *)mlan_adap->priv[network->role];
+    mlan_adapter *pmadapter    = pmpriv->adapter;
+    BSSDescriptor_t *pbss_desc = NULL;
+
+    if (ISSUPP_11NENABLED(pmadapter->fw_cap_info) &&
+        (pmpriv->config_bands & BAND_GN || pmpriv->config_bands & BAND_AN))
+    {
+        if (network->role == WLAN_BSS_ROLE_STA)
+        {
+            pbss_desc = &pmpriv->curr_bss_params.bss_descriptor;
+            return ((!pbss_desc->disable_11n) && (pbss_desc->pht_cap != NULL));
+        }
+#if CONFIG_WIFI_CAPA
+        else if (network->role == WLAN_BSS_ROLE_UAP)
+        {
+            if (network->wlan_capa & WIFI_SUPPORT_11N)
+                return 1;
+        }
+#endif
+    }
+
+    return 0;
+}
+
+#if CONFIG_11AC
+int wlan_11ac_allowed(struct wlan_network *network)
+{
+    mlan_private *pmpriv       = (mlan_private *)mlan_adap->priv[network->role];
+    mlan_adapter *pmadapter    = pmpriv->adapter;
+    BSSDescriptor_t *pbss_desc = NULL;
+
+    if (ISSUPP_11ACENABLED(pmadapter->fw_cap_info))
+    {
+        if (network->role == WLAN_BSS_ROLE_STA)
+        {
+            pbss_desc = &pmpriv->curr_bss_params.bss_descriptor;
+            if (wlan_11ac_bandconfig_allowed(pmpriv, pbss_desc->bss_band))
+                return ((!pbss_desc->disable_11n) && (pbss_desc->pvht_cap != NULL));
+        }
+#if CONFIG_WIFI_CAPA
+        else if (network->role == WLAN_BSS_ROLE_UAP)
+        {
+            if ((pmpriv->config_bands & BAND_GAC || pmpriv->config_bands & BAND_AAC) && (network->wlan_capa & WIFI_SUPPORT_11AC))
+                return 1;
+        }
+#endif
+    }
+
+    return 0;
+}
+#endif
+
+#if CONFIG_11AX
+int wlan_11ax_allowed(struct wlan_network *network)
+{
+    mlan_private *pmpriv       = (mlan_private *)mlan_adap->priv[network->role];
+    mlan_adapter *pmadapter    = pmpriv->adapter;
+    BSSDescriptor_t *pbss_desc = NULL;
+
+    if (IS_FW_SUPPORT_11AX(pmadapter))
+    {
+        if (network->role == WLAN_BSS_ROLE_STA)
+        {
+            pbss_desc = &pmpriv->curr_bss_params.bss_descriptor;
+            if (wlan_11ax_bandconfig_allowed(pmpriv, pbss_desc->bss_band))
+                return ((!pbss_desc->disable_11n) && (pbss_desc->phe_cap != NULL));
+        }
+#if CONFIG_WIFI_CAPA
+        else if (network->role == WLAN_BSS_ROLE_UAP)
+        {
+            if ((pmpriv->config_bands & BAND_GAX || pmpriv->config_bands & BAND_AAX) && (network->wlan_capa & WIFI_SUPPORT_11AX))
+                return 1;
+        }
+#endif
+    }
+
+    return 0;
+}
+#endif

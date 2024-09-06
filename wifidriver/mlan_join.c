@@ -358,7 +358,11 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
     */
     t_u8 akm_type_selected;
     t_u8 akm_type_id        = 0;
+#ifdef CONFIG_11R
     t_u8 akm_preference[25] = {0, 7, 1, 9, 3, 8, 2, 0, 5, 6, 0, 10, 11, 12, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 13};
+#else
+    t_u8 akm_preference[25] = {0, 7, 1, 9, 0, 8, 2, 0, 5, 0, 0, 10, 11, 12, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 13};
+#endif
 
     int ap_mfpc = 0, ap_mfpr = 0, ret = MLAN_STATUS_SUCCESS;
 
@@ -1337,12 +1341,6 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     pmpriv->curr_bss_params.bss_descriptor.channel = pbss_desc->phy_param_set.ds_param_set.current_chan;
 
     pmpriv->curr_bss_params.band = (t_u8)pbss_desc->bss_band;
-
-    if (!pmpriv->adapter->country_ie_ignore)
-    {
-        wifi_event_completion(WIFI_EVENT_SYNC_REGION_CODE, WIFI_EVENT_REASON_SUCCESS,
-                              pbss_desc->country_info.country_code);
-    }
 
 
     if (pbss_desc->wmm_ie.vend_hdr.element_id == WMM_IE)

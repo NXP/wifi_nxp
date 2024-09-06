@@ -1,16 +1,14 @@
 /*
  * Copyright (c) 2016 Intel Corporation.
- * Copyright 2008-2023 NXP
+ * Copyright 2008-2024 NXP
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*! \file wm_net.h
- *  \brief Network Abstraction Layer
+/*!\file wm_net.h
+ *\brief This file provides interface for network abstraction layer.
  *
  * This provides the calls related to the network layer.
- *
- *
  */
 
 #ifndef _WM_NET_H_
@@ -538,14 +536,13 @@ int net_wlan_deinit(void);
 
 /** Get STA interface netif structure pointer
  *
- * \rerurn A pointer to STA interface netif structure
- *
+ * \return A pointer to STA interface netif structure
  */
 struct netif *net_get_sta_interface(void);
 
 /** Get uAP interface netif structure pointer
  *
- * \rerurn A pointer to uAP interface netif structure
+ * \return A pointer to uAP interface netif structure
  *
  */
 struct netif *net_get_uap_interface(void);
@@ -756,10 +753,10 @@ int net_get_if_ip_addr(uint32_t *ip, void *intrfc_handle);
  * net_get_sta_handle(), net_get_uap_handle() to get
  * interface handle.
  *
- * \param[in] mask Subnet Mask pointer
+ * \param[in] mask Subnet   Mask pointer
  * \param[in] intrfc_handle interface
  *
- * \return WM_SUCCESS on success or error code.
+ * \return WM_SUCCESS on success otherwise error code.
  */
 int net_get_if_ip_mask(uint32_t *nm, void *intrfc_handle);
 

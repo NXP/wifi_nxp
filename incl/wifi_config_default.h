@@ -1,8 +1,11 @@
-/*
+ /*
  *  Copyright 2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
+ */
+/*!\file wifi_config_default.h
+ *\brief This file provides default macros for Wi-Fi.
  */
 
 #if !defined WIFI_HDR_CONFIG_H
@@ -240,6 +243,13 @@
 #endif
 
 /* WLAN white/black list opt */
+#if !defined CONFIG_UAP_STA_MAC_ADDR_FILTER
+#if defined(RW610)
+#define CONFIG_UAP_STA_MAC_ADDR_FILTER 1
+#elif defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
+#define CONFIG_UAP_STA_MAC_ADDR_FILTER 0
+#endif
+#endif
 
 #if !defined CONFIG_WIFI_DTIM_PERIOD
 #if defined(RW610)
@@ -257,8 +267,20 @@
 #endif
 #endif
 
+#if !defined CONFIG_WIFI_MAX_CLIENTS_CNT
+#if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
+#define CONFIG_WIFI_MAX_CLIENTS_CNT 1
+#endif
+#endif
 
 
+#if !defined CONFIG_WIFI_FRAG_THRESHOLD
+#if defined(RW610)
+#define CONFIG_WIFI_FRAG_THRESHOLD 1
+#elif defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
+#define CONFIG_WIFI_FRAG_THRESHOLD 0
+#endif
+#endif
 
 #if !defined CONFIG_WMM_UAPSD
 #if defined(RW610)
@@ -278,7 +300,7 @@
 
 #if !defined CONFIG_WIFI_TX_PER_TRACK
 #if defined(RW610)
-#define CONFIG_WIFI_TX_PER_TRACK 1
+#define CONFIG_WIFI_TX_PER_TRACK 0
 #elif defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
 #define CONFIG_WIFI_TX_PER_TRACK 0
 #endif
@@ -427,7 +449,21 @@
 #endif
 #endif
 
+#if !defined CONFIG_WIFI_FORCE_RTS
+#if defined(RW610)
+#define CONFIG_WIFI_FORCE_RTS 1
+#elif defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
+#define CONFIG_WIFI_FORCE_RTS 0
+#endif
+#endif
 
+#if !defined CONFIG_TX_AMPDU_PROT_MODE
+#if defined(RW610)
+#define CONFIG_TX_AMPDU_PROT_MODE 1
+#elif defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
+#define CONFIG_TX_AMPDU_PROT_MODE 0
+#endif
+#endif
 
 #if !defined CONFIG_TSP
 #if defined(RW610)
@@ -453,6 +489,13 @@
 #define CONFIG_MAX_IPV6_ADDRESSES 0
 #endif
 
+#if !defined CONFIG_WIFI_CAPA
+#if defined(RW610)
+#define CONFIG_WIFI_CAPA 1
+#elif defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
+#define CONFIG_WIFI_CAPA 0
+#endif
+#endif
 
 #if !defined CONFIG_ROAMING
 #if defined(RW610)
@@ -475,9 +518,16 @@
 #endif
 #endif
 
+#if !defined CONFIG_TURBO_MODE
+#if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
+#define CONFIG_TURBO_MODE CONFIG_WMM
+#endif
+#endif
 
+#if CONFIG_TURBO_MODE
 #undef CONFIG_TURBO_MODE
 #define CONFIG_TURBO_MODE CONFIG_WMM
+#endif
 
 #if !defined CONFIG_AUTO_RECONNECT
 #if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
@@ -997,6 +1047,17 @@
 #define CONFIG_HOST_MLME          1
 #define UAP_HOST_MLME             1
 
+#if CONFIG_WNM_PS
+#if defined(RW610)
+#undef CONFIG_WNM_PS
+#define CONFIG_WNM_PS 0
+#endif
+#endif
+
+#if !defined CONFIG_SEND_HOSTCMD
+#define CONFIG_SEND_HOSTCMD 1
+#endif
+
 /* Logs */
 #if !defined CONFIG_ENABLE_ERROR_LOGS
 #define CONFIG_ENABLE_ERROR_LOGS 1
@@ -1111,6 +1172,161 @@
 #if !defined CONFIG_SUPP_DEBUG
 #define CONFIG_SUPP_DEBUG 0
 #endif
+
+/*
+* Wi-Fi SLIM feature options
+*/
+
+#ifndef CONFIG_WIFI_SLIM_ROAM
+#define CONFIG_WIFI_SLIM_ROAM 0
+#endif
+
+#ifndef CONFIG_WIFI_SLIM_STA
+#define CONFIG_WIFI_SLIM_STA 0
+#endif
+
+#ifndef CONFIG_WIFI_SLIM_UAP
+#define CONFIG_WIFI_SLIM_UAP 0
+#endif
+
+#ifndef CONFIG_WIFI_SLIM_DBG
+#define CONFIG_WIFI_SLIM_DBG 0
+#endif
+
+#if CONFIG_WIFI_SLIM_ROAM
+
+#if CONFIG_ROAMING
+#undef CONFIG_ROAMING
+#define CONFIG_ROAMING 0
+#endif
+
+#if CONFIG_11K
+#undef CONFIG_11K
+#define CONFIG_11K 0
+#endif
+
+#if CONFIG_11V
+#undef CONFIG_11V
+#define CONFIG_11V 0
+#endif
+
+#if CONFIG_11R
+#undef CONFIG_11R
+#define CONFIG_11R 0
+#endif
+
+#endif /* CONFIG_WIFI_SLIM_ROAM */
+
+#if CONFIG_WIFI_SLIM_STA
+
+#if CONFIG_5GHz_SUPPORT
+#undef CONFIG_5GHz_SUPPORT
+#define CONFIG_5GHz_SUPPORT 0
+#endif
+
+#if CONFIG_CLOUD_KEEP_ALIVE
+#undef CONFIG_CLOUD_KEEP_ALIVE
+#define CONFIG_CLOUD_KEEP_ALIVE 0
+#endif
+
+#if CONFIG_WIFI_EU_CRYPTO
+#undef CONFIG_WIFI_EU_CRYPTO
+#define CONFIG_WIFI_EU_CRYPTO 0
+#endif
+
+#if CONFIG_TX_AMPDU_PROT_MODE
+#undef CONFIG_TX_AMPDU_PROT_MODE
+#define CONFIG_TX_AMPDU_PROT_MODE 0
+#endif
+
+#if CONFIG_WNM_PS
+#undef CONFIG_WNM_PS
+#define CONFIG_WNM_PS 0
+#endif
+
+#if CONFIG_TURBO_MODE
+#undef CONFIG_TURBO_MODE
+#define CONFIG_TURBO_MODE 0
+#endif
+
+#if CONFIG_AUTO_RECONNECT
+#undef CONFIG_AUTO_RECONNECT
+#define CONFIG_AUTO_RECONNECT 0
+#endif
+
+#if CONFIG_DRIVER_OWE
+#undef CONFIG_DRIVER_OWE
+#define CONFIG_DRIVER_OWE 0
+#endif
+
+#ifdef CONFIG_OWE
+#undef CONFIG_OWE
+#endif
+
+#if CONFIG_WIFI_FORCE_RTS
+#undef CONFIG_WIFI_FORCE_RTS
+#define CONFIG_WIFI_FORCE_RTS 0
+#endif
+
+#if CONFIG_WIFI_FRAG_THRESHOLD
+#undef CONFIG_WIFI_FRAG_THRESHOLD
+#define CONFIG_WIFI_FRAG_THRESHOLD 0
+#endif
+
+#if CONFIG_COMBO_SCAN
+#undef CONFIG_COMBO_SCAN
+#define CONFIG_COMBO_SCAN 0
+#endif
+
+#if CONFIG_SCAN_CHANNEL_GAP
+#undef CONFIG_SCAN_CHANNEL_GAP
+#define CONFIG_SCAN_CHANNEL_GAP 0
+#endif
+
+#if CONFIG_MAX_AP_ENTRIES
+#undef CONFIG_MAX_AP_ENTRIES
+#define CONFIG_MAX_AP_ENTRIES 5
+#endif
+
+#endif /* CONFIG_WIFI_SLIM_ROAM */
+
+#if CONFIG_WIFI_SLIM_UAP
+
+#if CONFIG_UAP_STA_MAC_ADDR_FILTER
+#undef CONFIG_UAP_STA_MAC_ADDR_FILTER
+#define CONFIG_UAP_STA_MAC_ADDR_FILTER 0
+#endif
+
+#if CONFIG_WIFI_MAX_CLIENTS_CNT
+#undef CONFIG_WIFI_MAX_CLIENTS_CNT
+#define CONFIG_WIFI_MAX_CLIENTS_CNT 0
+#endif
+
+#if CONFIG_WIFI_CAPA
+#undef CONFIG_WIFI_CAPA
+#define CONFIG_WIFI_CAPA 0
+#endif
+
+#endif /* CONFIG_WIFI_SLIM_ROAM */
+
+#if CONFIG_WIFI_SLIM_DBG
+
+#if CONFIG_ENABLE_ERROR_LOGS
+#undef CONFIG_ENABLE_ERROR_LOGS
+#define CONFIG_ENABLE_ERROR_LOGS 0
+#endif
+
+#if CONFIG_ENABLE_WARNING_LOGS
+#undef CONFIG_ENABLE_WARNING_LOGS
+#define CONFIG_ENABLE_WARNING_LOGS 0
+#endif
+
+#if CONFIG_SEND_HOSTCMD
+#undef CONFIG_SEND_HOSTCMD
+#define CONFIG_SEND_HOSTCMD 0
+#endif
+
+#endif /* CONFIG_WIFI_SLIM_ROAM */
 
 #else
 #error "Please define supported Wi-Fi module"

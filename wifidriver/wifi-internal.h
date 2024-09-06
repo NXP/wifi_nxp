@@ -412,6 +412,7 @@ void wifi_user_scan_config_cleanup(void);
  *
  */
 void wifi_scan_stop(void);
+int wifi_remain_on_channel(const bool status, const uint8_t channel, const uint32_t duration);
 #if CONFIG_WPA_SUPP
 void wpa_supp_handle_link_lost(mlan_private *priv);
 
@@ -432,7 +433,6 @@ int wifi_setup_he_cap(nxp_wifi_he_capabilities *he_cap, t_u8 band);
 #endif
 int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info);
 int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_time, const t_u8 *data, size_t data_len);
-int wifi_remain_on_channel(const bool status, const uint8_t channel, const uint32_t duration);
 int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params);
 int wifi_set_uap_rts(int rts_threshold);
 int wifi_set_uap_frag(int frag_threshold);

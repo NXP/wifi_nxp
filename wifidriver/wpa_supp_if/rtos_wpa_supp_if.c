@@ -380,6 +380,9 @@ void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
 
     mgmt = (const struct ieee80211_mgmt *)frame;
 
+    memset(&event, 0, sizeof(event));
+    memset(&wifi_if_ctx_rtos->assoc_bssid, 0, ETH_ALEN);
+
     if (frame_len < 24 + sizeof(mgmt->u.assoc_resp))
     {
         supp_d("%s: Association response frame too short", __func__);
@@ -387,9 +390,6 @@ void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
         reason_code = STA_CONNECT_FAIL_REASON_ASSOC_NO_RESP_RECEIVED;
         goto fail;
     }
-
-    memset(&event, 0, sizeof(event));
-    memset(&wifi_if_ctx_rtos->assoc_bssid, 0, ETH_ALEN);
 
     status = le_to_host16(mgmt->u.assoc_resp.status_code);
 
@@ -613,11 +613,11 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
     unsigned char num_chans                    = 0;
     t_u8 bss_mode                              = BSS_INFRASTRUCTURE;
     const char *ssid = NULL, *ssid2 = NULL;
-    char ssid_v[(MLAN_MAX_SSID_LENGTH + 1) * MRVDRV_MAX_SSID_LIST_LENGTH]  = {0};
-    const t_u8 *bssid                      = NULL;
-    wifi_scan_channel_list_t *chan_list    = NULL;
-    t_u8 channels[WIFI_SCAN_MAX_NUM_CHAN]  = {0};
-    mlan_scan_type scan_type               = MLAN_SCAN_TYPE_ACTIVE;
+    char ssid_v[(MLAN_MAX_SSID_LENGTH + 1) * MRVDRV_MAX_SSID_LIST_LENGTH] = {0};
+    const t_u8 *bssid                                                     = NULL;
+    wifi_scan_channel_list_t *chan_list                                   = NULL;
+    t_u8 channels[WIFI_SCAN_MAX_NUM_CHAN]                                 = {0};
+    mlan_scan_type scan_type                                              = MLAN_SCAN_TYPE_ACTIVE;
 
     if (!if_priv || !params)
     {
@@ -657,15 +657,16 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
         num_chans = 0;
     }
     uint8_t ssid_off = 0;
-    for (i = 0;  i < params->num_ssids; i++)
+    for (i = 0; i < params->num_ssids; i++)
     {
-        memcpy(ssid_v+ssid_off, (const char *)params->ssids[i].ssid, params->ssids[i].ssid_len);
+        memcpy(ssid_v + ssid_off, (const char *)params->ssids[i].ssid, params->ssids[i].ssid_len);
         ssid_off += params->ssids[i].ssid_len;
         ssid_v[ssid_off] = '\0';
         ssid_off++;
     }
     ssid = (const char *)&ssid_v;
 #if 0
+#if CONFIG_COMBO_SCAN
     if (params->num_filter_ssids > 1)
     {
         if (params->filter_ssids[1].ssid_len)
@@ -674,6 +675,7 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
             ssid2 = (const char *)&ssid_v2;
         }
     }
+#endif
 #endif
     /*
      * no ssids means passive scan
@@ -729,7 +731,9 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
 #if CONFIG_SCAN_WITH_RSSIFILTER
                                 params->filter_rssi,
 #endif
+#if CONFIG_SCAN_CHANNEL_GAP
                                 50U,
+#endif
                                 false, false);
     if (status != WM_SUCCESS)
     {
@@ -885,7 +889,8 @@ out:
     return status;
 }
 
-struct wpa_scan_res *wifi_nxp_wpa_supp_proc_scan_res(nxp_wifi_event_new_scan_result_t *scan_res)
+struct wpa_scan_res *wifi_nxp_wpa_supp_proc_scan_res(nxp_wifi_event_new_scan_result_t *scan_res,
+                                                     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos)
 {
     struct wpa_scan_res *r  = NULL;
     const unsigned char *ie = NULL;
@@ -945,7 +950,7 @@ struct wpa_scan_res *wifi_nxp_wpa_supp_proc_scan_res(nxp_wifi_event_new_scan_res
 
     (void)memcpy((void *)&r->parent_tsf, (const void *)&scan_res->ies_tsf, sizeof(r->parent_tsf));
 
-    memcpy(r->tsf_bssid, scan_res->mac_addr, ETH_ALEN);
+    memcpy(r->tsf_bssid, wifi_if_ctx_rtos->scan_start_tsf_bssid, ETH_ALEN);
 
     r->ie_len = ie_len;
 
@@ -970,7 +975,8 @@ struct wpa_scan_res *wifi_nxp_wpa_supp_proc_scan_res(nxp_wifi_event_new_scan_res
 
 int wifi_nxp_wpa_supp_scan_results_get(void *if_priv, struct wpa_scan_results *scan_res2)
 {
-    int ret = -1;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+    int ret                                    = -1;
     unsigned int i, num;
     nxp_wifi_event_new_scan_result_t scan_res;
     struct wpa_scan_res *sr = NULL;
@@ -1001,7 +1007,7 @@ int wifi_nxp_wpa_supp_scan_results_get(void *if_priv, struct wpa_scan_results *s
         memset(&scan_res, 0, sizeof(nxp_wifi_event_new_scan_result_t));
         (void)wifi_nxp_scan_res_get2(i, &scan_res);
 
-        sr = wifi_nxp_wpa_supp_proc_scan_res(&scan_res);
+        sr = wifi_nxp_wpa_supp_proc_scan_res(&scan_res, wifi_if_ctx_rtos);
 
         if (sr)
         {
@@ -1066,7 +1072,10 @@ int wifi_nxp_wpa_supp_deauthenticate(void *if_priv, const char *addr, unsigned s
     wifi_d("initiating wifi-deauth");
 
     status = wifi_nxp_deauthenticate(MLAN_BSS_TYPE_STA, (const unsigned char *)addr, reason_code);
-
+#if CONFIG_11MC
+    g_ftm_civic_cfg.civic_req  = 0;
+    g_ftm_location_cfg.lci_req = 0;
+#endif
     if (status != WM_SUCCESS)
     {
         supp_e("%s: wifi_nxp_wpa_supp_deauthenticate failed", __func__);
@@ -2115,49 +2124,52 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
 #endif
 
 #if CONFIG_11AX
-    status = wifi_setup_he_cap(
-        (nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211G].he_capab[IEEE80211_MODE_INFRA], 0);
-    if (status != WM_SUCCESS)
+    if (IS_FW_SUPPORT_11AX(mlan_adap))
     {
-        supp_e("%s: wifi nxp set 2G infra he cap failed", __func__);
-        goto out;
-    }
+        status = wifi_setup_he_cap(
+            (nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211G].he_capab[IEEE80211_MODE_INFRA], 0);
+        if (status != WM_SUCCESS)
+        {
+            supp_e("%s: wifi nxp set 2G infra he cap failed", __func__);
+            goto out;
+        }
 
-    status =
-        wifi_setup_he_cap((nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211G].he_capab[IEEE80211_MODE_AP], 0);
-    if (status != WM_SUCCESS)
-    {
-        supp_e("%s: wifi nxp set 2G ap he cap failed", __func__);
-        goto out;
-    }
-    if (bandwidth == BANDWIDTH_20MHZ)
-    {
-        modes[HOSTAPD_MODE_IEEE80211G].he_capab[IEEE80211_MODE_AP].phy_cap[HE_PHYCAP_CHANNEL_WIDTH_SET_IDX] = 0;
-    }
+        status = wifi_setup_he_cap(
+            (nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211G].he_capab[IEEE80211_MODE_AP], 0);
+        if (status != WM_SUCCESS)
+        {
+            supp_e("%s: wifi nxp set 2G ap he cap failed", __func__);
+            goto out;
+        }
+        if (bandwidth == BANDWIDTH_20MHZ)
+        {
+            modes[HOSTAPD_MODE_IEEE80211G].he_capab[IEEE80211_MODE_AP].phy_cap[HE_PHYCAP_CHANNEL_WIDTH_SET_IDX] = 0;
+        }
 #if CONFIG_5GHz_SUPPORT
-    if (!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
-    {
-        status = wifi_setup_he_cap(
-            (nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_INFRA], 1);
-        if (status != WM_SUCCESS)
+        if (!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
         {
-            supp_e("%s: wifi nxp set 5G infra he cap failed", __func__);
-            goto out;
-        }
+            status = wifi_setup_he_cap(
+                (nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_INFRA], 1);
+            if (status != WM_SUCCESS)
+            {
+                supp_e("%s: wifi nxp set 5G infra he cap failed", __func__);
+                goto out;
+            }
 
-        status = wifi_setup_he_cap(
-            (nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_AP], 1);
-        if (status != WM_SUCCESS)
-        {
-            supp_e("%s: wifi nxp set 5G ap he cap failed", __func__);
-            goto out;
+            status = wifi_setup_he_cap(
+                (nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_AP], 1);
+            if (status != WM_SUCCESS)
+            {
+                supp_e("%s: wifi nxp set 5G ap he cap failed", __func__);
+                goto out;
+            }
         }
-    }
-    if (bandwidth == BANDWIDTH_20MHZ)
-    {
-        modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_AP].phy_cap[HE_PHYCAP_CHANNEL_WIDTH_SET_IDX] = 0;
-    }
+        if (bandwidth == BANDWIDTH_20MHZ)
+        {
+            modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_AP].phy_cap[HE_PHYCAP_CHANNEL_WIDTH_SET_IDX] = 0;
+        }
 #endif
+    }
 #endif
 
     wifi_setup_channel_info(modes[HOSTAPD_MODE_IEEE80211B].channels, modes[HOSTAPD_MODE_IEEE80211B].num_channels,

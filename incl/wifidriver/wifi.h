@@ -1,13 +1,11 @@
 /*
- *  Copyright 2008-2023 NXP
+ * Copyright 2008-2024 NXP
  *
- *  SPDX-License-Identifier: BSD-3-Clause
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  */
-
-/** @file wifi.h
- *
- * @brief This file contains interface to wifi driver
+/*!\file  wifi.h
+ *\brief This file provides interface for Wi-Fi driver
  */
 
 #ifndef __WIFI_H__
@@ -44,6 +42,10 @@
 #if defined(SD9177)
 #define CONFIG_TCP_ACK_ENH 1
 #define CONFIG_FW_VDLL     1
+#if !CONFIG_WIFI_CAPA
+#undef CONFIG_WIFI_CAPA
+#define CONFIG_WIFI_CAPA 1
+#endif
 
 #if CONFIG_11AX
 #if !CONFIG_11K
@@ -118,7 +120,7 @@ extern t_u16 wifi_recovery_cnt;
 #endif
 extern bool wifi_shutdown_enable;
 
-/** WiFi Error Code */
+/** Wi-Fi Error Code */
 enum
 {
     WM_E_WIFI_ERRNO_START = MOD_ERROR_START(MOD_WIFI),
@@ -126,13 +128,13 @@ enum
     WIFI_ERROR_FW_DNLD_FAILED,
     /** The Firmware ready register not set. */
     WIFI_ERROR_FW_NOT_READY,
-    /** The WiFi card not found. */
+    /** The Wi-Fi card not found. */
     WIFI_ERROR_CARD_NOT_DETECTED,
-    /** The WiFi Firmware not found. */
+    /** The Wi-Fi Firmware not found. */
     WIFI_ERROR_FW_NOT_DETECTED,
 };
 
-/** WiFi driver TX/RX data status */
+/** Wi-Fi driver TX/RX data status */
 enum
 {
     /** Data in running status */
@@ -203,7 +205,7 @@ int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size);
 void wifi_deinit(void);
 #ifdef RW610
 /**
- * This API can be used to destroy all wifi driver tasks.
+ * This API can be used to destroy all Wi-Fi driver tasks.
  */
 void wifi_destroy_wifidriver_tasks(void);
 /**
@@ -215,7 +217,7 @@ int wifi_imu_get_task_lock(void);
  */
 int wifi_imu_put_task_lock(void);
 /**
- * This API can be used to judge if wifi firmware is hang.
+ * This API can be used to judge if Wi-Fi firmware is hang.
  */
 bool wifi_fw_is_hang(void);
 /**
@@ -224,14 +226,14 @@ bool wifi_fw_is_hang(void);
 int wifi_send_shutdown_cmd(void);
 #endif
 /**
- * This API can be used to set wifi driver tx status.
+ * This API can be used to set Wi-Fi driver tx status.
  *
  * @param[in] status Status to set for TX
  */
 void wifi_set_tx_status(t_u8 status);
 
 /**
- * This API can be used to set wifi driver rx status.
+ * This API can be used to set Wi-Fi driver rx status.
  *
  * @param[in] status Status to set for RX
  *
@@ -330,9 +332,9 @@ int wifi_low_level_output(const uint8_t interface,
 );
 
 /**
- * API to enable packet retries at wifi driver level.
+ * API to enable packet retries at Wi-Fi driver level.
  *
- * This API sets retry count which will be used by wifi driver to retry packet
+ * This API sets retry count which will be used by Wi-Fi driver to retry packet
  * transmission in case there was failure in earlier attempt. Failure may
  * happen due to SDIO write port un-availability or other failures in SDIO
  * write operation.
@@ -511,12 +513,12 @@ mlan_status wifi_stop_bgscan();
 void wifi_update_last_cmd_sent_ms(void);
 
 /**
- * Register an event queue with the wifi driver to receive events
+ * Register an event queue with the Wi-Fi driver to receive events
  *
- * The list of events which can be received from the wifi driver are
+ * The list of events which can be received from the Wi-Fi driver are
  * enumerated in the file wifi_events.h
  *
- * @param[in] event_queue The queue to which wifi driver will post events.
+ * @param[in] event_queue The queue to which Wi-Fi driver will post events.
  *
  * @note Only one queue can be registered. If the registered queue needs to
  * be changed unregister the earlier queue first.
@@ -526,10 +528,10 @@ void wifi_update_last_cmd_sent_ms(void);
 int wifi_register_event_queue(osa_msgq_handle_t event_queue);
 
 /**
- * Unregister an event queue from the wifi driver.
+ * Unregister an event queue from the Wi-Fi driver.
  *
  * @param[in] event_queue The queue to which was registered earlier with
- * the wifi driver.
+ * the Wi-Fi driver.
  *
  * @return Standard SDK return codes
  */
@@ -553,7 +555,7 @@ int wifi_get_scan_result(unsigned int index, struct wifi_scan_result2 **desc);
  *
  * @warning The count returned by this function is the current count of the
  * elements. A scan command given to the driver or some other background
- * event may change this count in the wifi driver. Thus when the API
+ * event may change this count in the Wi-Fi driver. Thus when the API
  * \ref wifi_get_scan_result is used to get individual elements of the scan
  * list, do not assume that it will return exactly 'count' number of
  * elements. Your application should not consider such situations as a
@@ -632,9 +634,9 @@ int wifi_set_get_cck_desense_cfg(void *cfg, t_u16 action);
 void wifi_enable_low_pwr_mode();
 #endif
 
-/** Set wifi calibration data in firmware.
+/** Set Wi-Fi calibration data in firmware.
  *
- * This function may be used to set wifi calibration data in firmware.
+ * This function may be used to set Wi-Fi calibration data in firmware.
  *
  * @param[in] cdata The calibration data
  * @param[in] clen Length of calibration data
@@ -642,18 +644,18 @@ void wifi_enable_low_pwr_mode();
  */
 void wifi_set_cal_data(const uint8_t *cdata, const unsigned int clen);
 
-/** Set wifi MAC address in firmware at load time.
+/** Set Wi-Fi MAC address in firmware at load time.
  *
- * This function may be used to set wifi MAC address in firmware.
+ * This function may be used to set Wi-Fi MAC address in firmware.
  *
  * @param[in] mac The new MAC Address
  *
  */
 void wifi_set_mac_addr(uint8_t *mac);
 
-/** Set wifi MAC address in firmware at run time.
+/** Set Wi-Fi MAC address in firmware at run time.
  *
- * This function may be used to set wifi MAC address in firmware as per passed bss type.
+ * This function may be used to set Wi-Fi MAC address in firmware as per passed bss type.
  *
  * @param[in] mac The new MAC Address
  * @param[in] bss_type BSS Type
@@ -682,9 +684,9 @@ int wifi_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
 
 /** Add Multicast Filter by MAC Address
  *
- * Multicast filters should be registered with the WiFi driver for IP-level
+ * Multicast filters should be registered with the Wi-Fi driver for IP-level
  * multicast addresses to work. This API allows for registration of such filters
- * with the WiFi driver.
+ * with the Wi-Fi driver.
  *
  * If multicast-mapped MAC address is 00:12:23:34:45:56 then pass mac_addr as
  * below:
@@ -779,7 +781,7 @@ int wifi_mem_access(uint16_t action, uint32_t addr, uint32_t *value);
 void wifi_scan_process_results(void);
 
 /**
- * Get the wifi region code
+ * Get the Wi-Fi region code
  *
  * This function will return one of the following values in the region_code
  * variable.\n
@@ -800,7 +802,7 @@ void wifi_scan_process_results(void);
 int wifi_get_region_code(t_u32 *region_code);
 
 /**
- * Set the wifi region code.
+ * Set the Wi-Fi region code.
  *
  * This function takes one of the values from the following array.\n
  * 0x10 : US FCC\n
@@ -929,8 +931,10 @@ int wifi_uap_ps_inactivity_sleep_enter(mlan_bss_type type,
                                        unsigned int max_awake);
 int wifi_enter_ieee_power_save(void);
 int wifi_exit_ieee_power_save(void);
+#if (CONFIG_WNM_PS)
 int wifi_enter_wnm_power_save(t_u16 wnm_sleep_time);
 int wifi_exit_wnm_power_save(void);
+#endif
 int wifi_enter_deepsleep_power_save(void);
 int wifi_exit_deepsleep_power_save(void);
 int wifi_set_power_save_mode(void);
@@ -1009,7 +1013,7 @@ int wrapper_wlan_uap_ampdu_enable(uint8_t *addr
 
 
 #if CONFIG_WIFI_GET_LOG
-/** WiFi Statistics counter */
+/** Wi-Fi Statistics counter */
 typedef PACK_START struct
 {
     /** Multicast transmitted frame count */
@@ -1154,21 +1158,21 @@ typedef PACK_START struct
     /** Rx Reset MAC Count */
     t_u32 g_reset_rx_mac_cnt;
     // Ownership error counters
-    /*Error Ownership error count*/
+    /** Error Ownership error count*/
     t_u32 dwCtlErrCnt;
-    /*Control Ownership error count*/
+    /** Control Ownership error count*/
     t_u32 dwBcnErrCnt;
-    /*Control Ownership error count*/
+    /** Control Ownership error count*/
     t_u32 dwMgtErrCnt;
-    /*Control Ownership error count*/
+    /** Control Ownership error count*/
     t_u32 dwDatErrCnt;
-    /*BIGTK MME good count*/
+    /** BIGTK MME good count*/
     t_u32 bigtk_mmeGoodCnt;
-    /*BIGTK Replay error count*/
+    /** BIGTK Replay error count*/
     t_u32 bigtk_replayErrCnt;
-    /*BIGTK MIC error count*/
+    /** BIGTK MIC error count*/
     t_u32 bigtk_micErrCnt;
-    /*BIGTK MME not included count*/
+    /** BIGTK MME not included count*/
     t_u32 bigtk_mmeNotFoundCnt;
 } PACK_END wifi_pkt_stats_t;
 
@@ -1182,6 +1186,7 @@ int wifi_uap_stop();
 int wifi_uap_do_acs(const int *freq_list);
 #endif
 
+#if CONFIG_WIFI_CAPA
 /**
  * Set uAP capability
  *
@@ -1196,6 +1201,7 @@ int wifi_uap_do_acs(const int *freq_list);
  */
 void wifi_uap_config_wifi_capa(uint8_t wlan_capa);
 void wifi_get_fw_info(mlan_bss_type type, t_u16 *fw_bands);
+#endif
 int wifi_get_data_rate(wifi_ds_rate *ds_rate, mlan_bss_type bss_type);
 
 int wifi_uap_set_bandwidth(const t_u8 bandwidth);
@@ -1209,7 +1215,9 @@ int wifi_uap_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr);
 
 int wifi_set_rts(int rts, mlan_bss_type bss_type);
 
+#if CONFIG_WIFI_FRAG_THRESHOLD
 int wifi_set_frag(int frag, mlan_bss_type bss_type);
+#endif
 
 #if CONFIG_11R
 bool wifi_same_ess_ft();
@@ -1307,7 +1315,9 @@ typedef struct _wlan_nlist_report_param
 
 int wifi_clear_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index, int mgmt_bitmap_index);
 
+#if CONFIG_UAP_STA_MAC_ADDR_FILTER
 int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);
+#endif
 
 int wifi_set_auto_arp(t_u32 *ipv4_addr);
 
@@ -1685,7 +1695,7 @@ t_u8 get_ecsa_block_tx_time();
 /**
  * Record whether block tx is required.
  *
- *\param[in] flag Flag is true, if block tx is required,otherwise, flag is false.
+ *\param[in] block_tx if block tx is required, block_tx is true. otherwise, flag is false.
  *
  * \return void.
  */
@@ -1698,6 +1708,11 @@ void set_ecsa_block_tx_flag(bool block_tx);
  */
 bool get_ecsa_block_tx_flag();
 
+/**
+ * put the ecsa semaphore .
+ *
+ * \return void.
+ */
 void wifi_put_ecsa_sem(void);
 
 /** wifi_ecsa_status_control */
@@ -1816,15 +1831,19 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 #if CONFIG_SCAN_WITH_RSSIFILTER
                        const t_s16 rssi_threshold,
 #endif
+#if CONFIG_SCAN_CHANNEL_GAP
                        const t_u16 scan_chan_gap,
+#endif
                        const bool keep_previous_scan,
                        const bool active_scan_triggered);
 int wifi_deauthenticate(uint8_t *bssid);
 
+#if CONFIG_TURBO_MODE
 int wifi_get_turbo_mode(t_u8 *mode);
 int wifi_get_uap_turbo_mode(t_u8 *mode);
 int wifi_set_turbo_mode(t_u8 mode);
 int wifi_set_uap_turbo_mode(t_u8 mode);
+#endif
 
 #if CONFIG_WPA_SUPP_AP
 t_u16 wifi_get_default_ht_capab();

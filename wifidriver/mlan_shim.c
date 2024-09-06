@@ -284,14 +284,18 @@ MLAN_API mlan_status mlan_unregister(IN t_void *pmlan_adapter)
 {
     mlan_status ret         = MLAN_STATUS_SUCCESS;
     mlan_adapter *pmadapter = (mlan_adapter *)pmlan_adapter;
+#if !CONFIG_MEM_POOLS
     pmlan_callbacks pcb;
+#endif
     t_s32 i = 0;
 
     MASSERT(pmlan_adapter);
 
     ENTER();
 
+#if !CONFIG_MEM_POOLS
     pcb = &pmadapter->callbacks;
+#endif
 
     wlan_free_adapter(pmadapter);
 
@@ -301,13 +305,21 @@ MLAN_API mlan_status mlan_unregister(IN t_void *pmlan_adapter)
         if (pmadapter->priv[i] != MNULL)
         {
             wlan_delete_station_list(pmadapter->priv[i]);
+#if !CONFIG_MEM_POOLS
             (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->priv[i]);
+#else
+            OSA_MemoryPoolFree(pmPrivateMemoryPool, pmadapter->priv[i]);
+#endif
             pmadapter->priv[i] = MNULL;
         }
     }
 
+#if !CONFIG_MEM_POOLS
     /* Free mlan_adapter */
     (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter);
+#else
+    OSA_MemoryPoolFree(pmAdapterMemoryPool, pmadapter);
+#endif
 
     LEAVE();
     return ret;

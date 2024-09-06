@@ -113,12 +113,14 @@ mlan_status wlan_cmd_enh_power_mode(pmlan_private pmpriv,
         psmode_enh->params.ps_bitmap = wlan_cpu_to_le16(ps_bitmap);
         cmd->size                    = wlan_cpu_to_le16(S_DS_GEN + AUTO_PS_FIX_SIZE);
     }
+#if (CONFIG_WNM_PS)
     else if (cmd_action == DIS_WNM_PS)
     {
         psmode_enh->action           = (ENH_PS_MODES)(wlan_cpu_to_le16(DIS_WNM_PS));
         psmode_enh->params.ps_bitmap = wlan_cpu_to_le16(ps_bitmap);
         cmd->size                    = wlan_cpu_to_le16(S_DS_GEN + AUTO_PS_FIX_SIZE);
     }
+#endif
     else if (cmd_action == GET_PS)
     {
         psmode_enh->action           = (ENH_PS_MODES)(wlan_cpu_to_le16(GET_PS));
@@ -213,6 +215,7 @@ mlan_status wlan_cmd_enh_power_mode(pmlan_private pmpriv,
         /*#endif*/
         cmd->size = wlan_cpu_to_le16(cmd_size);
     }
+#if (CONFIG_WNM_PS)
     else if (cmd_action == EN_WNM_PS)
     {
         psmode_enh->action                   = wlan_cpu_to_le16(EN_WNM_PS);
@@ -244,6 +247,7 @@ mlan_status wlan_cmd_enh_power_mode(pmlan_private pmpriv,
         }
         cmd->size = wlan_cpu_to_le16(cmd_size);
     }
+#endif
     else
     { /* Do Nothing */
     }

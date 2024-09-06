@@ -307,12 +307,14 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
         tlv_htcap->ht_cap.ampdu_param = bss->param.bss_config.ampdu_param;
         (void)__memcpy(pmpriv->adapter, tlv_htcap->ht_cap.supported_mcs_set, bss->param.bss_config.supported_mcs_set,
                        16);
+#if CONFIG_WIFI_CAPA
         /* Disable 802.11n */
         if (!pmpriv->adapter->usr_dot_11n_enable)
         {
             tlv_htcap->ht_cap.supported_mcs_set[0] = 0;
             tlv_htcap->ht_cap.supported_mcs_set[4] = 0;
         }
+#endif
         tlv_htcap->ht_cap.ht_ext_cap = wlan_cpu_to_le16(bss->param.bss_config.ht_ext_cap);
         tlv_htcap->ht_cap.tx_bf_cap  = wlan_cpu_to_le32(bss->param.bss_config.tx_bf_cap);
         tlv_htcap->ht_cap.asel       = bss->param.bss_config.asel;
@@ -337,6 +339,8 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
         {
             tlv_wmm_parameter->wmm_para.ac_params[ac].aci_aifsn.aifsn =
                 bss->param.bss_config.wmm_para.ac_params[ac].aci_aifsn.aifsn;
+            tlv_wmm_parameter->wmm_para.ac_params[ac].aci_aifsn.acm =
+                bss->param.bss_config.wmm_para.ac_params[ac].aci_aifsn.acm;
             tlv_wmm_parameter->wmm_para.ac_params[ac].aci_aifsn.aci =
                 bss->param.bss_config.wmm_para.ac_params[ac].aci_aifsn.aci;
             tlv_wmm_parameter->wmm_para.ac_params[ac].ecw.ecw_max =
@@ -638,6 +642,7 @@ static mlan_status wlan_uap_cmd_snmp_mib(pmlan_private pmpriv,
                 psnmp_mib->value[0] = *((t_u8 *)pdata_buf);
                 cmd->size += (t_u16)sizeof(t_u8);
                 break;
+#if CONFIG_WIFI_FRAG_THRESHOLD
             case FragThresh_i:
                 psnmp_mib->oid                 = wlan_cpu_to_le16((t_u16)FragThresh_i);
                 psnmp_mib->buf_size            = wlan_cpu_to_le16(sizeof(t_u16));
@@ -645,6 +650,7 @@ static mlan_status wlan_uap_cmd_snmp_mib(pmlan_private pmpriv,
                 *((t_u16 *)(psnmp_mib->value)) = wlan_cpu_to_le16((t_u16)ul_temp);
                 cmd->size += sizeof(t_u16);
                 break;
+#endif
             case RtsThresh_i:
                 psnmp_mib->oid                 = wlan_cpu_to_le16((t_u16)RtsThresh_i);
                 psnmp_mib->buf_size            = wlan_cpu_to_le16(sizeof(t_u16));
@@ -1083,6 +1089,8 @@ static mlan_status wlan_uap_cmd_add_station(pmlan_private pmpriv,
                 break;
             case SUPPORTED_RATES:
                 b_only = wlan_check_11B_support_rates((MrvlIEtypes_RatesParamSet_t *)tlv);
+                if (b_only)
+                    wm_wifi.bandwidth = BANDWIDTH_20MHZ;
                 break;
             case QOS_INFO:
                 wifi_d("STA supports wmm");
