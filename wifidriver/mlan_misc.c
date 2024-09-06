@@ -353,6 +353,16 @@ mlan_status wlan_bypass_802dot11_mgmt_pkt(void *data)
     // coverity[overrun-local:SUPPRESS]
     category = *((t_u8 *)pieee_pkt_hdr + sizeof(wlan_802_11_header));
 
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
+    /* Currently only support action frame process */
+    if (sub_type != SUBTYPE_ACTION)
+    {
+        PRINTM(MINFO, "Dropping non-action mgmt frame for subtype %d.\n", sub_type);
+        LEAVE();
+        return ret;
+    }
+#endif
+
     if ((pmgmt_pkt_hdr->wlan_header.frm_ctl & IEEE80211_FC_MGMT_FRAME_TYPE_MASK) == 0)
     {
         if ((((1 << sub_type) & priv->mgmt_frame_passthru_mask) == 0) && (sub_type != SUBTYPE_ACTION))
@@ -367,6 +377,15 @@ mlan_status wlan_bypass_802dot11_mgmt_pkt(void *data)
             if (category == IEEE_MGMT_ACTION_CATEGORY_BLOCK_ACK)
             {
                 PRINTM(MINFO, "Dropping mgmt frame for category %d.\n", category);
+                LEAVE();
+                return ret;
+            }
+
+            if (category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC &&
+                category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_WNM &&
+                category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_UNPROTECT_WNM)
+            {
+                PRINTM(MINFO, "Dropping mgmt frame for host unsupported category %d.\n", category);
                 LEAVE();
                 return ret;
             }

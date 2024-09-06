@@ -245,6 +245,53 @@ retry:
 }
 #endif
 
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
+/** Check if packet is mgmt and try to consume it.
+ *
+ * Return MLAN_STATUS_RESOURCE if not intrest in it.
+ * Return MLAN_STATUS_SUCCESS if packet is consumed.
+ * Return MLAN_STATUS_FAILURE if error happens and needs to drop it.
+ */
+static mlan_status process_mgmt_packet(t_u8 *data)
+{
+    RxPD *rxpd = (RxPD *)(void *)data;
+    struct net_pkt *p = NULL;
+    t_u16 plen;
+
+    if (rxpd->bss_type != MLAN_BSS_TYPE_STA || rxpd->rx_pkt_type != PKT_TYPE_MGMT_FRAME)
+    {
+        return MLAN_STATUS_RESOURCE;
+    }
+
+    if (wlan_bypass_802dot11_mgmt_pkt(data) == MLAN_STATUS_SUCCESS)
+    {
+        return MLAN_STATUS_RESOURCE;
+    }
+
+#if (CONFIG_TX_RX_ZERO_COPY) || (FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
+    plen = rxpd->rx_pkt_offset + rxpd->rx_pkt_length + sizeof(mlan_buffer);
+    p = gen_pkt_from_data_for_zerocopy(MLAN_BSS_TYPE_STA, data, plen);
+#else
+    plen = rxpd->rx_pkt_offset + rxpd->rx_pkt_length;
+    p = gen_pkt_from_data(MLAN_BSS_TYPE_STA, data, plen);
+#endif
+    if (!p)
+    {
+        net_d("process_mgmt_packet gen_pkt_from_data fail");
+        return MLAN_STATUS_FAILURE;
+    }
+
+    if (wifi_event_completion(WIFI_EVENT_MGMT_FRAME, WIFI_EVENT_REASON_SUCCESS, p) != WM_SUCCESS)
+    {
+        net_d("process_mgmt_packet send mgmt packet fail");
+        net_stack_buffer_free(p);
+        return MLAN_STATUS_FAILURE;
+    }
+
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
+
 static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 {
     RxPD *rxpd                   = (RxPD *)(void *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
@@ -267,6 +314,14 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         g_data_nf_last  = rxpd->nf;
         g_data_snr_last = rxpd->snr;
     }
+
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
+    mlan_status status = process_mgmt_packet((t_u8 *)rcvdata + INTF_HEADER_LEN);
+    if (status != MLAN_STATUS_RESOURCE)
+    {
+        return;
+    }
+#endif
 
     t_u8 *payload     = (t_u8 *)rxpd + rxpd->rx_pkt_offset;
 #if CONFIG_TX_RX_ZERO_COPY

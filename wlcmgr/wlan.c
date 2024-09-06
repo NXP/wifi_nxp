@@ -3940,25 +3940,42 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg)
 #endif
 }
 #else
+/** Try to roaming if enabled based on priority:
+ * 1. 11R roaming (full channel scan)
+ * 2. 11K roaming
+ * 3. 11V roaming
+ * 4. Legacy roaming (full channel scan)
+ *
+ * If not trigger roaming, subscribe RSSI low event again
+ */
 static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_state *next, struct wlan_network *network)
 {
+#if !CONFIG_ROAMING
+    wlcm_d("wlcm_process_rssi_low_event roaming not support");
+    return;
+#else
     bool set_rssi_threshold = false;
-
-#if CONFIG_ROAMING
-    if (wlan.roaming_enabled == true)
-    {
-        if (wlan.roam_reassoc == false)
-        {
-            wlan.roam_reassoc = true;
-#if CONFIG_11R
-            wlan.ft_bss = false;
-            if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
-            {
-                wlan.ft_bss = true;
-            }
+#if CONFIG_BG_SCAN || CONFIG_11K || CONFIG_11V
+    int ret;
 #endif
+
+    if (wlan.roaming_enabled == false)
+    {
+        wlcm_d("wlcm_process_rssi_low_event roaming disabled");
+        return;
+    }
+
+#if CONFIG_11R
+    if (wlan.roam_reassoc == false)
+    {
+        wlan.ft_bss = false;
+        if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
+        {
+            wlan.ft_bss = true;
+            wlan.roam_reassoc = true;
+
 #if CONFIG_BG_SCAN
-            int ret = wifi_config_bgscan_and_rssi(network->ssid);
+            ret = wifi_config_bgscan_and_rssi(network->ssid);
             if (ret == WM_SUCCESS)
             {
                 wlcm_d("bgscan config successful");
@@ -3968,19 +3985,18 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
             wlan.roam_reassoc = false;
             set_rssi_threshold = true;
         }
-        else
-        {
-            wlcm_d("Roaming already in progress");
-            (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
-            return;
-        }
     }
-#endif /* CONFIG_ROAMING */
+    else
+    {
+        wlcm_d("11R Roaming already in progress");
+        (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
+        return;
+    }
+#endif
 
 #if CONFIG_11K
     if (network->neighbor_report_supported == true)
     {
-        int ret;
         ret = wlan_host_11k_neighbor_req((const char *)network->ssid);
         if (ret == WM_SUCCESS)
         {
@@ -3994,7 +4010,6 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
 #if CONFIG_11V
     if (network->bss_transition_supported == true)
     {
-        int ret;
         ret = wlan_host_11v_bss_trans_query(0x10);
         if (ret == WM_SUCCESS)
         {
@@ -4005,10 +4020,31 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
     }
 #endif /* CONFIG_11V */
 
+    if (wlan.roam_reassoc == false)
+    {
+        wlan.roam_reassoc = true;
+#if CONFIG_BG_SCAN
+        ret = wifi_config_bgscan_and_rssi(network->ssid);
+        if (ret == WM_SUCCESS)
+        {
+            wlcm_d("bgscan config successful");
+            return;
+        }
+#endif
+        wlan.roam_reassoc = false;
+        set_rssi_threshold = true;
+    }
+    else
+    {
+        wlcm_d("Roaming already in progress");
+        set_rssi_threshold = true;
+    }
+
     if (set_rssi_threshold == true)
     {
         (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
     }
+#endif /* CONFIG_ROAMING */
 }
 #endif
 #endif
@@ -6208,12 +6244,12 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
         }
         if (wlan.connect_wakelock_taken)
         {
-#if CONFIG_HOST_SLEEP
-            wakelock_put();
-#endif
             wlan.connect_wakelock_taken = false;
         }
 
+#if CONFIG_HOST_SLEEP
+        wakelock_put();
+#endif
         wlan.cur_network_idx = -1;
         return;
     }
@@ -6711,7 +6747,14 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #endif
 #endif
             if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
+            {
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
+#if CONFIG_HOST_SLEEP
+                wakelock_put();
+#endif
+#endif
                 break;
+            }
 
             wlcm_request_disconnect(&next, network);
             break;
