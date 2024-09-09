@@ -875,59 +875,19 @@ static bool is_uap_starting(void)
 
     return ((state > HAPD_IFACE_DISABLED) && (state <= HAPD_IFACE_ENABLED));
 #else
-    return ((wlan.uap_state > CM_UAP_INITIALIZING) && (wlan.sta_state <= CM_UAP_IP_UP));
+    return ((wlan.uap_state > CM_UAP_INITIALIZING) && (wlan.uap_state <= CM_UAP_IP_UP));
 #endif
 }
 
 static int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
 {
-#if CONFIG_WIFI_NM_WPA_SUPPLICANT
-    net_get_if_ip_addr(ipv4_addr, net_get_sta_handle());
-#else
-    struct wlan_network* network = NULL;
-
-    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
-    {
-        network = &wlan.networks[wlan.cur_network_idx];
-    }
-
-    if (network == NULL)
-    {
-        wlcm_e("cannot get network info");
-        *ipv4_addr = 0;
-        return -WM_FAIL;
-    }
-
-    *ipv4_addr = network->ip.ipv4.address;
-#endif
-    return WM_SUCCESS;
+    return net_get_if_ip_addr(ipv4_addr, net_get_sta_handle());
 }
 
 #if (CONFIG_HOST_SLEEP) || (CONFIG_MEF_CFG)
 static int wlan_get_uap_ipv4_addr(unsigned int *ipv4_addr)
 {
-#if CONFIG_WIFI_NM_WPA_SUPPLICANT
-    net_get_if_ip_addr(ipv4_addr, net_get_uap_handle());
-    return WM_SUCCESS;
-#else
-    struct wlan_network* network = NULL;
-
-    if (wlan.running && (is_uap_state(CM_UAP_IP_UP) || is_uap_state(CM_UAP_STARTED)))
-    {
-        network = &wlan.networks[wlan.cur_uap_network_idx];
-    }
-
-    if (network == NULL)
-    {
-        wlcm_e("cannot get uap network info");
-        *ipv4_addr = 0;
-        return -WM_FAIL;
-    }
-
-    *ipv4_addr = network->ip.ipv4.address;
-#endif
-
-    return WM_SUCCESS;
+    return net_get_if_ip_addr(ipv4_addr, net_get_uap_handle());
 }
 #endif
 
@@ -4213,7 +4173,7 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
     }
 #endif
     wlan.roam_reassoc = true;
-    ret = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, bssid, network->ssid, NULL, pnlist_rep_param->num_channels,
+    ret = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, bssid, network->ssid, 1, pnlist_rep_param->num_channels,
                              chan_list, 0,
 #if CONFIG_SCAN_WITH_RSSIFILTER
                              0,
@@ -4335,7 +4295,7 @@ int wlan_ft_roam(const t_u8 *bssid, const t_u8 channel)
 
         wlan.ft_bss       = true;
         wlan.roam_reassoc = true;
-        ret               = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, bssid, network->ssid, NULL, 1, &chan_list, 0,
+        ret               = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, bssid, network->ssid, 1, 1, &chan_list, 0,
 #if CONFIG_SCAN_WITH_RSSIFILTER
                                  0,
 #endif
@@ -5868,10 +5828,10 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
     struct wlan_network *network = NULL;
     enum cm_uap_state next       = wlan.uap_state;
     void *if_handle              = NULL;
-#if CONFIG_WPA_SUPP
 #if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     int ret                      = 0;
 #endif
+#if CONFIG_WPA_SUPP
     struct netif *netif = net_get_uap_interface();
 #endif
 
@@ -6728,9 +6688,6 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlan.pending_assoc_request = false;
             if (!wlan.assoc_paused)
             {
-                if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
-                    break;
-
                 wlcm_request_connect(msg, &next, network);
             }
             else
@@ -6836,12 +6793,10 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case WIFI_EVENT_ASSOCIATION:
             wlcm_d("got event: association result: %s",
                     msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
-#if CONFIG_WIFI_NM_WPA_SUPPLICANT
             if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
             {
                 CONNECTION_EVENT(WLAN_REASON_ASSOC_SUCCESS, NULL);
             }
-#endif
             wlcm_process_association_event(msg, &next);
             break;
 
@@ -8116,16 +8071,6 @@ int wlan_stop(void)
         wlcm_w("failed to get scan lock: %d.", ret);
         return WLAN_ERROR_STATE;
     }
-#else
-    /* If CONFIG_WIFI_RECOVERY is defined, 0xb2 CMD will be skipped, but dhcp_server_stop()
-     * is called in 0xb2 CMD response. So it needs to be called here to stop DHCP server
-     */
-#if !CONFIG_WIFI_RECOVERY
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
-    if (wlan.uap_state == CM_UAP_IP_UP)
-        dhcp_server_stop();
-#endif
-#endif
 #endif
     status = OSA_SemaphoreDestroy((osa_semaphore_handle_t)wlan.scan_lock);
     if (status != KOSA_StatusSuccess)

@@ -855,7 +855,10 @@ static void stop_cb(void *ctx)
     interface_t *if_handle = (interface_t *)net_get_mlan_handle();
 
     net_dhcpv4_stop(if_handle->netif);
-    (void)net_if_down(if_handle->netif);
+#if CONFIG_IPV6
+    if (!is_sta_ipv6_connected())
+#endif
+        (void)net_if_dormant_on(if_handle->netif);
 }
 
 static void dhcp_timer_cb(osa_timer_arg_t arg)
@@ -867,7 +870,6 @@ static void dhcp_timer_cb(osa_timer_arg_t arg)
 
 void net_interface_up(void *intrfc_handle)
 {
-    net_if_up(((interface_t *)intrfc_handle)->netif);
     /* case 1: start uap/ connect to uap firstly.
     When init sta/uap interface, the flag of iface->if_dev->flags is initialized to NET_IF_LOWER_UP.
     Function update_operational_state()(zephyr function) will be called by net_if_up(). Only iface->if_dev->flags
@@ -886,25 +888,15 @@ void net_interface_up(void *intrfc_handle)
     Can't delete net_if_up() here, beacuse in addtion to start interface, net_if_up() will also perform other
     initilization work.*/
 
-    net_eth_carrier_on(((interface_t *)intrfc_handle)->netif);
+    net_if_dormant_off(((interface_t *)intrfc_handle)->netif);
 }
 
 void net_interface_down(void *intrfc_handle)
 {
-    interface_t *if_handle = (interface_t *)intrfc_handle;
-    net_if_ipv4_addr_rm(if_handle->netif, &if_handle->ipaddr.in_addr);
-	
-#if CONFIG_IPV6
-    struct net_if_ipv6 *ipv6;
-    net_if_config_ipv6_get(if_handle->netif, &ipv6);
-
-    for (int i = 0; i < NET_IF_MAX_IPV6_ADDR; i++)
-    {
-        net_if_ipv6_addr_rm(if_handle->netif, &ipv6->unicast[i].address.in6_addr);
-    }
-#endif
-
-    net_if_down(((interface_t *)intrfc_handle)->netif);
+    /** includes dhcpv4 stop and ipv6 clear,
+     *  for static IP case, we do not clear IP addr
+     */
+    net_if_dormant_on(((interface_t *)intrfc_handle)->netif);
 }
 
 void net_interface_dhcp_stop(void *intrfc_handle)
@@ -1005,8 +997,6 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
           (addr->ipv4.addr_type == NET_ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
 #endif
 
-    (void)net_if_down(if_handle->netif);
-
     if (if_handle == &g_mlan)
     {
         net_if_set_default(if_handle->netif);
@@ -1021,10 +1011,8 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
             net_if_ipv4_addr_add(if_handle->netif, &if_handle->ipaddr.in_addr, NET_ADDR_MANUAL, 0);
             net_if_ipv4_set_gw(if_handle->netif, &if_handle->gw.in_addr);
             net_if_ipv4_set_netmask_by_addr(if_handle->netif, &if_handle->ipaddr.in_addr, &if_handle->nmask.in_addr);
-            net_if_up(if_handle->netif);
             break;
         case NET_ADDR_TYPE_DHCP:
-            net_if_up(if_handle->netif);
             (void)OSA_TimerActivate((osa_timer_handle_t)dhcp_timer);
             net_dhcpv4_restart(if_handle->netif);
             break;
@@ -1055,7 +1043,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
          * WD_EVENT_NET_DHCP_CONFIG, should be sent to the wlcmgr.
          */
     }
-    else if (0
+    else if (if_handle == &g_uap
 #if CONFIG_P2P
         || ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_UAP))
 #endif
@@ -1063,7 +1051,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
     {
         /*For g_uap interface, notify wlcmgr_task task to get address only after receiving DAD finished event from
          * zephyr.*/
-        (void)wlan_wlcmgr_send_msg(WIFI_EVENT_UAP_NET_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
+        net_if_dormant_off(if_handle->netif);
     }
     else
     { /* Do Nothing */

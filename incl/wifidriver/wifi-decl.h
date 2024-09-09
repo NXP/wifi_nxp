@@ -160,7 +160,11 @@ typedef struct
 #define BSS_TYPE_UAP 1U
 
 #define UAP_DEFAULT_CHANNEL       0
+#ifdef RW610
+#define UAP_DEFAULT_BANDWIDTH     1
+#else
 #define UAP_DEFAULT_BANDWIDTH     2
+#endif
 #define UAP_DEFAULT_BEACON_PERIOD 100
 #define UAP_DEFAULT_HIDDEN_SSID   0
 
