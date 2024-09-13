@@ -4560,6 +4560,7 @@ void wifi_show_os_mem_stat()
  */
 static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len)
 {
+    mlan_private *pmpriv = NULL;
 #if (CONFIG_WMM)
     t_u32 pkt_len            = 0;
     t_u32 link_point_len     = 0;
@@ -4574,6 +4575,8 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
 #else
     poutbuf = (bypass_outbuf_t *)OSA_MemoryPoolAllocate(buf_1536_MemoryPool);
 #endif
+    if (interface == (t_u8)WLAN_BSS_TYPE_STA)
+        pmpriv = (mlan_private *)mlan_adap->priv[0];
     if (!poutbuf)
     {
         wuap_e("[%s] ERR:Cannot allocate buffer!\r\n", __func__);
@@ -4585,7 +4588,10 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
     (void)raw_process_pkt_hdrs((t_u8 *)poutbuf + link_point_len, pkt_len + len, interface);
     (void)memcpy((void *)((t_u8 *)poutbuf + link_point_len + pkt_len), (const void *)buf, (size_t)len);
     /* process packet headers with interface header and TxPD */
-    process_pkt_hdrs((void *)((t_u8 *)poutbuf + link_point_len), pkt_len + len, interface, 0, 0);
+    if (interface == (t_u8)WLAN_BSS_TYPE_STA)
+        process_pkt_hdrs((void *)((t_u8 *)poutbuf + link_point_len), pkt_len + len, interface, 0, pmpriv->pkt_tx_ctrl);
+    else
+        process_pkt_hdrs((void *)((t_u8 *)poutbuf + link_point_len), pkt_len + len, interface, 0, 0);
 
     wlan_add_buf_bypass_txq((t_u8 *)poutbuf, interface);
     send_wifi_driver_bypass_data_event(interface);
@@ -4599,6 +4605,8 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
 
     pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
 
+    if (interface == (t_u8)WLAN_BSS_TYPE_STA)
+        pmpriv = (mlan_private *)mlan_adap->priv[0];
     wifi_tx_card_awake_lock();
 #if defined(RW610)
     wifi_imu_lock();
@@ -4610,7 +4618,10 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
 
     (void)raw_process_pkt_hdrs((t_u8 *)poutbuf, pkt_len + len - 2U, interface);
     (void)memcpy((void *)((t_u8 *)poutbuf + pkt_len - 2), (const void *)buf, (size_t)len);
-    i = wlan_xmit_pkt(poutbuf, pkt_len + len - 2U, interface, 0);
+    if (interface == (t_u8)WLAN_BSS_TYPE_STA)
+        i = wlan_xmit_pkt(poutbuf, pkt_len + len - 2U, interface, pmpriv->pkt_tx_ctrl);
+    else
+        i = wlan_xmit_pkt(poutbuf, pkt_len + len - 2U, interface, 0);
 
 #if defined(RW610)
     wifi_imu_unlock();

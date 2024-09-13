@@ -259,10 +259,10 @@ static mlan_status wlan_setup_rates_from_bssdesc(IN mlan_private *pmpriv,
  *
  *  @return                 MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
  */
-static mlan_status wlan_setup_rates_from_bssdesc(mlan_private *pmpriv,
-                                                 BSSDescriptor_t *pbss_desc,
-                                                 t_u8 *pout_rates,
-                                                 t_u32 *pout_rates_size)
+mlan_status wlan_setup_rates_from_bssdesc(mlan_private *pmpriv,
+                                          BSSDescriptor_t *pbss_desc,
+                                          t_u8 *pout_rates,
+                                          t_u32 *pout_rates_size)
 {
     t_u8 card_rates[WLAN_SUPPORTED_RATES] = {0};
     t_u32 card_rates_size                 = 0;

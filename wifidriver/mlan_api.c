@@ -5620,7 +5620,12 @@ static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
     wlan_mgmt_pkt *pmgmt_pkt_hdr = MNULL;
     t_u8 *pos                    = MNULL;
     int meas_pkt_len             = 0;
+    t_s32 i                      = -1;
+    BSSDescriptor_t *pbss_desc   = MNULL;
+    WLAN_802_11_RATES rates = {0x00};
+    t_u32 rates_size;
     t_u8 addr[]                  = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    t_u8 baserates[] = {0x82, 0x84, 0x8b, 0x96, 0x8c, 0x98, 0xb0};
 
     if (pmpriv->bss_index != (t_u8)MLAN_BSS_ROLE_STA)
     {
@@ -5631,6 +5636,59 @@ static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
     da = (mlan_802_11_mac_addr *)(void *)dest;
     sa = (mlan_802_11_mac_addr *)(void *)(&pmpriv->curr_addr[0]);
 
+    i = wlan_find_bssid_in_list(pmpriv, dest, MLAN_BSS_MODE_AUTO);
+    if (i >= 0)
+    {
+        pbss_desc = &pmadapter->pscan_table[i];
+        if (wlan_setup_rates_from_bssdesc(pmpriv, pbss_desc, rates, &rates_size) != MLAN_STATUS_SUCCESS)
+        {
+            wifi_d("Not support the rates");
+            return (int)MLAN_STATUS_FAILURE;
+        }
+        t_u8 *prate = (t_u8 *)&(pbss_desc->supported_rates);
+        t_u8 rateIndex = 0xff;
+
+        for (int j = 0; j < rates_size; j++)
+        {
+            if (prate[j] >= 0x82)
+            {
+                for (int k = 0; k < sizeof(baserates); k++)
+                {
+                    if (prate[j] == baserates[k] && k < rateIndex)
+                    rateIndex = k;
+                }
+            }
+        }
+        pmpriv->pkt_tx_ctrl |= 1 << 15;
+        switch (baserates[rateIndex])
+        {
+        case 0x82:
+            pmpriv->pkt_tx_ctrl |= 0 << 16;
+            break;
+        case 0x84:
+            pmpriv->pkt_tx_ctrl |= 1 << 16;
+            break;
+        case 0x8b:
+            pmpriv->pkt_tx_ctrl |= 2 << 16;
+            break;
+        case 0x96:
+            pmpriv->pkt_tx_ctrl |= 3 << 16;
+            break;
+        case 0x8c:
+            pmpriv->pkt_tx_ctrl |= 5 << 16;
+            break;
+        case 0x98:
+            pmpriv->pkt_tx_ctrl |= 7 << 16;
+            break;
+        case 0xb0:
+            pmpriv->pkt_tx_ctrl |= 9 << 16;
+            break;
+        default:
+            pmpriv->pkt_tx_ctrl = 0;
+            wifi_d("Not support the base rates");
+            break;
+        }
+    }
     if (pmadapter->cmd_tx_data == 1U)
     {
         (void)wifi_get_command_lock();
@@ -5646,11 +5704,10 @@ static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
         memset(cmd, 0x00, pkt_len);
 
         pkt_type   = MRVL_PKT_TYPE_MGMT_FRAME;
-        tx_control = 0;
 
         /* Add pkt_type and tx_control */
         memcpy(pBuf, &pkt_type, sizeof(pkt_type));
-        memcpy(pBuf + sizeof(pkt_type), &tx_control, sizeof(tx_control));
+        memcpy(pBuf + sizeof(pkt_type), &(pmpriv->pkt_tx_ctrl), sizeof(pmpriv->pkt_tx_ctrl));
 
         pwlan_pkt_hdr = (wlan_802_11_header *)(void *)(pBuf + HEADER_SIZE + sizeof(pkt_len));
         /* 802.11 header */
@@ -5747,6 +5804,7 @@ static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
 #endif
     }
 
+    pmpriv->pkt_tx_ctrl = 0;
     return (int)MLAN_STATUS_SUCCESS;
 }
 

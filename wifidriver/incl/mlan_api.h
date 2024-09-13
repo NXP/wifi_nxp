@@ -192,6 +192,11 @@ void dump_mac_addr(const char *msg, unsigned char *addr);
 void dump_htcap_info(const MrvlIETypes_HTCap_t *htcap);
 void dump_ht_info(const MrvlIETypes_HTInfo_t *htinfo);
 #endif /* DEBUG_11N_ASSOC */
+mlan_status wlan_setup_rates_from_bssdesc(mlan_private *pmpriv,
+                                          BSSDescriptor_t *pbss_desc,
+                                          t_u8 *pout_rates,
+                                          t_u32 *pout_rates_size);
+
 mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
                                       IN t_u16 cmd_no,
                                       IN t_u16 cmd_action,
