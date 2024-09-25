@@ -1356,7 +1356,7 @@ mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, t_u16 band)
         (void)wlan_11d_generate_domain_info(pmadapter, &parsed_region_chan);
 
         /* Set domain info */
-        ret = wlan_11d_send_domain_info(pmpriv, MNULL, MTRUE);
+        ret = wlan_11d_send_domain_info(pmpriv, MNULL, MFALSE);
         if (ret != MLAN_STATUS_SUCCESS)
         {
             PRINTM(MERROR, "11D: Error sending domain info to FW\n");

@@ -327,36 +327,26 @@ int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
  * getting region code by pmadapter.
  * Then it sends 80211 domain info command to firmware
  */
-int wifi_uap_downld_domain_params(int channel, wifi_scan_chan_list_t scan_chan_list)
+int wifi_uap_downld_domain_params(int band)
 {
     int rv;
-    int band;
     mlan_private *priv_uap   = mlan_adap->priv[1];
     int region_code          = mlan_adap->region_code;
     const t_u8 *country_code = NULL;
     t_u8 nr_sb;
     wifi_sub_band_set_t *sub_band_list = NULL;
 
-    /* uap acs case, set sub_band_list based on scan_chan_list */
-    if (channel == 0)
-    {
-        channel = scan_chan_list.chan_number[0];
-    }
-
     /* get band and sub band lists */
 #if CONFIG_5GHz_SUPPORT
-    if (channel > MAX_CHANNELS_BG)
+    if (band == BAND_A)
     {
-        band          = BAND_A;
         sub_band_list = get_sub_band_from_region_code_5ghz(region_code, &nr_sb);
     }
     else
     {
-        band          = BAND_B;
         sub_band_list = get_sub_band_from_region_code(region_code, &nr_sb);
     }
 #else
-    band          = BAND_B;
     sub_band_list = get_sub_band_from_region_code(region_code, &nr_sb);
 #endif
 
@@ -1098,13 +1088,10 @@ int wifi_uap_start(mlan_bss_type type,
     if (wm_wifi.enable_11d_support && wm_wifi.uap_support_11d_apis)
     {
         wuap_d("Downloading domain params");
+        wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(BAND_B);
 #if CONFIG_5GHz_SUPPORT
-        if (channel > MAX_CHANNELS_BG)
-            mlan_adap->region_code = mlan_adap->cfp_code_a;
-        else
+        wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(BAND_A);
 #endif
-            mlan_adap->region_code = mlan_adap->cfp_code_bg;
-        wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(channel, scan_chan_list);
     }
 
     wuap_d("Starting BSS");
@@ -3746,13 +3733,10 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
         if (wm_wifi.enable_11d_support && wm_wifi.uap_support_11d_apis)
         {
             wuap_d("Downloading domain params");
+            wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(BAND_B);
 #if CONFIG_5GHz_SUPPORT
-            if (sys_config->channel > MAX_CHANNELS_BG)
-                mlan_adap->region_code = mlan_adap->cfp_code_a;
-            else
+            wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(BAND_A);
 #endif
-                mlan_adap->region_code = mlan_adap->cfp_code_bg;
-            wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(sys_config->channel, scan_chan_list);
         }
 
 #if CONFIG_5GHz_SUPPORT
