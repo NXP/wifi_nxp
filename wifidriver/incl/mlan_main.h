@@ -1564,6 +1564,8 @@ struct _mlan_private
     /** configured by DPP */
     bool is_dpp_connect;
 #endif
+    t_u32 tx_overrun_cnt;
+    t_u32 rx_overrun_cnt;
 };
 
 /** BA stream status */

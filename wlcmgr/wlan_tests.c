@@ -4724,11 +4724,14 @@ static void test_wlan_get_log(int argc, char **argv)
             "wepicverrcnt-3                     %u\r\n"
             "wepicverrcnt-4                     %u\r\n"
             "beaconReceivedCount                %u\r\n"
-            "beaconMissedCount                  %u\r\n",
+            "beaconMissedCount                  %u\r\n"
+            "rxUnicastCount                     %u\r\n"
+            "txOverrunCount                     %u\r\n"
+            "rxOverrunCount                     %u\r\n",
             stats.mcast_tx_frame, stats.failed, stats.retry, stats.multi_retry, stats.frame_dup, stats.rts_success,
             stats.rts_failure, stats.ack_failure, stats.rx_frag, stats.mcast_rx_frame, stats.fcs_error, stats.tx_frame,
             stats.wep_icv_error[0], stats.wep_icv_error[1], stats.wep_icv_error[2], stats.wep_icv_error[3],
-            stats.bcn_rcv_cnt, stats.bcn_miss_cnt);
+            stats.bcn_rcv_cnt, stats.bcn_miss_cnt, stats.rx_unicast_cnt, stats.tx_overrun_cnt, stats.rx_overrun_cnt);
 
         if (argc == 3 && !(strcmp(argv[2], "ext")))
         {
@@ -6084,7 +6087,7 @@ static void test_wlan_eu_crypto_ccmp_128(int argc, char **argv)
         (void)PRINTF("Hostcmd failed error: %d", ret);
     }
 }
-
+#if !defined(SD8978)
 static void dump_wlan_eu_crypto_ccmp_256(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -6166,7 +6169,6 @@ static void test_wlan_eu_crypto_ccmp_256(int argc, char **argv)
         (void)PRINTF("Hostcmd failed error: %d", ret);
     }
 }
-
 static void dump_wlan_eu_crypto_gcmp_128(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -6262,7 +6264,6 @@ static void test_wlan_eu_crypto_gcmp_128(int argc, char **argv)
         (void)PRINTF("Hostcmd failed error: %d", ret);
     }
 }
-
 static void dump_wlan_eu_crypto_gcmp_256(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -6362,7 +6363,7 @@ static void test_wlan_eu_crypto_gcmp_256(int argc, char **argv)
     }
 }
 #endif
-
+#endif
 #if CONFIG_HEAP_DEBUG
 int os_mem_alloc_cnt = 0;
 int os_mem_free_cnt  = 0;
@@ -6490,8 +6491,18 @@ static void dump_wlan_rx_abort_cfg_ext_usage()
 
 static void test_wlan_get_rx_abort_cfg_ext(int argc, char **argv)
 {
+#if !CONFIG_MEM_POOLS
     struct wlan_rx_abort_cfg_ext *cfg =
-        (struct wlan_rx_abort_cfg_ext *)OSA_MemoryAllocate(sizeof(struct wlan_rx_abort_cfg_ext));
+           (struct wlan_rx_abort_cfg_ext *)OSA_MemoryAllocate(sizeof(struct wlan_rx_abort_cfg_ext));
+#else
+    struct wlan_rx_abort_cfg_ext *cfg =
+           (struct wlan_rx_abort_cfg_ext *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+#endif
+    if(cfg == NULL )
+    {
+          (void)PRINTF("test_wlan_get_rx_abort_cfg_ext malloc fail! \r\n");
+          return;
+    }
     (void)memset(cfg, 0, sizeof(*cfg));
 
     wlan_get_rx_abort_cfg_ext(cfg);
@@ -9188,8 +9199,8 @@ static void test_wlan_set_bandcfg(int argc, char **argv)
     wlan_bandcfg_t bandcfg;
     uint32_t bandcfg_11ax_2G = 0;
     uint32_t bandcfg_11ax_5G = 0;
-    uint32_t val = 0;
-    int ret = WM_SUCCESS;
+    uint32_t val             = 0;
+    int ret                  = WM_SUCCESS;
 #endif
 
 #if !CONFIG_11AX
@@ -9209,8 +9220,7 @@ static void test_wlan_set_bandcfg(int argc, char **argv)
     bandcfg_11ax_2G = (val & MBIT(8));
     bandcfg_11ax_5G = (val & MBIT(9));
 
-    if ((bandcfg_11ax_2G && !bandcfg_11ax_5G) ||
-        (!bandcfg_11ax_2G && bandcfg_11ax_5G))
+    if ((bandcfg_11ax_2G && !bandcfg_11ax_5G) || (!bandcfg_11ax_2G && bandcfg_11ax_5G))
     {
         (void)PRINTF("Please set 11ax 2G/5G bit both 0 or both 1.\r\n");
         dump_wlan_set_bandcfg();
@@ -12405,9 +12415,11 @@ static struct cli_command tests[] = {
     {"wlan-eu-crypto-aes-wrap", "<EncDec>", test_wlan_eu_crypto_aes_wrap},
     {"wlan-eu-crypto-aes-ecb", "<EncDec>", test_wlan_eu_crypto_aes_ecb},
     {"wlan-eu-crypto-ccmp-128", "<EncDec>", test_wlan_eu_crypto_ccmp_128},
+#if !defined(SD8978)
     {"wlan-eu-crypto-ccmp-256", "<EncDec>", test_wlan_eu_crypto_ccmp_256},
     {"wlan-eu-crypto-gcmp-128", "<EncDec>", test_wlan_eu_crypto_gcmp_128},
     {"wlan-eu-crypto-gcmp-256", "<EncDec>", test_wlan_eu_crypto_gcmp_256},
+#endif
 #endif
 #if CONFIG_WIFI_MEM_ACCESS
     {"wlan-mem-access", "<memory_address> [<value>]", test_wlan_mem_access},

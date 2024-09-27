@@ -39,7 +39,7 @@ struct bus_message
 
 typedef struct
 {
-    int (*wifi_uap_downld_domain_params_p)(int channel, wifi_scan_chan_list_t scan_chan_list);
+    int (*wifi_uap_downld_domain_params_p)(int band);
 } wifi_uap_11d_apis_t;
 
 typedef struct mcast_filter
@@ -161,6 +161,8 @@ typedef struct
     t_u8 chan_sw_count;
     /** Sniffer channel number */
     t_u8 chan_num;
+    /** ACS channel number */
+    t_u8 acs_chan;
     /** HT Capability Info */
     t_u16 ht_cap_info;
     /** HTTX Cfg */

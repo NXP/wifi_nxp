@@ -20,6 +20,10 @@
 
 #if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
 
+#if !defined CONFIG_WIFI_AUTO_POWER_SAVE
+#define CONFIG_WIFI_AUTO_POWER_SAVE 1
+#endif
+
 #if !defined CONFIG_WIFI_MAX_PRIO
 #define CONFIG_WIFI_MAX_PRIO (configMAX_PRIORITIES - 1)
 #endif

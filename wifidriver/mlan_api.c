@@ -1986,7 +1986,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 #if !CONFIG_MEM_POOLS
     wlan_user_scan_cfg *user_scan_cfg = (wlan_user_scan_cfg *)OSA_MemoryAllocate(sizeof(wlan_user_scan_cfg));
 #else
-    wlan_user_scan_cfg *user_scan_cfg = (wlan_user_scan_cfg *)OSA_MemoryPoolAllocate(buf_512_MemoryPool);
+    wlan_user_scan_cfg *user_scan_cfg = (wlan_user_scan_cfg *)OSA_MemoryPoolAllocate(buf_768_MemoryPool);
 #endif
     if (user_scan_cfg == MNULL)
     {
@@ -2073,7 +2073,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 #if !CONFIG_MEM_POOLS
         OSA_MemoryFree((void *)user_scan_cfg);
 #else
-        OSA_MemoryPoolFree(buf_512_MemoryPool, user_scan_cfg);
+        OSA_MemoryPoolFree(buf_768_MemoryPool, user_scan_cfg);
 #endif
 
 #if CONFIG_WPA_SUPP
@@ -2524,9 +2524,14 @@ static int wifi_send_get_log_cmd(wlan_pkt_stats_t *stats, mlan_bss_type bss_type
 int wifi_get_log(wlan_pkt_stats_t *stats, mlan_bss_type bss_type)
 
 {
-    int rv = wifi_send_get_log_cmd(stats, bss_type);
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[bss_type];
+    int rv               = wifi_send_get_log_cmd(stats, bss_type);
     if (rv != WM_SUCCESS || wm_wifi.cmd_resp_status != WM_SUCCESS)
         return -WM_FAIL;
+
+    stats->rx_unicast_cnt = stats->rx_frag - stats->mcast_rx_frame;
+    stats->tx_overrun_cnt = pmpriv->tx_overrun_cnt;
+    stats->rx_overrun_cnt = pmpriv->rx_overrun_cnt;
 
     return WM_SUCCESS;
 }
@@ -4976,7 +4981,7 @@ int wlan_get_nonglobal_operclass_by_bw_channel(t_u8 bandwidth, t_u8 channel, t_u
 #if !CONFIG_MEM_POOLS
     misc = OSA_MemoryAllocate(sizeof(mlan_ds_misc_cfg));
 #else
-    misc                            = OSA_MemoryPoolAllocate(buf_512_MemoryPool);
+    misc = OSA_MemoryPoolAllocate(buf_3072_MemoryPool);
 #endif
 
     if (misc == NULL)
@@ -4999,7 +5004,7 @@ int wlan_get_nonglobal_operclass_by_bw_channel(t_u8 bandwidth, t_u8 channel, t_u
 #if !CONFIG_MEM_POOLS
         OSA_MemoryFree(misc);
 #else
-        OSA_MemoryPoolFree(buf_512_MemoryPool, misc);
+        OSA_MemoryPoolFree(buf_3072_MemoryPool, misc);
 #endif
         return -WM_FAIL;
     }
@@ -5008,7 +5013,7 @@ int wlan_get_nonglobal_operclass_by_bw_channel(t_u8 bandwidth, t_u8 channel, t_u
 #if !CONFIG_MEM_POOLS
     OSA_MemoryFree(misc);
 #else
-    OSA_MemoryPoolFree(buf_512_MemoryPool, misc);
+    OSA_MemoryPoolFree(buf_3072_MemoryPool, misc);
 #endif
 
     return ret;
@@ -5258,7 +5263,7 @@ int wifi_set_action_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 
 #if !CONFIG_MEM_POOLS
     bss = OSA_MemoryAllocate(sizeof(mlan_ds_bss));
 #else
-    bss = OSA_MemoryPoolAllocate(buf_1024_MemoryPool);
+    bss = OSA_MemoryPoolAllocate(buf_1280_MemoryPool);
 #endif
 
     if (bss == NULL)
@@ -5284,14 +5289,14 @@ int wifi_set_action_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 
 #if !CONFIG_MEM_POOLS
         OSA_MemoryFree(bss);
 #else
-        OSA_MemoryPoolFree(buf_1024_MemoryPool, bss);
+        OSA_MemoryPoolFree(buf_1280_MemoryPool, bss);
 #endif
         return -WM_FAIL;
     }
 #if !CONFIG_MEM_POOLS
     OSA_MemoryFree(bss);
 #else
-    OSA_MemoryPoolFree(buf_1024_MemoryPool, bss);
+    OSA_MemoryPoolFree(buf_1280_MemoryPool, bss);
 #endif
 
     return WM_SUCCESS;

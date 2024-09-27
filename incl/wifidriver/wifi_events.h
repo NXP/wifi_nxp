@@ -14,6 +14,10 @@
 
 #include <osa.h>
 
+#if CONFIG_WPA_SUPP
+#define CONFIG_WPA_SUPP_AP 1
+#endif
+
 /** Wi-Fi events */
 enum wifi_event
 {
@@ -47,6 +51,9 @@ enum wifi_event
 #if CONFIG_AUTO_RECONNECT
     /** Association Notify */
     WIFI_EVENT_ASSOCIATION_NOTIFY,
+#endif
+#if CONFIG_WPA_SUPP_AP
+    WIFI_EVENT_ACS_COMPLETE,
 #endif
 #endif
     /** PMK */

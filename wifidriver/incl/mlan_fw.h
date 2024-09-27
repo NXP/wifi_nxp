@@ -4612,16 +4612,7 @@ typedef MLAN_PACK_START struct _hostcmd_twt_report
     /** TWT report payload for FW response to fill */
     t_u8 data[36];
 } MLAN_PACK_END hostcmd_twt_report, *phostcmd_twt_report;
-/** Type definition of hostcmd_twt_information */
-typedef MLAN_PACK_START struct _hostcmd_twt_information
-{
-    /** TWT Flow Identifier. Range: [0-7] */
-    t_u8 flow_identifier;
-    /** TWT operation suspend duration in milli seconds. */
-    t_u32 suspend_duration;
-    /** TWT information state from FW. */
-    t_u8 information_state;
-} MLAN_PACK_END hostcmd_twt_information, *phostcmd_twt_information;
+
 /** HostCmd_DS_TWT_CFG */
 typedef MLAN_PACK_START struct _HostCmd_DS_TWT_CFG
 {
@@ -4638,8 +4629,6 @@ typedef MLAN_PACK_START struct _HostCmd_DS_TWT_CFG
         hostcmd_twt_teardown twt_teardown;
         /** TWT report for Sub ID: MLAN_11AX_TWT_REPORT_SUBID */
         hostcmd_twt_report twt_report;
-        /** TWT report for Sub ID: MLAN_11AX_TWT_INFORMATION_SUBID */
-        hostcmd_twt_information twt_information;
     } param;
 } MLAN_PACK_END HostCmd_DS_TWT_CFG;
 #endif /* CONFIG_11AX_TWT */
@@ -5905,6 +5894,8 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_mac_filter_t
 /** TODO: Temporary work around until firmware fix is available */
 /** setting for band_config - channel 173 */
 #define BAND_CONFIG_CH_173 0x11U
+/** setting for band_config - channel 169 and channel 177 */
+#define BAND_CONFIG_CH_169_177 0x31U
 #endif
 
 /** MrvlIEtypes_retry_limit_t */

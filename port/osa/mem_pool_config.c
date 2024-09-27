@@ -217,7 +217,7 @@
 
 // Buffer 0
 
-#define POOL_ID10_BUF0_CNT 0
+#define POOL_ID10_BUF0_CNT 1
 
 /* Buffer descriptor size already part of TX size so don't add again */
 #define POOL_ID10_BUF0_SZ 1792
@@ -257,7 +257,7 @@
 
 // Buffer 0
 
-#define POOL_ID12_BUF0_CNT 0
+#define POOL_ID12_BUF0_CNT 1
 
 /* Buffer descriptor size already part of TX size so don't add again */
 #define POOL_ID12_BUF0_SZ 2560
@@ -297,7 +297,7 @@
 
 // Buffer 0
 
-#define POOL_ID14_BUF0_CNT 0
+#define POOL_ID14_BUF0_CNT 1
 
 /* Buffer descriptor size already part of TX size so don't add again */
 #define POOL_ID14_BUF0_SZ 4096

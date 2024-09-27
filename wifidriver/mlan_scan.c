@@ -2679,7 +2679,7 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
                            (t_u8 **)(void **)&pscan_cfg_out);
     if (ret != MLAN_STATUS_SUCCESS || (pscan_cfg_out == MNULL))
 #else
-    pscan_cfg_out = (wlan_scan_cmd_config_tlv *)OSA_MemoryPoolAllocate(buf_768_MemoryPool);
+    pscan_cfg_out = (wlan_scan_cmd_config_tlv *)OSA_MemoryPoolAllocate(buf_1024_MemoryPool);
     if (pscan_cfg_out == MNULL)
 #endif
     {
@@ -2725,7 +2725,7 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
         (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_cfg_out);
         (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_chan_list);
 #else
-        OSA_MemoryPoolFree(buf_768_MemoryPool, pscan_cfg_out);
+        OSA_MemoryPoolFree(buf_1024_MemoryPool, pscan_cfg_out);
         OSA_MemoryPoolFree(buf_512_MemoryPool, pscan_chan_list);
 #endif
         if (pioctl_req != MNULL)
@@ -2776,7 +2776,7 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
     (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_cfg_out);
     (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_chan_list);
 #else
-    OSA_MemoryPoolFree(buf_768_MemoryPool, pscan_cfg_out);
+    OSA_MemoryPoolFree(buf_1024_MemoryPool, pscan_cfg_out);
     OSA_MemoryPoolFree(buf_512_MemoryPool, pscan_chan_list);
 #endif
 

@@ -38,13 +38,6 @@ Change log:
 #endif
 #endif
 
-#ifndef __ZEPHYR__
-#if !CONFIG_WIFI_AUTO_POWER_SAVE
-#define CONFIG_WIFI_AUTO_POWER_SAVE 1
-#endif
-#endif
-
-
 #define CONFIG_GTK_REKEY_OFFLOAD 0
 
 

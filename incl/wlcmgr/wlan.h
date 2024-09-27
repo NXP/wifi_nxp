@@ -22,7 +22,7 @@
 #include <wifi_events.h>
 #include <wifi.h>
 
-#define WLAN_DRV_VERSION "v1.3.r48.p21"
+#define WLAN_DRV_VERSION "v1.3.r48.p25"
 
 #if CONFIG_WPA2_ENTP
 #include <wm_mbedtls_helper_api.h>
@@ -1474,10 +1474,6 @@ typedef wifi_btwt_config_t wlan_btwt_config_t;
  * \ref wifi_twt_report_t
  */
 typedef wifi_twt_report_t wlan_twt_report_t;
-/** Configuration for TWT information
- * \ref wifi_twt_information_t
- */
-typedef wifi_twt_information_t wlan_twt_information_t;
 #endif /* CONFIG_11AX_TWT */
 #if CONFIG_MMSF
 #define WLAN_AMPDU_DENSITY 0x30
@@ -3356,14 +3352,6 @@ void wlan_clear_host_sleep_config(void);
  */
 int wlan_set_multicast(t_u8 mef_action);
 #endif
-
-/** Set configuration parameters of IEEE power save mode.
- *
- * \param [in] ps_cfg Power save configuratiuon includes multiple parameters.
- * \return WM_SUCCESS if the call was successful.
- * \return -WM_FAIL if failed.
- */
-int wlan_set_ieeeps_cfg(struct wlan_ieeeps_config *ps_cfg);
 
 /** Set configuration parameters of IEEE power save mode.
  *
@@ -5373,11 +5361,11 @@ void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),
 /** Set crypto RC4 (rivest cipher 4) algorithm encrypt command param.
  *
  * \param[in] Key key
- * \param[in] KeyLength The maximum key length is 32.
+ * \param[in] KeyLength The KeyLength + KeyIVLength valid range [1,256].
  * \param[in] KeyIV KeyIV
- * \param[in] KeyIVLength The maximum keyIV length is 32.
+ * \param[in] KeyIVLength The KeyLength + KeyIVLength valid range [1,256].
  * \param[in] Data Data
- * \param[in] DataLength The maximum data length is 1300.
+ * \param[in] DataLength The maximum data length is 1200.
  *
  * \return WM_SUCCESS if successful.
  * \return -WM_E_PERM if not supported.
@@ -5393,11 +5381,12 @@ int wlan_set_crypto_RC4_encrypt(
 /** Set crypto RC4 (rivest cipher 4) algorithm decrypt command param.
  *
  * \param[in] Key key
- * \param[in] KeyLength The maximum key length is 32.
+ * \param[in] KeyLength The KeyLength + KeyIVLength valid range [1,256].
  * \param[in] KeyIV KeyIV
- * \param[in] KeyIVLength The maximum keyIV length is 32.
+ * \param[in] KeyIVLength The KeyLength + KeyIVLength valid range [1,256].
  * \param[in] Data Data
- * \param[in] DataLength The maximum data length is 1300.
+ * \param[in] DataLength The maximum data length is 1200.
+ *
  * \return WM_SUCCESS if successful.
  * \return -WM_E_PERM if not supported.
  * \return -WM_FAIL if failure.
@@ -5412,11 +5401,11 @@ int wlan_set_crypto_RC4_decrypt(
 /** Set crypto AES_ECB (advanced encryption standard, electronic codebook) algorithm encrypt command param.
  *
  * \param[in] Key key
- * \param[in] KeyLength The maximum key length is 32.
- * \param[in] KeyIV KeyIV
- * \param[in] KeyIVLength The maximum keyIV length is 32.
+ * \param[in] KeyLength The key length is 16/24/32.
+ * \param[in] KeyIV KeyIV should point to a 8 bytes array with any value in the array.
+ * \param[in] KeyIVLength The keyIV length is 8.
  * \param[in] Data Data
- * \param[in] DataLength The maximum data length is 1300.
+ * \param[in] DataLength The data length is 16.
  * \return WM_SUCCESS if successful.
  * \return -WM_E_PERM if not supported.
  * \return -WM_FAIL if failure.
@@ -5431,11 +5420,11 @@ int wlan_set_crypto_AES_ECB_encrypt(
 /** Set crypto AES_ECB (advanced encryption standard, electronic codebook) algorithm decrypt command param.
  *
  * \param[in] Key key
- * \param[in] KeyLength The maximum key length is 32.
- * \param[in] KeyIV KeyIV
- * \param[in] KeyIVLength The maximum keyIV length is 32.
+ * \param[in] KeyLength The key length is 16/24/32.
+ * \param[in] KeyIV KeyIV should point to a 8 bytes array with any value in the array.
+ * \param[in] KeyIVLength The keyIV length is 8.
  * \param[in] Data Data
- * \param[in] DataLength The maximum data length is 1300.
+ * \param[in] DataLength The data length is 16.
  * \return WM_SUCCESS if successful.
  * \return -WM_E_PERM if not supported.
  * \return -WM_FAIL if failure.
@@ -5450,11 +5439,11 @@ int wlan_set_crypto_AES_ECB_decrypt(
 /** Set crypto AES_WRAP (advanced encryption standard wrap) algorithm encrypt command param.
  *
  * \param[in] Key key
- * \param[in] KeyLength The maximum key length is 32.
+ * \param[in] KeyLength The key length is 16/24/32.
  * \param[in] KeyIV KeyIV
- * \param[in] KeyIVLength The maximum keyIV length is 32.
+ * \param[in] KeyIVLength The keyIV length is 8.
  * \param[in] Data Data
- * \param[in] DataLength The maximum data length is 1300.
+ * \param[in] DataLength The data length valid range [8,1016].
  * \return WM_SUCCESS if successful.
  * \return -WM_E_PERM if not supported.
  * \return -WM_FAIL if failure.
@@ -5469,11 +5458,11 @@ int wlan_set_crypto_AES_WRAP_encrypt(
 /** Set crypto AES_WRAP algorithm decrypt command param.
  *
  * \param[in] Key key
- * \param[in] KeyLength The maximum key length is 32.
+ * \param[in] KeyLength The key length is 16/24/32.
  * \param[in] KeyIV KeyIV
- * \param[in] KeyIVLength The maximum keyIV length is 32.
+ * \param[in] KeyIVLength The keyIV length is 8.
  * \param[in] Data Data
- * \param[in] DataLength The maximum data length is 1300.
+ * \param[in] DataLength The data length valid range [8,1016].
  * \return WM_SUCCESS if successful.
  * \return -WM_E_PERM if not supported.
  * \return -WM_FAIL if failure.
@@ -5489,13 +5478,13 @@ int wlan_set_crypto_AES_WRAP_decrypt(
  * algorithm encrypt command param.
  *
  * \param[in] Key key
- * \param[in] KeyLength The maximum key length is 32.
+ * \param[in] KeyLength The key length is 16/32.
  * \param[in] AAD AAD
- * \param[in] AADLength The maximum AAD length is 32.
+ * \param[in] AADLength The maximum AAD length is 30.
  * \param[in] Nonce Nonce
- * \param[in] NonceLength The maximum nonce length is 14.
+ * \param[in] NonceLength The nonce length valid range [7,13].
  * \param[in] Data Data
- * \param[in] DataLength The maximum data length is 1300.
+ * \param[in] DataLength The maximum data length is 80.
  * \return WM_SUCCESS if successful.
  * \return -WM_E_PERM if not supported.
  * \return -WM_FAIL if failure.
@@ -5516,13 +5505,13 @@ int wlan_set_crypto_AES_CCMP_encrypt(const t_u8 *Key,
 /** Set crypto AES_CCMP algorithm decrypt command param.
  *
  * \param[in] Key key
- * \param[in] KeyLength The maximum key length is 32.
+ * \param[in] KeyLength The key length is 16/32.
  * \param[in] AAD AAD
- * \param[in] AADLength The maximum AAD length is 32.
+ * \param[in] AADLength The maximum AAD length is 30.
  * \param[in] Nonce Nonce
- * \param[in] NonceLength The maximum nonce length is 14.
+ * \param[in] NonceLength The nonce length valid range [7,13].
  * \param[in] Data Data
- * \param[in] DataLength The maximum data length is 1300.
+ * \param[in] DataLength The maximum data length is 80.
  * \return WM_SUCCESS if successful.
  * \return -WM_E_PERM if not supported.
  * \return -WM_FAIL if failure.
@@ -5543,13 +5532,13 @@ int wlan_set_crypto_AES_CCMP_decrypt(const t_u8 *Key,
 /** Set crypto AES_GCMP (galois/counter mode with AES-GMAC) algorithm encrypt command param.
  *
  * \param[in] Key key
- * \param[in] KeyLength The maximum key length is 32.
+ * \param[in] KeyLength The key length is 16/32.
  * \param[in] AAD AAD
- * \param[in] AADLength The maximum AAD length is 32.
+ * \param[in] AADLength The maximum AAD length is 30.
  * \param[in] Nonce Nonce
- * \param[in] NonceLength The maximum nonce length is 14.
+ * \param[in] NonceLength The nonce length valid range [7,13].
  * \param[in] Data Data
- * \param[in] DataLength The maximum data length is 1300.
+ * \param[in] DataLength The maximum data length is 80.
  * \return WM_SUCCESS if successful.
  * \return -WM_E_PERM if not supported.
  * \return -WM_FAIL if failure.
@@ -5570,13 +5559,13 @@ int wlan_set_crypto_AES_GCMP_encrypt(const t_u8 *Key,
 /** Set crypto AES_CCMP algorithm decrypt command param.
  *
  * \param[in] Key key
- * \param[in] KeyLength The maximum key length is 32.
+ * \param[in] KeyLength The key length is 16/32.
  * \param[in] AAD AAD
- * \param[in] AADLength The maximum AAD length is 32.
+ * \param[in] AADLength The maximum AAD length is 30.
  * \param[in] Nonce Nonce
- * \param[in] NonceLength The maximum nonce length is 14.
+ * \param[in] NonceLength The nonce length valid range [7,13].
  * \param[in] Data Data
- * \param[in] DataLength The maximum data length is 1300.
+ * \param[in] DataLength The maximum data length is 80.
  * \return WM_SUCCESS if successful.
  * \return -WM_E_PERM if not supported.
  * \return -WM_FAIL if failure.
@@ -5816,13 +5805,6 @@ uint8_t *wlan_get_twt_teardown_cfg(void);
  */
 int wlan_get_twt_report(wlan_twt_report_t *twt_report);
 
-/** TWT information
- *
- * \param[out] twt_information TWT information.
- *
- * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
- */
-int wlan_twt_information(wlan_twt_information_t *twt_information);
 #endif /* CONFIG_11AX_TWT */
 
 #if CONFIG_MMSF
@@ -6669,16 +6651,38 @@ int wlan_set_ips(int option);
  */
 int wlan_get_signal_info(wlan_rssi_info_t *signal);
 
+/**
+ * Set band configuration.
+ * \param[in] bandcfg    band configureation
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
 int wlan_set_bandcfg(wlan_bandcfg_t *bandcfg);
+
+/**
+ * Get band configuration.
+ * \param[out] bandcfg    band configureation
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
 int wlan_get_bandcfg(wlan_bandcfg_t *bandcfg);
 
-#if (CONFIG_COMPRESS_TX_PWTBL)
+#if CONFIG_COMPRESS_TX_PWTBL
 /**
  * set region power table
  * \param[in] region_code region code
  * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
  */
 int wlan_set_rg_power_cfg(t_u16 region_code);
+#endif
+
+#if (CONFIG_COMPRESS_RU_TX_PWTBL) && (CONFIG_11AX)
+/**
+ * set ru tx power table
+ * \param[in] region_code region code
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_ru_power_cfg(t_u16 region_code);
 #endif
 
 #if CONFIG_TURBO_MODE
@@ -7093,6 +7097,15 @@ int wlan_set_network_ip_byname(char *name, struct wlan_ip_config *ip);
  */
 int wlan_sta_inactivityto(wlan_inactivity_to_t *inac_to, t_u16 action);
 #endif
+
+/**
+ * Get 802.11 Status Code.
+ *
+ * \param[in] reason wlcmgr event reason
+ *
+ * \return status code defined in IEEE 802.11-2020 standard.
+ */
+t_u16 wlan_get_status_code(enum wlan_event_reason reason);
 
 #ifdef RW610
 /**

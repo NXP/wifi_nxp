@@ -1349,7 +1349,7 @@ mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, t_u16 band)
         (void)wlan_11d_generate_domain_info(pmadapter, &parsed_region_chan);
 
         /* Set domain info */
-        ret = wlan_11d_send_domain_info(pmpriv, MNULL, MTRUE);
+        ret = wlan_11d_send_domain_info(pmpriv, MNULL, MFALSE);
         if (ret != MLAN_STATUS_SUCCESS)
         {
             PRINTM(MERROR, "11D: Error sending domain info to FW\n");
@@ -1453,15 +1453,7 @@ mlan_status wlan_11d_parse_dnld_countryinfo(mlan_private *pmpriv, BSSDescriptor_
         (void)wlan_11d_generate_domain_info(pmadapter, &filtered_region_chan);
 
         /* Set domain info */
-        if ((MNULL != pbss_desc) && (*pbss_desc->country_info.country_code) &&
-            (pbss_desc->country_info.len > COUNTRY_CODE_LEN))
-        {
-            ret = wlan_11d_send_domain_info(pmpriv, MNULL, MFALSE);
-        }
-        else
-        {
-            ret = wlan_11d_send_domain_info(pmpriv, MNULL, MTRUE);
-        }
+        ret = wlan_11d_send_domain_info(pmpriv, MNULL, MFALSE);
         if (ret != MLAN_STATUS_SUCCESS)
         {
             PRINTM(MERROR, "11D: Error sending domain info to FW\n");
@@ -1507,7 +1499,7 @@ mlan_status wlan_11d_prepare_dnld_domain_info_cmd(mlan_private *pmpriv)
 
         /* Sort parsed_region_chan in ascending channel number */
         wlan_11d_sort_parsed_region_chan(&pmadapter->parsed_region_chan);
-
+#if 0
         /* Check if connected */
         if (pmpriv->media_connected == MTRUE)
         {
@@ -1517,6 +1509,7 @@ mlan_status wlan_11d_prepare_dnld_domain_info_cmd(mlan_private *pmpriv)
         {
             ret = wlan_11d_parse_dnld_countryinfo(pmpriv, MNULL);
         }
+#endif
     }
 
     LEAVE();

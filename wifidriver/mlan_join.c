@@ -358,10 +358,10 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
     */
     t_u8 akm_type_selected;
     t_u8 akm_type_id        = 0;
-#ifdef CONFIG_11R
+#if CONFIG_11R
     t_u8 akm_preference[25] = {0, 7, 1, 9, 3, 8, 2, 0, 5, 6, 0, 10, 11, 12, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 13};
 #else
-    t_u8 akm_preference[25] = {0, 7, 1, 9, 0, 8, 2, 0, 5, 0, 0, 10, 11, 12, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 13};
+    t_u8 akm_preference[25] = {0, 7, 1, 0, 0, 8, 2, 0, 5, 0, 0, 10, 11, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 13};
 #endif
 
     int ap_mfpc = 0, ap_mfpr = 0, ret = MLAN_STATUS_SUCCESS;

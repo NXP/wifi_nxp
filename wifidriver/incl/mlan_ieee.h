@@ -516,6 +516,19 @@ typedef t_u16 IEEEtypes_AId_t;
 /** IEEEtypes_StatusCode_t */
 typedef t_u16 IEEEtypes_StatusCode_t;
 
+/** IEEEtypes_StatusCode_e */
+typedef MLAN_PACK_START enum _IEEEtypes_StatusCode_e
+{
+    IEEE_STATUS_CODE_SUCCESS                   = 0,
+    IEEE_STATUS_CODE_REASON_UNSPECIFIED        = 1,
+    IEEE_STATUS_CODE_DENIED_OTHER_REASON       = 12,
+    IEEE_STATUS_CODE_POOR_CHANNEL_CONDITIONS   = 34,
+    IEEE_STATUS_CODE_REQUEST_DECLINED          = 37,
+    IEEE_STATUS_CODE_INVALID_PARAMETERS        = 38,
+    IEEE_STATUS_CODE_INVALID_RSNE_CAPABILITIES = 45,
+    IEEE_STATUS_CODE_TRANSMISSION_FAILURE      = 79,
+}MLAN_PACK_END IEEEtypes_StatusCode_e;
+
 /** IEEEtypes_SeqCtl_t */
 typedef MLAN_PACK_START struct _IEEEtypes_SeqCtl_t
 {

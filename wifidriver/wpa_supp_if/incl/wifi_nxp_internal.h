@@ -450,7 +450,7 @@ typedef MLAN_PACK_START struct _wifi_nxp_callbk_fns
     void (*dfs_cac_started_callbk_fn)(void *if_priv, nxp_wifi_dfs_cac_info *ch_switch_info);
     void (*dfs_cac_finished_callbk_fn)(void *if_priv, nxp_wifi_dfs_cac_info *ch_switch_info);
 } MLAN_PACK_END wifi_nxp_callbk_fns_t;
-
+#endif
 typedef struct _chan_to_freq_t
 {
     /** Channel */
@@ -509,7 +509,5 @@ static inline t_u16 freq_to_chan(unsigned int freq)
     }
     return 0;
 }
-
-#endif
 
 #endif /* __WIFI_NXP_INTERNAL_H__ */

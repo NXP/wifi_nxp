@@ -1758,13 +1758,12 @@ int wrapper_wifi_assoc(
 #if CONFIG_DRIVER_OWE
               owe_trans_mode == OWE_TRANS_MODE_OWE || wlan_security == WLAN_SECURITY_OWE_ONLY ||
 #endif
-              wlan_security == WLAN_SECURITY_WPA3_SAE || wlan_security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED))
+              wlan_security == WLAN_SECURITY_WPA3_SAE || wlan_security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED
+#if CONFIG_11R
+              || wlan_security == WLAN_SECURITY_WPA2_FT
+#endif
+              ))
     {
-        if (wlan_security == WLAN_SECURITY_WPA2 || wlan_security == WLAN_SECURITY_WPA_WPA2_MIXED)
-
-        {
-            priv->sec_info.authentication_mode = MLAN_AUTH_MODE_OPEN;
-        }
         priv->sec_info.is_wpa_tkip  = is_wpa_tkip;
         priv->sec_info.wpa2_enabled = true;
         if (d->rsn_ie_buff_len <= sizeof(priv->wpa_ie))
@@ -1779,7 +1778,7 @@ int wrapper_wifi_assoc(
         }
 #if CONFIG_11R
         if ((!is_ft) && (wlan_security == WLAN_SECURITY_WPA2 || wlan_security == WLAN_SECURITY_WPA3_SAE ||
-                         wlan_security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED))
+                         wlan_security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED || wlan_security == WLAN_SECURITY_WPA2_FT))
         {
             if (d->md_ie_buff_len <= sizeof(priv->md_ie))
             {
@@ -1792,6 +1791,53 @@ int wrapper_wifi_assoc(
          * but if the configured security is WPA2 PSK then AKM must be of PSK
          * hence update the AKM to WPA2 PSK and reset the PMF capabilities
          */
+
+        /* Skip index to 1 byte (RSN information) + 1 byte (Tag length) + 2 byte (RSN version) + 4 byte (Group Cipher
+         * Suite)*/
+        int index      = 8;
+        int rsnc_index = 0;
+        /* Get pairwise count value from wpa_ie (2 Bytes LE) */
+        uint16_t pairwise_count = priv->wpa_ie[index + 1] << 8 | priv->wpa_ie[index];
+        /* Skip 2 bytes pairwise_count + all pairwise cipher suite in list (Each 4 bytes) */
+        index = index + 2 + pairwise_count * 4;
+        /* Get AKM count value from wpa_ie (2 Bytes LE) */
+        uint16_t akm_count = priv->wpa_ie[index + 1] << 8 | priv->wpa_ie[index];
+        /* Skip 2 bytes akm_count */
+        index = index + 2;
+        if (wlan_security == WLAN_SECURITY_WPA2)
+        {
+            /* Skip OUI */
+            index = index + 3;
+            for (int i = 0; i < akm_count; i++)
+            {
+                /* Check AKM type field is SAE (0x8) */
+                if (priv->wpa_ie[index] == 0x8)
+                {
+                    /* Replace AKM type to PSK (0x2) */
+                    priv->wpa_ie[index] = 0x02;
+                    /* Reset PMF capabilities*/
+                    /* RSN capabilities index can be calculated in RSN IE by adding all fields present before it that
+                     * are
+                     * Tag Number                   - 1 byte
+                     * Tag Length                   - 1 byte
+                     * RSN Version                  - 2 bytes Group
+                     * Cipher Suite                 - 4 bytes
+                     * Pairwise Cipher Suite Count  - 2 bytes
+                     * Pairwise Cipher Suite List   - pairwise_count * 4 bytes
+                     * AKM Suite Count              - 2 bytes
+                     * AKM List                     - akm_count * 4 bytes
+                     *
+                     * rsnc_index = 12 + 4 * (pairwise_count + akm_count)
+                     *
+                     * */
+                    rsnc_index                   = 12 + 4 * (pairwise_count + akm_count);
+                    priv->wpa_ie[rsnc_index]     = 0x00;
+                    priv->wpa_ie[rsnc_index + 1] = 0x00;
+                }
+                /* Skip OUI (1 byte) + AKM type (1 byte) */
+                index = index + 4;
+            }
+        }
     }
     else
     { /* Do Nothing */
@@ -1818,12 +1864,18 @@ int wrapper_wifi_assoc(
     {
         if (priv->support_11d != NULL)
         {
-            if (priv->support_11d->wlan_11d_create_dnld_countryinfo_p(priv, d->bss_band) != MLAN_STATUS_SUCCESS)
+            if (priv->support_11d->wlan_11d_create_dnld_countryinfo_p(priv, BAND_B) != MLAN_STATUS_SUCCESS)
             {
                 PRINTM(MERROR, "Dnld_countryinfo_11d failed\n");
                 return -WM_FAIL;
             }
-
+#if CONFIG_5GHz_SUPPORT
+            if (priv->support_11d->wlan_11d_create_dnld_countryinfo_p(priv, BAND_A) != MLAN_STATUS_SUCCESS)
+            {
+                PRINTM(MERROR, "Dnld_countryinfo_11d failed\n");
+                return -WM_FAIL;
+            }
+#endif
             if (priv->support_11d->wlan_11d_parse_dnld_countryinfo_p(priv, d) != MLAN_STATUS_SUCCESS)
             {
                 return -WM_FAIL;
@@ -2372,12 +2424,18 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
     {
         if (priv->support_11d != NULL)
         {
-            if (priv->support_11d->wlan_11d_create_dnld_countryinfo_p(priv, d->bss_band) != MLAN_STATUS_SUCCESS)
+            if (priv->support_11d->wlan_11d_create_dnld_countryinfo_p(priv, BAND_B) != MLAN_STATUS_SUCCESS)
             {
                 PRINTM(MERROR, "Dnld_countryinfo_11d failed\n");
                 return -WM_FAIL;
             }
-
+#if CONFIG_5GHz_SUPPORT
+            if (priv->support_11d->wlan_11d_create_dnld_countryinfo_p(priv, BAND_A) != MLAN_STATUS_SUCCESS)
+            {
+                PRINTM(MERROR, "Dnld_countryinfo_11d failed\n");
+                return -WM_FAIL;
+            }
+#endif
             if (priv->support_11d->wlan_11d_parse_dnld_countryinfo_p(priv, d) != MLAN_STATUS_SUCCESS)
             {
                 return -WM_FAIL;
@@ -2598,15 +2656,17 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             case HostCmd_MMH_ACS_CFG:
 #endif
             {
-#if CONFIG_WPA_SUPP
 #ifdef SD8801
                 HostCmd_DS_ACS_CONFIG *acs_scan = (HostCmd_DS_ACS_CONFIG *)&resp->params.acs_scan;
 #else
                 HostCMD_DS_APCMD_ACS_SCAN *acs_scan = (HostCMD_DS_APCMD_ACS_SCAN *)&resp->params.acs_scan;
 #endif
-#endif
+                wm_wifi.acs_chan = 0;
+
                 if (resp->result == HostCmd_RESULT_OK)
                 {
+                    wm_wifi.acs_chan = acs_scan->chan;
+
                     bss_type = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
                     if ((bss_type == MLAN_BSS_TYPE_UAP)
                     )
@@ -2652,18 +2712,19 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                             acs_params.sec_freq = acs_params.pri_freq;
                         }
 
-#if CONFIG_5GHz_SUPPORT
-                        if (acs_scan->chan > MAX_CHANNELS_BG)
-                        {
 #if CONFIG_11AC
-                            if (wm_wifi.bandwidth == BANDWIDTH_80MHZ)
+                        if (wm_wifi.bandwidth == BANDWIDTH_80MHZ)
+                        {
+#if CONFIG_5GHz_SUPPORT
+                            if (acs_scan->chan > MAX_CHANNELS_BG)
                             {
                                 acs_params.ch_width = 80;
                             }
 #endif
                         }
+                        else
 #endif
-                        if (wm_wifi.bandwidth == BANDWIDTH_40MHZ && acs_scan->chan != 165)
+                            if (wm_wifi.bandwidth == BANDWIDTH_40MHZ)
                         {
                             acs_params.ch_width = 40;
                         }
@@ -2671,6 +2732,23 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                         {
                             acs_params.sec_freq = 0;
                             acs_params.ch_width = 20;
+                            wifi_uap_set_bandwidth(BANDWIDTH_20MHZ);
+#if CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP_AP
+                            wifi_event_completion(WIFI_EVENT_ACS_COMPLETE, WIFI_EVENT_REASON_SUCCESS, NULL);
+#endif
+#endif
+                        }
+                        if (acs_scan->chan == 165)
+                        {
+                            acs_params.sec_freq = 0;
+                            acs_params.ch_width = 20;
+                            wifi_uap_set_bandwidth(BANDWIDTH_20MHZ);
+#if CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP_AP
+                            wifi_event_completion(WIFI_EVENT_ACS_COMPLETE, WIFI_EVENT_REASON_SUCCESS, NULL);
+#endif
+#endif
                         }
                         acs_params.hw_mode = acs_scan->bandcfg.chanBand == 0 ? 1 : 2;
 #endif
@@ -2907,7 +2985,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #if !CONFIG_MEM_POOLS
                 t_u16 *ps_action_p = (t_u16 *)OSA_MemoryAllocate(sizeof(t_u16));
 #else
-                t_u16 *ps_action_p = (t_u16 *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+                t_u16 *ps_action_p                  = (t_u16 *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
 #endif
                 if (ps_action_p != NULL)
                 {
@@ -5168,7 +5246,8 @@ int wifi_handle_fw_event(struct bus_message *msg)
             break;
 #if CONFIG_HOST_SLEEP
         case EVENT_HS_ACT_REQ:
-            (void)wifi_event_completion(WIFI_EVENT_HS_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
+            if (pmpriv->adapter->is_hs_configured == MTRUE)
+                (void)wifi_event_completion(WIFI_EVENT_HS_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
 #endif
 #ifdef SD9177
@@ -5536,8 +5615,8 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 wifi_user_scan_config_cleanup();
                 wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
             }
-            break;
 #endif
+            break;
 #endif
 #if CONFIG_WIFI_FW_DEBUG
         case EVENT_FW_DEBUG_INFO:
@@ -7129,41 +7208,6 @@ int wifi_get_twt_report(wifi_twt_report_t *twt_report)
     return WM_SUCCESS;
 }
 
-int wifi_twt_information(wifi_twt_information_t *twt_information)
-{
-    wifi_get_command_lock();
-    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-    mlan_ds_twtcfg twt_cfg  = {0};
-    int ret                 = 0;
-
-    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_STA);
-    cmd->result  = 0x0;
-
-    twt_cfg.sub_id = MLAN_11AX_TWT_INFORMATION_SUBID;
-    (void)memcpy(&twt_cfg.param.twt_information, twt_information, sizeof(twt_cfg.param.twt_information));
-
-    /* TWT Flow Identifier. Range: [0-7]. */
-    if (twt_cfg.param.twt_information.flow_identifier > 7)
-    {
-        wifi_put_command_lock();
-        wifi_e("Invalid TWT flow id");
-        return -WM_FAIL;
-    }
-
-    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TWT_CFG, HostCmd_ACT_GEN_SET, 0, NULL,
-                             &twt_cfg, cmd);
-    ret = wifi_wait_for_cmdresp(NULL);
-    if (ret == WM_SUCCESS)
-    {
-        if (wm_wifi.cmd_resp_status != WM_SUCCESS)
-        {
-            wifi_e("TWT information error");
-        }
-    }
-
-    return WM_SUCCESS;
-}
 #endif /* CONFIG_11AX_TWT */
 #endif
 

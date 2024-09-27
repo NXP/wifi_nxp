@@ -29,13 +29,6 @@
 #endif
 #endif
 
-#ifndef __ZEPHYR__
-#if !CONFIG_WIFI_AUTO_POWER_SAVE
-#define CONFIG_WIFI_AUTO_POWER_SAVE 1
-#endif
-#endif
-
-
 #define CONFIG_GTK_REKEY_OFFLOAD 0
 
 
@@ -1174,6 +1167,12 @@ typedef PACK_START struct
     t_u32 bigtk_micErrCnt;
     /** BIGTK MME not included count*/
     t_u32 bigtk_mmeNotFoundCnt;
+    /** RX unicast count */
+    t_u32 rx_unicast_cnt;
+    /** TX Buffer Overrun Dropped Count */
+    t_u32 tx_overrun_cnt;
+    /** RX Buffer Overrun Dropped Count */
+    t_u32 rx_overrun_cnt;
 } PACK_END wifi_pkt_stats_t;
 
 int wifi_get_log(wifi_pkt_stats_t *stats, mlan_bss_type bss_type);
@@ -1184,6 +1183,8 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
 int wifi_uap_stop();
 #if CONFIG_WPA_SUPP_AP
 int wifi_uap_do_acs(const int *freq_list);
+#else
+int wifi_uap_do_acs(const int *freq_list, const t_u16 acs_band);
 #endif
 
 #if CONFIG_WIFI_CAPA
@@ -1391,13 +1392,6 @@ int wifi_set_twt_teardown_cfg(const wifi_twt_teardown_config_t *teardown_config)
  */
 int wifi_get_twt_report(wifi_twt_report_t *twt_report);
 
-/** Twt information
- *
- * \param[out] twt_report TWT Information
- *
- * \return WM_SUCCESS if successful otherwise failure.
- */
-int wifi_twt_information(wifi_twt_information_t *information);
 #endif /* CONFIG_11AX_TWT */
 #endif
 

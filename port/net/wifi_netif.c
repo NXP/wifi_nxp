@@ -444,6 +444,7 @@ static void process_data_packet(const t_u8 *rcvdata,
     {
         LINK_STATS_INC(link.memerr);
         LINK_STATS_INC(link.drop);
+        mlan_adap->priv[recv_interface]->rx_overrun_cnt++;
         return;
     }
 
@@ -702,6 +703,7 @@ void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen)
         w_pkt_e("[amsdu] No pbuf available. Dropping packet");
         LINK_STATS_INC(link.memerr);
         LINK_STATS_INC(link.drop);
+        mlan_adap->priv[interface]->rx_overrun_cnt++;
         return;
     }
     deliver_packet_above(p, interface);
@@ -846,6 +848,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     if (ret == true)
     {
         wifi_wmm_drop_retried_drop(interface);
+        mlan_adap->priv[interface]->tx_overrun_cnt++;
         return ERR_MEM;
     }
 #else
@@ -853,6 +856,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 
     if (wmm_outbuf == NULL)
     {
+        mlan_adap->priv[interface]->tx_overrun_cnt++;
         return ERR_MEM;
     }
 #endif
@@ -922,6 +926,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     if (ret == -WM_E_NOMEM)
     {
         LINK_STATS_INC(link.err);
+        mlan_adap->priv[interface]->tx_overrun_cnt++;
         ret = ERR_MEM;
     }
     else if (ret == -WM_E_BUSY)

@@ -1802,7 +1802,7 @@ void wifi_user_scan_config_cleanup(void)
 #if !CONFIG_MEM_POOLS
         OSA_MemoryFree((void *)wm_wifi.g_user_scan_cfg);
 #else
-        OSA_MemoryPoolFree(buf_512_MemoryPool, wm_wifi.g_user_scan_cfg);
+        OSA_MemoryPoolFree(buf_768_MemoryPool, wm_wifi.g_user_scan_cfg);
 #endif
         wm_wifi.g_user_scan_cfg = NULL;
     }
@@ -4007,6 +4007,7 @@ int wifi_add_to_bypassq(const t_u8 interface, void *pkt, t_u32 len)
         if (!poutbuf)
         {
             wuap_e("[%s] ERR:Cannot allocate buffer!\r\n", __func__);
+            mlan_adap->priv[interface]->tx_overrun_cnt++;
             return -WM_FAIL;
         }
 

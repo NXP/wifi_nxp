@@ -164,16 +164,16 @@
       <source relative_path="../../../third_party" project_relative_path="third_party" type="doc">
         <files mask="CMakeLists.txt"/>
       </source>
-      <source relative_path="./" type="other">
-        <files mask="add_coex_v3.yml"/>
-        <files mask="LICENSE"/>
-      </source>
       <source relative_path="./" type="script">
         <files mask="build_coex.sh"/>
       </source>
       <source relative_path="./" type="doc">
         <files mask="CMakeLists.txt"/>
         <files mask="README.md"/>
+        <files mask="SW-Content-Register.txt"/>
+      </source>
+      <source relative_path="./" type="other">
+        <files mask="LICENSE"/>
       </source>
       <source toolchain="armgcc" relative_path="./" type="workspace">
         <files mask="middleware_wireless_coex.cmake" hidden="true"/>

@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides the handling of CMD/EVENT in MLAN
  *
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -560,8 +560,10 @@ mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
     HostCmd_DS_TX_RATE_CFG *rate_cfg = (HostCmd_DS_TX_RATE_CFG *)&cmd->params.tx_rate_cfg;
     MrvlRateScope_t *rate_scope;
     MrvlRateDropPattern_t *rate_drop;
+#if CONFIG_11AX
     MrvlIETypes_rate_setting_t *rate_setting_tlv;
     mlan_ds_rate *ds_rate = MNULL;
+#endif
     t_u16 *pbitmap_rates  = (t_u16 *)pdata_buf;
 
     t_u32 i;
@@ -644,6 +646,7 @@ mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
     cmd->size = wlan_cpu_to_le16(S_DS_GEN + sizeof(HostCmd_DS_TX_RATE_CFG) + sizeof(MrvlRateScope_t) +
                                  sizeof(MrvlRateDropPattern_t));
 
+#if CONFIG_11AX
     if (pioctl_buf)
     {
         ds_rate          = (mlan_ds_rate *)pioctl_buf->pbuf;
@@ -655,6 +658,7 @@ mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
         cmd->size = wlan_cpu_to_le16(S_DS_GEN + sizeof(HostCmd_DS_TX_RATE_CFG) + sizeof(MrvlRateScope_t) +
                                      sizeof(MrvlRateDropPattern_t) + sizeof(MrvlIETypes_rate_setting_t));
     }
+#endif
 
     LEAVE();
     return MLAN_STATUS_SUCCESS;

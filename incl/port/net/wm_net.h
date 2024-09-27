@@ -1,6 +1,10 @@
 /*
+ *  Copyright 2008-2024 NXP
+ *
+ *  SPDX-License-Identifier: BSD-3-Clause
+ */
+/*
  * Copyright (c) 2016 Intel Corporation.
- * Copyright 2008-2024 NXP
  *
  * SPDX-License-Identifier: Apache-2.0
  */
