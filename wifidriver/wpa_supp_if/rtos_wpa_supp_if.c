@@ -1694,11 +1694,32 @@ out:
     return -1;
 }
 
+static int wifi_rate_to_signal_info(wlan_ds_rate *ds_rate, struct wpa_signal_info *si)
+{
+    wifi_data_rate_t *datarate = (wifi_data_rate_t *)&ds_rate->param.data_rate;
+    /* refer to legacy rates */
+    int lg_rate[12] = {1, 2, 5, 11, 6, 9, 12, 18, 24, 36, 48, 54};
+
+    if (datarate->tx_rate_format == MLAN_RATE_FORMAT_LG && datarate->tx_data_rate < 12)
+    {
+        /* Legacy rates */
+        si->current_txrate = lg_rate[datarate->tx_data_rate];
+    }
+    else if (datarate->tx_rate_format <= 3)
+    {
+        /* HT, VHT, HE rates */
+        si->current_txrate = datarate->tx_data_rate >> 1;
+    }
+
+    return WM_SUCCESS;
+}
+
 int wifi_nxp_wpa_supp_signal_poll(void *if_priv, struct wpa_signal_info *si, unsigned char *bssid)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     int ret                                    = -WM_FAIL;
     nxp_wifi_signal_info_t signal_params;
+    wlan_ds_rate ds_rate = {0};
 
     if (!if_priv || !si || !bssid)
     {
@@ -1722,6 +1743,21 @@ int wifi_nxp_wpa_supp_signal_poll(void *if_priv, struct wpa_signal_info *si, uns
     si->avg_signal        = signal_params.avg_signal;
     si->avg_beacon_signal = signal_params.avg_beacon_signal;
     si->current_noise     = signal_params.current_noise;
+
+    ds_rate.sub_command = WIFI_DS_GET_DATA_RATE;
+    ret = wlan_get_data_rate(&ds_rate, WLAN_BSS_TYPE_STA);
+    if (ret != WM_SUCCESS)
+    {
+        supp_e("%s: wifi_nxp_get_signal rate failed", __func__);
+        goto out;
+    }
+
+    ret = wifi_rate_to_signal_info(&ds_rate, si);
+    if (ret != WM_SUCCESS)
+    {
+        supp_e("%s: wifi_nxp_get_signal rate convert failed", __func__);
+        goto out;
+    }
 
 out:
     return ret;
