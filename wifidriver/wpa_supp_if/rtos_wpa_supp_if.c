@@ -18,6 +18,7 @@
 
 #include "rtos_wpa_supp_if.h"
 #include "wifi-internal.h"
+#include "supp_main.h"
 
 #define MAX_MGMT_TX_FRAME_SIZE 1500
 
@@ -556,6 +557,55 @@ void wifi_nxp_wpa_supp_event_proc_remain_on_channel(void *if_priv, int cancel_ch
     wifi_if_ctx_rtos->supp_callbk_fns.remain_on_channel(wifi_if_ctx_rtos->supp_drv_if_ctx, cancel_channel, &event);
 }
 #endif
+
+int wifi_nxp_supp_state(void)
+{
+    struct net_if *iface = (struct net_if *)(void *)net_get_sta_interface();
+    struct wpa_supplicant *wpa_s;
+    char if_name[CONFIG_NET_INTERFACE_NAME_LEN + 1];
+    int ret;
+
+    if (!get_supp_ready_state())
+    {
+        return 0;
+    }
+
+    ret = net_if_get_name(iface, if_name, sizeof(if_name));
+	if (!ret) {
+		supp_e("Cannot get interface name (%d)", ret);
+		return 0;
+	}
+
+	wpa_s = zephyr_get_handle_by_ifname(if_name);
+	if (!wpa_s) {
+		supp_e("Interface %s not found", if_name);
+		return 0;
+	}
+
+    return wpa_s->wpa_state;
+}
+
+int wifi_nxp_hapd_state(void)
+{
+    struct net_if *iface = (struct net_if *)(void *)net_get_uap_interface();
+    struct hostapd_iface *hapd_if;
+    char if_name[CONFIG_NET_INTERFACE_NAME_LEN + 1];
+    int ret;
+
+    ret = net_if_get_name(iface, if_name, sizeof(if_name));
+	if (!ret) {
+		supp_e("Cannot get interface name (%d)", ret);
+		return 0;
+	}
+
+	hapd_if = zephyr_get_hapd_handle_by_ifname(if_name);
+	if (!hapd_if) {
+		supp_e("Interface %s not found", if_name);
+		return 0;
+	}
+
+    return hapd_if->state;
+}
 
 void *wifi_nxp_wpa_supp_dev_init(void *supp_drv_if_ctx,
                                  const char *iface_name,

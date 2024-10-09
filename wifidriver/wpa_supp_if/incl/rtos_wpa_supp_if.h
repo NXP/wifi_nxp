@@ -35,6 +35,9 @@
 #define supp_d(...)
 #endif /* ! CONFIG_SUPP_DEBUG */
 
+int wifi_nxp_supp_state(void);
+int wifi_nxp_hapd_state(void);
+
 void *wifi_nxp_wpa_supp_dev_init(void *supp_drv_if_ctx,
                                  const char *iface_name,
                                  rtos_wpa_supp_dev_callbk_fns *supp_callbk_fns);

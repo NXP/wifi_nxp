@@ -59,6 +59,7 @@
 #include <supp_api.h>
 #include <wifi_nxp.h>
 #include "utils/common.h"
+#include "rtos_wpa_supp_if.h"
 #if CONFIG_WIFI_SHELL
 #if !CONFIG_WIFI_NM_WPA_SUPPLICANT
 #include "wpa_cli.h"
@@ -857,10 +858,8 @@ static bool is_state(enum cm_sta_state state)
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
 static bool is_uap_state(int state)
 {
-    struct netif *netif = net_get_uap_interface();
-    int curr_state = 0;
+    int curr_state = wifi_nxp_hapd_state();
 
-    hapd_state(net_if_get_device((void *)netif), &curr_state);
     return (state == curr_state);
 }
 #else
@@ -873,10 +872,8 @@ static bool is_uap_state(enum cm_uap_state state)
 static bool is_uap_starting(void)
 {
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
-    struct netif *netif = net_get_uap_interface();
-    int state = 0;
+    int state = wifi_nxp_hapd_state();
 
-    hapd_state(net_if_get_device((void *)netif), &state);
     return ((state > HAPD_IFACE_DISABLED) && (state <= HAPD_IFACE_ENABLED));
 #else
     return ((wlan.uap_state > CM_UAP_INITIALIZING) && (wlan.sta_state <= CM_UAP_IP_UP));
@@ -1814,10 +1811,7 @@ static bool is_running(void)
 static bool is_sta_connecting(void)
 {
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
-    struct netif *netif = net_get_sta_interface();
-    int state = 0;
-    if (get_supp_ready_state())
-        supplicant_wpa_state(net_if_get_device((void *)netif), &state);
+    int state = wifi_nxp_supp_state();
 
     return ((state >= WPA_SCANNING) && (state <= WPA_COMPLETED));
 #else
@@ -1828,10 +1822,7 @@ static bool is_sta_connecting(void)
 static bool is_sta_idle(void)
 {
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
-    struct netif *netif = net_get_sta_interface();
-    int state = 0;
-    if (get_supp_ready_state())
-        supplicant_wpa_state(net_if_get_device((void *)netif), &state);
+    int state = wifi_nxp_supp_state();
 
     return (state == WPA_DISCONNECTED);
 #else
@@ -6777,10 +6768,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #endif
         case CM_STA_USER_REQUEST_PS_ENTER:
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
-            struct netif *netif = net_get_sta_interface();
-            int state = 0;
-            if (get_supp_ready_state())
-                supplicant_wpa_state(net_if_get_device((void *)netif), &state);
+            int state = wifi_nxp_supp_state();
 
             if ((state >= WPA_SCANNING) && (state < WPA_COMPLETED))
 #else
@@ -9852,10 +9840,8 @@ int wlan_set_rssi_threshold(int rssithr)
 bool is_uap_started(void)
 {
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
-    struct netif *netif = net_get_uap_interface();
-    int state = 0;
+    int state = wifi_nxp_hapd_state();
 
-    hapd_state(net_if_get_device((void *)netif), &state);
     return (state == HAPD_IFACE_ENABLED);
 #else
     return is_uap_state(CM_UAP_IP_UP);
@@ -9865,11 +9851,7 @@ bool is_uap_started(void)
 bool is_sta_connected(void)
 {
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
-    struct netif *netif = net_get_sta_interface();
-    int state = 0;
-
-    if (get_supp_ready_state())
-        supplicant_wpa_state(net_if_get_device((void *)netif), &state);
+    int state = wifi_nxp_supp_state();
 
     return (state == WPA_COMPLETED);
 #else

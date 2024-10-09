@@ -270,6 +270,10 @@ zephyr_include_directories_ifdef(CONFIG_WIFI_NM_WPA_SUPPLICANT_CRYPTO_ALT
     incl/port/mbedtls
 )
 
+zephyr_library_compile_definitions_ifdef(CONFIG_WIFI_NM_HOSTAPD_AP
+    HOSTAPD
+)
+
 if(CONFIG_SPEED_OPTIMIZATIONS OR CONFIG_SIZE_OPTIMIZATIONS)
 # critical path code relocated to SRAM
 zephyr_code_relocate(FILES
