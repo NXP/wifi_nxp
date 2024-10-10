@@ -14,7 +14,6 @@
 #include <wm_net.h>
 #include <wifi.h>
 #include <wifi_nxp.h>
-#include <dhcp-server.h>
 #include <wifi-internal.h>
 #include <wifi-debug.h>
 

@@ -274,6 +274,7 @@ zephyr_library_compile_definitions_ifdef(CONFIG_WIFI_NM_HOSTAPD_AP
     HOSTAPD
 )
 
+if(CONFIG_CODE_DATA_RELOCATION)
 if(CONFIG_SPEED_OPTIMIZATIONS OR CONFIG_SIZE_OPTIMIZATIONS)
 # critical path code relocated to SRAM
 zephyr_code_relocate(FILES
@@ -332,6 +333,7 @@ zephyr_code_relocate(FILES
                      ${ZEPHYR_BASE}/kernel/thread.c
                      ${ZEPHYR_BASE}/kernel/work.c
                      LOCATION RAM_TEXT)
+endif()
 endif()
 
 zephyr_library_link_libraries_ifdef(CONFIG_MBEDTLS mbedTLS)

@@ -340,8 +340,6 @@ static inline uint32_t OSA_RandRange(uint32_t low, uint32_t high)
     return (low + OSA_Rand() % (high - low));
 }
 
-void OSA_DumpThreadInfo(char *name);
-
 /** Suspend the given thread
  *
  * - The function OSA_ThreadSelfComplete() will \b permanently suspend the
