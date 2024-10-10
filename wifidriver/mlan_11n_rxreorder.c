@@ -376,7 +376,7 @@ static t_void wlan_11n_delete_rxreorder_tbl_entry(mlan_private *priv, RxReorderT
 #if !CONFIG_MEM_POOLS
     (void)pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)rx_reor_tbl_ptr->rx_reorder_ptr);
 #else
-    OSA_MemoryPoolFree(buf_256_MemoryPool, rx_reor_tbl_ptr->rx_reorder_ptr);
+    OSA_MemoryPoolFree(buf_1024_MemoryPool, rx_reor_tbl_ptr->rx_reorder_ptr);
 #endif
 
 #if !CONFIG_MEM_POOLS
@@ -536,7 +536,7 @@ static t_void wlan_11n_create_rxreorder_tbl(mlan_private *priv, t_u8 *ta, int ti
         if ((pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle, 4U * win_size, MLAN_MEM_DEF,
                                               (t_u8 **)&new_node->rx_reorder_ptr)) != MLAN_STATUS_SUCCESS)
 #else
-        new_node->rx_reorder_ptr = OSA_MemoryPoolAllocate(buf_256_MemoryPool);
+        new_node->rx_reorder_ptr = OSA_MemoryPoolAllocate(buf_1024_MemoryPool);
         if (new_node->rx_reorder_ptr == MNULL)
 #endif
         {

@@ -521,7 +521,10 @@ static void stop_cb(void *ctx)
     interface_t *if_handle = (interface_t *)net_get_mlan_handle();
 
     dhcp_release_and_stop(&if_handle->netif);
-    netif_set_down(&if_handle->netif);
+#if CONFIG_IPV6
+    if (!is_sta_ipv6_connected())
+#endif
+        netif_set_down(&if_handle->netif);
     wm_netif_status_callback_ptr = NULL;
 }
 

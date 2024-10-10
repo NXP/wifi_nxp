@@ -272,6 +272,7 @@ int wifi_exit_ieee_power_save(void)
     return wifi_send_power_save_command(DIS_AUTO_PS, BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
 }
 
+#if (CONFIG_WNM_PS)
 int wifi_enter_wnm_power_save(t_u16 wnm_sleep_time)
 {
     ((mlan_private *)mlan_adap->priv[0])->wnm_set = true;
@@ -283,6 +284,7 @@ int wifi_exit_wnm_power_save(void)
 {
     return wifi_send_power_save_command(DIS_WNM_PS, BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
 }
+#endif
 
 int wifi_enter_deepsleep_power_save(void)
 {
@@ -471,6 +473,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         }
         return WIFI_EVENT_REASON_SUCCESS;
     }
+#if (CONFIG_WNM_PS)
     else if (ps_mode->action == EN_WNM_PS)
     {
         if ((ps_mode->params.auto_ps.ps_bitmap & BITMAP_STA_PS) != 0)
@@ -511,6 +514,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         *ps_event = (t_u16)WIFI_EVENT_WNM_PS;
         return WIFI_EVENT_REASON_SUCCESS;
     }
+#endif
     else if (ps_mode->action == (t_u16)GET_PS)
     {
         if ((ps_mode->params.ps_bitmap & BITMAP_AUTO_DS) != 0U)
@@ -549,10 +553,12 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         {
             *ps_event = (t_u16)WIFI_EVENT_IEEE_DEEP_SLEEP;
         }
+#if (CONFIG_WNM_PS)
         else if ((((mlan_private *)mlan_adap->priv[0])->wnm_set) && (deepsleepps_enabled))
         {
             *ps_event = (t_u16)WIFI_EVENT_WNM_DEEP_SLEEP;
         }
+#endif
         else if (ieeeps_enabled)
         {
             *ps_event = (t_u16)WIFI_EVENT_IEEE_PS;
@@ -561,17 +567,21 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         {
             *ps_event = (t_u16)WIFI_EVENT_DEEP_SLEEP;
         }
+#if (CONFIG_WNM_PS)
         else if (((mlan_private *)mlan_adap->priv[0])->wnm_set)
         {
             *ps_event = (t_u16)WIFI_EVENT_WNM_PS;
         }
+#endif
         else
         {
             return WIFI_EVENT_REASON_FAILURE;
         }
 
         if (ieeeps_enabled || deepsleepps_enabled
+#if CONFIG_WNM_PS
             || (((mlan_private *)mlan_adap->priv[0])->wnm_set)
+#endif
         )
         {
             /* sleep confirm response needs to get the sleep_rwlock, for this lock

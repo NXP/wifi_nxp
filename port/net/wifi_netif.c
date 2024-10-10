@@ -53,7 +53,7 @@ static struct nxp_wifi_device gs_nxp_wifi_dev;
 static void netmgr_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(netmgr_task, OSA_PRIORITY_NORMAL, 1, CONFIG_NETMGR_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(netmgr_task, WLAN_TASK_PRI_HIGH, 1, CONFIG_NETMGR_STACK_SIZE, 0);
 
 OSA_TASK_HANDLE_DEFINE(netmgr_task_Handle);
 
@@ -444,6 +444,7 @@ static void process_data_packet(const t_u8 *rcvdata,
     {
         LINK_STATS_INC(link.memerr);
         LINK_STATS_INC(link.drop);
+        mlan_adap->priv[recv_interface]->rx_overrun_cnt++;
         return;
     }
 
@@ -702,6 +703,7 @@ void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen)
         w_pkt_e("[amsdu] No pbuf available. Dropping packet");
         LINK_STATS_INC(link.memerr);
         LINK_STATS_INC(link.drop);
+        mlan_adap->priv[interface]->rx_overrun_cnt++;
         return;
     }
     deliver_packet_above(p, interface);
@@ -813,13 +815,10 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
         return ERR_OK;
     }
 
-    if (interface == WLAN_BSS_TYPE_STA)
+    if (wifi_add_to_bypassq(interface, p, p->tot_len) == WM_SUCCESS)
     {
-        if (wifi_add_to_bypassq(interface, p, p->tot_len) == WM_SUCCESS)
-        {
-            LINK_STATS_INC(link.xmit);
-            return ERR_OK;
-        }
+        LINK_STATS_INC(link.xmit);
+        return ERR_OK;
     }
 
     wifi_wmm_da_to_ra(p->payload, ra);
@@ -849,6 +848,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     if (ret == true)
     {
         wifi_wmm_drop_retried_drop(interface);
+        mlan_adap->priv[interface]->tx_overrun_cnt++;
         return ERR_MEM;
     }
 #else
@@ -856,6 +856,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 
     if (wmm_outbuf == NULL)
     {
+        mlan_adap->priv[interface]->tx_overrun_cnt++;
         return ERR_MEM;
     }
 #endif
@@ -925,6 +926,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     if (ret == -WM_E_NOMEM)
     {
         LINK_STATS_INC(link.err);
+        mlan_adap->priv[interface]->tx_overrun_cnt++;
         ret = ERR_MEM;
     }
     else if (ret == -WM_E_BUSY)

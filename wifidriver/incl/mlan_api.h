@@ -386,7 +386,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 #if CONFIG_SCAN_WITH_RSSIFILTER
                        const t_s16 rssi_threshold,
 #endif
+#if CONFIG_SCAN_CHANNEL_GAP
                        const t_u16 scan_chan_gap,
+#endif
                        const bool keep_previous_scan,
                        const bool active_scan_triggered);
 int wifi_stop_smart_mode(void);
@@ -405,6 +407,7 @@ int wifi_set_txpwrlimit(wifi_txpwrlimit_t *txpwrlimit);
 int wifi_send_rssi_info_cmd(wifi_rssi_info_t *rssi_info);
 void wifi_set_curr_bss_channel(uint8_t channel);
 int wifi_get_chanlist(wifi_chanlist_t *chanlist);
+int wifi_get_set_bandcfg(wifi_bandcfg_t *bandcfg, mlan_act_ioctl action);
 #if (CONFIG_IPS)
 int wifi_set_ips_config(mlan_bss_type interface, int option);
 #endif
@@ -441,6 +444,7 @@ typedef struct
     t_u8 status;
 } ftm_start_param;
 
+int wifi_unassoc_ftm_cfg(const t_u16 action, const t_u16 config);
 int wifi_ftm_start_stop(const t_u16 action, const t_u8 loop_cnt, const t_u8 *mac, const t_u8 channel);
 int wifi_ftm_start(const t_u16 action, const t_u8 *mac, const t_u8 channel);
 int wifi_ftm_stop(const t_u16 action, const t_u8 *mac, const t_u8 channel);
@@ -591,7 +595,9 @@ int wifi_tsp_cfg(const t_u16 action,
                  int *currRFUTemp);
 #endif
 
+#if CONFIG_TX_AMPDU_PROT_MODE
 int wifi_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action);
+#endif
 
 #if CONFIG_EXTERNAL_COEX_PTA
 int wifi_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config);

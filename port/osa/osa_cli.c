@@ -32,7 +32,9 @@ void OSA_DumpThreadInfo(char *name)
         return;
 
 #ifndef __ZEPHYR__
+#if !CONFIG_MEM_POOLS
     vTaskList(task_info_buf);
+#endif
 #endif
 
     PRINTF("Name                  State   Priority Stack  Num\r\n");

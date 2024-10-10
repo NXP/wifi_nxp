@@ -1134,6 +1134,7 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
                 pext_cap->ext_cap.TDLSSupport = 1;
             }
         }
+#if (CONFIG_WNM_PS)
         if ((((mlan_private *)mlan_adap->priv[0])->wnm_set == true) && (pbss_desc->pext_cap->ext_cap.WNM_Sleep == true))
         {
             pext_cap->ext_cap.WNM_Sleep = 1;
@@ -1142,6 +1143,7 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
         {
             pext_cap->ext_cap.WNM_Sleep = 0;
         }
+#endif
 
 #if CONFIG_11V
         if (pbss_desc->pext_cap->ext_cap.BSS_Transition == true)
@@ -1254,6 +1256,11 @@ void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, t_u8 *ra)
 
         util_unlink_list(pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, (pmlan_linked_list)ptx_tbl, MNULL,
                          MNULL);
+    }
+
+    if(ptx_tbl == NULL)
+    {
+        return;
     }
 
     (void)pmadapter->callbacks.moal_spin_unlock(pmadapter->pmoal_handle, priv->tx_ba_stream_tbl_ptr.plock);

@@ -1338,8 +1338,11 @@ static void wlan_rf_otp_cal_data_get(int argc, char *argv[])
         dump_wlan_get_otp_cal_data_usage();
         return;
     }
-
+#if !CONFIG_MEM_POOLS
     cal_data = (uint8_t *)OSA_MemoryAllocate(CAL_DATA_LEN);
+#else
+    cal_data = (uint8_t *)OSA_MemoryPoolAllocate(buf_3072_MemoryPool);
+#endif
     if (!cal_data)
     {
         (void)PRINTF("Error: failed to alloc memory!\r\n");
@@ -1366,8 +1369,11 @@ static void wlan_rf_otp_cal_data_get(int argc, char *argv[])
         (void)PRINTF("OTP cal data read failed: 0\r\n");
         dump_wlan_get_otp_cal_data_usage();
     }
-
+#if !CONFIG_MEM_POOLS
     (void)OSA_MemoryFree(cal_data);
+#else
+    OSA_MemoryPoolFree(buf_3072_MemoryPool, cal_data);
+#endif
 }
 
 static struct cli_command wlan_test_mode_commands[] = {

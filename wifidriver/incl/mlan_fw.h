@@ -4,7 +4,7 @@
  *  structures and declares global function prototypes used
  *  in MLAN module.
  *
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -417,6 +417,8 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define TLV_TYPE_MGMT_FRAME_WAKEUP (PROPRIETARY_TLV_BASE_ID + 0x116) /* 0x0216 */
 
 #define TLV_TYPE_PREV_BSSID (PROPRIETARY_TLV_BASE_ID + 330)
+
+#define TLV_TYPE_CSI_MONITOR_CFG (PROPRIETARY_TLV_BASE_ID + 354) /*0x0262*/
 
 /** ADDBA TID mask */
 #define ADDBA_TID_MASK (MBIT(2) | MBIT(3) | MBIT(4) | MBIT(5))
@@ -979,12 +981,14 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 
 #endif
 
+#if CONFIG_SCAN_CHANNEL_GAP
 /** TLV type : SCAN channel gap */
 #define TLV_TYPE_SCAN_CHANNEL_GAP              \
     (PROPRIETARY_TLV_BASE_ID + 0xc5) /* 0x01c5 \
                                       */
 /** TLV type : Channel statistics */
 #define TLV_TYPE_CHANNEL_STATS (PROPRIETARY_TLV_BASE_ID + 0xc6) /* 0x01c6 */
+#endif
 
 /** Firmware Host Command ID Constants */
 /** Host Command ID : Get hardware specifications */
@@ -1413,8 +1417,9 @@ typedef enum _ENH_PS_MODES
 
 #if (CONFIG_11MC) || (CONFIG_11AZ)
 /** Host Command ID : FTM session config and control */
-#define HostCmd_CMD_FTM_SESSION_CFG  0x024d
-#define HostCmd_CMD_FTM_SESSION_CTRL 0x024e
+#define HostCmd_CMD_FTM_SESSION_CFG         0x024d
+#define HostCmd_CMD_FTM_SESSION_CTRL        0x024e
+#define HostCmd_CMD_DOT11MC_UNASSOC_FTM_CFG 0x0275
 #endif
 
 /* Define action or option for HostCmd_CMD_802_11_SCAN */
@@ -1425,7 +1430,9 @@ typedef enum _ENH_PS_MODES
 /** Scan type : Any */
 #define HostCmd_BSS_MODE_ANY 0x0003
 
+#if CONFIG_TX_AMPDU_PROT_MODE
 #define HostCmd_CMD_TX_AMPDU_PROT_MODE 0x0263
+#endif
 
 #if CONFIG_CSI
 #define HostCmd_CMD_CSI 0x025b
@@ -1562,8 +1569,10 @@ typedef enum _ENH_PS_MODES
 #define EVENT_PS_AWAKE 0x0000000a
 /** Card Event definition : Power save sleep */
 #define EVENT_PS_SLEEP 0x0000000b
+#if (CONFIG_WNM_PS)
 /** Card Event definition : WNM power save */
 #define EVENT_WNM_PS 0x00000097
+#endif
 /** Card Event definition : MIC error multicast */
 #define EVENT_MIC_ERR_MULTICAST 0x0000000d
 /** Card Event definition : MIC error unicast */
@@ -1686,6 +1695,8 @@ typedef enum _ENH_PS_MODES
 #define WLS_SUB_EVENT_RADIO_RECEIVED     1
 #define WLS_SUB_EVENT_RADIO_RPT_RECEIVED 2
 #define WLS_SUB_EVENT_ANQP_RESP_RECEIVED 3
+#define WLS_SUB_EVENT_RTT_RESULTS        4
+#define WLS_SUB_EVENT_FTM_FAIL           5
 
 #endif
 
@@ -2511,6 +2522,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_AuthType_t
     t_u16 auth_type;
 } MLAN_PACK_END MrvlIEtypes_AuthType_t;
 
+#if CONFIG_SCAN_CHANNEL_GAP
 /** MrvlIEtypes_ScanChanGap_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_ScanChanGap_t
 {
@@ -2548,6 +2560,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_ChannelStats_t
     /** channel statictics */
     chan_statistics_t chanStat[];
 } MLAN_PACK_END MrvlIEtypes_ChannelStats_t;
+#endif
 
 /** MrvlIETypes_ActionFrame_t */
 typedef MLAN_PACK_START struct
@@ -3009,6 +3022,7 @@ typedef MLAN_PACK_START struct __auto_ds_param
     t_u16 deep_sleep_timeout;
 } MLAN_PACK_END auto_ds_param;
 
+#if (CONFIG_WNM_PS)
 /** Structure definition for the wnm power save command */
 typedef MLAN_PACK_START struct __wnm_ps_param
 {
@@ -3036,6 +3050,7 @@ typedef MLAN_PACK_START struct __wnm_ps_result
     /** 0: successful; 1: fail */
     t_u8 result;
 } MLAN_PACK_END wnm_ps_result;
+#endif
 
 /** Structure definition for sleep confirmation in the new ps command */
 typedef struct __sleep_confirm_param
@@ -3089,8 +3104,10 @@ typedef struct _auto_ps_param
 /** TLV type : ps param */
 #define TLV_TYPE_PS_PARAM (PROPRIETARY_TLV_BASE_ID + 0x72U) // 0x0172
 
+#if (CONFIG_WNM_PS)
 /** TLV type : wnm param */
 #define TLV_TYPE_WNM_PARAM (PROPRIETARY_TLV_BASE_ID + 0x158) // 0x0258
+#endif
 /** TLV type: ps_ext_param */
 #define TLV_TYPE_PS_EXT_PARAM (PROPRIETARY_TLV_BASE_ID + 0x15F) /* 0x25F */
 
@@ -3112,6 +3129,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_ps_param_t
     ps_param param;
 } MLAN_PACK_END MrvlIEtypes_ps_param_t;
 
+#if (CONFIG_WNM_PS)
 /** MrvlIEtypes_wnm_ps_param_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_wnm_ps_param_t
 {
@@ -3120,6 +3138,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_wnm_ps_param_t
     /** wnm ps param */
     wnm_ps_param param;
 } MLAN_PACK_END MrvlIEtypes_wnm_ps_param_t;
+#endif
 
 /** Structure definition for new power save command */
 typedef MLAN_PACK_START struct _HostCmd_DS_PS_MODE_ENH
@@ -3150,8 +3169,10 @@ typedef MLAN_PACK_START struct _HostCmd_DS_PS_MODE_ENH
         t_u16 ps_bitmap;
         /** auto ps param */
         auto_ps_param auto_ps;
+#if (CONFIG_WNM_PS)
         /** wnm ps param */
         wnm_ps_param param;
+#endif
         /** ext ps param */
         ext_ps_param ext_param;
     } params;
@@ -3779,6 +3800,7 @@ typedef enum _SNMP_MIB_INDEX
     StopDeauth_i    = 44,
 } SNMP_MIB_INDEX;
 
+#if CONFIG_TURBO_MODE
 /** Used just for Turbo mode */
 #define OID_WMM_TURBO_MODE 0x27
 /** turbo_mode parameters */
@@ -3790,6 +3812,7 @@ typedef MLAN_PACK_START struct _turbo_mode_para
     /** set prot mode */
     t_u8 mode;
 } MLAN_PACK_END turbo_mode_para;
+#endif
 
 /** max SNMP buf size */
 #define MAX_SNMP_BUF_SIZE 128U
@@ -4589,16 +4612,7 @@ typedef MLAN_PACK_START struct _hostcmd_twt_report
     /** TWT report payload for FW response to fill */
     t_u8 data[36];
 } MLAN_PACK_END hostcmd_twt_report, *phostcmd_twt_report;
-/** Type definition of hostcmd_twt_information */
-typedef MLAN_PACK_START struct _hostcmd_twt_information
-{
-    /** TWT Flow Identifier. Range: [0-7] */
-    t_u8 flow_identifier;
-    /** TWT operation suspend duration in milli seconds. */
-    t_u32 suspend_duration;
-    /** TWT information state from FW. */
-    t_u8 information_state;
-} MLAN_PACK_END hostcmd_twt_information, *phostcmd_twt_information;
+
 /** HostCmd_DS_TWT_CFG */
 typedef MLAN_PACK_START struct _HostCmd_DS_TWT_CFG
 {
@@ -4615,8 +4629,6 @@ typedef MLAN_PACK_START struct _HostCmd_DS_TWT_CFG
         hostcmd_twt_teardown twt_teardown;
         /** TWT report for Sub ID: MLAN_11AX_TWT_REPORT_SUBID */
         hostcmd_twt_report twt_report;
-        /** TWT report for Sub ID: MLAN_11AX_TWT_INFORMATION_SUBID */
-        hostcmd_twt_information twt_information;
     } param;
 } MLAN_PACK_END HostCmd_DS_TWT_CFG;
 #endif /* CONFIG_11AX_TWT */
@@ -5882,6 +5894,8 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_mac_filter_t
 /** TODO: Temporary work around until firmware fix is available */
 /** setting for band_config - channel 173 */
 #define BAND_CONFIG_CH_173 0x11U
+/** setting for band_config - channel 169 and channel 177 */
+#define BAND_CONFIG_CH_169_177 0x31U
 #endif
 
 /** MrvlIEtypes_retry_limit_t */
@@ -7153,6 +7167,15 @@ typedef MLAN_PACK_START struct _HostCmd_FTM_SESSION_CFG
     } tlv;
 } MLAN_PACK_END HostCmd_FTM_SESSION_CFG;
 
+/** Type definition for hostcmd_unassoc_ftm_cfg */
+typedef MLAN_PACK_START struct _Hostcmd_DOT11MC_UNASSOC_FTM_CFG
+{
+    /** 0: Get, 1: Set */
+    t_u16 action;
+    /** 0: Disable, 1: Enable */
+    t_u16 config;
+} MLAN_PACK_END HostCmd_DOT11MC_UNASSOC_FTM_CFG;
+
 /** Type definition for hostcmd_ftm_session_ctrl */
 typedef MLAN_PACK_START struct _Hostcmd_FTM_SESSION_CTRL
 {
@@ -7164,6 +7187,8 @@ typedef MLAN_PACK_START struct _Hostcmd_FTM_SESSION_CTRL
     t_u8 peer_mac[MLAN_MAC_ADDR_LENGTH];
     /** Channel on which FTM must be started */
     t_u8 chan;
+    /** Band on which FTM must be started */
+    t_u8 chanBand;
 } MLAN_PACK_END HostCmd_FTM_SESSION_CTRL;
 
 #if CONFIG_WLS_CSI_PROC
@@ -7692,6 +7717,8 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_DRCS_CFG drcs_cfg;
 #endif
 #if (CONFIG_11MC) || (CONFIG_11AZ)
+        /** hostcmd for unassociated FTM configuration user command */
+        HostCmd_DOT11MC_UNASSOC_FTM_CFG unassoc_ftm_cfg;
         /** hostcmd for session_ctrl user command */
         HostCmd_FTM_SESSION_CTRL ftm_session_ctrl;
         /** hostcmd for session_cfg user command */
@@ -7700,7 +7727,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_WLS_CSI_ACK wls_csi_ack;
 #endif
 #endif
+#if CONFIG_TX_AMPDU_PROT_MODE
         HostCmd_DS_CMD_TX_AMPDU_PROT_MODE tx_ampdu_prot_mode;
+#endif
 #if (CONFIG_IPS)
         HostCmd_DS_IPS_CONFIG ips_config;
 #endif

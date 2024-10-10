@@ -22,7 +22,8 @@ static int ptotal = 0, precvd = 0;
 
 #if defined(SDK_OS_FREE_RTOS)
 #if CONFIG_MEM_POOLS
-#define PING_SIZE (sizeof(struct icmp_echo_hdr) + 1024)
+// Max 10k ping will be supported
+#define PING_SIZE (sizeof(struct icmp_echo_hdr) + 10008)
 
 static uint8_t IEcho[PING_SIZE];
 #endif

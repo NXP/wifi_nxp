@@ -1511,8 +1511,10 @@ struct _mlan_private
     t_u8 ip_addr[IPADDR_LEN];
     t_u32 hotspot_cfg;
     ExtCap_t ext_cap;
+#if (CONFIG_WNM_PS)
     /** WNM power save mode */
     bool wnm_set;
+#endif
     t_u8 rssi_low;
     t_u8 roaming_enabled;
     t_u8 roaming_configured;
@@ -1562,6 +1564,8 @@ struct _mlan_private
     /** configured by DPP */
     bool is_dpp_connect;
 #endif
+    t_u32 tx_overrun_cnt;
+    t_u32 rx_overrun_cnt;
 };
 
 /** BA stream status */
@@ -2082,6 +2086,7 @@ struct _mlan_adapter
     /** WPA supplicant scan triggered */
     t_u8 wpa_supp_scan_triggered;
 #endif
+#if CONFIG_SCAN_CHANNEL_GAP
     /** channel statstics */
     ChanStatistics_t *pchan_stats;
     /** Number of records in the chan_stats */
@@ -2090,6 +2095,7 @@ struct _mlan_adapter
     t_u32 idx_chan_stats;
     /** scan channel gap time */
     t_u16 scan_chan_gap;
+#endif
     /** Number of records in the scan table */
     t_u32 num_in_scan_table;
     /** Scan probes */
@@ -2176,8 +2182,10 @@ struct _mlan_adapter
     t_u32 usr_dot_11n_dev_cap_a;
     /** MIMO abstraction of MCSs supported by device */
     t_u8 usr_dev_mcs_support;
+#if CONFIG_WIFI_CAPA
     /** user configured 11n enable/disable */
     t_u8 usr_dot_11n_enable;
+#endif
     /** Enable 11n support for adhoc start */
     bool adhoc_11n_enabled;
     /** Adhoc Secondary Channel Bandwidth */
@@ -2191,8 +2199,10 @@ struct _mlan_adapter
     t_u8 tx_vhtinfo;
     /** rxpd_vhtinfo */
     t_u8 rxpd_vhtinfo;
+#if CONFIG_WIFI_CAPA
     /** user configured 11ac enable/disable */
     t_u8 usr_dot_11ac_enable;
+#endif
     /** 802.11ac Device Capabilities for 2.4GHz */
     t_u32 usr_dot_11ac_dev_cap_bg;
     /** 802.11ac Device Capabilities for 5GHz */
@@ -2215,8 +2225,10 @@ struct _mlan_adapter
     t_u8 hw_2g_hecap_len;
     /** 802.11ax 2.4G HE capability */
     t_u8 hw_2g_he_cap[54];
+#if CONFIG_WIFI_CAPA
     /** user configured 11ax enable/disable */
     t_u8 usr_dot_11ax_enable;
+#endif
 #endif
     /** max mgmt IE index in device */
     t_u16 max_mgmt_ie_index;
@@ -2257,6 +2269,7 @@ struct _mlan_adapter
     bool skip_dfs;
     /* remain on channel flag */
     t_u8 remain_on_channel;
+    t_u8 remain_bss_index;
 };
 
 /** Ethernet packet type for EAPOL */
@@ -2353,6 +2366,9 @@ mlan_status wlan_cmd_remain_on_channel(IN pmlan_private pmpriv,
                                        IN t_u16 cmd_action,
                                        IN t_void *pdata_buf);
 
+
+
+mlan_status wlan_radio_ioctl_radio_ctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 
 
 mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
@@ -2762,7 +2778,9 @@ mlan_status wlan_cmd_cck_desense_cfg(pmlan_private pmpriv,
 #define BW_40MHZ 1
 #define BW_80MHZ 2
 
+#if CONFIG_TURBO_MODE
 int wlan_get_set_turbo_mode(t_u16 action, t_u8 *mode, mlan_bss_type bss_type);
+#endif
 
 
 /**

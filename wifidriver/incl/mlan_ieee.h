@@ -516,6 +516,19 @@ typedef t_u16 IEEEtypes_AId_t;
 /** IEEEtypes_StatusCode_t */
 typedef t_u16 IEEEtypes_StatusCode_t;
 
+/** IEEEtypes_StatusCode_e */
+typedef MLAN_PACK_START enum _IEEEtypes_StatusCode_e
+{
+    IEEE_STATUS_CODE_SUCCESS                   = 0,
+    IEEE_STATUS_CODE_REASON_UNSPECIFIED        = 1,
+    IEEE_STATUS_CODE_DENIED_OTHER_REASON       = 12,
+    IEEE_STATUS_CODE_POOR_CHANNEL_CONDITIONS   = 34,
+    IEEE_STATUS_CODE_REQUEST_DECLINED          = 37,
+    IEEE_STATUS_CODE_INVALID_PARAMETERS        = 38,
+    IEEE_STATUS_CODE_INVALID_RSNE_CAPABILITIES = 45,
+    IEEE_STATUS_CODE_TRANSMISSION_FAILURE      = 79,
+}MLAN_PACK_END IEEEtypes_StatusCode_e;
+
 /** IEEEtypes_SeqCtl_t */
 typedef MLAN_PACK_START struct _IEEEtypes_SeqCtl_t
 {
@@ -583,6 +596,8 @@ typedef t_u8 WLAN_802_11_RATES[WLAN_SUPPORTED_RATES];
 #define RSN_AKM_PSK 2
 /** AKM: FT PSK */
 #define RSN_AKM_FT_PSK 4
+/** AKM: 8021x_SHA256 */
+#define RSN_AKM_8021X_SHA256 5
 /** AKM: PSK SHA256 */
 #define RSN_AKM_PSK_SHA256 6
 
@@ -1691,6 +1706,7 @@ typedef MLAN_PACK_START struct _wlan_user_scan_chan
     t_u32 scan_time;
 } MLAN_PACK_END wlan_user_scan_chan;
 
+#if CONFIG_SCAN_CHANNEL_GAP
 /** channel statictics */
 typedef MLAN_PACK_START struct _ChanStatistics_t
 {
@@ -1713,6 +1729,7 @@ typedef MLAN_PACK_START struct _ChanStatistics_t
     /** max rssi */
     t_u8 max_rss;
 } MLAN_PACK_END ChanStatistics_t;
+#endif
 
 /**
  *  Input structure to configure an immediate scan cmd to firmware
@@ -1767,8 +1784,10 @@ typedef MLAN_PACK_START struct
      *  Variable number (fixed maximum) of channels to scan up
      */
     wlan_user_scan_chan chan_list[WLAN_USER_SCAN_CHAN_MAX];
+#if CONFIG_SCAN_CHANNEL_GAP
     /** scan channel gap */
     t_u16 scan_chan_gap;
+#endif
 } MLAN_PACK_END wlan_user_scan_cfg;
 /** Default scan interval in millisecond*/
 #define DEFAULT_BGSCAN_INTERVAL 30000
@@ -1810,8 +1829,10 @@ typedef MLAN_PACK_START struct
 #define LOWEST_RSSI_THRESHOLD 82
 /** delta rssi */
 #define DELTA_RSSI 10
+#if CONFIG_SCAN_CHANNEL_GAP
 /** Scan channel gap */
 #define SCAN_CHANNEL_GAP_VALUE 50U
+#endif
 #if CONFIG_11AX
 typedef MLAN_PACK_START struct _IEEEtypes_Extension_t
 {
@@ -2038,8 +2059,10 @@ typedef MLAN_PACK_START struct
     wlan_user_scan_ssid ssid_list[MRVDRV_MAX_SSID_LIST_LENGTH];
     /** Variable number (fixed maximum) of channels to scan up */
     wlan_user_scan_chan chan_list[WLAN_BG_SCAN_CHAN_MAX];
+#if CONFIG_SCAN_CHANNEL_GAP
     /** scan channel gap */
     t_u16 scan_chan_gap;
+#endif
 } MLAN_PACK_END wlan_bgscan_cfg;
 
 #ifdef PRAGMA_PACK
@@ -2087,10 +2110,12 @@ typedef struct _BSSDescriptor_t
     /** Receive signal strength in dBm */
     t_s32 rssi;
 
+#if CONFIG_SCAN_CHANNEL_GAP
     /** channel load */
     t_u16 chan_load;
     /** channel load */
     t_u16 chan_noise;
+#endif
 
     /** Channel */
     t_u8 channel;

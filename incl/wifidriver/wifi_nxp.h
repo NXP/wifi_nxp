@@ -1,11 +1,11 @@
-/** @file wifi_nxp.h
+/*
+ * Copyright 2008-2024 NXP
  *
- * @brief This file provides Core Wi-Fi definition for wpa supplicant RTOS driver.
+ * SPDX-License-Identifier: BSD-3-Clause
  *
- * Copyright 2008-2023 NXP
- *
- *  SPDX-License-Identifier: BSD-3-Clause
- *
+ */
+/*!\file  wifi_nxp.h
+ *\brief This file provides core Wi-Fi function definition for wpa supplicant RTOS driver port layer.
  */
 
 #ifndef __WIFI_NXP_H__

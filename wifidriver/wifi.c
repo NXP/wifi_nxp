@@ -134,7 +134,7 @@ typedef enum __mlan_status
 static void wifi_core_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(wifi_core_task, OSA_PRIORITY_HIGH, 1, CONFIG_WIFI_CORE_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wifi_core_task, WLAN_TASK_PRI_HIGH, 1, CONFIG_WIFI_CORE_STACK_SIZE, 0);
 
 #endif
 
@@ -145,7 +145,7 @@ static OSA_TASK_DEFINE(wifi_core_task, OSA_PRIORITY_HIGH, 1, CONFIG_WIFI_CORE_ST
 static void wifi_scan_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(wifi_scan_task, PRIORITY_RTOS_TO_OSA(1), 1, CONFIG_WIFI_SCAN_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wifi_scan_task, WLAN_TASK_PRI_LOW, 1, CONFIG_WIFI_SCAN_STACK_SIZE, 0);
 
 #if !CONFIG_WIFI_DRIVER_STACK_SIZE
 #define CONFIG_WIFI_DRIVER_STACK_SIZE (2048)
@@ -154,7 +154,7 @@ static OSA_TASK_DEFINE(wifi_scan_task, PRIORITY_RTOS_TO_OSA(1), 1, CONFIG_WIFI_S
 static void wifi_drv_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(wifi_drv_task, OSA_PRIORITY_HIGH, 1, CONFIG_WIFI_DRIVER_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wifi_drv_task, WLAN_TASK_PRI_HIGH, 1, CONFIG_WIFI_DRIVER_STACK_SIZE, 0);
 
 #if CONFIG_WMM
 
@@ -166,9 +166,9 @@ static void wifi_drv_tx_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
 #ifdef RW610
-static OSA_TASK_DEFINE(wifi_drv_tx_task, PRIORITY_RTOS_TO_OSA(2), 1, CONFIG_WIFI_DRV_TX_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wifi_drv_tx_task, WLAN_TASK_PRI_NORMAL, 1, CONFIG_WIFI_DRV_TX_STACK_SIZE, 0);
 #else
-static OSA_TASK_DEFINE(wifi_drv_tx_task, OSA_PRIORITY_HIGH, 1, CONFIG_WIFI_DRV_TX_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wifi_drv_tx_task, WLAN_TASK_PRI_HIGH, 1, CONFIG_WIFI_DRV_TX_STACK_SIZE, 0);
 #endif
 #endif
 
@@ -179,7 +179,7 @@ static OSA_TASK_DEFINE(wifi_drv_tx_task, OSA_PRIORITY_HIGH, 1, CONFIG_WIFI_DRV_T
 static void wifi_powersave_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(wifi_powersave_task, PRIORITY_RTOS_TO_OSA(1), 1, CONFIG_WIFI_POWERSAVE_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wifi_powersave_task, WLAN_TASK_PRI_LOW, 1, CONFIG_WIFI_POWERSAVE_STACK_SIZE, 0);
 
 int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr);
 int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
@@ -1406,13 +1406,13 @@ static int remove_mcast_ip(uint8_t *mac_addr)
 {
     mcast_filter *curr_node, *prev_node;
     (void)wifi_get_mcastf_lock();
-    curr_node = wm_wifi.start_list->next;
-    prev_node = wm_wifi.start_list;
     if (wm_wifi.start_list == NULL)
     {
         (void)wifi_put_mcastf_lock();
         return -WM_FAIL;
     }
+    curr_node = wm_wifi.start_list->next;
+    prev_node = wm_wifi.start_list;
     if (curr_node == NULL && cmp_mac_addr(prev_node->mac_addr, mac_addr))
     {
 #if !CONFIG_MEM_POOLS
@@ -1802,7 +1802,7 @@ void wifi_user_scan_config_cleanup(void)
 #if !CONFIG_MEM_POOLS
         OSA_MemoryFree((void *)wm_wifi.g_user_scan_cfg);
 #else
-        OSA_MemoryPoolFree(buf_512_MemoryPool, wm_wifi.g_user_scan_cfg);
+        OSA_MemoryPoolFree(buf_768_MemoryPool, wm_wifi.g_user_scan_cfg);
 #endif
         wm_wifi.g_user_scan_cfg = NULL;
     }
@@ -1866,15 +1866,6 @@ static void wifi_scan_task(void *argv)
                 wifi_user_scan_config_cleanup();
                 (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
             }
-#ifndef SD8801
-            else
-            {
-                (void)wlan_active_scan_req_for_passive_chan((mlan_private *)mlan_adap->priv[0],
-                                                            wm_wifi.g_user_scan_cfg);
-                wifi_user_scan_config_cleanup();
-                (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
-            }
-#endif
         }
         scan_thread_in_process = false;
     } /* for ;; */
@@ -2849,29 +2840,27 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
             }
             if (priv->bss_role == MLAN_BSS_ROLE_STA)
             {
-                if (priv->curr_bss_params.host_mlme)
-                {
-                    t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = {0};
-                    if ((memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
-                               MLAN_MAC_ADDR_LENGTH) &&
-                        memcmp(zero_mac, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
-                               MLAN_MAC_ADDR_LENGTH)) ||
-                        memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.attemp_bssid,
-                               MLAN_MAC_ADDR_LENGTH))
-                    {
-                        wifi_d("Dropping Deauth frame from other bssid: type=%d " MACSTR "\r\n", sub_type,
-                               MAC2STR(pieee_pkt_hdr->addr3));
-                        LEAVE();
-                        return ret;
-                    }
-                    wifi_d("wlan: HostMlme Disconnected: sub_type=%d\n", sub_type);
+				/* check receiving broadcast deauth frame from other BSSID and drop the deauh frame */
+				t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = {0};
+				if ((memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
+						   MLAN_MAC_ADDR_LENGTH) &&
+					memcmp(zero_mac, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
+						   MLAN_MAC_ADDR_LENGTH)) ||
+					memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.attemp_bssid,
+						   MLAN_MAC_ADDR_LENGTH))
+				{
+					wifi_d("Dropping Deauth frame from other bssid: type=%d " MACSTR "\r\n", sub_type,
+						   MAC2STR(pieee_pkt_hdr->addr3));
+					LEAVE();
+					return ret;
+				}
+				wifi_d("wlan: HostMlme Disconnected: sub_type=%d\n", sub_type);
 #if 0
 				pmadapter->pending_disconnect_priv = priv;
 				wlan_recv_event(
 					priv, MLAN_EVENT_ID_DRV_DEFER_HANDLING,
 					MNULL);
 #endif
-                }
             }
             break;
         case SUBTYPE_ACTION:
@@ -4018,6 +4007,7 @@ int wifi_add_to_bypassq(const t_u8 interface, void *pkt, t_u32 len)
         if (!poutbuf)
         {
             wuap_e("[%s] ERR:Cannot allocate buffer!\r\n", __func__);
+            mlan_adap->priv[interface]->tx_overrun_cnt++;
             return -WM_FAIL;
         }
 
@@ -4644,7 +4634,9 @@ int wifi_nxp_scan_res_get2(t_u32 table_idx, nxp_wifi_event_new_scan_result_t *sc
     }
 
     scan_res->rssi = (t_u8) - (bss_new_entry->rssi);
+#if CONFIG_SCAN_CHANNEL_GAP
     scan_res->noise = bss_new_entry->chan_noise;
+#endif
 
     if ((pmpriv->media_connected == MTRUE) &&
         (memcmp(bss_new_entry->mac_address, (t_u8 *)&pmpriv->curr_bss_params.bss_descriptor.mac_address,
@@ -4663,16 +4655,19 @@ void wifi_nxp_reset_scan_flag()
 
 int wifi_nxp_survey_res_get(void)
 {
+#if CONFIG_SCAN_CHANNEL_GAP
     mlan_private *pmpriv          = (mlan_private *)mlan_adap->priv[0];
     ChanStatistics_t *pchan_stats = NULL;
     mlan_scan_resp scan_resp;
     t_u32 idx;
     nxp_wifi_event_new_survey_result_t survey_res;
     bool more_res = true;
+#endif
 
     ENTER();
     wifi_d("dump_survey");
 
+#if CONFIG_SCAN_CHANNEL_GAP
     memset(&scan_resp, 0, sizeof(scan_resp));
     wifi_get_scan_table(pmpriv, &scan_resp);
 
@@ -4730,6 +4725,23 @@ int wifi_nxp_survey_res_get(void)
             OSA_TimeDelay(50);
         }
     }
+#else
+    if (wm_wifi.supp_if_callbk_fns->survey_res_callbk_fn)
+    {
+#if CONFIG_HOSTAPD
+        if (wm_wifi.hostapd_op)
+        {
+            wm_wifi.supp_if_callbk_fns->survey_res_callbk_fn(wm_wifi.hapd_if_priv, NULL, 0, false);
+        }
+        else
+#endif
+        {
+            wm_wifi.supp_if_callbk_fns->survey_res_callbk_fn(wm_wifi.if_priv, NULL, 0, false);
+        }
+
+        OSA_TimeDelay(50);
+    }
+#endif
     return WM_SUCCESS;
 }
 

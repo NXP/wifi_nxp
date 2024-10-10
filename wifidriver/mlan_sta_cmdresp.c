@@ -105,6 +105,7 @@ static mlan_status wlan_ret_mfg_tx_frame(pmlan_private pmpriv, HostCmd_DS_COMMAN
     cfg->short_preamble    = wlan_le32_to_cpu(mcmd->short_preamble);
     cfg->act_sub_ch        = wlan_le32_to_cpu(mcmd->act_sub_ch);
     cfg->short_gi          = wlan_le32_to_cpu(mcmd->short_gi);
+    cfg->adv_coding        = wlan_le32_to_cpu(mcmd->adv_coding);
     cfg->tx_bf             = wlan_le32_to_cpu(mcmd->tx_bf);
     cfg->gf_mode           = wlan_le32_to_cpu(mcmd->gf_mode);
     cfg->stbc              = wlan_le32_to_cpu(mcmd->stbc);
@@ -381,6 +382,7 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
                     mib->param.dtim_period = ul_temp;
                 }
                 break;
+#if CONFIG_WIFI_FRAG_THRESHOLD
             case FragThresh_i:
                 ul_temp = wlan_le16_to_cpu(*((t_u16 *)(psmib->value)));
                 PRINTM(MINFO, "SNMP_RESP: FragThsd =%u\n", ul_temp);
@@ -389,6 +391,7 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
                     mib->param.frag_threshold = ul_temp;
                 }
                 break;
+#endif
             case RtsThresh_i:
                 ul_temp = wlan_le16_to_cpu(*((t_u16 *)(psmib->value)));
                 PRINTM(MINFO, "SNMP_RESP: RTSThsd =%u\n", ul_temp);

@@ -298,8 +298,10 @@ typedef struct _mlan_ioctl_req
 /** Max active scan time for each channel in milliseconds  */
 #define MRVDRV_MAX_ACTIVE_SCAN_CHAN_TIME 500
 
+#if CONFIG_SCAN_CHANNEL_GAP
 /** Max gap time between 2 scan in milliseconds  */
 #define MRVDRV_MAX_SCAN_CHAN_GAP_TIME 500
+#endif
 
 /** Maximum number of probes to send on each channel */
 #define MAX_PROBES 4U
@@ -321,8 +323,10 @@ typedef struct _wlan_get_scan_table_fixed
     t_u8 channel;
     /** RSSI for the received packet */
     t_u8 rssi;
+#if CONFIG_SCAN_CHANNEL_GAP
     /** channel load */
     t_u8 chan_load;
+#endif
     /** TSF value in microseconds from the firmware at packet reception */
     t_u64 network_tsf;
 } wlan_get_scan_table_fixed;
@@ -467,10 +471,12 @@ typedef struct _mlan_scan_resp
     t_u8 *pscan_table;
     /* Age in seconds */
     t_u32 age_in_secs;
+#if CONFIG_SCAN_CHANNEL_GAP
     /** channel statstics */
     t_u8 *pchan_stats;
     /** Number of records in the chan_stats */
     t_u32 num_in_chan_stats;
+#endif
 } mlan_scan_resp, *pmlan_scan_resp;
 
 /** Type definition of mlan_scan_cfg */
@@ -487,8 +493,10 @@ typedef struct _mlan_scan_cfg
 #if CONFIG_EXT_SCAN_SUPPORT
     /** Extended Scan */
     t_u32 ext_scan;
+#if CONFIG_SCAN_CHANNEL_GAP
     /** scan channel gap */
     t_u32 scan_chan_gap;
+#endif
 #endif
 } mlan_scan_cfg, *pmlan_scan_cfg;
 
@@ -628,7 +636,6 @@ typedef struct _mlan_ssid_bssid
 #define MLAN_11AX_TWT_SETUP_SUBID       0x114
 #define MLAN_11AX_TWT_TEARDOWN_SUBID    0x115
 #define MLAN_11AX_TWT_REPORT_SUBID      0x116
-#define MLAN_11AX_TWT_INFORMATION_SUBID 0x119
 #endif /* CONFIG_11AX_TWT */
 
 #if CONFIG_MMSF
@@ -2997,17 +3004,6 @@ typedef MLAN_PACK_START struct _mlan_ds_twt_report
     t_u8 data[36];
 } MLAN_PACK_END mlan_ds_twt_report, *pmlan_ds_twt_report;
 
-/** Type definition of mlan_ds_twt_report for MLAN_OID_11AX_TWT_CFG */
-typedef MLAN_PACK_START struct _mlan_ds_twt_information
-{
-    /** TWT Flow Identifier. Range: [0-7] */
-    t_u8 flow_identifier;
-    /** TWT operation suspend duration in milli seconds. */
-    t_u32 suspend_duration;
-    /** TWT information state from FW. */
-    t_u8 information_state;
-} MLAN_PACK_END mlan_ds_twt_information, *pmlan_ds_twt_information;
-
 /** Type definition of mlan_ds_twtcfg for MLAN_OID_11AX_TWT_CFG */
 typedef MLAN_PACK_START struct _mlan_ds_twtcfg
 {
@@ -3024,8 +3020,6 @@ typedef MLAN_PACK_START struct _mlan_ds_twtcfg
         mlan_ds_twt_teardown twt_teardown;
         /** TWT report for Sub ID: MLAN_11AX_TWT_REPORT_SUBID */
         mlan_ds_twt_report twt_report;
-        /** TWT report for Sub ID: MLAN_11AX_TWT_INFORMATION_SUBID */
-        mlan_ds_twt_information twt_information;
     } param;
 } MLAN_PACK_END mlan_ds_twtcfg, *pmlan_ds_twtcfg;
 #endif /* CONFIG_11AX_TWT */

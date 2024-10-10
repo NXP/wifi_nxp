@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides the handling of CMD/EVENT in MLAN
  *
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -113,12 +113,14 @@ mlan_status wlan_cmd_enh_power_mode(pmlan_private pmpriv,
         psmode_enh->params.ps_bitmap = wlan_cpu_to_le16(ps_bitmap);
         cmd->size                    = wlan_cpu_to_le16(S_DS_GEN + AUTO_PS_FIX_SIZE);
     }
+#if (CONFIG_WNM_PS)
     else if (cmd_action == DIS_WNM_PS)
     {
         psmode_enh->action           = (ENH_PS_MODES)(wlan_cpu_to_le16(DIS_WNM_PS));
         psmode_enh->params.ps_bitmap = wlan_cpu_to_le16(ps_bitmap);
         cmd->size                    = wlan_cpu_to_le16(S_DS_GEN + AUTO_PS_FIX_SIZE);
     }
+#endif
     else if (cmd_action == GET_PS)
     {
         psmode_enh->action           = (ENH_PS_MODES)(wlan_cpu_to_le16(GET_PS));
@@ -213,6 +215,7 @@ mlan_status wlan_cmd_enh_power_mode(pmlan_private pmpriv,
         /*#endif*/
         cmd->size = wlan_cpu_to_le16(cmd_size);
     }
+#if (CONFIG_WNM_PS)
     else if (cmd_action == EN_WNM_PS)
     {
         psmode_enh->action                   = wlan_cpu_to_le16(EN_WNM_PS);
@@ -244,6 +247,7 @@ mlan_status wlan_cmd_enh_power_mode(pmlan_private pmpriv,
         }
         cmd->size = wlan_cpu_to_le16(cmd_size);
     }
+#endif
     else
     { /* Do Nothing */
     }
@@ -556,8 +560,10 @@ mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
     HostCmd_DS_TX_RATE_CFG *rate_cfg = (HostCmd_DS_TX_RATE_CFG *)&cmd->params.tx_rate_cfg;
     MrvlRateScope_t *rate_scope;
     MrvlRateDropPattern_t *rate_drop;
+#if CONFIG_11AX
     MrvlIETypes_rate_setting_t *rate_setting_tlv;
     mlan_ds_rate *ds_rate = MNULL;
+#endif
     t_u16 *pbitmap_rates  = (t_u16 *)pdata_buf;
 
     t_u32 i;
@@ -640,6 +646,7 @@ mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
     cmd->size = wlan_cpu_to_le16(S_DS_GEN + sizeof(HostCmd_DS_TX_RATE_CFG) + sizeof(MrvlRateScope_t) +
                                  sizeof(MrvlRateDropPattern_t));
 
+#if CONFIG_11AX
     if (pioctl_buf)
     {
         ds_rate          = (mlan_ds_rate *)pioctl_buf->pbuf;
@@ -651,6 +658,7 @@ mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
         cmd->size = wlan_cpu_to_le16(S_DS_GEN + sizeof(HostCmd_DS_TX_RATE_CFG) + sizeof(MrvlRateScope_t) +
                                      sizeof(MrvlRateDropPattern_t) + sizeof(MrvlIETypes_rate_setting_t));
     }
+#endif
 
     LEAVE();
     return MLAN_STATUS_SUCCESS;

@@ -41,7 +41,7 @@ extern void wpa2_shutdown();
 
 static void wps_tls(osa_task_param_t arg);
 OSA_TASK_HANDLE_DEFINE(wps_tls_Handle);
-static OSA_TASK_DEFINE(wps_tls, PRIORITY_RTOS_TO_OSA(2), 1, 8192, 0);
+static OSA_TASK_DEFINE(wps_tls, WLAN_TASK_PRI_NORMAL, 1, 8192, 0);
 
 u8 *rbuf;
 #if CONFIG_PEAP_MSCHAPV2

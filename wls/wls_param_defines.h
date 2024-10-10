@@ -40,7 +40,9 @@
 // #define FFT_PARALLEL
 // #define FFT_INPLACE
 // #define TDDE_FIRSTPATH
+#if defined(RW610)
 #define STA_20_ONLY
+#endif
 
 #define MAX_RX 1
 #define MAX_TX 4

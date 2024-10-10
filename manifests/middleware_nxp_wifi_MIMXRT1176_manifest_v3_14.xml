@@ -18,7 +18,7 @@
     <definition extID="middleware.sdmmc.host.usdhc.azurertos.MIMXRT1176"/>
     <definition extID="middleware.freertos-kernel.MIMXRT1176"/>
   </externalDefinitions>
-  <ksdk id="MCUXpressoSDK216000_middleware_nxp_wifi_MIMXRT1176_manifest_v3_14" name="MCUXpressoSDK216000_middleware_nxp_wifi_MIMXRT1176_manifest_v3_14" version="2.16.000" revision="2.16.000"/>
+  <ksdk id="MCUXpressoSDK216100_middleware_nxp_wifi_MIMXRT1176_manifest_v3_14" name="MCUXpressoSDK216100_middleware_nxp_wifi_MIMXRT1176_manifest_v3_14" version="2.16.100" revision="2.16.100"/>
   <components>
     <component id="middleware.wifi.wifi_bt_config.template.MIMXRT1176" name="Wi-Fi configuration template" brief="Template configuration file to be edited by user." version="1.0.0" full_name="Wi-Fi configuration template" category="Wireless/NXP Wi-Fi" user_visible="false" type="project_template" package_base_path="../../../components/wifi_bt_module/template" project_base_path="wifi/template">
       <defines>
