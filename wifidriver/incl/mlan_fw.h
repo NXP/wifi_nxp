@@ -4850,8 +4850,8 @@ typedef MLAN_PACK_START struct _hostcmd_twt_setup
     t_u8 twt_request;
     /** TWT Setup State. Set to 0 by driver, filled by FW in response*/
     t_u8 twt_setup_state;
-    /** Reserved, set to 0. */
-    t_u8 reserved[2];
+    /** TWT link lost timeout threshold */
+    t_u16 bcnMiss_threshold;
 } MLAN_PACK_END hostcmd_twt_setup, *phostcmd_twt_setup;
 
 /** Type definition of hostcmd_twt_teardown */

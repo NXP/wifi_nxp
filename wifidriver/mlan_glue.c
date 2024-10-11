@@ -7751,11 +7751,11 @@ int wifi_set_twt_setup_cfg(const wifi_twt_setup_config_t *twt_setup)
     {
         if (wm_wifi.cmd_resp_status != WM_SUCCESS)
         {
-            wifi_e("TWT setup cfg error");
+            wifi_e("TWT setup error. State code=%d", twt_cfg.param.twt_setup.twt_setup_state);
         }
         else
         {
-            (void)PRINTF("TWT flow id: %d\r\n", twt_cfg.param.twt_setup.flow_identifier);
+            (void)PRINTF("TWT setup success. Flow id: %d, use this in future TWT operation.\r\n", twt_cfg.param.twt_setup.flow_identifier);
         }
     }
     return WM_SUCCESS;

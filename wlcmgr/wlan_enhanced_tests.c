@@ -1560,7 +1560,7 @@ const static test_cfg_param_t g_btwt_cfg_param[] = {
     {"sp_gap", 11, 1, NULL},
 };
 
-static uint8_t g_twt_setup_cfg[12] = {0};
+static uint8_t g_twt_setup_cfg[15] = {0};
 
 static test_cfg_param_t g_twt_setup_cfg_param[] = {
     /* name                 offset  len  notes */
@@ -1569,13 +1569,15 @@ static test_cfg_param_t g_twt_setup_cfg_param[] = {
     {"trigger_enabled", 2, 1, "0: Non-Trigger enabled, 1: Trigger enabled TWT"},
     {"twt_info_disabled", 3, 1, "0: TWT info enabled, 1: TWT info disabled"},
     {"negotiation_type", 4, 1, "0: Individual TWT, 3: Broadcast TWT"},
-    {"twt_wakeup_duration", 5, 1, "time after which the TWT requesting STA can transition to doze state"},
-    {"flow_identifier", 6, 1, "Range: [0-7]"},
+    {"twt_wakeup_duration", 5, 1, "Min time which a STA need to stay awake in each TWT interval. Unit in (256 μs). Range: [0-sizeof(UINT8)]"},
+    {"flow_identifier", 6, 1, "Required if setup BTWT. Range: [0-7]"},
     {"hard_constraint", 7, 1,
      "0: FW can tweak the TWT setup parameters if it is rejected by AP, 1: FW should not tweak any parameters"},
-    {"twt_exponent", 8, 1, "Range: [0-63]"},
-    {"twt_mantissa", 9, 2, "Range: [0-sizeof(UINT16)]"},
+    {"twt_interval_exponent", 8, 1, "Range: [0-63]"},
+    {"twt_interval_mantissa", 9, 2, "TWT interval= mantissa * 2^exponent μs. Range: [0-maxof(UINT16)]"},
     {"twt_request", 11, 1, "Type, 0: REQUEST_TWT, 1: SUGGEST_TWT"},
+    /* Skip field: t_u8 twt_setup_state. Needless to input */
+    {"bcnMiss_threshold", 13, 2, "Link lost timeout threshold when TWT active. Unit in seconds. Range [1-maxof(UINT16)]"},
 };
 
 static uint8_t g_twt_teardown_cfg[3] = {0};
@@ -1669,7 +1671,7 @@ static void wlan_init_g_test_cfg_arrays()
     memcpy(g_11ax_cfg, wlan_get_11ax_cfg(), 31);
 #if CONFIG_11AX_TWT
     memcpy(g_btwt_cfg, wlan_get_btwt_cfg(), 12);
-    memcpy(g_twt_setup_cfg, wlan_get_twt_setup_cfg(), 12);
+    memcpy(g_twt_setup_cfg, wlan_get_twt_setup_cfg(), 15);
     memcpy(g_twt_teardown_cfg, wlan_get_twt_teardown_cfg(), 3);
 #endif /* CONFIG_11AX_TWT */
 }
@@ -1686,7 +1688,7 @@ static test_cfg_table_t g_test_cfg_table_list[] = { /*  name         data       
                                                     {"11axcfg", g_11ax_cfg, 29, g_11ax_cfg_param, 8},
 #if CONFIG_11AX_TWT
                                                     {"twt_bcast", g_btwt_cfg, 12, g_btwt_cfg_param, 8},
-                                                    {"twt_setup", g_twt_setup_cfg, 12, g_twt_setup_cfg_param, 11},
+                                                    {"twt_setup", g_twt_setup_cfg, 15, g_twt_setup_cfg_param, 12},
                                                     {"twt_teardown", g_twt_teardown_cfg, 3, g_twt_teardown_cfg_param,
                                                      3},
 #endif /* CONFIG_11AX_TWT */

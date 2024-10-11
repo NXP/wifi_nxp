@@ -1161,6 +1161,10 @@ typedef PACK_START struct
     t_u16 twt_mantissa;
     /** TWT Request Type, 0: REQUEST_TWT, 1: SUGGEST_TWT*/
     t_u8 twt_request;
+    /** TWT Setup State. Set to 0 by driver, filled by FW in response*/
+    t_u8 twt_setup_state;
+    /** TWT link lost timeout threshold */
+    t_u16 bcnMiss_threshold;
 } PACK_END wifi_twt_setup_config_t;
 
 /** Wi-Fi Teardown Configuration */

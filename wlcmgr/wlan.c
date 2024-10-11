@@ -13620,7 +13620,21 @@ uint8_t * wlan_get_btwt_cfg()
     return g_btwt_cfg_default;
 }
 
-static uint8_t g_twt_setup_cfg_default[] = {0x01, 0x00, 0x00, 0x01, 0x00, 0x40, 0x00, 0x01, 0x0a, 0x00, 0x02, 0x00};
+static uint8_t g_twt_setup_cfg_default[] = {
+    0x01, // implicit
+    0x00, // unannounced
+    0x00, // Non-Trigger
+    0x00, // info enabled
+    0x00, // indv TWT
+    0x40, // wakeup dur
+    0x00, // FID
+    0x01, // FW not tweak
+    0x0a, // exponent
+    0x00, 0x02, // mantissa  200TU
+    0x00, // REQ TWT
+    0x00, // state
+    0x3c, 0x00 //bcn miss=60s
+    };
 
 /* Below macros are defined as in FW under dot11ax_twt.c */
 #define TWT_EARLY_WAKEUP_ADJUSTMENT 1000                                // us

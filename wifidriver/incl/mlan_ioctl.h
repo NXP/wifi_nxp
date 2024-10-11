@@ -3132,6 +3132,10 @@ typedef MLAN_PACK_START struct _mlan_ds_twt_setup
     t_u16 twt_mantissa;
     /** TWT Request Type, 0: REQUEST_TWT, 1: SUGGEST_TWT*/
     t_u8 twt_request;
+    /** TWT Setup State. Set to 0 by driver, filled by FW in response*/
+    t_u8 twt_setup_state;
+    /** TWT link lost timeout threshold */
+    t_u16 bcnMiss_threshold;
 } MLAN_PACK_END mlan_ds_twt_setup, *pmlan_ds_twt_setup;
 
 /** Type definition of mlan_ds_twt_teardown for MLAN_OID_11AX_TWT_CFG */
