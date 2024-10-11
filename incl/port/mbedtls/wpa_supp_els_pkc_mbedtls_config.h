@@ -4039,9 +4039,7 @@ void *pvPortCalloc(size_t num, size_t size); /*Calloc for HEAP3.*/
 #define PSA_WANT_ALG_HMAC                       1
 #define PSA_WANT_ALG_MD5                        1
 #define PSA_WANT_ALG_OFB                        1
-/* PBKDF2-HMAC is not yet supported via the PSA API in Mbed TLS.
- * Note: when adding support, also adjust include/mbedtls/config_psa.h */
-//#define PSA_WANT_ALG_PBKDF2_HMAC                1
+#define PSA_WANT_ALG_PBKDF2_HMAC                1
 //#define PSA_WANT_ALG_RIPEMD160                  1
 #define PSA_WANT_ALG_RSA_OAEP                   1
 #define PSA_WANT_ALG_RSA_PKCS1V15_CRYPT         1
@@ -4055,8 +4053,6 @@ void *pvPortCalloc(size_t num, size_t size); /*Calloc for HEAP3.*/
 //#define PSA_WANT_ALG_STREAM_CIPHER              1
 #define PSA_WANT_ALG_TLS12_PRF                  1
 #define PSA_WANT_ALG_TLS12_PSK_TO_MS            1
-/* PBKDF2-HMAC is not yet supported via the PSA API in Mbed TLS.
- * Note: when adding support, also adjust include/mbedtls/config_psa.h */
 //#define PSA_WANT_ALG_XTS                        1
 //#define PSA_WANT_ECC_BRAINPOOL_P_R1_256         1
 //#define PSA_WANT_ECC_BRAINPOOL_P_R1_384         1
