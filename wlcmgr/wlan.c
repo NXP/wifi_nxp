@@ -1403,7 +1403,14 @@ static int security_profile_matches(const struct wlan_network *network, const st
 #if CONFIG_DRIVER_OWE
     if (config->type == WLAN_SECURITY_OWE_ONLY)
     {
-        return (int)res->WPA_WPA2_WEP.owe;
+        if (res->trans_mode == OWE_TRANS_MODE_OPEN)
+        {
+            return res->trans_ssid_len;
+        }
+        else
+        {
+            return (int)res->WPA_WPA2_WEP.owe;
+        }
     }
 #endif
 
@@ -1495,18 +1502,18 @@ static int network_matches_scan_result(const struct wlan_network *network,
             (*num_channels)++;
         }
         if ((res->ssid_len == 0) ||
-            (strncmp((const char *)network->ssid, (const char *)res->ssid,
+            ((strncmp((const char *)network->ssid, (const char *)res->ssid,
                      (size_t)MAX(strlen(network->ssid), (unsigned int)res->ssid_len)) != 0)
 #if CONFIG_DRIVER_OWE
-            || ((res->trans_mode == OWE_TRANS_MODE_OWE) &&
+            && ((res->trans_mode == OWE_TRANS_MODE_OWE) &&
                 (strncmp((const char *)network->trans_ssid, (const char *)res->ssid,
                          (size_t)MAX(strlen(network->trans_ssid), (unsigned int)res->ssid_len))) != 0)
 #endif
 #if CONFIG_WLAN_BRIDGE
-            || (strncmp((const char *)network->bridge_ssid, (const char *)res->ssid,
+            && (strncmp((const char *)network->bridge_ssid, (const char *)res->ssid,
                         (size_t)MAX(strlen(network->bridge_ssid), (unsigned int)res->ssid_len)) != 0)
 #endif
-        )
+            ))
         {
             wlcm_d("ssid mismatch: Got: %s Expected: %s", (char *)res->ssid, network->ssid);
             return -WM_FAIL;
@@ -1552,7 +1559,7 @@ static int network_matches_scan_result(const struct wlan_network *network,
 #endif
 
 #if CONFIG_DRIVER_OWE
-    wlcm_d("%s: Match successful", res->trans_mode == OWE_TRANS_MODE_OWE ? network->trans_ssid : network->ssid);
+    wlcm_d("%s: Match successful", res->trans_mode == OWE_TRANS_MODE_OWE ? res->ssid : res->trans_ssid);
 #endif
     /* If the bss blacklist is not empty, check whether the network is in the blacklist or not. */
     /* If yes, skip this network. */

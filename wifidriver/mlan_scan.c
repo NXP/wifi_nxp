@@ -1830,7 +1830,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 {
                     /* Current Format of OWE IE is element_id:element_len:oui:MAC Address:SSID length:SSID */
                     t_u8 trans_ssid_len =
-                        *(pcurrent_ptr + sizeof(IEEEtypes_Header_t) + sizeof(owe_oui) + MLAN_MAC_ADDR_LENGTH);
+                        *(pcurrent_ptr + sizeof(IEEEtypes_Header_t) + sizeof(owe_oui) + sizeof(owe_type) + MLAN_MAC_ADDR_LENGTH);
 
                     if (!trans_ssid_len || trans_ssid_len > MRVDRV_MAX_SSID_LENGTH)
                     {
@@ -1847,10 +1847,10 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                     }
 
                     (void)__memcpy(pmadapter, pbss_entry->trans_mac_address,
-                                   (pcurrent_ptr + sizeof(IEEEtypes_Header_t) + sizeof(owe_oui)), MLAN_MAC_ADDR_LENGTH);
+                                   (pcurrent_ptr + sizeof(IEEEtypes_Header_t) + sizeof(owe_oui) + sizeof(owe_type)), MLAN_MAC_ADDR_LENGTH);
                     pbss_entry->trans_ssid.ssid_len = trans_ssid_len;
                     (void)__memcpy(pmadapter, pbss_entry->trans_ssid.ssid,
-                                   (pcurrent_ptr + sizeof(IEEEtypes_Header_t) + sizeof(owe_oui) + MLAN_MAC_ADDR_LENGTH +
+                                   (pcurrent_ptr + sizeof(IEEEtypes_Header_t) + sizeof(owe_oui) + sizeof(owe_type) + MLAN_MAC_ADDR_LENGTH +
                                     sizeof(t_u8)),
                                    trans_ssid_len);
 
