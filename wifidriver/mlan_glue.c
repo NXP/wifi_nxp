@@ -2635,7 +2635,9 @@ static struct wifi_nxp_event_get_wiphy wiphy;
 int wifi_nxp_get_wiphy(const unsigned int bss_type)
 {
     int status = -WM_FAIL;
+#if CONFIG_11AX
     t_u8 bandwidth = wifi_uap_get_bandwidth();
+#endif
 
     wiphy.sband[0].wifi_nxp_n_channels = MAX_NUM_CHANNEL_2G;
 
@@ -2783,7 +2785,11 @@ int wifi_nxp_get_conn_info(uint16_t *beacon_interval, uint8_t *dtim_period, bool
 
     *beacon_interval = pmpriv->curr_bss_params.bss_descriptor.beacon_period;
     *dtim_period = pmpriv->curr_bss_params.bss_descriptor.dtim_period;
+#if CONFIG_11AX_TWT
     *twt_capable = wlan_check_ap_11ax_twt_supported(&(pmpriv->curr_bss_params.bss_descriptor)) ? true : false;
+#else
+    *twt_capable = false;
+#endif
 
     return WM_SUCCESS;
 }

@@ -2665,7 +2665,9 @@ void wifi_nxp_hostapd_dev_deinit(void *if_priv)
 int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
 {
     int status     = -WM_FAIL;
+#if CONFIG_11AX
     t_u8 bandwidth = wifi_uap_get_bandwidth();
+#endif
 
     if ((!if_priv) || (!modes))
     {

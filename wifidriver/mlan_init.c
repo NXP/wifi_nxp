@@ -349,9 +349,15 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->usr_dot_11ac_opermode_bw  = 0;
     pmadapter->usr_dot_11ac_opermode_nss = 0;
 #ifdef CONFIG_WIFI_NM_WPA_SUPPLICANT
+#if CONFIG_WIFI_CAPA
     pmadapter->usr_dot_11n_enable = MTRUE;
+#if CONFIG_11AC
     pmadapter->usr_dot_11ac_enable = MTRUE;
+#endif
+#if CONFIG_11AX
     pmadapter->usr_dot_11ax_enable = MTRUE;
+#endif
+#endif
 #else
 #if CONFIG_WIFI_CAPA
     pmadapter->usr_dot_11n_enable = MFALSE;
