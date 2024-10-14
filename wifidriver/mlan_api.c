@@ -5697,7 +5697,7 @@ static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
         wlan_802_11_header *pwlan_pkt_hdr = MNULL;
         IEEEtypes_FrameCtl_t *mgmt_fc_p   = MNULL;
         t_u8 *pBuf                        = &tx_frame.tx_buf[0];
-        t_u32 pkt_type, tx_control;
+        t_u32 pkt_type;
 
         pkt_len = MGMT_HEADER_LEN + AUTH_BODY_LEN;
 
