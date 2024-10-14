@@ -13,7 +13,6 @@
 /* Additional WMSDK header files */
 #include <wmerrno.h>
 #include <osa.h>
-
 #include <wifi.h>
 #if defined(RW610)
 #include "wifi-imu.h"
@@ -21,6 +20,7 @@
 #include "wifi-sdio.h"
 #endif
 #if CONFIG_WPA_SUPP_AP
+#include "wifi_nxp_internal.h"
 #include "rtos_wpa_supp_if.h"
 #endif
 #include "wifi-internal.h"
@@ -1920,6 +1920,11 @@ int wifi_uap_pmf_getset(uint8_t action, uint8_t *mfpc, uint8_t *mfpr)
     }
 
     return wm_wifi.cmd_resp_status;
+}
+
+int wifi_uap_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr)
+{
+    return wifi_uap_pmf_getset(HostCmd_ACT_GEN_GET, mfpc, mfpr);
 }
 
 #if CONFIG_UAP_STA_MAC_ADDR_FILTER

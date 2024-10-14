@@ -66,6 +66,7 @@ Change log:
 /** Enable Host PKT forwarding */
 #define PKT_FWD_ENABLE_BIT 0x01U
 
+#if UAP_SUPPORT
 mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req);
 
 mlan_status wlan_ops_uap_prepare_cmd(IN t_void *priv,
@@ -97,4 +98,64 @@ void wifi_uap_set_hidden_ssid(const t_u8 bcast_ssid_ctl);
 void wifi_uap_set_htcapinfo(const t_u16 ht_cap_info);
 
 void wifi_uap_set_beacon_period(const t_u16 beacon_period);
+
+#else
+static inline mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
+{
+    (void)PRINTF("wlan_ops_uap_ioctl UAP not supported %s:%d\r\n", __func__, __LINE__);
+    return (mlan_status)WM_UAP_NOT_SUPPORT;
+}
+
+static inline mlan_status wlan_ops_uap_prepare_cmd(IN t_void *priv,
+                                                   IN t_u16 cmd_no,
+                                                   IN t_u16 cmd_action,
+                                                   IN t_u32 cmd_oid,
+                                                   IN t_void *pioctl_buf,
+                                                   IN t_void *pdata_buf,
+                                                   IN t_void *pcmd_buf)
+{
+    (void)PRINTF("wlan_ops_uap_prepare_cmd UAP not supported %s:%d\r\n", __func__, __LINE__);
+    return (mlan_status)WM_UAP_NOT_SUPPORT;
+}
+
+static inline int wifi_set_uap_max_clients(unsigned int *max_sta_num)
+{
+    (void)PRINTF("wifi_set_uap_max_clients UAP not supported %s:%d\r\n", __func__, __LINE__);
+    return WM_UAP_NOT_SUPPORT;
+}
+
+static inline int wifi_get_uap_max_clients(unsigned int *max_sta_num)
+{
+    (void)PRINTF("wifi_get_uap_max_clients UAP not supported %s:%d\r\n", __func__, __LINE__);
+    return WM_UAP_NOT_SUPPORT;
+}
+
+static inline void wifi_uap_set_ecsa(void)
+{
+    (void)PRINTF("wifi_uap_set_ecsa UAP not supported %s:%d\r\n", __func__, __LINE__);
+}
+
+static inline int wifi_uap_ctrl_deauth(bool enable)
+{
+    (void)PRINTF("wifi_uap_ctrl_deauth UAP not supported %s:%d\r\n", __func__, __LINE__);
+    return WM_UAP_NOT_SUPPORT;
+}
+
+static inline void wifi_uap_set_hidden_ssid(const t_u8 bcast_ssid_ctl)
+{
+    (void)PRINTF("wifi_uap_set_hidden_ssid UAP not supported %s:%d\r\n", __func__, __LINE__);
+}
+
+static inline void wifi_uap_set_htcapinfo(const t_u16 ht_cap_info)
+{
+    (void)PRINTF("wifi_uap_set_htcapinfo UAP not supported %s:%d\r\n", __func__, __LINE__);
+}
+
+static inline void wifi_uap_set_beacon_period(const t_u16 beacon_period)
+{
+    (void)PRINTF("wifi_uap_set_beacon_period UAP not supported %s:%d\r\n", __func__, __LINE__);
+}
+
+#endif /* UAP_SUPPORT */
+
 #endif /* _MLAN_UAP_H_ */

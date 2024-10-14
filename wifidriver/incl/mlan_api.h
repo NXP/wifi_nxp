@@ -205,6 +205,7 @@ mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
                                       IN t_void *pdata_buf,
                                       mlan_bss_type bss_type,
                                       void *priv);
+#if UAP_SUPPORT
 int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
                                   t_u16 cmd_no,
                                   t_u16 cmd_action,
@@ -213,6 +214,20 @@ int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
                                   t_void *pdata_buf,
                                   mlan_bss_type bss_type,
                                   void *priv);
+#else
+static inline int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
+                                                t_u16 cmd_no,
+                                                t_u16 cmd_action,
+                                                t_u32 cmd_oid,
+                                                t_void *pioctl_buf,
+                                                t_void *pdata_buf,
+                                                mlan_bss_type bss_type,
+                                                void *priv)
+{
+    (void)PRINTF("wifi_uap_prepare_and_send_cmd UAP not suppored %s:%d\r\n", __func__, __LINE__);
+    return WM_UAP_NOT_SUPPORT;
+}
+#endif
 
 bool wmsdk_is_11N_enabled(void);
 

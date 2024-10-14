@@ -599,11 +599,6 @@ int wifi_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr)
     return WM_SUCCESS;
 }
 
-int wifi_uap_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr)
-{
-    return wifi_uap_pmf_getset(HostCmd_ACT_GEN_GET, mfpc, mfpr);
-}
-
 int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
 {
     (void)wifi_get_command_lock();
@@ -3251,6 +3246,15 @@ int wifi_enable_11d_support()
     return wlan_enable_11d_support(pmpriv);
 }
 
+int wifi_disable_11d_support()
+{
+    mlan_adap->priv[0]->state_11d.user_enable_11d_support = DISABLE_11D;
+    wrapper_wlan_11d_enable(DISABLE_11D);
+
+    return WM_SUCCESS;
+}
+
+#if UAP_SUPPORT
 int wifi_enable_uap_11d_support()
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
@@ -3265,14 +3269,6 @@ int wifi_enable_uap_11d_support()
     return wlan_enable_11d_support(pmpriv);
 }
 
-int wifi_disable_11d_support()
-{
-    mlan_adap->priv[0]->state_11d.user_enable_11d_support = DISABLE_11D;
-    wrapper_wlan_11d_enable(DISABLE_11D);
-
-    return WM_SUCCESS;
-}
-
 int wifi_disable_uap_11d_support()
 {
     mlan_adap->priv[1]->state_11d.user_enable_11d_support = DISABLE_11D;
@@ -3282,6 +3278,7 @@ int wifi_disable_uap_11d_support()
     wm_wifi.uap_support_11d_apis = MNULL;
     return WM_SUCCESS;
 }
+#endif /* UAP_SUPPORT */
 
 int wifi_enable_11d_support_APIs(void)
 {

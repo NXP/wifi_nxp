@@ -200,6 +200,13 @@ file(GLOB WIFI_SRC ./wifidriver/*.c)
 list(FILTER WIFI_SRC EXCLUDE REGEX ".*imu.c$")
 list(FILTER WIFI_SRC EXCLUDE REGEX ".*sdio.c$")
 list(FILTER WIFI_SRC EXCLUDE REGEX ".*firmware_dnld.c$")
+list(FILTER WIFI_SRC EXCLUDE REGEX ".*uap.*.c$")
+
+zephyr_library_sources_ifdef(CONFIG_NXP_WIFI_SOFTAP_SUPPORT
+    wifidriver/wifi-uap.c
+    wifidriver/mlan_uap_ioctl.c
+    wifidriver/mlan_uap_cmdevent.c
+)
 
 zephyr_library_sources_ifdef(CONFIG_NXP_RW610
     wifidriver/wifi-imu.c
