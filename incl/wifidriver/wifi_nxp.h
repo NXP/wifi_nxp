@@ -53,6 +53,8 @@ struct wifi_nxp_ctx_rtos
     int mgmt_tx_status;
     uint8_t *last_mgmt_tx_data;
     size_t last_mgmt_tx_data_len;
+    bool ft_roaming;
+    struct wpa_driver_set_key_params *key_params;
 };
 
 int wifi_supp_init(void);

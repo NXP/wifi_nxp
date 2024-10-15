@@ -330,6 +330,31 @@ void wifi_nxp_wpa_supp_event_proc_survey_res(void *if_priv,
 }
 #endif
 
+static void wifi_nxp_wpa_supp_free_pairwise_key_params(struct wpa_driver_set_key_params *params)
+{
+    if (params->ifname)
+    {
+        os_free((void *)params->ifname);
+    }
+
+    if (params->addr)
+    {
+        os_free((void *)params->addr);
+    }
+
+    if (params->seq)
+    {
+        os_free((void *)params->seq);
+    }
+
+    if (params->key)
+    {
+        os_free((void *)params->key);
+    }
+
+    os_free(params);
+}
+
 void wifi_nxp_wpa_supp_event_proc_auth_resp(void *if_priv, nxp_wifi_event_mlme_t *auth_resp, unsigned int event_len)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
@@ -439,6 +464,12 @@ void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
         event.assoc_reject.status_code    = status;
         event.assoc_reject.reason_code    = reason_code;
         event.assoc_reject.timeout_reason = NULL;
+        if (wifi_if_ctx_rtos->ft_roaming)
+        {
+            wifi_if_ctx_rtos->ft_roaming = false;
+            wifi_nxp_wpa_supp_free_pairwise_key_params(wifi_if_ctx_rtos->key_params);
+            wifi_if_ctx_rtos->key_params = NULL;
+        }
     }
     else
     {
@@ -1189,6 +1220,7 @@ int wifi_nxp_wpa_supp_deauthenticate(void *if_priv, const char *addr, unsigned s
 {
     int status = -WM_FAIL;
     int ret    = -1;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
     if ((!if_priv) || (!addr))
     {
@@ -1197,6 +1229,12 @@ int wifi_nxp_wpa_supp_deauthenticate(void *if_priv, const char *addr, unsigned s
     }
 
     wifi_d("initiating wifi-deauth");
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+    if (wifi_if_ctx_rtos->ft_roaming)
+    {
+        wifi_if_ctx_rtos->ft_roaming = false;
+    }
 
     status = wifi_nxp_deauthenticate(MLAN_BSS_TYPE_STA, (const unsigned char *)addr, reason_code);
 
@@ -1246,9 +1284,95 @@ int wifi_nxp_wpa_supp_add_key(struct nxp_wifi_umac_key_info *key_info, enum wpa_
 }
 #endif
 
+static int wifi_nxp_wpa_supp_save_pairwise_key_params(struct wifi_nxp_ctx_rtos *if_ctx,
+                                                      const unsigned char *ifname,
+                                                      enum wpa_alg alg,
+                                                      const unsigned char *addr,
+                                                      int key_idx,
+                                                      int set_tx,
+                                                      const unsigned char *seq,
+                                                      size_t seq_len,
+                                                      const unsigned char *key,
+                                                      size_t key_len,
+                                                      enum key_flag key_flag)
+{
+    int ret = -1;
+
+    if (if_ctx->key_params)
+    {
+        wifi_nxp_wpa_supp_free_pairwise_key_params(if_ctx->key_params);
+        if_ctx->key_params = NULL;
+    }
+
+    if_ctx->key_params = (struct wpa_driver_set_key_params *)os_zalloc(sizeof(struct wpa_driver_set_key_params));
+
+    if (!if_ctx->key_params)
+    {
+        wpa_printf(MSG_DEBUG, "%s: failed to alloc", __func__);
+        return -1;
+    }
+
+    if (ifname)
+    {
+        if_ctx->key_params->ifname = os_strdup(ifname);
+        if (!if_ctx->key_params->ifname)
+        {
+            wpa_printf(MSG_DEBUG, "%s: failed to alloc ifname", __func__);
+            goto out;
+        }
+    }
+
+    if (addr)
+    {
+        if_ctx->key_params->addr = os_memdup(addr, ETH_ALEN);
+        if (!if_ctx->key_params->addr)
+        {
+            wpa_printf(MSG_DEBUG, "%s: failed to alloc addr", __func__);
+            goto out;
+        }
+    }
+
+    if (seq)
+    {
+        if_ctx->key_params->seq = os_memdup(seq, seq_len);
+        if (!if_ctx->key_params->seq)
+        {
+            wpa_printf(MSG_DEBUG, "%s: failed to alloc seq", __func__);
+            goto out;
+        }
+        if_ctx->key_params->seq_len = seq_len;
+    }
+
+    if (key)
+    {
+        if_ctx->key_params->key = os_memdup(key, key_len);
+        if (!if_ctx->key_params->key)
+        {
+            wpa_printf(MSG_DEBUG, "%s: failed to alloc key", __func__);
+            goto out;
+        }
+        if_ctx->key_params->key_len = key_len;
+    }
+
+    if_ctx->key_params->alg      = alg;
+    if_ctx->key_params->key_idx  = key_idx;
+    if_ctx->key_params->set_tx   = set_tx;
+    if_ctx->key_params->key_flag = key_flag;
+
+    ret = 0;
+out:
+    if (ret)
+    {
+        wifi_nxp_wpa_supp_free_pairwise_key_params(if_ctx->key_params);
+        if_ctx->key_params = NULL;
+    }
+    return ret;
+}
+
 int wifi_nxp_wpa_supp_authenticate(void *if_priv, struct wpa_driver_auth_params *params, struct wpa_bss *curr_bss)
 {
     int status         = -WM_FAIL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     unsigned char *pos = NULL;
     unsigned char auth_alg;
     unsigned char auth_trans_num[2] = {1, 0};
@@ -1270,12 +1394,15 @@ int wifi_nxp_wpa_supp_authenticate(void *if_priv, struct wpa_driver_auth_params 
         goto out;
     }
 
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
     auth_alg = get_algo_from_auth_type(params->auth_alg);
 
+    wifi_if_ctx_rtos->ft_roaming = false;
     if (params->auth_alg == WPA_AUTH_ALG_FT)
     {
         pos = (unsigned char *)params->ie;
         len = params->ie_len;
+        wifi_if_ctx_rtos->ft_roaming = true;
     }
     else if ((params->auth_data != NULL) && (params->auth_data_len >= 4))
     {
@@ -1419,17 +1546,17 @@ out:
     return ret;
 }
 
-int wifi_nxp_wpa_supp_set_key(void *if_priv,
-                              const unsigned char *ifname,
-                              enum wpa_alg alg,
-                              const unsigned char *addr,
-                              int key_idx,
-                              int set_tx,
-                              const unsigned char *seq,
-                              size_t seq_len,
-                              const unsigned char *key,
-                              size_t key_len,
-                              enum key_flag key_flag)
+static int _wifi_nxp_wpa_supp_set_key(void *if_priv,
+                                      const unsigned char *ifname,
+                                      enum wpa_alg alg,
+                                      const unsigned char *addr,
+                                      int key_idx,
+                                      int set_tx,
+                                      const unsigned char *seq,
+                                      size_t seq_len,
+                                      const unsigned char *key,
+                                      size_t key_len,
+                                      enum key_flag key_flag)
 
 {
     int status                                 = -WM_FAIL;
@@ -1438,12 +1565,6 @@ int wifi_nxp_wpa_supp_set_key(void *if_priv,
     int ret                                    = -1;
     bool is_pairwise                           = false;
     int skip_set_key                           = 1;
-
-    if ((!if_priv) || (!ifname))
-    {
-        supp_e("%s: Invalid params", __func__);
-        goto out;
-    }
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
     if ((key_flag & KEY_FLAG_PAIRWISE_MASK) == KEY_FLAG_PAIRWISE_RX_TX_MODIFY)
@@ -1533,6 +1654,51 @@ int wifi_nxp_wpa_supp_set_key(void *if_priv,
     }
 out:
     return ret;
+}
+
+int wifi_nxp_wpa_supp_set_key(void *if_priv,
+                              const unsigned char *ifname,
+                              enum wpa_alg alg,
+                              const unsigned char *addr,
+                              int key_idx,
+                              int set_tx,
+                              const unsigned char *seq,
+                              size_t seq_len,
+                              const unsigned char *key,
+                              size_t key_len,
+                              enum key_flag key_flag)
+
+{
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+
+    if ((!if_priv) || (!ifname))
+    {
+        supp_e("%s: Invalid params", __func__);
+        return -1;
+    }
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+    if (wifi_if_ctx_rtos->ft_roaming && (key_flag & KEY_FLAG_PAIRWISE)) {
+        return wifi_nxp_wpa_supp_save_pairwise_key_params(wifi_if_ctx_rtos, ifname, alg,
+                                                          addr, key_idx, set_tx, seq, seq_len,
+                                                          key, key_len, key_flag);
+    }
+
+    if (wifi_if_ctx_rtos->ft_roaming && (key_flag & KEY_FLAG_GROUP)) {
+        if (wifi_if_ctx_rtos->key_params &&
+            (wifi_if_ctx_rtos->key_params->key_flag & KEY_FLAG_PAIRWISE)) {
+            _wifi_nxp_wpa_supp_set_key(if_priv, (const unsigned char *)wifi_if_ctx_rtos->key_params->ifname,
+                                       wifi_if_ctx_rtos->key_params->alg, wifi_if_ctx_rtos->key_params->addr,
+                                       wifi_if_ctx_rtos->key_params->key_idx, wifi_if_ctx_rtos->key_params->set_tx,
+                                       wifi_if_ctx_rtos->key_params->seq, wifi_if_ctx_rtos->key_params->seq_len,
+                                       wifi_if_ctx_rtos->key_params->key, wifi_if_ctx_rtos->key_params->key_len,
+                                       wifi_if_ctx_rtos->key_params->key_flag);
+            wifi_nxp_wpa_supp_free_pairwise_key_params(wifi_if_ctx_rtos->key_params);
+            wifi_if_ctx_rtos->key_params = NULL;
+        }
+    }
+    return _wifi_nxp_wpa_supp_set_key(if_priv, ifname, alg, addr, key_idx, set_tx, seq, seq_len, key, key_len, key_flag);
 }
 
 int wifi_nxp_wpa_supp_del_key(void *if_priv, const unsigned char *addr, int key_idx)
