@@ -575,7 +575,7 @@ typedef struct group_ip4_addr
 /* Head of list that will contain IPv4 multicast IP's */
 static group_ip4_addr_t *igmp_ip4_list;
 
-/* Callback called by LwiP to add or delete an entry in the multicast filter table */
+/* Callback called by net_mgmt to add or delete an entry in the multicast filter table */
 static int igmp_mac_filter(struct netif *netif, const struct in_addr *group, enum netif_mac_filter_action action)
 {
     uint8_t mcast_mac[6];
@@ -589,7 +589,7 @@ static int igmp_mac_filter(struct netif *netif, const struct in_addr *group, enu
     switch (action)
     {
         case NET_IF_ADD_MAC_FILTER:
-            /* LwIP takes care of duplicate IP addresses and it always send
+            /* TCP/IP stack takes care of duplicate IP addresses and it always send
              * unique IP address. Simply add IP to top of list*/
 #if !CONFIG_MEM_POOLS
             curr = (group_ip4_addr_t *)OSA_MemoryAllocate(sizeof(group_ip4_addr_t));
@@ -702,7 +702,7 @@ typedef struct group_ip6_addr
 /* Head of list that will contain IPv6 multicast IP's */
 static group_ip6_addr_t *mld_ip6_list;
 
-/* Callback called by LwiP to add or delete an entry in the IPv6 multicast filter table */
+/* Callback called by net_mgmt to add or delete an entry in the IPv6 multicast filter table */
 static int mld_mac_filter(struct netif *netif, const struct in6_addr *group, enum netif_mac_filter_action action)
 {
     uint8_t mcast_mac[6];
@@ -716,7 +716,7 @@ static int mld_mac_filter(struct netif *netif, const struct in6_addr *group, enu
     switch (action)
     {
         case NET_IF_ADD_MAC_FILTER:
-            /* LwIP takes care of duplicate IP addresses and it always send
+            /* TCP/IP stack takes care of duplicate IP addresses and it always send
              * unique IP address. Simply add IP to top of list*/
 #if !CONFIG_MEM_POOLS
             curr = (group_ip6_addr_t *)OSA_MemoryAllocate(sizeof(group_ip6_addr_t));
@@ -1313,9 +1313,6 @@ void net_configure_dns(struct net_ip_config *ip, unsigned int role)
         dns_setserver(1, (ip_addr_t *)(void *)&tmp);
 #endif
     }
-
-    /* DNS MAX Retries should be configured in lwip/dns.c to 3/4 */
-    /* DNS Cache size of about 4 is sufficient */
 }
 
 void net_stat(void)
