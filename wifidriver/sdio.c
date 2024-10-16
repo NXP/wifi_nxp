@@ -19,7 +19,6 @@
 #include "mlan_main_defs.h"
 #include "mlan_sdio_defs.h"
 #include "type_decls.h"
-#include "fsl_common.h"
 #include "sdio.h"
 #include "firmware_dnld.h"
 

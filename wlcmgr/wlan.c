@@ -35,7 +35,6 @@
 #else
 #include <wifi_cal_data_ext.h>
 #endif
-#include <fsl_common.h>
 #ifdef RW610
 #include "fsl_loader.h"
 #endif

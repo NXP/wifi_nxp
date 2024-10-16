@@ -16,7 +16,6 @@
 #include <wmlog.h>
 /* Additional WMSDK header files */
 #include "type_decls.h"
-#include "fsl_common.h"
 #include "firmware_dnld.h"
 #include "fwdnld_intf_abs.h"
 

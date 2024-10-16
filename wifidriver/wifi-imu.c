@@ -19,7 +19,6 @@
 #include <mlan_fw.h>
 #include "wifi-imu.h"
 #include "wifi-internal.h"
-#include "fsl_common.h"
 #include "fsl_adapter_rfimu.h"
 #include "fsl_imu.h"
 #include "fsl_loader.h"
