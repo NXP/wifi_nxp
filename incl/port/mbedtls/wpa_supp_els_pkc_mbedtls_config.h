@@ -32,23 +32,7 @@
 #endif
 
 /**************************** MCUX CSS_PKC ********************************************/
-#include "fsl_device_registers.h"
-#ifdef __ZEPHYR__
 #include <zephyr/sys/printk.h>
-#else
-#include "fsl_debug_console.h"
-
-#if defined(USE_RTOS) && defined(SDK_OS_FREE_RTOS)
-#include "FreeRTOS.h"
-
-void *pvPortCalloc(size_t num, size_t size); /*Calloc for HEAP3.*/
-
-#define MBEDTLS_PLATFORM_MEMORY
-#define MBEDTLS_PLATFORM_STD_CALLOC pvPortCalloc
-#define MBEDTLS_PLATFORM_STD_FREE vPortFree
-
-#endif /* USE_RTOS*/
-#endif /* __ZEPHYR__ */
 
 #if defined(CONFIG_WIFI_NM_WPA_SUPPLICANT_CRYPTO_MBEDTLS_PSA) && \
     !defined(CONFIG_BUILD_WITH_TFM)
@@ -411,134 +395,6 @@ void *pvPortCalloc(size_t num, size_t size); /*Calloc for HEAP3.*/
  *            digests and ciphers instead.
  *
  */
-#ifndef __ZEPHYR__
-//#define MBEDTLS_AES_ALT
-#define MBEDTLS_AES_CTX_ALT
-//#define MBEDTLS_AES_XTS_ALT
-//#define MBEDTLS_ARC4_ALT
-//#define MBEDTLS_ARIA_ALT
-//#define MBEDTLS_BLOWFISH_ALT
-//#define MBEDTLS_CAMELLIA_ALT
-//#define MBEDTLS_CCM_ALT
-//#define MBEDTLS_CHACHA20_ALT
-//#define MBEDTLS_CHACHAPOLY_ALT
-//#define MBEDTLS_CMAC_ALT
-#define MBEDTLS_CTR_DRBG_ALT
-#define MBEDTLS_AES_CMAC_ALT
-//#define MBEDTLS_DES_ALT
-//#define MBEDTLS_DHM_ALT
-//#define MBEDTLS_ECJPAKE_ALT
-//#define MBEDTLS_GCM_ALT
-//#define MBEDTLS_AES_GCM_ALT
-//#define MBEDTLS_NIST_KW_ALT
-//#define MBEDTLS_MD2_ALT
-//#define MBEDTLS_MD4_ALT
-//#define MBEDTLS_MD5_ALT
-//#define MBEDTLS_POLY1305_ALT
-//#define MBEDTLS_RIPEMD160_ALT
-//#define MBEDTLS_RSA_ALT
-#define MBEDTLS_RSA_CTX_ALT
-#define MBEDTLS_RSA_PUBLIC_ALT
-#define MBEDTLS_RSA_PRIVATE_ALT
-//#define MBEDTLS_SHA1_ALT
-//#define MBEDTLS_SHA256_ALT
-#define MBEDTLS_SHA256_CTX_ALT
-#define MBEDTLS_SHA256_STARTS_ALT
-#define MBEDTLS_SHA256_UPDATE_ALT
-#define MBEDTLS_SHA256_FINISH_ALT
-#define MBEDTLS_SHA256_FULL_ALT
-//#define MBEDTLS_SHA512_ALT
-#define MBEDTLS_SHA512_CTX_ALT
-#define MBEDTLS_SHA512_STARTS_ALT
-#define MBEDTLS_SHA512_UPDATE_ALT
-#define MBEDTLS_SHA512_FINISH_ALT
-#define MBEDTLS_SHA512_FULL_ALT
-//#define MBEDTLS_XTEA_ALT
-
-/*
- * When replacing the elliptic curve module, pleace consider, that it is
- * implemented with two .c files:
- *      - ecp.c
- *      - ecp_curves.c
- * You can replace them very much like all the other MBEDTLS__MODULE_NAME__ALT
- * macros as described above. The only difference is that you have to make sure
- * that you provide functionality for both .c files.
- */
-//#define MBEDTLS_ECP_ALT
-
-/**
- * \def MBEDTLS_MD2_PROCESS_ALT
- *
- * MBEDTLS__FUNCTION_NAME__ALT: Uncomment a macro to let mbed TLS use you
- * alternate core implementation of symmetric crypto or hash function. Keep in
- * mind that function prototypes should remain the same.
- *
- * This replaces only one function. The header file from mbed TLS is still
- * used, in contrast to the MBEDTLS__MODULE_NAME__ALT flags.
- *
- * Example: In case you uncomment MBEDTLS_SHA256_PROCESS_ALT, mbed TLS will
- * no longer provide the mbedtls_sha1_process() function, but it will still provide
- * the other function (using your mbedtls_sha1_process() function) and the definition
- * of mbedtls_sha1_context, so your implementation of mbedtls_sha1_process must be compatible
- * with this definition.
- *
- * \note Because of a signature change, the core AES encryption and decryption routines are
- *       currently named mbedtls_aes_internal_encrypt and mbedtls_aes_internal_decrypt,
- *       respectively. When setting up alternative implementations, these functions should
- *       be overridden, but the wrapper functions mbedtls_aes_decrypt and mbedtls_aes_encrypt
- *       must stay untouched.
- *
- * \note If you use the AES_xxx_ALT macros, then is is recommended to also set
- *       MBEDTLS_AES_ROM_TABLES in order to help the linker garbage-collect the AES
- *       tables.
- *
- * Uncomment a macro to enable alternate implementation of the corresponding
- * function.
- *
- * \warning   MD2, MD4, MD5, DES and SHA-1 are considered weak and their use
- *            constitutes a security risk. If possible, we recommend avoiding
- *            dependencies on them, and considering stronger message digests
- *            and ciphers instead.
- *
- * \warning   If both MBEDTLS_ECDSA_SIGN_ALT and MBEDTLS_ECDSA_DETERMINISTIC are
- *            enabled, then the deterministic ECDH signature functions pass the
- *            the static HMAC-DRBG as RNG to mbedtls_ecdsa_sign(). Therefore
- *            alternative implementations should use the RNG only for generating
- *            the ephemeral key and nothing else. If this is not possible, then
- *            MBEDTLS_ECDSA_DETERMINISTIC should be disabled and an alternative
- *            implementation should be provided for mbedtls_ecdsa_sign_det_ext()
- *            (and for mbedtls_ecdsa_sign_det() too if backward compatibility is
- *            desirable).
- *
- */
-//#define MBEDTLS_MD2_PROCESS_ALT
-//#define MBEDTLS_MD4_PROCESS_ALT
-//#define MBEDTLS_MD5_PROCESS_ALT
-//#define MBEDTLS_RIPEMD160_PROCESS_ALT
-//#define MBEDTLS_SHA1_PROCESS_ALT
-#define MBEDTLS_SHA256_PROCESS_ALT
-#define MBEDTLS_SHA512_PROCESS_ALT
-//#define MBEDTLS_DES_SETKEY_ALT
-//#define MBEDTLS_DES_CRYPT_ECB_ALT
-//#define MBEDTLS_DES3_CRYPT_ECB_ALT
-#define MBEDTLS_AES_SETKEY_ENC_ALT
-#define MBEDTLS_AES_SETKEY_DEC_ALT
-#define MBEDTLS_AES_ENCRYPT_ALT
-#define MBEDTLS_AES_DECRYPT_ALT
-#define MBEDTLS_AES_GCM_SETKEY_ALT
-#define MBEDTLS_AES_GCM_STARTS_ALT
-#define MBEDTLS_AES_GCM_UPDATE_ALT
-#define MBEDTLS_AES_GCM_FINISH_ALT
-#define MBEDTLS_AES_CBC_ALT
-#define MBEDTLS_AES_CTR_ALT
-#define MBEDTLS_ECDH_GEN_PUBLIC_ALT
-#define MBEDTLS_ECDH_COMPUTE_SHARED_ALT
-//#define MBEDTLS_ECP_RESTARTABLE
-#define MBEDTLS_ECDH_CANDO_ALT
-#define MBEDTLS_ECDSA_VERIFY_ALT
-#define MBEDTLS_ECDSA_SIGN_ALT
-#define MBEDTLS_ECDSA_GENKEY_ALT
-#endif
 
 /**
  * \def MBEDTLS_ECP_INTERNAL_ALT
@@ -609,21 +465,6 @@ void *pvPortCalloc(size_t num, size_t size); /*Calloc for HEAP3.*/
  *
  */
 //#define MBEDTLS_TEST_NULL_ENTROPY
-
-#ifndef __ZEPHYR__
-/**
- * \def MBEDTLS_ENTROPY_HARDWARE_ALT
- *
- * Uncomment this macro to let mbed TLS use your own implementation of a
- * hardware entropy collector.
- *
- * Your function must be called \c mbedtls_hardware_poll(), have the same
- * prototype as declared in entropy_poll.h, and accept NULL as first argument.
- *
- * Uncomment to use your own hardware entropy collector.
- */
-#define MBEDTLS_ENTROPY_HARDWARE_ALT
-#endif
 
 /**
  * \def MBEDTLS_AES_ROM_TABLES
@@ -1979,17 +1820,6 @@ void *pvPortCalloc(size_t num, size_t size); /*Calloc for HEAP3.*/
  */
 #define MBEDTLS_SSL_SERVER_NAME_INDICATION
 
-#ifndef __ZEPHYR__
-/**
- * \def MBEDTLS_SSL_TRUNCATED_HMAC
- *
- * Enable support for RFC 6066 truncated HMAC in SSL.
- *
- * Comment this macro to disable support for truncated HMAC in SSL
- */
-#define MBEDTLS_SSL_TRUNCATED_HMAC
-#endif
-
 /**
  * \def MBEDTLS_SSL_TRUNCATED_HMAC_COMPAT
  *
@@ -2077,18 +1907,6 @@ void *pvPortCalloc(size_t num, size_t size); /*Calloc for HEAP3.*/
  */
 //#define MBEDTLS_TEST_HOOKS
 
-#ifndef __ZEPHYR__
-/**
- * \def MBEDTLS_THREADING_ALT
- *
- * Provide your own alternate threading implementation.
- *
- * Requires: MBEDTLS_THREADING_C
- *
- * Uncomment this to allow your own alternate threading implementation.
- */
-#define MBEDTLS_THREADING_ALT
-#endif
 /**
  * \def MBEDTLS_THREADING_PTHREAD
  *
@@ -2357,36 +2175,6 @@ void *pvPortCalloc(size_t num, size_t size); /*Calloc for HEAP3.*/
  * PEM_PARSE uses AES for decrypting encrypted keys.
  */
 #define MBEDTLS_AES_C
-
-#ifndef __ZEPHYR__
-/**
- * \def MBEDTLS_ARC4_C
- *
- * Enable the ARCFOUR stream cipher.
- *
- * Module:  library/arc4.c
- * Caller:  library/cipher.c
- *
- * This module enables the following ciphersuites (if other requisites are
- * enabled as well):
- *      MBEDTLS_TLS_ECDH_ECDSA_WITH_RC4_128_SHA
- *      MBEDTLS_TLS_ECDH_RSA_WITH_RC4_128_SHA
- *      MBEDTLS_TLS_ECDHE_ECDSA_WITH_RC4_128_SHA
- *      MBEDTLS_TLS_ECDHE_RSA_WITH_RC4_128_SHA
- *      MBEDTLS_TLS_ECDHE_PSK_WITH_RC4_128_SHA
- *      MBEDTLS_TLS_DHE_PSK_WITH_RC4_128_SHA
- *      MBEDTLS_TLS_RSA_WITH_RC4_128_SHA
- *      MBEDTLS_TLS_RSA_WITH_RC4_128_MD5
- *      MBEDTLS_TLS_RSA_PSK_WITH_RC4_128_SHA
- *      MBEDTLS_TLS_PSK_WITH_RC4_128_SHA
- *
- * \warning   ARC4 is considered a weak cipher and its use constitutes a
- *            security risk. If possible, we recommend avoidng dependencies on
- *            it, and considering stronger ciphers instead.
- *
- */
-#define MBEDTLS_ARC4_C
-#endif
 
 /**
  * \def MBEDTLS_ASN1_PARSE_C
@@ -2918,25 +2706,6 @@ void *pvPortCalloc(size_t num, size_t size); /*Calloc for HEAP3.*/
  */
 //#define MBEDTLS_MD2_C
 
-#ifndef __ZEPHYR__
-/**
- * \def MBEDTLS_MD4_C
- *
- * Enable the MD4 hash algorithm.
- *
- * Module:  library/md4.c
- * Caller:
- *
- * Uncomment to enable support for (rare) MD4-signed X.509 certs.
- *
- * \warning   MD4 is considered a weak message digest and its use constitutes a
- *            security risk. If possible, we recommend avoiding dependencies on
- *            it, and considering stronger message digests instead.
- *
- */
-#define MBEDTLS_MD4_C
-#endif
-
 /**
  * \def MBEDTLS_MD5_C
  *
@@ -3296,7 +3065,6 @@ void *pvPortCalloc(size_t num, size_t size); /*Calloc for HEAP3.*/
  */
 #define MBEDTLS_SHA1_C
 
-#ifdef __ZEPHYR__
 /**
  * \def MBEDTLS_SHA224_C
  *
@@ -3312,7 +3080,6 @@ void *pvPortCalloc(size_t num, size_t size); /*Calloc for HEAP3.*/
  * This module adds support for SHA-224.
  */
 #define MBEDTLS_SHA224_C
-#endif
 
 /**
  * \def MBEDTLS_SHA256_C
@@ -3441,30 +3208,6 @@ void *pvPortCalloc(size_t num, size_t size); /*Calloc for HEAP3.*/
  * This module is required for SSL/TLS.
  */
 #define MBEDTLS_SSL_TLS_C
-
-#ifndef __ZEPHYR__
-/**
- * \def MBEDTLS_THREADING_C
- *
- * Enable the threading abstraction layer.
- * By default mbed TLS assumes it is used in a non-threaded environment or that
- * contexts are not shared between threads. If you do intend to use contexts
- * between threads, you will need to enable this layer to prevent race
- * conditions. See also our Knowledge Base article about threading:
- * https://tls.mbed.org/kb/development/thread-safety-and-multi-threading
- *
- * Module:  library/threading.c
- *
- * This allows different threading implementations (self-implemented or
- * provided).
- *
- * You will have to enable either MBEDTLS_THREADING_ALT or
- * MBEDTLS_THREADING_PTHREAD.
- *
- * Enable this layer to allow use of mutexes within mbed TLS
- */
-#define MBEDTLS_THREADING_C
-#endif
 
 /**
  * \def MBEDTLS_TIMING_C
@@ -3681,11 +3424,7 @@ void *pvPortCalloc(size_t num, size_t size); /*Calloc for HEAP3.*/
 //#define MBEDTLS_PLATFORM_TIME_MACRO            time /**< Default time macro to use, can be undefined. MBEDTLS_HAVE_TIME must be enabled */
 //#define MBEDTLS_PLATFORM_TIME_TYPE_MACRO       time_t /**< Default time macro to use, can be undefined. MBEDTLS_HAVE_TIME must be enabled */
 //#define MBEDTLS_PLATFORM_FPRINTF_MACRO      fprintf /**< Default fprintf macro to use, can be undefined */
-#ifdef __ZEPHYR__
 #define MBEDTLS_PLATFORM_PRINTF_MACRO        printk /**< Default printf macro to use, can be undefined */
-#else
-#define MBEDTLS_PLATFORM_PRINTF_MACRO        PRINTF /**< Default printf macro to use, can be undefined */
-#endif
 /* Note: your snprintf must correctly zero-terminate the buffer! */
 //#define MBEDTLS_PLATFORM_SNPRINTF_MACRO    snprintf /**< Default snprintf macro to use, can be undefined */
 //#define MBEDTLS_PLATFORM_VSNPRINTF_MACRO    vsnprintf /**< Default vsnprintf macro to use, can be undefined */

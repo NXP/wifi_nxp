@@ -10,9 +10,7 @@
 
 #include <osa.h>
 #if CONFIG_WLS_CSI_PROC
-
 #include "range_kalman.h"
-#include "fsl_debug_console.h"
 #include <stdio.h>
 #include <math.h>
 
