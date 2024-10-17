@@ -8,7 +8,6 @@
  *
  */
 #if CONFIG_MCU_MEM_ACCESS
-#include <cli.h>
 #include <cli_utils.h>
 #include <osa.h>
 
