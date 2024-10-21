@@ -48,6 +48,19 @@ Change log:
     } while (0)
 #endif /* BIG_ENDIAN_SUPPORT */
 
+/** Guard mlan_private access when uAP disabled */
+#if UAP_SUPPORT
+#define CHECK_BSS_TYPE(id, rvl)
+#define CHECK_BSS_TYPE_RET_VOID(id)
+#else
+#define CHECK_BSS_TYPE(id, rvl) \
+    if ((int)(id) > MLAN_BSS_ROLE_STA) \
+        return (rvl)
+#define CHECK_BSS_TYPE_RET_VOID(id) \
+    if ((int)(id) > MLAN_BSS_ROLE_STA) \
+        return
+#endif
+
 /** Band config 5GHz */
 #define UAP_BAND_CONFIG_5GHZ 0x01
 

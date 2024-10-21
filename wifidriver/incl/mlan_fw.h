@@ -1774,7 +1774,7 @@ typedef enum _ENH_PS_MODES
 #define EVENT_AUTO_LINK_SWITCH_NEW_NODE 0X00000125
 #endif
 
-#ifdef UAP_SUPPORT
+#if UAP_SUPPORT
 /** Event ID: STA deauth */
 #define EVENT_MICRO_AP_STA_DEAUTH 0x0000002c
 /** Event ID: STA assoicated */

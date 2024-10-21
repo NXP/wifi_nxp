@@ -84,7 +84,11 @@ Change log:
 
 /** Maximum BSS numbers */
 /* fixme: We have reduced this from 16 to 2. Ensure that this is Ok */
+#if UAP_SUPPORT
 #define MLAN_MAX_BSS_NUM 2U
+#else
+#define MLAN_MAX_BSS_NUM 1U
+#endif
 
 /** NET IP alignment */
 #define MLAN_NET_IP_ALIGN 0

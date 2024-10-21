@@ -136,7 +136,9 @@
 #define BG_SCAN_LIMIT 3
 #endif
 
+#if UAP_SUPPORT
 static bool wlan_uap_scan_chan_list_set;
+#endif
 
 #if CONFIG_MEF_CFG
 wlan_flt_cfg_t g_flt_cfg;
@@ -926,7 +928,11 @@ static int wlan_send_host_sleep_int(uint32_t wake_up_conds, bool is_config)
         return -WM_FAIL;
     }
 
-    if (!is_sta_connected() && !mlan_adap->priv[1]->media_connected)
+    if (!is_sta_connected()
+#if UAP_SUPPORT
+        && !mlan_adap->priv[1]->media_connected
+#endif
+        )
     {
         if ((wake_up_conds & (WAKE_ON_ALL_BROADCAST | WAKE_ON_UNICAST | WAKE_ON_MULTICAST
                                    | WAKE_ON_ARP_BROADCAST | WAKE_ON_MGMT_FRAME)) != 0)
@@ -1110,7 +1116,11 @@ int wlan_wowlan_config(t_u32 wake_up_conds)
         return -WM_FAIL;
     }
 
-    if (!is_sta_connected() && !mlan_adap->priv[1]->media_connected)
+    if (!is_sta_connected()
+#if UAP_SUPPORT
+        && !mlan_adap->priv[1]->media_connected
+#endif
+        )
     {
 #if CONFIG_MEF_CFG
         if (is_mef)
@@ -2060,7 +2070,8 @@ static int do_connect(int netindex)
     return WM_SUCCESS;
 }
 #endif
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
+
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT && UAP_SUPPORT
 static int do_start(struct wlan_network *network)
 {
     int ret = 0;
@@ -2257,7 +2268,8 @@ static int do_stop(struct wlan_network *network)
 
     return WM_SUCCESS;
 }
-#endif
+#endif /* !CONFIG_WIFI_NM_WPA_SUPPLICANT && UAP_SUPPORT */
+
 /* A connection attempt has failed for 'reason', decide whether to try to
  * connect to another network (in that case, tell the state machine to
  * transition to CM_STA_CONFIGURING to try that network) or finish attempting to
@@ -5886,10 +5898,12 @@ static void wlcm_process_fw_hang_event(struct wifi_message *msg, enum cm_sta_sta
         wlan_dhcp_cleanup();
     }
 
+#if UAP_SUPPORT
     if (wlan.uap_state > CM_UAP_INITIALIZING)
     {
         (void)do_stop(&wlan.networks[wlan.cur_uap_network_idx]);
     }
+#endif
 }
 
 static void wlcm_process_fw_reset_event(struct wifi_message *msg, enum cm_sta_state *next)
@@ -5905,6 +5919,7 @@ static void wlcm_process_fw_reset_event(struct wifi_message *msg, enum cm_sta_st
 }
 #endif
 
+#if UAP_SUPPORT
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
 static void wlan_notify_uap_chan_switch(t_u8 channel)
 {
@@ -6148,6 +6163,7 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
     }
     return next;
 }
+#endif /* UAP_SUPPORT */
 
 static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
 {
@@ -7329,7 +7345,9 @@ static void wlcmgr_task(void *data)
     osa_status_t status;
     struct wifi_message msg;
     enum cm_sta_state next_sta_state;
+#if UAP_SUPPORT
     enum cm_uap_state next_uap_state;
+#endif
 
     (void)memset((void *)&msg, 0, sizeof(struct wifi_message));
 
@@ -7368,6 +7386,7 @@ static void wlcmgr_task(void *data)
 
             if (is_uap_msg(&msg) != 0)
             {
+#if UAP_SUPPORT
                 /* uAP related msg */
                 next_uap_state = uap_state_machine(&msg);
                 if (wlan.uap_state == next_uap_state)
@@ -7377,6 +7396,9 @@ static void wlcmgr_task(void *data)
 
                 wlcm_d("SM uAP %s -> %s", dbg_uap_state_name(wlan.uap_state), dbg_uap_state_name(next_uap_state));
                 wlan.uap_state = next_uap_state;
+#else
+                wlcm_w("UAP feature disabled recv wlcm msg %d", msg.event);
+#endif
             }
             else if (msg.event == (uint16_t)CM_WLAN_USER_REQUEST_DEINIT)
             {
@@ -8811,6 +8833,14 @@ int wlan_add_network(struct wlan_network *network)
             return WLAN_ERROR_STATE;
         }
     }
+
+#if !UAP_SUPPORT
+    if (network->role != WLAN_BSS_ROLE_STA)
+    {
+        wlcm_e("wlan_add_network UAP not supported");
+        return -WM_E_INVAL;
+    }
+#endif
 
     /* make sure that the network name length is acceptable */
     len = strlen(network->name);
@@ -10272,6 +10302,7 @@ int wlan_reassociate(void)
 
 int wlan_start_network(const char *name)
 {
+#if UAP_SUPPORT
     unsigned int i;
     unsigned int len;
 
@@ -10324,10 +10355,15 @@ int wlan_start_network(const char *name)
 
     /* specified network was not found */
     return -WM_E_INVAL;
+#else
+    wlcm_e("wlan_start_network UAP not supported");
+    return -WM_E_NODEV;
+#endif /* UAP_SUPPORT */
 }
 
 int wlan_stop_network(const char *name)
 {
+#if UAP_SUPPORT
     unsigned int i;
     unsigned int len;
 
@@ -10362,6 +10398,10 @@ int wlan_stop_network(const char *name)
     } /* end of loop */
     /* specified network was not found */
     return -WM_E_INVAL;
+#else
+    wlcm_e("wlan_stop_network UAP not supported");
+    return -WM_E_NODEV;
+#endif /* UAP_SUPPORT */
 }
 
 #if defined(RW610)
@@ -10461,6 +10501,7 @@ void wlan_reset(cli_reset_option ResetOption)
             }
 
             /*Stop current uAP if uAP is started.*/
+#if UAP_SUPPORT
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
             if (is_uap_started())
             {
@@ -10479,6 +10520,7 @@ void wlan_reset(cli_reset_option ResetOption)
                     OSA_TimeDelay(1000);
                 }
             }
+#endif
 #endif
 #if CONFIG_CPU_LOADING
             if(cpu_loading.status != CPU_LOADING_STATUS_DEAD)
@@ -12683,8 +12725,10 @@ void wlan_uap_ampdu_rx_enable_per_tid(t_u8 tid)
 
 void wlan_uap_set_scan_chan_list(wifi_scan_chan_list_t scan_chan_list)
 {
+#if UAP_SUPPORT
     wlan_uap_scan_chan_list_set = true;
     (void)memcpy((void *)&wlan.scan_chan_list, (const void *)&scan_chan_list, sizeof(wifi_scan_chan_list_t));
+#endif
 }
 
 void wlan_uap_set_beacon_period(const uint16_t beacon_period)

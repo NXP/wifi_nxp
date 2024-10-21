@@ -1187,6 +1187,8 @@ void wlan_cleanup_bypass_txq(uint8_t interface)
     bypass_outbuf_t *buf;
     pmlan_private priv = mlan_adap->priv[interface];
 
+    CHECK_BSS_TYPE_RET_VOID(interface);
+
     /*Free hold buff*/
     while (!wlan_bypass_txq_empty(interface))
     {

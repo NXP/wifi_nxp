@@ -506,6 +506,7 @@ int wifi_send_rf_channel_cmd(wifi_rf_channel_t *rf_channel)
 
 int wifi_send_remain_on_channel_cmd(unsigned int bss_type, wifi_remain_on_channel_t *remain_on_channel)
 {
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
@@ -545,6 +546,7 @@ int wifi_get_set_rf_tx_power(t_u16 cmd_action, wifi_tx_power_t *tx_power)
 
 int wifi_get_data_rate(wifi_ds_rate *ds_rate, mlan_bss_type bss_type)
 {
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
@@ -2740,6 +2742,7 @@ static int wifi_send_get_log_cmd(wlan_pkt_stats_t *stats, mlan_bss_type bss_type
 int wifi_get_log(wlan_pkt_stats_t *stats, mlan_bss_type bss_type)
 
 {
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     int rv = wifi_send_get_log_cmd(stats, bss_type);
     if (rv != WM_SUCCESS || wm_wifi.cmd_resp_status != WM_SUCCESS)
         return -WM_FAIL;
@@ -4078,6 +4081,7 @@ int wifi_get_chanlist(wifi_chanlist_t *chanlist)
     return WM_SUCCESS;
 }
 
+#if UAP_SUPPORT
 void wifi_get_active_channel_list(t_u8 *chan_list, t_u8 *num_chans, t_u16 acs_band)
 {
     if (chan_list != MNULL && num_chans != MNULL)
@@ -4085,6 +4089,7 @@ void wifi_get_active_channel_list(t_u8 *chan_list, t_u8 *num_chans, t_u16 acs_ba
         wlan_get_active_channel_list((mlan_private *)mlan_adap->priv[1], chan_list, num_chans, acs_band);
     }
 }
+#endif
 
 int wifi_set_txpwrlimit(wifi_txpwrlimit_t *txpwrlimit)
 {
@@ -4720,6 +4725,7 @@ int wifi_set_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl, int bss_type)
         return -WM_FAIL;
     }
 
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[bss_type];
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
@@ -4757,6 +4763,7 @@ int wifi_set_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl, int bss_type)
 
 int wifi_get_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl, int bss_type)
 {
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[bss_type];
 
     if (wifi_ed_mac_ctrl == MNULL)
@@ -5118,6 +5125,7 @@ int wifi_set_eu_crypto(EU_Crypto *Crypto_Data, enum _crypto_algorithm Algorithm,
 
 int wifi_set_rx_mgmt_indication(unsigned int bss_type, unsigned int mgmt_subtype_mask)
 {
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[bss_type];
 
     mlan_ds_rx_mgmt_indication rx_mgmt_indication;

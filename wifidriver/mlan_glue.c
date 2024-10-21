@@ -151,8 +151,6 @@ int wrapper_wlan_set_regiontable(t_u8 region, t_u16 band);
 int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payload);
 int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
 
-int wrapper_wlan_handle_amsdu_rx_packet(const t_u8 *rcvdata, const t_u16 datalen);
-
 void wlan_process_hang(uint8_t fw_reload);
 
 #if CONFIG_11N
@@ -606,6 +604,7 @@ int mlan_subsys_init(void)
     /* 11d initialization */
     /* mlan_dev.cfg_11d = 0; */
 
+#if UAP_SUPPORT
     mlan_dev.bss_attr[1].bss_type = MLAN_BSS_TYPE_UAP;
     /** Data frame type: Ethernet II, 802.11, etc. */
     mlan_dev.bss_attr[1].frame_type = MLAN_DATA_FRAME_TYPE_ETH_II;
@@ -615,6 +614,7 @@ int mlan_subsys_init(void)
     mlan_dev.bss_attr[1].bss_priority = 0;
     /** BSS number */
     mlan_dev.bss_attr[1].bss_num = 0;
+#endif
 
     /* fixme: check return value above status */
     (void)mlan_register(&mlan_dev, (t_void **)&mlan_adap);
@@ -741,6 +741,7 @@ int wrapper_wlan_cmd_11n_delba_rspgen(void *saved_event_buff)
     return 0;
 }
 
+#if UAP_SUPPORT
 void wrapper_wlan_update_uap_rxrate_info(RxPD *rxpd)
 {
     pmlan_private priv = mlan_adap->priv[1];
@@ -841,6 +842,7 @@ int wrapper_wlan_uap_ampdu_enable(uint8_t *addr
         wlan_release_ralist_lock(pmpriv_uap);
     return MLAN_STATUS_SUCCESS;
 }
+#endif
 
 static mlan_status do_wlan_ret_11n_addba_resp(HostCmd_DS_COMMAND *resp)
 {
@@ -1300,105 +1302,6 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
 #endif
         return -WM_FAIL;
     }
-
-    return WM_SUCCESS;
-}
-
-/* fixme: This AMSDU special handling needs to be redesigned. We could
-   create a copy of the SDIO packet buffer for _every_ packet AMSDU and
-   non-AMSDU. We could then use RAW_PBUF allocation to allocate pbufs
-   during final step of packet delivery to lwip stack.
-
-   Note: This is not AMSDU inside AMPDU. This is a pure AMSDU.
-   Note: We will not be duplicating the AMSDU packet from the SDIO
-   buffer. So, we have to ensure that there are no race
-   conditions. i.e. the SDIO buffer is not overwritten in the background.
-*/
-int wrapper_wlan_handle_amsdu_rx_packet(const t_u8 *rcvdata, const t_u16 datalen)
-{
-    w_pkt_d("[amsdu] [recv]       : L: %d", datalen);
-
-    RxPD *rxpd = (RxPD *)(void *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
-
-    /* fixme: Check if mlan buffer can be allocated from standard mlan
-       function */
-#if !CONFIG_MEM_POOLS
-    pmlan_buffer pmbuf = OSA_MemoryAllocate(sizeof(mlan_buffer));
-#else
-    pmlan_buffer pmbuf = OSA_MemoryPoolAllocate(buf_128_MemoryPool);
-#endif
-
-    if (pmbuf == MNULL)
-    {
-        /* No mlan_buffer available. Drop this packet */
-        /* fixme: Need to note this event. */
-        w_pkt_e("[amsdu] No memory available. Have to drop packet");
-        return -WM_FAIL;
-    }
-    (void)memset(pmbuf, 0x00, sizeof(mlan_buffer));
-
-    /** Buffer descriptor, e.g. skb in Linux */
-    /* Note: We are storing payload member here. We need to unwind
-       pointer when passing pbuf to lwip */
-    pmbuf->pdesc = ((t_u8 *)rcvdata + INTF_HEADER_LEN + rxpd->rx_pkt_offset);
-
-    /* Store it for later retrivval. mlan stack does not know about this */
-    pmbuf->lwip_pbuf = NULL;
-
-    /* Since this is an AMSDU packet we have the entire SDIO buffer
-       with us. So we do not need to duplicate RxPD
-    */
-    pmbuf->pbuf = (t_u8 *)rxpd;
-    /** Offset to data */
-    pmbuf->data_offset = 0;
-
-    /** Data length */
-    /* fixme: CHK this*/
-    pmbuf->data_len = datalen;
-    /** Buffer type: data, cmd, event etc. */
-    pmbuf->buf_type = MLAN_BUF_TYPE_DATA;
-    /** Fields below are valid for data packet only */
-    /** QoS priority */
-    /* t_u32 priority; */
-    /** Time stamp when packet is received (seconds) */
-    /* t_u32 in_ts_sec; */
-    /** Time stamp when packet is received (micro seconds) */
-    /* t_u32 in_ts_usec; */
-    /** Time stamp when packet is processed (seconds) */
-    /* t_u32 out_ts_sec; */
-    /** Time stamp when packet is processed (micro seconds) */
-    /* t_u32 out_ts_usec; */
-
-    /** Fields below are valid for MLAN module only */
-    /** Pointer to parent mlan_buffer */
-    /* struct _mlan_buffer *pparent; */
-    /** Use count for this buffer */
-    /* t_u32 use_count; */
-
-    if (rxpd->bss_type == (t_u8)MLAN_BSS_ROLE_STA)
-    {
-        (void)wlan_handle_rx_packet(mlan_adap, pmbuf);
-    }
-    else
-    {
-        pmlan_private priv = wlan_get_priv(mlan_adap, MLAN_BSS_ROLE_UAP);
-        pmbuf->data_len    = rxpd->rx_pkt_length;
-        pmbuf->data_offset += rxpd->rx_pkt_offset;
-        (void)wlan_11n_deaggregate_pkt(priv, pmbuf);
-    }
-    /* if (rv != MLAN_STATUS_SUCCESS) { */
-    /*
-      We need to free allocated structures. In case of AMSDU this pmbuf
-      is not freed inside mlan
-    */
-#if !CONFIG_MEM_POOLS
-    OSA_MemoryFree(pmbuf);
-#else
-    OSA_MemoryPoolFree(buf_128_MemoryPool, pmbuf);
-#endif
-
-    /* return -WM_FAIL; */
-    /* } */
 
     return WM_SUCCESS;
 }
@@ -3002,7 +2905,12 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 
     if (bss_type == MLAN_BSS_TYPE_UAP)
     {
+#if UAP_SUPPORT
         pmpriv = (mlan_private *)mlan_adap->priv[1];
+#else
+        wcmdr_w("wifi_process_cmd_response receive UAP command response 0x%X when UAP not supported", resp->command);
+        return -WM_FAIL;
+#endif
     }
     else
     {
@@ -5221,6 +5129,7 @@ void wifi_sta_handle_event_data_pause(void *tx_pause)
     wifi_wmm_trigger_tx(tx_pause_tlv->tx_pause);
 }
 
+#if UAP_SUPPORT
 /*
  *  update uap tx pause status
  *  for self address, update the whole priv interface status
@@ -5258,6 +5167,7 @@ void wifi_uap_handle_event_data_pause(void *tx_pause)
 
     wifi_wmm_trigger_tx(tx_pause_tlv->tx_pause);
 }
+#endif
 
 void wifi_handle_event_data_pause(void *data)
 {
@@ -5300,6 +5210,7 @@ void wifi_handle_event_data_pause(void *data)
 #endif
                 }
             }
+#if UAP_SUPPORT
             else if (evt->bss_type == MLAN_BSS_TYPE_UAP)
             {
                 if (wifi_event_completion(WIFI_EVENT_UAP_TX_DATA_PAUSE, WIFI_EVENT_REASON_SUCCESS, tx_pause_tlv) !=
@@ -5313,6 +5224,7 @@ void wifi_handle_event_data_pause(void *data)
                 }
 
             }
+#endif
             else
             {
                 wifi_w("Not support bss_type %d", evt->bss_type);
@@ -5571,22 +5483,22 @@ mlan_status wifi_stop_bgscan()
 int wifi_handle_fw_event(struct bus_message *msg)
 {
     mlan_private *pmpriv     = (mlan_private *)mlan_adap->priv[0];
+#if UAP_SUPPORT
     mlan_private *pmpriv_uap = (mlan_private *)mlan_adap->priv[1];
+    t_u8 *sta_addr = NULL, *event_sta_addr = NULL;
+    wifi_uap_client_disassoc_t *disassoc_resp;
+#endif
 #if CONFIG_WMM_UAPSD
     t_u8 tx_lock_flag_org = 0;
 #endif
 #if CONFIG_EXT_SCAN_SUPPORT
     mlan_status rv = MLAN_STATUS_SUCCESS;
 #endif
-
 #if CONFIG_WPA_SUPP
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.if_priv;
 #endif
-
     Event_Ext_t *evt = ((Event_Ext_t *)msg->data);
-    t_u8 *sta_addr = NULL, *event_sta_addr = NULL;
     wifi_ecsa_info *pecsa_info = NULL;
-    wifi_uap_client_disassoc_t *disassoc_resp;
 #if CONFIG_WLAN_BRIDGE
     Event_AutoLink_SW_Node_t *pnewNode = NULL;
     char *pinfo                        = NULL;
@@ -5618,6 +5530,14 @@ int wifi_handle_fw_event(struct bus_message *msg)
         OSA_RWLockWriteUnlock(&sleep_rwlock);
         pmpriv->adapter->ps_state = PS_STATE_AWAKE;
     }
+
+#if !UAP_SUPPORT
+    if (evt->bss_type > MLAN_BSS_ROLE_STA)
+    {
+        wevt_w("wifi_handle_fw_event 0x%X receive UAP event when UAP not supported", evt->event_id);
+        return -WM_FAIL;
+    }
+#endif
 
     switch (evt->event_id)
     {
@@ -5991,6 +5911,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             }
         }
         break;
+#if UAP_SUPPORT
         case EVENT_MICRO_AP_STA_ASSOC:
         {
             /*
@@ -6200,6 +6121,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             wlan_clean_txrx(pmpriv_uap);
             wlan_delete_station_list(pmpriv_uap);
             break;
+#endif /* UAP_SUPPORT */
 #if CONFIG_WMM
         case EVENT_TX_DATA_PAUSE:
             wifi_handle_event_data_pause(evt);
@@ -6383,7 +6305,12 @@ int wifi_handle_fw_event(struct bus_message *msg)
             break;
 #endif
         default:
+#if UAP_SUPPORT
             wifi_d("Event 0x%x not implemented", evt->event_id);
+#else
+            /* TODO: back to debug level after disable UAP stable */
+            wifi_w("Event 0x%x not implemented when diable UAP", evt->event_id);
+#endif
             break;
     }
 
@@ -8036,6 +7963,8 @@ void wifi_wmm_tx_stats_dump(int bss_type)
 {
     int i;
     mlan_private *priv = MNULL;
+
+    CHECK_BSS_TYPE_RET_VOID(bss_type);
 
     if (bss_type == MLAN_BSS_TYPE_STA)
         priv = mlan_adap->priv[0];

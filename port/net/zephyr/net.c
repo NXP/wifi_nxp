@@ -532,6 +532,13 @@ int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt)
         return -ENOMEM;
     }
 
+#if !UAP_SUPPORT
+    if (interface > WLAN_BSS_ROLE_STA)
+    {
+        return -ENOMEM;
+    }
+#endif
+
 #if CONFIG_WMM
     if (net_pkt_len > ETH_HDR_LEN)
     {

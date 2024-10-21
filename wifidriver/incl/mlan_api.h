@@ -425,7 +425,9 @@ int wifi_set_pmfcfg(t_u8 mfpc, t_u8 mfpr);
 int wifi_set_chanlist(wifi_chanlist_t *chanlist);
 int wifi_get_txpwrlimit(wifi_SubBand_t subband, wifi_txpwrlimit_t *txpwrlimit);
 int wifi_get_data_rate(wifi_ds_rate *ds_rate, mlan_bss_type bss_type);
+#if UAP_SUPPORT
 void wifi_get_active_channel_list(t_u8 *chan_list, t_u8 *num_chans, t_u16 acs_band);
+#endif
 bool wifi_is_ecsa_enabled(void);
 int wifi_set_txpwrlimit(wifi_txpwrlimit_t *txpwrlimit);
 int wifi_send_rssi_info_cmd(wifi_rssi_info_t *rssi_info);
