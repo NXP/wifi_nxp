@@ -79,6 +79,10 @@
 #include "app_notify.h"
 #endif
 
+#if CONFIG_WIFI_RECOVERY
+#include "zephyr/net/dhcpv4_server.h"
+#endif
+
 #if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
 #include "board.h"
 
@@ -8113,6 +8117,14 @@ int wlan_stop(void)
         wlcm_w("failed to get scan lock: %d.", ret);
         return WLAN_ERROR_STATE;
     }
+#else
+#if CONFIG_WIFI_RECOVERY
+    /* If CONFIG_WIFI_RECOVERY is defined, 0xb2 CMD will be skipped, but dhcp_server_stop()
+     * is called in 0xb2 CMD response. So it needs to be called here to stop DHCP server
+     */
+    if (wifi_recovery_enable)
+        net_dhcpv4_server_stop((struct net_if *)net_get_uap_interface());
+#endif
 #endif
     status = OSA_SemaphoreDestroy((osa_semaphore_handle_t)wlan.scan_lock);
     if (status != KOSA_StatusSuccess)
