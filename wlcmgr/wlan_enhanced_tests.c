@@ -1574,7 +1574,7 @@ static test_cfg_param_t g_twt_setup_cfg_param[] = {
     {"hard_constraint", 7, 1,
      "0: FW can tweak the TWT setup parameters if it is rejected by AP, 1: FW should not tweak any parameters"},
     {"twt_interval_exponent", 8, 1, "Range: [0-63]"},
-    {"twt_interval_mantissa", 9, 2, "TWT interval= mantissa * 2^exponent μs. Range: [0-maxof(UINT16)]"},
+    {"twt_interval_mantissa", 9, 2, "TWT interval= mantissa * 2^exponent μs. Range: [0 - (2^16-1)]"},
     {"twt_request", 11, 1, "Type, 0: REQUEST_TWT, 1: SUGGEST_TWT"},
     /* Skip field: t_u8 twt_setup_state. Needless to input */
     {"bcnMiss_threshold", 13, 2, "Link lost timeout threshold when TWT active. Unit in seconds. Range [1-maxof(UINT16)]"},
@@ -1617,22 +1617,50 @@ static void test_wlan_twt_report(int argc, char **argv)
     int j;
     int num;
     wlan_twt_report_t info;
+    bool tipOnce = TRUE;
 
     memset(&info, 0x00, sizeof(info));
     wlan_get_twt_report(&info);
 
+    if (info.length == 0)
+    {
+        (void)PRINTF("twt_report results:\r\n Ex-AP's beacon doesn't contain BTWT IE.\r\n");
+        return;
+    }
+
     num = info.length / WLAN_BTWT_REPORT_LEN;
     num = num <= WLAN_BTWT_REPORT_MAX_NUM ? num : WLAN_BTWT_REPORT_MAX_NUM;
 
-    (void)PRINTF("twt_report len %hu, num %d, info:\r\n", info.length, num);
+    (void)PRINTF("twt_report results:\r\n Received B-TWT schedule from ex-AP's beacon. Total buff len = %hu, count of schedules = %d, detail:\r\n", info.length, num);
     for (i = 0; i < num; i++)
     {
-        (void)PRINTF("id[%d]:\r\n", i);
+        int idx = i * WLAN_BTWT_REPORT_LEN;
+        t_u16 req_typ = info.data[idx]   | info.data[++idx] << 8;
+        t_u16 tsf     = info.data[++idx] | info.data[++idx] << 8;
+        t_u8 wake_dur = info.data[++idx];
+        t_u16 mantissa= info.data[++idx] | info.data[++idx] << 8;
+        t_u16 twt_info= info.data[++idx] | info.data[++idx] << 8;
+        t_u8 btwt_id  = (twt_info & 0xF8) >> 3;
+    
+        (void)PRINTF("Schedule-[%d]:\r\n", i);
         for (j = 0; j < WLAN_BTWT_REPORT_LEN; j++)
         {
             (void)PRINTF(" 0x%02x", info.data[i * WLAN_BTWT_REPORT_LEN + j]);
         }
         (void)PRINTF("\r\n");
+        
+        (void)PRINTF(" ## Explain: Broadcast TWT ID = %2d; %s, %s; Interval Exponent = %2d, Mantissa = %2d; Wake Duration = %2d\r\n",
+                    btwt_id, 
+                    (req_typ & BIT(4)) ? "Trigger":"No trigger",
+                    (req_typ & BIT(6)) ? "Unannounced":"Announced",
+                    (req_typ & 0x7C00) >> 10, //IntervalExponent
+                    mantissa,
+                    wake_dur);
+        if (btwt_id == 0 && tipOnce)
+        {
+            tipOnce = FALSE;
+            (void)PRINTF(" ## BTWT_ID[0] will be auto joined when STA join other BTWT schedule. Don't manually join it.\r\n");
+        }
     }
 }
 
