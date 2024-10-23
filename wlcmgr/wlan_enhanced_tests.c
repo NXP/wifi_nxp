@@ -2127,10 +2127,10 @@ static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-set-rutxpwrlimit", NULL, test_wlan_set_rutxpwrlimit},
     {"wlan-11ax-cfg", "<11ax_cfg>", test_wlan_11ax_cfg},
 #if CONFIG_11AX_TWT
-    {"wlan-11ax-bcast-twt", "<bcast_twt_cfg>", test_wlan_bcast_twt},
-    {"wlan-11ax-twt-setup", "<twt_cfg>", test_wlan_twt_setup},
-    {"wlan-11ax-twt-teardown", "<twt_cfg>", test_wlan_twt_teardown},
-    {"wlan-11ax-twt-report", "<twt_report_get>", test_wlan_twt_report},
+    {"wlan-11ax-bcast-twt", "<dump/set/done> [<param_id> <param_data>]", test_wlan_bcast_twt},
+    {"wlan-11ax-twt-setup", "<dump/set/done> [<param_id> <param_data>]", test_wlan_twt_setup},
+    {"wlan-11ax-twt-teardown", "<dump/set/done> [<param_id> <param_data>]", test_wlan_twt_teardown},
+    {"wlan-11ax-twt-report", "", test_wlan_twt_report},
     {"wlan-11ax-twt-information", "<flow_identifier> <suspend_duration>", test_wlan_twt_information},
 #endif /* CONFIG_11AX_TWT */
 #endif /* CONFIG_11AX */
