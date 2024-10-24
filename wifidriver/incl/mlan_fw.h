@@ -7098,7 +7098,7 @@ typedef MLAN_PACK_START struct _wls_subevent_ftm_complete
 /**Structure for FTM distance subevent*/
 typedef MLAN_PACK_START struct wls_subevent_ftm_distance
 {
-    /** distance in 32.8 meters */
+    /** distance in meters */
     t_u32 distance;
     /** MAC address of the responder */
     t_u8 mac[ETH_ALEN];

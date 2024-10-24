@@ -7878,7 +7878,6 @@ void wifi_ftm_process_event(void *p_data)
 {
     wls_event_t *ftm_event = (wls_event_t *)p_data;
     double distance        = 0.0;
-    t_u8 *MAC;
 
     PRINTF("[INFO] EventID: 0x%x SubeventID:%d \r\n", ftm_event->event_id, ftm_event->sub_event_id);
 
@@ -7909,10 +7908,8 @@ void wifi_ftm_process_event(void *p_data)
         case WLS_SUB_EVENT_DISTANCE:
             distance = ftm_event->e.ftm_distance.distance / 256.0f;
             PRINTF("================================\r\n");
-            PRINTF("FTM distance report (MAC %02X:%02X:%02X:%02X:%02X:%02X)\r\n", MAC[0], MAC[1], MAC[2], MAC[3],
-                   MAC[4], MAC[5]);
             PRINTF("TSF: %x\r\n", ftm_event->e.ftm_distance.meas_start_tsf);
-            PRINTF("distance: %.2f meters", distance);
+            PRINTF("distance: %.2f meters\r\n", distance);
             break;
         default:
             wifi_d("[ERROR] Unknown sub event\n");
