@@ -7977,7 +7977,7 @@ void wifi_ftm_process_event(void *p_data)
             PRINTF("FTM distance report (MAC %02X:%02X:%02X:%02X:%02X:%02X)\r\n", MAC[0], MAC[1], MAC[2], MAC[3],
                    MAC[4], MAC[5]);
             PRINTF("TSF: %x\r\n", ftm_event->e.ftm_distance.meas_start_tsf);
-            PRINTF("distance: %.2f meters", distance);
+            PRINTF("distance: %.2f meters\r\n", distance);
             break;
         default:
             wifi_d("[ERROR] Unknown sub event\n");
