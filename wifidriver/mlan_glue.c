@@ -167,7 +167,7 @@ static void *wifi_11n_save_request(Event_Ext_t *evt)
 #if !CONFIG_MEM_POOLS
     void *dot11n_eventbuf = OSA_MemoryAllocate(evt->length);
 #else
-    void *dot11n_eventbuf                     = OSA_MemoryPoolAllocate(buf_256_MemoryPool);
+    void *dot11n_eventbuf = OSA_MemoryPoolAllocate(buf_256_MemoryPool);
 #endif
 
     if (dot11n_eventbuf == MNULL)
@@ -180,7 +180,6 @@ static void *wifi_11n_save_request(Event_Ext_t *evt)
     return dot11n_eventbuf;
 }
 #endif /* CONFIG_11N */
-
 
 void wrapper_deliver_amsdu_subframe(pmlan_buffer amsdu_pmbuf, t_u8 *data, t_u16 pkt_len)
 {
@@ -508,7 +507,6 @@ int mlan_subsys_deinit(void)
     return WM_SUCCESS;
 }
 
-
 #if CONFIG_11N
 /* Note: The saved_event_buff is allocated by the cmd resp/event handler
    thread. We need to free it in this function */
@@ -538,7 +536,6 @@ int wrapper_wlan_cmd_11n_addba_rspgen(void *saved_event_buff)
     else
     { /* Do Nothing */
     }
-
 
 #if !CONFIG_MEM_POOLS
     OSA_MemoryFree(saved_event_buff);
@@ -791,7 +788,6 @@ static mlan_status do_wlan_ret_11n_delba(mlan_private *priv, HostCmd_DS_COMMAND 
     return MLAN_STATUS_SUCCESS;
 }
 
-
 // Only Enable AMPDU for station interface
 int wrapper_wlan_sta_ampdu_enable(
 #if CONFIG_WMM
@@ -990,8 +986,8 @@ mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int le
 
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
-    cmd->seq_num       = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, bss_type);
-    cmd->result = 0x0;
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, bss_type);
+    cmd->result  = 0x0;
 
     (void)memset(&ds_mgmt_ie_list_cfg, 0x00, sizeof(HostCmd_DS_MGMT_IE_LIST_CFG));
 
@@ -1269,7 +1265,7 @@ mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, (t_u8)bss_type);
-    cmd->result = 0x0;
+    cmd->result  = 0x0;
 
 #if UAP_SUPPORT
     /* !UAP_SUPPORT will return in the entry of function, thus won't come here */
@@ -2502,7 +2498,7 @@ static void load_bss_list(const HostCmd_DS_STA_LIST *sta_list)
 #if !CONFIG_MEM_POOLS
     wifi_sta_list_t *sl = OSA_MemoryAllocate(sizeof(wifi_sta_list_t) + c * sizeof(wifi_sta_info_t));
 #else
-    wifi_sta_list_t *sl                 = OSA_MemoryPoolAllocate(buf_256_MemoryPool);
+    wifi_sta_list_t *sl = OSA_MemoryPoolAllocate(buf_256_MemoryPool);
 #endif
 
     if (sl == MNULL)
@@ -2986,7 +2982,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #if !CONFIG_MEM_POOLS
                 t_u16 *ps_action_p = (t_u16 *)OSA_MemoryAllocate(sizeof(t_u16));
 #else
-                t_u16 *ps_action_p                  = (t_u16 *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+                t_u16 *ps_action_p = (t_u16 *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
 #endif
                 if (ps_action_p != NULL)
                 {
@@ -4848,7 +4844,6 @@ static void wifi_handle_event_tx_status_report(Event_Ext_t *evt)
         return;
     }
 #endif
-
 }
 
 #define REASON_CODE_BSS_BLOCKED 0x21
@@ -5036,7 +5031,7 @@ mlan_status wifi_stop_bgscan()
 
 int wifi_handle_fw_event(struct bus_message *msg)
 {
-    mlan_private *pmpriv     = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
 #if UAP_SUPPORT
     mlan_private *pmpriv_uap = (mlan_private *)mlan_adap->priv[1];
     t_u8 *sta_addr = NULL, *event_sta_addr = NULL;
@@ -5051,7 +5046,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #if CONFIG_WPA_SUPP
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.if_priv;
 #endif
-    Event_Ext_t *evt = ((Event_Ext_t *)msg->data);
+    Event_Ext_t *evt           = ((Event_Ext_t *)msg->data);
     wifi_ecsa_info *pecsa_info = NULL;
 
 #if (CONFIG_UAP_AMPDU_TX) || (CONFIG_UAP_AMPDU_RX)
@@ -5719,9 +5714,9 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
             wifi_csi_status_info *pstatus = (wifi_csi_status_info *)&evt->reason_code;
 
-            pcsi_status->status = pstatus->status;
+            pcsi_status->status  = pstatus->status;
             pcsi_status->channel = pstatus->channel;
-            pcsi_status->cnt = pstatus->cnt;
+            pcsi_status->cnt     = pstatus->cnt;
             if (wifi_event_completion(WIFI_EVENT_CSI_STATUS, WIFI_EVENT_REASON_SUCCESS, pcsi_status) != WM_SUCCESS)
             {
                 /* If fail to send message on queue, free allocated memory ! */
@@ -6643,7 +6638,6 @@ void wifi_prepare_set_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
     (void)memcpy((void *)cmd->params.mac_addr.mac_addr, (const void *)mac_addr, MLAN_MAC_ADDR_LENGTH);
 }
 
-
 #if CONFIG_WIFI_TX_BUFF
 void wifi_prepare_set_tx_buf_size(HostCmd_DS_COMMAND *cmd, int seq_number)
 {
@@ -7245,7 +7239,8 @@ int wifi_set_twt_setup_cfg(const wifi_twt_setup_config_t *twt_setup)
         }
         else
         {
-            (void)PRINTF("TWT setup success. Flow id: %d, use this in future TWT operation.\r\n", twt_cfg.param.twt_setup.flow_identifier);
+            (void)PRINTF("TWT setup success. Flow id: %d, use this in future TWT operation.\r\n",
+                         twt_cfg.param.twt_setup.flow_identifier);
         }
     }
     return WM_SUCCESS;
@@ -7353,7 +7348,6 @@ int wifi_get_tsf_info(wifi_tsf_info_t *tsf_info)
     return ret;
 }
 #endif /* CONFIG_WIFI_CLOCKSYNC */
-
 
 #if CONFIG_WMM
 static void wifi_wmm_tx_stats_dump_ralist(mlan_list_head *ra_list_head)
@@ -7551,7 +7545,6 @@ int wifi_get_mc_cfg_ext(wifi_drcs_cfg_t *drcs, int num)
     return wm_wifi.cmd_resp_status;
 }
 #endif
-
 
 #if CONFIG_SUBSCRIBE_EVENT_SUPPORT
 /**
@@ -7950,6 +7943,7 @@ void wifi_ftm_process_event(void *p_data)
 {
     wls_event_t *ftm_event = (wls_event_t *)p_data;
     double distance        = 0.0;
+    t_u8 *MAC;
 
     PRINTF("[INFO] EventID: 0x%x SubeventID:%d \r\n", ftm_event->event_id, ftm_event->sub_event_id);
 
@@ -7976,6 +7970,14 @@ void wifi_ftm_process_event(void *p_data)
         case WLS_SUB_EVENT_FTM_FAIL:
             wifi_d("WLS_SUB_EVENT_ANQP_RESP_RECEIVED\n");
             PRINTF("\nFTM Session Failed!\r\n");
+            break;
+        case WLS_SUB_EVENT_DISTANCE:
+            distance = ftm_event->e.ftm_distance.distance / 256.0f;
+            PRINTF("================================\r\n");
+            PRINTF("FTM distance report (MAC %02X:%02X:%02X:%02X:%02X:%02X)\r\n", MAC[0], MAC[1], MAC[2], MAC[3],
+                   MAC[4], MAC[5]);
+            PRINTF("TSF: %x\r\n", ftm_event->e.ftm_distance.meas_start_tsf);
+            PRINTF("distance: %.2f meters", distance);
             break;
         default:
             wifi_d("[ERROR] Unknown sub event\n");

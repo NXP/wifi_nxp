@@ -1,24 +1,119 @@
+#ifdef APP_GPL_FILE
 /** @file wls_radix4Fft.c
   *
   * @brief This file contains fixed-point radix-4 FFT function
   *
-  * Copyright 2023 NXP
   *
-  * SPDX-License-Identifier: BSD-3-Clause
+  * Copyright 2024 NXP
+  *
+  * This software file (the File) is distributed by NXP
+  * under the terms of the GNU General Public License Version 2, June 1991
+  * (the License).  You may use, redistribute and/or modify the File in
+  * accordance with the terms and conditions of the License, a copy of which
+  * is available by writing to the Free Software Foundation, Inc.,
+  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA or on the
+  * worldwide web at http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
+  *
+  * THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
+  * IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE
+  * ARE EXPRESSLY DISCLAIMED.  The License provides additional details about
+  * this warranty disclaimer.
   *
   */
+#elif defined(APACHE)
+/** @file wls_radix4Fft.c
+  *
+  * @brief This file contains fixed-point radix-4 FFT function
+  *
+  *
+  * Copyright 2024 NXP
+  *
+  * Licensed under the Apache License, Version 2.0 (the License);
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an ASIS BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  *
+  */
+#elif defined(FREE_BSD)
+/** @file wls_radix4Fft.c
+  *
+  * @brief This file contains fixed-point radix-4 FFT function
+  *
+  *
+  * Copyright 2024 NXP
+  *
+  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+  * following conditions are met:
+  *
+  * 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+  * disclaimer.
+  *
+  * 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+  * disclaimer in the documentation and/or other materials provided with the distribution.
+  *
+  * 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote
+  * products derived from this software without specific prior written permission.
+  *
+  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ASIS AND
+  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+  * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+  * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
+#else
+/** @file wls_radix4Fft.c
+  *
+  * @brief This file contains fixed-point radix-4 FFT function
+  *
+  *  Usage:
+  *
+  *
+  * Copyright 2024 NXP
+  *
+  * NXP CONFIDENTIAL
+  * The source code contained or described herein and all documents related to
+  * the source code (Materials) are owned by NXP, its
+  * suppliers and/or its licensors. Title to the Materials remains with NXP,
+  * its suppliers and/or its licensors. The Materials contain
+  * trade secrets and proprietary and confidential information of NXP, its
+  * suppliers and/or its licensors. The Materials are protected by worldwide copyright
+  * and trade secret laws and treaty provisions. No part of the Materials may be
+  * used, copied, reproduced, modified, published, uploaded, posted,
+  * transmitted, distributed, or disclosed in any way without NXP's prior
+  * express written permission.
+  *
+  * No license under any patent, copyright, trade secret or other intellectual
+  * property right is granted to or conferred upon you by disclosure or delivery
+  * of the Materials, either expressly, by implication, inducement, estoppel or
+  * otherwise. Any license under such intellectual property rights must be
+  * express and approved by NXP in writing.
+  *
+  */
+#endif
 
 /************************************************************************
 * DFW fixed-point radix-4 FFT function
 ************************************************************************/
 
-#include <osa.h>
-#if CONFIG_WLS_CSI_PROC
-
+//
 #include <stdio.h>
 #include "wls_param_defines.h"
 #include "wls_radix4Fft.h"
-//#include "math.h"
+#if (MAX_FFT_FLT != 64)
+#include "math.h"
+#endif
 
 //#define ARM_DEBUG
 #if defined(MAX_FFT_SIZE_2048)
@@ -2090,7 +2185,7 @@ void radix4IfftStride(INT16* pSrc, INT16* pDst, int Nfft, const INT16* pCoeff, i
 }
 #endif
 
-#define FFT_SCALE
+//#define FFT_SCALE
 void radix2Ifft(INT16* pBfr, int Nfft, const INT16* pCoeff, int lenCoeff){
 
 	int ii, jj, mm, nn;
@@ -2178,6 +2273,7 @@ void radix2Ifft(INT16* pBfr, int Nfft, const INT16* pCoeff, int lenCoeff){
 	}
 }
 
+#if (MAX_FFT_FLT == 64)
 const float twiddleTableFlt[2 * MAX_FFT_FLT] = {
 	1.00000000f,       0.00000000f,      0.995184720f,     0.0980171412f,      0.980785251f,      0.195090324f,      0.956940353f,      0.290284663f,      0.923879504f,      0.382683456f,      0.881921232f,      0.471396744f,
 	0.831469595f,      0.555570245f,      0.773010433f,      0.634393334f,      0.707106769f,      0.707106769f,      0.634393275f,      0.773010433f,      0.555570185f,      0.831469655f,      0.471396655f,      0.881921291f,
@@ -2191,7 +2287,9 @@ const float twiddleTableFlt[2 * MAX_FFT_FLT] = {
 	0.555570424f,     -0.831469476f,      0.634393334f,     -0.773010433f,      0.707107008f,     -0.707106531f,      0.773010552f,     -0.634393156f,      0.831469595f,     -0.555570304f,      0.881921351f,     -0.471396536f,
 	0.923879564f,     -0.382683426f,      0.956940413f,     -0.290284395f,      0.980785310f,     -0.195090234f,      0.995184779f,    -0.0980167687f
 };
-
+#else
+const float *twiddleTableFlt = NULL;
+#endif
 
 void radix2FftFlt(float* pBfr, int Nfft, const float* pCoeff, int lenCoeff) {
 
@@ -2202,7 +2300,9 @@ void radix2FftFlt(float* pBfr, int Nfft, const float* pCoeff, int lenCoeff) {
 	float z0I, z0Q, z1I, z1Q;
 	float y0I, y0Q, y1I, y1Q;
 
+#if (MAX_FFT_FLT == 64)
 	const float *coeffPtr;
+#endif
 	float *loopPtr;
 	unsigned long long tempVal0, tempVal1;
 	unsigned long long *dataPtr = (unsigned long long *)pBfr;
@@ -2232,13 +2332,19 @@ void radix2FftFlt(float* pBfr, int Nfft, const float* pCoeff, int lenCoeff) {
 	coeffStride = lenCoeff >> 1;
 	for (ii = 0;ii<log2Nfft;ii++) {
 		loopPtr = pBfr;
+#if (MAX_FFT_FLT == 64)
 		coeffPtr = pCoeff;
-
+#endif
 		for (mm = 0;mm<loop2;mm++) {
 
+#if (MAX_FFT_FLT == 64)
 			W1I = coeffPtr[0]; // cosf(2 * PI * mm * coeffStride / MAX_FFT_FLT); //
 			W1Q = coeffPtr[1]; // sinf(2 * PI * mm * coeffStride / MAX_FFT_FLT); //
 			coeffPtr += 2 * coeffStride;
+#else
+			W1I = cosf(2 * PI * mm * coeffStride / MAX_FFT_FLT); //
+			W1Q = sinf(2 * PI * mm * coeffStride / MAX_FFT_FLT); //
+#endif
 			for (nn = loop1;nn>0;nn--) {
 				z0I = loopPtr[0];
 				z0Q = loopPtr[1];
@@ -2274,8 +2380,9 @@ void radix2IfftFlt(float* pBfr, int Nfft, const float* pCoeff, int lenCoeff) {
 	float x1I, x1Q, W1I, W1Q;
 	float z0I, z0Q, z1I, z1Q;
 	float y0I, y0Q, y1I, y1Q;
-
+#if (MAX_FFT_FLT == 64)
 	const float *coeffPtr;
+#endif
 	float *loopPtr;
 	unsigned long long tempVal0, tempVal1;
 	unsigned long long *dataPtr = (unsigned long long *)pBfr;
@@ -2305,13 +2412,18 @@ void radix2IfftFlt(float* pBfr, int Nfft, const float* pCoeff, int lenCoeff) {
 	coeffStride = lenCoeff >> 1;
 	for (ii = 0;ii<log2Nfft;ii++) {
 		loopPtr = pBfr;
+#if (MAX_FFT_FLT == 64)
 		coeffPtr = pCoeff;
-
+#endif
 		for (mm = 0;mm<loop2;mm++) {
-
+#if (MAX_FFT_FLT == 64)
 			W1I = coeffPtr[0]; // cosf(2 * PI * mm * coeffStride / MAX_FFT_FLT); //
 			W1Q = coeffPtr[1]; // sinf(2 * PI * mm * coeffStride / MAX_FFT_FLT); //
 			coeffPtr += 2*coeffStride;
+#else
+			W1I = cosf(2 * PI * mm * coeffStride / MAX_FFT_FLT); //
+			W1Q = sinf(2 * PI * mm * coeffStride / MAX_FFT_FLT); //
+#endif
 			for (nn = loop1;nn>0;nn--) {
 				z0I = loopPtr[0];
 				z0Q = loopPtr[1];
@@ -2690,5 +2802,3 @@ void radix4Fft4in64(unsigned int *loadPtr, unsigned int *fftOutBfr, const INT16*
 		coeffStride += coeffStrideTemp;
 	}
 }
-
-#endif  /* CONFIG_WLS_CSI_PROC */
