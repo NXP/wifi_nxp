@@ -1,19 +1,111 @@
+#ifdef APP_GPL_FILE
 /** @file wls_subspace_processing.c
   *
   * @brief This file contains source code to calculate fine timing using sub-space methods (ESPRIT)
   *
-  * Copyright 2023 NXP
   *
-  * SPDX-License-Identifier: BSD-3-Clause
+  * Copyright 2024 NXP
+  *
+  * This software file (the File) is distributed by NXP
+  * under the terms of the GNU General Public License Version 2, June 1991
+  * (the License).  You may use, redistribute and/or modify the File in
+  * accordance with the terms and conditions of the License, a copy of which
+  * is available by writing to the Free Software Foundation, Inc.,
+  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA or on the
+  * worldwide web at http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
+  *
+  * THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
+  * IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE
+  * ARE EXPRESSLY DISCLAIMED.  The License provides additional details about
+  * this warranty disclaimer.
   *
   */
+#elif defined(APACHE)
+/** @file wls_subspace_processing.c
+  *
+  * @brief This file contains source code to calculate fine timing using sub-space methods (ESPRIT)
+  *
+  *
+  * Copyright 2024 NXP
+  *
+  * Licensed under the Apache License, Version 2.0 (the License);
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an ASIS BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  *
+  */
+#elif defined(FREE_BSD)
+/** @file wls_subspace_processing.c
+  *
+  * @brief This file contains source code to calculate fine timing using sub-space methods (ESPRIT)
+  *
+  *
+  * Copyright 2024 NXP
+  *
+  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+  * following conditions are met:
+  *
+  * 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+  * disclaimer.
+  *
+  * 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+  * disclaimer in the documentation and/or other materials provided with the distribution.
+  *
+  * 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote
+  * products derived from this software without specific prior written permission.
+  *
+  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ASIS AND
+  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+  * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+  * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
+#else
+/** @file wls_subspace_processing.c
+  *
+  * @brief This file contains source code to calculate fine timing using sub-space methods (ESPRIT)
+  *
+  *  Usage:
+  *
+  *
+  * Copyright 2024 NXP
+  *
+  * NXP CONFIDENTIAL
+  * The source code contained or described herein and all documents related to
+  * the source code (Materials) are owned by NXP, its
+  * suppliers and/or its licensors. Title to the Materials remains with NXP,
+  * its suppliers and/or its licensors. The Materials contain
+  * trade secrets and proprietary and confidential information of NXP, its
+  * suppliers and/or its licensors. The Materials are protected by worldwide copyright
+  * and trade secret laws and treaty provisions. No part of the Materials may be
+  * used, copied, reproduced, modified, published, uploaded, posted,
+  * transmitted, distributed, or disclosed in any way without NXP's prior
+  * express written permission.
+  *
+  * No license under any patent, copyright, trade secret or other intellectual
+  * property right is granted to or conferred upon you by disclosure or delivery
+  * of the Materials, either expressly, by implication, inducement, estoppel or
+  * otherwise. Any license under such intellectual property rights must be
+  * express and approved by NXP in writing.
+  *
+  */
+#endif
 
 /************************************************************************
 * DFW Source code to calculate fine timing using sub-space methods (ESPRIT)
 ************************************************************************/
-
-#include <osa.h>
-#if CONFIG_WLS_CSI_PROC
 
 // Standard includes.
 #include <stdio.h>
@@ -42,21 +134,31 @@
 #endif
 #define SUBSP_DIM_L_MAX MAX_MAT_SIZE
 //needs to be floor(0.75*SUB_DIM_L)
-#define SIG_SUBSP_DIM_MAX 7 // 15
+#define SIG_SUBSP_DIM_MAX 15 // 7
 
 #define MUSIC_THRESH_REL_5GHz 0.01f
 #define MUSIC_THRESH_REL_2GHz 0.1f
 #define MUSIC_THRESH_MIN 0.02f
 #define MUSIC_THRESH_MAX 0.10f
 
+// Use these values for SUB_DIM_L 20
 #define SUB_DET_THRESH_5G_80MHZ 0.1f
-#define SUB_DET_THRESH_5G_40MHZ 0.08f
-#define SUB_DET_THRESH_5G_20MHZ 0.04f // 0.1f
+#define SUB_DET_THRESH_5G_40MHZ 0.1f
+#define SUB_DET_THRESH_5G_20MHZ 0.1f
+#define SUB_DET_THRESH_REL_5G_80MHZ 0.01f
+#define SUB_DET_THRESH_REL_5G_40MHZ 0.01f
+#define SUB_DET_THRESH_REL_5G_20MHZ 0.005f
+
+// Use these values for SUB_DIM_L 10
+//#define SUB_DET_THRESH_5G_80MHZ 0.03f
+//#define SUB_DET_THRESH_5G_40MHZ 0.03f
+//#define SUB_DET_THRESH_5G_20MHZ 0.03f
+//#define SUB_DET_THRESH_REL_5G_80MHZ 0.001f
+//#define SUB_DET_THRESH_REL_5G_40MHZ 0.001f
+//#define SUB_DET_THRESH_REL_5G_20MHZ 0.001f
+
 #define SUB_DET_THRESH_20MHZ 0.253f
 #define SUB_DET_THRESH_Legacy 0.38f
-#define SUB_DET_THRESH_REL_5G_80MHZ 0.01f
-#define SUB_DET_THRESH_REL_5G_40MHZ 0.025f
-#define SUB_DET_THRESH_REL_5G_20MHZ 0.005f
 #define SUB_DET_THRESH_REL_2G 0.015f
 #define SUB_DET_THRESH_REL_Legacy 0.25f
 
@@ -737,10 +839,10 @@ int calcSubspaceFineTiming(hal_pktinfo_t *pktinfo,		// structure with CSI buffer
 			sub_det_thresh_rel = SUB_DET_THRESH_REL_5G_40MHZ;
 		}
 		else if (pktinfo->sigBw == 0) {
-#if 0 //larger auto-correlation matrix size
+#if 1 //larger auto-correlation matrix size L 20
 			sub_det_thresh = SUB_DET_THRESH_5G_20MHZ;
 			sub_det_thresh_rel = SUB_DET_THRESH_REL_5G_20MHZ;
-#else
+#else //smaller auto-correlation matrix size L 10
 			fft_input_size = FFT_INPUT_SIZE_SHORT_WINDOW;
 			subsp_dim_L = SUB_DIM_L_10;
 			sub_det_thresh = SUB_DET_THRESH_5G_20MHZ;
@@ -880,4 +982,3 @@ int calcSubspaceFineTiming(hal_pktinfo_t *pktinfo,		// structure with CSI buffer
 
 	return 0;
 }
-#endif /* CONFIG_WLS_CSI_PROC */

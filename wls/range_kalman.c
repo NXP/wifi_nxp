@@ -1,18 +1,34 @@
+
 /** @file range_kalman.c
  *
  * @brief This file contains Kalman filter for WLS range measurements
  *
- * Copyright 2023 NXP
+ *  Usage:
  *
- * SPDX-License-Identifier: BSD-3-Clause
+ *
+ * Copyright 2024 NXP
+ *
+ * NXP CONFIDENTIAL
+ * The source code contained or described herein and all documents related to
+ * the source code (Materials) are owned by NXP, its
+ * suppliers and/or its licensors. Title to the Materials remains with NXP,
+ * its suppliers and/or its licensors. The Materials contain
+ * trade secrets and proprietary and confidential information of NXP, its
+ * suppliers and/or its licensors. The Materials are protected by worldwide copyright
+ * and trade secret laws and treaty provisions. No part of the Materials may be
+ * used, copied, reproduced, modified, published, uploaded, posted,
+ * transmitted, distributed, or disclosed in any way without NXP's prior
+ * express written permission.
+ *
+ * No license under any patent, copyright, trade secret or other intellectual
+ * property right is granted to or conferred upon you by disclosure or delivery
+ * of the Materials, either expressly, by implication, inducement, estoppel or
+ * otherwise. Any license under such intellectual property rights must be
+ * express and approved by NXP in writing.
  *
  */
 
-#include <osa.h>
-#if CONFIG_WLS_CSI_PROC
-
 #include "range_kalman.h"
-#include "fsl_debug_console.h"
 #include <stdio.h>
 #include <math.h>
 
@@ -64,8 +80,9 @@ int range_kalman(range_kalman_state *in)
     in->last_range_rate = range_rate_hat;
     in->last_time       = in->time;
 
-    PRINTF("Kalman update R mat: %f m, %f m/s; d-time: %d ms; range rate %f m/s\r\n", (double)sqrtf(in->R0_11),
-           (double)sqrtf(in->R0_22), (int)(delta_T * 1000), (double)in->last_range_rate);
+    // printf("Kalman update R mat: %f m, %f m/s; d-time: %d ms; range rate %f m/s\n", sqrtf(in->R0_11),
+    // sqrtf(in->R0_22), (int)(delta_T*1000), in->last_range_rate);
+
     return 0; // no errors
 }
 
@@ -141,5 +158,3 @@ int range_kalman(range_kalman_state *in)
     return 0; // no errors
 }
 #endif
-
-#endif /* CONFIG_WLS_CSI_PROC */

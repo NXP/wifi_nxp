@@ -210,7 +210,6 @@ typedef enum _KEY_INFO_AES
 #define WPA_CCMP_256_KEY_LEN 32
 #endif /* WPA || WAPI_AP || HOST_AUTHENTICATOR */
 
-
 /** Maximum ethernet frame length sans FCS */
 #define MV_ETH_FRAME_LEN 1514
 
@@ -512,7 +511,8 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define CAPINFO_40MHZ_INTOLARENT MBIT(8)
 
 /** Default 11n capability mask for 2.4GHz */
-#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || defined(IW610)
+#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || \
+    defined(IW610)
 #define DEFAULT_11N_CAP_MASK_BG \
     (HWSPEC_SHORTGI20_SUPP | HWSPEC_RXSTBC_SUPP | HWSPEC_SHORTGI40_SUPP | HWSPEC_CHANBW40_SUPP | HWSPEC_LDPC_SUPP)
 #elif defined(SD8801) || defined(RW610)
@@ -883,7 +883,6 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define GET_DEVNSSRXMCS(DevMCSMap, nss)        (((DevMCSMap) >> (2U * ((nss)-1U))) & 0x3U)
 #define SET_DEVNSSRXMCS(DevMCSMap, nss, value) ((DevMCSMap) |= ((value)&0x3) << (2 * ((nss)-1)))
 #define RESET_DEVRXMCSMAP(DevMCSMap)           ((DevMCSMap) &= 0xFFFF0000U)
-
 
 #if CONFIG_MULTI_BSSID_SUPPORT
 /** ExtCap : Set support Multi BSSID */
@@ -1274,7 +1273,6 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID : OTP user data */
 #define HostCmd_CMD_OTP_READ_USER_DATA 0x0114
 
-
 #ifdef SD8801
 #define HostCmd_CMD_ED_MAC_MODE 0x0124
 #else
@@ -1504,7 +1502,6 @@ typedef enum _ENH_PS_MODES
 
 #endif
 
-
 /* Radio type definitions for the channel TLV */
 /** Radio type BG */
 #define HostCmd_SCAN_RADIO_TYPE_BG 0U
@@ -1724,6 +1721,7 @@ typedef enum _ENH_PS_MODES
 #define WLS_SUB_EVENT_ANQP_RESP_RECEIVED 3
 #define WLS_SUB_EVENT_RTT_RESULTS        4
 #define WLS_SUB_EVENT_FTM_FAIL           5
+#define WLS_SUB_EVENT_DISTANCE           6
 
 #endif
 
@@ -1735,7 +1733,6 @@ typedef enum _ENH_PS_MODES
 #if (CONFIG_FW_VDLL) || (CONFIG_FW_VDLLV2)
 #define EVENT_VDLL_IND 0x00000081
 #endif
-
 
 #if UAP_SUPPORT
 /** Event ID: STA deauth */
@@ -1771,7 +1768,7 @@ typedef enum _ENH_PS_MODES
 #define EVENT_EV_SMC_GENERIC 0x00000077
 
 #if CONFIG_CSI
-#define EVENT_CSI 0x0000008D
+#define EVENT_CSI        0x0000008D
 #define EVENT_CSI_STATUS 0x000000A7
 #endif
 
@@ -2294,7 +2291,6 @@ typedef MLAN_PACK_START struct _wlan_802_11_header
     /** Address4 */
     mlan_802_11_mac_addr addr4;
 } MLAN_PACK_END wlan_802_11_header;
-
 
 /** wlan_802_11_header packet from FW with length */
 typedef MLAN_PACK_START struct _wlan_mgmt_pkt
@@ -4274,7 +4270,6 @@ typedef MLAN_PACK_START struct _HostCmd_DS_REMAIN_ON_CHANNEL
     t_u32 remain_period;
 } MLAN_PACK_END HostCmd_DS_REMAIN_ON_CHANNEL;
 
-
 #ifdef STA_SUPPORT
 
 /**
@@ -4707,7 +4702,7 @@ typedef MLAN_PACK_START struct _hostcmd_twt_report
     t_u8 length;
     t_u8 reserve[2];
     /** TWT report payload for FW response to fill */
-    t_u8 data[54]; //WLAN_BTWT_REPORT_LEN* WLAN_BTWT_REPORT_MAX_NUM
+    t_u8 data[54]; // WLAN_BTWT_REPORT_LEN* WLAN_BTWT_REPORT_MAX_NUM
 } MLAN_PACK_END hostcmd_twt_report, *phostcmd_twt_report;
 
 /** HostCmd_DS_TWT_CFG */
@@ -4959,14 +4954,14 @@ typedef MLAN_PACK_START struct
 typedef MLAN_PACK_START struct
 {
     mlan_wmm_queue_stats_action_e action; /**< Start, Stop, or Get */
-    t_u8 select_is_userpri : 1; /**< Set if select_bin is UP, Clear for AC */
-    t_u8 select_bin : 7;        /**< WMM_AC_BK(0) to WMM_AC_VO(3), or TID */
-    t_u16 pkt_count;       /**< Number of successful packets transmitted */
-    t_u16 pkt_loss;        /**< Packets lost; not included in pktCount */
-    t_u32 avg_queue_delay; /**< Average Queue delay in microsec */
-    t_u32 avg_tx_delay;    /**< Average Transmission delay in microsec */
-    t_u16 used_time;       /**< Calc used time - units of 32 microsec */
-    t_u16 policed_time;    /**< Calc policed time - units of 32 microsec */
+    t_u8 select_is_userpri : 1;           /**< Set if select_bin is UP, Clear for AC */
+    t_u8 select_bin : 7;                  /**< WMM_AC_BK(0) to WMM_AC_VO(3), or TID */
+    t_u16 pkt_count;                      /**< Number of successful packets transmitted */
+    t_u16 pkt_loss;                       /**< Packets lost; not included in pktCount */
+    t_u32 avg_queue_delay;                /**< Average Queue delay in microsec */
+    t_u32 avg_tx_delay;                   /**< Average Transmission delay in microsec */
+    t_u16 used_time;                      /**< Calc used time - units of 32 microsec */
+    t_u16 policed_time;                   /**< Calc policed time - units of 32 microsec */
     /** @brief Queue Delay Histogram; number of packets per queue delay range
      *
      *  [0] -  0ms <= delay < 5ms
@@ -5208,7 +5203,6 @@ typedef MLAN_PACK_START struct _MrvlIETypes_OperModeNtf_t
     /** operating mdoe */
     t_u8 oper_mode;
 } MLAN_PACK_END MrvlIETypes_OperModeNtf_t;
-
 
 /** MrvlIEtypes_PMK_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_PMK_t
@@ -5710,7 +5704,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_ExtBLECoex_Config_t
 #define TLV_TYPE_UAP_RSN_REPLAY_PROTECT (PROPRIETARY_TLV_BASE_ID + 0x64) // 0x0164
 /** TLV ID : Management Frame */
 #define TLV_TYPE_UAP_MGMT_FRAME (PROPRIETARY_TLV_BASE_ID + 0x68U) // 0x0168
-#endif /* UAP_SUPPORT || CONFIG_NET_MONITOR */
+#endif                                                            /* UAP_SUPPORT || CONFIG_NET_MONITOR */
 /** TLV: Management IE list */
 #define MRVL_MGMT_IE_LIST_TLV_ID (PROPRIETARY_TLV_BASE_ID + 0x69U)
 #if UAP_SUPPORT
@@ -5741,7 +5735,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_ExtBLECoex_Config_t
 #define TLV_TYPE_GWK_CIPHER (PROPRIETARY_TLV_BASE_ID + 0x92) // 0x0192
 /** TLV type : BSS Status */
 #define TLV_TYPE_BSS_STATUS (PROPRIETARY_TLV_BASE_ID + 0x93) // 0x0193
-#endif /* UAP_SUPPORT */
+#endif                                                       /* UAP_SUPPORT */
 
 #if CONFIG_11AX
 /** TLV type: Extension ID for 11AX Capability */
@@ -5761,7 +5755,6 @@ typedef MLAN_PACK_START struct _HostCmd_DS_ExtBLECoex_Config_t
 #if UAP_SUPPORT
 /** TLV type : WPA3 SAE Passowrd */
 #define TLV_TYPE_UAP_WPA3_SAE_PASSWORD (PROPRIETARY_TLV_BASE_ID + 0x141) // 0x0241
-
 
 /** MrvlIEtypes_AutoLinkParamSet_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_AutoLinkParamSet_t
@@ -6748,10 +6741,10 @@ typedef union
  */
 typedef MLAN_PACK_START struct
 {
-    t_u8 late : 1;               /**< Start TSF time missed for measurement */
-    t_u8 incapable : 1;          /**< Incapable of performing measurement */
-    t_u8 refused : 1;            /**< Measurement refused */
-    t_u8 rsvd3_7 : 5;            /**< Reserved */
+    t_u8 late : 1;      /**< Start TSF time missed for measurement */
+    t_u8 incapable : 1; /**< Incapable of performing measurement */
+    t_u8 refused : 1;   /**< Measurement refused */
+    t_u8 rsvd3_7 : 5;   /**< Reserved */
 
 } MLAN_PACK_END MeasRptMode_t;
 
@@ -7102,6 +7095,17 @@ typedef MLAN_PACK_START struct _wls_subevent_ftm_complete
     t_u32 meas_start_tsf;
 } MLAN_PACK_END wls_subevent_ftm_complete_t;
 
+/**Structure for FTM distance subevent*/
+typedef MLAN_PACK_START struct wls_subevent_ftm_distance
+{
+    /** distance in 32.8 meters */
+    t_u32 distance;
+    /** MAC address of the responder */
+    t_u8 mac[ETH_ALEN];
+    /** Measure start timestamp */
+    t_u32 meas_start_tsf;
+} MLAN_PACK_END wls_subevent_ftm_distance_t;
+
 /** Structure for FTM events*/
 typedef MLAN_PACK_START struct _wls_event_t
 {
@@ -7121,6 +7125,7 @@ typedef MLAN_PACK_START struct _wls_event_t
     {
         /** FTM Complete Sub event*/
         wls_subevent_ftm_complete_t ftm_complete;
+        wls_subevent_ftm_distance_t ftm_distance;
     } e;
 } MLAN_PACK_END wls_event_t;
 
@@ -7333,7 +7338,6 @@ typedef MLAN_PACK_START struct _Hostcmd_WLS_CSI_ACK
 #endif
 
 #endif
-
 
 #if CONFIG_CSI
 /** MrvlIEtypes_channel_bandcfg_t */
@@ -7966,7 +7970,6 @@ typedef MLAN_PACK_START struct _mlan_event_vdll_indication
 } MLAN_PACK_END mlan_event_vdll_indication, *pmlan_event_vdll_indication;
 
 #endif /* CONFIG_FW_VDLL || CONFIG_FW_VDLLV2*/
-
 
 #ifdef PRAGMA_PACK
 #pragma pack(pop)

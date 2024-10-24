@@ -1,13 +1,107 @@
-#if CONFIG_WLS_CSI_PROC
+#ifdef APP_GPL_FILE
 /** @file wls_structure_defs.h
  *
  * @brief This file contains header file for CSI structure definitions
  *
- * Copyright 2023 NXP
  *
- * SPDX-License-Identifier: BSD-3-Clause
+ * Copyright 2024 NXP
+ *
+ * This software file (the File) is distributed by NXP
+ * under the terms of the GNU General Public License Version 2, June 1991
+ * (the License).  You may use, redistribute and/or modify the File in
+ * accordance with the terms and conditions of the License, a copy of which
+ * is available by writing to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA or on the
+ * worldwide web at http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
+ *
+ * THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE
+ * ARE EXPRESSLY DISCLAIMED.  The License provides additional details about
+ * this warranty disclaimer.
  *
  */
+#elif defined(APACHE)
+/** @file wls_structure_defs.h
+ *
+ * @brief This file contains header file for CSI structure definitions
+ *
+ *
+ * Copyright 2024 NXP
+ *
+ * Licensed under the Apache License, Version 2.0 (the License);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an ASIS BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+#elif defined(FREE_BSD)
+/** @file wls_structure_defs.h
+ *
+ * @brief This file contains header file for CSI structure definitions
+ *
+ *
+ * Copyright 2024 NXP
+ *
+ * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+ * following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+ * disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+ * following disclaimer in the documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote
+ * products derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ASIS AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+#else
+/** @file wls_structure_defs.h
+ *
+ * @brief This file contains header file for CSI structure definitions
+ *
+ *  Usage:
+ *
+ *
+ * Copyright 2024 NXP
+ *
+ * NXP CONFIDENTIAL
+ * The source code contained or described herein and all documents related to
+ * the source code (Materials) are owned by NXP, its
+ * suppliers and/or its licensors. Title to the Materials remains with NXP,
+ * its suppliers and/or its licensors. The Materials contain
+ * trade secrets and proprietary and confidential information of NXP, its
+ * suppliers and/or its licensors. The Materials are protected by worldwide copyright
+ * and trade secret laws and treaty provisions. No part of the Materials may be
+ * used, copied, reproduced, modified, published, uploaded, posted,
+ * transmitted, distributed, or disclosed in any way without NXP's prior
+ * express written permission.
+ *
+ * No license under any patent, copyright, trade secret or other intellectual
+ * property right is granted to or conferred upon you by disclosure or delivery
+ * of the Materials, either expressly, by implication, inducement, estoppel or
+ * otherwise. Any license under such intellectual property rights must be
+ * express and approved by NXP in writing.
+ *
+ */
+#endif
 
 /************************************************************************
  * DFW Header file for CSI structure definitions
@@ -29,91 +123,6 @@
 #define UINT32 unsigned int
 #define UINT64 unsigned long long
 #endif
-
-typedef struct csiHeaderInfoStruct
-{
-    unsigned char csi;
-    unsigned char LTF;
-    unsigned short dataLength;
-    unsigned short FCF;
-    unsigned short dataParameter;
-    unsigned int HTCF;
-    unsigned int TSF;
-    unsigned char ADDR1[6];
-    unsigned char ADDR2[6];
-    unsigned char SBFnIndex;
-    // unsigned short PKTinfo;
-    unsigned char rxDevBw;
-    unsigned char nRx;
-    unsigned char nTx;
-    unsigned char Ng;
-    unsigned char sigBw;
-    unsigned char psb;
-    unsigned char packetType;
-
-    unsigned char cfoCourseEst;
-    // unsigned int LSig;
-    unsigned char LSigRate;
-    unsigned char LSigRateMbps;
-    unsigned short LSigLength;
-    unsigned char LSigParity;
-    unsigned char LSigTail;
-
-    unsigned char cfoFineEst;
-
-    unsigned char HtSigMcs;
-    unsigned char HtSigCbw20_40;
-    unsigned short HtSigLength;
-
-    unsigned char HtSigSmoothing;
-    unsigned char HtSigNotSounding;
-    unsigned char HtSigAggregation;
-    unsigned char HtSigStbc;
-    unsigned char HtSigFecCoding;
-    unsigned char HtSigShortGi;
-    unsigned char HtSigNoExtSpatStreams;
-    unsigned char HtSigCrc;
-    unsigned char HtSigTailBits;
-
-    unsigned char VhtSigBw;
-    unsigned char VhtSigStbc;
-    unsigned char VhtSigGroupId;
-    unsigned char VhtSigSuNoSts;
-    unsigned short VhtSigPartialAid;
-    unsigned char VhtSigTxOpPsNotAllwd;
-
-    unsigned char VhtSigShortGi;
-    unsigned char VhtSigShortGiDisAmb;
-    unsigned char VhtSigSuCoding;
-    unsigned char VhtSigLdpcExtraSymb;
-    unsigned char VhtSigMcs;
-    unsigned char VhtSigBeamformed;
-    unsigned char VhtSigCrc;
-    unsigned char VhtSigTail;
-
-    unsigned char rxNoiseFloor, rxNfA, rxNfB, rxNfC, rxNfD;
-    unsigned char rxRssi, rxRssiA, rxRssiB, rxRssiC, rxRssiD;
-
-    unsigned char LltfDvgaCtrMax;
-    unsigned char LltfBbCtrMax;
-    unsigned char LltfIfCtrMax;
-    unsigned char LltfLnaCtrMax;
-    unsigned char LltfSlnaMax;
-
-    unsigned char HtDvgaCtrMax;
-    unsigned char HtBbCtrMax;
-    unsigned char HtIfCtrMax;
-    unsigned char HtLnaCtrMax;
-    unsigned char HtSlnaMax;
-
-    unsigned char isLtf;
-    unsigned char NgDsfShift;
-    unsigned char scOffset;
-
-    int totalGainLltf;
-    int totalGainCsi;
-
-} CsiHeaderInfo;
 
 #define SOC_W8X64
 #define SOC_W8864
@@ -320,7 +329,7 @@ typedef struct hal_rxinfo
 
 typedef struct hal_csirxinfo
 {
-#ifdef SMAC_BFINFO
+#if defined(SMAC_BFINFO) && defined(RAW_HEADER)
     // DWORD-0
     UINT32 header_length : 13;
     UINT32 rsvd0 : 3;
@@ -385,7 +394,7 @@ typedef struct hal_csirxinfo
     UINT32 timestamp_7;
     // DWORD-20
     UINT32 timestamp_8;
-#else
+#elif defined(RAW_HEADER)
     // DWORD-0
     UINT32 data_length : 13; // Includes BF_INFO, LTF Data, and CSI Data. Length in dwords
     UINT32 ltf : 1;
@@ -471,8 +480,62 @@ typedef struct hal_csirxinfo
     UINT32 timestamp_7;
     // DWORD-20
     UINT32 timestamp_8;
+#else
+    // DWORD-0
+    UINT32 data_length : 13; // Includes BF_INFO, LTF Data, and CSI Data. Length in dwords
+    UINT32 rsvd1 : 3;
+    UINT32 signature : 16;   // 0xABCD: tagged by MAC HW
+    // DWORD-1
+    UINT32 header_signature; // 0x00010203
+    // DWORD-2
+    UINT32 pktinfo : 20;
+    UINT32 rsvd2 : 12;
+    // DWORD-3
+    UINT32 tsf;
+    // DWORD-4
+    UINT32 tsf_hi;
+    // DWORD-5
+    UINT32 addr1_lo;
+    // DWORD-6
+    UINT32 addr1_hi : 16;
+    UINT32 addr2_lo : 16;
+    // DWORD-7
+    UINT32 addr2_hi;
+    // DWORD-8
+    UINT32 rx_rssi_a : 8;
+    UINT32 rx_rssi_b : 8;
+    UINT32 rx_nf_a : 8;
+    UINT32 rx_nf_b : 8;
+    // DWORD-9
+    UINT32 SINR : 8;
+    UINT32 chan : 8;
+    UINT32 ap_type : 8;
+    UINT32 chip_id : 8;
+    // DWORD-10
+    UINT32 fcf : 16;
+    UINT32 rsvd3 : 16;
 #endif
 } hal_csirxinfo_t;
+
+typedef struct hal_tddestruct
+{
+    // DWORD-0
+    UINT32 cfo : 17;
+    UINT32 dta : 11;
+    UINT32 rsvd0 : 4;
+
+    // DWORD-1
+    UINT32 tod;
+    // DWORD-2
+    UINT32 toa_hi;
+    // DWORD-3
+    UINT32 toa_lo : 8;
+    UINT32 M1_idx : 9;
+    UINT32 M2_idx : 9;
+    UINT32 rsvd1 : 6;
+    // DWORD-4
+    UINT32 IQ_Data[1];
+} hal_tddestruct_t;
 
 typedef struct hal_pktinfo
 {
@@ -562,5 +625,3 @@ typedef struct reg_buf_ptr
 } reg_buf_ptr_t;
 
 #endif
-
-#endif /* CONFIG_WLS_CSI_PROC */
