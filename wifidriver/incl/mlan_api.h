@@ -308,16 +308,6 @@ void wifi_get_scan_table(mlan_private *pmpriv, mlan_scan_resp *pscan_resp);
 int wifi_get_eeprom_data(uint32_t offset, uint32_t byte_count, uint8_t *buf);
 int wifi_get_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int *buf_len);
 int wifi_send_remain_on_channel_cmd(unsigned int bss_type, wifi_remain_on_channel_t *remain_on_channel);
-int wifi_set_smart_mode_cfg(char *ssid,
-                            int beacon_period,
-                            wifi_chan_list_param_set_t *chan_list,
-                            uint8_t *smc_start_addr,
-                            uint8_t *smc_end_addr,
-                            uint16_t filter_type,
-                            int smc_frame_filter_len,
-                            uint8_t *smc_frame_filter,
-                            int custom_ie_len,
-                            uint8_t *custom_ie);
 int wifi_set_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t id, void *buf, unsigned int buf_len);
 #ifdef SD8801
 int wifi_get_ext_coex_stats(wifi_ext_coex_stats_t *ext_coex_stats);
@@ -358,8 +348,23 @@ int wifi_get_firmware_version_ext(wifi_fw_version_ext_t *version_ext);
  * @return WM_SUCCESS on success or error code.
  */
 int wifi_get_firmware_version(wifi_fw_version_t *ver);
+
+#if UAP_SUPPORT
+int wifi_set_smart_mode_cfg(char *ssid,
+                            int beacon_period,
+                            wifi_chan_list_param_set_t *chan_list,
+                            uint8_t *smc_start_addr,
+                            uint8_t *smc_end_addr,
+                            uint16_t filter_type,
+                            int smc_frame_filter_len,
+                            uint8_t *smc_frame_filter,
+                            int custom_ie_len,
+                            uint8_t *custom_ie);
 int wifi_get_smart_mode_cfg(void);
 int wifi_start_smart_mode(void);
+int wifi_stop_smart_mode(void);
+#endif
+
 /**
  * Get Calibration data from WLAN firmware
  *
@@ -415,7 +420,6 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 #endif
                        const bool keep_previous_scan,
                        const bool active_scan_triggered);
-int wifi_stop_smart_mode(void);
 int wifi_remove_key(int bss_index, bool is_pairwise, const uint8_t key_index, const uint8_t *mac_addr);
 int wifi_enable_ecsa_support(void);
 int wifi_set_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl, int bss_type);

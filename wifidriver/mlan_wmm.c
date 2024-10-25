@@ -151,7 +151,7 @@ t_void wlan_clean_txrx(pmlan_private priv)
 #endif /* CONFIG_WMM */
     (void)__memcpy(pmadapter, tos_to_tid, ac_to_tid, sizeof(tos_to_tid));
 
-#if defined(UAP_SUPPORT)
+#if UAP_SUPPORT
     priv->num_drop_pkts = 0;
 #endif
     (void)pmadapter->callbacks.moal_spin_unlock(pmadapter->pmoal_handle, priv->wmm.ra_list_spinlock);
@@ -286,7 +286,7 @@ t_void wlan_wmm_init(pmlan_adapter pmadapter)
                 priv->add_ba_param.rx_win_size = MLAN_STA_AMPDU_DEF_RXWINSIZE;
             }
 #endif
-#ifdef UAP_SUPPORT
+#if UAP_SUPPORT
             if (priv->bss_type == MLAN_BSS_TYPE_UAP
 #ifdef WIFI_DIRECT_SUPPORT
                 || priv->bss_type == MLAN_BSS_TYPE_WIFIDIRECT

@@ -4786,6 +4786,7 @@ int wifi_get_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl, int bss_type)
 #ifndef IEEEtypes_SSID_SIZE
 #define IEEEtypes_SSID_SIZE 32
 #endif /* IEEEtypes_SSID_SIZE */
+#if UAP_SUPPORT
 #define MRVL_SSID_TLV_ID          0x0000
 #define MRVL_BEACON_PERIOD_TLV_ID (PROPRIETARY_TLV_BASE_ID + 0x2cU)
 #define TLV_TYPE_SMCADDRRANGE     (PROPRIETARY_TLV_BASE_ID + 0xccU)
@@ -4953,6 +4954,7 @@ int wifi_stop_smart_mode(void)
 
     return WM_SUCCESS;
 }
+#endif /* UAP_SUPPORT */
 
 #if CONFIG_BG_SCAN
 void wifi_get_band(mlan_private *pmpriv, int *band)

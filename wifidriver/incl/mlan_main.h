@@ -1172,7 +1172,7 @@ typedef struct
     t_bool tx_disabled;
 } wlan_11h_interface_state_t;
 
-#if defined(UAP_SUPPORT)
+#if UAP_SUPPORT
 /** UAP get info callback state kept in the 'mlan_private' driver structure */
 typedef struct
 {
@@ -1387,15 +1387,15 @@ struct _mlan_private
     /** amsdu enabled */
     t_bool is_amsdu_enabled;
 #endif
-#ifdef UAP_SUPPORT
+#if UAP_SUPPORT
     /** UAP 11n flag */
     bool is_11n_enabled;
     /** UAP 11ac flag */
     bool is_11ac_enabled;
 #endif /* UAP_SUPPORT */
-#ifdef UAP_SUPPORT
+#if UAP_SUPPORT
 #endif /* UAP_SUPPORT */
-#ifdef UAP_SUPPORT
+#if UAP_SUPPORT
     /** packet forward control */
     t_u8 pkt_fwd;
     /**  dropped pkts */
@@ -1487,7 +1487,7 @@ struct _mlan_private
     wlan_11d_apis_t *support_11d_APIs;
     /** FSM variable for 11h support */
     wlan_11h_interface_state_t intf_state_11h;
-#if defined(UAP_SUPPORT)
+#if UAP_SUPPORT
     /** Whether UAP interface has started */
     t_bool uap_bss_started;
     /** state variable for UAP Get Info callback */
@@ -2647,7 +2647,7 @@ mlan_status wlan_get_global_nonglobal_oper_class(
 /** Handler to add supported operating class IE */
 int wlan_add_supported_oper_class_ie(mlan_private *pmpriv, t_u8 **pptlv_out, t_u8 curr_oper_class);
 
-#if defined(STA_SUPPORT) || defined(UAP_SUPPORT)
+#if defined(STA_SUPPORT) || UAP_SUPPORT
 /** rx handler for station/uap mode */
 mlan_status wlan_ops_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf);
 /** Process received packet */
@@ -2858,7 +2858,7 @@ mlan_status wlan_11d_cfg_domain_info(IN pmlan_adapter pmadapter, IN mlan_ioctl_r
 
 mlan_status wlan_11d_cfg_ioctl(IN mlan_private *pmpriv, IN pmlan_ioctl_req pioctl_req);
 #endif /* STA_SUPPORT */
-#ifdef UAP_SUPPORT
+#if UAP_SUPPORT
 /** Handle 11D domain information from UAP */
 mlan_status wlan_11d_handle_uap_domain_info(mlan_private *pmpriv, t_u16 band, t_u8 *domain_tlv, t_void *pioctl_buf);
 #endif

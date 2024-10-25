@@ -2143,7 +2143,7 @@ static t_u8 wifi_check_rsn_ie(IEEEtypes_Rsn_t *rsn_ie, mlan_uap_bss_param *sys_c
             case RSN_AKM_PSK_SHA256:
                 sys_config->key_mgmt |= KEY_MGMT_PSK_SHA256;
                 break;
-#ifdef UAP_HOST_MLME
+#if UAP_HOST_MLME
             case RSN_AKM_SAE:
 #if CONFIG_11R
             case RSN_AKM_FT_SAE:
@@ -2630,7 +2630,7 @@ static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
             case VHT_CAPABILITY:
             case VHT_OPERATION:
 #endif
-#ifdef UAP_HOST_MLME
+#if UAP_HOST_MLME
                 if ((out_len + length + 2) < (int)ie_out_len)
                 {
                     __memcpy(priv, ie_out + out_len, pos, length + 2);
@@ -2656,7 +2656,7 @@ static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
 #if CONFIG_11AX
             case EXTENSION:
                 ext_id = *(pos + 2);
-#ifdef UAP_SUPPORT
+#if UAP_SUPPORT
 #if CONFIG_11AX
                 if (ext_id == HE_CAPABILITY)
                 {
@@ -2793,7 +2793,7 @@ static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
         left_len -= (length + 2);
     }
 
-#ifdef UAP_SUPPORT
+#if UAP_SUPPORT
     if (enable_11d && !priv->bss_started && !wlan_11d_is_enabled(priv))
     {
         wuap_d("Enable 11D support");
@@ -4319,7 +4319,7 @@ void woal_cfg80211_setup_uap_he_cap(moal_private *priv, t_u8 wait_option)
     mlan_ds_11ax_he_cfg he_cfg;
     t_u8 hw_hecap_len;
     mlan_fw_info fw_info;
-#ifdef UAP_SUPPORT
+#if UAP_SUPPORT
     int ret = 0;
 #endif
 
@@ -4337,7 +4337,7 @@ void woal_cfg80211_setup_uap_he_cap(moal_private *priv, t_u8 wait_option)
             he_cfg.band = MBIT(0);
             moal_memcpy_ext(priv->phandle, &he_cfg.he_cap, phe_cap, hw_hecap_len, sizeof(mlan_ds_11ax_he_capa));
             DBG_HEXDUMP(MCMD_D, "2G HE_CFG ", (t_u8 *)&he_cfg, sizeof(he_cfg));
-#ifdef UAP_SUPPORT
+#if UAP_SUPPORT
             ret = woal_11ax_cfg(priv, MLAN_ACT_SET, &he_cfg, wait_option);
             if (ret)
                 PRINTM(MERROR, "Fail to set 2G HE CAP\n");
@@ -4357,7 +4357,7 @@ void woal_cfg80211_setup_uap_he_cap(moal_private *priv, t_u8 wait_option)
             he_cfg.band = MBIT(1);
             moal_memcpy_ext(priv->phandle, &he_cfg.he_cap, phe_cap, hw_hecap_len, sizeof(mlan_ds_11ax_he_capa));
             DBG_HEXDUMP(MCMD_D, "5G HE_CFG ", (t_u8 *)&he_cfg, sizeof(he_cfg));
-#ifdef UAP_SUPPORT
+#if UAP_SUPPORT
             ret = woal_11ax_cfg(priv, MLAN_ACT_SET, &he_cfg, wait_option);
             if (ret)
                 PRINTM(MERROR, "Fail to set 5G HE CAP\n");

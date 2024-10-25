@@ -132,7 +132,7 @@ Change log:
 #endif
 #endif /* STA_SUPPORT */
 
-#ifdef UAP_SUPPORT
+#if UAP_SUPPORT
 /** Default Win size attached during ADDBA request */
 #ifndef MLAN_UAP_AMPDU_DEF_TXWINSIZE
 #if defined(SD9177) && defined(COEX_APP_SUPPORT)
@@ -464,7 +464,7 @@ typedef enum _mlan_event_id
 #ifdef WIFI_DIRECT_SUPPORT
     MLAN_EVENT_ID_FW_REMAIN_ON_CHAN_EXPIRED,
 #endif
-#ifdef UAP_SUPPORT
+#if UAP_SUPPORT
     MLAN_EVENT_ID_UAP_FW_BSS_START,
     MLAN_EVENT_ID_UAP_FW_BSS_ACTIVE,
     MLAN_EVENT_ID_UAP_FW_BSS_IDLE,

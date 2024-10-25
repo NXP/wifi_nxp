@@ -1159,6 +1159,7 @@ int wrapper_wlan_cmd_get_hw_spec(void)
 
 mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int len, t_u16 action)
 {
+    CHECK_BSS_TYPE(bss_type, MLAN_STATUS_FAILURE);
     void *pdata_buf = NULL;
     HostCmd_DS_MGMT_IE_LIST_CFG ds_mgmt_ie_list_cfg;
     mlan_status status = MLAN_STATUS_SUCCESS;
@@ -1180,10 +1181,13 @@ mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int le
 
     pdata_buf = &ds_mgmt_ie_list_cfg;
 
+#if UAP_SUPPORT
+    /* !UAP_SUPPORT will return in the entry of function, thus won't come here */
     if (bss_type == MLAN_BSS_TYPE_UAP)
         status = wlan_ops_uap_prepare_cmd((mlan_private *)mlan_adap->priv[1], HOST_CMD_APCMD_SYS_CONFIGURE, action, 0,
                                           NULL, pdata_buf, cmd);
     else
+#endif
         status = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MGMT_IE_LIST, action, 0, NULL,
                                           pdata_buf, cmd);
 
@@ -2800,6 +2804,7 @@ static void wifi_set_hostcmd_resp(const HostCmd_DS_COMMAND *resp)
     wm_wifi.cmd_resp_priv = NULL;
 }
 
+#if UAP_SUPPORT
 static void load_bss_list(const HostCmd_DS_STA_LIST *sta_list)
 {
     if (wm_wifi.cmd_resp_priv == MNULL)
@@ -2858,6 +2863,7 @@ static void load_bss_list(const HostCmd_DS_STA_LIST *sta_list)
     wm_wifi.cmd_resp_status = WM_SUCCESS;
     wm_wifi.cmd_resp_priv   = NULL;
 }
+#endif
 
 static void load_ver_ext(HostCmd_DS_COMMAND *resp)
 {
@@ -2933,6 +2939,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
     {
         switch (command)
         {
+#if UAP_SUPPORT
             case HOST_CMD_SMART_MODE_CFG:
             {
 #if CONFIG_WIFI_EXTRA_DEBUG
@@ -3100,6 +3107,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 }
             }
             break;
+#endif /* UAP_SUPPORT */
             case HostCmd_CMD_802_11_TX_RATE_QUERY:
             {
                 if (resp->result == HostCmd_RESULT_OK)
@@ -3702,9 +3710,11 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             case HostCmd_CMD_802_11_NET_MONITOR:
                 wm_wifi.cmd_resp_status = WM_SUCCESS;
                 break;
+#if UAP_SUPPORT
             case HOST_CMD_APCMD_SYS_CONFIGURE:
                 wifi_uap_handle_cmd_resp(resp);
                 break;
+#endif
             case HostCmd_CMD_TXPWR_CFG:
                 rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, wm_wifi.cmd_resp_ioctl);
                 if (rv != MLAN_STATUS_SUCCESS)
@@ -4060,6 +4070,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     wm_wifi.cmd_resp_status = -WM_FAIL;
                 }
                 break;
+#if UAP_SUPPORT
             case HostCmd_CMD_PMF_PARAMS:
             {
                 const HostCmd_DS_PMF_PARAMS *get_pmf_params = &resp->params.pmf_params;
@@ -4080,6 +4091,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 }
             }
             break;
+#endif
 #if CONFIG_RF_TEST_MODE
             case HostCmd_CMD_MFG_COMMAND:
             {
@@ -4728,6 +4740,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 }
             }
             break;
+#if UAP_SUPPORT
             case HostCmd_CMD_ADD_NEW_STATION:
                 if (resp->result == HostCmd_RESULT_OK)
                 {
@@ -4738,7 +4751,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     wm_wifi.cmd_resp_status = -WM_FAIL;
                 }
                 break;
-
+#endif
             default:
                 /* fixme: Currently handled by the legacy code. Change this
                    handling later. Also check the default return value then*/
