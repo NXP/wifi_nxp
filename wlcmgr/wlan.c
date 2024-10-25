@@ -475,7 +475,9 @@ static struct
     /* store sta mac addr */
     uint8_t sta_mac[MLAN_MAC_ADDR_LENGTH];
     /* store uap mac addr */
+#if UAP_SUPPORT
     uint8_t uap_mac[MLAN_MAC_ADDR_LENGTH];
+#endif
 #if CONFIG_P2P
     uint8_t wfd_mac[MLAN_MAC_ADDR_LENGTH];
 #endif
@@ -7264,6 +7266,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #endif
             }
             break;
+#if UAP_SUPPORT
         case WIFI_EVENT_UAP_MAC_ADDR_CONFIG:
             if (msg->data != NULL)
             {
@@ -7275,6 +7278,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #endif
             }
             break;
+#endif
 #if CONFIG_BG_SCAN
         case WIFI_EVENT_BG_SCAN_STOPPED:
             wlcm_d("got event: BG scan stopped");
@@ -7654,7 +7658,7 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
 
     wlan.status = WLCMGR_INIT_DONE;
     wifi_mac_addr_t mac_addr;
-    wifi_mac_addr_t mac_addr_uap;
+
     ret = wifi_get_device_mac_addr(&mac_addr);
 
     if (ret != WM_SUCCESS)
@@ -7663,8 +7667,9 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
         return ret;
     }
 
+#if UAP_SUPPORT
+    wifi_mac_addr_t mac_addr_uap;
     ret = wifi_get_device_uap_mac_addr(&mac_addr_uap);
-
     if (ret != WM_SUCCESS)
     {
         wlcm_e("Failed to get uap mac address");
@@ -7672,6 +7677,7 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
     }
 
     (void)memcpy((void *)&wlan.uap_mac[0], (const void *)mac_addr_uap.mac, MLAN_MAC_ADDR_LENGTH);
+#endif
     (void)memcpy((void *)&wlan.sta_mac[0], (const void *)mac_addr.mac, MLAN_MAC_ADDR_LENGTH);
     (void)PRINTF("STA MAC Address: ");
     print_mac((const char *)&wlan.sta_mac);
@@ -10615,7 +10621,11 @@ void wlan_reset(cli_reset_option ResetOption)
             wlan_set_mac_addr(&wlan.sta_mac[0]);
             wlan_enable_all_networks();
 #else
+#if UAP_SUPPORT
             net_wlan_set_mac_address(&wlan.sta_mac[0], &wlan.uap_mac[0]);
+#else
+            net_wlan_set_mac_address(&wlan.sta_mac[0], NULL);
+#endif
 #endif
             /* Unblock TX data */
             wifi_set_tx_status(WIFI_DATA_RUNNING);
@@ -10896,29 +10906,32 @@ void wlan_set_cal_data(const uint8_t *cal_data, const unsigned int cal_data_size
 
 int wlan_set_mac_addr(uint8_t *mac)
 {
-    uint8_t ap_mac[MLAN_MAC_ADDR_LENGTH];
-
-    if (is_uap_starting() || is_sta_connecting())
+    if (is_uap_starting() || is_sta_connecting() || !mac)
     {
         return -WM_FAIL;
     }
 
     if (wlan.status == WLCMGR_INIT_DONE || wlan.status == WLCMGR_ACTIVATED)
     {
+#if UAP_SUPPORT
+        uint8_t ap_mac[MLAN_MAC_ADDR_LENGTH];
+
         (void)memcpy(ap_mac, mac, MLAN_MAC_ADDR_LENGTH);
         ap_mac[0] |= 2;
         ap_mac[4] += 1;
 
         net_wlan_set_mac_address((unsigned char *)mac, (unsigned char *)ap_mac);
-
-        _wifi_set_mac_addr(mac, MLAN_BSS_TYPE_STA);
-
-        _wifi_set_mac_addr(&ap_mac[0], MLAN_BSS_TYPE_UAP);
-
+#else
+        net_wlan_set_mac_address((unsigned char *)mac, NULL);
+#endif
         /* save the sta mac */
+        _wifi_set_mac_addr(mac, MLAN_BSS_TYPE_STA);
         (void)memcpy(&wlan.sta_mac[0], mac, MLAN_MAC_ADDR_LENGTH);
+#if UAP_SUPPORT
         /* save the uap mac */
+        _wifi_set_mac_addr(&ap_mac[0], MLAN_BSS_TYPE_UAP);
         (void)memcpy(&wlan.uap_mac[0], &ap_mac[0], MLAN_MAC_ADDR_LENGTH);
+#endif
     }
     else
     {
@@ -10934,6 +10947,7 @@ int wlan_set_mac_addr(uint8_t *mac)
 
 int wlan_set_uap_mac_addr(uint8_t *mac)
 {
+#if UAP_SUPPORT
     /* Only suppoprt unicast mac */
     if (mac[0] & 0x01)
     {
@@ -10965,6 +10979,10 @@ int wlan_set_uap_mac_addr(uint8_t *mac)
     }
 
     return WM_SUCCESS;
+#else
+    (void)mac;
+    return WM_SUCCESS;
+#endif
 }
 
 int wlan_set_sta_mac_addr(uint8_t *mac)
@@ -10980,10 +10998,12 @@ int wlan_set_sta_mac_addr(uint8_t *mac)
         return -WM_FAIL;
     }
 
+#if UAP_SUPPORT
     if (memcmp(mac, &wlan.uap_mac[0], MLAN_MAC_ADDR_LENGTH) == 0)
     {
         return -WM_FAIL;
     }
+#endif
 
     if (wlan.status == WLCMGR_INIT_DONE || wlan.status == WLCMGR_ACTIVATED)
     {

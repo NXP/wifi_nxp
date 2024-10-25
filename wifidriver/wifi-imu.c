@@ -686,6 +686,7 @@ static int wlan_get_mac_addr_sta()
     return true;
 }
 
+#if UAP_SUPPORT
 static int wlan_get_mac_addr_uap()
 {
     int seq_number = 0;
@@ -705,6 +706,7 @@ static int wlan_get_mac_addr_uap()
     wifi_send_fw_cmd(HostCmd_CMD_802_11_MAC_ADDRESS, (uint8_t *)outbuf, imupkt->size);
     return true;
 }
+#endif
 
 void wifi_prepare_get_fw_ver_ext_cmd(void *cmd, int seq_number, int version_str_sel);
 static int wlan_get_fw_ver_ext(int version_str_sel)
@@ -1043,6 +1045,7 @@ static int wlan_fw_init_cfg()
         return false;
     }
 
+#if UAP_SUPPORT
     last_resp_rcvd = 0;
 
     wlan_get_mac_addr_uap();
@@ -1051,6 +1054,7 @@ static int wlan_fw_init_cfg()
     {
         return false;
     }
+#endif
 
     wcmdr_d("CMD : GET_FW_VER_EXT (0x97)");
 
