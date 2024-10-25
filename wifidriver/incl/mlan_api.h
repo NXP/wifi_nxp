@@ -491,10 +491,12 @@ void wls_csi_process_event(void *p_data);
 #endif
 #endif
 
+#if UAP_SUPPORT
 int wifi_set_custom_ie(custom_ie *beacon_ies_data,
                        custom_ie *beacon_wps_ies_data,
                        custom_ie *proberesp_ies_data,
                        custom_ie *assocresp_ies_data);
+#endif
 
 #if CONFIG_11K
 /**

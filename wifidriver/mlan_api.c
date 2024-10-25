@@ -3883,6 +3883,7 @@ int wifi_set_ext_coex_config(const wifi_ext_coex_config_t *ext_coex_config)
 #endif
 
 #if CONFIG_WPA_SUPP
+#if UAP_SUPPORT
 int wifi_set_custom_ie(custom_ie *beacon_ies_data,
                        custom_ie *beacon_wps_ies_data,
                        custom_ie *proberesp_ies_data,
@@ -3966,6 +3967,7 @@ done:
     LEAVE();
     return status;
 }
+#endif
 
 void wifi_get_scan_table(mlan_private *pmpriv, mlan_scan_resp *pscan_resp)
 {

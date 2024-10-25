@@ -3318,10 +3318,24 @@ static void wlcm_process_channel_switch_supp(struct wifi_message *msg)
             memset(&pchan_band_info , 0, sizeof(chan_band_info));
             pchan_info = (wifi_ecsa_info *)msg->data;
             bss_type = pchan_info->bss_type;
+
+#if !UAP_SUPPORT
+            if (bss_type > WLAN_BSS_ROLE_STA)
+            {
+#if !CONFIG_MEM_POOLS
+                OSA_MemoryFree((void *)msg->data);
+#else
+                OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
+                return;
+            }
+#endif
+
             pmpriv = mlan_adap->priv[bss_type];
             pmadapter = pmpriv->adapter;
             channel = pchan_info->channel;
 
+#if UAP_SUPPORT
             if(is_uap_started())
             {
                 pmpriv->uap_channel = channel;
@@ -3329,6 +3343,7 @@ static void wlcm_process_channel_switch_supp(struct wifi_message *msg)
                 pmpriv->uap_state_chan_cb.band_config = pchan_info->band_config;
                 pchan_band_info.is_11n_enabled = pmpriv->is_11n_enabled;
             }
+#endif
 
             if (is_sta_connected())
             {
@@ -3434,11 +3449,13 @@ static void wlcm_process_channel_switch_supp(struct wifi_message *msg)
                     break;
            }
 
+#if UAP_SUPPORT
             if(is_uap_started())
             {
                 wm_wifi.supp_if_callbk_fns->ecsa_complete_callbk_fn(wm_wifi.hapd_if_priv, &chandef);
                 (void)PRINTF("uap switch to channel %d success!\r\n", channel);
             }
+#endif
 
             if (is_sta_connected())
             {
@@ -3483,11 +3500,13 @@ static void wlcm_process_channel_switch(struct wifi_message *msg)
             pchan_info = (wifi_ecsa_info *)msg->data;
             channel= pchan_info->channel;
 
+#if UAP_SUPPORT
             if(is_uap_started())
             {
                 (void)PRINTF("uap switch to channel %d success!\r\n", channel);
                 wlan.networks[wlan.cur_uap_network_idx].channel = channel;
             }
+#endif
 
             if (is_sta_connected())
             {
