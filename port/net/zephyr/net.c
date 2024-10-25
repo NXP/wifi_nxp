@@ -103,7 +103,9 @@ static struct net_mgmt_event_callback net_event_supp_cb;
 static bool g_supp_ready = 0;
 #endif
 interface_t g_mlan;
+#if UAP_SUPPORT
 interface_t g_uap;
+#endif
 
 static int net_wlan_init_done = 0;
 OSA_TIMER_HANDLE_DEFINE(dhcp_timer);
@@ -951,20 +953,24 @@ void *net_get_sta_handle(void)
     return &g_mlan;
 }
 
+#if UAP_SUPPORT
 void *net_get_uap_handle(void)
 {
     return &g_uap;
 }
+#endif
 
 struct netif *net_get_sta_interface(void)
 {
     return (struct netif *)g_mlan.netif;
 }
 
+#if UAP_SUPPORT
 struct netif *net_get_uap_interface(void)
 {
     return (struct netif *)g_uap.netif;
 }
+#endif
 
 int net_get_if_name_netif(char *pif_name, struct netif *iface)
 {
@@ -1170,6 +1176,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
          * WD_EVENT_NET_DHCP_CONFIG, should be sent to the wlcmgr.
          */
     }
+#if UAP_SUPPORT
     else if (if_handle == &g_uap
 #if CONFIG_P2P
         || ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_UAP))
@@ -1180,6 +1187,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
          * zephyr.*/
         net_if_dormant_off(if_handle->netif);
     }
+#endif
     else
     { /* Do Nothing */
     }

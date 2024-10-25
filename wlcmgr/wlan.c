@@ -5197,7 +5197,9 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     const char *s;
     unsigned char is_11n_enabled;
     int ret;
+#if CONFIG_WIFI_NM_HOSTAPD_AP
     struct netif *netif = net_get_uap_interface();
+#endif
     struct netif *sta_netif = net_get_sta_interface();
     struct wlan_network *network = &wlan.networks[wlan.cur_network_idx];
 
@@ -8243,7 +8245,7 @@ int wlan_stop(void)
         return WLAN_ERROR_STATE;
     }
 #else
-#if CONFIG_WIFI_RECOVERY
+#if CONFIG_WIFI_RECOVERY && UAP_SUPPORT
     /* If CONFIG_WIFI_RECOVERY is defined, 0xb2 CMD will be skipped, but dhcp_server_stop()
      * is called in 0xb2 CMD response. So it needs to be called here to stop DHCP server
      */
@@ -8251,6 +8253,7 @@ int wlan_stop(void)
         net_dhcpv4_server_stop((struct net_if *)net_get_uap_interface());
 #endif
 #endif
+
     status = OSA_SemaphoreDestroy((osa_semaphore_handle_t)wlan.scan_lock);
     if (status != KOSA_StatusSuccess)
     {
@@ -9037,7 +9040,7 @@ int wlan_add_network(struct wlan_network *network)
         if (network->role == WLAN_BSS_ROLE_UAP)
         {
             network->type = WLAN_BSS_TYPE_UAP;
-#if CONFIG_WPA_SUPP
+#if CONFIG_WIFI_NM_HOSTAPD_AP
             netif = net_get_uap_interface();
 #endif
         }
@@ -9757,7 +9760,9 @@ int wlan_remove_network(const char *name)
             }
             else if (wlan.networks[i].role == WLAN_BSS_ROLE_UAP)
             {
+#if CONFIG_WIFI_NM_HOSTAPD_AP
                 netif = net_get_uap_interface();
+#endif
             }
             else
             {
@@ -10419,10 +10424,13 @@ int wlan_remove_all_networks(void)
     intrfc_handle = net_get_sta_handle();
     net_interface_down(intrfc_handle);
 
+#if UAP_SUPPORT
     intrfc_handle = net_get_uap_handle();
     net_interface_down(intrfc_handle);
     /* wait for mgmt_event handled */
     OSA_TimeDelay(500);
+#endif
+
     return WM_SUCCESS;
 }
 
@@ -10706,8 +10714,10 @@ int wlan_stop_all_networks(void)
     net_interface_down(net_get_sta_handle());
     wlan_disconnect();
 
+#if UAP_SUPPORT
     net_interface_down(net_get_uap_handle());
     send_user_request(CM_UAP_USER_REQUEST_STOP, 0);
+#endif
 
     return WM_SUCCESS;
 }
@@ -11321,6 +11331,7 @@ int wlan_get_address(struct wlan_ip_config *addr)
 
 int wlan_get_uap_address(struct wlan_ip_config *addr)
 {
+#if UAP_SUPPORT
     void *if_handle = NULL;
     if (addr == NULL)
     {
@@ -11337,6 +11348,9 @@ int wlan_get_uap_address(struct wlan_ip_config *addr)
         return -WM_FAIL;
     }
     return WM_SUCCESS;
+#else
+    return -WM_E_NODEV;
+#endif
 }
 
 int wlan_get_uap_channel(int *channel)
@@ -11380,11 +11394,15 @@ int wlan_get_mac_address(unsigned char *dest)
 
 int wlan_get_mac_address_uap(unsigned char *dest)
 {
+#if UAP_SUPPORT
     if (!dest)
         return -WM_E_INVAL;
     (void)memset(dest, 0, MLAN_MAC_ADDR_LENGTH);
     (void)memcpy(dest, &wlan.uap_mac[0], MLAN_MAC_ADDR_LENGTH);
     return WM_SUCCESS;
+#else
+    return -WM_E_NODEV;
+#endif
 }
 
 #if CONFIG_P2P
