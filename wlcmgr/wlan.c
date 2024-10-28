@@ -3173,6 +3173,33 @@ static void wlcm_process_channel_switch_ann(enum cm_sta_state *next, struct wlan
     }
 }
 
+#if CONFIG_CSI
+void wlcm_process_csi_status_report(struct wifi_message *msg)
+{
+    if (msg->data != NULL)
+    {
+        wifi_csi_status_info *pcsi_status = (wifi_csi_status_info *)msg->data;
+        if (pcsi_status->status == csi_enabled)
+            (void)PRINTF("csi status report: enable and start csi on channel %d \r\n", pcsi_status->channel);
+        if (pcsi_status->status == csi_disabled)
+            (void)PRINTF("csi status report: stop and disable csi\r\n");
+        if (pcsi_status->status == csiconfig_wrong)
+            (void)PRINTF("csi status report: channel or bandwidth config wrong\r\n");
+        if (pcsi_status->status == csiinternal_restart)
+            (void)PRINTF("csi status report: FW internal restart csi on channel %d \r\n", pcsi_status->channel);
+        if (pcsi_status->status == csiinternal_stop)
+            (void)PRINTF("csi status report: FW internal stop csi\r\n");
+        if (pcsi_status->status == csiinternal_disabled)
+            (void)PRINTF("csi status report: FW internal stop and disable csi, user should put in csi cmd to enable csi\r\n");
+#if !CONFIG_MEM_POOLS
+        OSA_MemoryFree((void *)msg->data);
+#else
+        OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
+    }
+}
+#endif
+
 #if CONFIG_WPA_SUPP
 enum mlan_channel_type wlan_get_chan_type(nxp_wifi_ch_switch_info chandef)
 {
@@ -7061,6 +7088,12 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_process_channel_switch(msg);
 #endif
             break;
+#if CONFIG_CSI
+        case WIFI_EVENT_CSI_STATUS:
+            wlcm_d("got event: csi status report");
+            wlcm_process_csi_status_report(msg);
+            break;
+#endif
 
         case WIFI_EVENT_SLEEP:
 #if CONFIG_WIFI_PS_DEBUG

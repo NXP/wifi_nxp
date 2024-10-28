@@ -1854,6 +1854,25 @@ typedef struct _wifi_ecsa_info
     t_u8 channel;
 } wifi_ecsa_info;
 
+#if CONFIG_CSI
+typedef enum _csi_state
+{
+    csi_enabled = 0,
+    csi_disabled,
+    csiconfig_wrong,
+    csiinternal_restart,
+    csiinternal_stop,
+    csiinternal_disabled,
+} csi_state;
+
+typedef MLAN_PACK_START struct _wifi_csi_status_info
+{
+    csi_state status;
+    t_u8 channel;
+    t_u16 cnt;
+} MLAN_PACK_END wifi_csi_status_info;
+#endif
+
 #ifdef RW610
 #if CONFIG_HOST_SLEEP
 extern int wakeup_by;

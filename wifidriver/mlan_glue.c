@@ -6209,6 +6209,32 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
         }
         break;
+#if CONFIG_CSI
+        case EVENT_CSI_STATUS:
+        {
+            wifi_csi_status_info *pcsi_status = NULL;
+#if !CONFIG_MEM_POOLS
+            pcsi_status = OSA_MemoryAllocate(sizeof(wifi_csi_status_info));
+#else
+            pcsi_status = OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+#endif
+            wifi_csi_status_info *pstatus = (wifi_csi_status_info *)&evt->reason_code;
+
+            pcsi_status->status = pstatus->status;
+            pcsi_status->channel = pstatus->channel;
+            pcsi_status->cnt = pstatus->cnt;
+            if (wifi_event_completion(WIFI_EVENT_CSI_STATUS, WIFI_EVENT_REASON_SUCCESS, pcsi_status) != WM_SUCCESS)
+            {
+                /* If fail to send message on queue, free allocated memory ! */
+#if !CONFIG_MEM_POOLS
+                OSA_MemoryFree((void *)pcsi_status);
+#else
+                OSA_MemoryPoolFree(buf_32_MemoryPool, pcsi_status);
+#endif
+            }
+#endif
+        }
+        break;
 #endif
         case EVENT_MEF_HOST_WAKEUP:
             wifi_d("Host recevied host wake-up event from firmware");

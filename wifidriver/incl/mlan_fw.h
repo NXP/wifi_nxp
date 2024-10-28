@@ -1809,6 +1809,7 @@ typedef enum _ENH_PS_MODES
 
 #if CONFIG_CSI
 #define EVENT_CSI 0x0000008D
+#define EVENT_CSI_STATUS 0x000000A7
 #endif
 
 /** Card Event definition : RESET PN */
