@@ -27,6 +27,10 @@
 #include "fsl_loader.h"
 #include "fsl_ocotp.h"
 #else
+#ifdef CONFIG_BT_IND_DNLD
+#include "fw_loader_uart.h"
+#endif
+#include "fwdnld_intf_abs.h"
 #include "mfg_wlan_bt_fw.h"
 #include "wlan.h"
 #include "wifi.h"
@@ -1037,6 +1041,15 @@ static void main_task(osa_task_param_t arg)
 #endif
 
 #if !defined(RW610_SERIES) && !defined(RW612_SERIES)
+#ifdef CONFIG_BT_IND_DNLD
+    void *intf = NULL;
+    /* BTonly firmware download over UART */
+    BOARD_WIFI_BT_Enable(true);
+    intf = (void *)uart_init_interface();
+    assert(intf != NULL);
+    result = firmware_download(wlan_fw_bin, wlan_fw_bin_len, intf, 0);
+    assert(result == FWDNLD_INTF_SUCCESS);
+#else
     result = wifi_init_fcc(wlan_fw_bin, wlan_fw_bin_len);
     if (result != 0)
     {
@@ -1060,6 +1073,7 @@ static void main_task(osa_task_param_t arg)
     }
 
     assert(WM_SUCCESS == result);
+#endif /* CONFIG_BT_IND_DNLD */
 #endif
 
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
