@@ -1617,7 +1617,7 @@ static void test_wlan_twt_report(int argc, char **argv)
     int j;
     int num;
     wlan_twt_report_t info;
-    bool tipOnce = TRUE;
+    bool tipOnce = MTRUE;
 
     memset(&info, 0x00, sizeof(info));
     wlan_get_twt_report(&info);
@@ -1634,12 +1634,12 @@ static void test_wlan_twt_report(int argc, char **argv)
     (void)PRINTF("twt_report results:\r\n Received B-TWT schedule from ex-AP's beacon. Total buff len = %hu, count of schedules = %d, detail:\r\n", info.length, num);
     for (i = 0; i < num; i++)
     {
-        int idx = i * WLAN_BTWT_REPORT_LEN;
-        t_u16 req_typ = info.data[idx]   | info.data[++idx] << 8;
-        t_u16 tsf     = info.data[++idx] | info.data[++idx] << 8;
-        t_u8 wake_dur = info.data[++idx];
-        t_u16 mantissa= info.data[++idx] | info.data[++idx] << 8;
-        t_u16 twt_info= info.data[++idx] | info.data[++idx] << 8;
+        t_u8 *p = &info.data[i * WLAN_BTWT_REPORT_LEN];
+
+        t_u16 req_typ = p[0] | p[1] << 8;
+        t_u8 wake_dur = p[4];
+        t_u16 mantissa= p[5] | p[6] << 8;
+        t_u16 twt_info= p[7] | p[8] << 8;
         t_u8 btwt_id  = (twt_info & 0xF8) >> 3;
     
         (void)PRINTF("Schedule-[%d]:\r\n", i);
@@ -1658,7 +1658,7 @@ static void test_wlan_twt_report(int argc, char **argv)
                     wake_dur);
         if (btwt_id == 0 && tipOnce)
         {
-            tipOnce = FALSE;
+            tipOnce = MFALSE;
             (void)PRINTF(" ## BTWT_ID[0] will be auto joined when STA join other BTWT schedule. Don't manually join it.\r\n");
         }
     }
