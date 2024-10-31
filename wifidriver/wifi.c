@@ -2080,10 +2080,12 @@ static int wifi_core_init(void)
 
     wm_wifi.wifi_core_init_done = 1;
 
+#if UAP_SUPPORT
 #if defined(SD8801) || defined(RW610)
     wifi_uap_set_bandwidth(BANDWIDTH_20MHZ);
 #else
     wifi_uap_set_bandwidth(BANDWIDTH_40MHZ);
+#endif
 #endif
 
     return WM_SUCCESS;

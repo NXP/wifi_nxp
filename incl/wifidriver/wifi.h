@@ -2055,42 +2055,5 @@ t_u32 wifi_get_default_vht_capab();
 void wifi_uap_client_assoc(t_u8 *sta_addr, unsigned char is_11n_enabled);
 void wifi_uap_client_deauth(t_u8 *sta_addr);
 #endif
-
-#else /* !UAP_SUPPORT */
-static inline int wifi_uap_bss_sta_list(wifi_sta_list_t **list)
-{
-    (void)PRINTF("wifi_uap_bss_sta_list UAP not supported %s:%d\r\n", __func__, __LINE__);
-    return WM_UAP_NOT_SUPPORT;
-}
-
-static inline int wifi_get_uap_channel(int *channel)
-{
-    (void)PRINTF("wifi_get_uap_channel UAP not supported %s:%d\r\n", __func__, __LINE__);
-    return WM_UAP_NOT_SUPPORT;
-}
-
-static inline int wifi_uap_set_bandwidth(const t_u8 bandwidth)
-{
-    (void)PRINTF("wifi_uap_set_bandwidth UAP not supported %s:%d\r\n", __func__, __LINE__);
-    return WM_UAP_NOT_SUPPORT;
-}
-
-static inline t_u8 wifi_uap_get_bandwidth()
-{
-    (void)PRINTF("wifi_uap_get_bandwidth UAP not supported %s:%d\r\n", __func__, __LINE__);
-    return 0;
-}
-
-static inline int wifi_uap_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr)
-{
-    (void)PRINTF("wifi_uap_get_bandwidth UAP not supported %s:%d\r\n", __func__, __LINE__);
-    return WM_UAP_NOT_SUPPORT;
-}
-
-static inline void wifi_uap_set_httxcfg(const t_u16 ht_tx_cfg)
-{
-    (void)PRINTF("wifi_uap_set_httxcfg UAP not supported %s:%d\r\n", __func__, __LINE__);
-}
-
 #endif /* UAP_SUPPORT */
 #endif /* __WIFI_H__ */

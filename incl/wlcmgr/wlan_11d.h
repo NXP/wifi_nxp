@@ -52,11 +52,5 @@ static inline int wlan_enable_uap_11d(int state)
     else
         return wifi_disable_uap_11d_support();
 }
-#else
-static inline int wlan_enable_uap_11d(int state)
-{
-    (void)PRINTF("wlan_enable_uap_11d UAP not supported %s:%d\r\n", __func__, __LINE__);
-    return WM_UAP_NOT_SUPPORT;
-}
 #endif
 #endif /* __WLAN_11D_H__ */

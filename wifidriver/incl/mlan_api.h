@@ -225,7 +225,7 @@ static inline int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
                                                 void *priv)
 {
     (void)PRINTF("wifi_uap_prepare_and_send_cmd UAP not suppored %s:%d\r\n", __func__, __LINE__);
-    return WM_UAP_NOT_SUPPORT;
+    return -1;
 }
 #endif
 

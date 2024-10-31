@@ -45,10 +45,6 @@
 #define WIFI_SUPPORT_LEGACY (1 << 0)
 #endif
 
-#if !UAP_SUPPORT
-#define WM_UAP_NOT_SUPPORT 0
-#endif
-
 #if 0
 /** channel_field.flags */
 #define CHANNEL_FLAGS_TURBO                   0x0010

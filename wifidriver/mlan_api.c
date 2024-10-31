@@ -4162,7 +4162,9 @@ int wifi_set_rts(int rts, mlan_bss_type bss_type)
     mlan_ioctl_req req;
     mlan_ds_snmp_mib *mib = NULL;
     mlan_status ret       = MLAN_STATUS_FAILURE;
+#if UAP_SUPPORT
     wifi_sta_list_t *sl   = NULL;
+#endif
 
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
 
@@ -4198,6 +4200,7 @@ int wifi_set_rts(int rts, mlan_bss_type bss_type)
         mib->param.rts_threshold = rts;
     }
 
+#if UAP_SUPPORT
     if (bss_type == MLAN_BSS_TYPE_UAP)
     {
         if (!is_uap_started())
@@ -4227,6 +4230,9 @@ int wifi_set_rts(int rts, mlan_bss_type bss_type)
             wifi_e("uap required sta to connect before setting rts threshold\n\r");
     }
     else if (bss_type == MLAN_BSS_TYPE_STA)
+#else
+    if (bss_type == MLAN_BSS_TYPE_STA)
+#endif
     {
         if (is_sta_connected())
             ret = wlan_ops_sta_ioctl(mlan_adap, &req);
@@ -4260,7 +4266,9 @@ int wifi_set_frag(int frag, mlan_bss_type bss_type)
     mlan_ioctl_req req;
     mlan_ds_snmp_mib *mib = NULL;
     mlan_status ret       = MLAN_STATUS_FAILURE;
+#if UAP_SUPPORT
     wifi_sta_list_t *sl   = NULL;
+#endif
 
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
 
@@ -4296,6 +4304,7 @@ int wifi_set_frag(int frag, mlan_bss_type bss_type)
         mib->param.frag_threshold = frag;
     }
 
+#if UAP_SUPPORT
     if (bss_type == MLAN_BSS_TYPE_UAP)
     {
         if (!is_uap_started())
@@ -4326,6 +4335,9 @@ int wifi_set_frag(int frag, mlan_bss_type bss_type)
             wifi_e("uap required sta to connect before setting fragment threshold\n\r");
     }
     else if (bss_type == MLAN_BSS_TYPE_STA)
+#else
+    if (bss_type == MLAN_BSS_TYPE_STA)
+#endif
     {
         if (is_sta_connected())
             ret = wlan_ops_sta_ioctl(mlan_adap, &req);

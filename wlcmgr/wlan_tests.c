@@ -7815,6 +7815,7 @@ static void test_wlan_auto_null_tx(int argc, char **argv)
                 return;
             }
         }
+#if UAP_SUPPORT
         if (bss_type == MLAN_BSS_TYPE_UAP)
         {
             wifi_sta_list_t *sl = NULL;
@@ -7867,6 +7868,7 @@ static void test_wlan_auto_null_tx(int argc, char **argv)
                     (void)PRINTF("There is no STA connected to uAP\r\n");
             }
         }
+#endif
     }
     else if (string_equal("stop", argv[2]))
     {

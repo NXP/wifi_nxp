@@ -5706,16 +5706,8 @@ static void wlcm_process_init(enum cm_sta_state *next)
     (void)wifi_get_fw_region_and_cfp_tables();
 #endif
 
+#if UAP_SUPPORT
     (void)wifi_get_uap_max_clients(&wlan.uap_supported_max_sta_num);
-
-#if CONFIG_WPA_SUPP
-#if CONFIG_WPA_SUPP_AP
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
-    struct netif *uap_netif = net_get_uap_interface();
-
-    wpa_supp_set_ap_max_num_sta(uap_netif, wlan.uap_supported_max_sta_num);
-#endif
-#endif
 #endif
 
     (void)wrapper_wlan_cmd_get_hw_spec();
@@ -11394,6 +11386,7 @@ int wlan_get_uap_address(struct wlan_ip_config *addr)
 
 int wlan_get_uap_channel(int *channel)
 {
+#if UAP_SUPPORT
     if (channel != NULL)
     {
         *channel = 0;
@@ -11404,6 +11397,9 @@ int wlan_get_uap_channel(int *channel)
     }
 
     return wifi_get_uap_channel(channel);
+#else
+    return -WM_E_NODEV;
+#endif
 }
 
 #if CONFIG_P2P
@@ -11803,11 +11799,16 @@ unsigned int wlan_get_uap_supported_max_clients(void)
 
 int wlan_get_uap_max_clients(unsigned int *max_sta_num)
 {
+#if UAP_SUPPORT
     return wifi_get_uap_max_clients(max_sta_num);
+#else
+    return -WM_E_NODEV;
+#endif
 }
 
 int wlan_set_uap_max_clients(unsigned int max_sta_num)
 {
+#if UAP_SUPPORT
     int ret = -WM_FAIL;
 
     if (is_uap_started() != 0)
@@ -11845,6 +11846,9 @@ int wlan_set_uap_max_clients(unsigned int max_sta_num)
 #endif
         return ret;
     }
+#else
+    return -WM_E_NODEV;
+#endif
 }
 
 int wlan_get_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int *buf_len)
@@ -12406,10 +12410,12 @@ int wlan_get_pmfcfg(uint8_t *mfpc, uint8_t *mfpr)
 
 int wlan_uap_get_pmfcfg(uint8_t *mfpc, uint8_t *mfpr)
 {
+#if UAP_SUPPORT
     if (is_uap_started())
     {
         return wifi_uap_get_pmfcfg(mfpc, mfpr);
     }
+#endif
     return -WM_FAIL;
 }
 
@@ -12790,6 +12796,7 @@ void wlan_uap_set_scan_chan_list(wifi_scan_chan_list_t scan_chan_list)
 
 void wlan_uap_set_beacon_period(const uint16_t beacon_period)
 {
+#if UAP_SUPPORT
 #if CONFIG_WPA_SUPP
 #if CONFIG_WPA_SUPP_AP
 #if !CONFIG_WIFI_NM_WPA_SUPPLICANT
@@ -12801,19 +12808,25 @@ void wlan_uap_set_beacon_period(const uint16_t beacon_period)
 #endif
 
     wifi_uap_set_beacon_period(beacon_period);
+#endif
 }
 
 int wlan_uap_set_bandwidth(const uint8_t bandwidth)
 {
+#if UAP_SUPPORT
 #if defined(RW610) || defined(SD8801)
     return WM_SUCCESS;
 #else
     return wifi_uap_set_bandwidth(bandwidth);
 #endif
+#else
+    return -WM_E_NODEV;
+#endif
 }
 
 int wlan_uap_get_bandwidth(uint8_t *bandwidth)
 {
+#if UAP_SUPPORT
     *bandwidth = wifi_uap_get_bandwidth();
     if (*bandwidth == BANDWIDTH_20MHZ || *bandwidth == BANDWIDTH_40MHZ
 #if CONFIG_11AC
@@ -12827,10 +12840,14 @@ int wlan_uap_get_bandwidth(uint8_t *bandwidth)
     {
         return -WM_FAIL;
     }
+#else
+    return -WM_E_NODEV;
+#endif
 }
 
 int wlan_uap_set_hidden_ssid(const t_u8 hidden_ssid)
 {
+#if UAP_SUPPORT
     if (hidden_ssid != 0 && hidden_ssid != 1 && hidden_ssid != 2)
     {
         return -WM_FAIL;
@@ -12845,26 +12862,37 @@ int wlan_uap_set_hidden_ssid(const t_u8 hidden_ssid)
     wifi_uap_set_hidden_ssid(hidden_ssid);
 
     return WM_SUCCESS;
+#else
+    return -WM_E_NODEV;
+#endif
 }
 
 void wlan_uap_ctrl_deauth(const bool enable)
 {
+#if UAP_SUPPORT
     (void)wifi_uap_ctrl_deauth(enable);
+#endif
 }
 
 void wlan_uap_set_ecsa(void)
 {
+#if UAP_SUPPORT
     wifi_uap_set_ecsa();
+#endif
 }
 
 void wlan_uap_set_htcapinfo(const uint16_t ht_cap_info)
 {
+#if UAP_SUPPORT
     wifi_uap_set_htcapinfo(ht_cap_info);
+#endif
 }
 
 void wlan_uap_set_httxcfg(unsigned short httxcfg)
 {
+#if UAP_SUPPORT
     wifi_uap_set_httxcfg(httxcfg);
+#endif
 }
 
 #if CONFIG_WIFI_RTS_THRESHOLD
@@ -15728,19 +15756,13 @@ int wlan_get_region_code(unsigned int *region_code)
 
 int wlan_set_11d_state(int bss_type, int state)
 {
-#if CONFIG_WPA_SUPP_AP
-    struct netif *netif;
-#endif
     if (bss_type == WLAN_BSS_TYPE_UAP)
     {
-#if CONFIG_WPA_SUPP_AP
-        netif = net_get_uap_interface();
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
-        wpa_supp_set_ap_11d_state(netif, state);
-#endif
-#endif
-
+#if UAP_SUPPORT
         return wlan_enable_uap_11d(state);
+#else
+        return -WM_E_NODEV;
+#endif
     }
     else
     {

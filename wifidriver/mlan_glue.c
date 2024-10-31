@@ -1437,9 +1437,6 @@ mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
     pmlan_ioctl_req pioctl_req = (mlan_ioctl_req *)pioctl_buf;
     mlan_status rv             = MLAN_STATUS_SUCCESS;
 
-    (void)wifi_get_command_lock();
-    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-
     if (pioctl_req != NULL)
     {
         if (pioctl_req->bss_index == 1U)
@@ -1448,6 +1445,11 @@ mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
         }
     }
 
+    CHECK_BSS_TYPE(bss_type, MLAN_STATUS_FAILURE);
+
+    (void)wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
 #if CONFIG_P2P
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, MLAN_BSS_TYPE_WIFIDIRECT);
 #else
@@ -1455,11 +1457,14 @@ mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
 #endif /* CONFIG_P2P */
     cmd->result = 0x0;
 
+#if UAP_SUPPORT
+    /* !UAP_SUPPORT will return in the entry of function, thus won't come here */
     if (bss_type == MLAN_BSS_TYPE_UAP)
     {
         rv = wlan_ops_uap_prepare_cmd(pmpriv, cmd_no, cmd_action, cmd_oid, pioctl_buf, pdata_buf, cmd);
     }
     else
+#endif
     {
         rv = wlan_ops_sta_prepare_cmd(pmpriv, cmd_no, cmd_action, cmd_oid, pioctl_buf, pdata_buf, cmd);
     }
@@ -6318,12 +6323,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             break;
 #endif
         default:
-#if UAP_SUPPORT
             wifi_d("Event 0x%x not implemented", evt->event_id);
-#else
-            /* TODO: back to debug level after disable UAP stable */
-            wifi_w("Event 0x%x not implemented when diable UAP", evt->event_id);
-#endif
             break;
     }
 
