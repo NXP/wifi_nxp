@@ -3868,9 +3868,9 @@ static void notify_wifi_driver_tx_event(uint32_t events)
 
 int send_wifi_driver_tx_data_event(t_u8 interface)
 {
-    CHECK_BSS_TYPE(interface, -1);
     osa_event_flags_t events;
 
+    CHECK_BSS_TYPE(interface, -1);
     events = (1U << interface) | WIFI_EVENT_TX_DATA;
 
     if(1 != wm_wifi.wifi_core_init_done)
@@ -3883,9 +3883,9 @@ int send_wifi_driver_tx_data_event(t_u8 interface)
 
 int send_wifi_driver_tx_null_data_event(t_u8 interface)
 {
-    CHECK_BSS_TYPE(interface, -1);
     osa_event_flags_t events;
 
+    CHECK_BSS_TYPE(interface, -1);
     events = (1U << interface) | WIFI_EVENT_TX_NULL_DATA;
 
     notify_wifi_driver_tx_event(events);
@@ -3895,9 +3895,9 @@ int send_wifi_driver_tx_null_data_event(t_u8 interface)
 
 int send_wifi_driver_bypass_data_event(t_u8 interface)
 {
-    CHECK_BSS_TYPE(interface, -1);
     osa_event_flags_t events;
 
+    CHECK_BSS_TYPE(interface, -1);
     events = (1U << interface) | WIFI_EVENT_TX_BYPASS_DATA;
 
     notify_wifi_driver_tx_event(events);

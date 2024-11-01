@@ -1159,11 +1159,11 @@ int wrapper_wlan_cmd_get_hw_spec(void)
 
 mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int len, t_u16 action)
 {
-    CHECK_BSS_TYPE(bss_type, MLAN_STATUS_FAILURE);
     void *pdata_buf = NULL;
     HostCmd_DS_MGMT_IE_LIST_CFG ds_mgmt_ie_list_cfg;
     mlan_status status = MLAN_STATUS_SUCCESS;
 
+    CHECK_BSS_TYPE(bss_type, MLAN_STATUS_FAILURE);
     (void)wifi_get_command_lock();
 
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
