@@ -799,7 +799,9 @@ extern int retry_attempts;
  *       to become availale since the stack doesn't retry to send a packet
  *       dropped because of memory failure (except for the TCP timers).
  */
-
+#if CONFIG_WIFI_PKT_FWD
+#define MAX_RETRY_PKT_FWD 3
+#endif
 static err_t low_level_output(struct netif *netif, struct pbuf *p)
 {
     int ret;
@@ -858,17 +860,33 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
         }
         else
         {
-            retry = retry_attempts;
+#if CONFIG_WIFI_PKT_FWD
+            if (interface == WLAN_BSS_TYPE_UAP)
+            {
+                retry = MAX_RETRY_PKT_FWD;
+            }
+            else
+#endif
+            {
+                retry = retry_attempts;
+            }
         }
 
         wmm_outbuf = wifi_wmm_get_outbuf_enh(&outbuf_len, (mlan_wmm_ac_e)pkt_prio, interface, ra, &is_tx_pause);
         ret        = (wmm_outbuf == NULL) ? true : false;
 
-        if (ret == true && is_tx_pause == true)
+        /* uAP case doesn't need to delay to let powersave task run,
+         * as FW won't go into sleep mode when uAP enabled. And this
+         * delay will block uAP packet forward case */
+#if CONFIG_WIFI_PKT_FWD
+        if (interface != WLAN_BSS_TYPE_UAP)
+#endif
         {
-            OSA_TimeDelay(1);
+            if (ret == true && is_tx_pause == true)
+            {
+                OSA_TimeDelay(1);
+            }
         }
-
         retry--;
     } while (ret == true && retry > 0);
 
@@ -967,6 +985,16 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 
     return ret;
 }
+
+#if CONFIG_WIFI_PKT_FWD
+int net_wifi_pkt_fwd(uint8_t interface, void *stack_buffer)
+{
+    if (interface == WLAN_BSS_TYPE_UAP)
+        return low_level_output(net_get_uap_interface(), (struct pbuf *)stack_buffer);
+    else
+        return low_level_output(net_get_sta_interface(), (struct pbuf *)stack_buffer);
+}
+#endif
 
 #if CONFIG_WPS2
 void wps_register_rx_callback(void (*WPSEAPoLRxDataHandler)(const t_u8 *buf, const size_t len))

@@ -430,6 +430,18 @@ static inline void *net_stack_buffer_get_payload(void *buf)
 #endif
 }
 
+#if CONFIG_WIFI_PKT_FWD
+/** Send packet from Wi-Fi driver
+ *
+ * \param[in] interface Wi-Fi interface.
+ * \param[in] stack_buffer net stack buffer pointer.
+ *
+ * \return WM_SUCCESS on success
+ * \return -WM_FAIL otherwise
+ */
+int net_wifi_pkt_fwd(uint8_t interface, void *stack_buffer);
+#endif
+
 /**
  * Get network host entry
  *

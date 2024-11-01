@@ -1189,6 +1189,16 @@
 #endif
 #endif /* !CONFIG_WIFI_NXP_AP */
 
+#if !CONFIG_WIFI_PKT_FWD
+#if UAP_SUPPORT
+#if defined(RW610)
+#define CONFIG_WIFI_PKT_FWD 1
+#else
+#define CONFIG_WIFI_PKT_FWD 0
+#endif
+#endif
+#endif
+
 /*
  * Wi-Fi SLIM feature options
  */

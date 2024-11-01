@@ -135,8 +135,10 @@ enum wifi_event
     /** 802.11K/11V neighbor report */
     WIFI_EVENT_NLIST_REPORT,
     /* Add Block Ack */
-    /** 802.11N add block ack */
-    WIFI_EVENT_11N_ADDBA,
+    /** 802.11N send add block ack */
+    WIFI_EVENT_11N_SEND_ADDBA,
+    /** 802.11N receive add block ack */
+    WIFI_EVENT_11N_RECV_ADDBA,
     /** 802.11N block Ack stream timeout */
     WIFI_EVENT_11N_BA_STREAM_TIMEOUT,
     /** 802.11n Delete block add */

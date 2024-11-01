@@ -641,6 +641,8 @@ int wifi_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config);
 int wifi_imd3_cfg(t_u8 imd3_value);
 #endif
 
+int send_wifi_driver_bypass_data_event(t_u8 interface);
+
 #if CONFIG_AUTO_RECONNECT
 int wifi_auto_reconnect_enable(wifi_auto_reconnect_config_t auto_reconnect_config);
 int wifi_auto_reconnect_disable(void);

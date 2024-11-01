@@ -828,6 +828,17 @@ typedef struct
     t_u8 rx_amsdu;
 } add_ba_param_t;
 
+/** Send add BA parameter */
+typedef struct
+{
+    /** Wi-Fi interface */
+    t_u8 interface;
+    /** TID */
+    int tid;
+    /** Peer MAC address */
+    t_u8 peer_mac[MLAN_MAC_ADDR_LENGTH];
+} send_add_ba_param_t;
+
 /** Tx aggregation data structure */
 typedef struct _txAggr_t
 {
@@ -2448,6 +2459,10 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter);
 t_void wlan_free_adapter(pmlan_adapter pmadapter);
 /** Handle received packet, has extra handling for aggregate packets */
 mlan_status wlan_handle_rx_packet(pmlan_adapter pmadapter, pmlan_buffer pmbuf);
+#if CONFIG_WIFI_PKT_FWD
+/* Process received packet and forwards it to kernel/upper layer or send back to firmware */
+mlan_status wlan_process_uap_rx_packet(mlan_private *priv, pmlan_buffer pmbuf);
+#endif
 /** Transmit a null data packet */
 mlan_status wlan_send_null_packet(pmlan_private priv, t_u8 flags);
 
