@@ -684,12 +684,14 @@ int wrapper_wlan_cmd_11n_addba_rspgen(void *saved_event_buff)
         cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, BSS_TYPE_STA);
         (void)wlan_cmd_11n_addba_rspgen((mlan_private *)mlan_adap->priv[evt->bss_type], cmd, &evt->reason_code);
     }
+#if UAP_SUPPORT
     else if (evt->bss_type == BSS_TYPE_UAP)
     {
         cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, BSS_TYPE_UAP);
 
         (void)wlan_cmd_11n_uap_addba_rspgen((mlan_private *)mlan_adap->priv[evt->bss_type], cmd, &evt->reason_code);
     }
+#endif
     else
     { /* Do Nothing */
     }
@@ -868,11 +870,13 @@ static mlan_status do_wlan_ret_11n_addba_resp(HostCmd_DS_COMMAND *resp)
 #ifdef DEBUG_11N_AGGR
     wmprintf("ADDBA RESP RESP: %d\n\r", resp->result);
 #endif /* DEBUG_11N_AGGR */
+#if UAP_SUPPORT
     if (bss_type == BSS_TYPE_UAP)
     {
         mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
         rv                   = wlan_ret_11n_addba_resp(pmpriv, resp);
     }
+#endif
 
     return rv;
 }
@@ -3117,9 +3121,11 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             {
                 if (resp->result == HostCmd_RESULT_OK)
                 {
+#if UAP_SUPPORT
                     int bss_type = HostCmd_GET_BSS_TYPE(resp->seq_num);
                     if (bss_type == MLAN_BSS_TYPE_UAP)
                         pmpriv = (mlan_private *)mlan_adap->priv[1];
+#endif
                     if (wm_wifi.cmd_resp_priv != NULL)
                     {
                         wifi_ds_rate *ds_rate = (wifi_ds_rate *)wm_wifi.cmd_resp_priv;
@@ -7304,6 +7310,7 @@ void _wifi_set_mac_addr(const uint8_t *mac, mlan_bss_type bss_type)
         }
 #endif
     }
+#if UAP_SUPPORT
     else if (bss_type == MLAN_BSS_TYPE_UAP)
     {
         (void)memcpy(&mlan_adap->priv[1]->curr_addr[0], &mac[0], MLAN_MAC_ADDR_LENGTH);
@@ -7314,6 +7321,7 @@ void _wifi_set_mac_addr(const uint8_t *mac, mlan_bss_type bss_type)
         }
 #endif
     }
+#endif
 }
 
 #if CONFIG_WMM_UAPSD
