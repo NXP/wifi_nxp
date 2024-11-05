@@ -662,6 +662,10 @@ static void dump_wlan_add_usage(void)
 #endif
         "\r\n");
 #if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#if CONFIG_EAP_MSCHAPV2
+    (void)PRINTF("      If using eap-ttls-mschapv2/eap-peap-mschapv2, "
+        "please specify whether use CA or not by setting 'use_ca <0/1>'\r\n");
+#endif
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] ["
 #if CONFIG_EAP_TLS
@@ -686,7 +690,7 @@ static void dump_wlan_add_usage(void)
         "\r\n");
 #if CONFIG_EAP_MSCHAPV2
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-ttls-mschapv2 aid <anonymous identity> id "
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-ttls-mschapv2 use_ca <0/1> aid <anonymous identity> id "
         "<identity> pass "
         "<password> [key_passwd <client_key_passwd>]] [mfpc <1> mfpr <0/1>]"
         "\r\n");
@@ -695,15 +699,19 @@ static void dump_wlan_add_usage(void)
 #if CONFIG_EAP_PEAP
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] ["
-#if CONFIG_EAP_MSCHAPV2
-        "eap-peap-mschapv2"
-#endif
 #if CONFIG_EAP_TLS
-        "/eap-peap-tls"
+        "eap-peap-tls"
 #endif
 #if CONFIG_EAP_GTC
         "/eap-peap-gtc"
 #endif
+        " [ver 0/1] id <identity> pass "
+        "<password> [key_passwd <client_key_passwd>]] [mfpc <1> mfpr <0/1>]"
+        "\r\n");
+#endif
+#if CONFIG_EAP_MSCHAPV2
+    (void)PRINTF(
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-peap-mschapv2 use_ca <0/1>"
         " [ver 0/1] id <identity> pass "
         "<password> [key_passwd <client_key_passwd>]] [mfpc <1> mfpr <0/1>]"
         "\r\n");
@@ -1467,6 +1475,20 @@ static void test_wlan_add(int argc, char **argv)
             }
 #endif
 
+#if CONFIG_EAP_MSCHAPV2
+            network.security.verify_peer = 0;
+            if (string_equal(argv[arg + 1], "use_ca") != false)
+            {
+                unsigned int value;
+                if ((arg + 1 >= argc) || get_uint(argv[arg + 2], &value, strlen(argv[arg + 2])) || (value != 0 && value != 1))
+                {
+                    (void)PRINTF("Error: invalid use_ca parameter, please specify 0 or 1\r\n");
+                    return;
+                }
+                network.security.verify_peer = value;
+                arg += 2;
+            }
+#endif
 #if CONFIG_EAP_PEAP
             network.security.eap_ver = 1;
             if (string_equal(argv[arg + 1], "ver") != false)

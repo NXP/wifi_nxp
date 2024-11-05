@@ -8422,6 +8422,16 @@ static bool wlan_is_eap_fast_security(enum wlan_security_type security)
     return false;
 }
 
+#if CONFIG_EAP_MSCHAPV2
+static bool wlan_is_skip_ca(enum wlan_security_type security, bool verify_peer)
+{
+    if (((security == WLAN_SECURITY_EAP_TTLS_MSCHAPV2) || (security == WLAN_SECURITY_EAP_PEAP_MSCHAPV2)) && (verify_peer == 0))
+        return true;
+
+    return false;
+}
+#endif
+
 static bool wlan_is_skip_cert_cfg(enum wlan_security_type security)
 {
 #if CONFIG_EAP_MSCHAPV2
@@ -9163,8 +9173,10 @@ int wlan_add_network(struct wlan_network *network)
 #endif
 #endif
         {
-            if (false == wlan_is_skip_cert_cfg(network->security.type))
-            {
+#if CONFIG_EAP_MSCHAPV2
+            if (false == wlan_is_skip_ca(network->security.type, network->security.verify_peer))
+             {
+#endif
                 /* Specify CA certificate */
                 network->security.ca_cert_len =
                     wlan_get_entp_cert_files(FILE_TYPE_ENTP_CA_CERT, &network->security.ca_cert_data);
@@ -9174,7 +9186,11 @@ int wlan_add_network(struct wlan_network *network)
                     wlcm_e("CA cert is not configured");
                     goto INVAL;
                 }
-
+#if CONFIG_EAP_MSCHAPV2
+            }
+#endif
+            if (false == wlan_is_skip_cert_cfg(network->security.type))
+            {
                 /* Specify Client certificate */
                 network->security.client_cert_len =
                     wlan_get_entp_cert_files(FILE_TYPE_ENTP_CLIENT_CERT, &network->security.client_cert_data);
