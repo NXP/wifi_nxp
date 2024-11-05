@@ -315,6 +315,17 @@ OSA_TASK_HANDLE_DEFINE(main_task_Handle);
 
 #define SDK_VERSION "NXPSDK_2.15.0_r48.p1"
 
+#ifndef RW610
+/* Callback Function passed to WLAN Connection Manager. The callback function
+ * gets called when there are WLAN Events that need to be handled by the
+ * application.
+ */
+int wlan_event_callback(enum wlan_event_reason reason, void *data)
+{
+    return 0;
+}
+#endif
+
 static void uart_init_crc32(uart_cb *uartcb)
 {
     int i, j;

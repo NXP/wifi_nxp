@@ -4216,7 +4216,7 @@ int wifi_low_level_output(const t_u8 interface,
     // wakelock_get(WL_ID_LL_OUTPUT);
     /* Following condition is added to check if device is not connected and data packet is being transmitted */
 #ifndef __ZEPHYR__
-    if ((pmpriv->media_connected == MFALSE))
+    if (pmpriv->media_connected == MFALSE)
     {
 #if CONFIG_WMM
         wifi_wmm_buf_put((outbuf_t *)sd_buffer);

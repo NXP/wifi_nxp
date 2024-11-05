@@ -2573,8 +2573,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 {
                     pmpriv->uap_bss_started = MFALSE;
                     bss_type                = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
-                    if ((bss_type == MLAN_BSS_TYPE_UAP)
-                    )
+                    if (bss_type == MLAN_BSS_TYPE_UAP)
                     {
                         wm_wifi.cmd_resp_status = WM_SUCCESS;
                         wlan_clean_txrx(pmpriv);
@@ -2604,8 +2603,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     wm_wifi.acs_chan = acs_scan->chan;
 
                     bss_type = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
-                    if ((bss_type == MLAN_BSS_TYPE_UAP)
-                    )
+                    if (bss_type == MLAN_BSS_TYPE_UAP)
                     {
 #if CONFIG_WPA_SUPP
                         nxp_wifi_acs_params acs_params;
@@ -2706,8 +2704,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 if (resp->result == HostCmd_RESULT_OK)
                 {
                     bss_type = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
-                    if ((bss_type == MLAN_BSS_TYPE_UAP)
-                    )
+                    if (bss_type == MLAN_BSS_TYPE_UAP)
                     {
 #if CONFIG_WMM_UAPSD
                         /* disable uapsd for uAP */
