@@ -6956,6 +6956,22 @@ int wlan_set_ips(int option);
 int wlan_get_signal_info(wlan_rssi_info_t *signal);
 #endif
 
+/**
+ * Set band configuration.
+ * \param[in] bandcfg    band configureation
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_set_bandcfg(wlan_bandcfg_t *bandcfg);
+
+/**
+ * Get band configuration.
+ * \param[out] bandcfg    band configureation
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_get_bandcfg(wlan_bandcfg_t *bandcfg);
+
 #if (CONFIG_COMPRESS_TX_PWTBL)
 /**
  * Set TX power table according to region code

@@ -15392,6 +15392,16 @@ int wlan_get_signal_info(wlan_rssi_info_t *signal)
 }
 #endif
 
+int wlan_set_bandcfg(wlan_bandcfg_t *bandcfg)
+{
+    return wifi_get_set_bandcfg(bandcfg, MLAN_ACT_SET);
+}
+
+int wlan_get_bandcfg(wlan_bandcfg_t *bandcfg)
+{
+    return wifi_get_set_bandcfg(bandcfg, MLAN_ACT_GET);
+}
+
 #if CONFIG_TURBO_MODE
 int wlan_get_turbo_mode(t_u8 *mode)
 {
