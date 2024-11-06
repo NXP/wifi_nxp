@@ -1178,11 +1178,6 @@
 #define CONFIG_WIFI_SLIM_UAP 1
 #endif
 
-#if CONFIG_WIFI_CAPA
-#undef CONFIG_WIFI_CAPA
-#define CONFIG_WIFI_CAPA 0
-#endif
-
 #if CONFIG_ECSA
 #undef CONFIG_ECSA
 #define CONFIG_ECSA 0
