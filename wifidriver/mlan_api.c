@@ -6021,11 +6021,13 @@ int wifi_ftm_11mc_cfg(ftm_11mc_nego_cfg_t *ftm_11mc_nego_cfg)
 int wifi_ftm_location_cfg(location_cfg_info_t *ftm_location_cfg)
 {
     wlan_location_ftm_cfg(ftm_location_cfg);
+    return 0;
 }
 
 int wifi_ftm_civic_cfg(location_civic_rep_t *ftm_civic_cfg)
 {
     wlan_civic_ftm_cfg(ftm_civic_cfg);
+    return 0;
 }
 
 int wifi_ftm_cfg(const t_u8 protocol, ranging_11az_cfg_t *ftm_ranging_cfg)
