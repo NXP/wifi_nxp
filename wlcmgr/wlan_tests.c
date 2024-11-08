@@ -746,12 +746,10 @@ static void dump_wlan_add_usage(void)
 #if CONFIG_DRIVER_OWE
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> <owe_only> "
-#if CONFIG_WPA_SUPP
-        "[og <\"19 20 21\">] "
-#endif
         "mfpc 1 mfpr 1"
         "\r\n");
     (void)PRINTF("      If using OWE only security, always set the PMF configuration.\r\n");
+    (void)PRINTF("      NOTE: [og <\"19 20 21\">] is only supported in Micro-AP mode .\r\n");
 #endif
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3 sae"
