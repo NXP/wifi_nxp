@@ -12655,16 +12655,6 @@ int wlan_uap_set_hidden_ssid(const t_u8 hidden_ssid)
         return -WM_FAIL;
     }
 
-#if CONFIG_WPA_SUPP
-#if CONFIG_WPA_SUPP_AP
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
-    struct netif *netif = net_get_uap_interface();
-
-    wpa_supp_set_ap_hidden_ssid(netif, hidden_ssid);
-#endif
-#endif
-#endif
-
     wifi_uap_set_hidden_ssid(hidden_ssid);
 
     return WM_SUCCESS;
