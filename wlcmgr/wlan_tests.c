@@ -237,37 +237,34 @@ static void print_network(struct wlan_network *network)
                  network->ssid[0] != '\0' ? network->ssid : "(hidden)");
     print_mac(network->bssid);
 
-    if ((network->dot11n != 0U)
+    (void)PRINTF("\r\n\tmode: ");
 #if CONFIG_11AC
-        || (network->dot11ac != 0U)
-#endif
 #if CONFIG_11AX
-        || (network->dot11ax != 0U)
-#endif
-    )
+    if (network->dot11ax != 0U)
     {
-        (void)PRINTF("\r\n\tmode: ");
-#if CONFIG_11AC
-#if CONFIG_11AX
-        if (network->dot11ax != 0U)
-        {
-            (void)PRINTF("802.11AX ");
-        }
-        else
+        (void)PRINTF("802.11AX ");
+    }
+    else
 #endif
-            if (network->dot11ac != 0U)
-        {
-            (void)PRINTF("802.11AC ");
-        }
-        else
+        if (network->dot11ac != 0U)
+    {
+        (void)PRINTF("802.11AC ");
+    }
+    else
 #endif
-            if (network->dot11n != 0U)
-        {
-            (void)PRINTF("802.11N ");
-        }
-        else
+        if (network->dot11n != 0U)
+    {
+        (void)PRINTF("802.11N ");
+    }
+    else
+    {
+        if (network->channel <= 14)
         {
             (void)PRINTF("802.11BG ");
+        }
+        else
+        {
+            (void)PRINTF("802.11A ");
         }
     }
 
@@ -2109,7 +2106,14 @@ static int __scan_cb(unsigned int count)
         }
         else
         {
-            (void)PRINTF("802.11BG ");
+            if (res.channel <= 14)
+            {
+                (void)PRINTF("802.11BG ");
+            }
+            else
+            {
+                (void)PRINTF("802.11A ");
+            }
         }
         (void)PRINTF("\r\n");
 
