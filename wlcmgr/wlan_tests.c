@@ -140,7 +140,14 @@ static int __scan_cb(unsigned int count)
         }
         else
         {
-            (void)PRINTF("802.11BG ");
+            if (res.channel <= 14)
+            {
+                (void)PRINTF("802.11BG ");
+            }
+            else
+            {
+                (void)PRINTF("802.11A ");
+            }
         }
         (void)PRINTF("\r\n");
 
