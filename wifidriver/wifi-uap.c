@@ -2,7 +2,7 @@
  *
  *  @brief This file provides UAP related APIs.
  *
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -689,6 +689,11 @@ static int wifi_cmd_uap_config(char *ssid,
         {
             bss.param.bss_config.auth_mode               = MLAN_AUTH_MODE_AUTO;
             bss.param.bss_config.pwe_derivation          = pwe_derivation;
+			/* For WPA3-SAE with pwe = either 1 or 2 value, need to set auth_mode = MLAN_AUTH_MODE_SAE, since FW is expecting this when SAE H2E elementes are required*/
+			if(security == WLAN_SECURITY_WPA3_SAE && (pwe_derivation == 1 || pwe_derivation == 2))
+			{
+				bss.param.bss_config.auth_mode = MLAN_AUTH_MODE_SAE;
+			}
             bss.param.bss_config.transition_disable      = transition_disable;
             bss.param.bss_config.wpa_cfg.password_length = (t_u32)password_len;
             (void)memcpy((void *)bss.param.bss_config.wpa_cfg.password, (const void *)password, (size_t)password_len);
