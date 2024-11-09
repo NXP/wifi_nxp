@@ -10590,23 +10590,21 @@ int wlan_set_mac_addr(uint8_t *mac)
 
     if (wlan.status == WLCMGR_INIT_DONE || wlan.status == WLCMGR_ACTIVATED)
     {
-        /* save the sta mac */
-        _wifi_set_mac_addr(mac, MLAN_BSS_TYPE_STA);
-        (void)memcpy(&wlan.sta_mac[0], mac, MLAN_MAC_ADDR_LENGTH);
-
 #if UAP_SUPPORT
-        /* save the uap mac */
         uint8_t ap_mac[MLAN_MAC_ADDR_LENGTH];
-
         (void)memcpy(ap_mac, mac, MLAN_MAC_ADDR_LENGTH);
         ap_mac[4] += 1;
-
-        _wifi_set_mac_addr(&ap_mac[0], MLAN_BSS_TYPE_UAP);
-        (void)memcpy(&wlan.uap_mac[0], &ap_mac[0], MLAN_MAC_ADDR_LENGTH);
-
         net_wlan_set_mac_address((unsigned char *)mac, (unsigned char *)ap_mac);
 #else
         net_wlan_set_mac_address((unsigned char *)mac, NULL);
+#endif
+        /* save the sta mac */
+        _wifi_set_mac_addr(mac, MLAN_BSS_TYPE_STA);
+        (void)memcpy(&wlan.sta_mac[0], mac, MLAN_MAC_ADDR_LENGTH);
+#if UAP_SUPPORT
+        /* save the uap mac */
+        _wifi_set_mac_addr(&ap_mac[0], MLAN_BSS_TYPE_UAP);
+        (void)memcpy(&wlan.uap_mac[0], &ap_mac[0], MLAN_MAC_ADDR_LENGTH);
 #endif
     }
     else
