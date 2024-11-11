@@ -143,32 +143,32 @@ static void wlan_ed_mac_mode_set(int argc, char *argv[])
     interface = (t_u8)strtol(argv[1], NULL, 16);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul errno:%d", errno);
+        (void)PRINTF("Error during strtol errno:%d", errno);
     }
     errno                       = 0;
     wlan_ed_mac_ctrl.ed_ctrl_2g = (t_u16)strtol(argv[2], NULL, 16);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul errno:%d", errno);
+        (void)PRINTF("Error during strtol errno:%d", errno);
     }
     errno                         = 0;
     wlan_ed_mac_ctrl.ed_offset_2g = (t_s16)strtol(argv[3], NULL, 16);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul errno:%d", errno);
+        (void)PRINTF("Error during strtol errno:%d", errno);
     }
 #if CONFIG_5GHz_SUPPORT
     errno                       = 0;
     wlan_ed_mac_ctrl.ed_ctrl_5g = (t_u16)strtol(argv[4], NULL, 16);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul errno:%d", errno);
+        (void)PRINTF("Error during strtol errno:%d", errno);
     }
     errno                         = 0;
     wlan_ed_mac_ctrl.ed_offset_5g = (t_s16)strtol(argv[5], NULL, 16);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul errno:%d", errno);
+        (void)PRINTF("Error during strtol errno:%d", errno);
     }
 #endif
 
@@ -189,10 +189,16 @@ static void wlan_ed_mac_mode_set(int argc, char *argv[])
     {
         ret = wlan_set_ed_mac_mode(wlan_ed_mac_ctrl);
     }
-    else
+    else if (interface == MLAN_BSS_TYPE_UAP)
     {
         ret = wlan_set_uap_ed_mac_mode(wlan_ed_mac_ctrl);
     }
+    else
+    {
+        ret = -WM_FAIL;
+        (void)PRINTF("Error invalid interface\r\n");
+    }
+
     if (ret == WM_SUCCESS)
     {
         (void)PRINTF("ED MAC MODE settings configuration successful\r\n");
@@ -229,17 +235,23 @@ static void wlan_ed_mac_mode_get(int argc, char *argv[])
     interface = (t_u8)strtol(argv[1], NULL, 16);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul errno:%d", errno);
+        (void)PRINTF("Error during strtol errno:%d", errno);
     }
 
     if (interface == MLAN_BSS_TYPE_STA)
     {
         ret = wlan_get_ed_mac_mode(&wlan_ed_mac_ctrl);
     }
-    else
+    else if (interface == MLAN_BSS_TYPE_UAP)
     {
         ret = wlan_get_uap_ed_mac_mode(&wlan_ed_mac_ctrl);
     }
+    else
+    {
+        ret = -WM_FAIL;
+        (void)PRINTF("Error invalid interface\r\n");
+    }
+
     if (ret == WM_SUCCESS)
     {
         (void)PRINTF("EU adaptivity for 2.4GHz band : %s\r\n",
