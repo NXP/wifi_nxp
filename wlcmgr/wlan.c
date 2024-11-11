@@ -12254,6 +12254,9 @@ int wlan_set_auto_ping(void)
 }
 #endif /* CONFIG_AUTO_PING */
 
+#define  ICMPV6_HEADER_TYPE "\x3a"
+#define  IPV6_HEADER_TYPE "\x86\xdd"
+#define  TYPE_NS "\x87"
 int wlan_set_ipv6_ns_offload(void)
 {
     wlan_flt_cfg_t flt_cfg;
@@ -12266,20 +12269,30 @@ int wlan_set_ipv6_ns_offload(void)
     flt_cfg.mef_entry[0].mode   = MBIT(0);
     flt_cfg.mef_entry[0].action = 0x40;
 
-    flt_cfg.mef_entry[0].filter_num = 2;
+    flt_cfg.mef_entry[0].filter_num = 3;
 
+    flt_cfg.mef_entry[0].filter_item[0].fill_flag = (FILLING_TYPE | FILLING_REPEAT | FILLING_OFFSET | FILLING_BYTE_SEQ);
     flt_cfg.mef_entry[0].filter_item[0].type         = TYPE_BYTE_EQ;
     flt_cfg.mef_entry[0].filter_item[0].repeat       = 1;
     flt_cfg.mef_entry[0].filter_item[0].offset       = 20;
     flt_cfg.mef_entry[0].filter_item[0].num_byte_seq = 2;
-    (void)memcpy((void *)flt_cfg.mef_entry[0].filter_item[0].byte_seq, (const void *)"\x86\xdd", 2);
-    flt_cfg.mef_entry[0].rpn[1] = RPN_TYPE_AND;
+    (void)memcpy((void *)flt_cfg.mef_entry[0].filter_item[0].byte_seq, (const void *)IPV6_HEADER_TYPE, 2);
 
+    flt_cfg.mef_entry[0].rpn[1] = RPN_TYPE_AND;
+    flt_cfg.mef_entry[0].filter_item[1].fill_flag = (FILLING_TYPE | FILLING_REPEAT | FILLING_OFFSET | FILLING_BYTE_SEQ);
     flt_cfg.mef_entry[0].filter_item[1].type         = TYPE_BYTE_EQ;
     flt_cfg.mef_entry[0].filter_item[1].repeat       = 1;
-    flt_cfg.mef_entry[0].filter_item[1].offset       = 62;
+    flt_cfg.mef_entry[0].filter_item[1].offset       = 28;
     flt_cfg.mef_entry[0].filter_item[1].num_byte_seq = 1;
-    (void)memcpy((void *)flt_cfg.mef_entry[0].filter_item[1].byte_seq, (const void *)"\x87", 1);
+    (void)memcpy((void *)flt_cfg.mef_entry[0].filter_item[1].byte_seq, (const void *)ICMPV6_HEADER_TYPE, 1);
+
+    flt_cfg.mef_entry[0].rpn[2] = RPN_TYPE_AND;
+    flt_cfg.mef_entry[0].filter_item[2].fill_flag = (FILLING_TYPE | FILLING_REPEAT | FILLING_OFFSET | FILLING_BYTE_SEQ);
+    flt_cfg.mef_entry[0].filter_item[2].type         = TYPE_BYTE_EQ;
+    flt_cfg.mef_entry[0].filter_item[2].repeat       = 1;
+    flt_cfg.mef_entry[0].filter_item[2].offset       = 62;
+    flt_cfg.mef_entry[0].filter_item[2].num_byte_seq = 1;
+    (void)memcpy((void *)flt_cfg.mef_entry[0].filter_item[2].byte_seq, (const void *)TYPE_NS, 1);
 
     return wifi_set_packet_filters(&flt_cfg);
 }
