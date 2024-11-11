@@ -59,6 +59,9 @@
 #define WLAN_CAU_TEMPERATURE_ADDR    (0x4500400CU)
 #define WLAN_CAU_TEMPERATURE_FW_ADDR (0x41382490U)
 #define WLAN_FW_WAKE_STATUS_ADDR     (0x40031068U)
+#define WLAN_PMIP_TSEN_ADDR          (0x45004010U)
+#define WLAN_V33_VSEN_ADDR           (0x45004028U)
+#define WLAN_ADC_CTRL_ADDR           (0x45004000U)
 #endif
 
 #ifdef RW610
@@ -2010,6 +2013,7 @@ int wifi_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 w
 void wifi_cau_temperature_enable(void);
 int wifi_cau_temperature_write_to_firmware(void);
 int32_t wifi_get_temperature(void);
+void wifi_pmip_v33_enable();
 #endif
 
 #if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)

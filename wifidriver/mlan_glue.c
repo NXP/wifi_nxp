@@ -8709,6 +8709,29 @@ int wifi_cau_temperature_write_to_firmware()
     WIFI_WRITE_REG32(WLAN_CAU_TEMPERATURE_FW_ADDR, val);
     return val;
 }
+
+void wifi_pmip_v33_enable()
+{
+    uint32_t val;
+
+    val = WIFI_REG32(WLAN_PMIP_TSEN_ADDR);
+    val &= ~(0xE);
+    val |= (5 << 1);
+    WIFI_WRITE_REG32(WLAN_PMIP_TSEN_ADDR, val);
+
+    val = WIFI_REG32(WLAN_V33_VSEN_ADDR);
+    val &= ~(0xE);
+    val |= (5 << 1);
+    WIFI_WRITE_REG32(WLAN_V33_VSEN_ADDR, val);
+
+    val = WIFI_REG32(WLAN_ADC_CTRL_ADDR);
+    val |= 1 << 0;
+    WIFI_WRITE_REG32(WLAN_ADC_CTRL_ADDR, val);
+
+    val = WIFI_REG32(WLAN_ADC_CTRL_ADDR);
+    val &= ~(1 << 0);
+    WIFI_WRITE_REG32(WLAN_ADC_CTRL_ADDR, val);
+}
 #endif
 
 #if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
