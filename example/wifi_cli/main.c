@@ -306,11 +306,10 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
         case WLAN_REASON_PRE_BEACON_LOST:
             break;
 #endif
-#if CONFIG_WIFI_IND_DNLD
         case WLAN_REASON_FW_HANG:
         case WLAN_REASON_FW_RESET:
+            PRINTF("app_cb: WLAN: FW hang Event: %d\r\n", reason);
             break;
-#endif
         default:
             PRINTF("app_cb: WLAN: Unknown Event: %d\r\n", reason);
     }
