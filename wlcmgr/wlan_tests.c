@@ -56,6 +56,10 @@ extern uint64_t rtc_timeout;
 extern char *net_sprint_addr(sa_family_t af, const void *addr);
 #endif
 
+#if defined(RW610)
+extern int wlan_send_hostcmd(const void *cmd_buf, uint32_t cmd_buf_len, void *host_resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len);
+#endif
+
 static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 {
 // #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
@@ -9903,7 +9907,7 @@ static void test_wlan_set_turbo_mode(int argc, char **argv)
 #endif
 
 #if CONFIG_11AX
-
+#if CONFIG_WIFI_HTC_DEBUG
 static void dump_wlan_set_debug_htc_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -9970,6 +9974,7 @@ static void test_wlan_set_debug_htc(int argc, char **argv)
     else
         (void)PRINTF("Failed to set HTC parameter\r\n");
 }
+#endif
 
 static void dump_wlan_enable_disable_htc_usage()
 {
@@ -12789,9 +12794,11 @@ static struct cli_command tests[] = {
     {"wlan-set-ips", "<option>", test_wlan_set_ips},
 #endif
 #if CONFIG_11AX
+#if CONFIG_WIFI_HTC_DEBUG
     {"wlan-set-debug-htc",
      "<count> <vht> <he> <rxNss> <channelWidth> <ulMuDisable> <txNSTS> <erSuDisable> <erSuDisable> <erSuDisable>",
      test_wlan_set_debug_htc},
+#endif
     {"wlan-enable-disable-htc", "<option>", test_wlan_enable_disable_htc},
 #endif
 #if CONFIG_SET_SU

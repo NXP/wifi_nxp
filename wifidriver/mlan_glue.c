@@ -118,6 +118,10 @@ bool g_monitor_status = false;
 int (*net_monitor_callback)(void *buffer, t_u16 data_len) = NULL;
 #endif
 
+#if defined(RW610)
+extern int wlan_send_hostcmd(const void *cmd_buf, uint32_t cmd_buf_len, void *host_resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len);
+#endif
+
 int mlan_subsys_init(void);
 int mlan_subsys_deinit(void);
 

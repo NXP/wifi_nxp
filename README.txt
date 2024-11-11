@@ -57,7 +57,7 @@ doxy/refman/.
 * NSS      N*N MIMO spatial stream\n
 * OBSS     overlapping basic service set\n
 * OCE      Optimized connectivity experience\n
-* OMI      operating mode inication\n
+* OMI      operating mode indication\n
 * OWE      opportunistic wireless encryption\n
 * PBC      push button configuration\n
 * PEAP     Protected Extensible Authentication Protocol\n
@@ -70,8 +70,8 @@ doxy/refman/.
 * PWE      Password Element\n
 * QoS      quality of service\n
 * RSSI     received signal strength indicator\n
-* RTS      require to send\n
-* SAD      slow antenna diversity\n
+* RTS      request to send\n
+* SAD      software antenna diversity\n
 * SAE      Simultaneous Authentication of Equals\n
 * SSID     service set ID\n
 * STBC     space time block code\n
