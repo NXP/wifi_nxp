@@ -1535,23 +1535,44 @@ int wifi_nxp_wpa_supp_set_country(void *if_priv, const char *alpha2)
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     int ret                                    = -WM_FAIL;
     char *country                              = NULL;
+    t_u8 region_code_rw610;
+    unsigned char country3 = 0x20;
 
     country = OSA_MemoryAllocate(COUNTRY_CODE_LEN);
     (void)memcpy(country, alpha2, COUNTRY_CODE_LEN - 1);
+    country[2] = country3;
 
     if ((!if_priv) || (!alpha2))
     {
         supp_e("%s: Invalid params", __func__);
         goto out;
     }
-
+    ret = wlan_11d_region_2_code(mlan_adap, (t_u8 *)country, &region_code_rw610);
+    if(ret != WM_SUCCESS)
+    {
+        goto out;
+    }
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
     ret              = wifi_nxp_set_country(wifi_if_ctx_rtos->bss_type, alpha2);
-
-    if (ret == WM_SUCCESS)
+    if (ret != WM_SUCCESS)
     {
-        (void)wifi_event_completion(WIFI_EVENT_REGION_POWER_CFG, WIFI_EVENT_REASON_SUCCESS, (void *)country);
+        goto out;
     }
+
+#if defined(RW610) && (CONFIG_COMPRESS_TX_PWTBL)
+    ret = wlan_set_rg_power_cfg(region_code_rw610);
+    if (ret != WM_SUCCESS)
+    {
+        goto out;
+    }
+#endif
+#if defined(RW610) && ((CONFIG_COMPRESS_RU_TX_PWTBL) && (CONFIG_11AX))
+    ret = wlan_set_ru_power_cfg(region_code_rw610);
+    if (ret != WM_SUCCESS)
+    {
+        goto out;
+    }
+#endif
 
     return ret;
 
