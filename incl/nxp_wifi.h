@@ -555,6 +555,28 @@ extern "C" {
 
 #endif
 
+#ifndef CONFIG_NXP_WIFI_SOFTAP_SUPPORT
+#if UAP_SUPPORT
+#undef UAP_SUPPORT
+#define UAP_SUPPORT 0
+#endif
+
+#if UAP_HOST_MLME
+#undef UAP_HOST_MLME
+#define UAP_HOST_MLME 0
+#endif
+
+#if CONFIG_UAP_AMPDU_TX
+#undef CONFIG_UAP_AMPDU_TX
+#define CONFIG_UAP_AMPDU_TX 0
+#endif
+
+#if CONFIG_UAP_AMPDU_RX
+#undef CONFIG_UAP_AMPDU_RX
+#define CONFIG_UAP_AMPDU_RX 0
+#endif
+#endif
+
 #ifdef __cplusplus
 }
 #endif
