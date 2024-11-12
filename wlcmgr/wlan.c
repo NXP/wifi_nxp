@@ -14616,6 +14616,7 @@ void wlan_wps_generate_pin(uint32_t *pin)
 int wlan_start_wps_pin(const char *pin)
 {
     struct netif *netif = net_get_sta_interface();
+    int ret = -WM_FAIL;
 
     if (wlan.wps_session_attempt)
     {
@@ -14628,7 +14629,16 @@ int wlan_start_wps_pin(const char *pin)
         wlcm_d("WPS PIN validation failed for %s", pin);
         return -WM_FAIL;
     }
+
     wlan_remove_wps_network();
+
+    ret = wlan_exceed_network_limit();
+    if (ret)
+    {
+        wlcm_e("network array is full");
+        return ret;
+    }
+
     return wpa_supp_start_wps_pin(netif, pin, 0);
 }
 
