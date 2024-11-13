@@ -1047,7 +1047,7 @@ static void main_task(osa_task_param_t arg)
     BOARD_WIFI_BT_Enable(true);
     intf = (void *)uart_init_interface();
     assert(intf != NULL);
-    result = firmware_download(wlan_fw_bin, wlan_fw_bin_len, intf, 0);
+    result = firmware_download(bt_fw_bin, bt_fw_bin_len, intf, 0);
     assert(result == FWDNLD_INTF_SUCCESS);
 #else
     result = wifi_init_fcc(wlan_fw_bin, wlan_fw_bin_len);

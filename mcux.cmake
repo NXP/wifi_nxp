@@ -227,6 +227,31 @@ if (CONFIG_MCUX_COMPONENT_middleware.wifi.fwdnld)
     )
 endif()
 
+if (CONFIG_MCUX_COMPONENT_middleware.wifi.firmware_download)
+    mcux_add_source(
+        SOURCES incl/WIFI_IW416_BOARD_AW_AM457_CAL_DATA_EXT.h
+                # TODO please change to relative dir
+                wifidriver/incl/mlan_main_defs.h
+                # TODO please change to relative dir
+                wifidriver/sdio.c
+                # TODO please change to relative dir
+                wifidriver/sdio.h
+                # TODO please change to relative dir
+                firmware_dnld/firmware_dnld.c
+                # TODO please change to relative dir
+                firmware_dnld/firmware_dnld.h
+    )
+    mcux_add_include(
+        INCLUDES incl
+                 wifidriver
+                 wifidriver/incl
+                 firmware_dnld
+                 sdio_nxp_abs
+                 sdio_nxp_abs/incl
+                 fwdnld_intf_abs
+    )
+endif()
+
 if (CONFIG_MCUX_COMPONENT_middleware.wifi.net_free_rtos)
     mcux_add_source(
         SOURCES incl/port/net/wm_net.h

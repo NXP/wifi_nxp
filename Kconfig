@@ -42,6 +42,9 @@ config MCUX_COMPONENT_middleware.wifi.fwdnld
     select MCUX_COMPONENT_middleware.wifi.common_files
     select MCUX_COMPONENT_middleware.wifi.fwdnld_intf_abs
 
+config MCUX_COMPONENT_middleware.wifi.firmware_download
+    bool "Component middleware.wifi.firmware_download"
+    default n
 
 config MCUX_COMPONENT_middleware.wifi.net
     bool "Component middleware.wifi.net"
@@ -68,7 +71,7 @@ config MCUX_COMPONENT_middleware.wifi.wifidriver
         config MCUX_DEPENDENCY_COMPONENT_middleware.wifi.wifidriver_DEPEND_ANYOF_OPTION_1
             bool "Component MCUX_DEPENDENCY_COMPONENT_middleware.wifi.wifidriver_DEPEND_ANYOF_OPTION_1"
             select MCUX_COMPONENT_middleware.wifi.sdio
-            select MCUX_COMPONENT_middleware.wifi.fwdnld
+            imply MCUX_COMPONENT_middleware.wifi.fwdnld
             select MCUX_COMPONENT_middleware.wifi.fwdnld_intf_abs
 
         config MCUX_DEPENDENCY_COMPONENT_middleware.wifi.wifidriver_DEPEND_ANYOF_OPTION_2
