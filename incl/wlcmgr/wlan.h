@@ -6981,6 +6981,15 @@ int wlan_get_bandcfg(wlan_bandcfg_t *bandcfg);
 int wlan_set_rg_power_cfg(t_u16 region_code);
 #endif
 
+#if defined(RW610) && ((CONFIG_COMPRESS_RU_TX_PWTBL) && (CONFIG_11AX))
+/**
+ * set ru tx power table
+ * \param[in] region_code region code
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_ru_power_cfg(t_u16 region_code);
+#endif
+
 #if CONFIG_TURBO_MODE
 /**
  * Get Turbo mode.

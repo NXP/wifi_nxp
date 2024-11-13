@@ -1372,24 +1372,29 @@ static void dump_wlan_set_txomi_usage()
 static void test_wlan_set_rutxpwrlimit(int argc, char **argv)
 {
     int rv;
-    uint32_t board_type;
+    uint32_t region_code = (t_u16)strtol(argv[1], NULL, 0);
 #if CONFIG_COMPRESS_RU_TX_PWTBL
-    board_type = wlan_get_board_type();
 #ifdef RW610
-    switch (board_type)
+    switch (region_code)
     {
-        case RW610_PACKAGE_TYPE_QFN:
-            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_qfn_cfg_set, sizeof(rutxpowerlimit_qfn_cfg_set));
+        case RW610_PACKAGE_TYPE_WW:
+            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set_WW, sizeof(rutxpowerlimit_cfg_set_WW));
             break;
-        case RW610_PACKAGE_TYPE_CSP:
-            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_csp_cfg_set, sizeof(rutxpowerlimit_csp_cfg_set));
+        case RW610_PACKAGE_TYPE_FCC:
+            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set_FCC, sizeof(rutxpowerlimit_cfg_set_FCC));
             break;
-        case RW610_PACKAGE_TYPE_BGA:
-            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_bga_cfg_set, sizeof(rutxpowerlimit_bga_cfg_set));
+        case RW610_PACKAGE_TYPE_EU:
+            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set_EU, sizeof(rutxpowerlimit_cfg_set_EU));
+            break;
+        case RW610_PACKAGE_TYPE_CN:
+            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set_CN, sizeof(rutxpowerlimit_cfg_set_CN));
+            break;
+        case RW610_PACKAGE_TYPE_JP:
+            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set_JP, sizeof(rutxpowerlimit_cfg_set_JP));
             break;
         default:
-            PRINTF("Unknown board type, use BGA rutx power limit cfg \r\n");
-            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_bga_cfg_set, sizeof(rutxpowerlimit_bga_cfg_set));
+            PRINTF("Unknown region code, use WW rutx power limit cfg \r\n");
+            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set_WW, sizeof(rutxpowerlimit_cfg_set_WW));
             break;
     }
 #else

@@ -15487,10 +15487,22 @@ int wlan_set_country_code(const char *alpha2)
         return ret;
 
 #if defined(RW610) && (CONFIG_COMPRESS_TX_PWTBL)
-    return wlan_set_rg_power_cfg(region_code_rw610);
-#else
-    return ret;
+    ret = wlan_set_rg_power_cfg(region_code_rw610);
+    if (ret != WM_SUCCESS)
+    {
+        return -WM_FAIL;
+    }
 #endif
+
+#if defined(RW610) && ((CONFIG_COMPRESS_RU_TX_PWTBL) && (CONFIG_11AX))
+    ret = wlan_set_ru_power_cfg(region_code_rw610);
+    if (ret != WM_SUCCESS)
+    {
+        return -WM_FAIL;
+    }
+#endif
+
+    return ret;
 }
 
 int wlan_set_country_ie_ignore(uint8_t *ignore)
