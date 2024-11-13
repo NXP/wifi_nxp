@@ -6781,6 +6781,44 @@ static void test_wlan_enable_disable_htc(int argc, char **argv)
 }
 #endif
 
+static void dump_wlan_set_country_ie_ignore_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-set-country-ignore-ie <0/1>\r\n");
+    (void)PRINTF("    <enable/disable>: 1 -- Ignore country ie\r\n");
+    (void)PRINTF("                      0 -- Use country ie(default)\r\n");
+}
+
+static void test_wlan_set_country_ie_ignore(int argc, char **argv)
+{
+    int ret        = -WM_FAIL;
+    uint8_t ignore = 0;
+
+    if (argc > 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_set_country_ie_ignore_usage();
+        return;
+    }
+
+    /* SET */
+    if (argc == 2)
+    {
+        ignore = atoi(argv[1]);
+    }
+
+    ret = wlan_set_country_ie_ignore(&ignore);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Set country ie ignore is failed\r\n");
+    }
+    else
+    {
+        (void)PRINTF("Country ie \"%s\" is set\r\n", ignore == 0 ? "follow" : "ignore");
+    }
+}
+
 #if CONFIG_COEX_DUTY_CYCLE
 static void dump_wlan_single_ant_duty_cycle_usage()
 {
@@ -8888,6 +8926,7 @@ static struct cli_command tests[] = {
     {"wlan-cloud-keep-alive", "<start/stop/reset>", test_wlan_cloud_keep_alive},
     {"wlan_tcp_client", "dst_ip <dst_ip> src_port <src_port> dst_port <dst_port>", test_wlan_tcp_client},
 #endif
+    {"wlan-set-country-ie-ignore", "<0/1>", test_wlan_set_country_ie_ignore},
 #if CONFIG_COEX_DUTY_CYCLE
     {"wlan-single-ant-duty-cycle", "<enable/disable> [<Ieee154Duration> <TotalDuration>]",
      test_wlan_single_ant_duty_cycle},
