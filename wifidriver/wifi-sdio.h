@@ -123,6 +123,11 @@ int wifi_send_cmdbuffer(t_u32 tx_blocks, t_u32 len);
  *
  */
 HostCmd_DS_COMMAND *wifi_get_command_buffer(void);
+
+#ifdef SD9177
+HostCmd_DS_COMMAND *wifi_get_prev_command_buffer(void);
+#endif
+
 #if CONFIG_FW_VDLL
 int wifi_send_vdllcmdbuffer(t_u32 tx_blocks, t_u32 len);
 HostCmd_DS_COMMAND *wifi_get_vdllcommand_buffer(void);

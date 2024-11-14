@@ -77,6 +77,9 @@ typedef struct
     t_u8 wifi_init_done;
     t_u8 wifi_core_init_done;
     OSA_TASK_HANDLE_DEFINE(wifi_drv_task_Handle);
+#ifdef SD9177
+    OSA_TASK_HANDLE_DEFINE(wifi_pre_asleep_task_Handle);
+#endif
 
 #ifndef RW610
     OSA_TASK_HANDLE_DEFINE(wifi_core_task_Handle);
@@ -99,9 +102,11 @@ typedef struct
     void (*amsdu_data_input_callback)(uint8_t interface, uint8_t *buffer, uint16_t len);
     void (*deliver_packet_above_callback)(void *rxpd, t_u8 interface, t_void *lwip_pbuf);
     bool (*wrapper_net_is_ip_or_ipv6_callback)(const t_u8 *buffer);
-
+#ifdef SD9177
+    OSA_SEMAPHORE_HANDLE_DEFINE(command_lock);
+#else
     OSA_MUTEX_HANDLE_DEFINE(command_lock);
-
+#endif
     OSA_SEMAPHORE_HANDLE_DEFINE(command_resp_sem);
 
     OSA_MUTEX_HANDLE_DEFINE(mcastf_mutex);
@@ -118,6 +123,9 @@ typedef struct
 
     /* Queue for events/data from low level interface driver */
     OSA_MSGQ_HANDLE_DEFINE(io_events, MAX_EVENTS, sizeof(struct bus_message));
+#ifdef SD9177
+    OSA_MSGQ_HANDLE_DEFINE(pre_asleep_events, MAX_EVENTS, sizeof(struct bus_message));
+#endif
     OSA_MSGQ_HANDLE_DEFINE(powersave_queue, MAX_EVENTS, sizeof(struct bus_message));
 
     mcast_filter *start_list;
@@ -287,6 +295,13 @@ int wifi_event_completion(enum wifi_event event, enum wifi_event_reason result, 
  * Use this function to know whether a split scan is in progress.
  */
 bool is_split_scan_complete(void);
+
+#ifdef SD9177
+/**
+ * This function will handle pre asleep command response
+ */
+void wifi_handle_preasleep_response(void);
+#endif
 
 /**
  * Waits for Command processing to complete and waits for command response

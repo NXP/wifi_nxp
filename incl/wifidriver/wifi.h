@@ -856,6 +856,11 @@ int wifi_exit_deepsleep_power_save(void);
 int wifi_set_power_save_mode(void);
 int wifi_get_wakeup_reason(t_u16 *hs_wakeup_reason);
 void send_sleep_confirm_command(mlan_bss_type interface);
+
+#ifdef SD9177
+void prepare_error_sleep_confirm_command(mlan_bss_type interface);
+#endif
+
 void wifi_configure_listen_interval(int listen_interval);
 void wifi_configure_delay_to_ps(unsigned int timeout_ms);
 void wifi_configure_idle_time(unsigned int timeout_ms);

@@ -3156,6 +3156,17 @@ typedef struct __sleep_confirm_param
 
 /* bit define for pre_asleep*/
 #define BLOCK_CMD_IN_PRE_ASLEEP MBIT(0)
+
+#ifdef SD9177
+/** cmd is blocked by pre_asleep */
+#define HostCmd_RESULT_PRE_ASLEEP 0x0007
+/** Event for command blocked in pre_asleep
+ * This is specifically kept after all user request
+ * so as to avoid conflict with user requests.
+ */
+#define WIFI_EVENT_CMD_BLOCK_PRE_ASLEEP 0x0046
+#endif
+
 /** MrvlIEtypes_ext_ps_param_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_ext_ps_param_t
 {

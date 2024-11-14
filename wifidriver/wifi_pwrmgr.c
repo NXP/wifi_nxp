@@ -398,6 +398,26 @@ void send_sleep_confirm_command(mlan_bss_type interface)
     }
 }
 
+#ifdef SD9177
+void prepare_error_sleep_confirm_command(mlan_bss_type interface)
+{
+    OPT_Confirm_Sleep *ps_cfm_sleep;
+    // Command lock not taken here since it was already taken for previous command and we are not out of loop yet
+    HostCmd_DS_COMMAND *command = wifi_get_command_buffer();
+
+    ps_cfm_sleep = (OPT_Confirm_Sleep *)(void *)(command);
+
+    (void)memset(ps_cfm_sleep, 0, sizeof(OPT_Confirm_Sleep));
+    ps_cfm_sleep->command = HostCmd_CMD_802_11_PS_MODE_ENH;
+    ps_cfm_sleep->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, (t_u8)(interface));
+
+    ps_cfm_sleep->size                = (t_u16)sizeof(OPT_Confirm_Sleep);
+    ps_cfm_sleep->result              = 0;
+    ps_cfm_sleep->action              = (t_u16)SLEEP_CONFIRM;
+    ps_cfm_sleep->sleep_cfm.resp_ctrl = (t_u16)RESP_NEEDED;
+}
+#endif
+
 #if CONFIG_HOST_SLEEP
 /* fixme: accept HostCmd_DS_COMMAND directly */
 void wifi_process_hs_cfg_resp(t_u8 *cmd_res_buffer)

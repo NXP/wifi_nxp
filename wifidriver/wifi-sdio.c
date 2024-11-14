@@ -40,6 +40,11 @@ static size_t num_sg = 0;
 
 /* Buffer pointers to point to command and, command response buffer */
 static uint8_t ctrl_cmd_buf[WIFI_FW_CMDBUF_SIZE];
+
+#ifdef SD9177
+static uint8_t prev_cmd_buf[WIFI_FW_CMDBUF_SIZE] = {0};
+#endif
+
 #if CONFIG_FW_VDLL
 static uint8_t vdll_cmd_buf[WIFI_FW_CMDBUF_SIZE] = {0};
 #endif
@@ -2951,6 +2956,14 @@ HostCmd_DS_COMMAND *wifi_get_vdllcommand_buffer(void)
 {
     /* First 4 bytes reserved for SDIO pkt header */
     return (HostCmd_DS_COMMAND *)(void *)(vdll_cmd_buf + INTF_HEADER_LEN);
+}
+#endif
+
+#ifdef SD9177
+HostCmd_DS_COMMAND *wifi_get_prev_command_buffer(void)
+{
+    /* First 4 bytes reserved for SDIO pkt header */
+    return (HostCmd_DS_COMMAND *)(void *)(prev_cmd_buf + INTF_HEADER_LEN);
 }
 #endif
 

@@ -166,6 +166,17 @@ static void wifi_drv_task(osa_task_param_t arg);
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
 static OSA_TASK_DEFINE(wifi_drv_task, WLAN_TASK_PRI_HIGH, 1, CONFIG_WIFI_DRIVER_STACK_SIZE, 0);
 
+#ifdef SD9177
+#if !CONFIG_WIFI_PRE_ASLEEP_STACK_SIZE
+#define CONFIG_WIFI_PRE_ASLEEP_STACK_SIZE (2048)
+#endif
+
+static void wifi_pre_asleep_task(osa_task_param_t arg);
+
+/* OSA_TASKS: name, priority, instances, stackSz, useFloat */
+static OSA_TASK_DEFINE(wifi_pre_asleep_task, WLAN_TASK_PRI_HIGH, 1, CONFIG_WIFI_PRE_ASLEEP_STACK_SIZE, 0);
+#endif
+
 #if CONFIG_WMM
 
 #if !CONFIG_WIFI_DRV_TX_STACK_SIZE
@@ -193,6 +204,10 @@ static OSA_TASK_DEFINE(wifi_powersave_task, WLAN_TASK_PRI_LOW, 1, CONFIG_WIFI_PO
 
 int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr);
 int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
+
+#ifdef SD9177
+static int send_pre_asleep_request(int request, void* data);
+#endif
 
 #if CONFIG_HOST_SLEEP
 int wakelock_get(void)
@@ -295,8 +310,11 @@ int wifi_get_command_lock(void)
 #if CONFIG_HOST_SLEEP
     wakelock_get();
 #endif
+#ifdef SD9177
+    status = OSA_SemaphoreWait((osa_semaphore_handle_t)wm_wifi.command_lock, osaWaitForever_c);
+#else
     status = OSA_MutexLock((osa_mutex_handle_t)wm_wifi.command_lock, osaWaitForever_c);
-
+#endif
     if (status != KOSA_StatusSuccess)
     {
         return -WM_FAIL;
@@ -312,8 +330,11 @@ int wifi_put_command_lock(void)
 #if CONFIG_HOST_SLEEP
     wakelock_put();
 #endif
+#ifdef SD9177
+    status = OSA_SemaphorePost((osa_semaphore_handle_t)wm_wifi.command_lock);
+#else
     status = OSA_MutexUnlock((osa_mutex_handle_t)wm_wifi.command_lock);
-
+#endif
     if (status != KOSA_StatusSuccess)
     {
         return -WM_FAIL;
@@ -1137,10 +1158,52 @@ void wlan_process_hang(uint8_t fw_reload)
 }
 #endif
 
+#ifdef SD9177
+void wifi_handle_preasleep_response(void)
+{
+    int ret;
+
+    /* Set this state since fw is in preasleep
+     * as per the previous command response
+     */
+    mlan_adap->ps_state = PS_STATE_PRE_SLEEP;
+
+    ret = wifi_wait_for_cmdresp(NULL);
+    if (ret != WM_SUCCESS)
+    {
+        wifi_e("Failed to send command in pre asleep");
+    }
+}
+#endif
+
 int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 {
     int ret;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+#ifdef SD9177
+    bool cmd_pending = false;
+    bool is_sleep_confirmed = false;
+    HostCmd_DS_COMMAND *prev_cmd = wifi_get_prev_command_buffer();
+
+    /* Following implementation is tightly coupled with firmware's
+     * ask for sleep confirm after event 0xb or comamnd response as 0x7
+     */
+    memcpy(prev_cmd, cmd, WIFI_FW_CMDBUF_SIZE);
+    if (mlan_adap->ps_state == PS_STATE_PRE_SLEEP)
+    {
+        prepare_error_sleep_confirm_command((mlan_bss_type)WLAN_BSS_TYPE_STA);
+        cmd_pending = true;
+    }
+
+start:
+    if (is_sleep_confirmed == true)
+    {
+        memcpy(cmd, prev_cmd, WIFI_FW_CMDBUF_SIZE);
+        is_sleep_confirmed = false;
+    }
+#endif
+
 #ifndef RW610
     t_u32 buf_len = MLAN_SDIO_BLOCK_SIZE;
     t_u32 tx_blocks;
@@ -1317,9 +1380,21 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 #if CONFIG_WMM_UAPSD
     OSA_SemaphorePost((osa_semaphore_handle_t)uapsd_sem);
 #endif
+#ifndef SD9177
     wifi_set_xfer_pending(false);
 
     (void)wifi_put_command_lock();
+#else
+    if (cmd_pending == true)
+    {
+        cmd_pending = false;
+        is_sleep_confirmed = true;
+        goto start;
+    }
+    if (wifi_get_xfer_pending() == false)
+        (void)wifi_put_command_lock();
+    wifi_set_xfer_pending(false);
+#endif
     return ret;
 }
 
@@ -1708,6 +1783,7 @@ static void wifi_drv_task(void *argv)
 {
     osa_status_t status;
     struct bus_message msg;
+    int ret;
 
     (void)memset((void *)&msg, 0, sizeof(struct bus_message));
 
@@ -1733,7 +1809,18 @@ static void wifi_drv_task(void *argv)
             }
             else if (msg.event == MLAN_TYPE_CMD)
             {
-                (void)wifi_process_cmd_response((HostCmd_DS_COMMAND *)(void *)((uint8_t *)msg.data + INTF_HEADER_LEN));
+                ret = wifi_process_cmd_response((HostCmd_DS_COMMAND *)(void *)((uint8_t *)msg.data + INTF_HEADER_LEN));
+                if (ret != WM_SUCCESS)
+                {
+                    wifi_d("Command processing error");
+                }
+#ifdef SD9177
+                if (ret == WIFI_EVENT_CMD_BLOCK_PRE_ASLEEP)
+                {
+                    wifi_set_xfer_pending(true);
+                    send_pre_asleep_request(WIFI_EVENT_CMD_BLOCK_PRE_ASLEEP, NULL);
+                }
+#endif
                 wifi_update_last_cmd_sent_ms();
                 (void)wifi_put_command_resp_sem();
             }
@@ -1745,6 +1832,33 @@ static void wifi_drv_task(void *argv)
         }
     }
 }
+
+#ifdef SD9177
+static void wifi_pre_asleep_task(void *argv)
+{
+    osa_status_t status;
+    struct bus_message msg;
+
+    (void)memset((void *)&msg, 0, sizeof(struct bus_message));
+
+    /* Command response handling Loop */
+    while (true)
+    {
+        status = OSA_MsgQGet((osa_msgq_handle_t)wm_wifi.pre_asleep_events, &msg, osaWaitForever_c);
+        if (status == KOSA_StatusSuccess)
+        {
+            if (msg.event == (uint16_t)WIFI_EVENT_CMD_BLOCK_PRE_ASLEEP)
+            {
+                wlcm_d("Got pre asleep handling message %d", msg.event);
+                wifi_handle_preasleep_response();
+            }
+            else
+            { /* Do Nothing */
+            }
+        }
+    }
+}
+#endif
 
 #ifndef RW610
 #define WL_ID_WIFI_CORE_INPUT "wifi_core_task"
@@ -1924,6 +2038,24 @@ static t_void wlan_vdll_complete(osa_timer_arg_t tmr_handle)
 }
 #endif
 
+#ifdef SD9177
+static int send_pre_asleep_request(int request, void* data)
+{
+    struct wifi_message msg;
+
+    msg.event  = (uint16_t)request;
+    msg.reason = WIFI_EVENT_REASON_SUCCESS;
+    msg.data   = (void *)data;
+
+    if (OSA_MsgQPut((osa_msgq_handle_t)wm_wifi.pre_asleep_events, &msg) == KOSA_StatusSuccess)
+    {
+        return WM_SUCCESS;
+    }
+
+    return -WM_FAIL;
+}
+#endif
+
 static void wifi_core_deinit(void);
 static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, const uint16_t len);
 
@@ -1936,13 +2068,19 @@ static int wifi_core_init(void)
     {
         return WM_SUCCESS;
     }
-
+#ifdef SD9177
+    status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)wm_wifi.command_lock);
+#else
     status = OSA_MutexCreate((osa_mutex_handle_t)wm_wifi.command_lock);
+#endif
     if (status != KOSA_StatusSuccess)
     {
         wifi_e("Create command_lock failed");
         goto fail;
     }
+#ifdef SD9177
+    OSA_SemaphorePost((osa_semaphore_handle_t)wm_wifi.command_lock);
+#endif
 
     status = OSA_EventCreate((osa_event_handle_t)wm_wifi.wifi_event_Handle, 1);
     if (status != KOSA_StatusSuccess)
@@ -1991,6 +2129,21 @@ static int wifi_core_init(void)
         goto fail;
     }
 
+#ifdef SD9177
+    status = OSA_MsgQCreate((osa_msgq_handle_t)wm_wifi.pre_asleep_events, MAX_EVENTS, sizeof(struct bus_message));
+    if (status != KOSA_StatusSuccess)
+    {
+        wifi_e("Create pre asleep events queue failed");
+        goto fail;
+    }
+
+    status = OSA_TaskCreate((osa_task_handle_t)wm_wifi.wifi_pre_asleep_task_Handle, OSA_TASK(wifi_pre_asleep_task), NULL);
+    if (status != KOSA_StatusSuccess)
+    {
+        wifi_e("Create pre asleep thread failed");
+        goto fail;
+    }
+#endif
     ret = bus_register_data_input_function(&wifi_low_level_input);
     if (ret != WM_SUCCESS)
     {
@@ -2165,7 +2318,11 @@ static void wifi_core_deinit(void)
 #if CONFIG_WMM
     (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)wm_wifi.tx_data_sem);
 #endif
+#ifdef SD9177
+    (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)wm_wifi.command_lock);
+#else
     (void)OSA_MutexDestroy((osa_mutex_handle_t)wm_wifi.command_lock);
+#endif
     (void)OSA_EventDestroy((osa_event_handle_t)wm_wifi.wifi_event_Handle);
 #if 0
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_drv_task_Handle);
@@ -2408,6 +2565,9 @@ void wifi_destroy_wifidriver_tasks(void)
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_drv_tx_task_Handle);
 #endif
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_drv_task_Handle);
+#ifdef SD9177
+    (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_pre_asleep_task_Handle);
+#endif
 #ifndef RW610
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_core_task_Handle);
 #endif
@@ -2953,26 +3113,23 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
             if (priv->bss_role == MLAN_BSS_ROLE_STA)
             {
 #if CONFIG_HOST_MLME
-				/* check receiving broadcast deauth frame from other BSSID and drop the deauh frame */
-				t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = {0};
-				if ((memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
-						   MLAN_MAC_ADDR_LENGTH) &&
-					memcmp(zero_mac, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
-						   MLAN_MAC_ADDR_LENGTH)) ||
-					memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.attemp_bssid,
-						   MLAN_MAC_ADDR_LENGTH))
-				{
-					wifi_d("Dropping Deauth frame from other bssid: type=%d " MACSTR "\r\n", sub_type,
-						   MAC2STR(pieee_pkt_hdr->addr3));
-					LEAVE();
-					return ret;
-				}
-				wifi_d("wlan: HostMlme Disconnected: sub_type=%d\n", sub_type);
+                /* check receiving broadcast deauth frame from other BSSID and drop the deauh frame */
+                t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = {0};
+                if ((memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
+                            MLAN_MAC_ADDR_LENGTH) &&
+                     memcmp(zero_mac, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
+                            MLAN_MAC_ADDR_LENGTH)) ||
+                    memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.attemp_bssid, MLAN_MAC_ADDR_LENGTH))
+                {
+                    wifi_d("Dropping Deauth frame from other bssid: type=%d " MACSTR "\r\n", sub_type,
+                           MAC2STR(pieee_pkt_hdr->addr3));
+                    LEAVE();
+                    return ret;
+                }
+                wifi_d("wlan: HostMlme Disconnected: sub_type=%d\n", sub_type);
 #if 0
-				pmadapter->pending_disconnect_priv = priv;
-				wlan_recv_event(
-					priv, MLAN_EVENT_ID_DRV_DEFER_HANDLING,
-					MNULL);
+                pmadapter->pending_disconnect_priv = priv;
+                wlan_recv_event(priv, MLAN_EVENT_ID_DRV_DEFER_HANDLING, MNULL);
 #endif
 #endif
             }
@@ -3816,7 +3973,7 @@ int send_wifi_driver_tx_data_event(t_u8 interface)
     CHECK_BSS_TYPE(interface, -1);
     events = (1U << interface) | WIFI_EVENT_TX_DATA;
 
-    if(1 != wm_wifi.wifi_core_init_done)
+    if (1 != wm_wifi.wifi_core_init_done)
         return 0;
 
 #ifdef __ZEPHYR__
