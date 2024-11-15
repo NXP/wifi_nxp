@@ -107,6 +107,12 @@ if (CONFIG_MCUX_COMPONENT_middleware.wifi.common_files)
                 wifidriver/incl/type_decls.h
                 # TODO please change to relative dir
                 wifi_bt_firmware/wlan_bt_fw.h
+                incl/wifi_cal_data_frdmrw61x_1ant.h
+                incl/wifi_cal_data_rw61x_1ant.h
+                incl/wifi_cal_data_rw61x_1ant_diversity.h
+                incl/wifi_cal_data_rw61x_2ant.h
+                incl/wifi_cal_data_rw61x_3ant_diversity.h
+                incl/wifi_cal_data_rw61x_override.h
     )
     mcux_add_include(
         INCLUDES incl

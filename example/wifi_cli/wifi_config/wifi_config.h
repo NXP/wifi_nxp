@@ -54,7 +54,6 @@
 
 /* WLCMGR debug */
 #define CONFIG_WLCMGR_DEBUG 0
-
 /*
  * Wifi extra debug options
  */

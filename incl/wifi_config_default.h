@@ -20,6 +20,39 @@
 
 #if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177) || defined(IW610)
 
+/*
+ * #define OVERRIDE_CALIBRATION_DATA "wifi_cal_data_rw61x_override.h"
+ * if use the specific calibration data
+ */
+#if !defined(OVERRIDE_CALIBRATION_DATA)
+#if defined(RW610)
+/*
+ * FRDMRW610
+ */
+#if defined(FRDMRW610)
+/* FRDMRW610 1ANT */
+#define DEFAULT_CALDATA_RW610 "wifi_cal_data_frdmrw61x_1ant.h"
+#else
+/*
+ * RW610
+ */
+/* RW610 1ANT */
+#if CONFIG_WLAN_CALDATA_1ANT
+#define DEFAULT_CALDATA_RW610 "wifi_cal_data_rw61x_1ant.h"
+/* RW610 3ANT_DIVERSITY */
+#elif CONFIG_WLAN_CALDATA_3ANT_DIVERSITY
+#define DEFAULT_CALDATA_RW610 "wifi_cal_data_rw61x_3ant_diversity.h"
+/* RW610 1ANT_DIVERSITY */
+#elif CONFIG_WLAN_CALDATA_1ANT_WITH_DIVERSITY
+#define DEFAULT_CALDATA_RW610 "wifi_cal_data_rw61x_1ant_diversity.h"
+/* RW610 2ANT */
+#else
+#define DEFAULT_CALDATA_RW610 "wifi_cal_data_rw61x_2ant.h"
+#endif
+#endif
+#endif /* RW610 */
+#endif /* OVERRIDE_CALIBRATION_DATA */
+
 #if !defined CONFIG_WIFI_AUTO_POWER_SAVE
 #define CONFIG_WIFI_AUTO_POWER_SAVE 1
 #endif
