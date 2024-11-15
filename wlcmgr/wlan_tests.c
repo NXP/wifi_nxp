@@ -2785,6 +2785,9 @@ static void test_wlan_stat(int argc, char **argv)
             case WLAN_ASSOCIATED:
                 (void)PRINTF("Station associated (%s)\r\n", ps_mode_str);
                 break;
+             case WLAN_AUTHENTICATED:
+                (void)PRINTF("Station authenticated (%s)\r\n", ps_mode_str);
+                break;
             case WLAN_CONNECTING:
                 (void)PRINTF("Station connecting (%s)\r\n", ps_mode_str);
                 break;
@@ -2872,10 +2875,18 @@ static void test_wlan_info(int argc, char **argv)
     {
         switch (state)
         {
+            case WLAN_AUTHENTICATED:
             case WLAN_CONNECTED:
                 if (!wlan_get_current_network(network))
                 {
-                    (void)PRINTF("Station connected to:\r\n");
+                    if (state == WLAN_CONNECTED)
+                    {
+                        (void)PRINTF("Station connected to:\r\n");
+                    }
+                    else
+                    {
+                        (void)PRINTF("Station authenticated to:\r\n");
+                    }
                     print_network(network);
                 }
                 else
