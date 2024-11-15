@@ -743,14 +743,30 @@ int set_scan_params(struct wifi_scan_params_t *wifi_scan_params)
     {
         g_wifi_scan_params.scan_duration = wifi_scan_params->scan_duration;
     }
+    else
+    {
+        wlcm_e("scan duration value invalid!");
+        return -WM_FAIL;
+    }
     if (!verify_scan_channel_value(wifi_scan_params->channel[0]))
     {
         g_wifi_scan_params.channel[0] = wifi_scan_params->channel[0];
+    }
+    else
+    {
+        wlcm_e("scan channel value invalid!");
+        return -WM_FAIL;
     }
     if (!verify_split_scan_delay(wifi_scan_params->split_scan_delay))
     {
         g_wifi_scan_params.split_scan_delay = wifi_scan_params->split_scan_delay;
     }
+    else
+    {
+        wlcm_e("split scan delay value invalid!");
+        return -WM_FAIL;
+    }
+
     return WM_SUCCESS;
 }
 
@@ -831,7 +847,7 @@ static uint32_t wlan_map_to_wifi_wakeup_condtions(const uint32_t wlan_wakeup_con
 }
 #endif
 
-int wlan_is_started()
+int wlan_is_started(void)
 {
     return ((wlan.running == 1) && (wlan.status == WLCMGR_ACTIVATED));
 }
@@ -1217,7 +1233,7 @@ void wlan_config_host_sleep(bool is_manual, t_u8 is_periodic)
     }
 }
 
-void wlan_cancel_host_sleep()
+void wlan_cancel_host_sleep(void)
 {
     int ret = 0;
     enum wlan_bss_type type = WLAN_BSS_TYPE_STA;
@@ -1238,7 +1254,7 @@ void wlan_cancel_host_sleep()
     }
 }
 
-void wlan_clear_host_sleep_config()
+void wlan_clear_host_sleep_config(void)
 {
     wlan_is_manual = MFALSE;
 #if CONFIG_POWER_MANAGER
@@ -10161,7 +10177,7 @@ int wlan_connect_opt(char *name, bool skip_dfs)
     return ret;
 }
 
-int wlan_reassociate()
+int wlan_reassociate(void)
 {
     int ret;
 
@@ -11325,12 +11341,12 @@ void wlan_configure_delay_to_ps(unsigned int timeout_ms)
     wifi_configure_delay_to_ps(timeout_ms);
 }
 
-unsigned short wlan_get_listen_interval()
+unsigned short wlan_get_listen_interval(void)
 {
     return wifi_get_listen_interval();
 }
 
-unsigned int wlan_get_delay_to_ps()
+unsigned int wlan_get_delay_to_ps(void)
 {
     return wifi_get_delay_to_ps();
 }
@@ -11840,7 +11856,7 @@ int wlan_get_txpwrlimit(wifi_SubBand_t subband, wifi_txpwrlimit_t *txpwrlimit)
 }
 
 #if WLAN_LOW_POWER_ENABLE
-int wlan_enable_low_pwr_mode()
+int wlan_enable_low_pwr_mode(void)
 {
     if (wlan.status == WLCMGR_INACTIVE)
     {
@@ -12463,7 +12479,7 @@ int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg)
 }
 
 #if CONFIG_AUTO_PING
-int wlan_set_auto_ping()
+int wlan_set_auto_ping(void)
 {
     wlan_flt_cfg_t flt_cfg;
 
@@ -12493,7 +12509,7 @@ int wlan_set_auto_ping()
 }
 #endif /* CONFIG_AUTO_PING */
 
-int wlan_set_ipv6_ns_offload()
+int wlan_set_ipv6_ns_offload(void)
 {
     wlan_flt_cfg_t flt_cfg;
 
@@ -12649,19 +12665,11 @@ void wlan_uap_set_beacon_period(const uint16_t beacon_period)
 
 int wlan_uap_set_bandwidth(const uint8_t bandwidth)
 {
-#if CONFIG_WPA_SUPP
-#if CONFIG_WPA_SUPP_AP
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
-    struct netif *netif = net_get_uap_interface();
-
-    wpa_supp_set_ap_bw(netif, bandwidth);
+#if defined(RW610) || defined(SD8801)
+    return WM_SUCCESS;
 #else
     return wifi_uap_set_bandwidth(bandwidth);
 #endif
-#endif
-#endif
-
-    return wifi_uap_set_bandwidth(bandwidth);
 }
 
 int wlan_uap_get_bandwidth(uint8_t *bandwidth)
@@ -12937,7 +12945,7 @@ int wlan_set_host_11k_status(int enable_11k)
     return 0;
 }
 
-bool wlan_get_host_11k_status()
+bool wlan_get_host_11k_status(void)
 {
     return wlan.enable_11k;
 }
@@ -13132,7 +13140,7 @@ int wlan_pmksa_list(char *buf, size_t buflen)
 #endif
 }
 
-int wlan_pmksa_flush()
+int wlan_pmksa_flush(void)
 {
     struct netif *netif = net_get_sta_interface();
 #if !CONFIG_WIFI_NM_WPA_SUPPLICANT
@@ -13166,7 +13174,7 @@ int wlan_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_a
 #endif
 
 #if CONFIG_WPA2_ENTP
-void wlan_enable_wpa2_enterprise_ap_only()
+void wlan_enable_wpa2_enterprise_ap_only(void)
 {
     wlan.allow_wpa2_enterprise_ap_only = true;
     wifi_scan_enable_wpa2_enterprise_ap_only();
@@ -13229,12 +13237,12 @@ int wlan_set_roaming(const int enable, const uint8_t rssi_low_threshold)
     return wifi_config_roaming(enable, &wlan.rssi_low_threshold);
 }
 
-int wlan_get_roaming_status()
+int wlan_get_roaming_status(void)
 {
     return wlan.roaming_enabled;
 }
 
-void wlan_subscribe_rssi_low_event()
+void wlan_subscribe_rssi_low_event(void)
 {
     if(wlan.roaming_enabled)
     {
@@ -13504,6 +13512,7 @@ int wlan_enable_disable_htc(uint8_t option)
     return ret;
 }
 
+#if CONFIG_WIFI_HTC_DEBUG
 int wlan_send_debug_htc(const uint8_t count,
 		const uint8_t vht,
 		const uint8_t he,
@@ -13550,6 +13559,8 @@ int wlan_send_debug_htc(const uint8_t count,
     }
     return ret;
 }
+#endif
+
 int wlan_set_11ax_tx_omi(const t_u8 interface, const t_u16 tx_omi, const t_u8 tx_option, const t_u8 num_data_pkts)
 {
     if (interface == MLAN_BSS_TYPE_STA)
@@ -13640,63 +13651,63 @@ int wlan_get_11ax_rutxpowerlimit_legacy(wifi_rutxpwrlimit_t *ru_pwr_cfg)
 }
 
 /* cfg tables for 11axcfg and twt commands to FW */
-static uint8_t g_11ax_cfg_default[] = {
-    /* band */
-    0x03,
-    /* HE cap */
-    0xff, 0x00,                                                       // ID
-    0x18, 0x00,                                                       // Length
-    0x23,                                                             // he capability id
-    0x03, 0x08, 0x00, 0x82, 0x00, 0x00,                               // HE MAC capability info
-    0x40, 0x50, 0x42, 0x49, 0x0d, 0x00, 0x20, 0x1e, 0x17, 0x31, 0x00, // HE PHY capability info
-    0xfd, 0xff, 0xfd, 0xff,                                           // Tx Rx HE-MCS NSS support
-    0x88, 0x1f, 0x00, 0x00
-};
-
+static wlan_11ax_config_t g_11ax_cfg_default[] = {
+    {/* band */
+     0x03,
+     /* HE cap */
+     0x00ff,                               // ID
+     0x0018,                               // Length
+     0x23,                                 // he capability id
+     {0x03, 0x08, 0x00, 0x82, 0x00, 0x00}, // HE MAC capability info
+     {0x40, 0x50, 0x42, 0x49, 0x0d, 0x00, 0x20, 0x1e, 0x17, 0x31,
+      0x00},                   // HE PHY capability info
+     {0xfd, 0xff, 0xfd, 0xff}, // Tx Rx HE-MCS NSS support
+     {0x88, 0x1f, 0x00, 0x00}}};
 
 int wlan_set_11ax_cfg(wlan_11ax_config_t *ax_config)
 {
     return wifi_set_11ax_cfg(ax_config);
 }
 
-uint8_t * wlan_get_11ax_cfg()
+wlan_11ax_config_t *wlan_get_11ax_cfg(void)
 {
     return g_11ax_cfg_default;
 }
 
 #if CONFIG_11AX_TWT
-static uint8_t g_btwt_cfg_default[] = {/* action */
-                               0x01, 0x00,
-                               /* sub_id */
-                               0x25, 0x01,
-                               /* btwt_cfg */
-                               0x40, 0x04, 0x63, 0x00, 0x70, 0x02, 0x0a, 0x05};
+static wlan_btwt_config_t g_btwt_cfg_default[] = {{/* action */
+                                                   0x0001,
+                                                   /* sub_id */
+                                                   0x0125,
+                                                   /* btwt_cfg */
+                                                   0x40, 0x04, 0x0063, 0x0270,
+                                                   0x0a, 0x05}};
 
 int wlan_set_btwt_cfg(const wlan_btwt_config_t *btwt_config)
 {
     return wifi_set_btwt_cfg(btwt_config);
 }
 
-uint8_t * wlan_get_btwt_cfg()
+wlan_btwt_config_t *wlan_get_btwt_cfg(void)
 {
     return g_btwt_cfg_default;
 }
 
-static uint8_t g_twt_setup_cfg_default[] = {
-    0x01, // implicit
-    0x00, // unannounced
-    0x00, // Non-Trigger
-    0x00, // info enabled
-    0x00, // indv TWT
-    0x40, // wakeup dur
-    0x00, // FID
-    0x01, // FW not tweak
-    0x0a, // exponent
-    0x00, 0x02, // mantissa  200TU
-    0x00, // REQ TWT
-    0x00, // state
-    0x3c, 0x00 //bcn miss=60s
-    };
+static wlan_twt_setup_config_t g_twt_setup_cfg_default[] = {{
+    0x01,   // implicit
+    0x00,   // unannounced
+    0x00,   // Non-Trigger
+    0x00,   // info enabled
+    0x00,   // indv TWT
+    0x40,   // wakeup dur
+    0x00,   // FID
+    0x01,   // FW not tweak
+    0x0a,   // exponent
+    0x0200, // mantissa  200TU
+    0x00,   // REQ TWT
+    0x00,   // state
+    0x003c  // bcn miss=60s
+}};
 
 /* Below macros are defined as in FW under dot11ax_twt.c */
 #define TWT_EARLY_WAKEUP_ADJUSTMENT 1000                                // us
@@ -13713,19 +13724,20 @@ int wlan_set_twt_setup_cfg(const wlan_twt_setup_config_t *twt_setup)
     return wifi_set_twt_setup_cfg(twt_setup);
 }
 
-uint8_t * wlan_get_twt_setup_cfg()
+wlan_twt_setup_config_t * wlan_get_twt_setup_cfg(void)
 {
     return g_twt_setup_cfg_default;
 }
 
-static uint8_t g_twt_teardown_cfg_default[] = {0x00, 0x00, 0x00};
+static wlan_twt_teardown_config_t g_twt_teardown_cfg_default[] = {
+    {0x00, 0x00, 0x00}};
 
 int wlan_set_twt_teardown_cfg(const wlan_twt_teardown_config_t *teardown_config)
 {
     return wifi_set_twt_teardown_cfg(teardown_config);
 }
 
-uint8_t * wlan_get_twt_teardown_cfg()
+wlan_twt_teardown_config_t * wlan_get_twt_teardown_cfg(void)
 {
     return g_twt_teardown_cfg_default;
 }
@@ -14174,7 +14186,7 @@ int wlan_set_crypto_AES_GCMP_decrypt(const t_u8 *Key,
 #endif /* CONFIG_WIFI_EU_CRYPTO */
 
 #if CONFIG_HEAP_DEBUG
-void wlan_show_os_mem_stat()
+void wlan_show_os_mem_stat(void)
 {
     wifi_show_os_mem_stat();
 }
