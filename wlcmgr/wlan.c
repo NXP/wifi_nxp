@@ -4425,6 +4425,7 @@ static int wlan_set_uap_ecsa_cfg(
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
     bool block_tx_flag   = (1 == block_tx) ? true : false;
+    int ret = WM_SUCCESS;
 
     if (wlan_11h_radar_detect_required(pmpriv, channel))
     {
@@ -4460,12 +4461,19 @@ static int wlan_set_uap_ecsa_cfg(
         if (0 != switch_count)
         {
             set_ecsa_block_tx_time(switch_count);
-            return wifi_set_ecsa_cfg(block_tx, oper_class, channel, switch_count, band_width, ecsa);
+            ret = wifi_set_ecsa_cfg(block_tx, oper_class, channel, switch_count, band_width, ecsa);
         }
         else
         {
-            return wifi_set_action_ecsa_cfg(block_tx, oper_class, channel, switch_count);
+            ret = wifi_set_action_ecsa_cfg(block_tx, oper_class, channel, switch_count);
         }
+
+        if(WM_SUCCESS != ret)
+        {
+            set_ecsa_block_tx_flag(false);
+        }
+
+        return ret;
     }
     else
     {
