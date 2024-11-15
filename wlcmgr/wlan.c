@@ -934,7 +934,8 @@ static int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
 {
     struct wlan_network* network = NULL;
 
-    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)
+            || is_state(CM_STA_AUTHENTICATED)))
     {
         network = &wlan.networks[wlan.cur_network_idx];
     }
@@ -2163,7 +2164,8 @@ static int do_start(struct wlan_network *network)
         {
             network->channel = UAP_DEFAULT_CHANNEL;
 
-            if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+            if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)
+                        || is_state(CM_STA_AUTHENTICATED)))
             {
                 network->channel = wlan.networks[wlan.cur_network_idx].channel;
 #if CONFIG_WPA_SUPP
@@ -4792,17 +4794,10 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
 #endif
                 if (wlan.sta_ipv4_state == CM_STA_CONNECTED)
                 {
-                    wlcm_d("Lease renewal failed, disconnecting");
-
-
-                    do_connect_failed(WLAN_REASON_ADDRESS_FAILED);
-
-                    if (wlan.reassoc_control)
-                    {
-                        wlcm_request_reconnect(next, network);
-                    }
-
-                    *next = wlan.sta_state;
+                    wlcm_d("Lease renewal failed");
+                    CONNECTION_EVENT(WLAN_REASON_ADDRESS_FAILED, NULL);
+                    *next               = CM_STA_AUTHENTICATED;
+                    wlan.sta_ipv4_state = CM_STA_AUTHENTICATED;
                 }
 #if CONFIG_IPV6
             }
@@ -4818,6 +4813,9 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
         }
         (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
         CONNECTION_EVENT(WLAN_REASON_ADDRESS_SUCCESS, NULL);
+        wlan.sta_state      = CM_STA_CONNECTED;
+        *next               = CM_STA_CONNECTED;
+        wlan.sta_ipv4_state = CM_STA_CONNECTED;
     }
 }
 
@@ -8612,7 +8610,8 @@ int wlan_add_network(struct wlan_network *network)
 
     if (network->role == WLAN_BSS_ROLE_STA)
     {
-        if (is_running() && !is_state(CM_STA_IDLE) && !is_state(CM_STA_ASSOCIATED) && !is_state(CM_STA_CONNECTED))
+        if (is_running() && !is_state(CM_STA_IDLE) && !is_state(CM_STA_ASSOCIATED)
+            && !is_state(CM_STA_AUTHENTICATED) && !is_state(CM_STA_CONNECTED))
         {
             return WLAN_ERROR_STATE;
         }
@@ -10742,7 +10741,8 @@ static int wlan_pscan(int (*cb)(unsigned int count))
     wlan_scan_params_v2_t wlan_scan_param;
     int ret;
 
-    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)
+        || is_state(CM_STA_AUTHENTICATED)))
     {
         network = &wlan.networks[wlan.cur_network_idx];
     }
@@ -11935,7 +11935,8 @@ uint16_t wlan_get_beacon_period(void)
 {
     struct wlan_network* network = NULL;
 
-    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)
+         || is_state(CM_STA_AUTHENTICATED)))
     {
         network = &wlan.networks[wlan.cur_network_idx];
     }
@@ -12325,7 +12326,8 @@ int wlan_get_current_bssid(uint8_t *bssid)
 {
     struct wlan_network* network = NULL;
 
-    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)
+         || is_state(CM_STA_AUTHENTICATED)))
     {
         network = &wlan.networks[wlan.cur_network_idx];
     }
@@ -12348,7 +12350,8 @@ uint8_t wlan_get_current_channel(void)
 {
     struct wlan_network* network = NULL;
 
-    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)
+         || is_state(CM_STA_AUTHENTICATED)))
     {
         network = &wlan.networks[wlan.cur_network_idx];
     }
