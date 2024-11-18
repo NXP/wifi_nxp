@@ -1787,7 +1787,7 @@ static bool is_sta_idle(void)
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
     int state = wifi_nxp_supp_state();
 
-    return (state == WPA_DISCONNECTED);
+    return (state <= WPA_INACTIVE);
 #else
     return (wlan.sta_state == CM_STA_IDLE);
 #endif
