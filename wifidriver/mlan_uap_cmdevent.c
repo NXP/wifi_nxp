@@ -13,6 +13,7 @@ Change log:
     02/05/2009: initial version
 ********************************************************/
 
+#if CONFIG_NXP_WIFI_SOFTAP_SUPPORT
 #include <mlan_api.h>
 
 /* Additional WMSDK header files */
@@ -1417,4 +1418,4 @@ mlan_status wlan_ops_uap_prepare_cmd(IN t_void *priv,
     LEAVE();
     return ret;
 }
-
+#endif /* CONFIG_NXP_WIFI_SOFTAP_SUPPORT */

@@ -8,6 +8,7 @@
  *
  */
 
+#if CONFIG_NXP_WIFI_SOFTAP_SUPPORT
 #include <mlan_api.h>
 
 /* Additional WMSDK header files */
@@ -4869,3 +4870,4 @@ done:
 }
 
 #endif /* CONFIG_HOSTAPD */
+#endif /* CONFIG_NXP_WIFI_SOFTAP_SUPPORT */
