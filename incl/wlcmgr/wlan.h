@@ -337,12 +337,10 @@ enum wlan_event_reason
      *  Wi-Fi connection manager should be stopped and started again via
      *  wlan_stop() and wlan_start() respectively. */
     WLAN_REASON_INITIALIZATION_FAILED,
-#if (CONFIG_WIFI_IND_DNLD)
     /** The Wi-Fi connection manager has entered in hang mode. */
     WLAN_REASON_FW_HANG,
     /** The Wi-Fi connection manager has reset fw successfully. */
     WLAN_REASON_FW_RESET,
-#endif
     /** The Wi-Fi connection manager has entered power save mode. */
     WLAN_REASON_PS_ENTER,
     /** The Wi-Fi connection manager has exited from power save mode. */

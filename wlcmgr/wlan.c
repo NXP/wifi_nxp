@@ -10574,6 +10574,7 @@ static void wlcmgr_mon_task(void * data)
 #if CONFIG_WIFI_RECOVERY
             else if (msg.id == WIFI_RECOVERY_REQ)
             {
+                CONNECTION_EVENT(WLAN_REASON_FW_HANG, NULL);
                 wlan_reset(CLI_RESET_WIFI);
                 wifi_recovery_cnt ++;
             }
