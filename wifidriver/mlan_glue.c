@@ -621,8 +621,20 @@ int wrapper_wlan_uap_ampdu_enable(uint8_t *addr
 
             ptx_tbl->ba_status = BA_STREAM_SETUP_INPROGRESS;
             wlan_release_ralist_lock(pmpriv_uap);
-
+#if !CONFIG_MEM_POOLS
             addba = (send_add_ba_param_t *)OSA_MemoryAllocate(sizeof(send_add_ba_param_t));
+#else
+            addba = (send_add_ba_param_t *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+#endif
+            if (!addba)
+            {
+                wifi_w("No memory available for addba req");
+                wlan_request_ralist_lock(pmpriv_uap);
+                ptx_tbl->ba_status = BA_STREAM_NOT_SETUP;
+                wlan_release_ralist_lock(pmpriv_uap);
+                return MLAN_STATUS_FAILURE;
+            }
+
             addba->interface = WLAN_BSS_TYPE_UAP;
 #if CONFIG_WMM
             addba->tid = tid;
@@ -634,7 +646,14 @@ int wrapper_wlan_uap_ampdu_enable(uint8_t *addr
             if (ret != WM_SUCCESS)
             {
                 wifi_d("uap: failed to send addba req");
+                wlan_request_ralist_lock(pmpriv_uap);
+                ptx_tbl->ba_status = BA_STREAM_NOT_SETUP;
+                wlan_release_ralist_lock(pmpriv_uap);
+#if !CONFIG_MEM_POOLS
                 OSA_MemoryFree(addba);
+#else
+                OSA_MemoryPoolFree(buf_32_MemoryPool, addba);
+#endif
                 return MLAN_STATUS_FAILURE;
             }
         }
@@ -826,8 +845,20 @@ int wrapper_wlan_sta_ampdu_enable(
 
         ptx_tbl->ba_status = BA_STREAM_SETUP_INPROGRESS;
         wlan_release_ralist_lock(pmpriv);
-
+#if !CONFIG_MEM_POOLS
         addba = (send_add_ba_param_t *)OSA_MemoryAllocate(sizeof(send_add_ba_param_t));
+#else
+        addba = (send_add_ba_param_t *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+#endif
+        if (!addba)
+        {
+            wifi_w("No memory available for addba req");
+            wlan_request_ralist_lock(pmpriv);
+            ptx_tbl->ba_status = BA_STREAM_NOT_SETUP;
+            wlan_release_ralist_lock(pmpriv);
+            return MLAN_STATUS_FAILURE;
+        }
+
         addba->interface = WLAN_BSS_TYPE_STA;
 #if CONFIG_WMM
         addba->tid = tid;
@@ -839,7 +870,14 @@ int wrapper_wlan_sta_ampdu_enable(
         if (ret != WM_SUCCESS)
         {
             wifi_d("sta: failed to send addba req");
+            wlan_request_ralist_lock(pmpriv);
+            ptx_tbl->ba_status = BA_STREAM_NOT_SETUP;
+            wlan_release_ralist_lock(pmpriv);
+#if !CONFIG_MEM_POOLS
             OSA_MemoryFree(addba);
+#else
+            OSA_MemoryPoolFree(buf_32_MemoryPool, addba);
+#endif
             return MLAN_STATUS_FAILURE;
         }
     }

@@ -3602,7 +3602,11 @@ static void wlcm_process_send_addba(struct wifi_message *msg)
 
     wlan_send_addba(mlan_adap->priv[addba->interface], addba->tid, addba->peer_mac);
 
+#if !CONFIG_MEM_POOLS
     OSA_MemoryFree(addba);
+#else
+    OSA_MemoryPoolFree(buf_32_MemoryPool, addba);
+#endif
 }
 
 static void wlcm_process_addba_request(struct wifi_message *msg)
