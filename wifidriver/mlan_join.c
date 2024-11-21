@@ -5,7 +5,7 @@
  *  and response routines for sending adhoc start, adhoc join, and
  *  association commands to the firmware.
  *
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -1289,6 +1289,7 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 
 #if CONFIG_HOST_MLME
     IEEEtypes_MgmtHdr_t *hdr;
+    t_u16 assoc_rsp_size = 0;
 #endif
 
     ENTER();
@@ -1297,7 +1298,10 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     if (pmpriv->curr_bss_params.host_mlme)
     {
         hdr = (IEEEtypes_MgmtHdr_t *)&resp->params;
-        if (!__memcmp(pmpriv->adapter, hdr->BssId, pmpriv->pattempted_bss_desc->mac_address, MLAN_MAC_ADDR_LENGTH))
+        assoc_rsp_size = resp->size - S_DS_GEN;
+        if ((assoc_rsp_size >= (sizeof(IEEEtypes_MgmtHdr_t)
+             + sizeof(IEEEtypes_AssocRsp_t))) && !__memcmp(pmpriv->adapter, hdr->BssId,
+             pmpriv->pattempted_bss_desc->mac_address, MLAN_MAC_ADDR_LENGTH))
         {
             passoc_rsp = (IEEEtypes_AssocRsp_t *)((t_u8 *)(&resp->params) + sizeof(IEEEtypes_MgmtHdr_t));
         }
