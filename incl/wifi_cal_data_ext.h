@@ -49,7 +49,11 @@ const uint8_t int_cal_data[] = {0x00};
 const uint8_t int_cal_data[] = {0x00};
 #endif
 
-#if defined(SD9177) || defined(IW610)
+#if defined(IW610)
+const uint8_t int_cal_data[] = {0x00};
+#endif
+
+#if defined(SD9177)
 #if CONFIG_WLAN_CALDATA_2ANT_DIVERSITY
 /*Antenna Diversity*/
 const uint8_t int_cal_data[] = {
