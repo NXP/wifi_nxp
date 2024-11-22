@@ -27,13 +27,13 @@
 #include <wm_mbedtls_helper_api.h>
 #include <mbedtls/x509_crt.h>
 #endif /* (CONFIG_HOST_PMK) || (CONFIG_WPS2) */
-#ifdef RW610
-#include <wifi_cal_data_ext.h>
-#endif
 #ifdef OVERRIDE_CALIBRATION_DATA
 #include OVERRIDE_CALIBRATION_DATA
 #else
 #include <wifi_cal_data_ext.h>
+#ifdef RW610
+#include DEFAULT_CALDATA_RW610
+#endif
 #endif
 #ifdef RW610
 #include "fsl_loader.h"

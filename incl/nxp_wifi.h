@@ -250,6 +250,39 @@ extern "C" {
 #define CONFIG_WLAN_CALDATA_3ANT_DIVERSITY 1
 #endif
 
+#if CONFIG_NXP_OVERRIDE_CALIBRATION_DATA
+#define OVERRIDE_CALIBRATION_DATA "wifi_cal_data_rw61x_override.h"
+#endif
+
+#if !CONFIG_NXP_OVERRIDE_CALIBRATION_DATA
+#if defined(RW610)
+/*
+ * FRDMRW610
+ */
+#if defined(FRDMRW610)
+/* FRDMRW610 1ANT */
+#define DEFAULT_CALDATA_RW610 "wifi_cal_data_frdmrw61x_1ant.h"
+#else
+/*
+ * RW610
+ */
+/* RW610 1ANT */
+#if CONFIG_WLAN_CALDATA_1ANT
+#define DEFAULT_CALDATA_RW610 "wifi_cal_data_rw61x_1ant.h"
+/* RW610 3ANT_DIVERSITY */
+#elif CONFIG_WLAN_CALDATA_3ANT_DIVERSITY
+#define DEFAULT_CALDATA_RW610 "wifi_cal_data_rw61x_3ant_diversity.h"
+/* RW610 1ANT_DIVERSITY */
+#elif CONFIG_WLAN_CALDATA_1ANT_WITH_DIVERSITY
+#define DEFAULT_CALDATA_RW610 "wifi_cal_data_rw61x_1ant_diversity.h"
+/* RW610 2ANT */
+#else
+#define DEFAULT_CALDATA_RW610 "wifi_cal_data_rw61x_2ant.h"
+#endif
+#endif
+#endif /* RW610 */
+#endif /* CONFIG_NXP_OVERRIDE_CALIBRATION_DATA */
+
 #if CONFIG_NXP_WIFI_EU_VALIDATION
 #define CONFIG_EU_VALIDATION 1
 #endif
@@ -461,10 +494,6 @@ extern "C" {
 
 #if CONFIG_NXP_WIFI_SIGMA_AGENT
 #define CONFIG_SIGMA_AGENT 1
-#endif
-
-#if CONFIG_NXP_WIFI_CUSTOM_CALDATA
-#define CONFIG_CUSTOM_CALDATA 1
 #endif
 
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
