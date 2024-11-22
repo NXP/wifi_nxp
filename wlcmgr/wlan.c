@@ -11130,6 +11130,22 @@ int wlan_get_ps_mode(enum wlan_ps_mode *ps_mode)
     return WM_SUCCESS;
 }
 
+int wlan_get_ps_mode_cfg(uint8_t *ps_mode_cfg)
+{
+    if (ps_mode_cfg == NULL)
+    {
+        return -WM_E_INVAL;
+    }
+
+    *ps_mode_cfg = (wlan.cm_ieeeps_configured | (wlan.cm_deepsleepps_configured << 1)
+#if CONFIG_WNM_PS
+    | (wlan.cm_wnmps_configured << 2)
+#endif
+    );
+
+    return WM_SUCCESS;
+}
+
 int wlan_get_uap_connection_state(enum wlan_connection_state *state)
 {
     enum cm_uap_state cur;
