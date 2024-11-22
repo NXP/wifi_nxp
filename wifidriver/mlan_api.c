@@ -5184,8 +5184,7 @@ int wifi_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_
         else if (band_width == CHANNEL_BW_80MHZ)
         {
             pbwchansw_ie->new_channel_width        = 1;
-            pbwchansw_ie->new_channel_center_freq0 = center_freq_idx - 4;
-            pbwchansw_ie->new_channel_center_freq1 = center_freq_idx + 4;
+            pbwchansw_ie->new_channel_center_freq0 = center_freq_idx;
         }
         else if (band_width == CHANNEL_BW_160MHZ)
         {
