@@ -4071,6 +4071,15 @@ int wlan_uap_get_log(wlan_pkt_stats_t *stats);
  */
 int wlan_get_ps_mode(enum wlan_ps_mode *ps_mode);
 
+/** Get station interface power save configuration.
+ *
+ * \param[out] ps_mode_cfg A pointer to variable that stores power save mode configuration.
+ *
+ * \return WM_SUCCESS if successful.
+ * \return -WM_E_INVAL if \a ps_mode_cfg was NULL.
+ */
+int wlan_get_ps_mode_cfg(uint8_t *ps_mode_cfg);
+
 /** Send message to Wi-Fi connection manager thread.
  *
  * \param[in] event: An event from \ref wifi_event.

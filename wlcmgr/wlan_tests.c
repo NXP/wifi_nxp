@@ -3522,6 +3522,21 @@ static void test_wlan_set_max_clients_count(int argc, char **argv)
         (void)PRINTF("Failed to set max clients count\r\n");
     }
 }
+
+static void test_wlan_get_max_clients_count(int argc, char **argv)
+{
+    unsigned int max_sta_num;
+    int ret = -WM_FAIL;
+
+    ret = wlan_get_uap_max_clients(&max_sta_num);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to get maximum number of stations\r\n");
+        return;
+    }
+
+    (void)PRINTF("Maximum number of stations: %d\r\n", max_sta_num);
+}
 #endif
 
 #if CONFIG_WIFI_RTS_THRESHOLD
@@ -12506,6 +12521,32 @@ start_detect:
 }
 #endif
 
+static void test_wlan_get_ps_cfg(int argc, char **argv)
+{
+    struct {
+        uint8_t cm_ieeeps_configured : 1;
+        uint8_t cm_deepsleepps_configured : 1;
+#if CONFIG_WNM_PS
+        uint8_t cm_wnmps_configured : 1;
+#endif
+    } ps_mode_cfg = {0};
+    int ret = -WM_FAIL;
+
+    ret = wlan_get_ps_mode_cfg((uint8_t *)&ps_mode_cfg);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to get power save mode setting\r\n");
+        return;
+    }
+
+    (void)PRINTF("Power save mode setting: \r\n");
+    (void)PRINTF("    IEEE ps   : %d\r\n", ps_mode_cfg.cm_ieeeps_configured);
+    (void)PRINTF("    Deep sleep: %d\r\n", ps_mode_cfg.cm_deepsleepps_configured);
+#if CONFIG_WNM_PS
+    (void)PRINTF("    WNM ps    : %d\r\n", ps_mode_cfg.cm_wnmps_configured);
+#endif
+}
+
 static struct cli_command tests[] = {
     {"wlan-thread-info", NULL, test_wlan_thread_info},
 #if CONFIG_SCHED_SWITCH_TRACE
@@ -12543,8 +12584,10 @@ static struct cli_command tests[] = {
     {"wlan-wnm-ps", "<0/1> <sleep_interval>", test_wlan_wnm_ps},
 #endif
 #endif
+    {"wlan-get-ps-cfg", NULL, test_wlan_get_ps_cfg},
 #if CONFIG_WIFI_MAX_CLIENTS_CNT
     {"wlan-set-max-clients-count", "<max clients count>", test_wlan_set_max_clients_count},
+    {"wlan-get-max-clients-count", NULL, test_wlan_get_max_clients_count},
 #endif
 #if CONFIG_WIFI_RTS_THRESHOLD
     {"wlan-rts", "<sta/uap> <rts threshold>", test_wlan_set_rts},
