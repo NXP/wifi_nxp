@@ -3919,6 +3919,9 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
                     wlan.reassoc_request = false;
                 }
                 mlan_adap->skip_dfs = false;
+#if CONFIG_WPA_SUPP
+				wpa_supp_stop_bgscan(netif);
+#endif
                 CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
                 return;
             }
@@ -4028,6 +4031,9 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_state *next, struct wlan_network *network)
 {
     bool set_rssi_threshold = false;
+#if CONFIG_WPA_SUPP
+    struct netif *netif = net_get_sta_interface();
+#endif
 
 #if CONFIG_ROAMING
     if (wlan.roaming_enabled == true)
@@ -4042,6 +4048,14 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
                 wlan.ft_bss = true;
             }
 #endif
+#if CONFIG_WPA_SUPP
+			wpa_supp_set_bgscan(netif, 10, wlan.rssi_low_threshold, 100);
+
+			if (wm_wifi.supp_if_callbk_fns->signal_change_callbk_fn)
+			{
+				wm_wifi.supp_if_callbk_fns->signal_change_callbk_fn(wm_wifi.if_priv);
+			}
+#else
 #if CONFIG_BG_SCAN
             int ret = wifi_config_bgscan_and_rssi(network->ssid);
             if (ret == WM_SUCCESS)
@@ -4049,6 +4063,7 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
                 wlcm_d("bgscan config successful");
                 return;
             }
+#endif
 #endif
             wlan.roam_reassoc = false;
             set_rssi_threshold = true;

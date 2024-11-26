@@ -250,6 +250,28 @@ void wifi_nxp_wpa_supp_event_proc_scan_abort(void *if_priv)
     wifi_if_ctx_rtos->supp_callbk_fns.scan_abort(wifi_if_ctx_rtos->supp_drv_if_ctx);
 }
 
+void wifi_nxp_wpa_supp_event_signal_change(void *if_priv)
+{
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    union wpa_event_data event;
+    struct wpa_signal_info *signal_change = NULL;
+    wifi_rssi_info_t rssi_info;
+
+    memset(&event, 0, sizeof(event));
+    signal_change                = &event.signal_change;
+
+    (void)wifi_send_rssi_info_cmd(&rssi_info);
+
+    signal_change->above_threshold   = rssi_info.data_rssi_avg;
+    signal_change->current_txrate    = rssi_info.bcn_rssi_avg;
+    signal_change->current_signal    = rssi_info.bcn_rssi_last;
+    signal_change->current_noise     = rssi_info.bcn_nf_last;
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+    wifi_if_ctx_rtos->supp_callbk_fns.signal_change(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
+}
+
 void wifi_nxp_wpa_supp_event_proc_scan_done(void *if_priv, int aborted, int external_scan)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;

@@ -144,6 +144,8 @@ void wifi_nxp_wpa_supp_event_proc_mgmt_rx(void *if_priv, nxp_wifi_event_mlme_t *
 void wifi_nxp_wpa_supp_event_proc_eapol_rx(void *if_priv,
                                            nxp_wifi_event_eapol_mlme_t *eapol_rx,
                                            unsigned int event_len);
+void wifi_nxp_wpa_supp_event_signal_change(void *if_priv);
+
 void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t *mlme_event, unsigned int event_len);
 
 void wifi_nxp_wpa_supp_event_proc_ecsa_complete(void *if_priv, nxp_wifi_ch_switch_info *ch_switch_info);
