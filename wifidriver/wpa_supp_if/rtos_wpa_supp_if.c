@@ -1952,13 +1952,13 @@ static int wifi_rate_to_signal_info(wlan_ds_rate *ds_rate, struct wpa_signal_inf
 
     if (datarate->tx_rate_format == MLAN_RATE_FORMAT_LG && datarate->tx_data_rate < 12)
     {
-        /* Legacy rates */
-        si->current_txrate = lg_rate[datarate->tx_data_rate];
+        /* Legacy rates (in bps) */
+        si->current_txrate = lg_rate[datarate->tx_data_rate]*1000*1000;
     }
     else if (datarate->tx_rate_format <= 3)
     {
-        /* HT, VHT, HE rates */
-        si->current_txrate = datarate->tx_data_rate >> 1;
+        /* HT, VHT, HE rates (in bps) */
+        si->current_txrate = (datarate->tx_data_rate >> 1)*1000*1000;
     }
 
     return WM_SUCCESS;
