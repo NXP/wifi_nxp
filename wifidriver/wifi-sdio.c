@@ -42,7 +42,7 @@ static size_t num_sg = 0;
 static uint8_t ctrl_cmd_buf[WIFI_FW_CMDBUF_SIZE];
 
 #ifdef SD9177
-static uint8_t prev_cmd_buf[WIFI_FW_CMDBUF_SIZE] = {0};
+static uint8_t __attribute__((section(".wlan_data"))) prev_cmd_buf[WIFI_FW_CMDBUF_SIZE] = {0};
 #endif
 
 #if CONFIG_FW_VDLL
