@@ -5511,7 +5511,11 @@ static void test_wlan_add_packet_filter(int argc, char **argv)
 
 #if CONFIG_SEND_HOSTCMD
 #define HOSTCMD_RESP_BUFF_SIZE 1024
-static uint8_t host_cmd_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
+#if defined(CPU_MIMXRT1176DVMAA_cm7) && defined(SD9177)
+    static uint8_t __attribute__((section(".wlan_data"))) host_cmd_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
+#else
+    static uint8_t host_cmd_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
+#endif
 /* Command taken from robust_btc.conf*/
 static uint8_t host_cmd_buf[] = {0xe0, 0, 0x12, 0, 0x3c, 0, 0, 0, 0x01, 0, 0, 0, 0x38, 0x02, 0x02, 0, 0x07, 0x01};
 
