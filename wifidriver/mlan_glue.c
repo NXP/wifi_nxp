@@ -743,19 +743,6 @@ int wrapper_wlan_cmd_11n_delba_rspgen(void *saved_event_buff)
     return 0;
 }
 
-#if UAP_SUPPORT
-void wrapper_wlan_update_uap_rxrate_info(RxPD *rxpd)
-{
-    pmlan_private priv = mlan_adap->priv[1];
-
-    priv->rxpd_rate = rxpd->rx_rate;
-#ifdef SD8801
-    priv->rxpd_htinfo = rxpd->ht_info;
-#else
-    priv->rxpd_rate_info = rxpd->rate_info;
-#endif
-}
-
 static t_u8 wlan_is_ampdu_allowed(mlan_private *priv, TxBAStreamTbl *ptx_tbl, int tid)
 {
     if (priv->port_ctrl_mode == MTRUE)
@@ -769,6 +756,19 @@ static t_u8 wlan_is_ampdu_allowed(mlan_private *priv, TxBAStreamTbl *ptx_tbl, in
         return MTRUE;
     else
         return MFALSE;
+}
+
+#if UAP_SUPPORT
+void wrapper_wlan_update_uap_rxrate_info(RxPD *rxpd)
+{
+    pmlan_private priv = mlan_adap->priv[1];
+
+    priv->rxpd_rate = rxpd->rx_rate;
+#ifdef SD8801
+    priv->rxpd_htinfo = rxpd->ht_info;
+#else
+    priv->rxpd_rate_info = rxpd->rate_info;
+#endif
 }
 
 int wrapper_wlan_uap_ampdu_enable(uint8_t *addr
@@ -2612,7 +2612,7 @@ int wifi_nxp_get_wiphy(const unsigned int bss_type)
 {
     int status = -WM_FAIL;
 #if CONFIG_11AX
-    t_u8 bandwidth = wifi_uap_get_bandwidth();
+    t_u8 bandwidth = wifi_get_bandwidth();
 #endif
 
     wiphy.sband[0].wifi_nxp_n_channels = MAX_NUM_CHANNEL_2G;

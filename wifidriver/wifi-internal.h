@@ -475,6 +475,7 @@ int wifi_nxp_get_country(unsigned int bss_type, char *alpha2);
 int wifi_nxp_get_signal(unsigned int bss_type, nxp_wifi_signal_info_t *signal_params);
 int wifi_nxp_scan_res_num(void);
 int wifi_nxp_scan_res_get2(t_u32 table_idx, nxp_wifi_event_new_scan_result_t *scan_res);
+int wifi_get_bandwidth(void);
 #endif /* CONFIG_WPA_SUPP */
 
 #if CONFIG_WIFI_RX_REORDER

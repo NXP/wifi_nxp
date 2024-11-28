@@ -887,12 +887,16 @@ static bool is_uap_state(enum cm_uap_state state)
 
 static bool is_uap_starting(void)
 {
+#if UAP_SUPPORT
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
     int state = wifi_nxp_hapd_state();
 
     return ((state > HAPD_IFACE_DISABLED) && (state <= HAPD_IFACE_ENABLED));
 #else
     return ((wlan.uap_state > CM_UAP_INITIALIZING) && (wlan.uap_state <= CM_UAP_IP_UP));
+#endif
+#else
+    return false;
 #endif
 }
 
@@ -901,7 +905,7 @@ static int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
     return net_get_if_ip_addr(ipv4_addr, net_get_sta_handle());
 }
 
-#if (CONFIG_HOST_SLEEP) || (CONFIG_MEF_CFG)
+#if UAP_SUPPORT && (CONFIG_HOST_SLEEP || CONFIG_MEF_CFG)
 static int wlan_get_uap_ipv4_addr(unsigned int *ipv4_addr)
 {
     return net_get_if_ip_addr(ipv4_addr, net_get_uap_handle());
@@ -998,6 +1002,7 @@ static int wlan_send_host_sleep_int(uint32_t wake_up_conds, bool is_config)
             return -WM_FAIL;
         }
     }
+#if UAP_SUPPORT
     else if (is_uap_started())
     {
         ret = wlan_get_uap_ipv4_addr(&ipv4_addr);
@@ -1008,6 +1013,7 @@ static int wlan_send_host_sleep_int(uint32_t wake_up_conds, bool is_config)
         }
         type = WLAN_BSS_TYPE_UAP;
     }
+#endif
     else
     {
         ipv4_addr = 0;
@@ -3563,6 +3569,7 @@ static void wlcm_process_hs_config_event(void)
      * else confiugre host sleep for station
      * interface.
      */
+#if UAP_SUPPORT
     else if (is_uap_started() != 0)
     {
         ret = wlan_get_uap_ipv4_addr(&ipv4_addr);
@@ -3573,6 +3580,7 @@ static void wlcm_process_hs_config_event(void)
         }
         type = WLAN_BSS_TYPE_UAP;
     }
+#endif
     else
         ipv4_addr = 0;
 
@@ -4828,12 +4836,14 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
     wlan_handle_disconnect_event(mlan_adap->priv[0]);
 
+#if UAP_SUPPORT
     if(is_uap_started())
     {
         while (is_sta_connected())
             OSA_TimeDelay(100);
         wlan_switch_to_nondfs_channel();
     }
+#endif
 #endif
 #endif
 }
@@ -9999,12 +10009,16 @@ int wlan_set_rssi_threshold(int rssithr)
 
 bool is_uap_started(void)
 {
+#if UAP_SUPPORT
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
     int state = wifi_nxp_hapd_state();
 
     return (state == HAPD_IFACE_ENABLED);
 #else
     return is_uap_state(CM_UAP_IP_UP);
+#endif
+#else
+    return false;
 #endif
 }
 
@@ -10167,9 +10181,10 @@ int wlan_disconnect(void)
 
     (void)send_user_request(CM_STA_USER_REQUEST_DISCONNECT, 0);
 
-#if CONFIG_ECSA
     /*Wait for sta to enter the disconnect state, and then send ECSA cmd*/
+    /* zephyr also need this delay to remove network with same name */
     OSA_TimeDelay(1000);
+#if CONFIG_ECSA
     wrapper_clear_media_connected_event();
     wlan_switch_to_nondfs_channel();
 #endif
@@ -10459,8 +10474,10 @@ int wlan_enable_all_networks(void)
     intrfc_handle = net_get_sta_handle();
     net_interface_up(intrfc_handle);
 
+#if UAP_SUPPORT
     intrfc_handle = net_get_uap_handle();
     net_interface_up(intrfc_handle);
+#endif
     return WM_SUCCESS;
 }
 #endif
@@ -11835,15 +11852,6 @@ int wlan_set_uap_max_clients(unsigned int max_sta_num)
             return ret;
         }
 
-#if CONFIG_WPA_SUPP
-#if CONFIG_WPA_SUPP_AP
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
-        struct netif *uap_netif = net_get_uap_interface();
-
-        wpa_supp_set_ap_max_num_sta(uap_netif, max_sta_num);
-#endif
-#endif
-#endif
         return ret;
     }
 #else
@@ -12797,16 +12805,6 @@ void wlan_uap_set_scan_chan_list(wifi_scan_chan_list_t scan_chan_list)
 void wlan_uap_set_beacon_period(const uint16_t beacon_period)
 {
 #if UAP_SUPPORT
-#if CONFIG_WPA_SUPP
-#if CONFIG_WPA_SUPP_AP
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
-    struct netif *netif = net_get_uap_interface();
-
-    wpa_supp_set_ap_beacon_int(netif, beacon_period);
-#endif
-#endif
-#endif
-
     wifi_uap_set_beacon_period(beacon_period);
 #endif
 }
@@ -14699,6 +14697,7 @@ int wlan_mef_set_auto_arp(t_u8 mef_action)
         }
         ipv4_addr_num++;
     }
+#if UAP_SUPPORT
     if(is_uap_started() != 0)
     {
         ret = wlan_get_uap_ipv4_addr(&ipv4_addr[1]);
@@ -14709,6 +14708,7 @@ int wlan_mef_set_auto_arp(t_u8 mef_action)
         }
         ipv4_addr_num++;
     }
+#endif
     index = g_flt_cfg.nentries;
     g_flt_cfg.criteria |= (CRITERIA_BROADCAST | CRITERIA_UNICAST);
     g_flt_cfg.nentries++;
@@ -14783,6 +14783,7 @@ int wlan_mef_set_auto_ping(t_u8 mef_action)
         }
         ipv4_addr_num++;
     }
+#if UAP_SUPPORT
     if(is_uap_started() != 0)
     {
         ret = wlan_get_uap_ipv4_addr(&ipv4_addr[1]);
@@ -14793,6 +14794,7 @@ int wlan_mef_set_auto_ping(t_u8 mef_action)
         }
         ipv4_addr_num++;
     }
+#endif
     index = g_flt_cfg.nentries;
     g_flt_cfg.criteria |= (CRITERIA_BROADCAST | CRITERIA_UNICAST);
     g_flt_cfg.nentries++;
@@ -15694,19 +15696,6 @@ int wlan_set_country_code(const char *alpha2)
         return ret;
     }
 
-#if CONFIG_WPA_SUPP
-#if CONFIG_WPA_SUPP_AP
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
-    struct netif *netif = net_get_uap_interface();
-
-    ret = wpa_supp_set_ap_country(netif, alpha2, country3);
-    if (ret != WM_SUCCESS)
-    {
-        return -WM_FAIL;
-    }
-#endif
-#endif
-#endif
     ret = wifi_set_country_code(country_code);
     if (ret != WM_SUCCESS)
         return ret;

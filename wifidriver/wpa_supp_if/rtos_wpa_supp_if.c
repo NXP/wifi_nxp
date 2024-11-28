@@ -2046,16 +2046,18 @@ void wifi_nxp_wpa_supp_event_acs_channel_selected(void *if_priv, nxp_wifi_acs_pa
     event.acs_selected_channels.ch_width = acs_params->ch_width;
     event.acs_selected_channels.hw_mode  = (enum hostapd_hw_mode)acs_params->hw_mode;
 
+#if CONFIG_WPA_SUPP_AP
     if (wifi_if_ctx_rtos->hostapd)
     {
         wifi_if_ctx_rtos->hostapd_callbk_fns.acs_channel_sel(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
     }
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
     else
-    {
-        wifi_if_ctx_rtos->supp_callbk_fns.acs_channel_sel(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
-    }
 #endif
+    {
+#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
+        wifi_if_ctx_rtos->supp_callbk_fns.acs_channel_sel(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
+#endif
+    }
 }
 
 void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t *mlme_event, unsigned int event_len)
@@ -2334,12 +2336,14 @@ void wifi_nxp_wpa_supp_event_get_wiphy(void *if_priv,
                 wifi_if_ctx_rtos->supp_callbk_fns.get_wiphy_res(wifi_if_ctx_rtos->supp_drv_if_ctx, &band);
             }
         }
+#if CONFIG_WPA_SUPP_AP
         else
         {
            if (wifi_if_ctx_rtos->hapd_drv_if_ctx && wifi_if_ctx_rtos->hostapd_callbk_fns.get_wiphy_res) {
                 wifi_if_ctx_rtos->hostapd_callbk_fns.get_wiphy_res(wifi_if_ctx_rtos->hapd_drv_if_ctx, &band);
            }
         }
+#endif
     }
 
     if (wifi_if_ctx_rtos->bss_type == BSS_TYPE_STA)
@@ -2348,12 +2352,14 @@ void wifi_nxp_wpa_supp_event_get_wiphy(void *if_priv,
              wifi_if_ctx_rtos->supp_callbk_fns.get_wiphy_res(wifi_if_ctx_rtos->supp_drv_if_ctx, NULL);
         }
     }
+#if CONFIG_WPA_SUPP_AP
     else
     {
         if (wifi_if_ctx_rtos->hapd_drv_if_ctx && wifi_if_ctx_rtos->hostapd_callbk_fns.get_wiphy_res) {
              wifi_if_ctx_rtos->hostapd_callbk_fns.get_wiphy_res(wifi_if_ctx_rtos->hapd_drv_if_ctx, NULL);
         }
     }
+#endif
 }
 
 int wifi_nxp_wpa_supp_get_wiphy(void *if_priv)
