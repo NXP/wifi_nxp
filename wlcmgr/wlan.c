@@ -1803,6 +1803,17 @@ static bool is_scanning_allowed(void)
 #endif
 }
 
+static bool is_sta_associated(void)
+{
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+    int state = wifi_nxp_supp_state();
+
+    return ((state >= WPA_ASSOCIATED) && (state <= WPA_COMPLETED));
+#else
+    return ((wlan.sta_state >= CM_STA_ASSOCIATED) && (wlan.sta_state <= CM_STA_CONNECTED));
+#endif
+}
+
 /*
  * Connection Manager actions
  */
@@ -2052,7 +2063,7 @@ static int do_start(struct wlan_network *network)
         {
             network->channel = UAP_DEFAULT_CHANNEL;
 
-            if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+            if (wlan.running && is_sta_associated())
             {
                 network->channel = wlan.networks[wlan.cur_network_idx].channel;
 #if CONFIG_WPA_SUPP
@@ -3513,8 +3524,7 @@ static void wlcm_process_hs_config_event(void)
 #if CONFIG_11N
 static void wlcm_process_addba_request(struct wifi_message *msg)
 {
-    if (is_state(CM_STA_ASSOCIATED) || is_state(CM_STA_REQUESTING_ADDRESS) || is_state(CM_STA_OBTAINING_ADDRESS) ||
-        is_state(CM_STA_CONNECTED) || is_uap_started())
+    if (is_sta_associated() || is_uap_started())
     {
         (void)wrapper_wlan_cmd_11n_addba_rspgen(msg->data);
     }
@@ -3531,8 +3541,7 @@ static void wlcm_process_addba_request(struct wifi_message *msg)
 
 static void wlcm_process_delba_request(struct wifi_message *msg)
 {
-    if (is_state(CM_STA_ASSOCIATED) || is_state(CM_STA_REQUESTING_ADDRESS) || is_state(CM_STA_OBTAINING_ADDRESS) ||
-        is_state(CM_STA_CONNECTED) || is_uap_started())
+    if (is_sta_associated() || is_uap_started())
     {
         (void)wrapper_wlan_cmd_11n_delba_rspgen(msg->data);
     }
@@ -3549,8 +3558,7 @@ static void wlcm_process_delba_request(struct wifi_message *msg)
 
 static void wlcm_process_ba_stream_timeout_request(struct wifi_message *msg)
 {
-    if (is_state(CM_STA_ASSOCIATED) || is_state(CM_STA_REQUESTING_ADDRESS) || is_state(CM_STA_OBTAINING_ADDRESS) ||
-        is_state(CM_STA_CONNECTED) || is_uap_started())
+    if (is_sta_associated() || is_uap_started())
     {
         (void)wrapper_wlan_cmd_11n_ba_stream_timeout(msg->data);
     }
@@ -3740,8 +3748,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
     }
 #endif
 
-    if (!is_state(CM_STA_ASSOCIATING) && !is_state(CM_STA_ASSOCIATED) && !is_state(CM_STA_REQUESTING_ADDRESS) &&
-        !is_state(CM_STA_OBTAINING_ADDRESS) && !is_state(CM_STA_CONNECTED))
+    if (!is_sta_associated())
     {
         if (wlan.connect_wakelock_taken)
         {
@@ -4291,7 +4298,7 @@ int wlan_ft_roam(const t_u8 *bssid, const t_u8 channel)
 
     if (bssid)
     {
-        if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+        if (wlan.running && is_sta_associated())
         {
             memcpy(curr_bss, wlan.networks[wlan.cur_network_idx].bssid, MLAN_MAC_ADDR_LENGTH);
             if(memcmp(curr_bss, bssid, MLAN_MAC_ADDR_LENGTH) == 0)
@@ -4878,22 +4885,10 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
 #endif
                 if (wlan.sta_ipv4_state == CM_STA_CONNECTED)
                 {
-                    wlcm_d("Lease renewal failed, disconnecting");
-
-#if CONFIG_WLAN_FAST_PATH
-                    /* Mark the fast path cache invalid. */
-                    wlan.auth_cache_valid      = false;
-                    wlan.fast_path_cache_valid = false;
-#endif /* CONFIG_WLAN_FAST_PATH */
-
-                    do_connect_failed(WLAN_REASON_ADDRESS_FAILED);
-
-                    if (wlan.reassoc_control)
-                    {
-                        wlcm_request_reconnect(next, network);
-                    }
-
-                    *next = wlan.sta_state;
+                    wlcm_d("Lease renewal failed");
+                    CONNECTION_EVENT(WLAN_REASON_ADDRESS_FAILED, NULL);
+                    *next               = CM_STA_AUTHENTICATED;
+                    wlan.sta_ipv4_state = CM_STA_AUTHENTICATED;
                 }
 #if CONFIG_IPV6
             }
@@ -4922,6 +4917,9 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
 #endif /* CONFIG_P2P */
         (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
         CONNECTION_EVENT(WLAN_REASON_ADDRESS_SUCCESS, NULL);
+        wlan.sta_state      = CM_STA_CONNECTED;
+        *next               = CM_STA_CONNECTED;
+        wlan.sta_ipv4_state = CM_STA_CONNECTED;
     }
 }
 
@@ -6048,7 +6046,7 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
         case WIFI_EVENT_UAP_NET_ADDR_CONFIG:
             if (!is_uap_state(CM_UAP_STARTED))
             {
-                wlcm_w(
+                wlcm_d(
                     "Ignoring address config event as uap not "
                     "in started state");
                 break;
@@ -8738,7 +8736,7 @@ int wlan_add_network(struct wlan_network *network)
 
     if (network->role == WLAN_BSS_ROLE_STA)
     {
-        if (is_running() && !is_state(CM_STA_IDLE) && !is_state(CM_STA_ASSOCIATED) && !is_state(CM_STA_CONNECTED))
+        if (is_running() && !is_state(CM_STA_IDLE) && !is_sta_associated())
         {
             return WLAN_ERROR_STATE;
         }
@@ -9776,7 +9774,7 @@ int wlan_get_current_network(struct wlan_network *network)
         return -WM_E_INVAL;
     }
 
-    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED) || is_state(CM_STA_AUTHENTICATED)))
+    if (wlan.running && is_sta_associated())
     {
         (void)memcpy((void *)network, (const void *)&wlan.networks[wlan.cur_network_idx], sizeof(struct wlan_network));
 
@@ -9797,7 +9795,7 @@ int wlan_get_current_network_ssid(char *ssid)
         return -WM_E_INVAL;
     }
 
-    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED) || is_state(CM_STA_AUTHENTICATED)))
+    if (wlan.running && is_sta_associated())
     {
         (void)memcpy((void *)ssid, (const void *)&wlan.networks[wlan.cur_network_idx].ssid, IEEEtypes_SSID_SIZE + 1);
 
@@ -9823,7 +9821,7 @@ int wlan_get_current_network_bssid(char *bssid)
     memcpy(bssid, status.bssid, MLAN_MAC_ADDR_LENGTH);
     return WM_SUCCESS;
 #else
-    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+    if (wlan.running && is_sta_associated())
     {
         (void)memcpy((void *)bssid, (const void *)&wlan.networks[wlan.cur_network_idx].bssid, IEEEtypes_ADDRESS_SIZE);
 
@@ -10902,7 +10900,7 @@ static int wlan_pscan(int (*cb)(unsigned int count))
     wlan_scan_params_v2_t wlan_scan_param;
     int ret;
 
-    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+    if (wlan.running && is_sta_associated())
     {
         network = &wlan.networks[wlan.cur_network_idx];
     }
@@ -12136,7 +12134,7 @@ uint16_t wlan_get_beacon_period(void)
 {
     struct wlan_network* network = NULL;
 
-    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+    if (wlan.running && is_sta_associated())
     {
         network = &wlan.networks[wlan.cur_network_idx];
     }
@@ -12513,7 +12511,7 @@ int wlan_get_current_bssid(uint8_t *bssid)
 {
     struct wlan_network* network = NULL;
 
-    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+    if (wlan.running && is_sta_associated())
     {
         network = &wlan.networks[wlan.cur_network_idx];
     }
@@ -12536,7 +12534,7 @@ uint8_t wlan_get_current_channel(void)
 {
     struct wlan_network* network = NULL;
 
-    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+    if (wlan.running && is_sta_associated())
     {
         network = &wlan.networks[wlan.cur_network_idx];
     }
