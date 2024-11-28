@@ -675,6 +675,11 @@ int wifi_nxp_hapd_state(void)
     char if_name[CONFIG_NET_INTERFACE_NAME_LEN + 1];
     int ret;
 
+    if (!get_supp_ready_state())
+    {
+        return 0;
+    }
+
     ret = net_if_get_name(iface, if_name, sizeof(if_name));
     if (!ret) {
         supp_e("Cannot get interface name (%d)", ret);
