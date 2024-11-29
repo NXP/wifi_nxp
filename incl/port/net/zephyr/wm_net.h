@@ -306,6 +306,28 @@ static inline void *net_stack_buffer_get_payload(void *buf)
     return net_pkt_data((struct net_pkt *)buf);
 }
 
+#if CONFIG_WIFI_PKT_FWD
+/** Send packet from Wi-Fi driver
+ *
+ * \param[in] interface Wi-Fi interface.
+ * \param[in] stack_buffer net stack buffer pointer.
+ *
+ * \return WM_SUCCESS on success
+ * \return -WM_FAIL otherwise
+ */
+int net_wifi_packet_send(uint8_t interface, void *stack_buffer);
+
+/** Generate TX net packet buffer
+ *
+ * \param[in] interface Wi-Fi interface.
+ * \param[in] payload source data payload pointer.
+ * \param[in] datalen data length.
+ *
+ * \return net packet
+ */
+struct net_pkt *gen_tx_pkt_from_data(uint8_t interface, uint8_t *payload, uint16_t datalen);
+#endif
+
 /** Converts Internet host address in network byte order to a string in IPv4
  * dotted-decimal notation
  *

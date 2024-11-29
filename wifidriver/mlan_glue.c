@@ -757,7 +757,8 @@ static t_u8 wlan_is_ampdu_allowed(mlan_private *priv, TxBAStreamTbl *ptx_tbl, in
             return MFALSE;
     }
 
-    if (!ptx_tbl->ampdu_stat[tid] && ptx_tbl->ampdu_supported[tid] && (ptx_tbl->txpkt_cnt >= ptx_tbl->txba_thresh))
+    if (!ptx_tbl->ampdu_stat[tid] && ptx_tbl->ampdu_supported[tid] && (ptx_tbl->txpkt_cnt >= ptx_tbl->txba_thresh)
+            && (ptx_tbl->ba_status != BA_STREAM_SETUP_INPROGRESS))
         return MTRUE;
     else
         return MFALSE;
@@ -789,18 +790,43 @@ int wrapper_wlan_uap_ampdu_enable(uint8_t *addr
 #endif
                                  ))
         {
+            send_add_ba_param_t *addba = NULL;
+
             ptx_tbl->ba_status = BA_STREAM_SETUP_INPROGRESS;
             wlan_release_ralist_lock(pmpriv_uap);
-            ret = wlan_send_addba(pmpriv_uap,
-#if CONFIG_WMM
-                                  tid,
+#if !CONFIG_MEM_POOLS
+            addba = (send_add_ba_param_t *)OSA_MemoryAllocate(sizeof(send_add_ba_param_t));
 #else
-                                  0,
+            addba = (send_add_ba_param_t *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
 #endif
-                                  addr);
-            if (ret != 0)
+            if (!addba)
             {
-                wifi_d("uap failed to send addba req");
+                wifi_w("No memory available for addba req");
+                wlan_request_ralist_lock(pmpriv_uap);
+                ptx_tbl->ba_status = BA_STREAM_NOT_SETUP;
+                wlan_release_ralist_lock(pmpriv_uap);
+                return MLAN_STATUS_FAILURE;
+            }
+
+            addba->interface = WLAN_BSS_TYPE_UAP;
+#if CONFIG_WMM
+            addba->tid = tid;
+#else
+            addba->tid = 0;
+#endif
+            (void)memcpy(addba->peer_mac, addr, MLAN_MAC_ADDR_LENGTH);
+            ret = wifi_event_completion(WIFI_EVENT_11N_SEND_ADDBA, WIFI_EVENT_REASON_SUCCESS, addba);
+            if (ret != WM_SUCCESS)
+            {
+                wifi_d("uap: failed to send addba req");
+                wlan_request_ralist_lock(pmpriv_uap);
+                ptx_tbl->ba_status = BA_STREAM_NOT_SETUP;
+                wlan_release_ralist_lock(pmpriv_uap);
+#if !CONFIG_MEM_POOLS
+                OSA_MemoryFree(addba);
+#else
+                OSA_MemoryPoolFree(buf_32_MemoryPool, addba);
+#endif
                 return MLAN_STATUS_FAILURE;
             }
         }
@@ -896,6 +922,7 @@ static mlan_status do_wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMM
             {
                 wlan_11n_update_txbastream_tbl_ampdu_stat(priv, padd_ba_rsp->peer_mac_addr, MFALSE, tid);
                 ptx_ba_tbl->ampdu_supported[tid] = MFALSE;
+                ptx_ba_tbl->ba_status = BA_STREAM_NOT_SETUP;
             }
             wlan_release_ralist_lock(priv);
         }
@@ -906,6 +933,7 @@ static mlan_status do_wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMM
             {
                 /* Clear txpkt_cnt to avoid collision between our STA and our uAP */
                 ptx_ba_tbl->txpkt_cnt = 0;
+                ptx_ba_tbl->ba_status = BA_STREAM_NOT_SETUP;
             }
             wlan_release_ralist_lock(priv);
         }
@@ -988,18 +1016,44 @@ int wrapper_wlan_sta_ampdu_enable(
 #endif
                               ))
     {
+        send_add_ba_param_t *addba = NULL;
+
         ptx_tbl->ba_status = BA_STREAM_SETUP_INPROGRESS;
         wlan_release_ralist_lock(pmpriv);
-        ret = wlan_send_addba(pmpriv,
-#if CONFIG_WMM
-                              tid,
+#if !CONFIG_MEM_POOLS
+        addba = (send_add_ba_param_t *)OSA_MemoryAllocate(sizeof(send_add_ba_param_t));
 #else
-                              0,
+        addba = (send_add_ba_param_t *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
 #endif
-                              (t_u8 *)cur_mac);
-        if (ret != 0)
+        if (!addba)
+        {
+            wifi_w("No memory available for addba req");
+            wlan_request_ralist_lock(pmpriv);
+            ptx_tbl->ba_status = BA_STREAM_NOT_SETUP;
+            wlan_release_ralist_lock(pmpriv);
+            return MLAN_STATUS_FAILURE;
+        }
+
+        addba->interface = WLAN_BSS_TYPE_STA;
+#if CONFIG_WMM
+        addba->tid = tid;
+#else
+        addba->tid = 0;
+#endif
+        (void)memcpy(addba->peer_mac, cur_mac, MLAN_MAC_ADDR_LENGTH);
+
+        ret = wifi_event_completion(WIFI_EVENT_11N_SEND_ADDBA, WIFI_EVENT_REASON_SUCCESS, addba);
+        if (ret != WM_SUCCESS)
         {
             wifi_d("sta: failed to send addba req");
+            wlan_request_ralist_lock(pmpriv);
+            ptx_tbl->ba_status = BA_STREAM_NOT_SETUP;
+            wlan_release_ralist_lock(pmpriv);
+#if !CONFIG_MEM_POOLS
+            OSA_MemoryFree(addba);
+#else
+            OSA_MemoryPoolFree(buf_32_MemoryPool, addba);
+#endif
             return MLAN_STATUS_FAILURE;
         }
     }
@@ -5194,7 +5248,6 @@ static void wifi_uap_handle_event_data_pause(mlan_private *priv_uap, MrvlIEtypes
             }
 
             ra_list->tx_pause = (tx_pause_tlv->tx_pause) ? MTRUE : MFALSE;
-
             wifi_wmm_queue_unlock(priv_uap, i);
         }
     }
@@ -5827,7 +5880,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             void *saved_event_buff = wifi_11n_save_request(evt);
             if (saved_event_buff != NULL)
             {
-                if (wifi_event_completion(WIFI_EVENT_11N_ADDBA, WIFI_EVENT_REASON_SUCCESS, saved_event_buff) !=
+                if (wifi_event_completion(WIFI_EVENT_11N_RECV_ADDBA, WIFI_EVENT_REASON_SUCCESS, saved_event_buff) !=
                     WM_SUCCESS)
                 {
                     /* If fail to send message on queue, free allocated memory ! */

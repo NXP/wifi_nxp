@@ -171,10 +171,11 @@ void deliver_packet_above(struct net_pkt *p, int recv_interface)
     }
 }
 
+#define MAX_RETRY_GEN_PKT 3
 static struct net_pkt *gen_pkt_from_data(t_u8 interface, t_u8 *payload, t_u16 datalen)
 {
     struct net_pkt *pkt = NULL;
-    t_u8 retry_cnt      = 3;
+    t_u8 retry_cnt      = MAX_RETRY_GEN_PKT;
 
 retry:
     /* We allocate a network buffer */
@@ -205,11 +206,47 @@ retry:
     return pkt;
 }
 
+#if CONFIG_WIFI_PKT_FWD
+struct net_pkt *gen_tx_pkt_from_data(uint8_t interface, uint8_t *payload, uint16_t datalen)
+{
+    struct net_pkt *pkt = NULL;
+    uint8_t retry_cnt      = MAX_RETRY_GEN_PKT;
+
+retry:
+    /* We allocate a network buffer */
+#if CONFIG_WIFI_SOFTAP_SUPPORT
+    if (interface == WLAN_BSS_TYPE_UAP)
+        pkt = net_pkt_alloc_with_buffer(g_uap.netif, datalen, AF_INET, 0, K_NO_WAIT);
+    else
+#endif
+        pkt = net_pkt_alloc_with_buffer(g_mlan.netif, datalen, AF_INET, 0, K_NO_WAIT);
+
+    if (pkt == NULL)
+    {
+        if (retry_cnt)
+        {
+            retry_cnt--;
+            k_yield();
+            goto retry;
+        }
+        return NULL;
+    }
+
+    if (net_pkt_write(pkt, payload, datalen) < 0)
+    {
+        net_pkt_unref(pkt);
+        pkt = NULL;
+    }
+
+    net_pkt_cursor_init(pkt);
+    return pkt;
+}
+#endif
 #if CONFIG_TX_RX_ZERO_COPY
 static struct net_pkt *gen_pkt_from_data_for_zerocopy(t_u8 interface, t_u8 *payload, t_u16 datalen)
 {
     struct net_pkt *pkt = NULL;
-    t_u8 retry_cnt      = 3;
+    t_u8 retry_cnt      = MAX_RETRY_GEN_PKT;
 
 retry:
     /* We allocate a network buffer */
@@ -466,7 +503,9 @@ bool wrapper_net_is_ip_or_ipv6(const t_u8 *buffer)
 }
 
 extern int retry_attempts;
-
+#if CONFIG_WIFI_PKT_FWD
+#define MAX_RETRY_PKT_FWD 3
+#endif
 int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt)
 {
     int ret;
@@ -531,17 +570,33 @@ int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt)
         }
         else
         {
-            retry = retry_attempts;
+#if CONFIG_WIFI_PKT_FWD
+            if (interface == WLAN_BSS_TYPE_UAP)
+            {
+                retry = MAX_RETRY_PKT_FWD;
+            }
+            else
+#endif
+            {
+                retry = retry_attempts;
+            }
         }
 
         wmm_outbuf = wifi_wmm_get_outbuf_enh(&outbuf_len, (mlan_wmm_ac_e)pkt_prio, interface, ra, &is_tx_pause);
         ret        = (wmm_outbuf == NULL) ? true : false;
 
-        if (ret == true && is_tx_pause == true)
+        /* uAP case doesn't need to delay to let powersave task run,
+         * as FW won't go into sleep mode when uAP enabled. And this
+         * delay will block uAP packet forward case */
+#if CONFIG_WIFI_PKT_FWD
+        if (interface != WLAN_BSS_TYPE_UAP)
+#endif
         {
-            OSA_TimeDelay(1);
+            if (ret == true && is_tx_pause == true)
+            {
+                OSA_TimeDelay(1);
+            }
         }
-
         retry--;
     } while (ret == true && retry > 0);
 
@@ -619,6 +674,16 @@ int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt)
 
     return ret;
 }
+
+#if CONFIG_WIFI_PKT_FWD
+int net_wifi_packet_send(uint8_t interface, void *stack_buffer)
+{
+    if (interface == WLAN_BSS_TYPE_UAP)
+        return nxp_wifi_internal_tx(net_if_get_device((void *)g_uap.netif), (struct net_pkt *)stack_buffer);
+    else
+        return nxp_wifi_internal_tx(net_if_get_device((void *)g_mlan.netif), (struct net_pkt *)stack_buffer);
+}
+#endif
 
 /* Below struct is used for creating IGMP IPv4 multicast list */
 typedef struct group_ip4_addr

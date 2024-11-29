@@ -142,6 +142,10 @@ extern "C" {
 #define CONFIG_WIFI_RECOVERY 1
 #endif
 
+#if CONFIG_NXP_WIFI_PKT_FWD
+#define CONFIG_WIFI_PKT_FWD 1
+#endif
+
 #if CONFIG_NXP_WIFI_TSP
 #define CONFIG_TSP 1
 #endif
