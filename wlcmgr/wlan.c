@@ -3898,12 +3898,15 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
             CONNECTION_EVENT(WLAN_REASON_AUTH_SUCCESS, NULL);
 
 #if CONFIG_WPA_SUPP
+	    wlan.same_ess =
 #if CONFIG_11R
-            wlan.same_ess = wifi_same_ess_ft();
+            wifi_same_ess_ft() |
 #endif
+	    wlan.roam_reassoc;
+
             wlan.roam_reassoc = false;
 #endif
-            if (wlan.same_ess == true)
+            if ((wlan.same_ess == true) && (wlan.sta_ipv4_state == CM_STA_CONNECTED))
             {
 #if CONFIG_11R
                 wlan.ft_bss = false;
@@ -4049,12 +4052,12 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
             }
 #endif
 #if CONFIG_WPA_SUPP
-			wpa_supp_set_bgscan(netif, 10, wlan.rssi_low_threshold, 100);
+	    wpa_supp_set_bgscan(netif, 10, -wlan.rssi_low_threshold, 10);
 
-			if (wm_wifi.supp_if_callbk_fns->signal_change_callbk_fn)
-			{
-				wm_wifi.supp_if_callbk_fns->signal_change_callbk_fn(wm_wifi.if_priv);
-			}
+	    if (wm_wifi.supp_if_callbk_fns->signal_change_callbk_fn)
+	    {
+		    wm_wifi.supp_if_callbk_fns->signal_change_callbk_fn(wm_wifi.if_priv);
+	    }
 #else
 #if CONFIG_BG_SCAN
             int ret = wifi_config_bgscan_and_rssi(network->ssid);
