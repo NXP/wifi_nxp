@@ -59,7 +59,7 @@ config MCUX_COMPONENT_middleware.wifi.net
 
 config MCUX_COMPONENT_middleware.wifi.wifidriver
     bool "Component middleware.wifi.wifidriver"
-    select MCUX_COMPONENT_utility.debug_console
+    depends on MCUX_COMPONENT_utility.debug_console || MCUX_COMPONENT_utility.debug_console_lite
     select MCUX_COMPONENT_middleware.wifi.template
     select MCUX_COMPONENT_middleware.wifi.osa
     select MCUX_COMPONENT_middleware.wifi.net
@@ -88,7 +88,7 @@ config MCUX_COMPONENT_middleware.wifi.wifidriver
 
 config MCUX_COMPONENT_middleware.wifi
     bool "Component middleware.wifi"
-    select MCUX_COMPONENT_utility.debug_console
+    depends on MCUX_COMPONENT_utility.debug_console || MCUX_COMPONENT_utility.debug_console_lite
     select MCUX_COMPONENT_middleware.wifi.template
     select MCUX_COMPONENT_middleware.wifi.wifidriver
 
@@ -131,7 +131,7 @@ config MCUX_COMPONENT_middleware.wifi.cli
     bool "Component middleware.wifi.cli"
     select MCUX_COMPONENT_middleware.wifi
     select MCUX_COMPONENT_middleware.wifi.wifidriver
-    select MCUX_COMPONENT_utility.debug_console
+    depends on MCUX_COMPONENT_utility.debug_console || MCUX_COMPONENT_utility.debug_console_lite
 
 config MCUX_COMPONENT_middleware.wifi.wmcrypto
     bool "Component middleware.wifi.wmcrypto"
