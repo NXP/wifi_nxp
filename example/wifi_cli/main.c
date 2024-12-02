@@ -351,6 +351,7 @@ static struct cli_command hs_commands[] = {
 
 int wlan_hs_cli_init(void)
 {
+#if CONFIG_HOST_SLEEP
     unsigned int i;
 
     for (i = 0; i < sizeof(hs_commands) / sizeof(struct cli_command); i++)
@@ -360,6 +361,7 @@ int wlan_hs_cli_init(void)
             return -1;
         }
     }
+#endif
 
     return 0;
 }
