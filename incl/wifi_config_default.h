@@ -269,10 +269,8 @@
 #endif
 
 #if !defined CONFIG_SCAN_WITH_RSSIFILTER
-#if defined(RW610)
+#if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177) || defined(IW610)
 #define CONFIG_SCAN_WITH_RSSIFILTER 1
-#elif defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177) || defined(IW610)
-#define CONFIG_SCAN_WITH_RSSIFILTER 0
 #endif
 #endif
 
