@@ -1189,11 +1189,16 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     /* Following implementation is tightly coupled with firmware's
      * ask for sleep confirm after event 0xb or comamnd response as 0x7
      */
-    memcpy(prev_cmd, cmd, WIFI_FW_CMDBUF_SIZE);
-    if (mlan_adap->ps_state == PS_STATE_PRE_SLEEP)
+    if (cmd->command == HostCmd_CMD_802_11_PS_MODE_ENH)
     {
+        /* Do nothing */
+    }
+    else if (mlan_adap->ps_state == PS_STATE_PRE_SLEEP)
+    {
+        memcpy(prev_cmd, cmd, WIFI_FW_CMDBUF_SIZE);
         prepare_error_sleep_confirm_command((mlan_bss_type)WLAN_BSS_TYPE_STA);
         cmd_pending = true;
+        OSA_TimeDelay(5);
     }
 
 start:
