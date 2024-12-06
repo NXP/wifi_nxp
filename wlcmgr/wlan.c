@@ -4038,9 +4038,9 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 #if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_ROAMING)
 static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_state *next, struct wlan_network *network)
 {
-    int ret;
     bool set_rssi_threshold = false;
 #if CONFIG_WPA_SUPP
+    int ret;
     struct netif *netif = net_get_sta_interface();
 #endif
 
