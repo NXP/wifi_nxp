@@ -6953,7 +6953,7 @@ int wrapper_wlan_set_regiontable(t_u8 region, t_u16 band)
 const chan_freq_power_t  *wlan_get_regulatory_domain(uint8_t chan_freq, int *cfp_no)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
-    const chan_freq_power_t *cfp;
+    const chan_freq_power_t *cfp = NULL;
     uint16_t region_code = pmpriv->adapter->region_code;
 
     if (chan_freq == 0)

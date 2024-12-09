@@ -3610,7 +3610,7 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
             bandwidth         = BANDWIDTH_40MHZ;
             bandcfg.chanWidth = CHAN_BW_40MHZ;
         }
-#if CONFIG_11AC
+#if CONFIG_11AC && CONFIG_5GHz_SUPPORT
         else if (params->chan.bandwidth == 80)
         {
             bandwidth         = BANDWIDTH_80MHZ;
