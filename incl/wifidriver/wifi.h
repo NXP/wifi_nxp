@@ -28,15 +28,6 @@
 #undef CONFIG_WIFI_CAPA
 #define CONFIG_WIFI_CAPA 1
 #endif
-
-#if CONFIG_11AX
-#if !CONFIG_11K
-#define CONFIG_11K 1
-#endif
-#if !CONFIG_11V
-#define CONFIG_11V 1
-#endif
-#endif
 #endif
 
 #include <wifi-decl.h>

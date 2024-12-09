@@ -553,14 +553,6 @@ extern "C" {
 
 #if CONFIG_11AX
 
-#if !CONFIG_11K
-#define CONFIG_11K 1
-#endif
-
-#if !CONFIG_11V
-#define CONFIG_11V 1
-#endif
-
 #if !CONFIG_WPA_SUPP
 #define CONFIG_DRIVER_MBO 1
 #endif
