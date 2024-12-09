@@ -320,7 +320,11 @@ static int sdio_card_init(void)
     /* Enable IO in card */
     (void)sdio_drv_creg_write(0x2, 0, 0x2, &resp);
 
+#if defined(SD9177) || defined(SD8978)
+    (void)SDIO_SetBlockSize(&wm_g_sd, (sdio_func_num_t)0, 1);
+#elif defined(SD8801) || defined(SD8987)
     (void)SDIO_SetBlockSize(&wm_g_sd, (sdio_func_num_t)0, 256);
+#endif
     (void)SDIO_SetBlockSize(&wm_g_sd, (sdio_func_num_t)1, 256);
     (void)SDIO_SetBlockSize(&wm_g_sd, (sdio_func_num_t)2, 256);
 
