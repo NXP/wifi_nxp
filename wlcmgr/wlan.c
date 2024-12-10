@@ -1186,6 +1186,13 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
 {
     int ret;
 
+#ifdef CONFIG_NCP
+    if (!ncp_is_pm3_mode(powerState))
+    {
+        return kStatus_PMPowerStateNotAllowed;
+    }
+#endif
+
     if (eventType == kPM_EventEnteringSleep
 #ifdef RW610
             && powerState > PM_LP_STATE_PM0
