@@ -3008,7 +3008,9 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
              * Subscribe EVENT_RSSI_LOW if roaming is enabled.
              * Do this here in case roaming is not happened or failed in wpa_supplicant.
              */
+#if CONFIG_ROAMING
             wlan_subscribe_rssi_low_event();
+#endif
         }
 #endif
 #endif
@@ -3037,8 +3039,9 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
          * Subscribe EVENT_RSSI_LOW if roaming is enabled. 
          * Do this here in case roaming is not happened or failed in wpa_supplicant.
          */
+#if CONFIG_ROAMING
         wlan_subscribe_rssi_low_event();
-
+#endif
         /*
         * Zephyr l2 mgmt scan needs call report_scan_results() to clear scan callback.
         *

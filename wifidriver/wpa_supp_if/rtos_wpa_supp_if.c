@@ -1855,7 +1855,7 @@ int wifi_nxp_wpa_supp_set_supp_port(void *if_priv, int authorized, char *bssid)
         wifi_user_scan_config_cleanup();
     }
 
-#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+#if CONFIG_ROAMING
     wlan_subscribe_rssi_low_event();
 #endif
     ret = 0;
