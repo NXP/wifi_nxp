@@ -1473,6 +1473,11 @@ int net_wlan_init(void)
 
     if (!net_wlan_init_done)
     {
+        wifi_mac_addr_t mac_addr = {0};
+
+        wifi_get_device_mac_addr(&mac_addr);
+        wlan_set_mac_addr(&mac_addr.mac[0]);
+
         /* init STA netif */
         ret = wlan_get_mac_address(g_mlan.state.ethaddr.addr);
         if (ret != 0)

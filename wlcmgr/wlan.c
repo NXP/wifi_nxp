@@ -7611,8 +7611,8 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
 
     (void)memcpy((void *)&wlan.uap_mac[0], (const void *)mac_addr_uap.mac, MLAN_MAC_ADDR_LENGTH);
     (void)memcpy((void *)&wlan.sta_mac[0], (const void *)mac_addr.mac, MLAN_MAC_ADDR_LENGTH);
-    (void)PRINTF("MAC Address: ");
-    print_mac((const char *)&wlan.uap_mac);
+    (void)PRINTF("STA MAC Address: ");
+    print_mac((const char *)&wlan.sta_mac);
     (void)PRINTF("\r\n");
 #if CONFIG_P2P
     (void)memcpy((void *)&wlan.wfd_mac[0], (const void *)mac_addr.mac, MLAN_MAC_ADDR_LENGTH);
@@ -10816,6 +10816,7 @@ int wlan_set_mac_addr(uint8_t *mac)
     if (wlan.status == WLCMGR_INIT_DONE || wlan.status == WLCMGR_ACTIVATED)
     {
         (void)memcpy(ap_mac, mac, MLAN_MAC_ADDR_LENGTH);
+        ap_mac[0] |= 2;
         ap_mac[4] += 1;
 
         net_wlan_set_mac_address((unsigned char *)mac, (unsigned char *)ap_mac);
