@@ -284,6 +284,11 @@ int net_wlan_init(void)
 #endif
     if (!net_wlan_init_done)
     {
+        wifi_mac_addr_t mac_addr = {0};
+
+        wifi_get_device_mac_addr(&mac_addr);
+        wlan_set_mac_addr((uint8_t *)(&mac_addr.mac[0]));
+
 #if !CONFIG_NO_WIFI_TCPIP_INIT
         net_ipv4stack_init();
 #endif

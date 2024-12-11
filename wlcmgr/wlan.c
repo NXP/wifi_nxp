@@ -10709,6 +10709,7 @@ int wlan_set_mac_addr(uint8_t *mac)
 #if UAP_SUPPORT
         uint8_t ap_mac[MLAN_MAC_ADDR_LENGTH];
         (void)memcpy(ap_mac, mac, MLAN_MAC_ADDR_LENGTH);
+        ap_mac[0] |= 2;
         ap_mac[4] += 1;
         net_wlan_set_mac_address((unsigned char *)mac, (unsigned char *)ap_mac);
 #else
