@@ -434,6 +434,11 @@ static void print_network(struct wlan_network *network)
         case WLAN_SECURITY_WPA2_WPA3_SAE_MIXED:
             (void)PRINTF("%s: WPA2/WPA3 SAE Mixed\r\n", sec_tag(network));
             break;
+#if CONFIG_WPA_SUPP_DPP
+        case WLAN_SECURITY_DPP:
+            (void)PRINTF("%s: DPP\r\n", sec_tag(network));
+            break;
+#endif
         default:
             (void)PRINTF("\r\nUnexpected WLAN SECURITY\r\n");
             break;
