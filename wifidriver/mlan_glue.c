@@ -1775,7 +1775,6 @@ int wrapper_wifi_assoc(
         /* Skip index to 1 byte (RSN information) + 1 byte (Tag length) + 2 byte (RSN version) + 4 byte (Group Cipher
          * Suite)*/
         int index      = 8;
-        int rsnc_index = 0;
         /* Get pairwise count value from wpa_ie (2 Bytes LE) */
         uint16_t pairwise_count = priv->wpa_ie[index + 1] << 8 | priv->wpa_ie[index];
         /* Skip 2 bytes pairwise_count + all pairwise cipher suite in list (Each 4 bytes) */
@@ -1795,24 +1794,6 @@ int wrapper_wifi_assoc(
                 {
                     /* Replace AKM type to PSK (0x2) */
                     priv->wpa_ie[index] = 0x02;
-                    /* Reset PMF capabilities*/
-                    /* RSN capabilities index can be calculated in RSN IE by adding all fields present before it that
-                     * are
-                     * Tag Number                   - 1 byte
-                     * Tag Length                   - 1 byte
-                     * RSN Version                  - 2 bytes Group
-                     * Cipher Suite                 - 4 bytes
-                     * Pairwise Cipher Suite Count  - 2 bytes
-                     * Pairwise Cipher Suite List   - pairwise_count * 4 bytes
-                     * AKM Suite Count              - 2 bytes
-                     * AKM List                     - akm_count * 4 bytes
-                     *
-                     * rsnc_index = 12 + 4 * (pairwise_count + akm_count)
-                     *
-                     * */
-                    rsnc_index                   = 12 + 4 * (pairwise_count + akm_count);
-                    priv->wpa_ie[rsnc_index]     = 0x00;
-                    priv->wpa_ie[rsnc_index + 1] = 0x00;
                 }
                 /* Skip OUI (1 byte) + AKM type (1 byte) */
                 index = index + 4;
