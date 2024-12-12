@@ -354,7 +354,9 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
 #endif
         case WLAN_REASON_FW_HANG:
         case WLAN_REASON_FW_RESET:
+#ifdef RW610
             PRINTF("app_cb: WLAN: FW hang Event: %d\r\n", reason);
+#endif
             break;
         default:
             PRINTF("app_cb: WLAN: Unknown Event: %d\r\n", reason);
