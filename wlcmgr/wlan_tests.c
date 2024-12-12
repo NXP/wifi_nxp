@@ -2304,10 +2304,12 @@ static void test_wlan_sched_switch_debug(int argc, char **argv)
 }
 #endif
 
+#if LWIP_STATS_DISPLAY
 static void test_wlan_net_stats(int argc, char **argv)
 {
     net_stat();
 }
+#endif
 
 static void test_wlan_scan(int argc, char **argv)
 {
