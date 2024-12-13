@@ -1570,6 +1570,15 @@ static int net_netif_deinit(struct net_if *netif)
         netif->state = NULL;
     }
 #endif
+#if CONFIG_NET_STATISTICS_WIFI
+    const struct device *dev = net_if_get_device(netif);
+    struct interface *if_handle = (struct interface *)dev->data;
+
+    if (dev && if_handle)
+    {
+        memset(&if_handle->stats, 0, sizeof(if_handle->stats));
+    }
+#endif
     return WM_SUCCESS;
 }
 

@@ -1131,6 +1131,8 @@ typedef PACK_START struct
     t_u32 fcs_error;
     /** Tx frame count */
     t_u32 tx_frame;
+    /** Reserved */
+    t_u32 reserved;
     /** WEP ICV error count */
     t_u32 wep_icv_error[4];
     /** beacon recv count */
