@@ -281,16 +281,26 @@ zephyr_code_relocate(FILES
 file(GLOB ZPERF_SRC ${ZEPHYR_BASE}/subsys/net/lib/zperf/*.c)
 zephyr_code_relocate(FILES ${ZPERF_SRC} LOCATION RAM_TEXT)
 
-file(GLOB SOCKET_SRC ${ZEPHYR_BASE}/subsys/net/lib/sockets/*.c)
-zephyr_code_relocate(FILES ${SOCKET_SRC} LOCATION RAM_TEXT)
-
-file(GLOB NET_SRC ${ZEPHYR_BASE}/subsys/net/ip/*.c)
-zephyr_code_relocate(FILES ${NET_SRC} LOCATION RAM_TEXT)
-
-file(GLOB ETH_SRC ${ZEPHYR_BASE}/subsys/net/l2/ethernet/*.c)
-zephyr_code_relocate(FILES ${ETH_SRC} LOCATION RAM_TEXT)
-
-zephyr_code_relocate(FILES ${ZEPHYR_BASE}/lib/net_buf/buf.c LOCATION RAM_TEXT)
+zephyr_code_relocate(FILES
+                     ${ZEPHYR_BASE}/subsys/net/lib/sockets/sockets_packet.c
+                     ${ZEPHYR_BASE}/subsys/net/lib/sockets/sockets.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/connection.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/ipv4.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/ipv4_fragment.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/ipv6.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/ipv6_fragment.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/net_context.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/net_core.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/net_if.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/net_pkt.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/net_tc.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/packet_socket.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/tcp.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/udp.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/utils.c
+                     ${ZEPHYR_BASE}/subsys/net/l2/ethernet/ethernet.c
+                     ${ZEPHYR_BASE}/lib/net_buf/buf.c
+                     LOCATION RAM_TEXT)
 
 zephyr_code_relocate(FILES
                      ${ZEPHYR_BASE}/kernel/mem_slab.c
