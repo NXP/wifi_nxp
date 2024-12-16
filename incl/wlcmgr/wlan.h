@@ -22,7 +22,7 @@
 #include <wifi_events.h>
 #include <wifi.h>
 
-#define WLAN_DRV_VERSION "v1.3.r48.p29"
+#define WLAN_DRV_VERSION "v1.3.r48.p30"
 
 #if CONFIG_WPA2_ENTP
 #include <wm_mbedtls_helper_api.h>
