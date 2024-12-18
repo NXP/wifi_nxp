@@ -46,7 +46,9 @@
  * Prototypes
  ******************************************************************************/
 int wlan_driver_init(void);
+#if CONFIG_HOST_SLEEP
 int wlan_hs_cli_init(void);
+#endif
 
 /*******************************************************************************
  * Code
@@ -341,17 +343,13 @@ static void test_mcu_suspend(int argc, char **argv)
 {
     (void)mcu_suspend();
 }
-#endif
 
 static struct cli_command hs_commands[] = {
-#if CONFIG_HOST_SLEEP
     {"mcu-suspend", NULL, test_mcu_suspend},
-#endif
 };
 
 int wlan_hs_cli_init(void)
 {
-#if CONFIG_HOST_SLEEP
     unsigned int i;
 
     for (i = 0; i < sizeof(hs_commands) / sizeof(struct cli_command); i++)
@@ -361,10 +359,10 @@ int wlan_hs_cli_init(void)
             return -1;
         }
     }
-#endif
 
     return 0;
 }
+#endif
 #endif
 
 static void main_task(osa_task_param_t arg)
@@ -396,9 +394,11 @@ static void main_task(osa_task_param_t arg)
     assert(WM_SUCCESS == result);
 
 #ifndef RW610
+#if CONFIG_HOST_SLEEP
     result = wlan_hs_cli_init();
 
     assert(WM_SUCCESS == result);
+#endif
 #endif
 
     while (1)
