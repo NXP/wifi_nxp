@@ -5001,7 +5001,7 @@ mlan_status wifi_stop_bgscan()
     mlan_private *pmpriv = mlan_adap->priv[0];
     mlan_status ret      = MLAN_STATUS_SUCCESS;
 
-    memset(&pmpriv->scan_cfg, 0, sizeof(pmpriv->scan_cfg));
+    (void)memset(&pmpriv->scan_cfg, 0, sizeof(pmpriv->scan_cfg));
     pmpriv->scan_cfg.bss_type = MLAN_BSS_MODE_INFRA;
     pmpriv->scan_cfg.action   = BG_SCAN_ACT_SET;
     pmpriv->scan_cfg.enable   = MFALSE;

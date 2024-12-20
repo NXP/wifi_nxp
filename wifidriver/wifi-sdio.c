@@ -1257,7 +1257,7 @@ static void wlan_fw_init_cfg(void)
 #endif
         wifi_io_d("CMD : LOW_POWER_MODE (0x128)");
 
-        wlan_set_low_power_mode();
+        (void)wlan_set_low_power_mode();
     }
 #endif
 

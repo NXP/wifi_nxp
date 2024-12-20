@@ -9694,15 +9694,15 @@ static void test_wlan_start_wps_pbc(int argc, char **argv)
 
     if (ret == -WM_FAIL)
     {
-        PRINTF("Start WPS PBC failed\r\n");
+        (void)PRINTF("Start WPS PBC failed\r\n");
     }
     else if (ret == -2)
     {
-        PRINTF("FAIL-PBC-OVERLAP\r\n");
+        (void)PRINTF("FAIL-PBC-OVERLAP\r\n");
     }
     else
     {
-        PRINTF("Started WPS PBC session\r\n");
+        (void)PRINTF("Started WPS PBC session\r\n");
     }
 }
 
@@ -9724,11 +9724,11 @@ static void test_wlan_start_wps_pin(int argc, char **argv)
 
     if (ret != WM_SUCCESS)
     {
-        PRINTF("Invalid PIN entered\r\n");
+        (void)PRINTF("Invalid PIN entered\r\n");
     }
     else
     {
-        PRINTF("Started WPS PIN session with pin as: %s\r\n", argv[1]);
+        (void)PRINTF("Started WPS PIN session with pin as: %s\r\n", argv[1]);
     }
 }
 
@@ -9743,7 +9743,7 @@ static void test_wlan_wps_generate_pin(int argc, char **argv)
     }
 
     wlan_wps_generate_pin(&pin);
-    PRINTF("WPS PIN is: %08d\r\n", pin);
+    (void)PRINTF("WPS PIN is: %08d\r\n", pin);
 }
 #endif
 #if CONFIG_WPA_SUPP_WPS
@@ -9761,7 +9761,7 @@ static void test_wlan_wps_cancel(int argc, char **argv)
 
     if (ret != WM_SUCCESS)
     {
-        PRINTF("Cancel WPS failed\r\n");
+        (void)PRINTF("Cancel WPS failed\r\n");
     }
 }
 #if CONFIG_HOSTAPD
@@ -9779,7 +9779,7 @@ static void test_wlan_start_ap_wps_pbc(int argc, char **argv)
 
     if (ret != WM_SUCCESS)
     {
-        PRINTF("Start AP WPS PBC failed\r\n");
+        (void)PRINTF("Start AP WPS PBC failed\r\n");
     }
 }
 
@@ -9797,11 +9797,11 @@ static void test_wlan_start_ap_wps_pin(int argc, char **argv)
 
     if (ret != WM_SUCCESS)
     {
-        PRINTF("Start AP WPS PIN failed\r\n");
+        (void)PRINTF("Start AP WPS PIN failed\r\n");
     }
     else
     {
-        PRINTF("Started AP WPS PIN session with pin as: %s\r\n", argv[1]);
+        (void)PRINTF("Started AP WPS PIN session with pin as: %s\r\n", argv[1]);
     }
 }
 
@@ -9819,7 +9819,7 @@ static void test_wlan_wps_ap_cancel(int argc, char **argv)
 
     if (ret != WM_SUCCESS)
     {
-        PRINTF("Cancel WPS failed\r\n");
+        (void)PRINTF("Cancel WPS failed\r\n");
     }
 }
 #endif
@@ -11795,7 +11795,7 @@ static void wlan_get_best_scan_info(wlan_ant_detect_data_t *pData, unsigned int 
             }
             else
             {
-                PRINTF("Error: can't get scan res %d\r\n", i);
+                (void)PRINTF("Error: can't get scan res %d\r\n", i);
             }
         }
         wlan_sort_scan_entry(&pInfo->scan_entry[0]);
@@ -11828,24 +11828,24 @@ static void wlan_get_best_scan_info(wlan_ant_detect_data_t *pData, unsigned int 
             }
             else
             {
-                PRINTF("Error: can't get scan res %d\r\n", i);
+                (void)PRINTF("Error: can't get scan res %d\r\n", i);
             }
         }
     }
 
-    PRINTF("List top %d best scanned AP's info:\r\n", entry_count);
+    (void)PRINTF("List top %d best scanned AP's info:\r\n", entry_count);
     for (i = 0; i < entry_count; i++)
     {
         print_mac(pInfo->scan_entry[i].bssid);
-        PRINTF(" \"%s\"\r\n", pInfo->scan_entry[i].ssid);
-        PRINTF("\tchannel: %d\r\n", pInfo->scan_entry[i].channel);
-        PRINTF("\trssi: -%d dBm\r\n", pInfo->scan_entry[i].rssi);
+        (void)PRINTF(" \"%s\"\r\n", pInfo->scan_entry[i].ssid);
+        (void)PRINTF("\tchannel: %d\r\n", pInfo->scan_entry[i].channel);
+        (void)PRINTF("\trssi: -%d dBm\r\n", pInfo->scan_entry[i].rssi);
     }
 
     if (pData->detect_mode != PCB_DETECT_MODE)
     {
         pInfo->avg_rssi = wlan_calculate_avg_rssi(&pInfo->scan_entry[0]);
-        PRINTF("avg_rssi: -%d dBm\r\n", pInfo->avg_rssi);
+        (void)PRINTF("avg_rssi: -%d dBm\r\n", pInfo->avg_rssi);
     }
 }
 
@@ -11865,14 +11865,14 @@ static void wlan_get_specific_scan_info(wlan_ant_scan_info_t *pInfo, unsigned in
         }
         else
         {
-            PRINTF("Error: can't get scan res %d\r\n", i);
+            (void)PRINTF("Error: can't get scan res %d\r\n", i);
         }
     }
 
     print_mac(pInfo->scan_entry[pInfo->entry_idx].bssid);
-    PRINTF(" \"%s\"\r\n", pInfo->scan_entry[pInfo->entry_idx].ssid);
-    PRINTF("\tchannel: %d\r\n", pInfo->scan_entry[pInfo->entry_idx].channel);
-    PRINTF("\trssi: -%d dBm\r\n", pInfo->scan_entry[pInfo->entry_idx].rssi);
+    (void)PRINTF(" \"%s\"\r\n", pInfo->scan_entry[pInfo->entry_idx].ssid);
+    (void)PRINTF("\tchannel: %d\r\n", pInfo->scan_entry[pInfo->entry_idx].channel);
+    (void)PRINTF("\trssi: -%d dBm\r\n", pInfo->scan_entry[pInfo->entry_idx].rssi);
 }
 
 static void wlan_get_best_two_ants(wlan_ant_detect_data_t *pData)
@@ -12051,10 +12051,10 @@ static int wlan_evaluate_ant_by_common_device(wlan_ant_detect_data_t *pData)
         (void)PRINTF("List the info on every antenna for this common device\r\n");
         for (i = 0; i < pData->ant_port_count; i++)
         {
-            PRINTF("Antenna %d:\r\n", i + 1);
+            (void)PRINTF("Antenna %d:\r\n", i + 1);
             print_mac(pScan_info[i].scan_entry[com_idx_per_ant[i]].bssid);
-            PRINTF(" \"%s\"\r\n", pScan_info[i].scan_entry[com_idx_per_ant[i]].ssid);
-            PRINTF("\trssi[%d]: -%d dBm\r\n", i, pScan_info[i].scan_entry[com_idx_per_ant[i]].rssi);
+            (void)PRINTF(" \"%s\"\r\n", pScan_info[i].scan_entry[com_idx_per_ant[i]].ssid);
+            (void)PRINTF("\trssi[%d]: -%d dBm\r\n", i, pScan_info[i].scan_entry[com_idx_per_ant[i]].rssi);
             pScan_info[i].avg_rssi = pScan_info[i].scan_entry[com_idx_per_ant[i]].rssi;
         }
         wlan_get_best_two_ants(pData);
@@ -12086,7 +12086,7 @@ static void wlan_evaluate_ant_by_specific_device(wlan_ant_detect_data_t *pData)
             sum_rssi += pScan_info[i].scan_entry[j].rssi;
         }
         pScan_info[i].avg_rssi = sum_rssi / device_count_to_check;
-        PRINTF("\t-%d dBm\r\n", pScan_info[i].avg_rssi);
+        (void)PRINTF("\t-%d dBm\r\n", pScan_info[i].avg_rssi);
     }
 
     wlan_get_best_two_ants(pData);
