@@ -24,66 +24,70 @@ doxy/refman/.
 * The File Documentation provides documentation for all the APIs that are
 * available in Wi-Fi driver and connection manager.\n
 * \n
-* Abbreviations and acronyms\n
-* ACS      auto channel selection\n
-* AID      association ID\n
-* AMPDU    aggregate medium access control protocol data unit\n
-* AP       Access Point\n
-* ARP      address resolution protocol\n
-* BSS      basic service set\n
-* BSSID    basic servivce set ID\n
-* BTM      BSS transition management\n
-* CA       Certificate Authority\n
-* CCK      complementary code keying\n
-* CLI      command line input\n
-* CSI      channel state information\n
-* CW       continuous wave\n
-* DH       Diffie Hellman\n
-* DPP      device provisioning protocol\n
-* DTIM     delivery traffic indication map\n
-* EAP      Extensible Authentication Protocol\n
-* EAP TLS  Extensible Authentication Protocol Transport Layer Security\n
-* FCS      frame check sequence\n
-* FTM      fine timing measurement\n
-* GI       guard interval\n
-* HE       802.11ax high efficiency\n
-* HT       802.11n high throughput\n
-* HTC      high throughput control\n
-* LDPC     low density parity check\n
-* MBO      multi band operation\n
-* MEF      memory efficient filtering\n
-* MFPC     Management Frame Protection Capable\n
-* MFPR     Management frame protection required\n
-* NSS      N*N MIMO spatial stream\n
-* OBSS     overlapping basic service set\n
-* OCE      Optimized connectivity experience\n
-* OMI      operating mode indication\n
-* OWE      opportunistic wireless encryption\n
-* PBC      push button configuration\n
-* PEAP     Protected Extensible Authentication Protocol\n
-* PKEX     Public Key Exchange\n
-* PMF      protected management frame\n
-* PMK      pairwise master key\n
-* PMKSA    pairwise master key security association\n
-* PS       power save\n
-* PTA      packet traffic arbitration\n
-* PWE      Password Element\n
-* QoS      quality of service\n
-* RSSI     received signal strength indicator\n
-* RTS      request to send\n
-* SAD      software antenna diversity\n
-* SAE      Simultaneous Authentication of Equals\n
-* SSID     service set ID\n
-* STBC     space time block code\n
-* TBTT     target beacon transmission time\n
-* TIM      Traffic Indication Map\n
-* TRPC     transient receptor potential canonical\n
-* TSF      timing synchronization function\n
-* TSP      thermal safeguard protection\n
-* TWT      target wake time\n
-* UAPSD    unscheduled automatic power save delivery\n
-* VHT      802.11ac very high throughput\n
-* WLCMGR   Wi-Fi command manager
+*
+* \subsection abbr Abbreviations and acronyms
+*
+* Abbreviation | Description
+* ------------ | -----------------------------------------------------------
+* ACS          | auto channel selection
+* AID          | association ID
+* AMPDU        | aggregate medium access control protocol data unit
+* AP           | Access Point
+* ARP          | address resolution protocol
+* BSS          |  basic service set
+* BSSID        | basic servivce set ID
+* BTM          | BSS transition management
+* CA           | Certificate Authority
+* CCK          | complementary code keying
+* CLI          | command line input
+* CSI          | channel state information
+* CW           | continuous wave
+* DH           | Diffie Hellman
+* DPP          | device provisioning protocol
+* DTIM         | delivery traffic indication map
+* EAP          | Extensible Authentication Protocol
+* EAP TLS      | Extensible Authentication Protocol Transport Layer Security
+* FCS          | frame check sequence
+* FTM          | fine timing measurement
+* GI           | guard interval
+* HE           | 802.11ax high efficiency
+* HT           | 802.11n high throughput
+* HTC          | high throughput control
+* LDPC         | low density parity check
+* MBO          | multi band operation
+* MEF          | memory efficient filtering
+* MFPC         | Management Frame Protection Capable
+* MFPR         | Management frame protection required
+* NSS          | N*N MIMO spatial stream
+* OBSS         | overlapping basic service set
+* OCE          | Optimized connectivity experience
+* OMI          | operating mode indication
+* OWE          | opportunistic wireless encryption
+* PBC          | push button configuration
+* PEAP         | Protected Extensible Authentication Protocol
+* PKEX         | Public Key Exchange
+* PMF          | protected management frame
+* PMK          | pairwise master key
+* PMKSA        | pairwise master key security association
+* PS           | power save
+* PTA          | packet traffic arbitration
+* PWE          | Password Element
+* QoS          | quality of service
+* RSSI         | received signal strength indicator
+* RTS          | request to send
+* SAD          | software antenna diversity
+* SAE          | Simultaneous Authentication of Equals
+* SSID         | service set ID
+* STBC         | space time block code
+* TBTT         | target beacon transmission time
+* TIM          | Traffic Indication Map
+* TRPC         | transient receptor potential canonical
+* TSF          | timing synchronization function
+* TSP          | thermal safeguard protection
+* TWT          | target wake time
+* UAPSD        | unscheduled automatic power save delivery
+* VHT          | 802.11ac very high throughput
+* WLCMGR       | Wi-Fi command manager
 */
 
 
