@@ -8783,7 +8783,10 @@ int wlan_add_network(struct wlan_network *network)
 
 #if CONFIG_WPA_SUPP
 #if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
-    if ((is_ep_valid_security(network->security.type)) && ((network->security.wpa3_sb == 1U) || (network->security.wpa3_sb_192 == 1U)))
+    if ((is_ep_valid_security(network->security.type)) &&
+        ((network->security.wpa3_ent == 1U) ||
+	 (network->security.wpa3_sb == 1U) ||
+	 (network->security.wpa3_sb_192 == 1U)))
     {
         network->security.mfpr = 1;
     }
@@ -10599,10 +10602,11 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
     if (desc->WPA_WPA2_WEP.wpa2_entp != 0U)
     {
         res->wpa2_entp = 1;
+        res->wpa3_entp = (t_u8)desc->WPA_WPA2_WEP.wpa3_entp;
     }
-    else if (desc->WPA_WPA2_WEP.wpa2_entp_sha256 != 0U)
+    else if (desc->WPA_WPA2_WEP.wpa3_entp != 0U)
     {
-        res->wpa2_entp_sha256 = 1;
+        res->wpa3_entp = 1;
     }
     else if (desc->WPA_WPA2_WEP.wpa3_1x_sha256 != 0U)
     {
