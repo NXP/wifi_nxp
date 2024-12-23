@@ -725,8 +725,8 @@ struct wlan_scan_result
     unsigned wpa3_sae : 1;
     /** The network uses WPA2 Enterprise security */
     unsigned wpa2_entp : 1;
-    /** The network uses WPA2 Enterprise SHA256 security */
-    unsigned wpa2_entp_sha256 : 1;
+    /** The network uses WPA3 Enterprise security */
+    unsigned wpa3_entp : 1;
     /** The network uses WPA3 Enterprise SHA256 security */
     unsigned wpa3_1x_sha256 : 1;
     /** The network uses WPA3 Enterprise SHA384 security */
@@ -1234,6 +1234,8 @@ struct wlan_network_security
     int8_t mfpr;
 #if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     /** WPA3 Enterprise mode */
+    unsigned wpa3_ent : 1;
+    /** WPA3 Enterprise Suite B mode */
     unsigned wpa3_sb : 1;
     /** WPA3 Enterprise Suite B 192 mode */
     unsigned wpa3_sb_192 : 1;

@@ -191,6 +191,10 @@ inline static const char *sec_tag(struct wlan_network *network)
             {
                 return "\tsecurity: WPA3 SuiteB";
             }
+            else if (network->security.wpa3_ent)
+            {
+                return "\tsecurity: WPA3";
+            }
 
             return "\tsecurity: WPA2";
         }
@@ -676,9 +680,9 @@ static void dump_wlan_add_usage(void)
         "please specify whether use CA or not by setting 'use_ca <0/1>'\r\n");
 #endif
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] ["
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-ent/wpa3-sb/wpa3-sb-192] ["
 #if CONFIG_EAP_TLS
-        "eap-tls/eap-tls-sha256"
+        "eap-tls"
 #if CONFIG_11R
         "/eap-tls-ft/eap-tls-ft-sha384"
 #endif
@@ -694,12 +698,12 @@ static void dump_wlan_add_usage(void)
         "\r\n");
 #if CONFIG_EAP_TTLS
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-ttls aid <anonymous identity> [key2_passwd "
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-ent/wpa3-sb/wpa3-sb-192] [eap-ttls aid <anonymous identity> [key2_passwd "
         "<client_key2_passwd>]] [mfpc <1> mfpr <0/1>]"
         "\r\n");
 #if CONFIG_EAP_MSCHAPV2
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-ttls-mschapv2 use_ca <0/1> aid <anonymous identity> id "
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-ent/wpa3-sb/wpa3-sb-192] [eap-ttls-mschapv2 use_ca <0/1> aid <anonymous identity> id "
         "<identity> pass "
         "<password> [key_passwd <client_key_passwd>]] [mfpc <1> mfpr <0/1>]"
         "\r\n");
@@ -707,7 +711,7 @@ static void dump_wlan_add_usage(void)
 #endif
 #if CONFIG_EAP_PEAP
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] ["
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-ent/wpa3-sb/wpa3-sb-192] ["
 #if CONFIG_EAP_TLS
         "eap-peap-tls"
 #endif
@@ -720,14 +724,14 @@ static void dump_wlan_add_usage(void)
 #endif
 #if CONFIG_EAP_MSCHAPV2
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-peap-mschapv2 use_ca <0/1>"
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-ent/wpa3-sb/wpa3-sb-192] [eap-peap-mschapv2 use_ca <0/1>"
         " [ver 0/1] id <identity> pass "
         "<password> [key_passwd <client_key_passwd>]] [mfpc <1> mfpr <0/1>]"
         "\r\n");
 #endif
 #if CONFIG_EAP_FAST
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] ["
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-ent/wpa3-sb/wpa3-sb-192] ["
 #if CONFIG_EAP_MSCHAPV2
         "eap-fast-mschapv2"
 #endif
@@ -795,9 +799,9 @@ static void dump_wlan_add_usage(void)
 #endif
         "> <secret>]"
 #if (CONFIG_WPA2_ENTP) || (CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
-        " [wpa3-sb/wpa3-sb-192] "
+        " [wpa3-ent/wpa3-sb/wpa3-sb-192] "
 #if CONFIG_EAP_TLS
-        "[eap-tls/eap-tls-sha256"
+        "[eap-tls"
 #if CONFIG_11R
         "/eap-tls-ft/eap-tls-ft-sha384"
 #endif
@@ -958,6 +962,7 @@ static void test_wlan_add(int argc, char **argv)
 #endif
 #if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
         unsigned wpa3_sb : 1;
+        unsigned wpa3_ent : 1;
 #endif
         unsigned acs_band : 1;
     } info;
@@ -1343,6 +1348,12 @@ static void test_wlan_add(int argc, char **argv)
             info.security3++;
         }
 #if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+        else if ((info.wpa3_ent == 0U) && string_equal("wpa3-ent", argv[arg]))
+        {
+            network.security.wpa3_ent = 1;
+            arg += 1;
+            info.wpa3_ent = 1;
+        }
         else if ((info.wpa3_sb == 0U) && string_equal("wpa3-sb", argv[arg]))
         {
             network.security.wpa3_sb = 1;
@@ -2189,9 +2200,9 @@ static int __scan_cb(unsigned int count)
             {
                 (void)PRINTF("WPA2 Enterprise ");
             }
-            if (res.wpa2_entp_sha256 != 0U)
+            if (res.wpa3_entp != 0U)
             {
-                (void)PRINTF("WPA2-SHA256 Enterprise ");
+                (void)PRINTF("WPA3 Enterprise ");
             }
             if (res.wpa3_1x_sha256 != 0U)
             {
@@ -2225,7 +2236,7 @@ static int __scan_cb(unsigned int count)
 #if CONFIG_DRIVER_OWE
               (res.owe != 0U) ||
 #endif
-              (res.wpa2_entp_sha256 != 0U) || (res.wpa3_1x_sha256 != 0U) || (res.wpa3_1x_sha384 != 0U)))
+              (res.wpa3_entp != 0U) || (res.wpa3_1x_sha256 != 0U) || (res.wpa3_1x_sha384 != 0U)))
         {
             (void)PRINTF("OPEN ");
         }
