@@ -1853,7 +1853,7 @@ retry_xmit:
 
 exit_fn:
 
-    return ret;
+    return (mlan_status)ret;
 }
 
 mlan_status wlan_flush_wmm_pkt(t_u8 pkt_count)
