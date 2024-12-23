@@ -4390,15 +4390,15 @@ t_u8 *wlan_get_specific_ie(pmlan_private priv, t_u8 *ie_buf, t_u8 ie_len, IEEEty
                    "bytes left < IE length\n");
             break;
         }
-        if ((
+        if (
 #if CONFIG_11AX
-                (ext_id == 0U) &&
+            ((ext_id == 0U) &&
 #endif
-                element_id == id)
+             element_id == id)
 #if CONFIG_11AX
-            || (id == EXTENSION && element_id == id && ext_id == element_eid)
+
+            || (id == EXTENSION && element_id == id && ext_id == element_eid))
 #endif
-        )
         {
 #if CONFIG_11AX
             PRINTM(MCMND, "Find IE: id=%d ext_id=%d\n", id, ext_id);
