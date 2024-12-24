@@ -931,20 +931,14 @@ typedef PACK_START struct
     t_u32 fcs_error;
     /** Tx frame count */
     t_u32 tx_frame;
+    /** Reserved field */
+    t_u32 reserved;
     /** WEP ICV error count */
     t_u32 wep_icv_error[4];
     /** beacon recv count */
     t_u32 bcn_rcv_cnt;
     /** beacon miss count */
     t_u32 bcn_miss_cnt;
-    /** received amsdu count*/
-    t_u32 amsdu_rx_cnt;
-    /** received msdu count in amsdu*/
-    t_u32 msdu_in_rx_amsdu_cnt;
-    /** tx amsdu count*/
-    t_u32 amsdu_tx_cnt;
-    /** tx msdu count in amsdu*/
-    t_u32 msdu_in_tx_amsdu_cnt;
     /** Tx frag count */
     t_u32 tx_frag_cnt;
     /** Qos Tx frag count */
@@ -1065,15 +1059,48 @@ typedef PACK_START struct
     t_u32 bigtk_micErrCnt;
     /** BIGTK MME not included count*/
     t_u32 bigtk_mmeNotFoundCnt;
-    /** RX unicast count */
-    t_u32 rx_unicast_cnt;
-    /** TX Buffer Overrun Dropped Count */
-    t_u32 tx_overrun_cnt;
-    /** RX Buffer Overrun Dropped Count */
-    t_u32 rx_overrun_cnt;
 } PACK_END wifi_pkt_stats_t;
 
+typedef PACK_START struct
+{
+    /** Number of packets sent */
+    t_u32 tx;
+    /** Number of packets received */
+    t_u32 rx;
+} PACK_END pkt_stats_t;
+
+typedef PACK_START struct
+{
+    /** Number of received beacons */
+    t_u32 beacons_rx;
+    /** Number of missed beacons */
+    t_u32 beacons_miss;
+} PACK_END sta_mgmt_stats_t;
+
+/** Wi-Fi Statistics counter */
+typedef PACK_START struct
+{
+    /** Total number of beacon errors */
+    sta_mgmt_stats_t sta_mgmt;
+    /** Packets received and sent */
+    pkt_stats_t pkts;
+    /** Broadcast packets received and sent */
+    pkt_stats_t broadcast;
+    /** Multicast packets received and sent */
+    pkt_stats_t multicast;
+    /** Unicast packets received and sent */
+    pkt_stats_t unicast;
+    /** Errors in RX and TX */
+    pkt_stats_t errors;
+    /** Overrun errors in RX and TX */
+    pkt_stats_t overrun;
+} PACK_END wifi_stats_t;
+
 int wifi_get_log(wifi_pkt_stats_t *stats, mlan_bss_type bss_type);
+
+int wifi_get_stats(wifi_stats_t *stats, mlan_bss_type bss_type);
+
+int wifi_reset_stats(mlan_bss_type bss_type);
 #endif
 
 int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);

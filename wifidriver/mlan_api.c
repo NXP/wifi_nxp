@@ -2498,7 +2498,7 @@ int wifi_set_antenna(t_u32 ant_mode, t_u16 evaluate_time, t_u8 evaluate_mode)
 #endif /*RW610*/
 
 #if CONFIG_WIFI_GET_LOG
-static int wifi_send_get_log_cmd(wlan_pkt_stats_t *stats, mlan_bss_type bss_type)
+static int wifi_send_get_log_cmd(wifi_pkt_stats_t *stats, mlan_bss_type bss_type)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
 
@@ -2516,10 +2516,8 @@ static int wifi_send_get_log_cmd(wlan_pkt_stats_t *stats, mlan_bss_type bss_type
     return wifi_wait_for_cmdresp(stats);
 }
 
-int wifi_get_log(wlan_pkt_stats_t *stats, mlan_bss_type bss_type)
-
+int wifi_get_log(wifi_pkt_stats_t *stats, mlan_bss_type bss_type)
 {
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[bss_type];
     int rv;
 
     CHECK_BSS_TYPE(bss_type, -WM_FAIL);
@@ -2527,11 +2525,125 @@ int wifi_get_log(wlan_pkt_stats_t *stats, mlan_bss_type bss_type)
     if (rv != WM_SUCCESS || wm_wifi.cmd_resp_status != WM_SUCCESS)
         return -WM_FAIL;
 
-    stats->rx_unicast_cnt = stats->rx_frag - stats->mcast_rx_frame;
-    stats->tx_overrun_cnt = pmpriv->tx_overrun_cnt;
-    stats->rx_overrun_cnt = pmpriv->rx_overrun_cnt;
-
     return WM_SUCCESS;
+}
+
+int wifi_get_stats(wifi_stats_t *stats, mlan_bss_type bss_type)
+{
+    int rv                     = -WM_FAIL;
+    mlan_private *pmpriv       = (mlan_private *)mlan_adap->priv[bss_type];
+    wifi_pkt_stats_t *wifi_log = NULL;
+
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
+
+    stats->pkts.tx      = pmpriv->stats.pkts.tx;
+    stats->pkts.rx      = pmpriv->stats.pkts.rx;
+    stats->broadcast.tx = pmpriv->stats.broadcast.tx;
+    stats->broadcast.rx = pmpriv->stats.broadcast.rx;
+    stats->multicast.tx = pmpriv->stats.multicast.tx;
+    stats->multicast.rx = pmpriv->stats.multicast.rx;
+    stats->unicast.tx   = pmpriv->stats.unicast.tx;
+    stats->unicast.rx   = pmpriv->stats.unicast.rx;
+    stats->errors.tx    = pmpriv->stats.errors.tx;
+    stats->errors.rx    = pmpriv->stats.errors.rx;
+    stats->overrun.tx   = pmpriv->stats.overrun.tx;
+    stats->overrun.rx   = pmpriv->stats.overrun.rx;
+
+    if (bss_type == MLAN_BSS_TYPE_STA)
+    {
+#if !CONFIG_MEM_POOLS
+        wifi_log = (wifi_pkt_stats_t *)OSA_MemoryAllocate(sizeof(wifi_pkt_stats_t));
+#else
+        wifi_log = (wifi_pkt_stats_t *)OSA_MemoryPoolAllocate(buf_768_MemoryPool);
+#endif
+        if (wifi_log == NULL)
+        {
+            return -WM_E_NOMEM;
+        }
+
+        (void)memset(wifi_log, 0x00, sizeof(wifi_pkt_stats_t));
+        rv = wifi_get_log(wifi_log, bss_type);
+        if (rv != WM_SUCCESS)
+        {
+            goto done;
+        }
+
+        if (wifi_log->bcn_rcv_cnt >= pmpriv->stats.sta_mgmt.beacons_rx)
+        {
+            stats->sta_mgmt.beacons_rx = wifi_log->bcn_rcv_cnt -
+                pmpriv->stats.sta_mgmt.beacons_rx;
+        }
+        else
+        {
+            /** we might have a new connection since last stats reset,
+             *  so stored stats is invalid
+             */
+            stats->sta_mgmt.beacons_rx = wifi_log->bcn_rcv_cnt;
+        }
+
+        if (wifi_log->bcn_miss_cnt >= pmpriv->stats.sta_mgmt.beacons_miss)
+        {
+            stats->sta_mgmt.beacons_miss = wifi_log->bcn_miss_cnt -
+                pmpriv->stats.sta_mgmt.beacons_miss;
+        }
+        else
+        {
+            stats->sta_mgmt.beacons_miss = wifi_log->bcn_miss_cnt;
+        }
+
+done:
+#if !CONFIG_MEM_POOLS
+        OSA_MemoryFree(wifi_log);
+#else
+        OSA_MemoryPoolFree(buf_768_MemoryPool, wifi_log);
+#endif
+    }
+
+    return rv;
+}
+
+int wifi_reset_stats(mlan_bss_type bss_type)
+{
+    int rv                     = -WM_FAIL;
+    mlan_private *pmpriv       = (mlan_private *)mlan_adap->priv[bss_type];
+    wifi_pkt_stats_t *wifi_log = NULL;
+
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
+
+    /* clear wifi stats */
+    (void)memset(&pmpriv->stats, 0x00, sizeof(wifi_stats_t));
+
+    if (bss_type == MLAN_BSS_TYPE_STA)
+    {
+#if !CONFIG_MEM_POOLS
+        wifi_log = (wifi_pkt_stats_t *)OSA_MemoryAllocate(sizeof(wifi_pkt_stats_t));
+#else
+        wifi_log = (wifi_pkt_stats_t *)OSA_MemoryPoolAllocate(buf_768_MemoryPool);
+#endif
+        if (wifi_log == NULL)
+        {
+            return -WM_E_NOMEM;
+        }
+
+        (void)memset(wifi_log, 0x00, sizeof(wifi_pkt_stats_t));
+        rv = wifi_get_log(wifi_log, bss_type);
+        if (rv != WM_SUCCESS)
+        {
+            goto done;
+        }
+
+        pmpriv->stats.sta_mgmt.beacons_rx = wifi_log->bcn_rcv_cnt;
+        pmpriv->stats.sta_mgmt.beacons_miss = wifi_log->bcn_miss_cnt;
+
+done:
+#if !CONFIG_MEM_POOLS
+        OSA_MemoryFree(wifi_log);
+#else
+        OSA_MemoryPoolFree(buf_768_MemoryPool, wifi_log);
+#endif
+    }
+
+    return rv;
 }
 #endif
 
@@ -6397,5 +6509,65 @@ int wifi_auto_null_tx(wifi_auto_null_tx_t *auto_null_tx, mlan_bss_type bss_type)
     wifi_wait_for_cmdresp(NULL);
 
     return wm_wifi.cmd_resp_status;
+}
+#endif
+
+#if CONFIG_WIFI_GET_LOG
+#if !CONFIG_WPA_SUPP
+static inline int is_broadcast_ether_addr(const uint8_t *addr)
+{
+    return (addr[0] & addr[1] & addr[2] & addr[3] & addr[4] & addr[5]) == 0xff;
+}
+
+static inline int is_multicast_ether_addr(const uint8_t *addr)
+{
+    return addr[0] & 0x01;
+}
+#endif
+
+void wifi_iface_tx_stats(uint8_t *buf, int interface)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[interface];
+#if CONFIG_TX_RX_ZERO_COPY
+    eth_hdr *ethhdr = (eth_hdr *)(((outbuf_t *)buf)->eth_header);
+#else
+    eth_hdr *ethhdr = (eth_hdr *)(((outbuf_t *)buf)->data);
+#endif
+
+    if (is_broadcast_ether_addr(ethhdr->dest_addr))
+    {
+        WLAN_STATS_INC(pmpriv, stats.broadcast.tx);
+    }
+    else if (is_multicast_ether_addr(ethhdr->dest_addr))
+    {
+        WLAN_STATS_INC(pmpriv, stats.multicast.tx);
+    }
+    else
+    {
+        WLAN_STATS_INC(pmpriv, stats.unicast.tx);
+    }
+
+    WLAN_STATS_INC(pmpriv, stats.pkts.tx);
+}
+
+void wifi_iface_rx_stats(uint8_t *buf, int interface)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[interface];
+    eth_hdr *ethhdr = (eth_hdr *)buf;
+
+    if (is_broadcast_ether_addr(ethhdr->dest_addr))
+    {
+        WLAN_STATS_INC(pmpriv, stats.broadcast.rx);
+    }
+    else if (is_multicast_ether_addr(ethhdr->dest_addr))
+    {
+        WLAN_STATS_INC(pmpriv, stats.multicast.rx);
+    }
+    else
+    {
+        WLAN_STATS_INC(pmpriv, stats.unicast.rx);
+    }
+
+    WLAN_STATS_INC(pmpriv, stats.pkts.rx);
 }
 #endif

@@ -3738,6 +3738,10 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
         }
 #endif
         wlan.scan_count = 0;
+#if CONFIG_WIFI_GET_LOG
+        mlan_adap->priv[WLAN_BSS_TYPE_STA]->stats.sta_mgmt.beacons_rx = 0;
+        mlan_adap->priv[WLAN_BSS_TYPE_STA]->stats.sta_mgmt.beacons_miss = 0;
+#endif
     }
 #if !CONFIG_WPA_SUPP
     else if (wlan.scan_count < WLAN_RESCAN_LIMIT)
@@ -11885,6 +11889,19 @@ int wlan_uap_get_log(wlan_pkt_stats_t *stats)
         return -WM_E_INVAL;
 
     return wifi_get_log(stats, MLAN_BSS_TYPE_UAP);
+}
+
+int wlan_get_stats(wlan_stats_t *stats, enum wlan_bss_type bss_type)
+{
+    if (!stats)
+        return -WM_E_INVAL;
+
+    return wifi_get_stats(stats, (mlan_bss_type)bss_type);
+}
+
+int wlan_reset_stats(enum wlan_bss_type bss_type)
+{
+    return wifi_reset_stats((mlan_bss_type)bss_type);
 }
 #endif
 

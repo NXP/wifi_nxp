@@ -1027,7 +1027,7 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
         /* No mlan_buffer available. Drop this packet */
         /* fixme: Need to note this event. */
         wifi_w("No memory available. Have to drop packet.");
-        return -WM_FAIL;
+        return -WM_E_NOMEM;
     }
 #else
     pmlan_buffer pmbuf = (pmlan_buffer)((t_u8 *)rxpd - INTF_HEADER_LEN - sizeof(mlan_buffer));
@@ -1065,7 +1065,7 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
         OSA_MemoryPoolFree(buf_128_MemoryPool, pmbuf);
 #endif
         wifi_w("No memory available. Have to drop packet.");
-        return -WM_FAIL;
+        return -WM_E_NOMEM;
     }
     (void)memcpy((void *)pmbuf->pbuf, (const void *)rxpd, sizeof(RxPD));
 #else

@@ -224,13 +224,21 @@ static void deliver_packet_above(struct pbuf *p, int recv_interface)
                     goto retry;
                 }
                 LINK_STATS_INC(link.proterr);
+                WLAN_STATS_INC(mlan_adap->priv[recv_interface], stats.errors.rx);
                 LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
                 (void)pbuf_free(p);
                 p = NULL;
             }
+#if CONFIG_WIFI_GET_LOG
+            else
+            {
+                (void)wifi_iface_rx_stats(p->payload, recv_interface);
+            }
+#endif
             break;
         case ETHTYPE_EAPOL:
             LINK_STATS_INC(link.recv);
+            WLAN_STATS_INC(mlan_adap->priv[recv_interface], stats.pkts.rx);
 #if CONFIG_WPS2
             if (wps_rx_callback)
                 wps_rx_callback(p->payload, p->len);
@@ -242,6 +250,7 @@ static void deliver_packet_above(struct pbuf *p, int recv_interface)
         default:
             /* drop the packet */
             LINK_STATS_INC(link.drop);
+            WLAN_STATS_INC(mlan_adap->priv[recv_interface], stats.errors.rx);
             (void)pbuf_free(p);
             p = NULL;
             break;
@@ -448,7 +457,8 @@ static void process_data_packet(const t_u8 *rcvdata,
     {
         LINK_STATS_INC(link.memerr);
         LINK_STATS_INC(link.drop);
-        mlan_adap->priv[recv_interface]->rx_overrun_cnt++;
+        WLAN_STATS_INC(mlan_adap->priv[recv_interface], stats.overrun.rx);
+        WLAN_STATS_INC(mlan_adap->priv[recv_interface], stats.errors.rx);
         return;
     }
 
@@ -566,6 +576,9 @@ static void process_data_packet(const t_u8 *rcvdata,
                     /* mlan was unsuccessful in delivering the
                        packet */
                     LINK_STATS_INC(link.drop);
+                    if (rv == -WM_E_NOMEM)
+                        WLAN_STATS_INC(mlan_adap->priv[recv_interface], stats.overrun.rx);
+                    WLAN_STATS_INC(mlan_adap->priv[recv_interface], stats.errors.rx);
                     (void)pbuf_free(p);
                 }
             }
@@ -601,6 +614,7 @@ static void process_data_packet(const t_u8 *rcvdata,
 #endif
             /* fixme: avoid pbuf allocation in this case */
             LINK_STATS_INC(link.drop);
+            WLAN_STATS_INC(mlan_adap->priv[recv_interface], stats.errors.rx);
             (void)pbuf_free(p);
             p = NULL;
             break;
@@ -723,7 +737,8 @@ void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen)
         w_pkt_e("[amsdu] No pbuf available. Dropping packet");
         LINK_STATS_INC(link.memerr);
         LINK_STATS_INC(link.drop);
-        mlan_adap->priv[interface]->rx_overrun_cnt++;
+        WLAN_STATS_INC(mlan_adap->priv[interface], stats.overrun.rx);
+        WLAN_STATS_INC(mlan_adap->priv[interface], stats.errors.rx);
         return;
     }
     deliver_packet_above(p, interface);
@@ -893,7 +908,8 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     if (ret == true)
     {
         wifi_wmm_drop_retried_drop(interface);
-        mlan_adap->priv[interface]->tx_overrun_cnt++;
+        WLAN_STATS_INC(mlan_adap->priv[interface], stats.overrun.tx);
+        WLAN_STATS_INC(mlan_adap->priv[interface], stats.errors.tx);
         return ERR_MEM;
     }
 #else
@@ -901,7 +917,8 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 
     if (wmm_outbuf == NULL)
     {
-        mlan_adap->priv[interface]->tx_overrun_cnt++;
+        WLAN_STATS_INC(mlan_adap->priv[interface], stats.overrun.tx);
+        WLAN_STATS_INC(mlan_adap->priv[interface], stats.errors.tx);
         return ERR_MEM;
     }
 #endif
@@ -965,18 +982,25 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     if (ret == WM_SUCCESS)
     {
         LINK_STATS_INC(link.xmit);
+#if CONFIG_WIFI_GET_LOG
+#if !CONFIG_WMM
+        wifi_iface_tx_stats(wmm_outbuf, interface);
+#endif
+#endif
         return ERR_OK;
     }
 
     if (ret == -WM_E_NOMEM)
     {
         LINK_STATS_INC(link.err);
-        mlan_adap->priv[interface]->tx_overrun_cnt++;
+        WLAN_STATS_INC(mlan_adap->priv[interface], stats.overrun.tx);
+        WLAN_STATS_INC(mlan_adap->priv[interface], stats.errors.tx);
         ret = ERR_MEM;
     }
     else if (ret == -WM_E_BUSY)
     {
         LINK_STATS_INC(link.err);
+        WLAN_STATS_INC(mlan_adap->priv[interface], stats.errors.tx);
         ret = ERR_TIMEOUT;
     }
     else

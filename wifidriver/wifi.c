@@ -3665,6 +3665,7 @@ t_u32 g_wifi_xmit_schedule_end = 0;
 /* aggregate one amsdu packet and xmit */
 static mlan_status wifi_xmit_amsdu_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist)
 {
+    mlan_status ret              = MLAN_STATUS_SUCCESS;
     outbuf_t *buf                = MNULL;
     t_u32 max_amsdu_size         = MIN(priv->max_amsdu, priv->adapter->tx_buffer_size);
     t_u32 amsdu_offset           = sizeof(TxPD) + INTF_HEADER_LEN;
@@ -3732,8 +3733,18 @@ static mlan_status wifi_xmit_amsdu_pkts(mlan_private *priv, t_u8 ac, raListTbl *
          */
         if (amsdu_buf_available_size < 0 || ralist->total_pkts == 0)
         {
-            return wlan_xmit_wmm_amsdu_pkt((mlan_wmm_ac_e)ac, priv->bss_index, amsdu_offset - last_pad_len,
+            ret = wlan_xmit_wmm_amsdu_pkt((mlan_wmm_ac_e)ac, priv->bss_index, amsdu_offset - last_pad_len,
                                            wifi_get_amsdu_outbuf(0), amsdu_cnt);
+#if CONFIG_WIFI_GET_LOG
+            if (ret != MLAN_STATUS_SUCCESS)
+            {
+                WLAN_STATS_INC(priv, stats.overrun.tx);
+                WLAN_STATS_INC(priv, stats.errors.tx);
+            }
+
+            wifi_iface_tx_stats(wifi_get_amsdu_outbuf(0), priv->bss_index);
+#endif
+            return ret;
         }
     }
     return MLAN_STATUS_SUCCESS;
@@ -3780,6 +3791,8 @@ static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist
 #endif
     if (ret != MLAN_STATUS_SUCCESS)
     {
+        WLAN_STATS_INC(priv, stats.overrun.tx);
+        WLAN_STATS_INC(priv, stats.errors.tx);
 #ifdef RW610
         ASSERT(0);
 #else
@@ -3791,6 +3804,9 @@ static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist
 #endif
     }
 
+#if CONFIG_WIFI_GET_LOG
+    wifi_iface_tx_stats((uint8_t *)buf, priv->bss_index);
+#endif
     wifi_wmm_buf_put(buf);
     priv->wmm.pkts_queued[ac]--;
 
@@ -3910,17 +3926,24 @@ t_void wlan_process_bypass_txq(t_u8 interface)
 
         status = wlan_xmit_bypass_pkt((t_u8 *)&buf->intf_header[0],
                                       buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN, interface);
+        if (status != MLAN_STATUS_SUCCESS)
+        {
+            wifi_d("[%s] bypass xmit pkt failed \r\n", __func__);
+            WLAN_STATS_INC(priv, stats.overrun.tx);
+            WLAN_STATS_INC(priv, stats.errors.tx);
+        }
+        else
+        {
+#if CONFIG_WIFI_GET_LOG
+            wifi_iface_tx_stats((uint8_t *)buf, interface);
+#endif
+        }
 
 #if !CONFIG_MEM_POOLS
         OSA_MemoryFree(buf);
 #else
         OSA_MemoryPoolFree(buf_1536_MemoryPool, buf);
 #endif
-
-        if (status != MLAN_STATUS_SUCCESS)
-        {
-            wifi_d("[%s] bypass xmit pkt failed \r\n", __func__);
-        }
     }
 
 #ifndef RW610
@@ -4323,8 +4346,7 @@ int wifi_add_to_bypassq(const t_u8 interface, void *pkt, t_u32 len)
         if (!poutbuf)
         {
             wuap_e("[%s] ERR:Cannot allocate buffer!\r\n", __func__);
-            mlan_adap->priv[interface]->tx_overrun_cnt++;
-            return -WM_FAIL;
+            return -WM_E_NOMEM;
         }
 
         (void)memset((t_u8 *)poutbuf, 0, link_point_len + pkt_len);

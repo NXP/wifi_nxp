@@ -45,6 +45,15 @@
 #define wlcm_d(...)
 #endif /* ! CONFIG_WLCMGR_DEBUG */
 
+#if CONFIG_WIFI_GET_LOG
+/** Wi-Fi statistics */
+#define WLAN_STATS_INC(priv, x) (++(priv->x))
+#define WLAN_STATS_GET(priv, x) (priv->x)
+#else
+#define WLAN_STATS_INC(priv, x)
+#define WLAN_STATS_GET(priv, x)
+#endif
+
 #if (defined(configSUPPORT_STATIC_ALLOCATION) && (configSUPPORT_STATIC_ALLOCATION > 0U)) && \
     !((defined(configSUPPORT_DYNAMIC_ALLOCATION) && (configSUPPORT_DYNAMIC_ALLOCATION == 1U)))
 
@@ -1382,6 +1391,9 @@ struct wifi_scan_params_t
 /** Wi-Fi firmware stat from \ref wifi_pkt_stats_t
  */
 typedef wifi_pkt_stats_t wlan_pkt_stats_t;
+/** Wi-Fi driver stat from \ref wifi_stats_t
+ */
+typedef wifi_stats_t wlan_stats_t;
 #endif
 
 /** Configuration for Wi-Fi scan channel list from
@@ -4061,6 +4073,31 @@ int wlan_get_log(wlan_pkt_stats_t *stats);
  * \return -WM_FAIL if command fails.
  */
 int wlan_uap_get_log(wlan_pkt_stats_t *stats);
+
+/**
+ * Use this API to get the various statistics of STA/uAP from Wi-Fi driver
+ *
+ * \param[out] stats: A pointer to structure where stats collected from Wi-Fi driver
+ *	      can be copied.\n
+ *            Explore the elements of the \ref wlan_stats_t strucutre for
+ * 	      more information on stats.
+ *
+ * \param[in] bss_type: 0: STA, 1: uAP
+ * 
+ * \return WM_SUCCESS if operation is successful.
+ * \return -WM_FAIL if command fails.
+ */
+int wlan_get_stats(wlan_stats_t *stats, enum wlan_bss_type bss_type);
+
+/**
+ * Use this API to reset the various statistics of STA/uAP from Wi-Fi driver
+ *
+ * \param[in] bss_type: 0: STA, 1: uAP
+ *
+ * \return WM_SUCCESS if operation is successful.
+ * \return -WM_FAIL if command fails.
+ */
+int wlan_reset_stats(enum wlan_bss_type bss_type);
 #endif
 
 /** Get station interface power save mode.

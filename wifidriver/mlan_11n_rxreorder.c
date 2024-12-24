@@ -189,7 +189,7 @@ static mlan_status wlan_11n_dispatch_pkt_until_start_win(t_void *priv, RxReorder
         (void)pmpriv->adapter->callbacks.moal_spin_unlock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
         if (rx_tmp_ptr != NULL)
         {
-            (void)wlan_11n_dispatch_pkt(priv, rx_tmp_ptr, rx_reor_tbl_ptr);
+            ret = wlan_11n_dispatch_pkt(priv, rx_tmp_ptr, rx_reor_tbl_ptr);
         }
     }
 
@@ -979,7 +979,7 @@ mlan_status mlan_11n_rxreorder_pkt(void *priv, t_u16 seq_num, t_u16 tid, t_u8 *t
     {
         if (pkt_type != PKT_TYPE_BAR)
         {
-            (void)wlan_11n_dispatch_pkt(priv, payload, rx_reor_tbl_ptr);
+            ret = wlan_11n_dispatch_pkt(priv, payload, rx_reor_tbl_ptr);
         }
 
         LEAVE();
@@ -989,7 +989,7 @@ mlan_status mlan_11n_rxreorder_pkt(void *priv, t_u16 seq_num, t_u16 tid, t_u8 *t
     {
         if ((pkt_type == PKT_TYPE_AMSDU) && (rx_reor_tbl_ptr->amsdu == 0U))
         {
-            (void)wlan_11n_dispatch_pkt(priv, payload, rx_reor_tbl_ptr);
+            ret = wlan_11n_dispatch_pkt(priv, payload, rx_reor_tbl_ptr);
             LEAVE();
             return ret;
         }
@@ -1024,7 +1024,7 @@ mlan_status mlan_11n_rxreorder_pkt(void *priv, t_u16 seq_num, t_u16 tid, t_u8 *t
                         rx_reor_tbl_ptr->last_seq = seq_num;
                         if (pkt_type != PKT_TYPE_BAR)
                         {
-                            (void)wlan_11n_dispatch_pkt(priv, payload, rx_reor_tbl_ptr);
+                            ret = wlan_11n_dispatch_pkt(priv, payload, rx_reor_tbl_ptr);
                         }
                     }
                     LEAVE();

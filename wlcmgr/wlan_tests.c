@@ -4826,14 +4826,11 @@ static void test_wlan_get_log(int argc, char **argv)
             "wepicverrcnt-3                     %u\r\n"
             "wepicverrcnt-4                     %u\r\n"
             "beaconReceivedCount                %u\r\n"
-            "beaconMissedCount                  %u\r\n"
-            "rxUnicastCount                     %u\r\n"
-            "txOverrunCount                     %u\r\n"
-            "rxOverrunCount                     %u\r\n",
+            "beaconMissedCount                  %u\r\n",
             stats.mcast_tx_frame, stats.failed, stats.retry, stats.multi_retry, stats.frame_dup, stats.rts_success,
             stats.rts_failure, stats.ack_failure, stats.rx_frag, stats.mcast_rx_frame, stats.fcs_error, stats.tx_frame,
             stats.wep_icv_error[0], stats.wep_icv_error[1], stats.wep_icv_error[2], stats.wep_icv_error[3],
-            stats.bcn_rcv_cnt, stats.bcn_miss_cnt, stats.rx_unicast_cnt, stats.tx_overrun_cnt, stats.rx_overrun_cnt);
+            stats.bcn_rcv_cnt, stats.bcn_miss_cnt);
 
         if (argc == 3 && !(strcmp(argv[2], "ext")))
         {

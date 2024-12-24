@@ -652,4 +652,10 @@ int wifi_get_auto_reconnect_config(wifi_auto_reconnect_config_t *auto_reconnect_
 #if CONFIG_INACTIVITY_TIMEOUT_EXT
 int wifi_sta_inactivityto(wifi_inactivity_to_t *inac_to, t_u16 cmd_action);
 #endif
+
+#if CONFIG_WIFI_GET_LOG
+/* Wi-Fi statistics */
+void wifi_iface_tx_stats(uint8_t *buf, int interface);
+void wifi_iface_rx_stats(uint8_t *buf, int interface);
+#endif
 #endif /* __MLAN_API_H__ */

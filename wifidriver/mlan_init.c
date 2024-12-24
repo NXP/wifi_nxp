@@ -250,6 +250,10 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->is_dpp_connect = MFALSE;
 #endif
 
+#if CONFIG_WIFI_GET_LOG
+    (void)__memset(pmadapter, &priv->stats, 0, sizeof(priv->stats));
+#endif
+
     LEAVE();
     return ret;
 }

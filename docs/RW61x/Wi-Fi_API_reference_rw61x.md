@@ -4750,6 +4750,52 @@ rekey) 7: Magic pattern matched Others: reserved. (set to 0)
 > 
 > \-WM\_FAIL if command fails.
 
+#### int wlan\_get\_stats (wlan\_stats\_t  \* *stats*, enum wlan\_bss\_type *bss\_type*)
+
+> Use this API to get the various statistics of STA/uAP from Wi-Fi driver
+
+<table>
+<tbody>
+<tr class="odd">
+<td>out</td>
+<td><em>stats</em></td>
+<td><p>A pointer to structure where stats collected from Wi-Fi driver can be copied.</p>
+<p>Explore the elements of the wlan_stats_t strucutre for more information on stats.</p></td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>bss_type</em></td>
+<td>0: STA, 1: uAP</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if operation is successful.
+> 
+> \-WM\_FAIL if command fails.
+
+#### int wlan\_reset\_stats (enum wlan\_bss\_type *bss\_type*)
+
+> Use this API to reset the various statistics of STA/uAP from Wi-Fi driver
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>bss_type</em></td>
+<td>0: STA, 1: uAP</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if operation is successful.
+> 
+> \-WM\_FAIL if command fails.
+
 #### int wlan\_get\_ps\_mode (enum wlan\_ps\_mode \* *ps\_mode*)
 
 > Get station interface power save mode.
@@ -9306,6 +9352,10 @@ WLAN\_KEY\_MGMT\_FT\_FILS\_SHA256 | WLAN\_KEY\_MGMT\_FT\_FILS\_SHA384)
 #### typedef wifi\_pkt\_stats\_t wlan\_pkt\_stats\_t
 
 > Wi-Fi firmware stat from wifi\_pkt\_stats\_t
+
+#### typedef wifi\_stats\_t wlan\_stats\_t
+
+> Wi-Fi driver stat from wifi\_stats\_t
 
 #### typedef wifi\_scan\_channel\_list\_t wlan\_scan\_channel\_list\_t
 
