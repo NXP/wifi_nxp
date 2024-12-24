@@ -87,7 +87,7 @@ zephyr_compile_definitions_ifdef(CONFIG_IW416_MURATA_1XK_USD
     WIFI_BT_USE_USD_INTERFACE
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_IW416_MURATA_1XK_M2
+zephyr_compile_definitions_ifdef(CONFIG_NXP_IW416_MURATA_1XK_M2
     WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_1XK_WW.h"
     CONFIG_NXP_WIFI_ED_OFFSET_2G=0x00
     CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0C
@@ -101,7 +101,7 @@ zephyr_compile_definitions_ifdef(CONFIG_IW612_MURATA_2EL_USD
     WIFI_BT_USE_USD_INTERFACE
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_IW612_MURATA_2EL_M2
+zephyr_compile_definitions_ifdef(CONFIG_NXP_IW612_MURATA_2EL_M2
     WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_2EL_WW.h"
     CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0A
     CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0A
