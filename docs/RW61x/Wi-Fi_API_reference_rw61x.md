@@ -1,5 +1,3 @@
-# Table of Contents
-
 # Main Page
 
 ## Introduction
@@ -268,48 +266,6 @@ information.
 </tr>
 </tbody>
 </table>
-
-# Data Structure Index
-
-## Data Structures
-
-Here are the data structures with brief descriptions:
-
-**ipv4\_config**
-
-**ipv6\_config**
-
-**rx\_pkt\_he\_rate\_info**
-
-**rx\_pkt\_ht\_rate\_info**
-
-**rx\_pkt\_rate\_info**
-
-**rx\_pkt\_vht\_rate\_info**
-
-**tx\_ampdu\_prot\_mode\_para**
-
-**tx\_pkt\_he\_rate\_info**
-
-**tx\_pkt\_ht\_rate\_info**
-
-**tx\_pkt\_rate\_info**
-
-**tx\_pkt\_vht\_rate\_info**
-
-**wifi\_scan\_params\_t**
-
-**wlan\_cipher**
-
-**wlan\_ieeeps\_config**
-
-**wlan\_ip\_config**
-
-**wlan\_network**
-
-**wlan\_network\_security**
-
-**wlan\_scan\_result**
 
 # File Index
 
@@ -10003,7 +9959,3 @@ WLAN\_KEY\_MGMT\_FT\_FILS\_SHA256 | WLAN\_KEY\_MGMT\_FT\_FILS\_SHA384)
 </tr>
 </tbody>
 </table>
-
-# Index
-
-INDEX
