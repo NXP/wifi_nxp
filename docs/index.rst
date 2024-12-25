@@ -10,4 +10,5 @@ Wi-Fi Connection Manager. Refer to the source code for additional information.
    :maxdepth: 1
    :caption: Wi-Fi NXP API Guide for RW61x
 
-   RW61x/Wi-Fi_API_reference_rw61x.md
+   RW61x/umindex.md
+
