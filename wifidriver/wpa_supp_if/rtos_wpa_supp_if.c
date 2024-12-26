@@ -1572,7 +1572,7 @@ int wifi_nxp_wpa_supp_set_country(void *if_priv, const char *alpha2)
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     int ret                                    = -WM_FAIL;
     char country[COUNTRY_CODE_LEN]             = {0};
-    t_u8 region_code_rw610;
+    t_u8 region_code;
     unsigned char country3 = 0x20;
 
     if ((!if_priv) || (!alpha2))
@@ -1590,7 +1590,8 @@ int wifi_nxp_wpa_supp_set_country(void *if_priv, const char *alpha2)
     country[1] = alpha2[1];
     country[2] = country3;
 
-    ret = wlan_11d_region_2_code(mlan_adap, (t_u8 *)country, &region_code_rw610);
+    ret = wlan_11d_region_2_code(mlan_adap, (t_u8 *)country, &region_code);
+
     if(ret != WM_SUCCESS)
     {
         goto out;
@@ -1602,19 +1603,24 @@ int wifi_nxp_wpa_supp_set_country(void *if_priv, const char *alpha2)
         goto out;
     }
 
-#if defined(RW610) && (CONFIG_COMPRESS_TX_PWTBL)
-    ret = wlan_set_rg_power_cfg(region_code_rw610);
+#if CONFIG_COMPRESS_TX_PWTBL
+#if defined(RW610) || defined(IW610)
+    ret = wlan_set_rg_power_cfg(region_code);
     if (ret != WM_SUCCESS)
     {
         goto out;
     }
 #endif
-#if defined(RW610) && ((CONFIG_COMPRESS_RU_TX_PWTBL) && (CONFIG_11AX))
-    ret = wlan_set_ru_power_cfg(region_code_rw610);
+#endif
+
+#if (CONFIG_COMPRESS_RU_TX_PWTBL) && (CONFIG_11AX)
+#if defined(RW610) || defined(IW610)
+    ret = wlan_set_ru_power_cfg(region_code);
     if (ret != WM_SUCCESS)
     {
         goto out;
     }
+#endif
 #endif
 
     return ret;

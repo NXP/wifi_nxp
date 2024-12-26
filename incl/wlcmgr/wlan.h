@@ -4451,8 +4451,8 @@ int wlan_set_sta_tx_power(t_u32 power_level);
 /**
  * Set worldwide safe mode TX power limits.
  * Set TX power limit and ru TX power limit according to the region code.
- * TX power limit: \ref rg_power_cfg_rw610
- * ru TX power limit: \ref ru_power_cfg_rw610
+ * TX power limit: \ref rg_power_cfg_info
+ * ru TX power limit: \ref ru_power_cfg_info
  *
  * \return WM_SUCCESS if successful.
  * \return -WM_FAIL if unsuccessful.

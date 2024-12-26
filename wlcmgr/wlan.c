@@ -15385,10 +15385,10 @@ int wlan_set_ips(int option)
 int wlan_set_country_code(const char *alpha2)
 {
     int ret;
-    t_u8 region_code_rw610;
+    t_u8 rg_code_cfg;
     unsigned char country3 = 0x20;
     char country_code[COUNTRY_CODE_LEN] = {0};
-#ifndef RW610
+#if !defined RW610 && !defined IW610
     char region_code[COUNTRY_CODE_LEN] = {0};
     const char *wlan_region_code       = NULL;
 
@@ -15413,7 +15413,7 @@ int wlan_set_country_code(const char *alpha2)
     country_code[1] = alpha2[1];
     country_code[2] = country3;
 
-    ret = wlan_11d_region_2_code(mlan_adap, (t_u8 *)country_code, &region_code_rw610);
+    ret = wlan_11d_region_2_code(mlan_adap, (t_u8 *)country_code, &rg_code_cfg);
     if(ret != WM_SUCCESS)
     {
         wlcm_e("%s: Invalid country code.",country_code);
@@ -15435,19 +15435,24 @@ int wlan_set_country_code(const char *alpha2)
     if (ret != WM_SUCCESS)
         return ret;
 
-#if defined(RW610) && (CONFIG_COMPRESS_TX_PWTBL)
-    ret = wlan_set_rg_power_cfg(region_code_rw610);
+#if CONFIG_COMPRESS_TX_PWTBL
+#if defined(RW610) || defined(IW610)
+    ret = wlan_set_rg_power_cfg(rg_code_cfg);
     if (ret != WM_SUCCESS)
     {
         return -WM_FAIL;
     }
 #endif
-#if defined(RW610) && ((CONFIG_COMPRESS_RU_TX_PWTBL) && (CONFIG_11AX))
-    ret = wlan_set_ru_power_cfg(region_code_rw610);
+#endif
+
+#if (CONFIG_COMPRESS_RU_TX_PWTBL) && (CONFIG_11AX)
+#if defined(RW610) || defined(IW610)
+    ret = wlan_set_ru_power_cfg(rg_code_cfg);
     if (ret != WM_SUCCESS)
     {
         return -WM_FAIL;
     }
+#endif
 #endif
 
     return ret;
