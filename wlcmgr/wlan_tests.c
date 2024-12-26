@@ -845,10 +845,10 @@ static void dump_wlan_add_usage(void)
 #endif
 #if (CONFIG_WPA2_ENTP) || (CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
     (void)PRINTF(
-        "    [wpa3-sb/wpa3-sb-192] "
+        "    [wpa-ent/wpa3-sb/wpa3-sb-192] "
         "["
 #if CONFIG_EAP_TLS
-        "eap-tls/eap-tls-sha256"
+        "eap-tls"
 #endif
 #if CONFIG_EAP_TTLS
         "/eap-ttls"
@@ -2206,11 +2206,11 @@ static int __scan_cb(unsigned int count)
             }
             if (res.wpa3_1x_sha256 != 0U)
             {
-                (void)PRINTF("WPA3-SHA256 Enterprise ");
+                (void)PRINTF("WPA3 Enterprise SuiteB");
             }
             if (res.wpa3_1x_sha384 != 0U)
             {
-                (void)PRINTF("WPA3-SHA384 Enterprise ");
+                (void)PRINTF("WPA3 Enterprise SuiteB-192");
             }
         }
 #if (CONFIG_11R)
