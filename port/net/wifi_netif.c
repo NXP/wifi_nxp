@@ -834,7 +834,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 
     if (interface > WLAN_BSS_TYPE_UAP)
     {
-        wifi_wmm_drop_no_media(interface);
+        LWIP_DEBUGF(NETIF_DEBUG, ("Illegal interface! [interface=%u]\n", interface));
         return ERR_MEM;
     }
 
