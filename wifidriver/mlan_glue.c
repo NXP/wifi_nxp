@@ -6379,9 +6379,9 @@ static void process_rsn_ie(t_u8 *rsn_ie,
     t_u8 wpa2_oui01[4]          = {0x00, 0x0f, 0xac, 0x01};
     t_u8 wpa2_oui02[4]          = {0x00, 0x0f, 0xac, 0x02};
     t_u8 wpa2_oui04[4]          = {0x00, 0x0f, 0xac, 0x04};
-    t_u8 wpa2_oui05[4]          = {0x00, 0x0f, 0xac, 0x05};
     t_u8 wpa2_oui06[4]          = {0x00, 0x0f, 0xac, 0x06};
 
+    t_u8 wpa3_oui05[4] = {0x00, 0x0f, 0xac, 0x05};
     t_u8 wpa3_oui08[4] = {0x00, 0x0f, 0xac, 0x08};
     t_u8 wpa3_oui0b[4] = {0x00, 0x0f, 0xac, 0x0b};
     t_u8 wpa3_oui0c[4] = {0x00, 0x0f, 0xac, 0x0c};
@@ -6434,7 +6434,7 @@ static void process_rsn_ie(t_u8 *rsn_ie,
         {
             mcstCipher->tkip = true;
         }
-        else if (!memcmp(temp, (const void *)wpa2_oui05, sizeof(wpa2_oui05)))
+        else if (!memcmp(temp, (const void *)wpa3_oui05, sizeof(wpa3_oui05)))
         {
             mcstCipher->wep104 = true;
         }
@@ -6508,9 +6508,9 @@ static void process_rsn_ie(t_u8 *rsn_ie,
         {
             WPA_WPA2_WEP->wpa2 = 1;
         }
-        else if (memcmp(temp, wpa2_oui05, sizeof(wpa2_oui05)) == 0)
+        else if (memcmp(temp, wpa3_oui05, sizeof(wpa3_oui05)) == 0)
         {
-            WPA_WPA2_WEP->wpa2_entp_sha256 = 1;
+            WPA_WPA2_WEP->wpa3_entp  = 1;
         }
         else if (memcmp(temp, wpa2_oui06, sizeof(wpa2_oui06)) == 0)
         {

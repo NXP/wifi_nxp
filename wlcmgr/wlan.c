@@ -10705,9 +10705,9 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
     {
         res->wpa2_entp = 1;
     }
-    else if (desc->WPA_WPA2_WEP.wpa2_entp_sha256 != 0U)
+    else if (desc->WPA_WPA2_WEP.wpa3_entp  != 0U)
     {
-        res->wpa2_entp_sha256 = 1;
+        res->wpa3_entp  = 1;
     }
     else if (desc->WPA_WPA2_WEP.wpa3_1x_sha256 != 0U)
     {

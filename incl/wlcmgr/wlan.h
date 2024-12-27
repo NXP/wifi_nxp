@@ -735,8 +735,8 @@ struct wlan_scan_result
     unsigned wpa3_sae : 1;
     /** The network uses WPA2 Enterprise security */
     unsigned wpa2_entp : 1;
-    /** The network uses WPA2 Enterprise SHA256 security */
-    unsigned wpa2_entp_sha256 : 1;
+    /** The network uses WPA3 Enterprise security */
+    unsigned wpa3_entp : 1;
     /** The network uses WPA3 Enterprise SHA256 security */
     unsigned wpa3_1x_sha256 : 1;
     /** The network uses WPA3 Enterprise SHA384 security */
