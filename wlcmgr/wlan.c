@@ -2248,10 +2248,10 @@ static int do_stop(struct wlan_network *network)
             CONNECTION_EVENT(WLAN_REASON_UAP_STOP_FAILED, NULL);
             return -WM_FAIL;
         }
+        wlan.uap_state           = CM_UAP_INITIALIZING;
         wlan_uap_set_bandwidth(UAP_DEFAULT_BANDWIDTH);
         wlan_uap_set_beacon_period(UAP_DEFAULT_BEACON_PERIOD);
         wlan_uap_set_hidden_ssid(UAP_DEFAULT_HIDDEN_SSID);
-        wlan.uap_state           = CM_UAP_INITIALIZING;
         wlan.cur_uap_network_idx = -1;
     }
 
