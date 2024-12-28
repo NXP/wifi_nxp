@@ -4760,7 +4760,9 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
 #if CONFIG_WPA_SUPP
     if (
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
-        (params.security == WIFI_SECURITY_TYPE_SAE)
+        ((params.security == WIFI_SECURITY_TYPE_SAE)
+        || (params.security == WIFI_SECURITY_TYPE_SAE_H2E)
+        || (params.security == WIFI_SECURITY_TYPE_SAE_AUTO))
 #else
         (network->security.type == WLAN_SECURITY_WPA3_SAE ||
          network->security.type == WLAN_SECURITY_WPA3_SAE_EXT_KEY)
