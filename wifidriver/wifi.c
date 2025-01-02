@@ -2298,7 +2298,9 @@ static void wifi_core_deinit(void)
     bus_deregister_data_input_funtion();
 
     (void)OSA_MsgQDestroy((osa_msgq_handle_t)wm_wifi.io_events);
-
+#ifdef SD9177
+    (void)OSA_MsgQDestroy((osa_msgq_handle_t)wm_wifi.pre_asleep_events);
+#endif
     (void)OSA_MsgQDestroy((osa_msgq_handle_t)wm_wifi.powersave_queue);
 
 #if CONFIG_WMM
