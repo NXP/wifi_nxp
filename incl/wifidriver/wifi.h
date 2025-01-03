@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2024 NXP
+ * Copyright 2008-2025 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  *
@@ -869,7 +869,8 @@ unsigned int wifi_get_delay_to_ps();
 unsigned int wifi_get_idle_time();
 void wifi_configure_null_pkt_interval(unsigned int null_pkt_interval);
 int wrapper_wifi_assoc(
-    const unsigned char *bssid, int wlan_security, bool is_wpa_tkip, unsigned int owe_trans_mode, bool is_ft);
+    const unsigned char *bssid, int wlan_security, bool is_wpa_tkip,
+    unsigned int owe_trans_mode, bool is_ft, int key_mgmt);
 bool wifi_get_xfer_pending(void);
 void wifi_set_xfer_pending(bool xfer_val);
 int wrapper_wlan_cmd_11n_ba_stream_timeout(void *saved_event_buff);
