@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides Core WLAN definition
  *
- *  Copyright 2008-2024 NXP
+ *  Copyright 2008-2025 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -2565,7 +2565,7 @@ static int start_association(struct wlan_network *network, struct wifi_scan_resu
 #endif
 
     ret = wrapper_wifi_assoc(res->bssid, (int)network->security.type, (bool)network->security.ucstCipher.tkip,
-                             owe_trans_mode, is_ft);
+                             owe_trans_mode, is_ft, network->security.key_mgmt);
     if (ret != WM_SUCCESS)
     {
         wlcm_d("association failed");

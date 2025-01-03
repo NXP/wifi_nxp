@@ -4,7 +4,7 @@
  *  structures and declares global function prototypes used
  *  in MLAN module.
  *
- *  Copyright 2008-2024 NXP
+ *  Copyright 2008-2025 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -1034,6 +1034,8 @@ typedef struct _wlan_802_11_security_t
     mlan_auth_mode authentication_mode;
     /** Encryption mode */
     mlan_encryption_mode encryption_mode;
+    /** RSN Selector */
+    mlan_rsn_selector rsn_selector;
 } wlan_802_11_security_t;
 
 /** Current Basic Service Set State Structure */
@@ -1503,7 +1505,7 @@ struct _mlan_private
     /** EWPA query 0: disable, 1: enable */
     bool ewpa_query;
     /** Encryption Key*/
-    t_u8 wpa_ie[MLAN_WMSDK_MAX_WPA_IE_LEN];
+    t_u8 wpa_ie[MLAN_RSN_MAX_IE_LEN];
     /** WPA IE length */
     t_u8 wpa_ie_len;
 #if CONFIG_11R

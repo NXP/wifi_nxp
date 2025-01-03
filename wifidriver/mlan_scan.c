@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides wlan scan IOCTL and firmware command APIs
  *
- *  Copyright 2008-2024 NXP
+ *  Copyright 2008-2025 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -1463,13 +1463,13 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
     const t_u8 epigram_oui[3]   = {0x00, 0x90, 0x4c};
     const t_u8 epigram_type1[1] = {0x33};
     const t_u8 epigram_type2[1] = {0x34};
+    const t_u8 wfa_oui[3]       = {0x50, 0x6f, 0x9a};
+    const t_u8 rsno_type[3]     = {0x29, 0x2a, 0x2b};
 
 #if CONFIG_DRIVER_OWE
-    const t_u8 owe_oui[3]  = {0x50, 0x6f, 0x9a};
     const t_u8 owe_type[1] = {0x01c};
 #endif
 #if CONFIG_DRIVER_MBO
-    const t_u8 scan_mbo_oui[3]  = {0x50, 0x6f, 0x9a};
     const t_u8 scan_mbo_type[1] = {0x016};
 #endif
 
@@ -1825,12 +1825,12 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 }
 #if CONFIG_DRIVER_OWE
                 else if (IS_FW_SUPPORT_EMBEDDED_OWE(pmadapter) &&
-                         (!__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, owe_oui, sizeof(owe_oui)) &&
+                         (!__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wfa_oui, sizeof(wfa_oui)) &&
                           (pvendor_ie->vend_hdr.oui_type == owe_type[0])))
                 {
                     /* Current Format of OWE IE is element_id:element_len:oui:MAC Address:SSID length:SSID */
                     t_u8 trans_ssid_len =
-                        *(pcurrent_ptr + sizeof(IEEEtypes_Header_t) + sizeof(owe_oui) + sizeof(owe_type) + MLAN_MAC_ADDR_LENGTH);
+                        *(pcurrent_ptr + sizeof(IEEEtypes_Header_t) + sizeof(wfa_oui) + sizeof(owe_type) + MLAN_MAC_ADDR_LENGTH);
 
                     if (!trans_ssid_len || trans_ssid_len > MRVDRV_MAX_SSID_LENGTH)
                     {
@@ -1847,10 +1847,10 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                     }
 
                     (void)__memcpy(pmadapter, pbss_entry->trans_mac_address,
-                                   (pcurrent_ptr + sizeof(IEEEtypes_Header_t) + sizeof(owe_oui) + sizeof(owe_type)), MLAN_MAC_ADDR_LENGTH);
+                                   (pcurrent_ptr + sizeof(IEEEtypes_Header_t) + sizeof(wfa_oui) + sizeof(owe_type)), MLAN_MAC_ADDR_LENGTH);
                     pbss_entry->trans_ssid.ssid_len = trans_ssid_len;
                     (void)__memcpy(pmadapter, pbss_entry->trans_ssid.ssid,
-                                   (pcurrent_ptr + sizeof(IEEEtypes_Header_t) + sizeof(owe_oui) + sizeof(owe_type) + MLAN_MAC_ADDR_LENGTH +
+                                   (pcurrent_ptr + sizeof(IEEEtypes_Header_t) + sizeof(wfa_oui) + sizeof(owe_type) + MLAN_MAC_ADDR_LENGTH +
                                     sizeof(t_u8)),
                                    trans_ssid_len);
 
@@ -1860,7 +1860,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 }
 #endif
 #if CONFIG_DRIVER_MBO
-                else if (__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, scan_mbo_oui, sizeof(scan_mbo_oui)) == 0 &&
+                else if (__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wfa_oui, sizeof(wfa_oui)) == 0 &&
                          (pvendor_ie->vend_hdr.oui_type == scan_mbo_type[0]))
                 {
                     t_u8 *pcurrent_attr = pcurrent_ptr + MBO_IE_HEADER_LEN;
@@ -1885,6 +1885,38 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                     }
                 }
 #endif
+                else if (__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wfa_oui, sizeof(wfa_oui)) == 0 &&
+                         (pvendor_ie->vend_hdr.oui_type == rsno_type[0] ||
+                         pvendor_ie->vend_hdr.oui_type == rsno_type[1] ||
+                         pvendor_ie->vend_hdr.oui_type == rsno_type[2]))
+                {
+                    if (pvendor_ie->vend_hdr.oui_type == rsno_type[0])
+                    {
+                        if (element_len + sizeof(IEEEtypes_Header_t) <= sizeof(pbss_entry->rsno_ie_buff))
+                        {
+                            (void)__memcpy(pmadapter, pbss_entry->rsno_ie_buff,
+                                           pcurrent_ptr, element_len + sizeof(IEEEtypes_Header_t));
+                            pbss_entry->rsno_ie_buff_len = element_len + sizeof(IEEEtypes_Header_t);
+                            pbss_entry->prsno_ie         = (IEEEtypes_Generic_t *)(void *)pbss_entry->rsno_ie_buff;
+                        }
+                    }
+                    else if (pvendor_ie->vend_hdr.oui_type == rsno_type[1])
+                    {
+                        if (element_len + sizeof(IEEEtypes_Header_t) <= sizeof(pbss_entry->rsno2_ie_buff))
+                        {
+                            (void)__memcpy(pmadapter, pbss_entry->rsno2_ie_buff,
+                                           pcurrent_ptr, element_len + sizeof(IEEEtypes_Header_t));
+                            pbss_entry->rsno2_ie_buff_len = element_len + sizeof(IEEEtypes_Header_t);
+                            pbss_entry->prsno2_ie         = (IEEEtypes_Generic_t *)(void *)pbss_entry->rsno2_ie_buff;
+                        }
+                    }
+                    else if (pvendor_ie->vend_hdr.oui_type == rsno_type[2])
+                    {
+                            (void)__memcpy(pmadapter, &pbss_entry->rsnxo_ie_saved,
+                                           pcurrent_ptr, sizeof(pbss_entry->rsnxo_ie_saved));
+                            pbss_entry->prsnxo_ie = &pbss_entry->rsnxo_ie_saved;
+                    }
+                }
 #if CONFIG_11K
                 /* Voice Enterprise Test Plan V1.2, test case 5.4, store other vendor specific ie */
                 else
@@ -1933,9 +1965,6 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                     wifi_e("Insufficient space to save RSN_IE size: %d", element_len);
                 }
 
-                /* pbss_entry->prsn_ie = (IEEEtypes_Generic_t *) pcurrent_ptr; */
-                /* pbss_entry->rsn_offset = */
-                /*     (t_u16) (pcurrent_ptr - pbss_entry->pbeacon_buf); */
                 HEXDUMP("InterpretIE: Resp RSN_IE", (t_u8 *)pbss_entry->prsn_ie,
                         (*(pbss_entry->prsn_ie)).ieee_hdr.len + sizeof(IEEEtypes_Header_t));
                 break;
@@ -2761,9 +2790,21 @@ static void adjust_pointers_to_internal_buffers(BSSDescriptor_t *pbss_entry, BSS
     {
         pbss_entry->prsn_ie = (IEEEtypes_Generic_t *)(void *)pbss_entry->rsn_ie_buff;
     }
+    if (pbss_entry->prsno_ie != NULL)
+    {
+        pbss_entry->prsno_ie = (IEEEtypes_Generic_t *)(void *)pbss_entry->rsno_ie_buff;
+    }
+    if (pbss_entry->prsno2_ie != NULL)
+    {
+        pbss_entry->prsno2_ie = (IEEEtypes_Generic_t *)(void *)pbss_entry->rsno2_ie_buff;
+    }
     if (pbss_entry->prsnx_ie != NULL)
     {
         pbss_entry->prsnx_ie = &pbss_entry->rsnx_ie_saved;
+    }
+    if (pbss_entry->prsnxo_ie != NULL)
+    {
+        pbss_entry->prsnxo_ie = &pbss_entry->rsnxo_ie_saved;
     }
 #if CONFIG_WPA_SUPP
     if (pbss_new_entry->ies != NULL)
