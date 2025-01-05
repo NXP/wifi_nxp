@@ -1767,10 +1767,30 @@ int wifi_auto_null_tx(wifi_auto_null_tx_t *auto_null_tx, mlan_bss_type bss_type)
 void hostapd_connected_sta_list(wifi_sta_info_t *si, wifi_sta_list_t *sl);
 #endif
 bool wifi_is_remain_on_channel(void);
-
+#if CONFIG_WMM
+/**
+ * Update STA TX pause status
+ *
+ *\param[in] tx_pause trigger tx handler if this is an unpause event.
+ *
+ * \return void.
+ */
+void wifi_sta_handle_event_data_pause(void *tx_pause);
+#endif
 /* UAP support */
 #if UAP_SUPPORT
-
+#if CONFIG_WMM
+/**
+ * Update uAP TX pause status
+ *
+ *\param[in] tx_pause trigger tx handler if this is an unpause event.
+ *           for self address, update the whole priv interface status
+ *           for other addresses, update corresponding ralist status
+ *           trigger tx handler if this is an unpause event
+ * \return void.
+ */
+void wifi_uap_handle_event_data_pause(void *tx_pause);
+#endif
 /**
  * Returns the current STA list connected to our uAP
  *
