@@ -7303,8 +7303,8 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #else
             OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
 #endif
-#endif
             break;
+#endif
         default:
             wlcm_w("got unknown message: %d", msg->event);
             break;
