@@ -4683,16 +4683,14 @@ static inline void wifi_wmm_trigger_tx(t_u8 tx_pause)
     }
 }
 
-/*
- *  update sta tx pause status
- *  trigger tx handler if this is an unpause event
- */
-static void wifi_sta_handle_event_data_pause(mlan_private *priv, MrvlIEtypes_tx_pause_t *tx_pause_tlv)
+void wifi_sta_handle_event_data_pause(void *tx_pause)
 {
     int i;
     t_u8 *bssid                         = MNULL;
     raListTbl *ra_list                  = MNULL;
     t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = {0};
+    mlan_private *priv     = mlan_adap->priv[0];
+    MrvlIEtypes_tx_pause_t *tx_pause_tlv = (MrvlIEtypes_tx_pause_t *)tx_pause;
 
     if (!priv->media_connected)
         return;
@@ -4733,10 +4731,12 @@ static void wifi_sta_handle_event_data_pause(mlan_private *priv, MrvlIEtypes_tx_
  *  for other addresses, update corresponding ralist status
  *  trigger tx handler if this is an unpause event
  */
-static void wifi_uap_handle_event_data_pause(mlan_private *priv_uap, MrvlIEtypes_tx_pause_t *tx_pause_tlv)
+void wifi_uap_handle_event_data_pause(void *tx_pause)
 {
     int i;
     raListTbl *ra_list = MNULL;
+    mlan_private *priv_uap = mlan_adap->priv[1];
+    MrvlIEtypes_tx_pause_t *tx_pause_tlv = (MrvlIEtypes_tx_pause_t *)tx_pause;
 
     if (!memcmp(priv_uap->curr_addr, tx_pause_tlv->peermac, MLAN_MAC_ADDR_LENGTH))
     {
@@ -4787,19 +4787,47 @@ void wifi_handle_event_data_pause(void *data)
 
         if (tlv_type == TLV_TYPE_TX_PAUSE)
         {
+#if !CONFIG_MEM_POOLS
+            void *tx_pause_tlv = OSA_MemoryAllocate(sizeof(MrvlIEtypes_tx_pause_t));
+#else
+            void *tx_pause_tlv = OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+#endif
+
+            (void)memcpy(tx_pause_tlv, (void *)tlv, sizeof(MrvlIEtypes_tx_pause_t));
             if (evt->bss_type == MLAN_BSS_TYPE_STA)
             {
-                wifi_sta_handle_event_data_pause(mlan_adap->priv[0], (MrvlIEtypes_tx_pause_t *)tlv);
+                if (wifi_event_completion(WIFI_EVENT_TX_DATA_PAUSE, WIFI_EVENT_REASON_SUCCESS, tx_pause_tlv) !=
+                    WM_SUCCESS)
+                {
+#if !CONFIG_MEM_POOLS
+                    OSA_MemoryFree(tx_pause_tlv);
+#else
+                    OSA_MemoryPoolFree(buf_32_MemoryPool, tx_pause_tlv);
+#endif
+                }
             }
 #if UAP_SUPPORT
             else if (evt->bss_type == MLAN_BSS_TYPE_UAP)
             {
-                wifi_uap_handle_event_data_pause(mlan_adap->priv[1], (MrvlIEtypes_tx_pause_t *)tlv);
+                if (wifi_event_completion(WIFI_EVENT_UAP_TX_DATA_PAUSE, WIFI_EVENT_REASON_SUCCESS, tx_pause_tlv) !=
+                    WM_SUCCESS)
+                {
+#if !CONFIG_MEM_POOLS
+                    OSA_MemoryFree(tx_pause_tlv);
+#else
+                    OSA_MemoryPoolFree(buf_32_MemoryPool, tx_pause_tlv);
+#endif
+                }
             }
 #endif
             else
             {
                 wifi_w("Not support bss_type %d", evt->bss_type);
+#if !CONFIG_MEM_POOLS
+                OSA_MemoryFree(tx_pause_tlv);
+#else
+                OSA_MemoryPoolFree(buf_32_MemoryPool, tx_pause_tlv);
+#endif
             }
         }
 

@@ -5982,6 +5982,16 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
                 next = CM_UAP_INITIALIZING;
             }
             break;
+#if CONFIG_WMM
+        case WIFI_EVENT_UAP_TX_DATA_PAUSE:
+            wifi_uap_handle_event_data_pause(msg->data);
+#if !CONFIG_MEM_POOLS
+            OSA_MemoryFree(msg->data);
+#else
+            OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
+            break;
+#endif
         default:
             wlcm_w("got unknown message  UAP  : %d", msg->event);
             break;
@@ -7067,6 +7077,16 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case WIFI_EVENT_REGION_POWER_CFG:
             wlcm_process_region_power_cfg(msg);
             break;
+#if CONFIG_WMM
+        case WIFI_EVENT_TX_DATA_PAUSE:
+            wifi_sta_handle_event_data_pause(msg->data);
+#if !CONFIG_MEM_POOLS
+            OSA_MemoryFree(msg->data);
+#else
+            OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
+            break;
+#endif
         default:
             wlcm_w("got unknown message: %d", msg->event);
             break;
