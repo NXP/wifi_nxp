@@ -1867,19 +1867,24 @@ int wifi_nxp_wpa_supp_set_country(void *if_priv, const char *alpha2)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     int ret                                    = -WM_FAIL;
-    char *country                              = NULL;
+    char country[COUNTRY_CODE_LEN]             = {0};
     t_u8 region_code                           = 0;
     unsigned char country3                     = 0x20;
-
-    country    = OSA_MemoryAllocate(COUNTRY_CODE_LEN);
-    (void)memcpy(country, alpha2, COUNTRY_CODE_LEN - 1);
-    country[2] = country3;
 
     if ((!if_priv) || (!alpha2))
     {
         supp_e("%s: Invalid params", __func__);
         goto out;
     }
+
+    if ((alpha2[2] == 0x4f) || (alpha2[2] == 0x49) || (alpha2[2] == 0x58) || (alpha2[2] == 0x04))
+    {
+        country3 = alpha2[2];
+    }
+
+    country[0] = alpha2[0];
+    country[1] = alpha2[1];
+    country[2] = country3;
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
