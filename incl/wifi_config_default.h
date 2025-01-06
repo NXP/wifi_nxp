@@ -110,6 +110,17 @@
 #define CONFIG_11AX 0
 #endif
 
+#if !defined CONFIG_MULTI_BSSID_SUPPORT
+#if defined(RW610) || defined(SD9177) || defined(IW610)
+#define CONFIG_MULTI_BSSID_SUPPORT CONFIG_11AX
+#endif
+#endif
+
+#if !CONFIG_MULTI_BSSID_SUPPORT
+#undef CONFIG_MULTI_BSSID_SUPPORT
+#define CONFIG_MULTI_BSSID_SUPPORT CONFIG_11AX
+#endif
+
 #if !defined CONFIG_11AX_TWT
 #if defined(RW610) || defined(SD9177) || defined(IW610)
 #define CONFIG_11AX_TWT CONFIG_11AX
@@ -119,6 +130,17 @@
 #if !CONFIG_11AX
 #undef CONFIG_11AX_TWT
 #define CONFIG_11AX_TWT 0
+#endif
+
+#if !defined CONFIG_SET_SU
+#if defined(RW610) || defined(SD9177) || defined(IW610)
+#define CONFIG_SET_SU CONFIG_11AX
+#endif
+#endif
+
+#if !CONFIG_11AX
+#undef CONFIG_SET_SU
+#define CONFIG_SET_SU 0
 #endif
 
 /* WMM options */
@@ -172,6 +194,12 @@
 #define CONFIG_SDIO_MP_AGGR_DEF_PKT_LIMIT 8
 #else
 #define CONFIG_SDIO_MP_AGGR_DEF_PKT_LIMIT 4
+#endif
+#endif
+
+#if !defined CONFIG_MEF_CFG
+#if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177) || defined(IW610)
+#define CONFIG_MEF_CFG 0
 #endif
 #endif
 
@@ -302,6 +330,14 @@
 #if !defined CONFIG_WIFI_MAX_CLIENTS_CNT
 #if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177) || defined(IW610)
 #define CONFIG_WIFI_MAX_CLIENTS_CNT 1
+#endif
+#endif
+
+#if !defined CONFIG_WIFI_RTS_THRESHOLD
+#if defined(RW610)
+#define CONFIG_WIFI_RTS_THRESHOLD 1
+#elif defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177) || defined(IW610)
+#define CONFIG_WIFI_RTS_THRESHOLD 0
 #endif
 #endif
 
@@ -812,6 +848,38 @@
 #endif
 #endif
 
+#if !defined CONFIG_RX_CHAN_INFO
+#if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177) || defined(IW610)
+#define CONFIG_RX_CHAN_INFO CONFIG_WPA_SUPP_DPP
+#endif
+#endif
+
+#if !CONFIG_RX_CHAN_INFO
+#undef CONFIG_RX_CHAN_INFO
+#define CONFIG_RX_CHAN_INFO CONFIG_WPA_SUPP_DPP
+#endif
+
+#if !CONFIG_WPA_SUPP_DPP
+#undef CONFIG_RX_CHAN_INFO
+#define CONFIG_RX_CHAN_INFO 0
+#endif
+
+#if !defined CONFIG_TXPD_RXPD_V3
+#if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177) || defined(IW610)
+#define CONFIG_TXPD_RXPD_V3 CONFIG_WPA_SUPP_DPP
+#endif
+#endif
+
+#if !CONFIG_TXPD_RXPD_V3
+#undef CONFIG_TXPD_RXPD_V3
+#define CONFIG_TXPD_RXPD_V3 CONFIG_WPA_SUPP_DPP
+#endif
+
+#if !CONFIG_WPA_SUPP_DPP
+#undef CONFIG_TXPD_RXPD_V3
+#define CONFIG_TXPD_RXPD_V3 0
+#endif
+
 #if !defined CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
 #if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177) || defined(IW610)
 #define CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE 0
@@ -1051,12 +1119,6 @@
 #define CONFIG_BG_SCAN             1
 #define CONFIG_HOST_MLME           1
 #define UAP_HOST_MLME              1
-#define CONFIG_WIFI_RTS_THRESHOLD  1
-#define CONFIG_MEF_CFG             1
-#define CONFIG_MULTI_BSSID_SUPPORT 1
-#define CONFIG_SET_SU              1
-#define CONFIG_RX_CHAN_INFO        1
-#define CONFIG_TXPD_RXPD_V3        1
 
 #if CONFIG_WNM_PS
 #if defined(RW610)
