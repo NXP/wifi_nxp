@@ -195,6 +195,8 @@ static t_u8 search_oui_in_ie(mlan_adapter *pmadapter, IEBody *ie_body, t_u8 *oui
  *  Check the pbss_desc for appropriate IE and then check if RSN IE has AES
  *  OUI in it. If RSN IE does not have AES in PTK then return 0;
  *
+ *  Add RSN Override and RSN Override 2 check.
+ *
  *  @param pbss_desc       A pointer to current BSS descriptor
  *  @return                0 on failure to find AES OUI, 1 on success.
  */
@@ -203,6 +205,8 @@ static t_u8 is_rsn_oui_present(mlan_adapter *pmadapter, BSSDescriptor_t *pbss_de
     t_u8 *oui       = MNULL;
     IEBody *ie_body = MNULL;
     t_u8 ret        = MLAN_OUI_NOT_PRESENT;
+    IEEEtypes_VendorHeader_t *hdr = MNULL;
+    const t_u8 wfa_oui[3] = {0x50, 0x6f, 0x9a};
 
     ENTER();
     if (((pbss_desc->prsn_ie != MNULL) && ((*(pbss_desc->prsn_ie)).ieee_hdr.element_id == RSN_IE)))
@@ -215,6 +219,41 @@ static t_u8 is_rsn_oui_present(mlan_adapter *pmadapter, BSSDescriptor_t *pbss_de
             return ret;
         }
     }
+
+    if (pbss_desc->prsno_ie != MNULL)
+    {
+        hdr = (IEEEtypes_VendorHeader_t *)(void *)pbss_desc->prsno_ie;
+        if (hdr->element_id == (t_u8)VENDOR_SPECIFIC_221 &&
+            !__memcmp(pmadapter, hdr->oui, wfa_oui, sizeof(wfa_oui)) &&
+            hdr->oui_type == MLAN_OUI_TYPE_RSNO)
+        {
+            ie_body = (IEBody *)(void *)((t_u8 *)(&hdr->oui_subtype) + RSN_GTK_OUI_OFFSET);
+            oui     = &rsn_oui[cipher][0];
+            if ((ret = search_oui_in_ie(pmadapter, ie_body, oui)) != 0U)
+            {
+                LEAVE();
+                return ret;
+            }
+        }
+    }
+
+    if (pbss_desc->prsno2_ie != MNULL)
+    {
+        hdr = (IEEEtypes_VendorHeader_t *)(void *)pbss_desc->prsno2_ie;
+        if (hdr->element_id == (t_u8)VENDOR_SPECIFIC_221 &&
+            !__memcmp(pmadapter, hdr->oui, wfa_oui, sizeof(wfa_oui)) &&
+            hdr->oui_type == MLAN_OUI_TYPE_RSNO2)
+        {
+            ie_body = (IEBody *)(void *)((t_u8 *)(&hdr->oui_subtype) + RSN_GTK_OUI_OFFSET);
+            oui     = &rsn_oui[cipher][0];
+            if ((ret = search_oui_in_ie(pmadapter, ie_body, oui)) != 0U)
+            {
+                LEAVE();
+                return ret;
+            }
+        }
+    }
+
     LEAVE();
     return ret;
 }
@@ -3417,7 +3456,10 @@ static mlan_status wlan_update_ssid_in_beacon_buf(mlan_adapter *pmadapter,
                                                   IEEEtypes_Ssid_t *pssid,
                                                   IEEEtypes_ExtCap_t *pnew_extcap,
                                                   IEEEtypes_Generic_t *pnew_rsnx,
-                                                  IEEEtypes_Generic_t *pnew_rsn)
+                                                  IEEEtypes_Generic_t *pnew_rsn,
+                                                  IEEEtypes_Generic_t *pnew_rsno,
+                                                  IEEEtypes_Generic_t *pnew_rsno2,
+                                                  IEEEtypes_Generic_t *pnew_rsnxo)
 {
 #if CONFIG_WPA_SUPP
     mlan_callbacks *pcb = (pmlan_callbacks)&pmadapter->callbacks;
@@ -3434,6 +3476,8 @@ static mlan_status wlan_update_ssid_in_beacon_buf(mlan_adapter *pmadapter,
 
     if (pnew_rsnx)
         beacon_buf_size += pnew_rsnx->ieee_hdr.len + sizeof(IEEEtypes_Header_t);
+    if (pnew_rsnxo)
+        beacon_buf_size += pnew_rsnxo->ieee_hdr.len + sizeof(IEEEtypes_Header_t);
 #if CONFIG_WPA_SUPP
     ret = pcb->moal_malloc(pmadapter->pmoal_handle, beacon_buf_size, MLAN_MEM_DEF, (t_u8 **)&pbeacon_buf);
     if (ret != MLAN_STATUS_SUCCESS || !pbeacon_buf)
@@ -3466,8 +3510,14 @@ static mlan_status wlan_update_ssid_in_beacon_buf(mlan_adapter *pmadapter,
     if (pnew_rsnx)
     {
         (void)__memcpy(pmadapter, &pnew_entry->rsnx_ie_saved, pnew_rsnx,
-                       pnew_rsnx->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
+                       sizeof(pnew_entry->rsnx_ie_saved));
         pnew_entry->prsnx_ie = &pnew_entry->rsnx_ie_saved;
+    }
+    if (pnew_rsnxo)
+    {
+        (void)__memcpy(pmadapter, &pnew_entry->rsnxo_ie_saved, pnew_rsnxo,
+                       sizeof(pnew_entry->rsnxo_ie_saved));
+        pnew_entry->prsnxo_ie = &pnew_entry->rsnxo_ie_saved;
     }
 
     if (pnew_rsn)
@@ -3476,6 +3526,20 @@ static mlan_status wlan_update_ssid_in_beacon_buf(mlan_adapter *pmadapter,
                        pnew_rsn->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
         pnew_entry->rsn_ie_buff_len = pnew_rsn->ieee_hdr.len + sizeof(IEEEtypes_Header_t);
         pnew_entry->prsn_ie         = (IEEEtypes_Generic_t *)pnew_entry->rsn_ie_buff;
+    }
+    if (pnew_rsno)
+    {
+        (void)__memcpy(pmadapter, pnew_entry->rsno_ie_buff, pnew_rsno,
+                       pnew_rsno->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
+        pnew_entry->rsno_ie_buff_len = pnew_rsno->ieee_hdr.len + sizeof(IEEEtypes_Header_t);
+        pnew_entry->prsno_ie         = (IEEEtypes_Generic_t *)pnew_entry->rsno_ie_buff;
+    }
+    if (pnew_rsno2)
+    {
+        (void)__memcpy(pmadapter, pnew_entry->rsno2_ie_buff, pnew_rsno2,
+                       pnew_rsno2->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
+        pnew_entry->rsno2_ie_buff_len = pnew_rsno2->ieee_hdr.len + sizeof(IEEEtypes_Header_t);
+        pnew_entry->prsno2_ie         = (IEEEtypes_Generic_t *)pnew_entry->rsno2_ie_buff;
     }
 
 #if CONFIG_WPA_SUPP
@@ -3629,6 +3693,11 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
 #endif
     IEEEtypes_ExtCap_t *pextcap = MNULL;
     IEEEtypes_Generic_t *prsnx  = MNULL;
+    IEEEtypes_VendorHeader_t *pvdr = MNULL;
+    IEEEtypes_Generic_t *prsno = MNULL;
+    IEEEtypes_Generic_t *prsno2 = MNULL;
+    IEEEtypes_Generic_t *prsnxo = MNULL;
+    const t_u8 wfa_oui[3] = {0x50, 0x6f, 0x9a};
 
     ENTER();
 
@@ -3681,6 +3750,24 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
                 prsn = (IEEEtypes_Generic_t *)pos;
                 DBG_HEXDUMP(MCMD_D, "MBSSID RSN", pos, prsn->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
                 break;
+            case VENDOR_SPECIFIC_221:
+                pvdr = (IEEEtypes_VendorHeader_t *)pos;
+                if (!__memcmp(pmadapter, pvdr->oui, wfa_oui, sizeof(wfa_oui)))
+                {
+                    if (pvdr->oui_type == MLAN_OUI_TYPE_RSNO)
+                    {
+                        prsno = (IEEEtypes_Generic_t *)pos;
+                    }
+                    else if (pvdr->oui_type == MLAN_OUI_TYPE_RSNO2)
+                    {
+                        prsno2 = (IEEEtypes_Generic_t *)pos;
+                    }
+                    else if (pvdr->oui_type == MLAN_OUI_TYPE_RSNXO)
+                    {
+                        prsnxo = (IEEEtypes_Generic_t *)pos;
+                    }
+                }
+                break;
             default:
                 break;
         }
@@ -3710,7 +3797,8 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
             bss_new_entry->ssid.ssid_len = pssid->len;
             (void)__memcpy(pmadapter, bss_new_entry->ssid.ssid, pssid->ssid, MIN(pssid->len, MLAN_MAX_SSID_LENGTH));
             if (MLAN_STATUS_SUCCESS !=
-                wlan_update_ssid_in_beacon_buf(pmadapter, pbss_entry, bss_new_entry, pssid, pextcap, prsnx, prsn))
+                wlan_update_ssid_in_beacon_buf(pmadapter, pbss_entry, bss_new_entry, pssid, pextcap, prsnx, prsn,
+                                               prsno, prsno2, prsnxo))
             {
                 PRINTM(MERROR, "Fail to update MBSSID beacon buf\n");
                 pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)bss_new_entry);
