@@ -3062,6 +3062,13 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
             {
                 wlcm_d("SM: returned to %s", dbg_sta_state_name(*next));
                 handle_scan_results();
+#if CONFIG_ROAMING
+                /*
+                 * Subscribe EVENT_RSSI_LOW if roaming is enabled.
+                 * Do this here in case roaming is not happened.
+                 */
+                wlan_subscribe_rssi_low_event();
+#endif
                 *next = wlan.sta_state;
                 return;
             }
@@ -3846,6 +3853,11 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
             wpa_supp_network_status(netif, network);
 #endif
 #endif
+
+#if CONFIG_ROAMING
+            wlan_subscribe_rssi_low_event();
+#endif
+
 #if CONFIG_WPA_SUPP
 #if CONFIG_11R
             wlan.same_ess = wifi_same_ess_ft();
@@ -12957,7 +12969,13 @@ int wlan_host_11k_cfg(int enable_11k)
     wlan.enable_11k = enable_11k;
     return WM_SUCCESS;
 #else
-    return wifi_host_11k_cfg(enable_11k);
+    int ret = -WM_FAIL;
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+
+    ret = wifi_host_11k_cfg(enable_11k);
+    wlan_set_host_11k_status(pmpriv->enable_host_11k);
+
+    return ret;
 #endif
 }
 
