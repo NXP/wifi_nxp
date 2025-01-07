@@ -4274,6 +4274,7 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
         chan_list[i].chan_number = (t_u8)pnlist_rep_param->channels[i];
         chan_list[i].scan_type   = MLAN_SCAN_TYPE_ACTIVE;
         chan_list[i].scan_time   = 60;
+        chan_list[i].radio_type  = (chan_list[i].chan_number > 14) ? HostCmd_SCAN_RADIO_TYPE_A : HostCmd_SCAN_RADIO_TYPE_BG;
     }
 
 #if CONFIG_11R
