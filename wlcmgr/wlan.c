@@ -25,7 +25,11 @@
 #include <mbedtls/x509_crt.h>
 #endif /* (CONFIG_HOST_PMK) || (CONFIG_WPS2) */
 #ifdef OVERRIDE_CALIBRATION_DATA
+#if (CONFIG_WLAN_EXT_CALDATA_2ANT_HI_ISO == 1U) || (CONFIG_WLAN_EXT_CALDATA_2ANT_LO_ISO == 1U)
+#include <wifi_cal_data_ext.h>
+#else
 #include OVERRIDE_CALIBRATION_DATA
+#endif
 #else
 #include <wifi_cal_data_ext.h>
 #ifdef RW610
@@ -7370,7 +7374,13 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
 #endif
 
 #ifdef OVERRIDE_CALIBRATION_DATA
+#if (CONFIG_WLAN_EXT_CALDATA_2ANT_HI_ISO == 1U)
+    wlan_set_cal_data(ext_cal_data_hi_iso_36, sizeof(ext_cal_data_hi_iso_36));
+#elif (CONFIG_WLAN_EXT_CALDATA_2ANT_LO_ISO == 1U)
+    wlan_set_cal_data(ext_cal_data_low_iso_20, sizeof(ext_cal_data_low_iso_20));
+#else
     wlan_set_cal_data(ext_cal_data, sizeof(ext_cal_data));
+#endif
 #else
 #ifndef RW610
     wlan_set_cal_data(int_cal_data, sizeof(int_cal_data));
