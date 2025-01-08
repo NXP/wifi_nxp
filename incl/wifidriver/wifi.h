@@ -1130,14 +1130,6 @@ typedef PACK_START struct
     t_u32 bcn_rcv_cnt;
     /** beacon miss count */
     t_u32 bcn_miss_cnt;
-    /** received amsdu count*/
-    t_u32 amsdu_rx_cnt;
-    /** received msdu count in amsdu*/
-    t_u32 msdu_in_rx_amsdu_cnt;
-    /** tx amsdu count*/
-    t_u32 amsdu_tx_cnt;
-    /** tx msdu count in amsdu*/
-    t_u32 msdu_in_tx_amsdu_cnt;
     /** Tx frag count */
     t_u32 tx_frag_cnt;
     /** Qos Tx frag count */
