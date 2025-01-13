@@ -879,7 +879,7 @@ int wifi_get_txratecfg(wifi_ds_rate *ds_rate, mlan_bss_type bss_type);
 void wifi_wake_up_card(uint32_t *resp);
 void wifi_tx_card_awake_lock(void);
 void wifi_tx_card_awake_unlock(void);
-#ifdef RW610
+#if defined(RW610) || defined(IW610)
 uint32_t wifi_get_board_type();
 #endif
 #if CONFIG_WPA2_ENTP

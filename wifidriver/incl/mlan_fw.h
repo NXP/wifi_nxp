@@ -3313,8 +3313,13 @@ typedef MLAN_PACK_START struct _HostCmd_DS_GET_HW_SPEC
     t_u32 fw_release_number;
     /** hw dev cap */
     t_u32 hw_dev_cap;
-    /** Reserved field */
-    t_u32 reserved_2;
+    /** Board type or Reserved field */
+#if defined(IW610)
+    t_u8 board_type;
+    t_u8 reserved_2[3];
+#else
+     t_u32 reserved_2;
+#endif
     /** Reserved field */
     t_u32 reserved_3;
     /** FW/HW Capability */

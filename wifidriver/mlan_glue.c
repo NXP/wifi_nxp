@@ -8012,6 +8012,11 @@ uint32_t wifi_get_board_type()
 
     return wifi_rw610_package_type;
 }
+#elif defined(IW610)
+uint32_t wifi_get_board_type()
+{
+    return mlan_adap->board_type;
+}
 #endif
 
 #ifdef RW610

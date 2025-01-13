@@ -14,6 +14,11 @@
 #include "fsl_ocotp.h"
 #endif
 
+#if defined(IW610)
+#define IW610_PACKAGE_TYPE_CSP 0
+#define IW610_PACKAGE_TYPE_QFN 1
+#endif
+
 #ifdef WIFI_BT_TX_PWR_LIMITS
 #include WIFI_BT_TX_PWR_LIMITS
 #else
@@ -111,11 +116,16 @@ rg_power_cfg rg_power_cfg_info[] = {
 
 #if defined(IW610)
 rg_power_cfg rg_power_cfg_info[] = {
-    {0x00, .power_info[0] = {(t_u8 *)rg_table_WW, sizeof(rg_table_WW)}},
-    {0x10, .power_info[0] = {(t_u8 *)rg_table_US, sizeof(rg_table_US)}},
-    {0x30, .power_info[0] = {(t_u8 *)rg_table_EU, sizeof(rg_table_EU)}},
-    {0x50, .power_info[0] = {(t_u8 *)rg_table_CN, sizeof(rg_table_CN)}},
-    {0xFF, .power_info[0] = {(t_u8 *)rg_table_JP, sizeof(rg_table_JP)}},
+    {0x00, .power_info[IW610_PACKAGE_TYPE_CSP] = {(t_u8 *)rg_table_WW_csp, sizeof(rg_table_WW_csp)},
+    .power_info[IW610_PACKAGE_TYPE_QFN] = {(t_u8 *)rg_table_WW_qfn, sizeof(rg_table_WW_qfn)}},
+    {0x10, .power_info[IW610_PACKAGE_TYPE_CSP] = {(t_u8 *)rg_table_US_csp, sizeof(rg_table_US_csp)},
+    .power_info[IW610_PACKAGE_TYPE_QFN] = {(t_u8 *)rg_table_US_qfn, sizeof(rg_table_US_qfn)}},
+    {0x30, .power_info[IW610_PACKAGE_TYPE_CSP] = {(t_u8 *)rg_table_EU_csp, sizeof(rg_table_EU_csp)},
+    .power_info[IW610_PACKAGE_TYPE_QFN] = {(t_u8 *)rg_table_EU_qfn, sizeof(rg_table_EU_qfn)}},
+    {0x50, .power_info[IW610_PACKAGE_TYPE_CSP] = {(t_u8 *)rg_table_CN_csp, sizeof(rg_table_CN_csp)},
+    .power_info[IW610_PACKAGE_TYPE_QFN] = {(t_u8 *)rg_table_CN_qfn, sizeof(rg_table_CN_qfn)}},
+    {0xFF, .power_info[IW610_PACKAGE_TYPE_CSP] = {(t_u8 *)rg_table_JP_csp, sizeof(rg_table_JP_csp)},
+    .power_info[IW610_PACKAGE_TYPE_QFN] = {(t_u8 *)rg_table_JP_qfn, sizeof(rg_table_JP_qfn)}},
 };
 #endif /* IW610 */
 
@@ -125,31 +135,25 @@ int wlan_set_rg_power_cfg(t_u16 region_code)
     int rv              = WM_SUCCESS;
     uint32_t board_type = 0;
 
-#if defined(RW610)
     board_type = wifi_get_board_type();
-    if (RW610_PACKAGE_TYPE_QFN == board_type)
-    {
-        (void)PRINTF("PKG_TYPE: QFN\r\n");
-        (void)PRINTF("Set QFN tx power table data \r\n");
-    }
-    else if (RW610_PACKAGE_TYPE_BGA == board_type)
-    {
-        (void)PRINTF("PKG_TYPE: BGA\r\n");
-        (void)PRINTF("Set BGA tx power table data \r\n");
-    }
-    else if (RW610_PACKAGE_TYPE_CSP == board_type)
-    {
-        (void)PRINTF("PKG_TYPE: CSP\r\n");
-        (void)PRINTF("Set CSP tx power table data \r\n");
-    }
-    else
-    {
-        board_type = RW610_PACKAGE_TYPE_BGA;
-        (void)PRINTF("PKG_TYPE: UNKNOWN\r\n");
-        (void)PRINTF("Set BGA tx power table data \r\n");
-        (void)PRINTF("Can't get board type, we use bga data default \r\n");
-    }
+    (void)PRINTF("baord_type: %d, baord_type mapping: \r\n", board_type);
+
+#if defined(RW610)
+    (void)PRINTF("0----QFN\r\n");
+    (void)PRINTF("1----CSP\r\n");
+    (void)PRINTF("2----BGA\r\n");
 #endif /* RW610 */
+
+#if defined(IW610)
+    (void)PRINTF("0----CSP\r\n");
+    (void)PRINTF("1----QFN\r\n");
+#endif /* IW610 */
+
+    if(board_type >= PKG_TYPE_MAX)
+     {
+        (void)PRINTF("board_type error\r\n");
+        return -WM_FAIL;
+     }
 
     for (i = 0; i < sizeof(rg_power_cfg_info) / sizeof(rg_power_cfg); i++)
     {

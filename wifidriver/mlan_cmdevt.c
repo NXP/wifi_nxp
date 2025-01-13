@@ -1063,6 +1063,9 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
     ENTER();
 
     pmadapter->fw_cap_info = wlan_le32_to_cpu(hw_spec->fw_cap_info);
+#if defined(IW610)
+    pmadapter->board_type = hw_spec->board_type;
+#endif
     /* Get no 5G status to check whether need to disable 5G */
     wlan_get_no_5G_status(pmpriv, resp);
 #ifdef STA_SUPPORT

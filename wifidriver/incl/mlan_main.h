@@ -2393,6 +2393,10 @@ struct _mlan_adapter
     /* remain on channel flag */
     t_u8 remain_on_channel;
     t_u8 remain_bss_index;
+#if defined(IW610)
+    /* board type info from FW */
+    t_u8 board_type;
+#endif
 };
 
 /** Ethernet packet type for EAPOL */

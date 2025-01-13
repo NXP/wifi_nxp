@@ -16031,7 +16031,7 @@ uint32_t wlan_get_board_type(void)
 {
     uint32_t board_type = 0xff;
 
-#ifdef RW610
+#if defined(RW610) || defined(IW610)
     board_type = wifi_get_board_type();
 #endif
 
