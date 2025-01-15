@@ -1,4 +1,4 @@
-# Wi-Fi NXP API Guide for RW61x
+# Wi-Fi API Guide for RW61x
 
 
 ```{tocTree}
