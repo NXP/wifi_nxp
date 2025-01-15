@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides WLAN Test API
  *
- *  Copyright 2008-2024 NXP
+ *  Copyright 2008-2025 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -5678,7 +5678,7 @@ static void test_wlan_8801_ext_coex_stats(int argc, char **argv)
 #endif
 
 #if UAP_SUPPORT
-#if !defined(SD8801) && !defined(RW610)
+#if !defined(SD8801) && !defined(RW610) && !defined(IW610)
 static void test_wlan_set_uap_bandwidth(int argc, char **argv)
 {
     uint8_t bandwidth;
@@ -12692,7 +12692,7 @@ static struct cli_command tests[] = {
     {"wlan-ext-coex-uwb", NULL, test_wlan_ext_coex_uwb},
 #endif
 #if UAP_SUPPORT
-#if !defined(SD8801) && !defined(RW610)
+#if !defined(SD8801) && !defined(RW610) && !defined(IW610)
 #if CONFIG_11AC
     {"wlan-set-uap-bandwidth", "<1/2/3> 1:20 MHz 2:40MHz 3:80MHz", test_wlan_set_uap_bandwidth},
 #else
