@@ -1294,11 +1294,16 @@
 #if UAP_SUPPORT
 #if defined(RW610)
 #define CONFIG_WIFI_PKT_FWD 1
+#elif defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177) || defined(IW610)
+#define CONFIG_WIFI_PKT_FWD CONFIG_WMM
+#endif
+#endif /* UAP_SUPPORT */
 #else
-#define CONFIG_WIFI_PKT_FWD 0
+#if defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177) || defined(IW610)
+#undef CONFIG_WIFI_PKT_FWD
+#define CONFIG_WIFI_PKT_FWD CONFIG_WMM
 #endif
-#endif
-#endif
+#endif /* !CONFIG_WIFI_PKT_FWD */
 
 /*
  * Wi-Fi SLIM feature options
