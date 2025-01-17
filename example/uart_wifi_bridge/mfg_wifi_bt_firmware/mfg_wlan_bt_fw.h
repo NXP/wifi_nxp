@@ -25,6 +25,14 @@
 #elif defined(RW610)
 const unsigned char *wlan_fw_bin   = (void *)0;
 const unsigned int wlan_fw_bin_len = 0;
+#elif defined(IW610)
+#if !(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
+#include "sduartspi_iw610_mfg_se.h"
+#elif defined(CONFIG_BT_IND_DNLD)
+#include "uartspi_iw610_mfg_se.h"
+#else
+#include "sd_iw610_mfg_se.h"
+#endif
 #endif
 
 #endif /* __MFG_WLAN_BT_FW_H__ */
