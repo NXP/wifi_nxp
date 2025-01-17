@@ -16,7 +16,7 @@
 #if !(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
 
 const uint8_t fw_cpu12[] = {
-  #include <sduart_iw610.bin.se.inc>
+  #include <sduartspi_iw610.bin.se.inc>
 };
 
 const unsigned char *wlan_fw_bin   = (const unsigned char *)(void *)&fw_cpu12[0];
