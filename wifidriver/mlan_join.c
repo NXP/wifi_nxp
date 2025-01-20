@@ -357,13 +357,20 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
     */
     t_u8 akm_type_selected;
     t_u8 akm_type_id        = 0;
-#if CONFIG_11R
-    t_u8 akm_preference[25] = {0, 7, 1, 9, 3, 8, 2, 0, 5, 6, 0, 10, 11, 12, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 13};
-#else
+#if CONFIG_WPA_SUPP
     t_u8 akm_preference[25] = {0, 7, 1, 0, 0, 8, 2, 0, 5, 0, 0, 10, 11, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 13};
+#else
+    t_u8 akm_preference[25] = {0, 0, 1, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 #endif
-
     int ap_mfpc = 0, ap_mfpr = 0, ret = MLAN_STATUS_SUCCESS;
+
+#if CONFIG_11R
+    /* add FT akm types to preference list */
+    akm_preference[3] = 9;
+    akm_preference[4] = 3;
+    akm_preference[9] = 6;
+    akm_preference[13] = 12;
+#endif
 
     pmf_mask = (((pmpriv->pmfcfg.mfpc << MFPC_BIT) | (pmpriv->pmfcfg.mfpr << MFPR_BIT)) | (~PMF_MASK));
     /* prsn_cap = prsn_ie->rsn_ie + 2 bytes version + 4 bytes
