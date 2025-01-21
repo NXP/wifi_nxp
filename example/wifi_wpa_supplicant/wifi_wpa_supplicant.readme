@@ -5,8 +5,7 @@ Currently only WLAN connection Manager CLIs are available.
 
 Before building the example application select Wi-Fi module macro in the app_config.h. (see #define WIFI_<SoC Name>_BOARD_<Module Name>).
 
-If Wi-Fi module Redfinch is used, please note that the application is for Redfinch A1 by default. If you are using Redfinch A0, please
-undefine flag CONFIG_RW610_A1 in wifi_config.h before compiling application.
+If Wi-Fi module rw61x is used, please note that the application is for rw61x A2 by default. 
 
 For more information about Wi-Fi module connection see:
     readme_modules.txt
