@@ -2323,7 +2323,7 @@ static int do_start(struct wlan_network *network)
 
         t_u8 bandwidth = wifi_uap_get_bandwidth();
 
-#if defined(SD8801) || defined(RW610)
+#if defined(SD8801) || defined(RW610) || defined(IW610)
         wpa_supp_set_ap_bw(netif, 1);
 #else
         wpa_supp_set_ap_bw(netif, bandwidth);
@@ -12599,7 +12599,7 @@ void wlan_uap_set_beacon_period(const uint16_t beacon_period)
 
 int wlan_uap_set_bandwidth(const uint8_t bandwidth)
 {
-#if defined(RW610) || defined(SD8801)
+#if defined(RW610) || defined(SD8801) || defined(IW610)
     return WM_SUCCESS;
 #else
 #if UAP_SUPPORT

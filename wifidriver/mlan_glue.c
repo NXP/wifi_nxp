@@ -2816,7 +2816,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 
                         memset(&acs_params, 0, sizeof(nxp_wifi_acs_params));
 
-#if defined(SD8801) || defined(RW610)
+#if defined(SD8801) || defined(RW610) || defined(IW610)
 #ifdef SD8801
                         acs_params.pri_freq = channel_to_frequency(acs_scan->chan, 0);
                         acs_params.hw_mode  = 1;
