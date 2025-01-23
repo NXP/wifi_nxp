@@ -7,7 +7,7 @@ config MCUX_COMPONENT_middleware.wifi.wifi_bt_config.template
 config MCUX_COMPONENT_middleware.wifi.template
     bool "Component middleware.wifi.template"
     if MCUX_COMPONENT_middleware.wifi.template
-      choice
+      choice MCUX_DEPENDENCY_COMPONENT_middleware.wifi.template.selection
         prompt "Component middleware.wifi.template anyOf 1"
         default MCUX_DEPENDENCY_COMPONENT_middleware.wifi.template_DEPEND_ANYOF_OPTION_1
         config MCUX_DEPENDENCY_COMPONENT_middleware.wifi.template_DEPEND_ANYOF_OPTION_1
@@ -104,7 +104,7 @@ config MCUX_COMPONENT_middleware.wifi.mlan_sdio
     select MCUX_COMPONENT_middleware.wifi.common_files
 
     if MCUX_COMPONENT_middleware.wifi.mlan_sdio
-      choice
+      choice MCUX_DEPENDENCY_COMPONENT_middleware.wifi.mlan_sdio.selection
         prompt "Component middleware.wifi.mlan_sdio anyOf 1"
         default MCUX_DEPENDENCY_COMPONENT_middleware.wifi.mlan_sdio_DEPEND_ANYOF_OPTION_1
         config MCUX_DEPENDENCY_COMPONENT_middleware.wifi.mlan_sdio_DEPEND_ANYOF_OPTION_1
