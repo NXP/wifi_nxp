@@ -2464,6 +2464,7 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
     priv->sec_info.ewpa_enabled        = MFALSE;
     priv->sec_info.wpa_enabled         = MFALSE;
     priv->sec_info.authentication_mode = MLAN_AUTH_MODE_AUTO;
+    priv->sec_info.rsn_selector = MLAN_RSN_SELECTOR_INVALID;
 
     priv->sec_info.is_wpa_tkip = MFALSE;
 #if CONFIG_11R
