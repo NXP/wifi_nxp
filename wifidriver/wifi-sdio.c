@@ -3054,6 +3054,7 @@ void sd_wifi_deinit(void)
     sdio_drv_deinit();
     (void)mlan_subsys_deinit();
     (void)wlan_deinit_struct();
+    g_txrx_flag = false;
 }
 
 #if CONFIG_FW_VDLL

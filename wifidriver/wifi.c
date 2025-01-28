@@ -2144,7 +2144,7 @@ static void wifi_core_deinit(void)
 #endif
     (void)OSA_MutexDestroy((osa_mutex_handle_t)wm_wifi.command_lock);
     (void)OSA_EventDestroy((osa_event_handle_t)wm_wifi.wifi_event_Handle);
-#ifndef RW610
+#if 0
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_drv_task_Handle);
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_core_task_Handle);
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_scan_task_Handle);
@@ -2152,12 +2152,12 @@ static void wifi_core_deinit(void)
 #if CONFIG_WMM
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_drv_tx_task_Handle);
 #endif
-#else
+#endif
     wm_wifi.cmd_resp_priv   = NULL;
     wm_wifi.cmd_resp_ioctl  = NULL;
     wm_wifi.cmd_resp_status = 0;
     memset(&wm_wifi, 0x00, sizeof(wm_wifi));
-#endif
+
 #if CONFIG_CSI
     (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem);
 #endif
@@ -2381,7 +2381,6 @@ void wifi_deinit(void)
 #endif
 }
 
-#ifdef RW610
 bool wifi_fw_is_hang(void)
 {
     if (mlan_adap && mlan_adap->bus_ops.fw_is_hang)
@@ -2400,10 +2399,11 @@ void wifi_destroy_wifidriver_tasks(void)
 #endif
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_scan_task_Handle);
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_powersave_task_Handle);
-
+#ifdef RW610
     imu_uninstall_callback();
-}
 #endif
+}
+
 void wifi_set_tx_status(t_u8 status)
 {
     wifi_tx_status = status;

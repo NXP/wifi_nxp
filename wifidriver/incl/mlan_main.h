@@ -1295,7 +1295,6 @@ typedef MLAN_PACK_START struct _mlan_chan_info
 #define HOST_MLME_ASSOC_DONE    MBIT(3)
 #endif
 
-#ifdef RW610
 /**Adapter_operations data structure*/
 typedef struct _bus_operations
 {
@@ -1304,7 +1303,6 @@ typedef struct _bus_operations
     /**Interface header length*/
     t_u32 intf_header_len;
 } bus_operations;
-#endif
 
 /** Private structure for MLAN */
 struct _mlan_private
@@ -2193,10 +2191,8 @@ struct _mlan_adapter
     mlan_callbacks callbacks;
     /** Init parameters */
     mlan_init_para init_para;
-#ifdef RW610
     /** bus operations*/
     bus_operations bus_ops;
-#endif
     /** Country ie ignore */
     t_u8 country_ie_ignore;
     /** In reset status now */

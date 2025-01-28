@@ -190,11 +190,13 @@ int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size);
  *
  */
 void wifi_deinit(void);
-#ifdef RW610
+
 /**
  * This API can be used to destroy all wifi driver tasks.
  */
 void wifi_destroy_wifidriver_tasks(void);
+
+#ifdef RW610
 /**
  * This API can be used to get IMU task lock.
  */
