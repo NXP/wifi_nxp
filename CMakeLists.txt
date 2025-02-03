@@ -293,13 +293,13 @@ zephyr_code_relocate(FILES
                      wifidriver/mlan_11n_rxreorder.c
                      wifidriver/mlan_wmm.c
                      wifidriver/wifi.c
-                     LOCATION RAM_TEXT)
+                     LOCATION ITCM_TEXT)
 
 if(CONFIG_SDIO_STACK)
 zephyr_code_relocate(FILES
                      sdio_nxp_abs/mlan_sdio.c
                      wifidriver/wifi-sdio.c
-                     LOCATION RAM_TEXT)
+                     LOCATION ITCM_TEXT)
 endif()
 
 if(CONFIG_NXP_RW610)
@@ -313,31 +313,34 @@ endif()
 zephyr_code_relocate(FILES
                      ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/osa/fsl_os_abstraction_zephyr.c
                      ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/utilities/misc_utilities/fsl_memcpy.S
-                     LOCATION RAM_TEXT)
+                     LOCATION ITCM_TEXT)
 
 file(GLOB ZPERF_SRC ${ZEPHYR_BASE}/subsys/net/lib/zperf/*.c)
 zephyr_code_relocate(FILES ${ZPERF_SRC} LOCATION RAM_TEXT)
 
 zephyr_code_relocate(FILES
-                     ${ZEPHYR_BASE}/subsys/net/lib/sockets/sockets_packet.c
-                     ${ZEPHYR_BASE}/subsys/net/lib/sockets/sockets.c
                      ${ZEPHYR_BASE}/subsys/net/ip/connection.c
-                     ${ZEPHYR_BASE}/subsys/net/ip/ipv4.c
-                     ${ZEPHYR_BASE}/subsys/net/ip/ipv4_fragment.c
                      ${ZEPHYR_BASE}/subsys/net/ip/ipv6.c
                      ${ZEPHYR_BASE}/subsys/net/ip/ipv6_fragment.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/packet_socket.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/utils.c
+                     LOCATION RAM_TEXT)
+
+zephyr_code_relocate(FILES
+                     ${ZEPHYR_BASE}/subsys/net/lib/sockets/sockets_packet.c
+                     ${ZEPHYR_BASE}/subsys/net/lib/sockets/sockets.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/ipv4.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/ipv4_fragment.c
                      ${ZEPHYR_BASE}/subsys/net/ip/net_context.c
                      ${ZEPHYR_BASE}/subsys/net/ip/net_core.c
                      ${ZEPHYR_BASE}/subsys/net/ip/net_if.c
                      ${ZEPHYR_BASE}/subsys/net/ip/net_pkt.c
                      ${ZEPHYR_BASE}/subsys/net/ip/net_tc.c
-                     ${ZEPHYR_BASE}/subsys/net/ip/packet_socket.c
                      ${ZEPHYR_BASE}/subsys/net/ip/tcp.c
                      ${ZEPHYR_BASE}/subsys/net/ip/udp.c
-                     ${ZEPHYR_BASE}/subsys/net/ip/utils.c
                      ${ZEPHYR_BASE}/subsys/net/l2/ethernet/ethernet.c
                      ${ZEPHYR_BASE}/lib/net_buf/buf.c
-                     LOCATION RAM_TEXT)
+                     LOCATION ITCM_TEXT)
 
 zephyr_code_relocate(FILES
                      ${ZEPHYR_BASE}/kernel/mem_slab.c
@@ -349,7 +352,7 @@ zephyr_code_relocate(FILES
                      ${ZEPHYR_BASE}/kernel/sem.c
                      ${ZEPHYR_BASE}/kernel/thread.c
                      ${ZEPHYR_BASE}/kernel/work.c
-                     LOCATION RAM_TEXT)
+                     LOCATION ITCM_TEXT)
 endif()
 endif()
 

@@ -151,7 +151,7 @@ typedef enum __mlan_status
 static void wifi_core_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(wifi_core_task, OSA_PRIORITY_HIGH, 1, CONFIG_WIFI_CORE_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wifi_core_task, OSA_PRIORITY_NORMAL, 1, CONFIG_WIFI_CORE_STACK_SIZE, 0);
 #endif
 
 static void wifi_scan_task(osa_task_param_t arg);
