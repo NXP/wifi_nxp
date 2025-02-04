@@ -3921,13 +3921,14 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 				(void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
 			}
 #endif
-
+            wlan.same_ess =
 #if CONFIG_11R
-			wlan.same_ess = wifi_same_ess_ft();
+			wifi_same_ess_ft() |
 #endif
-			wlan.roam_reassoc = false;
+			wlan.roam_reassoc;
+            wlan.roam_reassoc = false;
 #endif
-			if (wlan.same_ess == true)
+			if ((wlan.same_ess == true) && (wlan.sta_ipv4_state == CM_STA_CONNECTED))
             {
 #if CONFIG_11R
                 wlan.ft_bss = false;
