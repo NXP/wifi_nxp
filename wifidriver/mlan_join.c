@@ -361,7 +361,7 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
 #if CONFIG_WPA_SUPP
     t_u8 akm_preference[25] = {0, 7, 1, 0, 0, 8, 2, 0, 5, 0, 0, 10, 11, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 13};
 #else
-    t_u8 akm_preference[25] = {0, 0, 1, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    t_u8 akm_preference[25] = {0, 0, 1, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0};
 #endif
     int ap_mfpc = 0, ap_mfpr = 0, ret = MLAN_STATUS_SUCCESS;
 
