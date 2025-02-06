@@ -220,14 +220,6 @@ file(GLOB WLCMGR_SRC ./wlcmgr/*.c)
 
 zephyr_library_sources(${WLCMGR_SRC})
 
-zephyr_library_sources_ifdef(CONFIG_NXP_WIFI_SMOKE_TESTS
-    nw_utils/init_enet.c
-)
-
-zephyr_include_directories_ifdef(CONFIG_NXP_WIFI_SMOKE_TESTS
-    nw_utils
-)
-
 if(CONFIG_NXP_WIFI_SIGMA_AGENT)
 zephyr_library_sources(
     nw_utils/wifi_ping.c

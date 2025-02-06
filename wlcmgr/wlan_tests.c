@@ -2294,9 +2294,6 @@ static int __scan_cb(unsigned int count)
         }
 #endif
     }
-#if CONFIG_WIFI_SMOKE_TESTS
-    PRINTF("SCAN COMPLETED !\r\n");
-#endif
     return 0;
 }
 

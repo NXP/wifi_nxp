@@ -621,13 +621,7 @@ if (CONFIG_MCUX_COMPONENT_middleware.wifi.cli)
                 # TODO please change to relative dir
                 incl/wifi_ping.h
                 # TODO please change to relative dir
-                nw_utils/init_enet.c
-                # TODO please change to relative dir
                 nw_utils/network_cfg.h
-                # TODO please change to relative dir
-                nw_utils/telnet/telnet_server.h
-                # TODO please change to relative dir
-                nw_utils/telnet/telnet_server.c
                 # TODO please change to relative dir
                 wlcmgr/wlan_basic_cli.c
                 # TODO please change to relative dir
@@ -644,7 +638,6 @@ if (CONFIG_MCUX_COMPONENT_middleware.wifi.cli)
                  incl
                  incl/wlcmgr
                  nw_utils
-                 nw_utils/telnet
     )
 endif()
 

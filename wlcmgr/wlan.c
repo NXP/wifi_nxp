@@ -6437,16 +6437,6 @@ static void wlcm_process_get_hw_spec_event(void)
     (void)wifi_wmm_init();
 #endif
 
-#if CONFIG_WIFI_SMOKE_TESTS
-    extern int initNetwork(void);
-    /* network enet init */
-    int ret = initNetwork();
-    if (ret != WM_SUCCESS)
-    {
-        PRINTF("FAILED to init network (ret=%d). Reboot the board and try again.\r\n", ret);
-    }
-#endif
-
 #if CONFIG_SIGMA_AGENT
     extern int sigma_agent_init(void);
 
