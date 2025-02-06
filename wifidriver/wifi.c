@@ -1410,14 +1410,16 @@ static int add_mcast_ip(uint8_t *mac_addr)
 static int remove_mcast_ip(uint8_t *mac_addr)
 {
     mcast_filter *curr_node, *prev_node;
+
     (void)wifi_get_mcastf_lock();
-    curr_node = wm_wifi.start_list->next;
     prev_node = wm_wifi.start_list;
-    if (wm_wifi.start_list == NULL)
+    if (prev_node == NULL)
     {
         (void)wifi_put_mcastf_lock();
         return -WM_FAIL;
     }
+
+    curr_node = wm_wifi.start_list->next;
     if (curr_node == NULL && cmp_mac_addr(prev_node->mac_addr, mac_addr))
     {
 #if !CONFIG_MEM_POOLS
