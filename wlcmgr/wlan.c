@@ -10456,33 +10456,32 @@ int wlan_remove_all_networks(void)
     wlan_remove_all_network_profiles();
 
     intrfc_handle = net_get_sta_handle();
-    net_interface_down(intrfc_handle);
+    net_if_down(((interface_t *)intrfc_handle)->netif);
 
 #if UAP_SUPPORT
     intrfc_handle = net_get_uap_handle();
-    net_interface_down(intrfc_handle);
+    net_if_down(((interface_t *)intrfc_handle)->netif);
+#endif
     /* wait for mgmt_event handled */
     OSA_TimeDelay(500);
-#endif
 
     return WM_SUCCESS;
 }
 
-#if CONFIG_WIFI_NM_WPA_SUPPLICANT
 int wlan_enable_all_networks(void)
 {
     void *intrfc_handle = NULL;
 
     intrfc_handle = net_get_sta_handle();
-    net_interface_up(intrfc_handle);
+    net_if_up(((interface_t *)intrfc_handle)->netif);
 
 #if UAP_SUPPORT
     intrfc_handle = net_get_uap_handle();
-    net_interface_up(intrfc_handle);
+    net_if_up(((interface_t *)intrfc_handle)->netif);
 #endif
     return WM_SUCCESS;
 }
-#endif
+
 void wlan_destroy_all_tasks(void)
 {
     OSA_LockSchedule();
@@ -10649,7 +10648,6 @@ void wlan_reset(cli_reset_option ResetOption)
             /* update the netif hwaddr after reset */
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
             wlan_set_mac_addr(&wlan.sta_mac[0]);
-            wlan_enable_all_networks();
 #else
 #if UAP_SUPPORT
             net_wlan_set_mac_address(&wlan.sta_mac[0], &wlan.uap_mac[0]);
@@ -10657,6 +10655,8 @@ void wlan_reset(cli_reset_option ResetOption)
             net_wlan_set_mac_address(&wlan.sta_mac[0], NULL);
 #endif
 #endif
+            wlan_enable_all_networks();
+
             /* Unblock TX data */
             wifi_set_tx_status(WIFI_DATA_RUNNING);
             /* Unblock RX data */
