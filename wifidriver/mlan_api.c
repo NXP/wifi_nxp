@@ -6531,7 +6531,11 @@ void wifi_iface_tx_stats(uint8_t *buf, int interface)
 #if CONFIG_TX_RX_ZERO_COPY
     eth_hdr *ethhdr = (eth_hdr *)(((outbuf_t *)buf)->eth_header);
 #else
-    eth_hdr *ethhdr = (eth_hdr *)(((outbuf_t *)buf)->data);
+    eth_hdr *ethhdr = (eth_hdr *)(buf +
+#if CONFIG_WMM
+                      sizeof(mlan_linked_list) +
+#endif
+                      sizeof(TxPD) + INTF_HEADER_LEN);
 #endif
 
     if (is_broadcast_ether_addr(ethhdr->dest_addr))
