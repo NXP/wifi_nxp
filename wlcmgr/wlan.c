@@ -6668,6 +6668,12 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
                 wlan.pending_disconnect_request = true;
             }
             wpa_supp_disconnect(netif);
+#else
+	    	if ((network->role == WLAN_BSS_ROLE_STA) &&
+                (network->security.type != WLAN_SECURITY_NONE && network->security.type != WLAN_SECURITY_WEP_OPEN))
+            {
+				wifi_send_clear_wpa_psk((int)network->role, network->ssid);
+            }
 #endif
             wlcm_request_disconnect(&next, network);
             break;
