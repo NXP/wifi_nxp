@@ -6875,17 +6875,13 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 
         case CM_STA_USER_REQUEST_DISCONNECT:
 #if CONFIG_WPA_SUPP
-#if !CONFIG_WIFI_NM_WPA_SUPPLICANT
-            wlan.pending_disconnect_request = false;
-            ret = wpa_supp_abort_scan(netif);
-            if (ret == WM_SUCCESS)
-            {
-                wlan.pending_disconnect_request = true;
-            }
-            wpa_supp_disconnect(netif);
-#else
             supplicant_disconnect(net_if_get_device((void *)netif));
-#endif
+#else
+            if ((network->role == WLAN_BSS_ROLE_STA) &&
+                (network->security.type != WLAN_SECURITY_NONE && network->security.type != WLAN_SECURITY_WEP_OPEN))
+            {
+                wifi_send_clear_wpa_psk((int)network->role, network->ssid);
+            }
 #endif
             if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
             {
