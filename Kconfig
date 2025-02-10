@@ -52,9 +52,13 @@ config MCUX_COMPONENT_middleware.wifi.net
     if MCUX_COMPONENT_middleware.wifi.net
         config MCUX_COMPONENT_middleware.wifi.net_free_rtos
             bool "Component middleware.wifi.net_free_rtos"
-            imply MCUX_COMPONENT_middleware.lwip
-            imply MCUX_COMPONENT_middleware.lwip.apps.lwiperf
+            select MCUX_COMPONENT_middleware.lwip
             select MCUX_COMPONENT_middleware.freertos-kernel
+
+        config MCUX_COMPONENT_middleware.wifi.net_free_rtos.iperf
+            bool "Component middleware.wifi.net_free_rtos.iperf"
+            default y if MCUX_COMPONENT_middleware.wifi.net_free_rtos
+            imply MCUX_COMPONENT_middleware.lwip.apps.lwiperf
     endif
 
 config MCUX_COMPONENT_middleware.wifi.wifidriver
