@@ -189,7 +189,7 @@ typedef enum
 #if defined(SD8997) || defined(SD9098) || defined(SD9064) || defined(RW610)
 #define HOST_WAKEUP_GPIO_PIN 12
 #define CARD_WAKEUP_GPIO_PIN 13
-#elif defined(SD9177) || defined(IW610)
+#elif defined(SD9177)
 #define HOST_WAKEUP_GPIO_PIN 17
 #define CARD_WAKEUP_GPIO_PIN 16
 #elif defined(WIFI_88W8987_BOARD_MURATA_1ZM_M2)
@@ -197,6 +197,9 @@ typedef enum
 #define CARD_WAKEUP_GPIO_PIN 16
 #elif defined(WIFI_IW416_BOARD_MURATA_1XK_M2)
 #define HOST_WAKEUP_GPIO_PIN 2
+#define CARD_WAKEUP_GPIO_PIN 16
+#elif defined(WIFI_IW610_BOARD_MURATA_2LL_M2)
+#define HOST_WAKEUP_GPIO_PIN 4
 #define CARD_WAKEUP_GPIO_PIN 16
 #else
 #define HOST_WAKEUP_GPIO_PIN 1
