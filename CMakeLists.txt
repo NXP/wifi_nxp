@@ -283,6 +283,13 @@ zephyr_library_compile_definitions_ifdef(CONFIG_WIFI_NM_HOSTAPD_AP
 
 if(CONFIG_CODE_DATA_RELOCATION)
 if(CONFIG_SPEED_OPTIMIZATIONS OR CONFIG_SIZE_OPTIMIZATIONS)
+
+if(CONFIG_NXP_RW610)
+	set(QUICK_ACCESS_CODE_AREA RAM_TEXT)
+else()
+	set(QUICK_ACCESS_CODE_AREA ITCM_TEXT)
+endif()
+
 # critical path code relocated to SRAM
 zephyr_code_relocate(FILES
                      port/osa/osa.c
@@ -293,13 +300,13 @@ zephyr_code_relocate(FILES
                      wifidriver/mlan_11n_rxreorder.c
                      wifidriver/mlan_wmm.c
                      wifidriver/wifi.c
-                     LOCATION ITCM_TEXT)
+                     LOCATION ${QUICK_ACCESS_CODE_AREA})
 
 if(CONFIG_SDIO_STACK)
 zephyr_code_relocate(FILES
                      sdio_nxp_abs/mlan_sdio.c
                      wifidriver/wifi-sdio.c
-                     LOCATION ITCM_TEXT)
+                     LOCATION ${QUICK_ACCESS_CODE_AREA})
 endif()
 
 if(CONFIG_NXP_RW610)
@@ -307,13 +314,13 @@ zephyr_code_relocate(FILES
                      wifidriver/wifi-imu.c
                      ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/drivers/imu/fsl_imu.c
                      ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/rpmsg/fsl_adapter_rfimu.c
-                     LOCATION RAM_TEXT)
+                     LOCATION ${QUICK_ACCESS_CODE_AREA})
 endif()
 
 zephyr_code_relocate(FILES
                      ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/osa/fsl_os_abstraction_zephyr.c
                      ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/utilities/misc_utilities/fsl_memcpy.S
-                     LOCATION ITCM_TEXT)
+                     LOCATION ${QUICK_ACCESS_CODE_AREA})
 
 file(GLOB ZPERF_SRC ${ZEPHYR_BASE}/subsys/net/lib/zperf/*.c)
 zephyr_code_relocate(FILES ${ZPERF_SRC} LOCATION RAM_TEXT)
@@ -340,7 +347,7 @@ zephyr_code_relocate(FILES
                      ${ZEPHYR_BASE}/subsys/net/ip/udp.c
                      ${ZEPHYR_BASE}/subsys/net/l2/ethernet/ethernet.c
                      ${ZEPHYR_BASE}/lib/net_buf/buf.c
-                     LOCATION ITCM_TEXT)
+                     LOCATION ${QUICK_ACCESS_CODE_AREA})
 
 zephyr_code_relocate(FILES
                      ${ZEPHYR_BASE}/kernel/mem_slab.c
@@ -352,7 +359,7 @@ zephyr_code_relocate(FILES
                      ${ZEPHYR_BASE}/kernel/sem.c
                      ${ZEPHYR_BASE}/kernel/thread.c
                      ${ZEPHYR_BASE}/kernel/work.c
-                     LOCATION ITCM_TEXT)
+                     LOCATION ${QUICK_ACCESS_CODE_AREA})
 endif()
 endif()
 
