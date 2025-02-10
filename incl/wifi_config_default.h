@@ -701,15 +701,15 @@
 #endif
 
 #if !defined CONFIG_TCP_ACK_ENH
-#if defined(SD9177) || defined(IW610)
+#if defined(SD9177)
 #define CONFIG_TCP_ACK_ENH 1
 #endif
 #endif
 
 #if CONFIG_TCP_ACK_ENH
-#if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801)
+#if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(IW610)
 #undef CONFIG_TCP_ACK_ENH
-#define CONFIG_TCP_ACK_ENH
+#define CONFIG_TCP_ACK_ENH 0
 #endif
 #endif
 
