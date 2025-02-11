@@ -1752,15 +1752,12 @@ static void wifi_assoc_rsno_2_rsn(t_u8 *rsno_ie, size_t rsno_len, t_u8 *rsn_ie, 
  * So the case that AP requires secure connection but we are in open mode will not happen.
  */
 static int wifi_assoc_pick_security_ie(mlan_private *priv, BSSDescriptor_t *d,
-    int wlan_security, int wlan_key_mgmt, bool is_wpa_tkip, bool is_ft)
+    int wlan_security, int wlan_key_mgmt, bool is_wpa_tkip)
 {
     t_u32 key_mgmt_network = (t_u32)wlan_key_mgmt;
     t_u32 key_mgmt_ie_rsno2 = 0;
     t_u32 key_mgmt_ie_rsno = 0;
     t_u32 key_mgmt_ie_rsn = 0;
-#if !CONFIG_11R
-    (void)is_ft;
-#endif
 
     if (d->prsn_ie)
     {
@@ -1869,8 +1866,8 @@ rsn_ie_picked:
            key_mgmt_network, key_mgmt_ie_rsno2, key_mgmt_ie_rsno, key_mgmt_ie_rsn);
 
 #if CONFIG_11R
-    if ((!is_ft) && (wlan_security == WLAN_SECURITY_WPA2 || wlan_security == WLAN_SECURITY_WPA3_SAE ||
-        wlan_security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED || wlan_security == WLAN_SECURITY_WPA2_FT))
+    if (wlan_security == WLAN_SECURITY_WPA2 || wlan_security == WLAN_SECURITY_WPA3_SAE ||
+        wlan_security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED || wlan_security == WLAN_SECURITY_WPA2_FT)
     {
         if (d->md_ie_buff_len <= sizeof(priv->md_ie))
         {
@@ -1949,11 +1946,16 @@ int wrapper_wifi_assoc(
      * security part is yet not fully integrated into mlan. This will
      * not be necessary after the integration is complete.
      */
-    ret = wifi_assoc_pick_security_ie(priv, d, wlan_security, key_mgmt, is_wpa_tkip, is_ft);
-    if (ret != WM_SUCCESS)
+#if CONFIG_11R
+    if (!is_ft)
+#endif
     {
-        wifi_e("wifi_assoc_pick_security_ie failed ret %d", ret);
-        return -WM_FAIL;
+        ret = wifi_assoc_pick_security_ie(priv, d, wlan_security, key_mgmt, is_wpa_tkip);
+        if (ret != WM_SUCCESS)
+        {
+            wifi_e("wifi_assoc_pick_security_ie failed ret %d", ret);
+            return -WM_FAIL;
+        }
     }
 
     if ((MNULL != d) && (*d->country_info.country_code) && (d->country_info.len > COUNTRY_CODE_LEN) &&
