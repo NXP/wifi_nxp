@@ -3971,15 +3971,19 @@ int wlan_set_auto_arp(void);
 int wlan_set_auto_ping(void);
 #endif /*  CONFIG_AUTO_PING */
 
+#if CONFIG_HOST_SLEEP
 /**
  * Use this API to enable WOWLAN (wake-on-wireless-LAN) on magic packet RX in Wi-Fi firmware
  *
+ * \param[in] bss_type:   0--for bss type as sta, 1--for bss type as uap
  * \param[in] ptn_cfg: A pointer to \ref wlan_wowlan_ptn_cfg_t containing wake on Wi-Fi pattern configuration
  *
  *\return WM_SUCCESS if operation is successful.
  *\return -WM_FAIL if command fails
  */
-int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg);
+int wlan_wowlan_cfg_ptn_match(enum wlan_bss_type bss_type, wlan_wowlan_ptn_cfg_t *ptn_cfg);
+#endif
+
 /**
  * Use this API to enable NS offload in Wi-Fi firmware.
  *

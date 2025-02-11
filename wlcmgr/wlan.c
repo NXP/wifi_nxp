@@ -670,6 +670,7 @@ static struct
     uint8_t ind_reset;
 #if CONFIG_HOST_SLEEP
     uint8_t hs_dummy_send;
+    uint8_t hs_bss_type;
 #endif
 #if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
     uint8_t ir_mode;
@@ -12326,18 +12327,30 @@ static t_bool is_wowlan_pattern_supported(wifi_wowlan_pattern_t *pat, t_u8 *byte
     return true;
 }
 
-int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg)
+#if CONFIG_HOST_SLEEP
+int wlan_wowlan_cfg_ptn_match(enum wlan_bss_type bss_type, wlan_wowlan_ptn_cfg_t *ptn_cfg)
 {
-    wlan_flt_cfg_t flt_cfg;
+
+    wlan.hs_bss_type = bss_type;
+
+    if (wlan.hs_bss_type == WLAN_BSS_TYPE_UAP)
+    {
+         (void)PRINTF("pkt filter offload feature is configured for UAP mode\r\n");
+    }
+    else
+    {
+         (void)PRINTF("pkt filter offload feature is configured for STA mode\r\n");
+    }
+
     wifi_mef_entry_t *mef_entry;
     t_u8 byte_seq[MAX_NUM_BYTE_SEQ + 1];
     const t_u8 ipv4_mc_mac[] = {0x33, 0x33};
     const t_u8 ipv6_mc_mac[] = {0x01, 0x00, 0x5e};
     int filt_num = 0, i = 0, ret = 0;
     t_bool first_pat = true;
-    memset(&flt_cfg, 0, sizeof(flt_cfg));
+    memset(&g_flt_cfg, 0, sizeof(g_flt_cfg));
     //  mef_cfg.mef_act_type = MEF_ACT_WOWLAN;
-    mef_entry = &flt_cfg.mef_entry[0];
+    mef_entry = &g_flt_cfg.mef_entry[0];
 
     mef_entry->mode   = MEF_MODE_HOST_SLEEP;
     mef_entry->action = MEF_ACTION_ALLOW_AND_WAKEUP_HOST;
@@ -12355,18 +12368,18 @@ int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg)
         {
             if (!(byte_seq[0] & 0x01) && (byte_seq[MAX_NUM_BYTE_SEQ] == 1))
             {
-                flt_cfg.criteria |= CRITERIA_UNICAST;
+                g_flt_cfg.criteria |= CRITERIA_UNICAST;
                 continue;
             }
             else if (is_broadcast_ether_addr(byte_seq))
             {
-                flt_cfg.criteria |= CRITERIA_BROADCAST;
+                g_flt_cfg.criteria |= CRITERIA_BROADCAST;
                 continue;
             }
             else if ((!memcmp(byte_seq, ipv4_mc_mac, 2) && (byte_seq[MAX_NUM_BYTE_SEQ] == 2)) ||
                      (!memcmp(byte_seq, ipv6_mc_mac, 3) && (byte_seq[MAX_NUM_BYTE_SEQ] == 3)))
             {
-                flt_cfg.criteria |= CRITERIA_MULTICAST;
+                g_flt_cfg.criteria |= CRITERIA_MULTICAST;
                 continue;
             }
         }
@@ -12390,38 +12403,59 @@ int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg)
     {
         //   (void)memset(&flt_cfg, 0, sizeof(wlan_flt_cfg_t));
 
-        flt_cfg.criteria = CRITERIA_UNICAST | CRITERIA_BROADCAST | CRITERIA_MULTICAST;
-        flt_cfg.nentries = 1;
+        g_flt_cfg.criteria = CRITERIA_UNICAST | CRITERIA_BROADCAST | CRITERIA_MULTICAST;
+        g_flt_cfg.nentries = 1;
 
-        flt_cfg.mef_entry[0].mode   = MEF_MODE_HOST_SLEEP;
-        flt_cfg.mef_entry[0].action = MEF_ACTION_ALLOW_AND_WAKEUP_HOST;
+        g_flt_cfg.mef_entry[0].mode   = MEF_MODE_HOST_SLEEP;
+        g_flt_cfg.mef_entry[0].action = MEF_ACTION_ALLOW_AND_WAKEUP_HOST;
 
-        flt_cfg.mef_entry[0].filter_num = 2;
+        g_flt_cfg.mef_entry[0].filter_num = 2;
 
-        flt_cfg.mef_entry[0].filter_item[filt_num].type         = TYPE_BYTE_EQ;
-        flt_cfg.mef_entry[0].filter_item[filt_num].repeat       = 16;
-        flt_cfg.mef_entry[0].filter_item[filt_num].offset       = 56;
-        flt_cfg.mef_entry[0].filter_item[filt_num].num_byte_seq = MLAN_MAC_ADDR_LENGTH;
-        (void)memcpy((void *)flt_cfg.mef_entry[0].filter_item[filt_num].byte_seq, (const void *)wlan.sta_mac,
-                     MLAN_MAC_ADDR_LENGTH);
+        g_flt_cfg.mef_entry[0].filter_item[filt_num].type         = TYPE_BYTE_EQ;
+        g_flt_cfg.mef_entry[0].filter_item[filt_num].repeat       = 16;
+        g_flt_cfg.mef_entry[0].filter_item[filt_num].offset       = 56;
+        g_flt_cfg.mef_entry[0].filter_item[filt_num].num_byte_seq = MLAN_MAC_ADDR_LENGTH;
+
+        if (wlan.hs_bss_type == WLAN_BSS_TYPE_UAP)
+        {
+            (void)memcpy((void *)g_flt_cfg.mef_entry[0].filter_item[filt_num].byte_seq, (const void *)wlan.uap_mac,
+                         MLAN_MAC_ADDR_LENGTH);
+        }
+        else
+        {
+            (void)memcpy((void *)g_flt_cfg.mef_entry[0].filter_item[filt_num].byte_seq, (const void *)wlan.sta_mac,
+                         MLAN_MAC_ADDR_LENGTH);
+        }
+
         if (filt_num)
-            flt_cfg.mef_entry[0].rpn[filt_num] = RPN_TYPE_OR;
+            g_flt_cfg.mef_entry[0].rpn[filt_num] = RPN_TYPE_OR;
         filt_num++;
         // flt_cfg.mef_entry.filter_item[1].fill_flag	  = (FILLING_TYPE | FILLING_REPEAT | FILLING_BYTE_SEQ |
         // FILLING_OFFSET);
-        flt_cfg.mef_entry[0].filter_item[filt_num].type         = TYPE_BYTE_EQ;
-        flt_cfg.mef_entry[0].filter_item[filt_num].repeat       = 16;
-        flt_cfg.mef_entry[0].filter_item[filt_num].offset       = 28;
-        flt_cfg.mef_entry[0].filter_item[filt_num].num_byte_seq = MLAN_MAC_ADDR_LENGTH;
-        (void)memcpy((void *)flt_cfg.mef_entry[0].filter_item[filt_num].byte_seq, (const void *)wlan.sta_mac,
-                     MLAN_MAC_ADDR_LENGTH);
+        g_flt_cfg.mef_entry[0].filter_item[filt_num].type         = TYPE_BYTE_EQ;
+        g_flt_cfg.mef_entry[0].filter_item[filt_num].repeat       = 16;
+        g_flt_cfg.mef_entry[0].filter_item[filt_num].offset       = 28;
+        g_flt_cfg.mef_entry[0].filter_item[filt_num].num_byte_seq = MLAN_MAC_ADDR_LENGTH;
+
+        if (wlan.hs_bss_type == WLAN_BSS_TYPE_UAP)
+        {
+            (void)memcpy((void *)g_flt_cfg.mef_entry[0].filter_item[filt_num].byte_seq, (const void *)wlan.uap_mac,
+                         MLAN_MAC_ADDR_LENGTH);
+        }
+        else
+        {
+            (void)memcpy((void *)g_flt_cfg.mef_entry[0].filter_item[filt_num].byte_seq, (const void *)wlan.sta_mac,
+                         MLAN_MAC_ADDR_LENGTH);
+        }
+
         if (filt_num)
-            flt_cfg.mef_entry[0].rpn[filt_num] = RPN_TYPE_OR;
+            g_flt_cfg.mef_entry[0].rpn[filt_num] = RPN_TYPE_OR;
         filt_num++;
     }
-    flt_cfg.mef_entry[0].filter_num = filt_num;
-    return wifi_set_packet_filters(&flt_cfg);
+    g_flt_cfg.mef_entry[0].filter_num = filt_num;
+    return wifi_set_packet_filters(&g_flt_cfg);
 }
+#endif
 
 #if CONFIG_AUTO_PING
 int wlan_set_auto_ping(void)
@@ -14565,6 +14599,12 @@ int wlan_set_ipv6_ns_mef(t_u8 mef_action)
 {
 	int index;
 
+	if(!is_sta_connected())
+	{
+	    wlcm_e("No connection on STA");
+	    return -WM_E_PERM;
+	}
+
     if (g_flt_cfg.nentries >= MAX_NUM_ENTRIES)
     {
         wlcm_e("Number of MEF entries(%d) exceeds limit(8)!", g_flt_cfg.nentries);
@@ -14599,6 +14639,13 @@ int wlan_set_ipv6_ns_mef(t_u8 mef_action)
 int wlan_mef_set_multicast(t_u8 mef_action)
 {
     t_u32 index = 0;
+
+    if(!is_sta_connected() && !is_uap_started())
+    {
+        wlcm_e("No connection on STA and uAP is not activated.");
+        wlcm_e("Should at least meet one condition.");
+        return -WM_E_PERM;
+    }
 
     if (g_flt_cfg.nentries >= MAX_NUM_ENTRIES)
     {

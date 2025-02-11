@@ -5481,16 +5481,16 @@ static void dump_wlan_add_packet_filter()
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("For wowlan Add packet filter\r\n");
     (void)PRINTF("wowlan magic filter:\r\n");
-    (void)PRINTF("wlan_add_packet_filter 1:\r\n");
+    (void)PRINTF("wlan_add_packet_filter sta/uap 1:\r\n");
     (void)PRINTF("wowlan User defined pattren packet filter:\r\n");
-    (void)PRINTF("wlan_add_packet_filter 0 <number of patterns> <ptn_len> <pkt_offset> <ptn> ........:\r\n");
+    (void)PRINTF("wlan_add_packet_filter sta/uap 0 <number of patterns> <ptn_len> <pkt_offset> <ptn> ........:\r\n");
     (void)PRINTF(
-        "For 2 number of patterns Usage \r\nwlan_add_packet_filter 0 2 6 0 0xff 0xff 0xff 0xff 0xff 0xff 4 20 192 168 "
+        "For 2 number of patterns Usage \r\nwlan_add_packet_filter sta/uap 0 2 6 0 0xff 0xff 0xff 0xff 0xff 0xff 4 20 192 168 "
         "10 1\r\n");
     (void)PRINTF("wowlan User defined pattren and magic packet filter:\r\n");
-    (void)PRINTF("wlan_add_packet_filter 1 <number of patterns> <ptn_len> <pkt_offset> <ptn> ........:\r\n");
+    (void)PRINTF("wlan_add_packet_filter sta/uap 1 <number of patterns> <ptn_len> <pkt_offset> <ptn> ........:\r\n");
     (void)PRINTF(
-        "For 2 number of patterns Usage \r\nwlan_add_packet_filter 1 2 6 0 0xff 0xff 0xff 0xff 0xff 0xff 4 20 192 168 "
+        "For 2 number of patterns Usage \r\nwlan_add_packet_filter sta/uap 1 2 6 0 0xff 0xff 0xff 0xff 0xff 0xff 4 20 192 168 "
         "10 1\r\n");
 }
 
@@ -5499,24 +5499,43 @@ static void test_wlan_add_packet_filter(int argc, char **argv)
     int ret = -WM_FAIL;
     t_u8 i = 0, j = 0, k = 0;
     wlan_wowlan_ptn_cfg_t wowlan_ptn_cfg;
-    if (argc < 2)
+    enum wlan_bss_type bss_type = WLAN_BSS_TYPE_STA;
+
+    if (argc < 3)
     {
-        (void)PRINTF("Usage: %s <0/1>\r\n", argv[0]);
+        (void)PRINTF("Usage: %s <sta/uap> <0/1> \r\n", argv[0]);
         (void)PRINTF("Error: Specify 1 to magic filter\r\n");
         dump_wlan_add_packet_filter();
         return;
     }
-    if (argc > 3 && atoi(argv[2]) != argc - 3)
+
+    if (string_equal("sta", argv[1]))
     {
-        (void)PRINTF("Usage: %s 0/1 <patterns number> <ptn_len> <pkt_offset> <ptn> ...........\r\n", argv[0]);
+        bss_type = MLAN_BSS_TYPE_STA;
+    }
+    else if (string_equal("uap", argv[1]))
+    {
+        bss_type = MLAN_BSS_TYPE_UAP;
+    }
+    else
+    {
+       (void)PRINTF("Error: provide BSS type\r\n");
+       (void)PRINTF("Usage: %s <sta/uap> <0/1> \r\n", argv[0]);
+       dump_wlan_add_packet_filter();
+       return;
+    }
+
+    if (((argc > 4) && !(((atoi(argv[3]) * atoi(argv[4])) + 6) == argc)))
+    {
+        (void)PRINTF("Usage: %s sta/uap 0/1 <patterns number> <ptn_len> <pkt_offset> <ptn> ...........\r\n", argv[0]);
         dump_wlan_add_packet_filter();
         return;
     }
     (void)memset(&wowlan_ptn_cfg, 0, sizeof(wlan_wowlan_ptn_cfg_t));
-    wowlan_ptn_cfg.enable = atoi(argv[1]);
-    if (argc > 2)
+    wowlan_ptn_cfg.enable = atoi(argv[2]);
+    if (argc > 3)
     {
-        wowlan_ptn_cfg.n_patterns = atoi(argv[2]);
+        wowlan_ptn_cfg.n_patterns = atoi(argv[3]);
         for (i = 0, k = 0; (i + 3 < argc) && k < MAX_NUM_FILTERS; k++)
         {
             wowlan_ptn_cfg.patterns[k].pattern_len = atoi(argv[i + 3]);
@@ -5529,7 +5548,7 @@ static void test_wlan_add_packet_filter(int argc, char **argv)
             (void)memset(wowlan_ptn_cfg.patterns[k].mask, 0x3f, 6);
         }
     }
-    ret = wlan_wowlan_cfg_ptn_match(&wowlan_ptn_cfg);
+    ret = wlan_wowlan_cfg_ptn_match(bss_type, &wowlan_ptn_cfg);
     if (ret == WM_SUCCESS)
         (void)PRINTF("Enabled pkt filter offload feature");
     else
@@ -12669,7 +12688,7 @@ static struct cli_command tests[] = {
     {"enable-ns-offload", NULL, test_wlan_ns_offload},
     {"wlan-auto-arp", NULL, test_wlan_auto_arp},
 #if CONFIG_MEF_CFG
-    {"wlan-add-packet-filter", "0/1 <patterns number> <ptn_len> <pkt_offset> <ptn> ...........",
+    {"wlan-add-packet-filter", " sta/uap 0/1 <patterns number> <ptn_len> <pkt_offset> <ptn> ...........",
      test_wlan_add_packet_filter},
     {"wlan-host-sleep", "<0/1> mef/wowlan <wake_up_conds>", test_wlan_host_sleep},
 #else
