@@ -144,8 +144,11 @@ typedef enum __mlan_status
 static void wifi_core_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
+#ifdef IW610
+static OSA_TASK_DEFINE(wifi_core_task, WLAN_TASK_PRI_NORMAL, 1, CONFIG_WIFI_CORE_STACK_SIZE, 0);
+#else
 static OSA_TASK_DEFINE(wifi_core_task, WLAN_TASK_PRI_HIGH, 1, CONFIG_WIFI_CORE_STACK_SIZE, 0);
-
+#endif
 #endif
 
 #if !CONFIG_WIFI_SCAN_STACK_SIZE
@@ -186,7 +189,7 @@ static OSA_TASK_DEFINE(wifi_pre_asleep_task, WLAN_TASK_PRI_HIGH, 1, CONFIG_WIFI_
 static void wifi_drv_tx_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-#ifdef RW610
+#if defined(RW610) || defined(IW610)
 static OSA_TASK_DEFINE(wifi_drv_tx_task, WLAN_TASK_PRI_NORMAL, 1, CONFIG_WIFI_DRV_TX_STACK_SIZE, 0);
 #else
 static OSA_TASK_DEFINE(wifi_drv_tx_task, WLAN_TASK_PRI_HIGH, 1, CONFIG_WIFI_DRV_TX_STACK_SIZE, 0);
