@@ -1278,9 +1278,9 @@ struct wlan_network_security
     char eap_password[PASSWORD_MAX_LENGTH];
 #if CONFIG_EAP_MSCHAPV2
     /** whether verify peer with CA or not
-     *  0: not verify,
-     *  1: verify. */
-    bool verify_peer;
+     *  false: not verify,
+     *  true: verify. */
+    bool verify_peer_cert;
 #endif
     /** CA (Certificate Authority) certification blob (Binary Large Object) in PEM (Base64 ASCII)/DER (binary) format */
     unsigned char *ca_cert_data;

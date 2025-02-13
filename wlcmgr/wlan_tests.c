@@ -677,7 +677,7 @@ static void dump_wlan_add_usage(void)
 #if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
 #if CONFIG_EAP_MSCHAPV2
     (void)PRINTF("      If using eap-ttls-mschapv2/eap-peap-mschapv2, "
-        "please specify whether use CA or not by setting 'use_ca <0/1>'\r\n");
+        "please specify whether verify peer with CA or not by setting 'verify_peer_cert <0/1>'\r\n");
 #endif
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3-ent/wpa3-sb/wpa3-sb-192] ["
@@ -703,7 +703,7 @@ static void dump_wlan_add_usage(void)
         "\r\n");
 #if CONFIG_EAP_MSCHAPV2
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa3-ent/wpa3-sb/wpa3-sb-192] [eap-ttls-mschapv2 use_ca <0/1> aid <anonymous identity> id "
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-ent/wpa3-sb/wpa3-sb-192] [eap-ttls-mschapv2 verify_peer_cert <0/1> aid <anonymous identity> id "
         "<identity> pass "
         "<password> [key_passwd <client_key_passwd>]] [mfpc <1> mfpr <0/1>]"
         "\r\n");
@@ -724,7 +724,7 @@ static void dump_wlan_add_usage(void)
 #endif
 #if CONFIG_EAP_MSCHAPV2
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa3-ent/wpa3-sb/wpa3-sb-192] [eap-peap-mschapv2 use_ca <0/1>"
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-ent/wpa3-sb/wpa3-sb-192] [eap-peap-mschapv2 verify_peer_cert <0/1>"
         " [ver 0/1] id <identity> pass "
         "<password> [key_passwd <client_key_passwd>]] [mfpc <1> mfpr <0/1>]"
         "\r\n");
@@ -1496,16 +1496,16 @@ static void test_wlan_add(int argc, char **argv)
 #endif
 
 #if CONFIG_EAP_MSCHAPV2
-            network.security.verify_peer = 0;
-            if (string_equal(argv[arg + 1], "use_ca") != false)
+            network.security.verify_peer_cert = false;
+            if (string_equal(argv[arg + 1], "verify_peer_cert") != false)
             {
                 unsigned int value;
                 if ((arg + 1 >= argc) || get_uint(argv[arg + 2], &value, strlen(argv[arg + 2])) || (value != 0 && value != 1))
                 {
-                    (void)PRINTF("Error: invalid use_ca parameter, please specify 0 or 1\r\n");
+                    (void)PRINTF("Error: invalid verify_peer_cert parameter, please specify 0 or 1\r\n");
                     return;
                 }
-                network.security.verify_peer = value;
+                network.security.verify_peer_cert = !!value;
                 arg += 2;
             }
 #endif

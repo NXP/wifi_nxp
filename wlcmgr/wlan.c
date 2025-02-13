@@ -8553,9 +8553,9 @@ static bool wlan_is_eap_fast_security(enum wlan_security_type security)
 }
 
 #if CONFIG_EAP_MSCHAPV2
-static bool wlan_is_skip_ca(enum wlan_security_type security, bool verify_peer)
+static bool wlan_is_skip_ca(enum wlan_security_type security, bool verify_peer_cert)
 {
-    if (((security == WLAN_SECURITY_EAP_TTLS_MSCHAPV2) || (security == WLAN_SECURITY_EAP_PEAP_MSCHAPV2)) && (verify_peer == 0))
+    if (((security == WLAN_SECURITY_EAP_TTLS_MSCHAPV2) || (security == WLAN_SECURITY_EAP_PEAP_MSCHAPV2)) && (!verify_peer_cert))
         return true;
 
     return false;
@@ -9308,7 +9308,7 @@ int wlan_add_network(struct wlan_network *network)
 #endif
         {
 #if CONFIG_EAP_MSCHAPV2
-            if (false == wlan_is_skip_ca(network->security.type, network->security.verify_peer))
+            if (false == wlan_is_skip_ca(network->security.type, network->security.verify_peer_cert))
              {
 #endif
                 /* Specify CA certificate */
