@@ -12325,7 +12325,12 @@ int wlan_wowlan_cfg_ptn_match(enum wlan_bss_type bss_type, wlan_wowlan_ptn_cfg_t
 
     if (wlan.hs_bss_type == WLAN_BSS_TYPE_UAP)
     {
-         (void)PRINTF("pkt filter offload feature is configured for UAP mode\r\n");
+#if UAP_SUPPORT
+        (void)PRINTF("pkt filter offload feature is configured for UAP mode\r\n");
+#else
+        (void)PRINTF("pkt filter offload set fail because uAP mode not supported\r\n");
+        return -WM_E_NODEV;
+#endif
     }
     else
     {
@@ -12406,12 +12411,14 @@ int wlan_wowlan_cfg_ptn_match(enum wlan_bss_type bss_type, wlan_wowlan_ptn_cfg_t
         g_flt_cfg.mef_entry[0].filter_item[filt_num].offset       = 56;
         g_flt_cfg.mef_entry[0].filter_item[filt_num].num_byte_seq = MLAN_MAC_ADDR_LENGTH;
 
+#if UAP_SUPPORT
         if (wlan.hs_bss_type == WLAN_BSS_TYPE_UAP)
         {
             (void)memcpy((void *)g_flt_cfg.mef_entry[0].filter_item[filt_num].byte_seq, (const void *)wlan.uap_mac,
                          MLAN_MAC_ADDR_LENGTH);
         }
         else
+#endif
         {
             (void)memcpy((void *)g_flt_cfg.mef_entry[0].filter_item[filt_num].byte_seq, (const void *)wlan.sta_mac,
                          MLAN_MAC_ADDR_LENGTH);
@@ -12427,12 +12434,14 @@ int wlan_wowlan_cfg_ptn_match(enum wlan_bss_type bss_type, wlan_wowlan_ptn_cfg_t
         g_flt_cfg.mef_entry[0].filter_item[filt_num].offset       = 28;
         g_flt_cfg.mef_entry[0].filter_item[filt_num].num_byte_seq = MLAN_MAC_ADDR_LENGTH;
 
+#if UAP_SUPPORT
         if (wlan.hs_bss_type == WLAN_BSS_TYPE_UAP)
         {
             (void)memcpy((void *)g_flt_cfg.mef_entry[0].filter_item[filt_num].byte_seq, (const void *)wlan.uap_mac,
                          MLAN_MAC_ADDR_LENGTH);
         }
         else
+#endif
         {
             (void)memcpy((void *)g_flt_cfg.mef_entry[0].filter_item[filt_num].byte_seq, (const void *)wlan.sta_mac,
                          MLAN_MAC_ADDR_LENGTH);
