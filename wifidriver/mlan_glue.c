@@ -6360,6 +6360,7 @@ int wrapper_bssdesc_first_set(int bss_index,
 
         if (d->prsn_ie != MNULL)
         {
+            (*ap_mfpr)     = 1;
             /* use superset of RSNE, RSNO and RSNO2 to match with network security profile */
             process_rsn_ie(d->rsn_ie_buff, rsn_mcstCipher, rsn_ucstCipher, ap_mfpc, ap_mfpr, WPA_WPA2_WEP);
 
