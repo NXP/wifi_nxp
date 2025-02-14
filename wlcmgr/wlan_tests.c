@@ -5409,13 +5409,32 @@ static void test_wlan_add_packet_filter(int argc, char **argv)
     int ret = -WM_FAIL;
     t_u8 i = 0, j = 0, k = 0;
     wlan_wowlan_ptn_cfg_t wowlan_ptn_cfg;
-    if (argc < 2)
+    enum wlan_bss_type bss_type = WLAN_BSS_TYPE_STA;
+
+    if (argc < 3)
     {
-        (void)PRINTF("Usage: %s <0/1>\r\n", argv[0]);
+        (void)PRINTF("Usage: %s <sta/uap> <0/1>\r\n", argv[0]);
         (void)PRINTF("Error: Specify 1 to magic filter\r\n");
         dump_wlan_add_packet_filter();
         return;
     }
+
+	if (string_equal("sta", argv[1]))
+    {
+        bss_type = MLAN_BSS_TYPE_STA;
+    }
+    else if (string_equal("uap", argv[1]))
+    {
+        bss_type = MLAN_BSS_TYPE_UAP;
+    }
+    else
+    {
+       (void)PRINTF("Error: provide BSS type\r\n");
+       (void)PRINTF("Usage: %s <sta/uap> <0/1> \r\n", argv[0]);
+       dump_wlan_add_packet_filter();
+       return;
+    }
+
     if (argc > 3 && atoi(argv[2]) != argc - 3)
     {
         (void)PRINTF("Usage: %s 0/1 <patterns number> <ptn_len> <pkt_offset> <ptn> ...........\r\n", argv[0]);
@@ -5439,14 +5458,14 @@ static void test_wlan_add_packet_filter(int argc, char **argv)
             (void)memset(wowlan_ptn_cfg.patterns[k].mask, 0x3f, 6);
         }
     }
-    ret = wlan_wowlan_cfg_ptn_match(&wowlan_ptn_cfg);
+    ret = wlan_wowlan_cfg_ptn_match(bss_type, &wowlan_ptn_cfg);
     if (ret == WM_SUCCESS)
         (void)PRINTF("Enabled pkt filter offload feature");
     else
         (void)PRINTF("Failed to enabled magic pkt filter offload, error: %d", ret);
 }
 #endif /* CONFIG_MEF_CFG */
-#endif /*RW610*/
+#endif /* CONFIG_WIFI_BLE_COEX_APP */
 #else
 static void test_wlan_ns_offload(int argc, char **argv)
 {
