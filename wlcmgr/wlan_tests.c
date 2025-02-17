@@ -7478,19 +7478,33 @@ static void test_wlan_set_mac_address(int argc, char **argv)
 
 #if (CONFIG_WIFI_RESET)
 #ifdef RW610
+static void dump_wlan_reset_usage(void)
+{
+    (void)PRINTF("Usage: wlan-reset <options>\r\n");
+    (void)PRINTF("0 to Disable WiFi\r\n");
+    (void)PRINTF("1 to Enable WiFi\r\n");
+    (void)PRINTF("2 to Reset WiFi\r\n");
+}
+
 static void test_wlan_reset(int argc, char **argv)
 {
     int option;
 
-    option = atoi(argv[1]);
-    if (argc != 2 || (option != 0 && option != 1 && option != 2))
+    if (argc != 2)
     {
-        (void)PRINTF("Usage: %s <options>\r\n", argv[0]);
-        (void)PRINTF("0 to Disable WiFi\r\n");
-        (void)PRINTF("1 to Enable WiFi\r\n");
-        (void)PRINTF("2 to Reset WiFi\r\n");
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_reset_usage();
         return;
     }
+
+    option = atoi(argv[1]);
+    if (option != 0 && option != 1 && option != 2)
+    {
+        (void)PRINTF("Error: invalid option\r\n");
+        dump_wlan_reset_usage();
+        return;
+    }
+
 #if CONFIG_CSI
     if (option == 2)
     {
