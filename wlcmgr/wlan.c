@@ -12265,6 +12265,7 @@ int wlan_set_auto_arp(void)
     return wifi_set_packet_filters(&flt_cfg);
 }
 
+#if CONFIG_HOST_SLEEP
 #ifndef __ZEPHYR__
 #define DIV_ROUND_UP(n, d) (((n) + (d)-1) / (d))
 #endif
@@ -12317,7 +12318,6 @@ static t_bool is_wowlan_pattern_supported(wifi_wowlan_pattern_t *pat, t_u8 *byte
     return true;
 }
 
-#if CONFIG_HOST_SLEEP
 int wlan_wowlan_cfg_ptn_match(enum wlan_bss_type bss_type, wlan_wowlan_ptn_cfg_t *ptn_cfg)
 {
 
