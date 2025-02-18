@@ -14596,13 +14596,15 @@ int wlan_mef_set_auto_ping(t_u8 mef_action)
 
 int wlan_set_ipv6_ns_mef(t_u8 mef_action)
 {
-	int index;
+    int index;
 
-	if(!is_sta_connected())
-	{
-	    wlcm_e("No connection on STA");
-	    return -WM_E_PERM;
-	}
+#ifndef RW610
+    if(!is_sta_connected())
+    {
+        wlcm_e("No connection on STA");
+        return -WM_E_PERM;
+    }
+#endif
 
     if (g_flt_cfg.nentries >= MAX_NUM_ENTRIES)
     {
