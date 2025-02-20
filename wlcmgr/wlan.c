@@ -14610,7 +14610,7 @@ int wlan_set_ipv6_ns_mef(t_u8 mef_action)
 {
     int index;
 
-#ifndef RW610
+#if !defined(RW610) && !defined(IW610)
     if(!is_sta_connected())
     {
         wlcm_e("No connection on STA");
