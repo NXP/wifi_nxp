@@ -8261,18 +8261,6 @@ int wlan_stop(void)
         return WLAN_ERROR_STATE;
     }
 #endif
-
-    /* We need to wait for scan_lock as wifi scan might have been
-     * scheduled, so it must be completed before deleting cm_main_thread
-     * here. Otherwise deadlock situation might arrive as both of them
-     * share command_lock semaphore.
-     */
-    status = OSA_SemaphoreWait((osa_semaphore_handle_t)wlan.scan_lock, osaWaitForever_c);
-    if (status != KOSA_StatusSuccess)
-    {
-        wlcm_w("failed to get scan lock: %d.", ret);
-        return WLAN_ERROR_STATE;
-    }
 #else
 #if CONFIG_WIFI_RECOVERY && UAP_SUPPORT
     /* If CONFIG_WIFI_RECOVERY is defined, 0xb2 CMD will be skipped, but dhcp_server_stop()
@@ -10580,6 +10568,8 @@ void wlan_reset(cli_reset_option ResetOption)
 #if defined(RW610)
             /* wait for imu task done */
             wlan_imu_get_task_lock();
+#else
+            g_txrx_flag = false;
 #endif
             /* Destroy all tasks before touch the global vars */
             wlan_destroy_all_tasks();
