@@ -10402,6 +10402,8 @@ void wlan_reset(cli_reset_option ResetOption)
 #if defined(RW610)
             /* wait for imu task done */
             wlan_imu_get_task_lock();
+#else
+            wifi_sdio_lock();
 #endif
             /* Destroy all tasks before touch the global vars */
             wlan_destroy_all_tasks();
