@@ -10570,6 +10570,7 @@ void wlan_reset(cli_reset_option ResetOption)
             wlan_imu_get_task_lock();
 #else
             g_txrx_flag = false;
+            wifi_sdio_lock();
 #endif
             /* Destroy all tasks before touch the global vars */
             wlan_destroy_all_tasks();
