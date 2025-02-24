@@ -4075,6 +4075,7 @@ int wlan_set_auto_arp(void);
 int wlan_set_auto_ping(void);
 #endif /*  CONFIG_AUTO_PING */
 
+#if (CONFIG_HOST_SLEEP && CONFIG_MEF_CFG)
 /**
  * Use this API to enable WOWLAN (wake-on-wireless-LAN) on magic packet RX in Wi-Fi firmware
  *
@@ -4084,6 +4085,8 @@ int wlan_set_auto_ping(void);
  *\return -WM_FAIL if command fails
  */
 int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg);
+#endif
+
 /**
  * Use this API to enable NS offload in Wi-Fi firmware.
  *

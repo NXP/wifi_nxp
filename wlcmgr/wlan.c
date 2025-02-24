@@ -12556,6 +12556,7 @@ static inline bool is_broadcast_ether_addr(const t_u8 *addr)
 }
 #endif
 
+#if CONFIG_MEF_CFG
 /**
  * @brief is_wowlan_pattern_supported
  *
@@ -12693,6 +12694,7 @@ int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg)
     flt_cfg.mef_entry[0].filter_num = filt_num;
     return wifi_set_packet_filters(&flt_cfg);
 }
+#endif
 
 #if CONFIG_AUTO_PING
 int wlan_set_auto_ping(void)
