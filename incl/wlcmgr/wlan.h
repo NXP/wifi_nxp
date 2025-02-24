@@ -3971,7 +3971,7 @@ int wlan_set_auto_arp(void);
 int wlan_set_auto_ping(void);
 #endif /*  CONFIG_AUTO_PING */
 
-#if CONFIG_HOST_SLEEP
+#if (CONFIG_HOST_SLEEP && CONFIG_MEF_CFG)
 /**
  * Use this API to enable WOWLAN (wake-on-wireless-LAN) on magic packet RX in Wi-Fi firmware
  *
