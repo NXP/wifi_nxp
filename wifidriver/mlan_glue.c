@@ -6960,7 +6960,11 @@ int wrapper_bssdesc_first_set(int bss_index,
         pwe_rsnx = MBIT(0);
     }
 
-    if ((d->prsnxo_ie != MNULL) && (d->prsnxo_ie->data[0] & (0x1 << SAE_H2E_BIT)))
+    if (!d->prsnxo_ie)
+    {
+        pwe_rsnxo = 0;
+    }
+    else if (d->prsnxo_ie->data[0] & (0x1 << SAE_H2E_BIT))
     {
         pwe_rsnxo = MBIT(2);
         for (i = WLAN_SUPPORTED_RATES; i > 0; i--)
