@@ -1236,6 +1236,22 @@
 #define CONFIG_WIFI_HTC_DEBUG 0
 #endif
 
+#if !defined CONFIG_NO_WIFI_TCPIP_INIT
+#define CONFIG_NO_WIFI_TCPIP_INIT 0
+#endif
+
+#if !defined CONFIG_NET_DEBUG
+#define CONFIG_NET_DEBUG 0
+#endif
+
+#if !defined FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+#define FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER 0
+#endif
+
+#if !defined CONFIG_UART_WIFI_BRIDGE
+#define CONFIG_UART_WIFI_BRIDGE 0
+#endif
+
 /*
  * Heap debug options
  */

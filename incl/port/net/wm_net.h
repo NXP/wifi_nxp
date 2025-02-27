@@ -749,12 +749,12 @@ char *ipv6_addr_type_to_desc(struct net_ipv6_config *ipv6_conf);
  * Use net_get_sta_handle(), net_get_uap_handle() to get
  * interface handle.
  *
- * \param[out] if_name interface name pointer
+ * \param[out] pif_name interface name pointer
  * \param[in] intrfc_handle interface handle
  *
  * \return WM_SUCCESS on success or error code.
  */
-int net_get_if_name(char *if_name, void *intrfc_handle);
+int net_get_if_name(char *pif_name, void *intrfc_handle);
 
 /** Get interface IP Address
  *

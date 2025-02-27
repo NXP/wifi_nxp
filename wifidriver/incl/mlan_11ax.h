@@ -1,4 +1,3 @@
-#if CONFIG_11AX
 /** @file mlan_11ax.h
  *
  *  @brief This file defines the private and adapter data
@@ -14,6 +13,7 @@
 #ifndef _MLAN_11AX_H_
 #define _MLAN_11AX_H_
 
+#if CONFIG_11AX
 /** device support 2.4G 40MHZ */
 #define AX_2G_40MHZ_SUPPORT MBIT(1)
 /** device support 2.4G 242 tone RUs */
@@ -50,5 +50,5 @@ mlan_status wlan_ret_11ax_cmd(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, ml
 #if CONFIG_11AX_TWT
 mlan_status wlan_cmd_twt_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf);
 #endif /* CONFIG_11AX_TWT */
-#endif /* _MLAN_11AX_H_ */
 #endif /* CONFIG_11AX */
+#endif /* _MLAN_11AX_H_ */
