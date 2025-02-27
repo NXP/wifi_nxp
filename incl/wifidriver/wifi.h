@@ -37,11 +37,12 @@
 #endif
 #if defined(SD9177) || defined(IW610)
 #define CONFIG_FW_VDLL     1
+#if UAP_SUPPORT
 #if !CONFIG_WIFI_CAPA
 #undef CONFIG_WIFI_CAPA
 #define CONFIG_WIFI_CAPA 1
 #endif
-
+#endif
 #if CONFIG_11AX
 #if !CONFIG_11K
 #define CONFIG_11K 1
@@ -1807,6 +1808,7 @@ bool wifi_is_remain_on_channel(void);
  */
 void wifi_sta_handle_event_data_pause(void *tx_pause);
 #endif
+
 /* UAP support */
 #if UAP_SUPPORT
 #if CONFIG_WMM

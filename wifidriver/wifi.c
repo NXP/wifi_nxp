@@ -4477,6 +4477,7 @@ int wifi_low_level_output(const t_u8 interface,
             }
         }
     }
+#if UAP_SUPPORT
     else if (interface == MLAN_BSS_TYPE_UAP)
     {
         ret = wlan_is_tcp_ack(pmpriv, buffer);
@@ -4517,6 +4518,7 @@ int wifi_low_level_output(const t_u8 interface,
             }
         }
     }
+#endif /** UAP_SUPPORT */
 #endif /** CONFIG_TCP_ACK_ENH */
 #endif /** CONFIG_11AX */
 #endif
