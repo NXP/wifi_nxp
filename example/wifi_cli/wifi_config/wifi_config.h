@@ -71,7 +71,7 @@
 #define CONFIG_FW_VDLL_DEBUG 0
 #define CONFIG_DHCP_SERVER_DEBUG 0
 #define CONFIG_FWDNLD_IO_DEBUG 0
-
+#define CONFIG_WIFI_SG_DEBUG 0
 /*
  * Heap debug options
  */

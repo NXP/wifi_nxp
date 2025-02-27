@@ -10386,7 +10386,12 @@ void wlan_reset(cli_reset_option ResetOption)
             wlan_remove_all_networks();
 
             (void)net_wlan_deinit();
-
+#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+            if (wm_wifi.nxp_wifi_rxpbuf_reset != NULL)
+            {
+                wm_wifi.nxp_wifi_rxpbuf_reset();
+            }
+#endif
             wifi_scan_stop();
             mlan_adap->skip_dfs = false;
 #if defined(RW610)

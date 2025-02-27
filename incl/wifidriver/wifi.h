@@ -268,6 +268,13 @@ int wifi_register_get_rxbuf_desc_callback(void *(*wifi_get_rxbuf_desc)(t_u16 rx_
 
 void wifi_deregister_get_rxbuf_desc_callback(void);
 
+int wifi_register_flush_rxbuf_desc_callback(void (*wifi_flush_rxbuf_desc)());
+
+void wifi_deregister_flush_rxbuf_desc_callback(void);
+
+int wifi_register_rxpbuf_reset_callback(void (*nxp_wifi_rxpbuf_reset)());
+
+void wifi_deregister_rxpbuf_reset_callback(void);
 #endif
 
 /**

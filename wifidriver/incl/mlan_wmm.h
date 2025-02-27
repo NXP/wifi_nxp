@@ -203,7 +203,6 @@ mlan_status wlan_cmd_wmm_param_config(pmlan_private pmpriv,
 /* process wmm_param_config command response */
 mlan_status wlan_ret_wmm_param_config(pmlan_private pmpriv, const HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);
 
-#if CONFIG_WMM
 /* wmm enhance buffer pool */
 #define MAX_WMM_BUF_NUM 16
 #define WMM_DATA_LEN    1580
@@ -228,6 +227,7 @@ typedef struct
 #endif
 } outbuf_t;
 
+#if CONFIG_WMM
 typedef struct
 {
     mlan_linked_list entry;
