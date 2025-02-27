@@ -434,7 +434,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** TLV ID : Management Frame */
 #define TLV_TYPE_MGMT_FRAME (PROPRIETARY_TLV_BASE_ID + 0x68) /* 0x0168 */
 /** TLV type: management filter  */
-#define TLV_TYPE_MGMT_FRAME_WAKEUP (PROPRIETARY_TLV_BASE_ID + 0x116) /* 0x0216 */
+#define TLV_TYPE_MGMT_FRAME_WAKEUP (PROPRIETARY_TLV_BASE_ID + 0x116U) /* 0x0216 */
 
 #define TLV_TYPE_PREV_BSSID (PROPRIETARY_TLV_BASE_ID + 330)
 
@@ -1954,7 +1954,7 @@ typedef MLAN_PACK_START struct
 } MLAN_PACK_END MrvlIETypes_SmcAddrRange_t;
 
 #if CONFIG_HOST_SLEEP
-#define MAX_MGMT_FRAME_FILTER         2
+#define MAX_MGMT_FRAME_FILTER         2U
 #define EVENT_MANAGEMENT_FRAME_WAKEUP 0x00000088
 
 typedef MLAN_PACK_START struct _mgmt_frame_filter

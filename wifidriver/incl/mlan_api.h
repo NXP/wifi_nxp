@@ -663,4 +663,14 @@ int wifi_sta_inactivityto(wifi_inactivity_to_t *inac_to, t_u16 cmd_action);
 void wifi_iface_tx_stats(uint8_t *buf, int interface);
 void wifi_iface_rx_stats(uint8_t *buf, int interface);
 #endif
+
+#if (CONFIG_WPS2) || (CONFIG_WPA_SUPP_WPS)
+void check_for_wps_ie(const uint8_t *poui,
+                      t_u8 oui_type,
+                      bool *wps_IE_exist,
+                      t_u16 *wps_session,
+                      void *element_data,
+                      unsigned element_len);
+#endif /* CONFIG_WPA_SUPP_WPS */
+
 #endif /* __MLAN_API_H__ */

@@ -1424,15 +1424,6 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     return ret;
 }
 
-#if (CONFIG_WPS2) || (CONFIG_WPA_SUPP_WPS)
-void check_for_wps_ie(const uint8_t *poui,
-                      t_u8 oui_type,
-                      bool *wps_IE_exist,
-                      t_u16 *wps_session,
-                      void *element_data,
-                      unsigned element_len);
-#endif /* CONFIG_WPA_SUPP_WPS */
-
 /**
  *  @brief  Check if any hidden SSID found in passive scan channels
  *          and do specific SSID active scan for those channels

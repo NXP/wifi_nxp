@@ -848,9 +848,9 @@ void wifi_set_ps_cfg(t_u16 multiple_dtims,
                      t_u16 adhoc_wake_period,
                      t_u16 mode,
                      t_u16 delay_to_ps);
-int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action, t_u32 conditions);
+int wifi_send_hs_cfg_cmd(mlan_bss_type bss_type, t_u32 ipv4_addr, t_u16 action, t_u32 conditions);
 #if CONFIG_HOST_SLEEP
-int wifi_cancel_host_sleep(mlan_bss_type interface);
+int wifi_cancel_host_sleep(mlan_bss_type bss_type);
 #endif
 bool wrapper_wlan_11d_support_is_enabled(void);
 void wrapper_wlan_11d_clear_parsedtable(void);
@@ -865,18 +865,18 @@ int wifi_enter_deepsleep_power_save(void);
 int wifi_exit_deepsleep_power_save(void);
 int wifi_set_power_save_mode(void);
 int wifi_get_wakeup_reason(t_u16 *hs_wakeup_reason);
-void send_sleep_confirm_command(mlan_bss_type interface);
+void send_sleep_confirm_command(mlan_bss_type bss_type);
 
 #ifdef SD9177
-void prepare_error_sleep_confirm_command(mlan_bss_type interface);
+void prepare_error_sleep_confirm_command(mlan_bss_type bss_type);
 #endif
 
 void wifi_configure_listen_interval(int listen_interval);
 void wifi_configure_delay_to_ps(unsigned int timeout_ms);
 void wifi_configure_idle_time(unsigned int timeout_ms);
-unsigned short wifi_get_listen_interval();
-unsigned int wifi_get_delay_to_ps();
-unsigned int wifi_get_idle_time();
+unsigned short wifi_get_listen_interval(void);
+unsigned int wifi_get_delay_to_ps(void);
+unsigned int wifi_get_idle_time(void);
 void wifi_configure_null_pkt_interval(unsigned int null_pkt_interval);
 int wrapper_wifi_assoc(
     const unsigned char *bssid, int wlan_security, bool is_wpa_tkip,

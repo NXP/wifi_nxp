@@ -1098,6 +1098,22 @@
 #endif
 #endif
 
+#if !defined CONFIG_WIFI_TX_BUFF
+#define CONFIG_WIFI_TX_BUFF 0
+#endif
+
+#if !defined CONFIG_WLS_CSI_PROC
+#define CONFIG_WLS_CSI_PROC 0
+#endif
+
+#if !defined CONFIG_WIFI_PS_DEBUG
+#define CONFIG_WIFI_PS_DEBUG 0
+#endif
+
+#if !defined CONFIG_MEM_POOLS
+#define CONFIG_MEM_POOLS 0
+#endif
+
 #if !defined CONFIG_FW_VDLLV2
 #if defined(RW610)
 #define CONFIG_FW_VDLLV2 1

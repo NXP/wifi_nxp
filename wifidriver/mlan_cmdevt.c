@@ -134,7 +134,10 @@ mlan_status wlan_cmd_enh_power_mode(pmlan_private pmpriv,
         cmd->size                             = wlan_cpu_to_le16(S_DS_GEN + sizeof(t_u16) + sizeof(ext_ps_param));
         psmode_enh->params.ext_param.param.header.type = wlan_cpu_to_le16(TLV_TYPE_PS_EXT_PARAM);
         psmode_enh->params.ext_param.param.header.len  = sizeof(t_u32);
-        psmode_enh->params.ext_param.param.mode        = wlan_cpu_to_le32(*((t_u32 *)pdata_buf));
+        if (pdata_buf != NULL)
+        {
+            psmode_enh->params.ext_param.param.mode        = wlan_cpu_to_le32(*((t_u32 *)pdata_buf));
+        }
     }
     else if (cmd_action == EN_AUTO_PS)
     {

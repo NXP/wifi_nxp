@@ -78,8 +78,6 @@ extern bool mac_addr_valid;
 #if CONFIG_WIFI_TX_BUFF
 extern uint16_t tx_buf_size;
 #endif
-extern bool txpwrlimit_data_valid;
-extern uint8_t trpc_country;
 extern bus_operations bus_ops;
 
 mlan_status imu_wifi_init(enum wlan_type type, const uint8_t *fw_ram_start_addr, const size_t size);
@@ -109,7 +107,7 @@ HostCmd_DS_COMMAND *wifi_get_command_buffer(void);
 
 mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx_control);
 int raw_process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface);
-uint32_t wifi_get_device_value1();
+uint32_t wifi_get_device_value1(void);
 
 uint8_t *wifi_get_imu_outbuf(uint32_t *outbuf_len);
 
@@ -129,7 +127,7 @@ mlan_status wlan_xmit_wmm_amsdu_pkt(mlan_wmm_ac_e ac, t_u8 interface, t_u32 txle
 #endif
 #endif
 
-void imu_wakeup_card();
+void imu_wakeup_card(void);
 #if CONFIG_WIFI_TX_BUFF
 int _wlan_return_all_tx_buf(imu_link_t link);
 #endif
