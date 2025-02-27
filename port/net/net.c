@@ -158,32 +158,32 @@ char *ipv6_addr_state_to_desc(unsigned char addr_state)
 
 char *ipv6_addr_addr_to_desc(struct net_ipv6_config *ipv6_conf)
 {
-    ip6_addr_t ip6_addr;
+    ip6_addr_t tmp;
 
-    (void)memcpy((void *)ip6_addr.addr, (const void *)ipv6_conf->address, sizeof(ip6_addr.addr));
+    (void)memcpy((void *)tmp.addr, (const void *)ipv6_conf->address, sizeof(tmp.addr));
 
-    return inet6_ntoa(ip6_addr);
+    return inet6_ntoa(tmp);
 }
 
 char *ipv6_addr_type_to_desc(struct net_ipv6_config *ipv6_conf)
 {
-    ip6_addr_t ip6_addr;
+    ip6_addr_t tmp;
 
-    (void)memcpy((void *)ip6_addr.addr, (const void *)ipv6_conf->address, sizeof(ip6_addr.addr));
+    (void)memcpy((void *)tmp.addr, (const void *)ipv6_conf->address, sizeof(tmp.addr));
 
-    if (ip6_addr_islinklocal(&ip6_addr))
+    if (ip6_addr_islinklocal(&tmp))
     {
         return IPV6_ADDR_TYPE_LINKLOCAL;
     }
-    else if (ip6_addr_isglobal(&ip6_addr))
+    else if (ip6_addr_isglobal(&tmp))
     {
         return IPV6_ADDR_TYPE_GLOBAL;
     }
-    else if (ip6_addr_isuniquelocal(&ip6_addr))
+    else if (ip6_addr_isuniquelocal(&tmp))
     {
         return IPV6_ADDR_TYPE_UNIQUELOCAL;
     }
-    else if (ip6_addr_issitelocal(&ip6_addr))
+    else if (ip6_addr_issitelocal(&tmp))
     {
         return IPV6_ADDR_TYPE_SITELOCAL;
     }
@@ -216,7 +216,7 @@ void net_ipv4stack_init(void)
 {
     static bool tcpip_init_done;
     err_t err;
-    sys_sem_t init_sem;
+    static sys_sem_t init_sem;
 
     if (tcpip_init_done)
     {
@@ -224,12 +224,12 @@ void net_ipv4stack_init(void)
     }
 
     err = sys_sem_new(&init_sem, 0);
-    LWIP_ASSERT("failed to create init_sem", err == ERR_OK);
+    LWIP_ASSERT("failed to create init_sem", err == (int)ERR_OK);
     LWIP_UNUSED_ARG(err);
 
     tcpip_init(tcpip_init_done_cb, &init_sem);
 
-    sys_sem_wait(&init_sem);
+    (void)sys_sem_wait(&init_sem);
     sys_sem_free(&init_sem);
 
     tcpip_init_done = true;
@@ -284,11 +284,11 @@ int net_wlan_init(void)
     (void)wifi_register_deliver_packet_above_callback(&handle_deliver_packet_above);
     (void)wifi_register_wrapper_net_is_ip_or_ipv6_callback(&wrapper_net_is_ip_or_ipv6);
 #endif
-    if (!net_wlan_init_done)
+    if (net_wlan_init_done == 0)
     {
         wifi_mac_addr_t mac_addr = {0};
 
-        wifi_get_device_mac_addr(&mac_addr);
+        (void)wifi_get_device_mac_addr(&mac_addr);
         wlan_set_mac_addr((uint8_t *)(&mac_addr.mac[0]));
 
 #if !CONFIG_NO_WIFI_TCPIP_INIT
@@ -370,7 +370,7 @@ int net_get_if_name_netif(char *pif_name, struct netif *iface)
     char if_name[NETIF_NAMESIZE];
     int ret;
 
-    ret = netifapi_netif_index_to_name(iface->num + 1, if_name);
+    ret = netifapi_netif_index_to_name((uint8_t)iface->num + 1U, if_name);
 
     if (ret != WM_SUCCESS)
     {
@@ -488,7 +488,7 @@ static void wm_netif_status_callback(struct netif *n)
      * The flag value is zero, if we are still in process of connection
      * establishment or dhcp is off
      */
-    enum wifi_event_reason wifi_event_reason;
+    enum wifi_event_reason event_reason;
     event_flag_dhcp_connection = DHCP_IGNORE;
 
     if (is_dhcp_off)
@@ -524,10 +524,10 @@ static void wm_netif_status_callback(struct netif *n)
     switch (event_flag_dhcp_connection)
     {
         case DHCP_SUCCESS:
-            wifi_event_reason = WIFI_EVENT_REASON_SUCCESS;
+            event_reason = WIFI_EVENT_REASON_SUCCESS;
             break;
         case DHCP_FAILED:
-            wifi_event_reason = WIFI_EVENT_REASON_FAILURE;
+            event_reason = WIFI_EVENT_REASON_FAILURE;
             break;
         default:
             net_d("Unexpected DHCP event");
@@ -535,7 +535,7 @@ static void wm_netif_status_callback(struct netif *n)
     }
     if (event_flag_dhcp_connection != DHCP_IGNORE)
     {
-        (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, wifi_event_reason, NULL);
+        (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, event_reason, NULL);
     }
 }
 
@@ -552,7 +552,9 @@ static void stop_cb(void *ctx)
 #if CONFIG_IPV6
     if (!is_sta_ipv6_connected())
 #endif
+    {
         netif_set_down(&if_handle->netif);
+    }
     wm_netif_status_callback_ptr = NULL;
 }
 
@@ -581,22 +583,22 @@ static int check_iface_mask(void *handle, uint32_t ipaddr)
 static void *net_ip_to_interface(uint32_t ipaddr)
 {
     int ret;
-    void *handle;
+    void *phandle;
     /* Check mlan handle */
-    handle = net_get_mlan_handle();
-    ret    = check_iface_mask(handle, ipaddr);
+    phandle = net_get_mlan_handle();
+    ret    = check_iface_mask(phandle, ipaddr);
     if (ret == WM_SUCCESS)
     {
-        return handle;
+        return phandle;
     }
 
 #if UAP_SUPPORT
     /* Check uap handle */
-    handle = net_get_uap_handle();
-    ret    = check_iface_mask(handle, ipaddr);
+    phandle = net_get_uap_handle();
+    ret    = check_iface_mask(phandle, ipaddr);
     if (ret == WM_SUCCESS)
     {
-        return handle;
+        return phandle;
     }
 #endif
 
@@ -635,7 +637,7 @@ void *net_get_uap_handle(void)
 }
 #endif
 
-int net_alloc_client_data_id()
+int net_alloc_client_data_id(void)
 {
     int idx = -1;
 
@@ -676,7 +678,7 @@ void net_interface_dhcp_cleanup(void *intrfc_handle)
 int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
 {
 #if CONFIG_IPV6
-    t_u8 i;
+    t_s8 i;
 #endif
 
     if (addr == NULL)
@@ -707,7 +709,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
 
         for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
         {
-            if (if_handle->netif.ip6_addr_state[i] != IP6_ADDR_INVALID)
+            if (if_handle->netif.ip6_addr_state[(int)i] != (uint32_t)IP6_ADDR_INVALID)
             {
                 netif_ip6_addr_set_state(&if_handle->netif, i, IP6_ADDR_INVALID);
                 netif_ip6_addr_set(&if_handle->netif, i, IP6_ADDR_ANY6);
@@ -845,7 +847,7 @@ int net_get_if_name(char *pif_name, void *intrfc_handle)
     char if_name[NETIF_NAMESIZE] = {0};
     int ret;
 
-    ret = netifapi_netif_index_to_name(if_handle->netif.num + 1, if_name);
+    ret = netifapi_netif_index_to_name((uint8_t)if_handle->netif.num + 1U, if_name);
 
     if (ret != WM_SUCCESS)
     {
@@ -878,7 +880,7 @@ void net_configure_dns(struct net_ip_config *ip, unsigned int role)
 {
     ip4_addr_t tmp;
 
-    if (ip->ipv4.addr_type == NET_ADDR_TYPE_STATIC)
+    if (ip->ipv4.addr_type == (uint32_t)NET_ADDR_TYPE_STATIC)
     {
         if (role != WLAN_BSS_ROLE_UAP)
         {
@@ -1764,13 +1766,13 @@ static void ipv6_mcast_delete(struct net_mgmt_event_callback *cb, struct net_if 
 static void wifi_net_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event, struct net_if *iface)
 {
     // const struct wifi_status *status = (const struct wifi_status *)cb->info;
-    enum wifi_event_reason wifi_event_reason;
+    enum wifi_event_reason event_reason;
 
     switch (mgmt_event)
     {
         case NET_EVENT_IPV4_DHCP_BOUND:
-            wifi_event_reason = WIFI_EVENT_REASON_SUCCESS;
-            wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, wifi_event_reason, NULL);
+            event_reason = WIFI_EVENT_REASON_SUCCESS;
+            wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, event_reason, NULL);
             break;
         case NET_EVENT_IPV4_MADDR_ADD:
             ipv4_mcast_add(cb, iface);
