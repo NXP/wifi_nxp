@@ -1092,44 +1092,6 @@ static void main_task(osa_task_param_t arg)
 #endif /* CONFIG_BT_IND_DNLD */
 #endif
 
-#if defined(RW610_SERIES) || defined(RW612_SERIES)
-    NVIC_SetPriority(BOARD_UART_IRQ, 5);
-    usart_config.srcclk = BOARD_DEBUG_UART_CLK_FREQ;
-    usart_config.base   = BOARD_DEBUG_UART;
-
-    if (kStatus_Success != USART_RTOS_Init(&handle, &t_handle, &usart_config))
-    {
-        (void)vTaskSuspend(NULL);
-    }
-#else
-    (void)NVIC_SetPriority(LPUART1_IRQn, 5);
-#if defined(MIMXRT1176_cm7_SERIES)
-    (void)NVIC_SetPriority(LPUART2_IRQn, HAL_UART_ISR_PRIORITY);
-#else
-    (void)NVIC_SetPriority(LPUART3_IRQn, HAL_UART_ISR_PRIORITY);
-#endif
-
-    lpuart_config.srcclk = DEMO_LPUART_CLK_FREQ;
-    lpuart_config.base   = DEMO_LPUART;
-
-    if (kStatus_Success != LPUART_RTOS_Init(&handle, &t_handle, &lpuart_config))
-    {
-        (void)vTaskSuspend(NULL);
-    }
-
-    lpuart_config_bt.srcclk = BOARD_BT_UART_CLK_FREQ;
-#if defined(MIMXRT1176_cm7_SERIES)
-    lpuart_config_bt.base   = LPUART2;
-#else
-    lpuart_config_bt.base = LPUART3;
-#endif
-
-    if (kStatus_Success != LPUART_RTOS_Init(&handle_bt, &t_handle_bt, &lpuart_config_bt))
-    {
-        (void)vTaskSuspend(NULL);
-    }
-#endif
-
 #if defined(MIMXRT1176_cm7_SERIES)
     LPSPI_MasterGetDefaultConfig(&spiConfig);
     spiConfig.baudRate = TRANSFER_BAUDRATE;
@@ -1189,6 +1151,43 @@ static void main_task(osa_task_param_t arg)
         while (1)
         {
         }
+    }
+#endif
+#if defined(RW610_SERIES) || defined(RW612_SERIES)
+    NVIC_SetPriority(BOARD_UART_IRQ, 5);
+    usart_config.srcclk = BOARD_DEBUG_UART_CLK_FREQ;
+    usart_config.base   = BOARD_DEBUG_UART;
+
+    if (kStatus_Success != USART_RTOS_Init(&handle, &t_handle, &usart_config))
+    {
+        (void)vTaskSuspend(NULL);
+    }
+#else
+    (void)NVIC_SetPriority(LPUART1_IRQn, 5);
+#if defined(MIMXRT1176_cm7_SERIES)
+    (void)NVIC_SetPriority(LPUART2_IRQn, HAL_UART_ISR_PRIORITY);
+#else
+    (void)NVIC_SetPriority(LPUART3_IRQn, HAL_UART_ISR_PRIORITY);
+#endif
+
+    lpuart_config.srcclk = DEMO_LPUART_CLK_FREQ;
+    lpuart_config.base   = DEMO_LPUART;
+
+    if (kStatus_Success != LPUART_RTOS_Init(&handle, &t_handle, &lpuart_config))
+    {
+        (void)vTaskSuspend(NULL);
+    }
+
+    lpuart_config_bt.srcclk = BOARD_BT_UART_CLK_FREQ;
+#if defined(MIMXRT1176_cm7_SERIES)
+    lpuart_config_bt.base   = LPUART2;
+#else
+    lpuart_config_bt.base = LPUART3;
+#endif
+
+    if (kStatus_Success != LPUART_RTOS_Init(&handle_bt, &t_handle_bt, &lpuart_config_bt))
+    {
+        (void)vTaskSuspend(NULL);
     }
 #endif
     size_t uart_rx_len = 0;
