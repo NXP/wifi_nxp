@@ -748,7 +748,7 @@ int wlan_wmm_add_buf_txqueue_enh(const uint8_t interface, const uint8_t *buffer,
     priv = mlan_adap->priv[interface];
 
     /* refer to low_level_output payload memcpy */
-#if CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY || FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
     wifi_wmm_da_to_ra(&((outbuf_t *)buffer)->eth_header[0], ra);
 #else
     wifi_wmm_da_to_ra(&((outbuf_t *)buffer)->data[0], ra);
