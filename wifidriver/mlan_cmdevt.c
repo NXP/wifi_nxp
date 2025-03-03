@@ -2365,6 +2365,7 @@ mlan_status wlan_cmd_tx_frame(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u
     t_u16 data_len                          = tx_frame->data_len;
 
     ENTER();
+
     cmd->command         = wlan_cpu_to_le16(HostCmd_CMD_802_11_TX_FRAME);
     cmd_size             = sizeof(HostCmd_DS_80211_TX_FRAME) + S_DS_GEN;
     tx_frame_cmd->action = 0;

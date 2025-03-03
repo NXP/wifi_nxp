@@ -197,7 +197,7 @@ t_void wlan_wmm_delete_peer_ralist(pmlan_private priv, t_u8 *mac);
 /* process wmm_param_config command */
 mlan_status wlan_cmd_wmm_param_config(pmlan_private pmpriv,
                                       HostCmd_DS_COMMAND *cmd,
-                                      t_u8 cmd_action,
+                                      t_u16 cmd_action,
                                       t_void *pdata_buf);
 
 /* process wmm_param_config command response */

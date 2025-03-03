@@ -18,7 +18,7 @@
 #include <wifi_events.h>
 
 /* fixme: remove these after complete integration with mlan */
-#define MLAN_MAC_ADDR_LENGTH (6U)
+#define MLAN_MAC_ADDR_LENGTH 6U
 /** Version string buffer length */
 #define MLAN_MAX_VER_STR_LEN 128
 
@@ -1813,7 +1813,7 @@ typedef struct _wifi_ds_subscribe_evt
 #endif
 
 #if CONFIG_CSI
-#define CSI_FILTER_MAX 16
+#define CSI_FILTER_MAX 16U
 /** Structure of CSI filters */
 typedef PACK_START struct _wifi_csi_filter_t
 {

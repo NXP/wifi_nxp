@@ -1721,7 +1721,7 @@ typedef struct
 
     IEEEtypes_PowerConstraint_t power_constraint; /**< Power Constraint IE */
     IEEEtypes_PowerCapability_t power_capability; /**< Power Capability IE */
-    IEEEtypes_TPCReport_t tpc_report;             /**< TPC Report IE */
+    IEEEtypes_TPCReport_t tpc_report_ie;          /**< TPC Report IE */
     IEEEtypes_ChanSwitchAnn_t chan_switch_ann;    /**< Channel Switch Announcement IE */
     IEEEtypes_Quiet_t quiet;                      /**< Quiet IE */
     IEEEtypes_IBSS_DFS_t ibss_dfs;                /**< IBSS DFS Element IE */

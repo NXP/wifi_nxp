@@ -1118,6 +1118,18 @@
 #define CONFIG_MEM_POOLS 0
 #endif
 
+#if !defined CONFIG_RSN_REPLAY_DETECTION
+#define CONFIG_RSN_REPLAY_DETECTION 0
+#endif
+
+#if !defined CONFIG_MULTI_CHAN
+#define CONFIG_MULTI_CHAN 0
+#endif
+
+#if !defined CONFIG_WIFI_IND_RESET
+#define CONFIG_WIFI_IND_RESET 0
+#endif
+
 #if !defined CONFIG_FW_VDLLV2
 #if defined(RW610)
 #define CONFIG_FW_VDLLV2 1

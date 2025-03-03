@@ -231,7 +231,7 @@ Change log:
 #define MLAN_RX_CMD_BUF_SIZE (2 * 1024)
 
 /** MLAN MAC Address Length */
-#define MLAN_MAC_ADDR_LENGTH (6U)
+#define MLAN_MAC_ADDR_LENGTH 6U
 /** MLAN 802.11 MAC Address */
 typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 

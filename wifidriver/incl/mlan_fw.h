@@ -191,23 +191,23 @@ typedef enum _KEY_INFO_TKIP
 /** KEY_INFO_AES*/
 typedef enum _KEY_INFO_AES
 {
-    KEY_INFO_AES_MCAST      = 0x01,
-    KEY_INFO_AES_UNICAST    = 0x02,
-    KEY_INFO_AES_ENABLED    = 0x04,
-    KEY_INFO_AES_MCAST_IGTK = 0x400,
+    KEY_INFO_AES_MCAST      = 0x01U,
+    KEY_INFO_AES_UNICAST    = 0x02U,
+    KEY_INFO_AES_ENABLED    = 0x04U,
+    KEY_INFO_AES_MCAST_IGTK = 0x400U,
 } KEY_INFO_AES;
 
 /** WPA AES key length */
-#define WPA_AES_KEY_LEN 16
+#define WPA_AES_KEY_LEN 16U
 /** WPA TKIP key length */
-#define WPA_TKIP_KEY_LEN 32
+#define WPA_TKIP_KEY_LEN 32U
 /** WPA AES IGTK key length */
-#define CMAC_AES_KEY_LEN 16
+#define CMAC_AES_KEY_LEN 16U
 /** IGTK key length */
-#define WPA_IGTK_KEY_LEN     16
-#define WPA_IGTK_256_KEY_LEN 32
-#define WPA_GCMP_KEY_LEN     32
-#define WPA_CCMP_256_KEY_LEN 32
+#define WPA_IGTK_KEY_LEN     16U
+#define WPA_IGTK_256_KEY_LEN 32U
+#define WPA_GCMP_KEY_LEN     32U
+#define WPA_CCMP_256_KEY_LEN 32U
 #endif /* WPA || WAPI_AP || HOST_AUTHENTICATOR */
 
 /** Maximum ethernet frame length sans FCS */
@@ -438,7 +438,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 
 #define TLV_TYPE_PREV_BSSID (PROPRIETARY_TLV_BASE_ID + 330)
 
-#define TLV_TYPE_CSI_MONITOR_CFG (PROPRIETARY_TLV_BASE_ID + 354) /*0x0262*/
+#define TLV_TYPE_CSI_MONITOR_CFG (PROPRIETARY_TLV_BASE_ID + 0x162U) /*0x0262*/
 
 #define TLV_TYPE_RSNO_IE (PROPRIETARY_TLV_BASE_ID + 0x167) /* 0x267 */
 
@@ -2671,20 +2671,20 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_RsnParamSet_t
 /** Key Info flag for unicast key */
 #define KEY_INFO_UCAST_KEY 0x02U
 /** Key Info flag for enable key */
-#define KEY_INFO_ENABLE_KEY 0x04
+#define KEY_INFO_ENABLE_KEY 0x04U
 /** Key Info flag for default key */
 #define KEY_INFO_DEFAULT_KEY 0x08U
 /** Key Info flag for TX key */
 #define KEY_INFO_TX_KEY 0x10U
 /** Key Info flag for RX key */
 #define KEY_INFO_RX_KEY       0x20U
-#define KEY_INFO_CMAC_AES_KEY 0x400
+#define KEY_INFO_CMAC_AES_KEY 0x400U
 /** PN size for WPA/WPA2 */
-#define WPA_PN_SIZE 8
+#define WPA_PN_SIZE 8U
 /** PN size for PMF IGTK */
-#define IGTK_PN_SIZE 8
+#define IGTK_PN_SIZE 8U
 /** WAPI KEY size */
-#define WAPI_KEY_SIZE 32
+#define WAPI_KEY_SIZE 32U
 /** key params fix size */
 #define KEY_PARAMS_FIXED_LEN 10U
 /** key index mask */

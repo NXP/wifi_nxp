@@ -1902,14 +1902,14 @@ typedef enum _mlan_psk_type
 /** 40 bits RC4 - WEP */
 #define MIN_WEP_KEY_SIZE 5
 /** packet number size */
-#define PN_SIZE 16
+#define PN_SIZE 16U
 /** max seq size of wpa/wpa2 key */
-#define SEQ_MAX_SIZE 8
+#define SEQ_MAX_SIZE 8U
 
 /** key flag for tx_seq */
-#define KEY_FLAG_TX_SEQ_VALID 0x00000001
+#define KEY_FLAG_TX_SEQ_VALID 0x00000001U
 /** key flag for rx_seq */
-#define KEY_FLAG_RX_SEQ_VALID 0x00000002
+#define KEY_FLAG_RX_SEQ_VALID 0x00000002U
 /** key flag for group key */
 #define KEY_FLAG_GROUP_KEY 0x00000004U
 /** key flag for tx and rx */
@@ -1918,23 +1918,23 @@ typedef enum _mlan_psk_type
 #define KEY_FLAG_AES_MCAST_IGTK 0x00000010U
 #ifdef MAC80211_SUPPORT_MESH
 /** key flag for mesh group Rx key */
-#define KEY_FLAG_SET_GRP_TX_KEY 0x00000100
+#define KEY_FLAG_SET_GRP_TX_KEY 0x00000100U
 #endif
 /** key flag for remove key */
-#define KEY_FLAG_REMOVE_KEY 0x80000000
+#define KEY_FLAG_REMOVE_KEY 0x80000000U
 /** key flag for GCMP */
-#define KEY_FLAG_GCMP 0x00000020
+#define KEY_FLAG_GCMP 0x00000020U
 /** key flag for GCMP_256 */
-#define KEY_FLAG_GCMP_256 0x00000040
+#define KEY_FLAG_GCMP_256 0x00000040U
 /** key flag for ccmp 256 */
-#define KEY_FLAG_CCMP_256 0x00000080
+#define KEY_FLAG_CCMP_256 0x00000080U
 /** key flag for GMAC_128 */
-#define KEY_FLAG_GMAC_128 0x00000100
+#define KEY_FLAG_GMAC_128 0x00000100U
 /** key flag for GMAC_256 */
-#define KEY_FLAG_GMAC_256 0x00000200
+#define KEY_FLAG_GMAC_256 0x00000200U
 
 /* Clear all key indexes */
-#define KEY_INDEX_CLEAR_ALL 0x0000000F
+#define KEY_INDEX_CLEAR_ALL 0x0000000FU
 
 /** Type definition of mlan_ds_encrypt_key for MLAN_OID_SEC_CFG_ENCRYPT_KEY */
 typedef struct _mlan_ds_encrypt_key
@@ -3528,7 +3528,7 @@ typedef struct _mlan_ds_misc_country_code
 /** action for set */
 #define SUBSCRIBE_EVT_ACT_BITWISE_SET 0x0002
 /** action for clear */
-#define SUBSCRIBE_EVT_ACT_BITWISE_CLR 0x0003
+#define SUBSCRIBE_EVT_ACT_BITWISE_CLR 0x0003U
 /** BITMAP for subscribe event rssi low */
 #define SUBSCRIBE_EVT_RSSI_LOW MBIT(0)
 /** BITMAP for subscribe event snr low */

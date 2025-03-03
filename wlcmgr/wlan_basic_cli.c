@@ -52,9 +52,9 @@ static void test_wlan_get_mac_address(int argc, char **argv)
 #endif
 
     (void)PRINTF("MAC address\r\n");
-    if (wlan_get_mac_address(sta_mac)
+    if ((wlan_get_mac_address(sta_mac) != WM_SUCCESS)
 #if UAP_SUPPORT
-        || wlan_get_mac_address_uap(uap_mac)
+        || (wlan_get_mac_address_uap(uap_mac) != WM_SUCCESS)
 #endif
         )
     {
@@ -121,7 +121,7 @@ int wlan_basic_cli_init(void)
 {
     unsigned int i;
 
-    if (wlan_wfa_basic_cli_init_done)
+    if (wlan_wfa_basic_cli_init_done == true)
     {
         return WLAN_ERROR_NONE;
     }

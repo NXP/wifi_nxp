@@ -2539,12 +2539,12 @@ mlan_status wlan_cmd_bgscan_config(IN mlan_private *pmpriv,
 mlan_status wlan_ret_bgscan_config(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *resp, IN mlan_ioctl_req *pioctl_buf);
 #endif
 
-#if (CONFIG_ROAMING) || (CONFIG_SUBSCRIBE_EVENT_SUPPORT)
 /** Handler for subscribe event command */
 mlan_status wlan_cmd_subscribe_event(IN mlan_private *pmpriv,
                                      IN HostCmd_DS_COMMAND *cmd,
                                      IN t_u16 cmd_action,
-                                     IN t_void *pioctl_buf);
+                                     IN t_void *pdata_buf);
+#if (CONFIG_ROAMING) || (CONFIG_SUBSCRIBE_EVENT_SUPPORT)
 int wlan_parse_getdata(HostCmd_DS_COMMAND *resp, mlan_ds_subscribe_evt *sub_evt);
 #endif
 
@@ -3332,4 +3332,8 @@ mlan_status wlan_cmd_boot_sleep(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t
 mlan_status wlan_ret_boot_sleep(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);
 
 t_bool wlan_is_etsi_country(pmlan_adapter pmadapter, t_u8 *country_code);
+
+#if CONFIG_WIFI_CHANNEL_LOAD
+mlan_status wlan_cmd_get_channel_load(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf);
+#endif
 #endif /* !_MLAN_MAIN_H_ */
