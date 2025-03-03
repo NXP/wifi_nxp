@@ -18,7 +18,7 @@ Change log:
 /* Additional WMSDK header files */
 #include <wmerrno.h>
 #include <osa.h>
-#if CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY || FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
 #include <wm_net.h>
 #endif
 /* Always keep this include at the end of all include files */
@@ -648,7 +648,7 @@ SUCC:
     mlan_adap->priv[interface]->wmm.pkts_queued[queue]--;
     ra_list->total_pkts--;
     ra_list->drop_count++;
-#if CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY || FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
     /* Before replacement, need free the buffer from stack first */
     net_stack_buffer_free(buf->buffer);
 #endif
@@ -808,7 +808,7 @@ void wifi_wmm_buf_put(outbuf_t *buf)
 
     assert(mlan_adap->outbuf_pool.free_cnt < MAX_WMM_BUF_NUM);
 
-#if CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY || FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
     /* Free driver's reference count for network buffer */
     net_stack_buffer_free(buf->buffer);
 #endif

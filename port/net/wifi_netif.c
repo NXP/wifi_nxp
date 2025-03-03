@@ -177,8 +177,6 @@ static void nxp_wifi_rx_populate_queue(struct nxp_wifi_device *p_nxp_wifi_dev)
             if (0 == p)
             {
                 LWIP_DEBUGF(NETIF_DEBUG, ("nxp_wifi_rx_populate_queue: pbuf allocation failure\n"));
-                PRINTF("nxp_wifi_rx_populate_queue failed: 0x%p [pos=%u] [h = %u] [T = %u]\r\n",
-                                p, ul_modifer, p_nxp_wifi_dev->us_rx_head, p_nxp_wifi_dev->us_rx_tail);
             }
 
             /* Make sure lwIP is well configured so one pbuf can contain the maximum packet size. */
@@ -189,9 +187,6 @@ static void nxp_wifi_rx_populate_queue(struct nxp_wifi_device *p_nxp_wifi_dev)
 
             /* Save pbuf pointer to be sent to lwIP upper layer. */
             p_nxp_wifi_dev->rx_pbuf[ul_modifer] = p;
-
-//           	PRINTF("nxp_wifi_rx_populate_queue: 0x%p [pos=%u] [h = %u] [T = %u]\r\n",
-//           			p, ul_index, p_nxp_wifi_dev->us_rx_head, p_nxp_wifi_dev->us_rx_tail);
         }
         ul_modifer = (ul_modifer + 1) % NETIF_RX_BUFFERS;
     }
