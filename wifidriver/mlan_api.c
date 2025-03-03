@@ -6063,6 +6063,44 @@ int wifi_csi_cfg(wifi_csi_config_params_t *csi_params)
 }
 #endif
 
+#if CONFIG_WIFI_CHANNEL_LOAD
+int wifi_channel_load(wlan_802_11_chan_load_t *cfg)
+{
+    wifi_802_11_chan_load_t *chan_load    = (wifi_802_11_chan_load_t *)cfg;
+    wifi_802_11_chan_load_t chan_load_cmd = {0};
+
+    chan_load_cmd.duration = chan_load->duration;
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+
+    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_GET_CH_LOAD, HostCmd_ACT_GEN_GET, 0,
+                                              NULL, &chan_load_cmd, cmd);
+    
+    if (rv != MLAN_STATUS_SUCCESS)
+    {
+        wifi_put_command_lock();
+        return -WM_FAIL;
+    }
+
+    return wifi_wait_for_cmdresp(NULL);
+}
+
+int wifi_get_channel_load(wlan_802_11_chan_load_t *cfg)
+{
+    wifi_802_11_chan_load_t *chan_load    = (wifi_802_11_chan_load_t *)cfg;
+
+    chan_load->noise = mlan_adap->noise;
+    chan_load->ch_load = mlan_adap->ch_load_param;
+    chan_load->rx_quality = mlan_adap->rx_quality;
+
+    PRINTF("SIZEOF MLANADAPT %d\r\n", sizeof(mlan_adap));
+
+    return WM_SUCCESS;
+}
+#endif
+
 #if (CONFIG_IPS)
 /* enable/disable config for IPS */
 int wifi_set_ips_config(mlan_bss_type interface, int option)

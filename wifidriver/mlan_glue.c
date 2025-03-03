@@ -6500,6 +6500,33 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
         case EVENT_ACCESS_BY_HOST:
             break;
+#if CONFIG_WIFI_CHANNEL_LOAD
+        case EVENT_CHAN_LOAD:
+            wifi_802_11_chan_load_t *chan_load = NULL;
+#if !CONFIG_MEM_POOLS
+            chan_load = OSA_MemoryAllocate(sizeof(wifi_802_11_chan_load_t));
+#else
+            chan_load = OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+#endif
+            if (chan_load == MNULL)
+            {
+                wifi_w("No mem. Cannot process channel load event");
+                break;
+            }
+
+            memcpy(chan_load, (t_u8 *)(msg->data + sizeof(ch_load_event_t)), sizeof(wifi_802_11_chan_load_t));
+
+            if(wifi_event_completion(WIFI_EVENT_CHAN_LOAD, WIFI_EVENT_REASON_SUCCESS, chan_load) != WM_SUCCESS)
+            {
+                /* If fail to send message on queue, free allocated memory ! */
+#if !CONFIG_MEM_POOLS
+                OSA_MemoryFree((void *)chan_load);
+#else
+                OSA_MemoryPoolFree(buf_32_MemoryPool, chan_load);
+#endif
+            }
+            break;
+#endif
 #if CONFIG_WMM
         case EVENT_REMAIN_ON_CHANNEL_EXPIRED:
             mlan_adap->remain_on_channel = MFALSE;

@@ -1371,6 +1371,10 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 #define HostCmd_CMD_CCK_DESENSE_CFG 0x0265
 #endif
 
+#ifdef CONFIG_WIFI_CHANNEL_LOAD
+#define HostCmd_CMD_802_11_GET_CH_LOAD 0x027b
+#endif
+
 /** Host Command ID: Tx Frame */
 #define HostCmd_CMD_802_11_TX_FRAME 0x0283
 
@@ -1825,6 +1829,10 @@ typedef enum _ENH_PS_MODES
 #define EVENT_ASSOC_REQ_IE 0x00000095
 
 #define EVENT_ACCESS_BY_HOST 0x00000098
+
+#if CONFIG_WIFI_CHANNEL_LOAD
+#define EVENT_CHAN_LOAD 0x00000099
+#endif
 
 /** Event ID mask */
 #define EVENT_ID_MASK 0xffff
@@ -7775,6 +7783,32 @@ typedef MLAN_PACK_START struct _HostCmd_IMD3_CFG
 } MLAN_PACK_END HostCmd_IMD3_CFG;
 #endif
 
+#if CONFIG_WIFI_CHANNEL_LOAD
+typedef MLAN_PACK_START struct _HostCmd_DS_802_11_GET_CH_LOAD
+{
+    t_u16 action;
+    t_u16 ch_load;
+    t_s16 noise;
+    t_u16 rx_quality;
+    t_u16 duration;
+    t_u16 cca_th; /* not using cca_th in v18 */
+} MLAN_PACK_END HostCmd_DS_802_11_GET_CH_LOAD;
+
+typedef MLAN_PACK_START struct _CH_LOAD_EVENT_HEADER_t
+{
+    /** No of bytes in packet including this field */
+    t_u16 length;
+    /** Type: Event (3) */
+    t_u16 type;
+    /** Event ID */
+    t_u16 event_id;
+    /** BSS index number for multiple BSS support */
+    t_u8 bss_index;
+    /** BSS type */
+    t_u8 bss_type;
+} MLAN_PACK_END ch_load_event_t;
+#endif
+
 /** HostCmd_DS_80211_TX_FRAME */
 typedef MLAN_PACK_START struct _HostCmd_DS_80211_TX_FRAME
 {
@@ -8115,6 +8149,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #endif
 #if CONFIG_IMD3_CFG
         HostCmd_IMD3_CFG imd3_cfg;
+#endif
+#if CONFIG_WIFI_CHANNEL_LOAD
+        HostCmd_DS_802_11_GET_CH_LOAD  channel_load;
 #endif
         HostCmd_DS_80211_TX_FRAME tx_frame;
     } params;

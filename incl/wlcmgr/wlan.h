@@ -1623,6 +1623,10 @@ typedef txrate_setting wlan_txrate_setting;
 typedef wifi_rssi_info_t wlan_rssi_info_t;
 #endif
 
+#if CONFIG_WIFI_CHANNEL_LOAD
+typedef wifi_802_11_chan_load_t wlan_802_11_chan_load_t;
+#endif
+
 #if CONFIG_EXTERNAL_COEX_PTA
 #define MIN_SAMP_TIMING              20
 #define MAX_SAMP_TIMING              200
@@ -6127,6 +6131,19 @@ int wlan_get_mmsf(t_u8 *enable, t_u8 *Density, t_u8 *MMSF);
 
 #if CONFIG_WIFI_RECOVERY
 int wlan_recovery_test(void);
+#endif
+
+#if CONFIG_WIFI_CHANNEL_LOAD
+/**
+ * Set Wi-Fi channel load info.
+ *
+ */
+int wlan_channel_load(wlan_802_11_chan_load_t *chan_load);
+/**
+ * Get Wi-Fi channel load info.
+ *
+ */
+int wlan_get_channel_load(wlan_802_11_chan_load_t *chan_load);
 #endif
 
 #if CONFIG_WIFI_CLOCKSYNC
