@@ -6555,6 +6555,17 @@ static void wlcm_send_host_sleep(struct wifi_message *msg, enum cm_sta_state *ne
 }
 #endif
 
+#if CONFIG_WIFI_CHANNEL_LOAD
+static void wlcm_process_chan_load(void *ch_load)
+{
+    HostCmd_DS_802_11_GET_CH_LOAD *ch_load_info = (HostCmd_DS_802_11_GET_CH_LOAD *)ch_load;
+    
+    mlan_adap->noise = ch_load_info->noise;
+    mlan_adap->ch_load_param = ch_load_info->ch_load;
+    mlan_adap->rx_quality = ch_load_info->rx_quality;
+}
+#endif
+
 #if CONFIG_CPU_LOADING
 static void wlan_cpu_loading_info_display(void)
 {
@@ -7083,6 +7094,16 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case WIFI_EVENT_REGION_POWER_CFG:
             wlcm_process_region_power_cfg(msg);
             break;
+#if CONFIG_WIFI_CHANNEL_LOAD        
+        case WIFI_EVENT_CHAN_LOAD:
+            wlcm_process_chan_load(msg->data);
+#if !CONFIG_MEM_POOLS
+            OSA_MemoryFree(msg->data);
+#else
+            OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
+            break;
+#endif
 #if CONFIG_WMM
         case WIFI_EVENT_TX_DATA_PAUSE:
             wifi_sta_handle_event_data_pause(msg->data);
@@ -14222,6 +14243,18 @@ int wlan_get_mmsf(t_u8 *enable, t_u8 *Density, t_u8 *MMSF)
 int wlan_recovery_test(void)
 {
     return wifi_recovery_test();
+}
+#endif
+
+#if CONFIG_WIFI_CHANNEL_LOAD
+int wlan_channel_load(wlan_802_11_chan_load_t *chan_load)
+{
+    return wifi_channel_load(chan_load);
+}
+
+int wlan_get_channel_load(wlan_802_11_chan_load_t *chan_load)
+{
+    return wifi_get_channel_load(chan_load);
 }
 #endif
 

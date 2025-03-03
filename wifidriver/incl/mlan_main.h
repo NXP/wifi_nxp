@@ -2396,6 +2396,14 @@ struct _mlan_adapter
     /* remain on channel flag */
     t_u8 remain_on_channel;
     t_u8 remain_bss_index;
+#if CONFIG_WIFI_CHANNEL_LOAD
+    /** channel load info for current channel */
+    t_u16 ch_load_param;
+    /** Noise floor value for current channel */
+    t_s16 noise;
+    /** rx quality info */
+    t_u16 rx_quality;
+#endif
 #if defined(IW610)
     /* board type info from FW */
     t_u8 board_type;

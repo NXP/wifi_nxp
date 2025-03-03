@@ -925,6 +925,18 @@ typedef struct
     int16_t bcn_nf_avg;
 } wifi_rssi_info_t;
 
+#if CONFIG_WIFI_CHANNEL_LOAD
+typedef PACK_START struct
+{
+    t_u16 action;
+    t_u16 ch_load;
+    t_s16 noise;
+    t_u16 rx_quality;
+    t_u16 duration;
+    t_u16 cca_th; /* not using cca_th in v18 */
+} PACK_END wifi_802_11_chan_load_t;
+#endif
+
 /**
  * Data structure for subband set
  *

@@ -7717,6 +7717,68 @@ static void test_wlan_recovery_test(int argc, char **argv)
 }
 #endif
 
+#if CONFIG_WIFI_CHANNEL_LOAD
+/**
+ *  @brief This function dump the usage of wlan-subscribe-event cmd for user test.
+ */
+static void dump_wlan_get_channel_load_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-get-channel-load <duration>\r\n");
+    (void)PRINTF("duration:\r\n");
+    (void)PRINTF("      please set duration, the value set is taken as ms value.\r\n");
+}
+
+static void test_wlan_get_channel_load(int argc, char **argv)
+{
+    int ret;
+    wlan_802_11_chan_load_t chan_load;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_get_channel_load_usage();
+        return;
+    }
+
+    (void)memset(&chan_load, 0, sizeof(wlan_802_11_chan_load_t));
+
+    /* Set duration to get channel load*/
+    if (!strncmp(argv[1], "set", strlen(argv[1])))
+    {
+        chan_load.duration = atoi(argv[2]);
+
+        ret = wlan_channel_load(&chan_load);
+
+        if (ret != WM_SUCCESS)
+        {
+            (void)PRINTF("Fail to set par channel load.\r\n");
+        }
+        else
+        {
+            (void)PRINTF("Set channel load duration %d.\r\n", chan_load.duration);
+        }
+    }
+    /* Get channel load after setting*/
+    else if (!strncmp(argv[1], "get", strlen(argv[1])))
+    {
+        ret = wlan_get_channel_load(&chan_load);
+
+        if (ret != WM_SUCCESS)
+        {
+            (void)PRINTF("Fail to get channel load.\r\n");
+        }
+
+        PRINTF("Wi-Fi channel load:\r\n");
+        PRINTF("Channel load noise: %d\r\n", chan_load.noise);
+        PRINTF("Channel load ch_load: %d\r\n", chan_load.ch_load);
+        PRINTF("Channel load rx_quality: %d\r\n", chan_load.rx_quality);
+    }
+
+    return;
+}
+#endif
+
 #if CONFIG_SUBSCRIBE_EVENT_SUPPORT
 /**
  *  @brief This function print the get subscribe event from firmware for user test.
@@ -12966,6 +13028,9 @@ static struct cli_command tests[] = {
 #endif
 #if CONFIG_WIFI_RECOVERY
     {"wlan-recovery-test", NULL, test_wlan_recovery_test},
+#endif
+#if CONFIG_WIFI_CHANNEL_LOAD
+    {"wlan-get-channel-load", "<set/get> <duration>", test_wlan_get_channel_load},
 #endif
 };
 

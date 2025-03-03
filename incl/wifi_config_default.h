@@ -414,6 +414,14 @@
 #endif
 #endif
 
+#if !defined CONFIG_WIFI_CHANNEL_LOAD
+#if defined(RW610) || defined(IW610)
+#define CONFIG_WIFI_CHANNEL_LOAD 1
+#elif defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
+#define CONFIG_WIFI_CHANNEL_LOAD 0
+#endif
+#endif
+
 #if !defined CONFIG_NET_MONITOR
 #if defined(RW610)
 #define CONFIG_NET_MONITOR 1
