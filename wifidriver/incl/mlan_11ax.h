@@ -29,8 +29,8 @@
 #define AX_5G_TLV_INDEX 1
 #endif
 
-t_u8 wlan_check_ap_11ax_twt_supported(BSSDescriptor_t *pbss_desc);
-t_u8 wlan_check_11ax_twt_supported(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc);
+bool wlan_check_ap_11ax_twt_supported(BSSDescriptor_t *pbss_desc);
+bool wlan_check_11ax_twt_supported(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc);
 t_u16 wlan_fill_he_cap_tlv(mlan_private *pmpriv, t_u16 band, MrvlIEtypes_Extension_t *phe_cap, t_u8 flag);
 int wlan_cmd_append_11ax_tlv(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc, t_u8 **ppbuffer);
 void wlan_update_11ax_cap(mlan_adapter *pmadapter,

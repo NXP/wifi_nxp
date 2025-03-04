@@ -1120,6 +1120,14 @@
 #endif
 #endif
 
+#if !defined CONFIG_11MC
+#define CONFIG_11MC 0
+#endif
+
+#if !defined CONFIG_11AZ
+#define CONFIG_11AZ 0
+#endif
+
 /** Wi-Fi NXP internal macros */
 #define LWIPERF_REVERSE_MODE       1
 #define CONFIG_MLAN_WMSDK          1

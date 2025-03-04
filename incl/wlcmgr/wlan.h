@@ -1713,7 +1713,7 @@ struct ipv6_config
     /** The address type: linklocal, site-local or global. */
     unsigned char addr_type;
     /** The state of IPv6 address (Tentative, Preferred, etc.). */
-    unsigned char addr_state;
+    uint8_t addr_state;
 };
 #endif
 

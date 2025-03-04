@@ -2844,7 +2844,7 @@ typedef struct _mlan_ds_11ac_vht_cfg
 } mlan_ds_11ac_vht_cfg, *pmlan_ds_11ac_vht_cfg;
 
 #if CONFIG_11AX
-#define MAX_RU_COUNT    6
+#define MAX_RU_COUNT    6U
 #define MAX_RUTXPWR_NUM 140
 typedef MLAN_PACK_START struct _mlan_rupwrlimit_config_t
 {

@@ -27,10 +27,14 @@
  */
 static inline int wlan_enable_11d(int state)
 {
-    if (state)
+    if (state == 1)
+    {
         return wifi_enable_11d_support();
+    }
     else
+    {
         return wifi_disable_11d_support();
+    }
 }
 
 #if UAP_SUPPORT
@@ -47,10 +51,14 @@ static inline int wlan_enable_11d(int state)
  */
 static inline int wlan_enable_uap_11d(int state)
 {
-    if (state)
+    if (state == 1)
+    {
         return wifi_enable_uap_11d_support();
+    }
     else
+    {
         return wifi_disable_uap_11d_support();
+    }
 }
 #endif
 #endif /* __WLAN_11D_H__ */
