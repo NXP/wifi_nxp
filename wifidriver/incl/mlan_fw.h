@@ -6015,7 +6015,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_mac_filter_t
     /** Number of STA MACs */
     t_u8 count;
     /** STA MAC addresses buffer */
-    t_u8 mac_address[1];
+    t_u8 mac_addr[1];
 } MLAN_PACK_END MrvlIEtypes_mac_filter_t;
 
 /** setting for band_config - band=5GHZ */
@@ -6328,7 +6328,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_sta_info_t
     /** Header */
     MrvlIEtypesHeader_t header;
     /** STA MAC address */
-    t_u8 mac_address[MLAN_MAC_ADDR_LENGTH];
+    t_u8 mac_addr[MLAN_MAC_ADDR_LENGTH];
     /** Power mfg status */
     t_u8 power_mfg_status;
     /** RSSI */
@@ -6852,9 +6852,9 @@ typedef MLAN_PACK_START struct
 
 typedef MLAN_PACK_START struct
 {
-    t_u16 startFreq;
-    t_u8 chanWidth;
-    t_u8 chanNum;
+    t_u16 start_freq;
+    t_u8 channel_width;
+    t_u8 channel_num;
 
 } MLAN_PACK_END MrvlChannelDesc_t;
 
@@ -7812,7 +7812,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         /** EEPROM register access */
         HostCmd_DS_802_11_EEPROM_ACCESS eeprom;
         /** Memory access */
-        HostCmd_DS_MEM_ACCESS mem;
+        HostCmd_DS_MEM_ACCESS memory;
         /** Bridge mode */
         HostCmd_BRIDGE_MODE bridge_mode;
         /** Auto Reconnect */
@@ -7836,7 +7836,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #endif
 #endif /* UAP_SUPPORT */
 #if UAP_HOST_MLME
-        HostCmd_DS_ADD_STATION sta_info;
+        HostCmd_DS_ADD_STATION station_info;
 #endif
         /** Sleep period command */
         HostCmd_DS_802_11_SLEEP_PERIOD sleep_pd;

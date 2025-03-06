@@ -2727,7 +2727,7 @@ int wlan_stop_network(const char *name);
  *  \return WM_SUCCESS if the MAC address was copied.
  *  \return -WM_E_INVAL if \a dest is NULL.
  */
-int wlan_get_mac_address(uint8_t *dest);
+int wlan_get_mac_address(unsigned char *dest);
 
 /** Retrieve the Wi-Fi MAC address of the uAP interface.
  *

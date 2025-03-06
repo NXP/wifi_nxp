@@ -41,6 +41,8 @@
 
 /*------------------------------------------------------*/
 #include <netif_decl.h>
+#include <wlan.h>
+
 /*------------------------------------------------------*/
 
 #if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
@@ -863,7 +865,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 #if !CONFIG_TX_RX_ZERO_COPY && !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
     u16_t uCopied;
 #endif
-    t_u8 interface   = ethernetif->interface;
+    t_u8 interface   = ethernetif->intf;
     t_u8 *wmm_outbuf = NULL;
 
 #if !CONFIG_WMM && FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
@@ -1384,7 +1386,7 @@ err_t lwip_netif_init(struct netif *netif)
      */
     NETIF_INIT_SNMP(netif, snmp_ifType_ethernet_csmacd, LINK_SPEED_OF_YOUR_NETIF_IN_BPS);
 
-    ethernetif->interface = MLAN_BSS_TYPE_STA;
+    ethernetif->intf      = MLAN_BSS_TYPE_STA;
     netif->state          = ethernetif;
     netif->name[0]        = IFNAME0;
     netif->name[1]        = IFNAME1;
@@ -1424,7 +1426,7 @@ err_t lwip_netif_uap_init(struct netif *netif)
         return ERR_MEM;
     }
 
-    ethernetif->interface = MLAN_BSS_TYPE_UAP;
+    ethernetif->intf      = MLAN_BSS_TYPE_UAP;
     netif->state          = ethernetif;
     netif->name[0]        = 'u';
     netif->name[1]        = 'a';

@@ -1136,12 +1136,40 @@
 #endif
 #endif
 
+#if !defined CONFIG_RSN_REPLAY_DETECTION
+#define CONFIG_RSN_REPLAY_DETECTION 0
+#endif
+
 #if !defined CONFIG_11MC
 #define CONFIG_11MC 0
 #endif
 
 #if !defined CONFIG_11AZ
 #define CONFIG_11AZ 0
+#endif
+
+#if !defined CONFIG_FW_VDLL
+#define CONFIG_FW_VDLL 0
+#endif
+
+#if !defined CONFIG_MULTI_CHAN
+#define CONFIG_MULTI_CHAN 0
+#endif
+
+#if !defined CONFIG_RSN_REPLAY_DETECTION
+#define CONFIG_RSN_REPLAY_DETECTION 0
+#endif
+
+#if !defined CONFIG_WIFI_IND_RESET
+#define CONFIG_WIFI_IND_RESET 0
+#endif
+
+#if !defined CONFIG_WIFI_RECOVERY
+#define CONFIG_WIFI_RECOVERY 0
+#endif
+
+#if !defined CONFIG_IMD3_CFG
+#define CONFIG_IMD3_CFG 0
 #endif
 
 /** Wi-Fi NXP internal macros */

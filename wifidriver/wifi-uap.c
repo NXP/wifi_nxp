@@ -2007,7 +2007,7 @@ int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_a
     if (tlv->count)
     {
         tlv->header.len = tlv->count * MLAN_MAC_ADDR_LENGTH + 2;
-        __memcpy(NULL, tlv->mac_address, mac_addr, mac_count * MLAN_MAC_ADDR_LENGTH);
+        __memcpy(NULL, tlv->mac_addr, mac_addr, mac_count * MLAN_MAC_ADDR_LENGTH);
     }
     else
     {

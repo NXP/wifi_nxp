@@ -1023,7 +1023,7 @@ static mlan_status wlan_uap_cmd_add_station(pmlan_private pmpriv,
                                             pmlan_ioctl_req pioctl_buf)
 {
     mlan_ds_bss *bss                = MNULL;
-    HostCmd_DS_ADD_STATION *new_sta = (HostCmd_DS_ADD_STATION *)&cmd->params.sta_info;
+    HostCmd_DS_ADD_STATION *new_sta = (HostCmd_DS_ADD_STATION *)&cmd->params.station_info;
     sta_node *sta_ptr               = MNULL;
     t_u16 tlv_buf_left;
     t_u8 *pos        = MNULL;

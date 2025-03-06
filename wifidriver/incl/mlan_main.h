@@ -723,7 +723,7 @@ typedef MLAN_PACK_START struct _eth_hdr
 } MLAN_PACK_END eth_hdr;
 
 /** Ethernet LLC frame header */
-typedef MLAN_PACK_START struct _eth_llc_hdr
+typedef MLAN_PACK_START struct _ethernet_llc_header
 {
     /* destination SAP */
     t_u8 dsap;
@@ -735,7 +735,7 @@ typedef MLAN_PACK_START struct _eth_llc_hdr
     t_u8 protid[3];
     /* ether type field */
     t_u16 type;
-} MLAN_PACK_END eth_llc_hdr;
+} MLAN_PACK_END ethernet_llc_header;
 
 /* The IPv4 header */
 typedef MLAN_PACK_START struct _ip_hdr

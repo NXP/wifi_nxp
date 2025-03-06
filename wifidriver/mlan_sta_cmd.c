@@ -1497,7 +1497,7 @@ done:
 mlan_status wlan_cmd_mem_access(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action, IN t_void *pdata_buf)
 {
     mlan_ds_mem_rw *mem_rw            = (mlan_ds_mem_rw *)pdata_buf;
-    HostCmd_DS_MEM_ACCESS *mem_access = (HostCmd_DS_MEM_ACCESS *)&cmd->params.mem;
+    HostCmd_DS_MEM_ACCESS *mem_access = (HostCmd_DS_MEM_ACCESS *)&cmd->params.memory;
 
     ENTER();
 

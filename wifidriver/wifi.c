@@ -3596,9 +3596,9 @@ static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, 
     if (memcmp((t_u8 *)prx_pd + prx_pd->rx_pkt_offset + WIFI_SIZEOF_ETH_HDR, rfc1042_eth_hdr,
                sizeof(rfc1042_eth_hdr)) == 0U)
     {
-        eth_llc_hdr *ethllchdr = (eth_llc_hdr *)(void *)((t_u8 *)prx_pd + prx_pd->rx_pkt_offset + WIFI_SIZEOF_ETH_HDR);
+        ethernet_llc_header *ethllchdr = (ethernet_llc_header *)(void *)((t_u8 *)prx_pd + prx_pd->rx_pkt_offset + WIFI_SIZEOF_ETH_HDR);
         eth_proto              = mlan_ntohs(ethllchdr->type);
-        offset                 = sizeof(eth_llc_hdr);
+        offset                 = sizeof(ethernet_llc_header);
     }
 
     if (eth_proto == ETH_PROTO_EAPOL)

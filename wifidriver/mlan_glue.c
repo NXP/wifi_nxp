@@ -2677,7 +2677,7 @@ static void load_bss_list(const HostCmd_DS_STA_LIST *sta_list)
             sta[i].rssi = si->rssi;
         }
 
-        (void)memcpy(sta[i].mac, si->mac_address, MLAN_MAC_ADDR_LENGTH);
+        (void)memcpy(sta[i].mac, si->mac_addr, MLAN_MAC_ADDR_LENGTH);
         sta[i].power_mgmt_status = si->power_mfg_status;
         si = (MrvlIEtypes_sta_info_t *)((t_u8 *)si + (si->header.len + sizeof(MrvlIEtypesHeader_t)));
 
@@ -3453,7 +3453,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             case HostCmd_CMD_MEM_ACCESS:
             {
                 HostCmd_DS_MEM_ACCESS *mem;
-                mem = (HostCmd_DS_MEM_ACCESS *)&resp->params.mem;
+                mem = (HostCmd_DS_MEM_ACCESS *)&resp->params.memory;
                 if (mem->action == HostCmd_ACT_GEN_GET)
                 {
                     if (wm_wifi.cmd_resp_priv != NULL)
