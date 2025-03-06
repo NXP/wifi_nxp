@@ -1835,7 +1835,7 @@ static int wifi_assoc_pick_security_ie(mlan_private *priv, BSSDescriptor_t *d,
         goto wpa_ie_picked;
     }
 
-    wifi_w("wifi assoc selecting security profile failed, "
+    wifi_d("wifi assoc selecting security profile failed, "
            "key mgmt network 0x%x rsno2 0x%x rsno 0x%x rsn 0x%x",
            key_mgmt_network, key_mgmt_ie_rsno2, key_mgmt_ie_rsno, key_mgmt_ie_rsn);
     priv->sec_info.rsn_selector = MLAN_RSN_SELECTOR_INVALID;
