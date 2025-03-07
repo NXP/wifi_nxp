@@ -454,7 +454,7 @@ extern "C" {
 #endif
 
 #if (CONFIG_NXP_WIFI_9177)
-#define CONFIG_TCP_ACK_ENH 1
+#define CONFIG_TCP_ACK_ENH 0
 #endif
 
 #if CONFIG_11AX
