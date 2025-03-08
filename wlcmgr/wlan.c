@@ -1815,7 +1815,8 @@ static bool is_sta_connecting(void)
 
     return ((state >= WPA_SCANNING) && (state <= WPA_COMPLETED));
 #else
-    return ((wlan.sta_state > CM_STA_ASSOCIATING) && (wlan.sta_state <= CM_STA_CONNECTED));
+    return ((wlan.sta_state == CM_STA_SCANNING)
+            || ((wlan.sta_state >= CM_STA_ASSOCIATING) && (wlan.sta_state <= CM_STA_CONNECTED)));
 #endif
 }
 
