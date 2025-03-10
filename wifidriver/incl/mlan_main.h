@@ -2973,9 +2973,9 @@ static t_u8 queuing_ra_based(pmlan_private priv)
  *  @return 	   	        Number of Rates copied
  */
 INLINE
-static t_u32 wlan_copy_rates(t_u8 *dest, t_u32 pos, t_u8 *src, int len)
+static t_u32 wlan_copy_rates(t_u8 *dest, t_u32 pos, t_u8 *src, t_u32 len)
 {
-    int i;
+    t_u32 i;
 
     for (i = 0; i < len && src[i]; i++)
     {
