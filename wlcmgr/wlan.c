@@ -309,6 +309,10 @@ extern OSA_SEMAPHORE_HANDLE_DEFINE(wakelock);
 extern int wakeup_by;
 
 bool wlan_is_manual = false;
+
+#ifdef IW610
+void (*wlan_hs_notify_cb)(void) = NULL;
+#endif
 #endif
 
 #if CONFIG_SCAN_CHANNEL_GAP
@@ -773,6 +777,22 @@ t_u8 g_csi_event_for_wls;
 /*
  * Utility Functions
  */
+#if CONFIG_HOST_SLEEP
+#ifdef IW610
+void wlan_register_hs_callback(void (*hs_notify_cb)(void))
+{
+	wlan_hs_notify_cb = hs_notify_cb;
+}
+
+static void wlan_notify_hs_status()
+{
+    if (wlan_hs_notify_cb != NULL)
+    {
+        wlan_hs_notify_cb();
+    }
+}
+#endif
+#endif
 
 int verify_scan_duration_value(int scan_duration)
 {
@@ -1100,11 +1120,16 @@ static int wlan_send_host_sleep_int(uint32_t wake_up_conds, bool is_config)
         ipv4_addr = 0;
     }
 
-    if (wlan.hs_dummy_send == MFALSE || is_config == MFALSE)
+    if (
+#ifndef IW610
+    wlan.hs_dummy_send == MFALSE ||
+#endif
+    is_config == MFALSE)
     {
         wifi_send_hs_cfg_cmd((mlan_bss_type)type, ipv4_addr, HS_CONFIGURE, wlan.hs_wakeup_condition);
         wlan.hs_dummy_send = MTRUE;
     }
+
     return ret;
 }
 
@@ -1113,8 +1138,10 @@ void wlan_hs_pre_cfg(void)
     if (wlan.hs_enabled == MTRUE)
     {
         (void)wlan_send_host_sleep_int(wlan.hs_wakeup_condition, MFALSE);
+#ifndef IW610
         /** Wait for HS Activate to complete */
         OSA_TimeDelay(1000);
+#endif
     }
 }
 
@@ -6883,6 +6910,9 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #endif
 #endif
             }
+#endif
+#ifdef IW610
+            wlan_notify_hs_status();
 #endif
             break;
 #endif

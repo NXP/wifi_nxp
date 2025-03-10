@@ -4038,6 +4038,11 @@ int wlan_send_host_sleep(uint32_t wakeup_condition);
  * \return -WM_FAIL if command fails.
  */
 int wlan_get_wakeup_reason(uint16_t *hs_wakeup_reason);
+
+#ifdef IW610
+/** Use this API to register call back for host sleep confirm done*/
+void wlan_register_hs_callback(void (*hs_notify_cb)(void));
+#endif
 #endif
 
 /**
