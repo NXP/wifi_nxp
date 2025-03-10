@@ -288,8 +288,7 @@ t_void wlan_wmm_init(pmlan_adapter pmadapter)
             }
 #endif
 #if UAP_SUPPORT
-            if (priv->bss_type == MLAN_BSS_TYPE_UAP
-            )
+            if (priv->bss_type == MLAN_BSS_TYPE_UAP)
             {
                 priv->add_ba_param.tx_win_size = MLAN_UAP_AMPDU_DEF_TXWINSIZE;
                 priv->add_ba_param.rx_win_size = MLAN_UAP_AMPDU_DEF_RXWINSIZE;
