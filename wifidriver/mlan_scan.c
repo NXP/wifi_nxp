@@ -23,7 +23,7 @@ Change log:
 /********************************************************
                 Local Constants
 ********************************************************/
-#if defined(RW610) || defined(SD9177) || defined(IW610)
+#if defined(RW610) || defined(SD9177) || defined(IW610) || defined(SD8978) || defined(SD8987)
 /** minimum scan time for passive to active scan */
 #define MIN_PASSIVE_TO_ACTIVE_SCAN_TIME 150
 #endif
@@ -461,7 +461,7 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
                         /* Skip DFS channels if required */
                         if (pmadapter->skip_dfs)
                             continue;
-#if defined(RW610) || defined(SD9177) || defined(IW610)
+#if defined(RW610) || defined(SD9177) || defined(IW610) || defined(SD8978) || defined(SD8987)
                         scan_type = MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE;
 #else
                         scan_type = MLAN_SCAN_TYPE_PASSIVE;
@@ -487,7 +487,7 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
                 pscan_chan_list[chan_idx].max_scan_time =
                     wlan_cpu_to_le16((t_u16)puser_scan_in->chan_list[0].scan_time);
             }
-#if defined(RW610) || defined(SD9177) || defined(IW610)
+#if defined(RW610) || defined(SD9177) || defined(IW610) || defined(SD8978) || defined(SD8987)
             else if (scan_type == MLAN_SCAN_TYPE_PASSIVE || scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE)
 #else
             else if (scan_type == MLAN_SCAN_TYPE_PASSIVE)
@@ -504,7 +504,7 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
                 pscan_chan_list[chan_idx].max_scan_time = wlan_cpu_to_le16(pmadapter->active_scan_time);
             }
 
-#if defined(RW610) || defined(SD9177) || defined(IW610)
+#if defined(RW610) || defined(SD9177) || defined(IW610) || defined(SD8978) || defined(SD8987)
             if (scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE)
             {
                 pscan_chan_list[chan_idx].max_scan_time =
@@ -512,7 +512,7 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
                 pscan_chan_list[chan_idx].chan_scan_mode.passive_to_active_scan = MTRUE;
             }
 #endif
-#if defined(RW610) || defined(SD9177) || defined(IW610)
+#if defined(RW610) || defined(SD9177) || defined(IW610) || defined(SD8978) || defined(SD8987)
             if (scan_type == MLAN_SCAN_TYPE_PASSIVE || scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE)
 #else
             if (scan_type == MLAN_SCAN_TYPE_PASSIVE)
@@ -528,7 +528,7 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
 
             pscan_chan_list[chan_idx].chan_number = (t_u8)cfp->channel;
 
-#if defined(RW610) || defined(SD9177) || defined(IW610)
+#if defined(RW610) || defined(SD9177) || defined(IW610) || defined(SD8978) || defined(SD8987)
             wscan_d("Channel: %d Type: %s %d", cfp->channel,
                     scan_type == MLAN_SCAN_TYPE_PASSIVE           ? "Passive" :
                     scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE ? "PassiveToActive" :
@@ -1332,7 +1332,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
                         /* Skip DFS channels if required */
                         if (pmadapter->skip_dfs)
                             continue;
-#if defined(RW610) || defined(SD9177) || defined(IW610)
+#if defined(RW610) || defined(SD9177) || defined(IW610) || defined(SD8978) || defined(SD8987)
                         scan_type = MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE;
 #else
                         scan_type = MLAN_SCAN_TYPE_PASSIVE;
@@ -1348,7 +1348,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
                     }
                 }
             }
-#if defined(RW610) || defined(SD9177) || defined(IW610)
+#if defined(RW610) || defined(SD9177) || defined(IW610) || defined(SD8978) || defined(SD8987)
             if (scan_type == MLAN_SCAN_TYPE_PASSIVE || scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE)
 #else
             if (scan_type == MLAN_SCAN_TYPE_PASSIVE)
@@ -1368,7 +1368,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
             }
             else
             {
-#if defined(RW610) || defined(SD9177) || defined(IW610)
+#if defined(RW610) || defined(SD9177) || defined(IW610) || defined(SD8978) || defined(SD8987)
                 if (scan_type == MLAN_SCAN_TYPE_PASSIVE || scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE)
 #else
                 if (scan_type == MLAN_SCAN_TYPE_PASSIVE)
@@ -1386,7 +1386,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
                 }
             }
 
-#if defined(RW610) || defined(SD9177) || defined(IW610)
+#if defined(RW610) || defined(SD9177) || defined(IW610) || defined(SD8978) || defined(SD8987)
             if (scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE)
             {
                 (pscan_chan_list + chan_idx)->chan_scan_mode.passive_to_active_scan = MTRUE;
@@ -1396,7 +1396,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
             (pscan_chan_list + chan_idx)->min_scan_time = wlan_cpu_to_le16(scan_dur);
             (pscan_chan_list + chan_idx)->max_scan_time = wlan_cpu_to_le16(scan_dur);
 
-#if defined(RW610) || defined(SD9177) || defined(IW610)
+#if defined(RW610) || defined(SD9177) || defined(IW610) || defined(SD8978) || defined(SD8987)
             wscan_d("Channel: %d Type: %s ", channel,
                     scan_type == MLAN_SCAN_TYPE_PASSIVE           ? "Passive" :
                     scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE ? "PassiveToActive" :
