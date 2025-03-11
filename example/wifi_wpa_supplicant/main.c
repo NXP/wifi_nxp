@@ -292,6 +292,15 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
             PRINTF("Soft AP \"%s\" started successfully\r\n", ssid);
             printSeparator();
+
+#ifdef CONFIG_WPA_SUPP_P2P
+            if (uap_network.type == WLAN_BSS_TYPE_WIFIDIRECT)
+            {
+                if (dhcp_server_start(net_get_wfd_handle()))
+                    PRINTF("Error in starting dhcp server\r\n");
+            }
+            else
+#endif
             if (dhcp_server_start(net_get_uap_handle()))
             {
                 PRINTF("Error in starting dhcp server\r\n");

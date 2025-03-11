@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <wifi_events.h>
 #include <wifi.h>
+#include "lwip/netif.h"
 
 #define WLAN_DRV_VERSION "v1.3.r48.p39"
 
@@ -206,6 +207,7 @@ typedef enum
 #define CARD_WAKEUP_GPIO_PIN 16
 #endif
 
+#define WLAN_MGMT_PROBE_RQST MBIT(4)
 #define WLAN_MGMT_DIASSOC MBIT(10)
 #define WLAN_MGMT_AUTH    MBIT(11)
 #define WLAN_MGMT_DEAUTH  MBIT(12)
@@ -2746,6 +2748,22 @@ int wlan_get_mac_address(unsigned char *dest);
  *  \return -WM_E_INVAL if \a dest is NULL.
  */
 int wlan_get_mac_address_uap(uint8_t *dest);
+
+#if CONFIG_WPA_SUPP_P2P
+/** Retrieve the wireless MAC address of wfd interface.
+ *
+ *  This function copies the MAC address of the wireless interface to
+ *  the 6-byte array pointed to by \a dest.  In the event of an error, nothing
+ *  is copied to \a dest.
+ *
+ *  \param[out] dest A pointer to a 6-byte array where the MAC address will be
+ *              copied.
+ *
+ *  \return WM_SUCCESS if the MAC address was copied.
+ *  \return -WM_E_INVAL if \a dest is NULL.
+ */
+int wlan_get_wfd_mac_address(unsigned char *dest);
+#endif
 
 /** Retrieve the IP address configuration of the station interface.
  *
@@ -6713,7 +6731,7 @@ void wlan_wps_generate_pin(uint32_t *pin);
  * \return WM_SUCCESS if the pin entered is valid.
  * \return -WM_FAIL if invalid pin entered.
  */
-int wlan_start_wps_pin(const char *pin);
+int wlan_start_wps_pin(const struct netif *netif, const char *pin);
 
 /** Start WPS PBC (push button configuration) session.
  *
@@ -6723,7 +6741,7 @@ int wlan_start_wps_pin(const char *pin);
  * \return -WM_FAIL if invalid pin entered.
  *
  */
-int wlan_start_wps_pbc(void);
+int wlan_start_wps_pbc(const struct netif *netif);
 
 /** Cancel WPS session.
  *
@@ -7312,6 +7330,18 @@ int wlan_dpp_reconfig(const char *cmd);
  * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
  */
 int wlan_dpp_configurator_sign(int is_ap, const char *cmd);
+#endif
+
+#ifdef CONFIG_WPA_SUPP_P2P
+int wlan_p2p_find(const char *cmd);
+int wlan_p2p_stop_find(void);
+int wlan_p2p_connect(char *cmd);
+int wlan_p2p_group_add(char *cmd);
+int wlan_p2p_get_passphrase(void);
+int wlan_p2p_invite(char *cmd);
+int wlan_p2p_prov_disc(char *cmd);
+int wlan_p2p_cancel(void);
+int wlan_p2p_remove_client(char *cmd);
 #endif
 
 #if CONFIG_IMD3_CFG

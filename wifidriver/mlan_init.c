@@ -253,6 +253,9 @@ mlan_status wlan_init_priv(pmlan_private priv)
 #if CONFIG_WPA_SUPP_DPP
     priv->is_dpp_connect = MFALSE;
 #endif
+#if CONFIG_WPA_SUPP_P2P
+    priv->p2p_mgmt_bitmap_index = -1;
+#endif
 
 #if CONFIG_WIFI_GET_LOG
     (void)__memset(pmadapter, &priv->stats, 0, sizeof(priv->stats));

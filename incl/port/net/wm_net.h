@@ -567,6 +567,13 @@ struct netif *net_get_sta_interface(void);
 struct netif *net_get_uap_interface(void);
 #endif
 
+/** Get wfd interface netif structure pointer
+ *
+ * \rerurn A pointer to wfd interface netif structure
+ *
+ */
+struct netif *net_get_wfd_interface(void);
+
 #if defined(SDK_OS_FREE_RTOS)
 
 /** Get interface name for given netif
@@ -619,6 +626,15 @@ void *net_get_uap_handle(void);
  * \return void
  */
 void net_interface_up(void *intrfc_handle);
+
+/** Get wfd interface handle
+ *
+ * Some APIs require the interface handle to be passed to them. The handle can
+ * be retrieved using this API.
+ *
+ * \return wfd interface handle
+ */
+void *net_get_wfd_handle(void);
 
 /** Take interface down
  *
@@ -819,6 +835,9 @@ void dhcp_stat(void);
  */
 void net_stat(void);
 
+#if CONFIG_WPA_SUPP_P2P
+int netif_get_bss_type();
+#endif
 
 #ifdef MGMT_RX
 void rx_mgmt_register_callback(int (*rx_mgmt_cb_fn)(const enum wlan_bss_type bss_type,

@@ -154,11 +154,17 @@ typedef enum
     MGMT_MBO_IE              = MGMT_VENDOR_SPECIFIC_221,
 } IEEEtypes_ElementId_t;
 
-typedef struct wifi_uap_client_disassoc
+typedef struct wwifi_enable_11d_supportifi_uap_client_disassoc
 {
     int reason_code;
     t_u8 sta_addr[MLAN_MAC_ADDR_LENGTH];
 } wifi_uap_client_disassoc_t;
+
+typedef struct wifi_remain_channel_info
+{
+    t_u8 cancel_channel;
+    t_u8 bss_type;
+} wifi_remain_channel_info;
 
 /**
  * Initialize Wi-Fi driver module.
@@ -843,8 +849,8 @@ wifi_sub_band_set_t *get_sub_band_from_region_code(int region_code, t_u8 *nr_sb)
 wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, t_u8 *nr_sb);
 #endif
 
-int wifi_enable_11d_support();
-int wifi_disable_11d_support();
+int wifi_enable_11d_support(int bss_type);
+int wifi_disable_11d_support(int bss_type);
 
 #ifdef OTP_CHANINFO
 int wifi_get_fw_region_and_cfp_tables(void);
@@ -917,7 +923,7 @@ uint32_t wifi_get_board_type();
 void wifi_scan_enable_wpa2_enterprise_ap_only();
 #endif
 
-int wrapper_wlan_11d_enable(t_u32 state);
+int wrapper_wlan_11d_enable(int bss_type, t_u32 state);
 
 int wifi_11h_enable(void);
 
@@ -927,7 +933,7 @@ int wrapper_wlan_cmd_11n_delba_rspgen(void *saved_event_buff);
 
 int wrapper_wlan_ecsa_enable(void);
 
-int wrapper_wlan_sta_ampdu_enable(
+int wrapper_wlan_sta_ampdu_enable(const t_u8 interface,
 #if CONFIG_WMM
     t_u8 tid
 #endif
@@ -1768,7 +1774,8 @@ bool get_monitor_flag();
 int wifi_mgmtframe_tx_cfg(wifi_host_tx_frame_params_t *mgmtframe);
 #endif
 
-int wifi_send_mgmt_auth_request(const t_u8 channel,
+int wifi_send_mgmt_auth_request(const unsigned int bss_type,
+                                const t_u8 channel,
                                 const t_u8 auth_alg,
                                 const t_u8 *auth_seq_num,
                                 const t_u8 *status_code,
@@ -1942,7 +1949,7 @@ int wifi_disable_uap_11d_support();
 int wrapper_wlan_uap_11d_enable(t_u32 state);
 
 void wifi_uap_set_httxcfg(const t_u16 ht_tx_cfg);
-int wifi_uap_set_httxcfg_int(unsigned short httxcfg);
+int wifi_uap_set_httxcfg_int(unsigned int bss_type, unsigned short httxcfg);
 
 int wifi_uap_ps_inactivity_sleep_exit(mlan_bss_type type);
 int wifi_uap_ps_inactivity_sleep_enter(mlan_bss_type type,
@@ -1976,7 +1983,8 @@ int wifi_uap_start(mlan_bss_type type,
 #endif
 );
 
-int wrapper_wlan_uap_ampdu_enable(uint8_t *addr
+int wrapper_wlan_uap_ampdu_enable(const t_u8 interface,
+                                  uint8_t *addr
 #if CONFIG_WMM
                                   ,
                                   t_u8 tid
@@ -2017,8 +2025,8 @@ int wifi_uap_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr);
 t_u16 wifi_get_default_ht_capab();
 t_u32 wifi_get_default_vht_capab();
 
-void wifi_uap_client_assoc(t_u8 *sta_addr, unsigned char is_11n_enabled);
-void wifi_uap_client_deauth(t_u8 *sta_addr);
+void wifi_uap_client_assoc(t_u8 bss_type, t_u8 *sta_addr, unsigned char is_11n_enabled);
+void wifi_uap_client_deauth(t_u8 bss_type, t_u8 *sta_addr);
 #endif
 #endif /* UAP_SUPPORT */
 #endif /* __WIFI_H__ */

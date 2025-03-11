@@ -151,6 +151,10 @@ int wifi_supp_init(void)
 {
     int ret = -WM_FAIL;
     char sta_iface_name[NETIF_NAMESIZE], uap_iface_name[NETIF_NAMESIZE];
+#if CONFIG_WPA_SUPP_P2P
+    char wfd_iface_name[NETIF_NAMESIZE];
+#endif
+
     struct netif *iface = NULL;
 
     if (wifi_supp_init_done != 0U)
@@ -219,6 +223,30 @@ int wifi_supp_init(void)
 #endif
 
     (void)net_get_if_name_netif(uap_iface_name, iface);
+#endif
+
+#if CONFIG_WPA_SUPP_P2P
+    g_wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)os_mem_alloc(sizeof(struct wifi_nxp_ctx_rtos));
+
+    if (!g_wifi_if_ctx_rtos)
+    {
+        wifi_e("Interface ctx alloc failed.");
+        goto out;
+    }
+
+    wm_wifi.if_priv_wfd = (void *)g_wifi_if_ctx_rtos;
+
+    iface = net_get_wfd_interface();
+
+    if (iface == NULL)
+    {
+        wifi_e("net_get_wfd_interface failed. status code %d", ret);
+        goto out;
+    }
+
+    netif_set_client_data(iface, LWIP_NETIF_CLIENT_DATA_INDEX_MAX, (void *)&wpa_supp_ops);
+
+    (void)net_get_if_name_netif(wfd_iface_name, iface);
 #endif
 
     ret = start_wpa_supplicant(sta_iface_name);

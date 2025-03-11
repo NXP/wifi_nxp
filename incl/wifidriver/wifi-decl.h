@@ -157,6 +157,11 @@ typedef struct
 /** BSS type : UAP */
 #define BSS_TYPE_UAP 1U
 
+#if CONFIG_WPA_SUPP_P2P
+/** BSS type : WFD */
+#define BSS_TYPE_WFD 2U
+#endif
+
 #define UAP_DEFAULT_CHANNEL       0
 #define UAP_DEFAULT_BANDWIDTH     2
 #define UAP_DEFAULT_BEACON_PERIOD 100

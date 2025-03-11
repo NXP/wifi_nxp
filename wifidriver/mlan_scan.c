@@ -573,7 +573,35 @@ static void wlan_add_wps_probe_request_ie(IN mlan_private *pmpriv, OUT t_u8 **pp
         *pptlv_out += sizeof(MrvlIEtypesHeader_t);
         (void)__memcpy(pmpriv->adapter, *pptlv_out, pmpriv->wps.wps_ie.vend_hdr.oui, pmpriv->wps.wps_ie.vend_hdr.len);
         *pptlv_out += (pmpriv->wps.wps_ie.vend_hdr.len + sizeof(MrvlIEtypesHeader_t));
-        *pptlv_out += pmpriv->wps.wps_ie.vend_hdr.len;
+//        *pptlv_out += pmpriv->wps.wps_ie.vend_hdr.len;
+    }
+    LEAVE();
+}
+#endif
+
+#if CONFIG_WPA_SUPP_P2P
+/**
+ *  @brief Add P2P IE to probe request frame
+ *
+ *  @param pmpriv             A pointer to mlan_private structure
+ *  @param pptlv_out          A pointer to TLV to fill in
+ *
+ *  @return                   N/A
+ */
+static void wlan_add_p2p_probe_request_ie(IN mlan_private *pmpriv, OUT t_u8 **pptlv_out)
+{
+    MrvlIEtypesHeader_t *tlv;
+
+    ENTER();
+
+    if ((pmpriv->p2p.session_enable) && (pmpriv->p2p.p2p_ie.vend_hdr.len))
+    {
+        tlv       = (MrvlIEtypesHeader_t *)*pptlv_out;
+        tlv->type = wlan_cpu_to_le16(VENDOR_SPECIFIC_221);
+        tlv->len  = wlan_cpu_to_le16(pmpriv->p2p.p2p_ie.vend_hdr.len);
+        *pptlv_out += sizeof(MrvlIEtypesHeader_t);
+        (void)__memcpy(pmpriv->adapter, *pptlv_out, pmpriv->p2p.p2p_ie.vend_hdr.oui, pmpriv->p2p.p2p_ie.vend_hdr.len);
+        *pptlv_out += (pmpriv->p2p.p2p_ie.vend_hdr.len + sizeof(MrvlIEtypesHeader_t));
     }
     LEAVE();
 }
@@ -1270,6 +1298,9 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
 #if CONFIG_WPA_SUPP
 #if CONFIG_WPA_SUPP_WPS
     wlan_add_wps_probe_request_ie(pmpriv, &ptlv_pos);
+#endif
+#ifdef CONFIG_WPA_SUPP_P2P
+    wlan_add_p2p_probe_request_ie(pmpriv, &ptlv_pos);
 #endif
     wlan_add_probe_request_ie(pmpriv, &ptlv_pos);
 #endif
@@ -3206,7 +3237,11 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
                     bss_new_entry->mac_address[4], bss_new_entry->mac_address[5]);
 
 #if CONFIG_WPA_SUPP
-#if CONFIG_WPA_SUPP_WPS
+#ifdef CONFIG_WPA_SUPP_P2P
+            if (pmpriv->p2p.session_enable == MFALSE)
+            {
+#endif
+#if CONFIG_WPA_SUPP_WPS 
             if (pmpriv->wps.session_enable == MTRUE)
             {
                 if ((bss_new_entry->wps_IE_exist == MFALSE) || (bss_new_entry->wps_session == 0xffff))
@@ -3220,6 +3255,9 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
                 }
             }
 #endif /* CONFIG_WPA_SUPP_WPS */
+#ifdef CONFIG_WPA_SUPP_P2P
+            }
+#endif /* CONFIG_WPA_SUPP_P2P */
 #endif
 
             /*
@@ -4331,6 +4369,10 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
                    bss_new_entry->mac_address[4], bss_new_entry->mac_address[5]);
 
 #if CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_P2P
+            if (pmpriv->p2p.session_enable == MFALSE)
+            {
+#endif
 #if CONFIG_WPA_SUPP_WPS
             if (pmpriv->wps.session_enable == MTRUE)
             {
@@ -4345,6 +4387,9 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
                 }
             }
 #endif /* CONFIG_WPA_SUPP_WPS */
+#ifdef CONFIG_WPA_SUPP_P2P
+            }
+#endif /* CONFIG_WPA_SUPP_P2P */
 #endif
 
             band = BAND_G;

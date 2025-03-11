@@ -1143,6 +1143,15 @@ typedef struct
     t_u8 session_enable;
 } wps_t;
 
+/** Data structure for P2P information */
+typedef struct
+{
+    /** WPS IE */
+    IEEEtypes_VendorSpecific_t p2p_ie;
+    /** Session enable flag */
+    t_u8 session_enable;
+} p2p_t;
+
 typedef struct _mlan_private mlan_private;
 typedef struct _mlan_private *pmlan_private;
 
@@ -1259,6 +1268,10 @@ struct _mlan_private
     t_u8 frame_type;
     /** MAC address information */
     t_u8 curr_addr[MLAN_MAC_ADDR_LENGTH];
+#if CONFIG_WPA_SUPP_P2P
+    /** P2P MAC address information */
+    t_u8 curr_p2p_addr[MLAN_MAC_ADDR_LENGTH];
+#endif
     /** Media connection status */
     t_bool media_connected;
 
@@ -1509,8 +1522,16 @@ struct _mlan_private
     t_u8 default_scan_ies_len;
 #endif
 
-
 #if CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_P2P
+    p2p_t p2p;
+    int p2p_mgmt_bitmap_index;
+    int p2p_gc_network;
+    int p2p_go_network;
+    t_u8 p2p_go_ssid[MLAN_MAX_SSID_LENGTH];
+    t_u8 p2p_go_ssid_len;
+    int p2p_go_chan;
+#endif
 #if CONFIG_WPA_SUPP_WPS
     /** WPS */
     wps_t wps;
@@ -2205,6 +2226,10 @@ struct _mlan_adapter
 #if CONFIG_WPA_SUPP
     /** WPA supplicant scan triggered */
     t_u8 wpa_supp_scan_triggered;
+#ifdef CONFIG_WPA_SUPP_P2P
+    /** WPA supplicant p2p scan triggered */
+    t_u8 wpa_supp_p2p_scan_triggered;
+#endif
 #endif
 #if CONFIG_SCAN_CHANNEL_GAP
     /** channel statstics */
@@ -2513,7 +2538,16 @@ mlan_status wlan_cmd_remain_on_channel(IN pmlan_private pmpriv,
                                        IN t_u16 cmd_action,
                                        IN t_void *pdata_buf);
 
-
+#if CONFIG_WPA_SUPP_P2P
+mlan_status wlan_bss_ioctl_wifi_direct_mode(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
+mlan_status wlan_cmd_wifi_direct_mode(IN pmlan_private pmpriv,
+                                      IN HostCmd_DS_COMMAND *cmd,
+                                      IN t_u16 cmd_action,
+                                      IN t_void *pdata_buf);
+mlan_status wlan_ret_wifi_direct_mode(IN pmlan_private pmpriv,
+                                      IN HostCmd_DS_COMMAND *resp,
+                                      IN mlan_ioctl_req *pioctl_buf);
+#endif
 
 mlan_status wlan_radio_ioctl_radio_ctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 

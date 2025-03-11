@@ -25,15 +25,15 @@
  * \return -WM_FAIL if operation was failed.
  * \return WM_SUCCESS if operation was successful.
  */
-static inline int wlan_enable_11d(int state)
+static inline int wlan_enable_11d(int bss_type, int state)
 {
     if (state == 1)
     {
-        return wifi_enable_11d_support();
+        return wifi_enable_11d_support(bss_type);
     }
     else
     {
-        return wifi_disable_11d_support();
+        return wifi_disable_11d_support(bss_type);
     }
 }
 

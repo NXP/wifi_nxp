@@ -272,14 +272,14 @@ done:
 }
 #endif /* CONFIG_11AX */
 
-void wifi_uap_clear_domain_info()
+void wifi_uap_clear_domain_info(unsigned int bss_type)
 {
     (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd                     = wifi_get_command_buffer();
     HostCmd_DS_802_11D_DOMAIN_INFO *domain_info = (HostCmd_DS_802_11D_DOMAIN_INFO *)((t_u8 *)cmd + S_DS_GEN);
 
     __memset(NULL, cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_UAP);
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, bss_type);
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_802_11D_DOMAIN_INFO);
     cmd->size    = S_DS_GEN + sizeof(domain_info->action) + sizeof(MrvlIEtypesHeader_t);
 
@@ -330,11 +330,10 @@ int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
  * getting region code by pmadapter.
  * Then it sends 80211 domain info command to firmware
  */
-int wifi_uap_downld_domain_params(int band)
+int wifi_uap_downld_domain_params(mlan_private *pmpriv, int band)
 {
     int rv;
     mlan_adapter *pmadapter = mlan_adap;
-    mlan_private *priv_uap   = pmadapter->priv[1];
     int region_code          = pmadapter->region_code;
     const t_u8 *country_code = NULL;
     int chan_spacing = 1;
@@ -402,8 +401,8 @@ int wifi_uap_downld_domain_params(int band)
         pdomain->sub_band[pdomain->no_of_sub_band].max_tx_pwr = max_tx_power;
         pdomain->no_of_sub_band ++;
     }
-    rv = wifi_uap_prepare_and_send_cmd(priv_uap, HostCmd_CMD_802_11D_DOMAIN_INFO, HostCmd_ACT_GEN_SET, 0, NULL, NULL,
-                                       MLAN_BSS_TYPE_UAP, NULL);
+    rv = wifi_uap_prepare_and_send_cmd(pmpriv, HostCmd_CMD_802_11D_DOMAIN_INFO, HostCmd_ACT_GEN_SET, 0, NULL, NULL,
+                                       pmpriv->bss_type, NULL);
     if (rv != 0)
     {
         wuap_w("Unable to send uap domain info");
@@ -742,7 +741,7 @@ static int wifi_cmd_uap_config(char *ssid,
         SETHT_LDPCCODINGCAP(bss.param.bss_config.ht_cap_info);
         SETHT_LDPCCODINGCAP(wm_wifi.ht_tx_cfg);
     }
-    ret = wifi_uap_set_httxcfg_int(wm_wifi.ht_tx_cfg);
+    ret = wifi_uap_set_httxcfg_int(bss_type, wm_wifi.ht_tx_cfg);
     if (ret != WM_SUCCESS)
     {
         wuap_e("Cannot set uAP HT TX Cfg:%x", wm_wifi.ht_tx_cfg);
@@ -1123,15 +1122,15 @@ int wifi_uap_start(mlan_bss_type type,
     if (wifi_is_remain_on_channel() && remain_priv)
     {
         wuap_d("Cancel Remain on Channel before Starting AP");
-        wifi_remain_on_channel(false, 0, 0);
+        wifi_remain_on_channel(type, false, 0, 0);
     }
 
     if (wm_wifi.enable_11d_support && wm_wifi.uap_support_11d_apis)
     {
         wuap_d("Downloading domain params");
-        wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(BAND_B);
+        wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(pmpriv, BAND_B);
 #if CONFIG_5GHz_SUPPORT
-        wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(BAND_A);
+        wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(pmpriv, BAND_A);
 #endif
     }
 
@@ -1189,7 +1188,7 @@ int wifi_uap_stop()
     /* Start BSS */
     rv = wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_BSS_STOP, HostCmd_ACT_GEN_SET, 0, NULL, NULL,
                                        MLAN_BSS_TYPE_UAP, NULL);
-    wifi_uap_clear_domain_info();
+    wifi_uap_clear_domain_info(MLAN_BSS_TYPE_UAP);
 
     return rv;
 }
@@ -2046,52 +2045,53 @@ int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_a
 
 #if CONFIG_HOSTAPD
 
-void wifi_uap_client_assoc(t_u8 *sta_addr, unsigned char is_11n_enabled)
+void wifi_uap_client_assoc(t_u8 bss_type, t_u8 *sta_addr, unsigned char is_11n_enabled)
 {
+    mlan_private *priv = (mlan_private *)mlan_adap->priv[bss_type];
 #if (CONFIG_UAP_AMPDU_TX) || (CONFIG_UAP_AMPDU_RX)
-    wlan_request_ralist_lock(mlan_adap->priv[1]);
+    wlan_request_ralist_lock(priv);
     /* Clear corresponding tx/rx table if necessary */
-    if (wlan_11n_get_txbastream_tbl((mlan_private *)mlan_adap->priv[1], sta_addr))
+    if (wlan_11n_get_txbastream_tbl(priv, sta_addr))
     {
-        wlan_11n_delete_txbastream_tbl_entry((mlan_private *)mlan_adap->priv[1], sta_addr);
+        wlan_11n_delete_txbastream_tbl_entry(priv, sta_addr);
     }
 
-    wlan_cleanup_reorder_tbl((mlan_private *)mlan_adap->priv[1], sta_addr);
+    wlan_cleanup_reorder_tbl(priv, sta_addr);
 #if CONFIG_WMM
-    wlan_ralist_del_enh(mlan_adap->priv[1], sta_addr);
+    wlan_ralist_del_enh(priv, sta_addr);
 #endif
     /* txbastream table also is used as connected STAs data base */
-    wlan_11n_create_txbastream_tbl((mlan_private *)mlan_adap->priv[1], sta_addr, BA_STREAM_NOT_SETUP);
-    wlan_11n_update_txbastream_tbl_tx_thresh((mlan_private *)mlan_adap->priv[1], sta_addr, 3);
+    wlan_11n_create_txbastream_tbl(priv, sta_addr, BA_STREAM_NOT_SETUP);
+    wlan_11n_update_txbastream_tbl_tx_thresh(priv, sta_addr, 3);
 
     if (is_11n_enabled)
     {
-        wlan_11n_update_txbastream_tbl_ampdu_supported((mlan_private *)mlan_adap->priv[1], sta_addr, MTRUE);
+        wlan_11n_update_txbastream_tbl_ampdu_supported(priv, sta_addr, MTRUE);
     }
 
-    wlan_release_ralist_lock(mlan_adap->priv[1]);
+    wlan_release_ralist_lock(priv);
 
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
 
 #if CONFIG_WMM
-    wlan_ralist_add_enh(mlan_adap->priv[1], sta_addr);
+    wlan_ralist_add_enh(priv, sta_addr);
 #endif
 }
 
-void wifi_uap_client_deauth(t_u8 *sta_addr)
+void wifi_uap_client_deauth(t_u8 bss_type, t_u8 *sta_addr)
 {
 #if (CONFIG_UAP_AMPDU_TX) || (CONFIG_UAP_AMPDU_RX)
-    if ((mlan_private *)mlan_adap->priv[1]->is_11n_enabled)
+    if ((mlan_private *)mlan_adap->priv[bss_type]->is_11n_enabled)
     {
-        wlan_cleanup_reorder_tbl((mlan_private *)mlan_adap->priv[1], sta_addr);
-        wlan_request_ralist_lock((mlan_private *)mlan_adap->priv[1]);
-        wlan_11n_delete_txbastream_tbl_entry((mlan_private *)mlan_adap->priv[1], sta_addr);
-        wlan_release_ralist_lock((mlan_private *)mlan_adap->priv[1]);
+        wlan_cleanup_reorder_tbl((mlan_private *)mlan_adap->priv[bss_type], sta_addr);
+        wlan_request_ralist_lock((mlan_private *)mlan_adap->priv[bss_type]);
+        wlan_11n_delete_txbastream_tbl_entry((mlan_private *)mlan_adap->priv[bss_type], sta_addr);
+        wlan_release_ralist_lock((mlan_private *)mlan_adap->priv[bss_type]);
     }
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
 
 #if CONFIG_WMM
-    wlan_ralist_del_enh(mlan_adap->priv[1], sta_addr);
+    wlan_ralist_del_enh(mlan_adap->priv[bss_type], sta_addr);
 #endif
 }
 
@@ -2439,7 +2439,7 @@ mlan_status wifi_set_get_sys_config(mlan_private *priv, t_u16 action, mlan_uap_b
     ioctl_buf.pbuf = (t_u8 *)&bss;
 
     ret = wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_SYS_CONFIGURE, HostCmd_ACT_GEN_SET, 0, &ioctl_buf, NULL,
-                                        MLAN_BSS_TYPE_UAP, NULL);
+                                        priv->bss_type, NULL);
     if (ret != WM_SUCCESS)
     {
         return MLAN_STATUS_FAILURE;
@@ -2890,7 +2890,7 @@ static int wifi_nxp_set_mgmt_ies(mlan_private *priv,
     {
         if (priv->beacon_vendor_index != -1)
         {
-            ret = wifi_clear_mgmt_ie2(MLAN_BSS_TYPE_UAP, priv->beacon_vendor_index);
+            ret = wifi_clear_mgmt_ie2(priv->bss_type, priv->beacon_vendor_index);
             if (ret != WM_SUCCESS)
             {
                 wuap_e("Clear uAP vendor IE failed");
@@ -2909,7 +2909,7 @@ static int wifi_nxp_set_mgmt_ies(mlan_private *priv,
         if (ie_length)
         {
             priv->beacon_vendor_index =
-                wifi_set_mgmt_ie2(MLAN_BSS_TYPE_UAP, MGMT_MASK_BEACON | MGMT_MASK_ASSOC_RESP | MGMT_MASK_PROBE_RESP,
+                wifi_set_mgmt_ie2(priv->bss_type, MGMT_MASK_BEACON | MGMT_MASK_ASSOC_RESP | MGMT_MASK_PROBE_RESP,
                                   (void *)ie_buffer, ie_length);
 
             if (priv->beacon_vendor_index == -1)
@@ -3017,7 +3017,7 @@ static int wifi_nxp_set_mgmt_ies(mlan_private *priv,
         assocresp_ies_data->mgmt_subtype_mask = MGMT_MASK_CLEAR;
     }
 
-    ret = wifi_set_custom_ie(beacon_ies_data, beacon_wps_ies_data, proberesp_ies_data, assocresp_ies_data);
+    ret = wifi_set_custom_ie(priv->bss_type, beacon_ies_data, beacon_wps_ies_data, proberesp_ies_data, assocresp_ies_data);
     if (ret != WM_SUCCESS)
     {
         ret = -WM_FAIL;
@@ -3483,9 +3483,9 @@ static void wifi_set_uap_dfs_cac(mlan_private *priv, Band_Config_t *bandcfg, t_u
 }
 #endif
 
-int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
+int wifi_nxp_beacon_config(unsigned int bss_type, nxp_wifi_ap_info_t *params)
 {
-    mlan_private *priv = (mlan_private *)mlan_adap->priv[1];
+    mlan_private *priv = (mlan_private *)mlan_adap->priv[bss_type];
     mlan_private *remain_priv = NULL;
     // mlan_adapter *pmadapter = priv->adapter;
 
@@ -3534,7 +3534,7 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
     if (wifi_is_remain_on_channel() && remain_priv)
     {
         wuap_d("Cancel Remain on Channel before Starting AP");
-        wifi_remain_on_channel(false, 0, 0);
+        wifi_remain_on_channel(bss_type, false, 0, 0);
     }
 
     if (params->beacon_set)
@@ -3558,6 +3558,14 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
             goto done;
         }
 
+#if CONFIG_WPA_SUPP_P2P
+        if (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
+        {
+            priv->p2p_go_network = true;
+            priv->bss_role       = MLAN_BSS_ROLE_UAP;
+            wifi_set_wifi_direct_mode(bss_type, WIFI_DIRECT_MODE_GO);
+        }
+#endif
         __memset(NULL, &bandcfg, 0, sizeof(Band_Config_t));
 
         if (priv->uap_max_sta)
@@ -3705,7 +3713,7 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
                 enable_11n, sys_config->ht_cap_info, priv->uap_channel, bandcfg.chanBand, bandcfg.chanWidth,
                 bandcfg.chan2Offset, bandcfg.scanMode);
 
-            ret = wifi_uap_set_httxcfg_int(ht_cap);
+            ret = wifi_uap_set_httxcfg_int(bss_type, ht_cap);
             if (ret != WM_SUCCESS)
             {
                 wuap_e("Cannot set uAP HT TX Cfg:%x", sys_config->ht_cap_info);
@@ -3812,9 +3820,9 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
         if (wm_wifi.enable_11d_support && wm_wifi.uap_support_11d_apis)
         {
             wuap_d("Downloading domain params");
-            wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(BAND_B);
+            wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(priv, BAND_B);
 #if CONFIG_5GHz_SUPPORT
-            wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(BAND_A);
+            wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(priv, BAND_A);
 #endif
         }
 
@@ -3825,11 +3833,19 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
 
         if (!params->beacon_set)
         {
+            t_u32 mgmt_subtype_mask = WIFI_MGMT_AUTH | MGMT_MASK_ASSOC_REQ | MGMT_MASK_REASSOC_REQ | WIFI_MGMT_DEAUTH |
+                                      WIFI_MGMT_ACTION | WIFI_MGMT_DIASSOC;
+#if CONFIG_WPA_SUPP_P2P
+            if (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
+            {
+                mgmt_subtype_mask |= MGMT_MASK_PROBE_REQ;
+            }
+#endif
             wuap_d("Starting BSS");
             /* Start BSS */
             if (MLAN_STATUS_SUCCESS != wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_BSS_START,
                                                                      HostCmd_ACT_GEN_SET, 0, NULL, NULL,
-                                                                     MLAN_BSS_TYPE_UAP, NULL))
+                                                                     priv->bss_type, NULL))
             {
                 wuap_e("Start BSS failed");
                 priv->uap_host_based = MFALSE;
@@ -3838,9 +3854,7 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
             }
             wuap_d("wlan: AP started");
 
-            (void)wifi_set_rx_mgmt_indication(MLAN_BSS_TYPE_UAP, WIFI_MGMT_AUTH | MGMT_MASK_ASSOC_REQ |
-                                                                     MGMT_MASK_REASSOC_REQ | WIFI_MGMT_DEAUTH |
-                                                                     WIFI_MGMT_ACTION | WIFI_MGMT_DIASSOC);
+            (void)wifi_set_rx_mgmt_indication(priv->bss_type, mgmt_subtype_mask);
         }
 
     done:
@@ -4427,7 +4441,7 @@ static mlan_status wifi_uap_sta_info(mlan_private *priv, t_u16 action, mlan_ds_s
     ioctl_buf.pbuf = (t_u8 *)&bss;
 
     ret = wifi_uap_prepare_and_send_cmd(priv, HostCmd_CMD_ADD_NEW_STATION, action, 0, &ioctl_buf, NULL,
-                                        MLAN_BSS_TYPE_UAP, NULL);
+                                        priv->bss_type, NULL);
     if (ret != WM_SUCCESS)
     {
         return MLAN_STATUS_FAILURE;
@@ -4466,9 +4480,9 @@ static mlan_status wifi_uap_sta_remove(mlan_private *priv, const uint8_t *addr)
     return MLAN_STATUS_SUCCESS;
 }
 
-int wifi_nxp_sta_add(nxp_wifi_sta_info_t *params)
+int wifi_nxp_sta_add(unsigned int bss_type, nxp_wifi_sta_info_t *params)
 {
-    mlan_private *priv         = (mlan_private *)mlan_adap->priv[1];
+    mlan_private *priv         = (mlan_private *)mlan_adap->priv[bss_type];
     int ret                    = 0;
     mlan_ds_sta_info *sta_info = NULL;
     t_u8 *pos;
@@ -4626,7 +4640,7 @@ done:
     return ret;
 }
 
-int wifi_nxp_sta_remove(const uint8_t *addr)
+int wifi_nxp_sta_remove(unsigned int bss_type, const uint8_t *addr)
 {
     mlan_private *priv         = (mlan_private *)mlan_adap->priv[1];
     int ret                    = 0;
@@ -4680,9 +4694,9 @@ done:
     return ret;
 }
 
-int wifi_set_uap_rts(int rts_threshold)
+int wifi_set_uap_rts(unsigned int bss_type, int rts_threshold)
 {
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[bss_type];
     MrvlIEtypes_rts_threshold_t rts_threshold_tlv;
 
     __memset(NULL, &rts_threshold_tlv, 0, sizeof(MrvlIEtypes_rts_threshold_t));
@@ -4691,7 +4705,7 @@ int wifi_set_uap_rts(int rts_threshold)
     rts_threshold_tlv.rts_threshold = (t_u16)rts_threshold;
 
     int rv = wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_SYS_CONFIGURE, HostCmd_ACT_GEN_SET, 0, MNULL,
-                                           &rts_threshold_tlv, MLAN_BSS_TYPE_UAP, NULL);
+                                           &rts_threshold_tlv, bss_type, NULL);
     if (rv != WM_SUCCESS)
     {
         return rv;
@@ -4706,9 +4720,9 @@ int wifi_set_uap_rts(int rts_threshold)
     return rv;
 }
 
-int wifi_set_uap_frag(int frag_threshold)
+int wifi_set_uap_frag(unsigned int bss_type, int frag_threshold)
 {
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[bss_type];
     MrvlIEtypes_frag_threshold_t frag_threshold_tlv;
 
     __memset(NULL, &frag_threshold_tlv, 0, sizeof(MrvlIEtypes_frag_threshold_t));
@@ -4717,7 +4731,7 @@ int wifi_set_uap_frag(int frag_threshold)
     frag_threshold_tlv.frag_threshold = (t_u16)frag_threshold;
 
     int rv = wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_SYS_CONFIGURE, HostCmd_ACT_GEN_SET, 0, MNULL,
-                                           &frag_threshold_tlv, MLAN_BSS_TYPE_UAP, NULL);
+                                           &frag_threshold_tlv, bss_type, NULL);
     if (rv != WM_SUCCESS)
     {
         return rv;
@@ -4776,9 +4790,9 @@ void wifi_nxp_uap_disconnect(mlan_private *priv, t_u16 reason_code, t_u8 *mac)
 #endif
 }
 
-int wifi_nxp_stop_ap(void)
+int wifi_nxp_stop_ap(unsigned int bss_type)
 {
-    mlan_private *priv = (mlan_private *)mlan_adap->priv[1];
+    mlan_private *priv = (mlan_private *)mlan_adap->priv[bss_type];
     int ret            = WM_SUCCESS;
 
     if ((mlan_adap->in_reset == MTRUE) && (priv->media_connected == MFALSE))
@@ -4786,11 +4800,11 @@ int wifi_nxp_stop_ap(void)
         return ret;
     }
 
-    (void)wifi_set_rx_mgmt_indication(MLAN_BSS_TYPE_UAP, 0);
+    (void)wifi_set_rx_mgmt_indication(bss_type, 0);
 
     if (priv->beacon_vendor_index != -1)
     {
-        ret = wifi_clear_mgmt_ie2(MLAN_BSS_TYPE_UAP, priv->beacon_vendor_index);
+        ret = wifi_clear_mgmt_ie2(bss_type, priv->beacon_vendor_index);
         if (ret != WM_SUCCESS)
         {
             wuap_e("Clear uAP vendor IE failed");
@@ -4809,12 +4823,12 @@ int wifi_nxp_stop_ap(void)
 
     wuap_d("Stopping BSS"); /* Stop BSS */
     if (MLAN_STATUS_SUCCESS != wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_BSS_STOP, HostCmd_ACT_GEN_SET, 0,
-                                                             NULL, NULL, MLAN_BSS_TYPE_UAP, NULL))
+                                                             NULL, NULL, bss_type, NULL))
     {
         wuap_e("Stop BSS failed");
         return -WM_FAIL;
     }
-    wifi_uap_clear_domain_info();
+    wifi_uap_clear_domain_info(bss_type);
     priv->uap_host_based = MFALSE;
 
     wuap_d("wlan: AP stopped");
@@ -4824,9 +4838,9 @@ done:
     return ret;
 }
 
-int wifi_nxp_set_acl(nxp_wifi_acl_info_t *params)
+int wifi_nxp_set_acl(unsigned int bss_type, nxp_wifi_acl_info_t *params)
 {
-    mlan_private *priv             = (mlan_private *)mlan_adap->priv[1];
+    mlan_private *priv             = (mlan_private *)mlan_adap->priv[bss_type];
     int ret                        = -WM_FAIL;
     mlan_uap_bss_param *sys_config = NULL;
     bool bss_started               = MFALSE;
@@ -4874,7 +4888,7 @@ int wifi_nxp_set_acl(nxp_wifi_acl_info_t *params)
         bss_started = MTRUE;
 
         if (MLAN_STATUS_SUCCESS != wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_BSS_STOP, HostCmd_ACT_GEN_SET, 0,
-                                                                 NULL, NULL, MLAN_BSS_TYPE_UAP, NULL))
+                                                                 NULL, NULL, bss_type, NULL))
         {
             wuap_e("Stop BSS failed");
         }
@@ -4888,7 +4902,7 @@ int wifi_nxp_set_acl(nxp_wifi_acl_info_t *params)
     if (bss_started)
     {
         if (MLAN_STATUS_SUCCESS != wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_BSS_START, HostCmd_ACT_GEN_SET, 0,
-                                                                 NULL, NULL, MLAN_BSS_TYPE_UAP, NULL))
+                                                                 NULL, NULL, bss_type, NULL))
         {
             wuap_e("Start BSS failed");
         }

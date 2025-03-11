@@ -499,7 +499,8 @@ extern t_u8 g_csi_event_for_wls;
 #endif
 
 #if UAP_SUPPORT
-int wifi_set_custom_ie(custom_ie *beacon_ies_data,
+int wifi_set_custom_ie(unsigned int bss_type,
+		       custom_ie *beacon_ies_data,
                        custom_ie *beacon_wps_ies_data,
                        custom_ie *proberesp_ies_data,
                        custom_ie *assocresp_ies_data);

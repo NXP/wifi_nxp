@@ -378,13 +378,14 @@ int wifi_send_remain_on_channel_cmd(unsigned int bss_type, wifi_remain_on_channe
     CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[bss_type];
 
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, bss_type);
     cmd->result  = 0x0;
     /*save remain on channel bss index*/
     mlan_adap->remain_bss_index = mlan_adap->priv[bss_type]->bss_index;
     mlan_status rv =
-        wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[bss_type], HostCmd_CMD_802_11_REMAIN_ON_CHANNEL,
+        wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_REMAIN_ON_CHANNEL,
                                  HostCmd_ACT_GEN_SET, 0, NULL, remain_on_channel, cmd);
     if (rv != MLAN_STATUS_SUCCESS)
     {
@@ -2159,6 +2160,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 
     mlan_adap->wpa_supp_scan_triggered = wm_wifi.wpa_supp_scan;
     wm_wifi.wpa_supp_scan              = MFALSE;
+#if CONFIG_WPA_SUPP_P2P
+    mlan_adap->wpa_supp_p2p_scan_triggered = wm_wifi.wpa_supp_p2p_scan;
+#endif
 #endif
     if (ssid_num > MRVDRV_MAX_SSID_LIST_LENGTH)
         return -WM_E_INVAL;
@@ -2172,6 +2176,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
         {
 #if CONFIG_WPA_SUPP
             mlan_adap->wpa_supp_scan_triggered = MFALSE;
+#ifdef CONFIG_WPA_SUPP_P2P
+            mlan_adap->wpa_supp_p2p_scan_triggered = MFALSE;
+#endif
 #endif
             return -WM_E_INVAL;
         }
@@ -2186,6 +2193,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     {
 #if CONFIG_WPA_SUPP
         mlan_adap->wpa_supp_scan_triggered = MFALSE;
+#ifdef CONFIG_WPA_SUPP_P2P
+        mlan_adap->wpa_supp_p2p_scan_triggered = MFALSE;
+#endif
 #endif
         return -WM_E_NOMEM;
     }
@@ -2227,6 +2237,11 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
             user_scan_cfg->ssid_list[i].max_len = 40;
         }
     }
+#endif
+
+#ifdef CONFIG_WPA_SUPP_P2P
+        if ((mlan_adap->wpa_supp_p2p_scan_triggered) && (!memcmp((const void *)ssid, "DIRECT-", 7)))
+            user_scan_cfg->ssid_list[0].max_len = 0xFE;
 #endif
 
     if ((chan_list != MNULL) && (chan_list[0].radio_type & BAND_SPECIFIED))
@@ -2272,6 +2287,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 
 #if CONFIG_WPA_SUPP
         mlan_adap->wpa_supp_scan_triggered = MFALSE;
+#if CONFIG_WPA_SUPP_P2P
+        mlan_adap->wpa_supp_p2p_scan_triggered = MFALSE;
+#endif
         return -WM_E_BUSY;
 #else
         return -WM_E_BUSY;
@@ -3394,21 +3412,21 @@ out:
     return ret;
 }
 
-int wifi_enable_11d_support()
+int wifi_enable_11d_support(int bss_type)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
 
-    wrapper_wlan_11d_enable(ENABLE_11D);
+    wrapper_wlan_11d_enable(bss_type, ENABLE_11D);
 
     wlan_11d_support_APIs(pmpriv);
 
     return wlan_enable_11d_support(pmpriv);
 }
 
-int wifi_disable_11d_support()
+int wifi_disable_11d_support(int bss_type)
 {
-    mlan_adap->priv[0]->state_11d.user_enable_11d_support = DISABLE_11D;
-    wrapper_wlan_11d_enable(DISABLE_11D);
+    mlan_adap->priv[bss_type]->state_11d.user_enable_11d_support = DISABLE_11D;
+    wrapper_wlan_11d_enable(bss_type, DISABLE_11D);
 
     return WM_SUCCESS;
 }
@@ -4040,7 +4058,8 @@ int wifi_set_ext_coex_config(const wifi_ext_coex_config_t *ext_coex_config)
 
 #if CONFIG_WPA_SUPP
 #if UAP_SUPPORT
-int wifi_set_custom_ie(custom_ie *beacon_ies_data,
+int wifi_set_custom_ie(unsigned int bss_type,
+		       custom_ie *beacon_ies_data,
                        custom_ie *beacon_wps_ies_data,
                        custom_ie *proberesp_ies_data,
                        custom_ie *assocresp_ies_data)
@@ -4108,11 +4127,11 @@ int wifi_set_custom_ie(custom_ie *beacon_ies_data,
 
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
 
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, MLAN_BSS_TYPE_UAP);
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, bss_type);
 
     cmd->result = 0x0;
 
-    status = wlan_ops_uap_prepare_cmd((mlan_private *)mlan_adap->priv[1], HOST_CMD_APCMD_SYS_CONFIGURE,
+    status = wlan_ops_uap_prepare_cmd((mlan_private *)mlan_adap->priv[bss_type], HOST_CMD_APCMD_SYS_CONFIGURE,
                                       HostCmd_ACT_GEN_SET, 0, NULL, (void *)pcustom_ie, cmd);
 
     (void)wifi_wait_for_cmdresp(NULL);
@@ -5740,7 +5759,11 @@ static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
     t_u8 addr[]                  = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     t_u8 baserates[] = {0x82, 0x84, 0x8b, 0x96, 0x8c, 0x98, 0xb0};
 
-    if (pmpriv->bss_index != (t_u8)MLAN_BSS_ROLE_STA)
+    if (pmpriv->bss_index != (t_u8)MLAN_BSS_ROLE_STA
+#ifdef CONFIG_WPA_SUPP_P2P
+        && (pmpriv->bss_type != (t_u8)MLAN_BSS_TYPE_WIFIDIRECT)
+#endif
+		)
     {
         wifi_d("invalid interface %d for sending auth request", pmpriv->bss_index);
         return (int)MLAN_STATUS_FAILURE;
@@ -5909,7 +5932,7 @@ static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
         pkt_len                = (t_u16)meas_pkt_len;
         pmgmt_pkt_hdr->frm_len = pkt_len - (t_u16)sizeof(pmgmt_pkt_hdr->frm_len);
 
-        (void)wifi_inject_frame(WLAN_BSS_TYPE_STA, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
+        (void)wifi_inject_frame(pmpriv->bss_type, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
 
 #if !CONFIG_MEM_POOLS
         OSA_MemoryFree(pmgmt_pkt_hdr);
@@ -5922,7 +5945,8 @@ static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
     return (int)MLAN_STATUS_SUCCESS;
 }
 
-int wifi_send_mgmt_auth_request(const t_u8 channel,
+int wifi_send_mgmt_auth_request(const unsigned int bss_type,
+				const t_u8 channel,
                                 const t_u8 auth_alg,
                                 const t_u8 *auth_seq_num,
                                 const t_u8 *status_code,
@@ -5930,7 +5954,7 @@ int wifi_send_mgmt_auth_request(const t_u8 channel,
                                 const t_u8 *sae_data,
                                 const t_u16 sae_data_len)
 {
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[bss_type];
     int ret;
 
     if ((pmpriv->auth_alg != WLAN_AUTH_SAE) && (pmpriv->auth_flag & HOST_MLME_AUTH_PENDING))
@@ -5948,9 +5972,9 @@ int wifi_send_mgmt_auth_request(const t_u8 channel,
 
     if (pmpriv->auth_flag == 0)
     {
-        wifi_set_rx_mgmt_indication(MLAN_BSS_TYPE_STA, WIFI_MGMT_AUTH | WIFI_MGMT_DEAUTH | WIFI_MGMT_DIASSOC);
+        wifi_set_rx_mgmt_indication(bss_type, WIFI_MGMT_AUTH | WIFI_MGMT_DEAUTH | WIFI_MGMT_DIASSOC);
 
-        wifi_remain_on_channel(true, channel, 6000);
+        wifi_remain_on_channel(bss_type, true, channel, 6000);
     }
 
     pmpriv->curr_bss_params.host_mlme = 1;
@@ -5962,8 +5986,8 @@ int wifi_send_mgmt_auth_request(const t_u8 channel,
 
     if (ret != WM_SUCCESS)
     {
-        wifi_set_rx_mgmt_indication(MLAN_BSS_TYPE_STA, 0);
-        wifi_remain_on_channel(false, 0, 0);
+        wifi_set_rx_mgmt_indication(bss_type, 0);
+        wifi_remain_on_channel(bss_type, false, 0, 0);
 
         pmpriv->curr_bss_params.host_mlme = 0;
         pmpriv->auth_flag                 = 0;

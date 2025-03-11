@@ -1066,10 +1066,8 @@ mlan_status wlan_cmd_11ac_cfg(IN pmlan_private pmpriv,
     ENTER();
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_11AC_CFG);
     cmd->size    = wlan_cpu_to_le16(sizeof(HostCmd_DS_11AC_CFG) + S_DS_GEN);
-    if (pmpriv->bss_type == MLAN_BSS_TYPE_UAP)
-    {
-        cmd->seq_num = (t_u16)(0x01U) << 12;
-    }
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, pmpriv->bss_type);
+
     vhtcfg->action      = wlan_cpu_to_le16(cmd_action);
     vhtcfg->band_config = (t_u8)(vht_cfg->band & 0xFFU);
     vhtcfg->misc_config = (t_u8)(vht_cfg->txrx & 0x3U);

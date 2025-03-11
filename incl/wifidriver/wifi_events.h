@@ -208,6 +208,10 @@ enum wlan_bss_type
     WLAN_BSS_TYPE_STA = 0,
     /** uAP */
     WLAN_BSS_TYPE_UAP = 1,
+#if CONFIG_WPA_SUPP_P2P
+    /** WiFi Direct */
+    WLAN_BSS_TYPE_WIFIDIRECT = 2,
+#endif
     /** Any */
     WLAN_BSS_TYPE_ANY = 0xff,
 };

@@ -9871,6 +9871,7 @@ static void test_wlan_set_ips(int argc, char **argv)
 static void test_wlan_start_wps_pbc(int argc, char **argv)
 {
     int ret;
+    struct netif *netif = net_get_sta_interface();
 
     if (argc != 1)
     {
@@ -9878,7 +9879,7 @@ static void test_wlan_start_wps_pbc(int argc, char **argv)
         return;
     }
 
-    ret = wlan_start_wps_pbc();
+    ret = wlan_start_wps_pbc(netif);
 
     if (ret == -WM_FAIL)
     {
@@ -9897,6 +9898,7 @@ static void test_wlan_start_wps_pbc(int argc, char **argv)
 static void test_wlan_start_wps_pin(int argc, char **argv)
 {
     int ret = -WM_FAIL;
+    struct netif *netif;
 
     if (argc != 2)
     {
@@ -9905,7 +9907,8 @@ static void test_wlan_start_wps_pin(int argc, char **argv)
     }
 
 #if (CONFIG_WPA_SUPP_WPS)
-    ret = wlan_start_wps_pin(argv[1]);
+    netif = net_get_sta_interface();
+    ret = wlan_start_wps_pin(netif, argv[1]);
 #else
     ret = wlan_start_wps_pin((uint32_t)atoi(argv[1]));
 #endif
@@ -11274,6 +11277,315 @@ static void test_wlan_dpp_configurator_sign(int argc, char **argv)
         (void)PRINTF("\r\n DPP chirping OK!\r\n");
     }
 }
+#endif
+
+#if CONFIG_WPA_SUPP_P2P
+#define P2P_CMD_SIZE 256
+
+static void test_wlan_p2p_find(int argc, char **argv)
+{
+    int ret, i;
+    int totallen = 0;
+    int len      = 0;
+    static char cmd[P2P_CMD_SIZE];
+    char *pos = cmd;
+
+    (void)memset(cmd, 0, sizeof(cmd));
+
+    for (i = 1; i < argc; i++)
+    {
+        len = strlen(argv[i]);
+        // len = (strlen(argv[i]) <= (P2P_FIND_CMD_SIZE - 1)) ? strlen(argv[i]) : (P2P_FIND_CMD_SIZE - 1);
+
+        strncpy(pos, argv[i], len);
+        pos[len] = ' ';
+        len++;
+        pos += len;
+
+        totallen += len;
+    }
+    pos[totallen] = '\0';
+
+    ret = wlan_p2p_find(cmd);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n p2p_find start failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n p2p_find start ok!\r\n");
+    }
+}
+
+static void test_wlan_p2p_stop_find(int argc, char **argv)
+{
+    int ret;
+
+    ret = wlan_p2p_stop_find();
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n p2p_stop_find failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n p2p_stop_find ok!\r\n");
+    }
+}
+
+static void test_wlan_p2p_connect(int argc, char **argv)
+{
+    int ret, i;
+    int totallen = 0;
+    int len      = 0;
+    static char cmd[P2P_CMD_SIZE];
+    char *pos = cmd;
+
+    (void)memset(cmd, 0, sizeof(cmd));
+
+    for (i = 1; i < argc; i++)
+    {
+        len = strlen(argv[i]);
+        // len = (strlen(argv[i]) <= (P2P_FIND_CMD_SIZE - 1)) ? strlen(argv[i]) : (P2P_FIND_CMD_SIZE - 1);
+
+        strncpy(pos, argv[i], len);
+        pos[len] = ' ';
+        len++;
+        pos += len;
+
+        totallen += len;
+    }
+    pos[totallen] = '\0';
+
+    ret = wlan_p2p_connect(cmd);
+
+    switch (ret)
+    {
+        case WM_SUCCESS:
+            (void)PRINTF("\r\n p2p_connect start ok!\r\n");
+            break;
+        case -WM_FAIL:
+            (void)PRINTF("\r\n p2p_connect start failed!!\r\n");
+            break;
+        case -2:
+            (void)PRINTF("\r\n p2p_connect start failed!!\r\n");
+            (void)PRINTF("\r\n FAIL-CHANNEL-UNAVAILABLE!!\r\n");
+            break;
+        case -3:
+            (void)PRINTF("\r\n p2p_connect start failed!!\r\n");
+            (void)PRINTF("\r\n FAIL-CHANNEL-UNSUPPORTED!!\r\n");
+            break;
+        case -4:
+            (void)PRINTF("\r\n p2p_connect start failed!!\r\n");
+            (void)PRINTF("\r\n FAIL-INVALID-PIN!!\r\n");
+            break;
+        default:
+            (void)PRINTF("\r\n pin:%08d\r\n", ret);
+            break;
+    }
+}
+
+static void test_wlan_p2p_group_add(int argc, char **argv)
+{
+    int ret, i;
+    int totallen = 0;
+    int len      = 0;
+    static char cmd[P2P_CMD_SIZE];
+    char *pos = cmd;
+
+    (void)memset(cmd, 0, sizeof(cmd));
+
+    for (i = 1; i < argc; i++)
+    {
+        len = strlen(argv[i]);
+        // len = (strlen(argv[i]) <= (P2P_FIND_CMD_SIZE - 1)) ? strlen(argv[i]) : (P2P_FIND_CMD_SIZE - 1);
+
+        strncpy(pos, argv[i], len);
+        pos[len] = ' ';
+        len++;
+        pos += len;
+
+        totallen += len;
+    }
+    pos[totallen] = '\0';
+
+    ret = wlan_p2p_group_add(cmd);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n p2p_group_add failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n p2p_group_add ok!\r\n");
+    }
+}
+
+static void test_wlan_p2p_get_passphrase(int argc, char **argv)
+{
+    int ret;
+
+    ret = wlan_p2p_get_passphrase();
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n p2p_get_passphrase failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n p2p_get_passphrase ok!\r\n");
+    }
+}
+
+static void test_wlan_p2p_start_wps_pbc(int argc, char **argv)
+{
+    int ret;
+    struct netif *netif = net_get_wfd_interface();
+
+    ret = wlan_start_wps_pbc(netif);
+
+    if (ret == -WM_FAIL)
+    {
+        PRINTF("Start WPS PBC failed\r\n");
+    }
+    else if (ret == -2)
+    {
+        PRINTF("FAIL-PBC-OVERLAP\r\n");
+    }
+}
+
+static void test_wlan_p2p_start_wps_pin(int argc, char **argv)
+{
+    int ret             = -WM_FAIL;
+    struct netif *netif = net_get_wfd_interface();
+
+    PRINTF("Start WPS PIN session with %s pin\r\n", argv[1]);
+
+    ret = wlan_start_wps_pin(netif, argv[1]);
+
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("Invalid PIN entered\r\n");
+    }
+}
+
+static void test_wlan_p2p_invite(int argc, char **argv)
+{
+    int ret, i;
+    int totallen = 0;
+    int len      = 0;
+    static char cmd[P2P_CMD_SIZE];
+    char *pos = cmd;
+
+    (void)memset(cmd, 0, sizeof(cmd));
+
+    for (i = 1; i < argc; i++)
+    {
+        len = strlen(argv[i]);
+        // len = (strlen(argv[i]) <= (P2P_FIND_CMD_SIZE - 1)) ? strlen(argv[i]) : (P2P_FIND_CMD_SIZE - 1);
+
+        strncpy(pos, argv[i], len);
+        pos[len] = ' ';
+        len++;
+        pos += len;
+
+        totallen += len;
+    }
+    pos[totallen] = '\0';
+
+    ret = wlan_p2p_invite(cmd);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n p2p_invite failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n p2p_invite ok!\r\n");
+    }
+}
+
+static void test_wlan_p2p_prov_disc(int argc, char **argv)
+{
+    int ret, i;
+    int totallen = 0;
+    int len      = 0;
+    static char cmd[P2P_CMD_SIZE];
+    char *pos = cmd;
+
+    (void)memset(cmd, 0, sizeof(cmd));
+
+    for (i = 1; i < argc; i++)
+    {
+        len = strlen(argv[i]);
+        // len = (strlen(argv[i]) <= (P2P_FIND_CMD_SIZE - 1)) ? strlen(argv[i]) : (P2P_FIND_CMD_SIZE - 1);
+
+        strncpy(pos, argv[i], len);
+        pos[len] = ' ';
+        len++;
+        pos += len;
+
+        totallen += len;
+    }
+    pos[totallen] = '\0';
+
+    ret = wlan_p2p_prov_disc(cmd);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n p2p_prov_disc start failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n p2p_prov_disc start ok!\r\n");
+    }
+}
+
+static void test_wlan_p2p_cancel(int argc, char **argv)
+{
+    int ret;
+
+    ret = wlan_p2p_cancel();
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n p2p_cancel failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n p2p_cancel ok!\r\n");
+    }
+}
+
+static void test_wlan_p2p_remove_client(int argc, char **argv)
+{
+    int ret, i;
+    int totallen = 0;
+    int len      = 0;
+    static char cmd[P2P_CMD_SIZE];
+    char *pos = cmd;
+
+    (void)memset(cmd, 0, sizeof(cmd));
+
+    for (i = 1; i < argc; i++)
+    {
+        len = strlen(argv[i]);
+        // len = (strlen(argv[i]) <= (P2P_FIND_CMD_SIZE - 1)) ? strlen(argv[i]) : (P2P_FIND_CMD_SIZE - 1);
+
+        strncpy(pos, argv[i], len);
+        pos[len] = ' ';
+        len++;
+        pos += len;
+
+        totallen += len;
+    }
+    pos[totallen] = '\0';
+
+    ret = wlan_p2p_remove_client(cmd);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n p2p_remove_client failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n p2p_remove_client ok!\r\n");
+    }
+}
+
 #endif
 
 #if CONFIG_IMD3_CFG
@@ -13004,6 +13316,19 @@ static struct cli_command tests[] = {
     {"wlan-dpp-reconfig", "<network id> ...", test_wlan_dpp_reconfig},
     {"wlan-dpp-configurator-sign", " conf=<sta-dpp/ap-dpp> ssid=<ascii> configurator=<id>",
      test_wlan_dpp_configurator_sign},
+#endif
+#ifdef CONFIG_WPA_SUPP_P2P
+    {"wlan-p2p-find", NULL, test_wlan_p2p_find},
+    {"wlan-p2p-stop-find", NULL, test_wlan_p2p_stop_find},
+    {"wlan-p2p-connect", NULL, test_wlan_p2p_connect},
+    {"wlan-p2p-group-add", NULL, test_wlan_p2p_group_add},
+    {"wlan-p2p-get-passphrase", NULL, test_wlan_p2p_get_passphrase},
+    {"wlan-p2p-start-wps-pbc", NULL, test_wlan_p2p_start_wps_pbc},
+    {"wlan-p2p-start-wps-pin", "<8 digit pin>", test_wlan_p2p_start_wps_pin},
+    {"wlan-p2p-invite", NULL, test_wlan_p2p_invite},
+    {"wlan-p2p-prov-disc", NULL, test_wlan_p2p_prov_disc},
+    {"wlan-p2p-cancel", NULL, test_wlan_p2p_cancel},
+    {"wlan-p2p-remove-client", NULL, test_wlan_p2p_remove_client},
 #endif
 #if CONFIG_NET_MONITOR
     {"wlan-net-monitor-cfg", NULL, test_wlan_net_monitor_cfg},

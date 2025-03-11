@@ -77,6 +77,9 @@ static interface_t g_mlan;
 #if UAP_SUPPORT
 static interface_t g_uap;
 #endif
+#if CONFIG_WPA_SUPP_P2P
+static interface_t g_wfd;
+#endif
 
 static int net_wlan_init_done;
 OSA_TIMER_HANDLE_DEFINE(dhcp_timer);
@@ -84,6 +87,11 @@ static void dhcp_timer_cb(osa_timer_arg_t arg);
 
 err_t lwip_netif_init(struct netif *netif);
 err_t lwip_netif_uap_init(struct netif *netif);
+
+#if CONFIG_WPA_SUPP_P2P
+err_t lwip_netif_wfd_init(struct netif *netif);
+#endif
+
 #if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
 void *wifi_get_rxbuf_desc(t_u16 rx_len);
 void wifi_flush_rxbuf_desc();
@@ -107,9 +115,9 @@ static void netif_ext_status_callback(struct netif *netif,
                                       netif_nsc_reason_t reason,
                                       const netif_ext_callback_args_t *args)
 {
-    interface_t *if_handle = (interface_t *)net_get_mlan_handle();
+//    interface_t *if_handle = (interface_t *)net_get_mlan_handle();
 
-    if (&if_handle->netif == netif)
+//    if (&if_handle->netif == netif)
     {
 #if CONFIG_IPV6
         if ((reason & (LWIP_NSC_IPV6_ADDR_STATE_CHANGED | LWIP_NSC_IPV6_SET)) != LWIP_NSC_NONE)
@@ -331,6 +339,17 @@ int net_wlan_init(void)
 #endif /* CONFIG_IPV6 */
 #endif /* UAP_SUPPORT */
 
+#if CONFIG_WPA_SUPP_P2P
+        ip_addr_set_any(0, &g_wfd.ipaddr);
+        ret = netifapi_netif_add(&g_wfd.netif, ip_2_ip4(&g_wfd.ipaddr), ip_2_ip4(&g_wfd.ipaddr),
+                                 ip_2_ip4(&g_wfd.ipaddr), NULL, lwip_netif_wfd_init, tcpip_input);
+        if (ret)
+        {
+            net_e("P2P interface add failed\r\n");
+            return -WM_FAIL;
+        }
+#endif
+
         status = OSA_TimerCreate((osa_timer_handle_t)dhcp_timer, DHCP_TIMEOUT, &dhcp_timer_cb, NULL, KOSA_TimerOnce,
                                  OSA_TIMER_NO_ACTIVATE);
         if (status != KOSA_StatusSuccess)
@@ -362,6 +381,13 @@ struct netif *net_get_sta_interface(void)
 struct netif *net_get_uap_interface(void)
 {
     return &g_uap.netif;
+}
+#endif
+
+#if CONFIG_WPA_SUPP_P2P
+struct netif *net_get_wfd_interface(void)
+{
+    return &g_wfd.netif;
 }
 #endif
 
@@ -637,6 +663,13 @@ void *net_get_uap_handle(void)
 }
 #endif
 
+#if CONFIG_WPA_SUPP_P2P
+void *net_get_wfd_handle(void)
+{
+    return &g_wfd;
+}
+#endif
+
 int net_alloc_client_data_id(void)
 {
     int idx = -1;
@@ -692,8 +725,13 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
 
     interface_t *if_handle = (interface_t *)intrfc_handle;
 
+#if CONFIG_WPA_SUPP_P2P
+    net_d("configuring interface %s (with %s)", (if_handle == &g_mlan) ? "mlan" : (if_handle == &g_uap) ? "uap" : "wfd",
+          (addr->ipv4.addr_type == NET_ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
+#else
     net_d("configuring interface %s (with %s)", (if_handle == &g_mlan) ? "mlan" : "uap",
           (addr->ipv4.addr_type == NET_ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
+#endif
 
     (void)netifapi_netif_set_down(&if_handle->netif);
     wm_netif_status_callback_ptr = NULL;
@@ -702,6 +740,9 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
     if (if_handle == &g_mlan
 #if UAP_SUPPORT
         || if_handle == &g_uap
+#endif
+#ifdef CONFIG_WPA_SUPP_P2P
+        || if_handle == &g_wfd
 #endif
         )
     {
@@ -770,7 +811,11 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
             break;
     }
     /* Finally this should send the following event. */
-    if (if_handle == &g_mlan)
+    if ((if_handle == &g_mlan)
+#if CONFIG_WPA_SUPP_P2P
+        || ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_STA))
+#endif
+    )
     {
         (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_STA_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
 
@@ -781,7 +826,11 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
          */
     }
 #if UAP_SUPPORT
-    else if (if_handle == &g_uap)
+    else if ((if_handle == &g_uap)
+#if CONFIG_WPA_SUPP_P2P
+             || ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_UAP))
+#endif
+	    )
     {
         (void)wlan_wlcmgr_send_msg(WIFI_EVENT_UAP_NET_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
     }

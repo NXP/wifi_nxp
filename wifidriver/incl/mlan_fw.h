@@ -1265,6 +1265,11 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 #define HostCmd_CMD_CONFIG_GTK_REKEY_OFFLOAD_CFG 0x010f
 #endif
 
+#if CONFIG_WPA_SUPP_P2P
+/** Host Command ID: WIFI_DIRECT_MODE_CONFIG */
+#define HOST_CMD_WIFI_DIRECT_MODE_CONFIG 0x00eb
+#endif
+
 /** Host Command ID: Remain On Channel */
 #define HostCmd_CMD_802_11_REMAIN_ON_CHANNEL 0x010d
 
@@ -4273,6 +4278,13 @@ typedef MLAN_PACK_START struct _HostCmd_DS_802_11_RF_TX_POWER
 #define CONNECTION_TYPE_INFRA 0
 /** Connection type adhoc */
 #define CONNECTION_TYPE_ADHOC 1
+#if CONFIG_WPA_SUPP_P2P
+/** BSS Mode: WIFIDIRECT Client */
+#define BSS_MODE_WIFIDIRECT_CLIENT 0
+/** BSS Mode: WIFIDIRECT GO */
+#define BSS_MODE_WIFIDIRECT_GO 2
+#endif
+
 /** HostCmd_DS_SET_BSS_MODE */
 typedef MLAN_PACK_START struct _HostCmd_DS_SET_BSS_MODE
 {
@@ -4296,6 +4308,17 @@ typedef MLAN_PACK_START struct _HostCmd_DS_REMAIN_ON_CHANNEL
     /** remain time: Unit ms*/
     t_u32 remain_period;
 } MLAN_PACK_END HostCmd_DS_REMAIN_ON_CHANNEL;
+
+#if CONFIG_WPA_SUPP_P2P
+/** HostCmd_DS_WIFI_DIRECT_MODE */
+typedef MLAN_PACK_START struct _HostCmd_DS_WIFI_DIRECT_MODE
+{
+    /** Action 0-GET, 1-SET*/
+    t_u16 action;
+    /**0:disable 1:listen 2:GO 3:p2p client 4:find 5:stop find*/
+    t_u16 mode;
+} MLAN_PACK_END HostCmd_DS_WIFI_DIRECT_MODE;
+#endif
 
 #ifdef STA_SUPPORT
 
@@ -7883,6 +7906,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_SET_BSS_MODE bss_mode;
         HostCmd_DS_CMD_TX_DATA_PAUSE tx_data_pause;
         HostCmd_DS_REMAIN_ON_CHANNEL remain_on_chan;
+#if CONFIG_WPA_SUPP_P2P
+        HostCmd_DS_WIFI_DIRECT_MODE wifi_direct_mode;
+#endif
 #ifdef WLAN_LOW_POWER_ENABLE
         HostCmd_CONFIG_LOW_PWR_MODE low_pwr_mode_cfg;
 #endif /* WLAN_LOW_POWER_ENABLE */

@@ -130,6 +130,10 @@ struct nxp_wifi_device
 /*------------------------------------------------------*/
 extern void wlan_wake_up_card(void);
 
+#if CONFIG_WPA_SUPP_P2P
+extern int wlan_get_wfd_mac_address(t_u8 *);
+extern int wfd_bss_type;
+#endif
 
 #if CONFIG_WPA_SUPP
 // void (*l2_packet_rx_callback)(const struct pbuf *p);

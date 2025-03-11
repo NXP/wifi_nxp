@@ -2252,6 +2252,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
         case HostCmd_CMD_802_11_REMAIN_ON_CHANNEL:
             ret = wlan_cmd_remain_on_channel(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
+#if CONFIG_WPA_SUPP_P2P
+        case HOST_CMD_WIFI_DIRECT_MODE_CONFIG:
+            ret = wlan_cmd_wifi_direct_mode(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            break;
+#endif
         case HostCmd_CMD_802_11_SUBSCRIBE_EVENT:
             ret = wlan_cmd_subscribe_event(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;

@@ -50,6 +50,9 @@ typedef enum _mlan_ioctl_req_id
 #if defined(STA_SUPPORT) && UAP_SUPPORT
     MLAN_OID_BSS_ROLE,
 #endif
+#if CONFIG_WPA_SUPP_P2P
+    MLAN_OID_WIFI_DIRECT_MODE,
+#endif
 #if UAP_HOST_MLME
 #if UAP_SUPPORT
     MLAN_OID_UAP_ADD_STATION = 0x0002001C,
@@ -1183,6 +1186,9 @@ typedef struct _mlan_ds_bss
         /** BSS role */
         mlan_bss_role bss_role;
 #endif
+#if CONFIG_WPA_SUPP_P2P
+        t_u16 wfd_mode;
+#endif
         /** AP acs scan MLAN_OID_UAP_ACS_SCAN */
         mlan_uap_acs_scan ap_acs_scan;
         /** host based flag for MLAN_OID_BSS_START */
@@ -1194,6 +1200,11 @@ typedef struct _mlan_ds_bss
 #endif
 #endif
     } param;
+#if CONFIG_WPA_SUPP_P2P
+    t_u8 bss_type;
+    /** Action: set or get */
+    mlan_act_ioctl action;
+#endif
 } mlan_ds_bss, *pmlan_ds_bss;
 
 #ifdef OTP_CHANINFO
@@ -1874,6 +1885,15 @@ typedef enum _mlan_psk_type
     MLAN_PSK_QUERY,
     MLAN_PSK_PASSWORD,
 } mlan_psk_type;
+
+typedef enum
+{
+    WIFI_DIRECT_MODE_NONE = 0,
+    WIFI_DIRECT_MODE_DEVICE,
+    WIFI_DIRECT_MODE_GO,
+    WIFI_DIRECT_MODE_CLIENT,
+    WIFI_DIRECT_MODE_NOT_SPECIFIED,
+} WifiDirect_op_mode;
 
 /** The bit to indicate the key is for unicast */
 #define MLAN_KEY_INDEX_UNICAST 0x40000000
@@ -3228,6 +3248,9 @@ typedef struct _mlan_ds_11n_cfg
         /** DelBA for MLAN_OID_11N_CFG_DELBA */
         mlan_ds_11n_delba del_ba;
     } param;
+#ifdef CONFIG_WPA_SUPP_P2P
+    t_u8 bss_type;
+#endif
 } mlan_ds_11n_cfg, *pmlan_ds_11n_cfg;
 
 /** Country code length */

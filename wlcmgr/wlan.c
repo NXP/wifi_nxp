@@ -75,6 +75,9 @@
 #include <supp_crypto.h>
 #include <wifi_nxp.h>
 #include "utils/common.h"
+#ifdef CONFIG_WPA_SUPP_P2P
+#include <netif_decl.h>
+#endif
 #if CONFIG_WIFI_SHELL
 #include "wpa_cli.h"
 #endif
@@ -541,6 +544,9 @@ static struct
     /* store uap mac addr */
 #if UAP_SUPPORT
     uint8_t uap_mac[MLAN_MAC_ADDR_LENGTH];
+#endif
+#if CONFIG_WPA_SUPP_P2P
+    uint8_t wfd_mac[MLAN_MAC_ADDR_LENGTH];
 #endif
     /* callbacks */
     int (*cb)(enum wlan_event_reason reason, void *data);
@@ -3267,6 +3273,10 @@ static void wlcm_process_sta_addr_config_event(struct wifi_message *msg,
             {
                 if_handle = net_get_mlan_handle();
             }
+#if CONFIG_WPA_SUPP_P2P
+            else if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
+                if_handle = net_get_wfd_handle();
+#endif
             (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
             wlan.sta_state = CM_STA_CONNECTED;
             if (wlan.connect_wakelock_taken)
@@ -3943,6 +3953,17 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
             {
                 if_handle = net_get_mlan_handle();
             }
+#if CONFIG_WPA_SUPP_P2P
+            else if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
+            {
+                if_handle = net_get_wfd_handle();
+		netif = net_get_wfd_interface();
+            }
+            else
+            {
+                /* Do nothing */
+            }
+#endif
 
 #if defined(SDK_OS_FREE_RTOS)
 #if defined(SD9177) || defined(IW610)
@@ -4677,6 +4698,15 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
     {
         if_handle = net_get_mlan_handle();
     }
+#if CONFIG_WPA_SUPP_P2P
+    else if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
+    {
+        mlan_private *priv_wfd = (mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_WIFIDIRECT];
+
+        if_handle = net_get_wfd_handle();
+        priv_wfd->p2p_gc_network = false;
+    }
+#endif
 
     if (if_handle != NULL)
     {
@@ -4880,7 +4910,10 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
                 {
                     if_handle = net_get_mlan_handle();
                 }
-
+#if CONFIG_WPA_SUPP_P2P
+                else if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
+                    if_handle = net_get_wfd_handle();
+#endif
                 net_interface_up(if_handle);
                 mlan_adap->skip_dfs = false;
                 CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
@@ -4900,6 +4933,10 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
         {
             if_handle = net_get_mlan_handle();
         }
+#if CONFIG_WPA_SUPP_P2P
+        else if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
+            if_handle = net_get_wfd_handle();
+#endif /* CONFIG_EMBEDDED_P2P */
         (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
         // net_inet_ntoa(network->ip.ipv4.address, ip);
         wlan.sta_state      = CM_STA_CONNECTED;
@@ -4952,6 +4989,16 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
         {
             if_handle = net_get_mlan_handle();
         }
+#if CONFIG_WPA_SUPP_P2P
+        else if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
+        {
+            if_handle = net_get_wfd_handle();
+        }
+        else
+        {
+            /*Do nothing*/
+        }
+#endif 
         (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
         CONNECTION_EVENT(WLAN_REASON_ADDRESS_SUCCESS, NULL);
         wlan.sta_state      = CM_STA_CONNECTED;
@@ -5133,6 +5180,9 @@ static int wlcm_process_add_unspecified_network(const char *name)
     struct wlan_network *network;
     size_t len       = 0;
     const char *ssid = "w";
+#if CONFIG_WPA_SUPP_P2P
+    mlan_private *priv_wfd = (mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_WIFIDIRECT];
+#endif
 
     network = OSA_MemoryAllocate(sizeof(struct wlan_network));
 
@@ -5150,6 +5200,28 @@ static int wlcm_process_add_unspecified_network(const char *name)
 
     network->ip.ipv4.addr_type = ADDR_TYPE_DHCP;
 
+#if CONFIG_WPA_SUPP_P2P
+    if (priv_wfd->p2p_go_network)
+    {
+        wfd_bss_type = network->role = WLAN_BSS_ROLE_UAP;
+        network->type = WLAN_BSS_TYPE_WIFIDIRECT;
+        network->channel = priv_wfd->p2p_go_chan;
+        /* Set IP address to 192.168.49.1 */
+        network->ip.ipv4.address = htonl(0xc0a83101UL);
+        /* Set default gateway to 192.168.49.1 */
+        network->ip.ipv4.gw = htonl(0xc0a83101UL);
+        /* Set netmask to 255.255.255.0 */
+        network->ip.ipv4.netmask = htonl(0xffffff00UL);
+        /* Specify address type as static assignment */
+        network->ip.ipv4.addr_type = ADDR_TYPE_STATIC;
+    }
+    else if (priv_wfd->p2p_gc_network)
+    {
+        wfd_bss_type = network->role = WLAN_BSS_ROLE_STA;
+        network->type = WLAN_BSS_TYPE_WIFIDIRECT;
+    }
+#endif
+
     ret = wlan_add_network(network);
 
     OSA_MemoryFree(network);
@@ -5164,6 +5236,17 @@ static int wlcm_process_add_unspecified_network(const char *name)
         if (wlan.networks[i].name[0] != '\0' && strlen(wlan.networks[i].name) == len &&
                 !strncmp(wlan.networks[i].name, name, len))
         {
+#if CONFIG_WPA_SUPP_P2P
+            if (priv_wfd->p2p_go_network)
+            {
+               wlan.cur_uap_network_idx = i;
+               wlan.uap_state = CM_UAP_CONFIGURED;
+               if (priv_wfd->p2p_go_ssid_len)
+                  memcpy(wlan.networks[wlan.cur_uap_network_idx].ssid, priv_wfd->p2p_go_ssid,MIN(priv_wfd->p2p_go_ssid_len,MLAN_MAX_SSID_LENGTH));
+               (void)wifi_event_completion(WIFI_EVENT_UAP_STARTED, WIFI_EVENT_REASON_SUCCESS, NULL);
+            }
+            else
+#endif
             wlan.cur_network_idx = i;
             break;
         }
@@ -5182,6 +5265,9 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
 #endif
     struct netif *sta_netif = net_get_sta_interface();
     struct wlan_network *network = &wlan.networks[wlan.cur_network_idx];
+#ifdef CONFIG_WPA_SUPP_P2P
+    mlan_private *priv_wfd = (mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_WIFIDIRECT];
+#endif
 
     wlcm_d("%s: %s", __func__, buf);
 
@@ -5258,6 +5344,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     {
         wlcm_d("AP: Station connected");
         t_u8 addr[MLAN_MAC_ADDR_LENGTH];
+	t_u8 bss_type = MLAN_BSS_TYPE_UAP;
 
         s = strchr(buf, ' ');
         if (s == NULL)
@@ -5266,11 +5353,19 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         if (hwaddr_aton(s + 1, addr))
             return;
 
+#ifdef CONFIG_WPA_SUPP_P2P
+        if (strstr(buf, " p2p_dev_addr="))
+        {
+            netif = net_get_wfd_interface();
+            bss_type = MLAN_BSS_TYPE_WIFIDIRECT;
+        }
+#endif
+
         ret = wpa_supp_get_sta_info(netif, addr, &is_11n_enabled);
         if (ret != 0)
             return;
 
-        wifi_uap_client_assoc(addr, is_11n_enabled);
+        wifi_uap_client_assoc(bss_type, addr, is_11n_enabled);
 
         CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_CONN, addr);
     }
@@ -5279,6 +5374,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         wlcm_d("AP: Station dis-connected");
 
         wifi_uap_client_disassoc_t disassoc_resp;
+	t_u8 bss_type = MLAN_BSS_TYPE_UAP;
 
         disassoc_resp.reason_code = 0;
 
@@ -5289,9 +5385,16 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         if (hwaddr_aton(s + 1, disassoc_resp.sta_addr))
             return;
 
-        wifi_uap_client_deauth(disassoc_resp.sta_addr);
+#ifdef CONFIG_WPA_SUPP_P2P
+        if (strstr(buf, " p2p_dev_addr="))
+        {
+            bss_type = MLAN_BSS_TYPE_WIFIDIRECT;
+        }
+#endif
 
-        CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_DISSOC, (void *)&disassoc_resp);
+        wifi_uap_client_deauth(bss_type, disassoc_resp.sta_addr);
+
+        CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_DISSOC, disassoc_resp.sta_addr);
     }
 #endif /* CONFIG_HOSTAPD */
 #if CONFIG_WPA_SUPP_WPS
@@ -5348,12 +5451,86 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     else if (strstr(buf, WPS_EVENT_SUCCESS))
     {
         wlcm_d("WPS registration completed successfully");
-        if (wlan.wps_session_attempt)
+        if (wlan.wps_session_attempt
+#if CONFIG_WPA_SUPP_P2P
+             || priv_wfd->p2p_go_network
+#endif
+		)
         {
             if (wlcm_process_add_unspecified_network("wps_network") == WM_SUCCESS)
             {
                 wlan.wps_session_attempt = 0;
+#if CONFIG_WPA_SUPP_P2P
+                priv_wfd->p2p_go_network = false;
+#endif
             }
+        }
+    }
+    else
+#endif
+#ifdef CONFIG_WPA_SUPP_P2P
+    if (strstr(buf, P2P_EVENT_FIND_STOPPED))
+    {
+        wlcm_d("p2p find stoped");
+        priv_wfd->p2p.session_enable = MFALSE;
+#ifdef CONFIG_WPA_SUPP_WPS
+        priv_wfd->wps.session_enable = MFALSE;
+#endif
+    }
+    else if (strstr(buf, P2P_EVENT_GROUP_STARTED))
+    {
+        char *pos;
+
+        if (strstr(buf, " GO "))
+        {
+            priv_wfd->p2p_go_network = true;
+
+            pos = strstr(buf, " ssid=");
+            if (pos)
+            {
+                char *end;
+                pos += 6;
+                if (*pos == '"')
+                  pos ++;
+
+                end = strchr(pos, '"');
+                if (end)
+                {
+                    priv_wfd->p2p_go_ssid_len = (end - pos);
+                    if (priv_wfd->p2p_go_ssid_len && (priv_wfd->p2p_go_ssid_len < MLAN_MAX_SSID_LENGTH))
+                    {
+                       (void)memcpy(priv_wfd->p2p_go_ssid, pos, priv_wfd->p2p_go_ssid_len);
+                    }
+                }
+            }
+
+            if (strstr(buf, " freq="))
+            {
+                pos = os_strstr(buf, " freq=");
+                if (pos)
+                {
+                    int freq = 0;
+
+                    pos += 6;
+                    freq = atoi(pos);
+                    if (freq > 0)
+                        priv_wfd->p2p_go_chan = freq_to_chan(freq);
+                }
+            }
+        }
+    }
+    else if(strstr(buf, P2P_EVENT_GO_NEG_SUCCESS))
+    {
+        if (strstr(buf, " role=client "))
+        {
+            priv_wfd->p2p_gc_network = true;
+            priv_wfd->bss_role = MLAN_BSS_ROLE_STA;
+        }
+
+        if (strstr(buf, " role=GO "))
+        {
+            priv_wfd->p2p_go_network = true;
+            priv_wfd->bss_role = MLAN_BSS_ROLE_UAP;
         }
     }
     else
@@ -5786,7 +5963,9 @@ static void wlcm_process_init(enum cm_sta_state *next)
 
     wlan_set_11d_state(WLAN_BSS_TYPE_UAP, 1);
     wlan_set_11d_state(WLAN_BSS_TYPE_STA, 1);
-
+#ifdef CONFIG_WPA_SUPP_P2P
+    wlan_set_11d_state(WLAN_BSS_TYPE_WIFIDIRECT, 1);
+#endif
 }
 
 static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_sta_state *next)
@@ -5941,6 +6120,13 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
                     (void)memcpy((void *)&network->bssid[0], (const void *)&wlan.uap_mac[0], 6);
                     if_handle = net_get_uap_handle();
                 }
+#if CONFIG_WPA_SUPP_P2P
+                else if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
+                {
+                    (void)memcpy((void *)&network->bssid[0], (const void *)&wlan.wfd_mac[0], 6);
+                    if_handle = net_get_wfd_handle();
+                }
+#endif
 #if CONFIG_WPA_SUPP
                 OSA_TimerDeactivate((osa_timer_handle_t)wlan.supp_status_timer);
                 wlan.status_timeout = 0;
@@ -5999,7 +6185,7 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
                 /* BIT 14 indicate deauth is initiated by FW */
                 if(!(disassoc_resp->reason_code & MBIT(14)))
                 {
-                    wifi_nxp_sta_remove(disassoc_resp->sta_addr);
+                    wifi_nxp_sta_remove(network->type, disassoc_resp->sta_addr);
                 }
             }
 #else
@@ -6030,6 +6216,16 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
                 {
                     if_handle = net_get_uap_handle();
                 }
+#if CONFIG_WPA_SUPP_P2P
+                else if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
+                {
+                    if_handle = net_get_wfd_handle();
+                }
+                else
+                {
+                    /*Do Nothing*/
+                }
+#endif
 
                 (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
                 /* UAP case set dns same as gateway */
@@ -6210,6 +6406,16 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
     {
         if_handle = net_get_mlan_handle();
     }
+#if CONFIG_WPA_SUPP_P2P
+    else if (curr_nw->type == WLAN_BSS_TYPE_WIFIDIRECT)
+    {
+        if_handle = net_get_wfd_handle();
+    }
+    else
+    {
+        /* Do Nothing */
+    }
+#endif
     if (if_handle == NULL)
     {
 #if CONFIG_NCP
@@ -7548,7 +7754,10 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
     (void)PRINTF("STA MAC Address: ");
     print_mac((const char *)&wlan.sta_mac);
     (void)PRINTF("\r\n");
-
+#if defined(CONFIG_EMBEDDED_P2P) || defined(CONFIG_WPA_SUPP_P2P)
+    (void)memcpy((void *)&wlan.wfd_mac[0], (const void *)mac_addr.mac, MLAN_MAC_ADDR_LENGTH);
+    wlan.wfd_mac[0] |= (0x01 << 1);
+#endif
     ret = wifi_get_device_firmware_version_ext(&wlan.fw_ver_ext);
     if (ret != WM_SUCCESS)
     {
@@ -9073,6 +9282,14 @@ int wlan_add_network(struct wlan_network *network)
         { /* Do Nothing */
         }
     }
+
+
+#ifdef CONFIG_WPA_SUPP_P2P
+    if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
+    {
+        netif = net_get_wfd_interface();
+    }
+#endif
 
     if (network->role == WLAN_BSS_ROLE_UAP)
     {
@@ -10854,6 +11071,9 @@ int wlan_set_mac_addr(uint8_t *mac)
 
     if (wlan.status == WLCMGR_INIT_DONE || wlan.status == WLCMGR_ACTIVATED)
     {
+#ifdef CONFIG_WPA_SUPP_P2P
+        uint8_t wfd_mac[MLAN_MAC_ADDR_LENGTH];
+#endif
 #if UAP_SUPPORT
         uint8_t ap_mac[MLAN_MAC_ADDR_LENGTH];
         (void)memcpy(ap_mac, mac, MLAN_MAC_ADDR_LENGTH);
@@ -10870,6 +11090,11 @@ int wlan_set_mac_addr(uint8_t *mac)
         /* save the uap mac */
         _wifi_set_mac_addr(&ap_mac[0], MLAN_BSS_TYPE_UAP);
         (void)memcpy(&wlan.uap_mac[0], &ap_mac[0], MLAN_MAC_ADDR_LENGTH);
+#endif
+#if CONFIG_WPA_SUPP_P2P
+         (void)memcpy(wfd_mac, mac, MLAN_MAC_ADDR_LENGTH);
+         wfd_mac[0] |= (0x01 << 1);
+         _wifi_set_mac_addr(&wfd_mac[0], MLAN_BSS_TYPE_WIFIDIRECT);
 #endif
     }
     else
@@ -11263,6 +11488,10 @@ int wlan_get_uap_connection_state(enum wlan_connection_state *state)
 int wlan_get_address(struct wlan_ip_config *addr)
 {
     void *if_handle = NULL;
+#ifdef CONFIG_WPA_SUPP_P2P
+    mlan_private *priv_wfd = (mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_WIFIDIRECT];
+#endif
+
     if (addr == NULL)
     {
         return -WM_E_INVAL;
@@ -11274,6 +11503,14 @@ int wlan_get_address(struct wlan_ip_config *addr)
     }
 
     if_handle = net_get_mlan_handle();
+
+#ifdef CONFIG_WPA_SUPP_P2P
+    if (priv_wfd->p2p_gc_network)
+    {
+        if_handle = net_get_wfd_handle();
+    }
+#endif
+
     if (net_get_if_addr((struct net_ip_config *)addr, if_handle) != 0)
     {
         return -WM_FAIL;
@@ -11331,6 +11568,21 @@ int wlan_get_uap_channel(int *channel)
 #endif
 }
 
+#if CONFIG_WPA_SUPP_P2P
+int wlan_get_wfd_address(struct wlan_ip_config *addr)
+{
+    void *if_handle = NULL;
+    if (addr == NULL)
+        return -WM_E_INVAL;
+    if (!is_running())
+        return WLAN_ERROR_STATE;
+
+    if_handle = net_get_wfd_handle();
+    if (net_get_if_addr((struct net_ip_config *)addr, if_handle))
+        return -WM_FAIL;
+    return WM_SUCCESS;
+}
+#endif
 
 int wlan_get_mac_address(unsigned char *dest)
 {
@@ -11354,6 +11606,16 @@ int wlan_get_mac_address_uap(unsigned char *dest)
 #endif
 }
 
+#if CONFIG_WPA_SUPP_P2P
+int wlan_get_wfd_mac_address(unsigned char *dest)
+{
+    if (dest == NULL)
+        return -WM_E_INVAL;
+    (void)memset((void *)dest, 0, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)dest, (const void *)&wlan.wfd_mac[0], MLAN_MAC_ADDR_LENGTH);
+    return WM_SUCCESS;
+}
+#endif
 
 void wlan_wake_up_card(void)
 {
@@ -14972,10 +15234,9 @@ static int wlan_exceed_network_limit(void)
     return ret;
 }
 
-int wlan_start_wps_pbc(void)
+int wlan_start_wps_pbc(const struct netif *netif)
 {
     int ret = -WM_FAIL;
-    struct netif *netif = net_get_sta_interface();
 
     if (wlan.wps_session_attempt)
     {
@@ -15007,9 +15268,8 @@ void wlan_wps_generate_pin(uint32_t *pin)
     wpa_supp_wps_generate_pin(netif, (unsigned int *)pin);
 }
 
-int wlan_start_wps_pin(const char *pin)
+int wlan_start_wps_pin(const struct netif *netif, const char *pin)
 {
-    struct netif *netif = net_get_sta_interface();
     int ret = -WM_FAIL;
 
     if (wlan.wps_session_attempt)
@@ -15756,7 +16016,7 @@ int wlan_set_11d_state(int bss_type, int state)
     }
     else
     {
-        return wlan_enable_11d(state);
+        return wlan_enable_11d(bss_type, state);
     }
 }
 
@@ -15918,6 +16178,72 @@ int wlan_dpp_configurator_sign(int is_ap, const char *cmd)
     return wpa_supp_dpp_configurator_sign(netif, is_ap, cmd);
 }
 #endif /* CONFIG_WPA_SUPP_DPP */
+
+#if CONFIG_WPA_SUPP_P2P
+int wlan_p2p_find(const char *cmd)
+{
+    struct netif *netif = net_get_wfd_interface();
+
+    return wpa_supp_p2p_find(netif, cmd);
+}
+
+int wlan_p2p_stop_find(void)
+{
+    struct netif *netif = net_get_wfd_interface();
+
+    return wpa_supp_p2p_stop_find(netif);
+}
+
+int wlan_p2p_connect(char *cmd)
+{
+    struct netif *netif = net_get_wfd_interface();
+
+    return wpa_supp_p2p_connect(netif, cmd);
+}
+
+int wlan_p2p_group_add(char *cmd)
+{
+    struct netif *netif = net_get_wfd_interface();
+
+    return wpa_supp_p2p_group_add(netif, cmd);
+}
+
+int wlan_p2p_get_passphrase(void)
+{
+    struct netif *netif = net_get_wfd_interface();
+
+    return wpa_supp_p2p_get_passphrase(netif);
+}
+
+int wlan_p2p_invite(char *cmd)
+{
+    struct netif *netif = net_get_wfd_interface();
+
+    return wpa_supp_p2p_invite(netif, cmd);
+}
+
+int wlan_p2p_prov_disc(char *cmd)
+{
+    struct netif *netif = net_get_wfd_interface();
+
+    return wpa_supp_p2p_prov_disc(netif, cmd);
+}
+
+int wlan_p2p_cancel(void)
+{
+    struct netif *netif = net_get_wfd_interface();
+
+    return wpas_supp_p2p_cancel(netif);
+}
+
+int wlan_p2p_remove_client(char *cmd)
+{
+    struct netif *netif = net_get_wfd_interface();
+
+    return wpa_supp_p2p_remove_client(netif, cmd);
+}
+
+#endif
 
 #if CONFIG_IMD3_CFG
 int wlan_imd3_cfg(t_u8 imd3_value)
