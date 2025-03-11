@@ -293,7 +293,9 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             PRINTF("Soft AP \"%s\" started successfully\r\n", ssid);
             printSeparator();
             if (dhcp_server_start(net_get_uap_handle()))
+            {
                 PRINTF("Error in starting dhcp server\r\n");
+            }
 
             PRINTF("DHCP Server started successfully\r\n");
             printSeparator();
@@ -361,6 +363,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             break;
         default:
             PRINTF("app_cb: WLAN: Unknown Event: %d\r\n", reason);
+            break;
     }
     return 0;
 }
@@ -679,7 +682,7 @@ int main(void)
     printSeparator();
     PRINTF("wifi wpa supplicant demo\r\n");
     printSeparator();
-    CRYPTO_InitHardware();
+    (void)CRYPTO_InitHardware();
 #ifdef RW610
     RTC_Init(RTC);
 #endif
