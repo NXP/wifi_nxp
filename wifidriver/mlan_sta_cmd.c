@@ -661,7 +661,7 @@ static mlan_status wlan_cmd_802_11_hs_cfg(IN pmlan_private pmpriv,
     t_u16 hs_activate                     = MFALSE;
 
     ENTER();
-    if (pdata_buf == MNULL)
+    if (pdata_buf->gpio == 0U && pdata_buf->conditions == 0U)
     {
         /* New Activate command */
         hs_activate = MTRUE;
