@@ -862,6 +862,9 @@ int wifi_set_region_power_cfg(const t_u8 *data, t_u16 len);
 int wifi_set_txbfcap(unsigned int tx_bf_cap);
 int wifi_set_htcapinfo(unsigned int htcapinfo);
 int wifi_set_httxcfg(unsigned short httxcfg);
+#ifdef CONFIG_WPA_SUPP_P2P
+int wifi_set_wifi_direct_mode(unsigned int bss_type, unsigned int role);
+#endif
 int wifi_get_tx_power(t_u32 *power_level);
 int wifi_set_tx_power(t_u32 power_level);
 int wrapper_wlan_cmd_get_hw_spec(void);

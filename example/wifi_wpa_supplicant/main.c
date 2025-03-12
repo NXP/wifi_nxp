@@ -294,6 +294,13 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
 
 #ifdef CONFIG_WPA_SUPP_P2P
+	    struct wlan_network uap_network;
+	    ret = wlan_get_current_uap_network(&uap_network);
+	    if (ret != WM_SUCCESS)
+            {
+                PRINTF("Failed to get Soft AP network\r\n");
+                return 0;
+            }
             if (uap_network.type == WLAN_BSS_TYPE_WIFIDIRECT)
             {
                 if (dhcp_server_start(net_get_wfd_handle()))

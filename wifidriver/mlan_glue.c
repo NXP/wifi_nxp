@@ -2498,7 +2498,7 @@ int wifi_assocreq_p2p_ie_cfg(mlan_private *priv)
         wpsie_len = sizeof(IEEEtypes_Header_t) + priv->wps.wps_ie.vend_hdr.len;
 
     total_len = p2pie_len + wpsie_len;
-    buf       = (t_u8 *)os_mem_alloc(total_len);
+    buf       = (t_u8 *)OSA_MemoryAllocate(total_len);
     if (buf == MNULL)
     {
         wifi_e("Cannot allocate memory");
@@ -2523,7 +2523,7 @@ int wifi_assocreq_p2p_ie_cfg(mlan_private *priv)
     priv->p2p_mgmt_bitmap_index =
         wifi_set_mgmt_ie2(priv->bss_type, MGMT_MASK_ASSOC_REQ | MGMT_MASK_REASSOC_REQ, (void *)buf, total_len);
 
-    os_mem_free(buf);
+    OSA_MemoryFree(buf);
 
     if (priv->p2p_mgmt_bitmap_index != -1)
         ret = (int)WM_SUCCESS;
@@ -5135,10 +5135,10 @@ void wifi_handle_event_data_pause(void *data)
     MrvlIEtypesHeader_t *tlv = (MrvlIEtypesHeader_t *)&evt->reason_code;
 
 #if CONFIG_WPA_SUPP_P2P
-    if (evt->bss_type == BSS_TYPE_WFD)
-    {
-        priv_uap = priv = (mlan_private *)mlan_adap->priv[2];
-    }
+//    if (evt->bss_type == BSS_TYPE_WFD)
+//    {
+//        priv_uap = priv = (mlan_private *)mlan_adap->priv[2];
+//    }
 #endif
 
     /* set tx pause */
@@ -7242,7 +7242,7 @@ void _wifi_set_mac_addr(const uint8_t *mac, mlan_bss_type bss_type)
     else if (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
     {
         (void)memcpy(&mlan_adap->priv[2]->curr_addr[0], &mac[0], MLAN_MAC_ADDR_LENGTH);
-        if (wm_wifi.supp_if_callbk_fns->mac_changed_callbk_fn)
+        if (wm_wifi.supp_if_callbk_fns && wm_wifi.supp_if_callbk_fns->mac_changed_callbk_fn)
         {
             wm_wifi.supp_if_callbk_fns->mac_changed_callbk_fn(wm_wifi.if_priv_wfd);
         }

@@ -226,7 +226,7 @@ int wifi_supp_init(void)
 #endif
 
 #if CONFIG_WPA_SUPP_P2P
-    g_wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)os_mem_alloc(sizeof(struct wifi_nxp_ctx_rtos));
+    g_wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)OSA_MemoryAllocate(sizeof(struct wifi_nxp_ctx_rtos));
 
     if (!g_wifi_if_ctx_rtos)
     {
