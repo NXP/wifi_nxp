@@ -267,6 +267,7 @@ information.
 </tbody>
 </table>
 
+
 # File Index
 
 ## File List
@@ -281,17 +282,17 @@ Here is a list of all documented files with brief descriptions:
 
 ### Data Fields
 
-enum address\_types addr\_type
+  - enum address\_types addr\_type
 
-unsigned address
+  - unsigned address
 
-unsigned gw
+  - unsigned gw
 
-unsigned netmask
+  - unsigned netmask
 
-unsigned dns1
+  - unsigned dns1
 
-unsigned dns2
+  - unsigned dns2
 
 ### Detailed Description
 
@@ -329,7 +330,7 @@ This data structure represents an IPv4 address
 
 #### The documentation for this struct was generated from the following file:
 
-wlan.h
+  - wlan.h
 
 #### 
 
@@ -337,11 +338,11 @@ wlan.h
 
 ### Data Fields
 
-unsigned address \[4\]
+  - unsigned address \[4\]
 
-unsigned char addr\_type
+  - unsigned char addr\_type
 
-unsigned char addr\_state
+  - unsigned char addr\_state
 
 ### Detailed Description
 
@@ -363,7 +364,7 @@ This data structure represents an IPv6 address
 
 #### The documentation for this struct was generated from the following file:
 
-wlan.h
+  - wlan.h
 
 #### 
 
@@ -371,9 +372,9 @@ wlan.h
 
 ### Data Fields
 
-t\_u32 hemcs\_rxcnt \[12\]
+  - t\_u32 hemcs\_rxcnt \[12\]
 
-t\_u32 hestbcrate\_rxcnt \[12\]
+  - t\_u32 hestbcrate\_rxcnt \[12\]
 
 ### Detailed Description
 
@@ -392,7 +393,7 @@ Sum of RX packets for HE (802.11ax high efficiency) rate.
 
 #### The documentation for this struct was generated from the following file:
 
-wlan.h
+  - wlan.h
 
 #### 
 
@@ -400,11 +401,11 @@ wlan.h
 
 ### Data Fields
 
-t\_u32 htmcs\_rxcnt \[16\]
+  - t\_u32 htmcs\_rxcnt \[16\]
 
-t\_u32 htsgi\_rxcnt \[16\]
+  - t\_u32 htsgi\_rxcnt \[16\]
 
-t\_u32 htstbcrate\_rxcnt \[16\]
+  - t\_u32 htstbcrate\_rxcnt \[16\]
 
 ### Detailed Description
 
@@ -427,7 +428,7 @@ Sum of RX packets for HT (802.11n high throughput) rate.
 
 #### The documentation for this struct was generated from the following file:
 
-wlan.h
+  - wlan.h
 
 #### 
 
@@ -435,21 +436,21 @@ wlan.h
 
 ### Data Fields
 
-t\_u32 nss\_rxcnt \[2\]
+  - t\_u32 nss\_rxcnt \[2\]
 
-t\_u32 nsts\_rxcnt
+  - t\_u32 nsts\_rxcnt
 
-t\_u32 bandwidth\_rxcnt \[3\]
+  - t\_u32 bandwidth\_rxcnt \[3\]
 
-t\_u32 preamble\_rxcnt \[6\]
+  - t\_u32 preamble\_rxcnt \[6\]
 
-t\_u32 ldpc\_txbfcnt \[2\]
+  - t\_u32 ldpc\_txbfcnt \[2\]
 
-t\_s32 rssi\_value \[2\]
+  - t\_s32 rssi\_value \[2\]
 
-t\_s32 rssi\_chain0 \[4\]
+  - t\_s32 rssi\_chain0 \[4\]
 
-t\_s32 rssi\_chain1 \[4\]
+  - t\_s32 rssi\_chain1 \[4\]
 
 ### Detailed Description
 
@@ -498,7 +499,7 @@ Sum of RX packets.
 
 #### The documentation for this struct was generated from the following file:
 
-wlan.h
+  - wlan.h
 
 #### 
 
@@ -506,11 +507,11 @@ wlan.h
 
 ### Data Fields
 
-t\_u32 vhtmcs\_rxcnt \[10\]
+  - t\_u32 vhtmcs\_rxcnt \[10\]
 
-t\_u32 vhtsgi\_rxcnt \[10\]
+  - t\_u32 vhtsgi\_rxcnt \[10\]
 
-t\_u32 vhtstbcrate\_rxcnt \[10\]
+  - t\_u32 vhtstbcrate\_rxcnt \[10\]
 
 ### Detailed Description
 
@@ -533,7 +534,7 @@ Sum of RX packets for VHT (802.11ac very high throughput) rate.
 
 #### The documentation for this struct was generated from the following file:
 
-wlan.h
+  - wlan.h
 
 #### 
 
@@ -541,7 +542,7 @@ wlan.h
 
 ### Data Fields
 
-int mode
+  - int mode
 
 ### Detailed Description
 
@@ -556,7 +557,7 @@ Set protection mode for the transmit AMPDU packet
 
 #### The documentation for this struct was generated from the following file:
 
-wlan.h
+  - wlan.h
 
 #### 
 
@@ -564,9 +565,9 @@ wlan.h
 
 ### Data Fields
 
-t\_u32 hemcs\_txcnt \[12\]
+  - t\_u32 hemcs\_txcnt \[12\]
 
-t\_u32 hestbcrate\_txcnt \[12\]
+  - t\_u32 hestbcrate\_txcnt \[12\]
 
 ### Detailed Description
 
@@ -585,7 +586,7 @@ Sum of TX packets for HE (802.11ax high efficiency) rate.
 
 #### The documentation for this struct was generated from the following file:
 
-wlan.h
+  - wlan.h
 
 #### 
 
@@ -593,11 +594,11 @@ wlan.h
 
 ### Data Fields
 
-t\_u32 htmcs\_txcnt \[16\]
+  - t\_u32 htmcs\_txcnt \[16\]
 
-t\_u32 htsgi\_txcnt \[16\]
+  - t\_u32 htsgi\_txcnt \[16\]
 
-t\_u32 htstbcrate\_txcnt \[16\]
+  - t\_u32 htstbcrate\_txcnt \[16\]
 
 ### Detailed Description
 
@@ -620,7 +621,7 @@ Sum of TX packets for HT (802.11n high throughput) rate.
 
 #### The documentation for this struct was generated from the following file:
 
-wlan.h
+  - wlan.h
 
 #### 
 
@@ -628,17 +629,17 @@ wlan.h
 
 ### Data Fields
 
-t\_u32 nss\_txcnt \[2\]
+  - t\_u32 nss\_txcnt \[2\]
 
-t\_u32 bandwidth\_txcnt \[3\]
+  - t\_u32 bandwidth\_txcnt \[3\]
 
-t\_u32 preamble\_txcnt \[4\]
+  - t\_u32 preamble\_txcnt \[4\]
 
-t\_u32 ldpc\_txcnt
+  - t\_u32 ldpc\_txcnt
 
-t\_u32 rts\_txcnt
+  - t\_u32 rts\_txcnt
 
-t\_s32 ack\_RSSI
+  - t\_s32 ack\_RSSI
 
 ### Detailed Description
 
@@ -678,7 +679,7 @@ Sum of TX packets.
 
 #### The documentation for this struct was generated from the following file:
 
-wlan.h
+  - wlan.h
 
 #### 
 
@@ -686,11 +687,11 @@ wlan.h
 
 ### Data Fields
 
-t\_u32 vhtmcs\_txcnt \[10\]
+  - t\_u32 vhtmcs\_txcnt \[10\]
 
-t\_u32 vhtsgi\_txcnt \[10\]
+  - t\_u32 vhtsgi\_txcnt \[10\]
 
-t\_u32 vhtstbcrate\_txcnt \[10\]
+  - t\_u32 vhtstbcrate\_txcnt \[10\]
 
 ### Detailed Description
 
@@ -713,7 +714,7 @@ Sum of TX packets for VHT (802.11ac very high throughput) rate.
 
 #### The documentation for this struct was generated from the following file:
 
-wlan.h
+  - wlan.h
 
 #### 
 
@@ -721,17 +722,17 @@ wlan.h
 
 ### Data Fields
 
-uint8\_t \* bssid
+  - uint8\_t \* bssid
 
-char \* ssid
+  - char \* ssid
 
-int channel \[MAX\_CHANNEL\_LIST\]
+  - int channel \[MAX\_CHANNEL\_LIST\]
 
-IEEEtypes\_Bss\_t bss\_type
+  - IEEEtypes\_Bss\_t bss\_type
 
-int scan\_duration
+  - int scan\_duration
 
-int split\_scan\_delay
+  - int split\_scan\_delay
 
 ### Detailed Description
 
@@ -765,7 +766,7 @@ This structure is used to configure Wi-Fi scan parameters
 
 #### The documentation for this struct was generated from the following file:
 
-wlan.h
+  - wlan.h
 
 #### 
 
@@ -773,37 +774,37 @@ wlan.h
 
 ### Data Fields
 
-uint16\_t none: 1
+  - uint16\_t none: 1
 
-uint16\_t wep40: 1
+  - uint16\_t wep40: 1
 
-uint16\_t wep104: 1
+  - uint16\_t wep104: 1
 
-uint16\_t tkip: 1
+  - uint16\_t tkip: 1
 
-uint16\_t ccmp: 1
+  - uint16\_t ccmp: 1
 
-uint16\_t aes\_128\_cmac: 1
+  - uint16\_t aes\_128\_cmac: 1
 
-uint16\_t gcmp: 1
+  - uint16\_t gcmp: 1
 
-uint16\_t sms4: 1
+  - uint16\_t sms4: 1
 
-uint16\_t gcmp\_256: 1
+  - uint16\_t gcmp\_256: 1
 
-uint16\_t ccmp\_256: 1
+  - uint16\_t ccmp\_256: 1
 
-uint16\_t rsvd: 1
+  - uint16\_t rsvd: 1
 
-uint16\_t bip\_gmac\_128: 1
+  - uint16\_t bip\_gmac\_128: 1
 
-uint16\_t bip\_gmac\_256: 1
+  - uint16\_t bip\_gmac\_256: 1
 
-uint16\_t bip\_cmac\_256: 1
+  - uint16\_t bip\_cmac\_256: 1
 
-uint16\_t gtk\_not\_used: 1
+  - uint16\_t gtk\_not\_used: 1
 
-uint16\_t rsvd2: 2
+  - uint16\_t rsvd2: 2
 
 ### Detailed Description
 
@@ -877,7 +878,7 @@ Wi-Fi cipher structure
 
 #### The documentation for this struct was generated from the following file:
 
-wlan.h
+  - wlan.h
 
 #### 
 
@@ -885,19 +886,19 @@ wlan.h
 
 ### Data Fields
 
-t\_u32 ps\_null\_interval
+  - t\_u32 ps\_null\_interval
 
-t\_u32 multiple\_dtim\_interval
+  - t\_u32 multiple\_dtim\_interval
 
-t\_u32 listen\_interval
+  - t\_u32 listen\_interval
 
-t\_u32 adhoc\_awake\_period
+  - t\_u32 adhoc\_awake\_period
 
-t\_u32 bcn\_miss\_timeout
+  - t\_u32 bcn\_miss\_timeout
 
-t\_s32 delay\_to\_ps
+  - t\_s32 delay\_to\_ps
 
-t\_u32 ps\_mode
+  - t\_u32 ps\_mode
 
 ### Detailed Description
 
@@ -935,7 +936,7 @@ This structure is for IEEE PS (power save) configuration
 
 #### The documentation for this struct was generated from the following file:
 
-wlan.h
+  - wlan.h
 
 #### 
 
@@ -943,11 +944,11 @@ wlan.h
 
 ### Data Fields
 
-struct ipv6\_config ipv6 \[CONFIG\_MAX\_IPV6\_ADDRESSES\]
+  - struct ipv6\_config ipv6 \[CONFIG\_MAX\_IPV6\_ADDRESSES\]
 
-size\_t ipv6\_count
+  - size\_t ipv6\_count
 
-struct ipv4\_config ipv4
+  - struct ipv4\_config ipv4
 
 ### Detailed Description
 
@@ -974,7 +975,7 @@ well as IPv6 addresses
 
 #### The documentation for this struct was generated from the following file:
 
-wlan.h
+  - wlan.h
 
 #### 
 
@@ -982,83 +983,83 @@ wlan.h
 
 ### Data Fields
 
-int id
+  - int id
 
-int wps\_network
+  - int wps\_network
 
-char name \[WLAN\_NETWORK\_NAME\_MAX\_LENGTH+1\]
+  - char name \[WLAN\_NETWORK\_NAME\_MAX\_LENGTH+1\]
 
-char ssid \[IEEEtypes\_SSID\_SIZE+1\]
+  - char ssid \[IEEEtypes\_SSID\_SIZE+1\]
 
-char bssid \[IEEEtypes\_ADDRESS\_SIZE\]
+  - char bssid \[IEEEtypes\_ADDRESS\_SIZE\]
 
-unsigned int channel
+  - unsigned int channel
 
-uint8\_t sec\_channel\_offset
+  - uint8\_t sec\_channel\_offset
 
-uint16\_t acs\_band
+  - uint16\_t acs\_band
 
-int rssi
+  - int rssi
 
-short rssi\_threshold
+  - short rssi\_threshold
 
-unsigned short ht\_capab
+  - unsigned short ht\_capab
 
-unsigned int vht\_capab
+  - unsigned int vht\_capab
 
-unsigned char vht\_oper\_chwidth
+  - unsigned char vht\_oper\_chwidth
 
-unsigned char he\_oper\_chwidth
+  - unsigned char he\_oper\_chwidth
 
-enum wlan\_bss\_type type
+  - enum wlan\_bss\_type type
 
-enum wlan\_bss\_role role
+  - enum wlan\_bss\_role role
 
-struct wlan\_network\_security security
+  - struct wlan\_network\_security security
 
-struct wlan\_ip\_config ip
+  - struct wlan\_ip\_config ip
 
-unsigned ssid\_specific: 1
+  - unsigned ssid\_specific: 1
 
-unsigned trans\_ssid\_specific: 1
+  - unsigned trans\_ssid\_specific: 1
 
-unsigned bssid\_specific: 1
+  - unsigned bssid\_specific: 1
 
-unsigned channel\_specific: 1
+  - unsigned channel\_specific: 1
 
-unsigned security\_specific: 1
+  - unsigned security\_specific: 1
 
-unsigned dot11n: 1
+  - unsigned dot11n: 1
 
-unsigned dot11ac: 1
+  - unsigned dot11ac: 1
 
-unsigned dot11ax: 1
+  - unsigned dot11ax: 1
 
-uint16\_t mdid
+  - uint16\_t mdid
 
-unsigned ft\_1x: 1
+  - unsigned ft\_1x: 1
 
-unsigned ft\_psk: 1
+  - unsigned ft\_psk: 1
 
-unsigned ft\_sae: 1
+  - unsigned ft\_sae: 1
 
-unsigned int owe\_trans\_mode
+  - unsigned int owe\_trans\_mode
 
-char trans\_ssid \[IEEEtypes\_SSID\_SIZE+1\]
+  - char trans\_ssid \[IEEEtypes\_SSID\_SIZE+1\]
 
-unsigned int trans\_ssid\_len
+  - unsigned int trans\_ssid\_len
 
-uint16\_t beacon\_period
+  - uint16\_t beacon\_period
 
-uint8\_t dtim\_period
+  - uint8\_t dtim\_period
 
-uint8\_t wlan\_capa
+  - uint8\_t wlan\_capa
 
-uint8\_t btm\_mode
+  - uint8\_t btm\_mode
 
-bool bss\_transition\_supported
+  - bool bss\_transition\_supported
 
-bool neighbor\_report\_supported
+  - bool neighbor\_report\_supported
 
 ### Detailed Description
 
@@ -1293,7 +1294,7 @@ of address assignment to be used for this interface.
 
 #### The documentation for this struct was generated from the following file:
 
-wlan.h
+  - wlan.h
 
 #### 
 
@@ -1301,109 +1302,137 @@ wlan.h
 
 ### Data Fields
 
-enum wlan\_security\_type type
+  - enum wlan\_security\_type type
 
-int key\_mgmt
+  - int key\_mgmt
 
-struct wlan\_cipher mcstCipher
+  - struct wlan\_cipher mcstCipher
 
-struct wlan\_cipher ucstCipher
+  - struct wlan\_cipher ucstCipher
 
-unsigned pkc: 1
+  - unsigned pkc: 1
 
-int group\_cipher
+  - int group\_cipher
 
-int pairwise\_cipher
+  - int pairwise\_cipher
 
-int group\_mgmt\_cipher
+  - int group\_mgmt\_cipher
 
-bool is\_pmf\_required
+  - bool is\_pmf\_required
 
-char psk \[WLAN\_PSK\_MAX\_LENGTH\]
+  - char psk \[WLAN\_PSK\_MAX\_LENGTH\]
 
-uint8\_t psk\_len
+  - uint8\_t psk\_len
 
-char password \[WLAN\_PASSWORD\_MAX\_LENGTH+1\]
+  - char password \[WLAN\_PASSWORD\_MAX\_LENGTH+1\]
 
-size\_t password\_len
+  - size\_t password\_len
 
-char \* sae\_groups
+  - char \* sae\_groups
 
-uint8\_t pwe\_derivation
+  - uint8\_t pwe\_derivation
 
-uint8\_t transition\_disable
+  - uint8\_t transition\_disable
 
-char \* owe\_groups
+  - char \* owe\_groups
 
-char pmk \[WLAN\_PMK\_LENGTH\]
+  - char pmk \[WLAN\_PMK\_LENGTH\]
 
-bool pmk\_valid
+  - bool pmk\_valid
 
-int8\_t mfpc
+  - int8\_t mfpc
 
-int8\_t mfpr
+  - int8\_t mfpr
 
-unsigned wpa3\_sb: 1
+  - unsigned wpa3\_ent: 1
 
-unsigned wpa3\_sb\_192: 1
+  - unsigned wpa3\_sb: 1
 
-unsigned eap\_ver: 1
+  - unsigned wpa3\_sb\_192: 1
 
-unsigned peap\_label: 1
+  - unsigned eap\_ver: 1
 
-uint8\_t eap\_crypto\_binding
+  - unsigned peap\_label: 1
 
-unsigned eap\_result\_ind: 1
+  - uint8\_t eap\_crypto\_binding
 
-unsigned char tls\_cipher
+  - unsigned eap\_result\_ind: 1
 
-char identity \[IDENTITY\_MAX\_LENGTH\]
+  - unsigned char tls\_cipher
 
-char anonymous\_identity \[IDENTITY\_MAX\_LENGTH\]
+  - char identity \[IDENTITY\_MAX\_LENGTH\]
 
-char eap\_password \[PASSWORD\_MAX\_LENGTH\]
+  - char anonymous\_identity \[IDENTITY\_MAX\_LENGTH\]
 
-bool verify\_peer
+  - char eap\_password \[PASSWORD\_MAX\_LENGTH\]
 
-unsigned char \* ca\_cert\_data
+  - bool verify\_peer\_cert
 
-size\_t ca\_cert\_len
+  - unsigned char \* ca\_cert\_data
 
-unsigned char \* client\_cert\_data
+  - size\_t ca\_cert\_len
 
-size\_t client\_cert\_len
+  - unsigned char \* client\_cert\_data
 
-unsigned char \* client\_key\_data
+  - size\_t client\_cert\_len
 
-size\_t client\_key\_len
+  - unsigned char \* client\_key\_data
 
-char client\_key\_passwd \[PASSWORD\_MAX\_LENGTH\]
+  - size\_t client\_key\_len
 
-char ca\_cert\_hash \[HASH\_MAX\_LENGTH\]
+  - char client\_key\_passwd \[PASSWORD\_MAX\_LENGTH\]
 
-char domain\_match \[DOMAIN\_MATCH\_MAX\_LENGTH\]
+  - char ca\_cert\_hash \[HASH\_MAX\_LENGTH\]
 
-char domain\_suffix\_match \[DOMAIN\_MATCH\_MAX\_LENGTH\]
+  - char domain\_match \[DOMAIN\_MATCH\_MAX\_LENGTH\]
 
-unsigned char \* ca\_cert2\_data
+  - char domain\_suffix\_match \[DOMAIN\_MATCH\_MAX\_LENGTH\]
 
-size\_t ca\_cert2\_len
+  - unsigned char \* ca\_cert2\_data
 
-unsigned char \* client\_cert2\_data
+  - size\_t ca\_cert2\_len
 
-size\_t client\_cert2\_len
+  - unsigned char \* client\_cert2\_data
 
-unsigned char \* client\_key2\_data
+  - size\_t client\_cert2\_len
 
-size\_t client\_key2\_len
+  - unsigned char \* client\_key2\_data
 
-char client\_key2\_passwd \[PASSWORD\_MAX\_LENGTH\]
+  - size\_t client\_key2\_len
 
-unsigned char \* **dpp\_connector**
+  - char client\_key2\_passwd \[PASSWORD\_MAX\_LENGTH\]
 
-unsigned char \* **dpp\_c\_sign\_key**
+  - unsigned char \* dh\_data
 
-unsigned char \* **dpp\_net\_access\_key**
+  - size\_t dh\_len
+
+  - unsigned char \* server\_cert\_data
+
+  - size\_t server\_cert\_len
+
+  - unsigned char \* server\_key\_data
+
+  - size\_t server\_key\_len
+
+  - char server\_key\_passwd \[PASSWORD\_MAX\_LENGTH\]
+
+  - size\_t nusers
+
+  - char identities \[MAX\_USERS\]\[IDENTITY\_MAX\_LENGTH\]
+
+  - char passwords \[MAX\_USERS\]\[PASSWORD\_MAX\_LENGTH\]
+
+  - char pac\_opaque\_encr\_key \[PAC\_OPAQUE\_ENCR\_KEY\_MAX\_LENGTH\]
+
+  - char a\_id \[A\_ID\_MAX\_LENGTH\]
+
+  - uint8\_t fast\_prov
+
+  - unsigned char \* **dpp\_connector**
+
+  - unsigned char \* **dpp\_c\_sign\_key**
+
+  - unsigned char \* **dpp\_net\_access\_key**
 
 ### Detailed Description
 
@@ -1516,9 +1545,13 @@ Network security configuration
 
 > Management frame protection required (MFPR)
 
-#### unsigned wlan\_network\_security::wpa3\_sb
+#### unsigned wlan\_network\_security::wpa3\_ent
 
 > WPA3 Enterprise mode
+
+#### unsigned wlan\_network\_security::wpa3\_sb
+
+> WPA3 Enterprise Suite B mode
 
 #### unsigned wlan\_network\_security::wpa3\_sb\_192
 
@@ -1563,9 +1596,9 @@ Network security configuration
 
 > Password string for EAP.
 
-#### bool wlan\_network\_security::verify\_peer
+#### bool wlan\_network\_security::verify\_peer\_cert
 
-> whether verify peer with CA or not 0: not verify, 1: verify.
+> whether verify peer with CA or not false: not verify, true: verify.
 
 #### unsigned char\* wlan\_network\_security::ca\_cert\_data
 
@@ -1641,9 +1674,64 @@ Network security configuration
 
 > Client key password for phase two
 
+#### unsigned char\* wlan\_network\_security::dh\_data
+
+> DH (Diffie Hellman) parameters blob (Binary Large Object)
+
+#### size\_t wlan\_network\_security::dh\_len
+
+> DH (Diffie Hellman) parameters blob (Binary Large Object) length
+
+#### unsigned char\* wlan\_network\_security::server\_cert\_data
+
+> Server certification blob (Binary Large Object) in PEM (Base64
+> ASCII)/DER (binary) format
+
+#### size\_t wlan\_network\_security::server\_cert\_len
+
+> Server certification blob (Binary Large Object) length
+
+#### unsigned char\* wlan\_network\_security::server\_key\_data
+
+> Server key blob (Binary Large Object)
+
+#### size\_t wlan\_network\_security::server\_key\_len
+
+> Server key blob (Binary Large Object) length
+
+#### char wlan\_network\_security::server\_key\_passwd\[PASSWORD\_MAX\_LENGTH\]
+
+> Server key password
+
+#### size\_t wlan\_network\_security::nusers
+
+> Number of EAP users
+
+#### char wlan\_network\_security::identities\[MAX\_USERS\]\[IDENTITY\_MAX\_LENGTH\]
+
+> User Identities
+
+#### char wlan\_network\_security::passwords\[MAX\_USERS\]\[PASSWORD\_MAX\_LENGTH\]
+
+> User Passwords
+
+#### char wlan\_network\_security::pac\_opaque\_encr\_key\[PAC\_OPAQUE\_ENCR\_KEY\_MAX\_LENGTH\]
+
+> Encryption key for EAP-FAST PAC-Opaque values
+
+#### char wlan\_network\_security::a\_id\[A\_ID\_MAX\_LENGTH\]
+
+> EAP-FAST authority identity (A-ID)
+
+#### uint8\_t wlan\_network\_security::fast\_prov
+
+> EAP-FAST provisioning modes: 0 = provisioning disabled 1 = only
+> anonymous provisioning allowed 2 = only authenticated provisioning
+> allowed 3 = both provisioning modes allowed (default)
+
 #### The documentation for this struct was generated from the following file:
 
-wlan.h
+  - wlan.h
 
 #### 
 
@@ -1651,79 +1739,79 @@ wlan.h
 
 ### Data Fields
 
-char ssid \[WLAN\_NETWORK\_NAME\_MAX\_LENGTH+1\]
+  - char ssid \[WLAN\_NETWORK\_NAME\_MAX\_LENGTH+1\]
 
-unsigned int ssid\_len
+  - unsigned int ssid\_len
 
-char bssid \[IEEEtypes\_ADDRESS\_SIZE\]
+  - char bssid \[IEEEtypes\_ADDRESS\_SIZE\]
 
-unsigned int channel
+  - unsigned int channel
 
-enum wlan\_bss\_type type
+  - enum wlan\_bss\_type type
 
-enum wlan\_bss\_role role
+  - enum wlan\_bss\_role role
 
-unsigned dot11n: 1
+  - unsigned dot11n: 1
 
-unsigned dot11ac: 1
+  - unsigned dot11ac: 1
 
-unsigned dot11ax: 1
+  - unsigned dot11ax: 1
 
-unsigned wmm: 1
+  - unsigned wmm: 1
 
-unsigned wps: 1
+  - unsigned wps: 1
 
-unsigned int wps\_session
+  - unsigned int wps\_session
 
-unsigned wep: 1
+  - unsigned wep: 1
 
-unsigned wpa: 1
+  - unsigned wpa: 1
 
-unsigned wpa2: 1
+  - unsigned wpa2: 1
 
-unsigned wpa2\_sha256: 1
+  - unsigned wpa2\_sha256: 1
 
-unsigned owe: 1
+  - unsigned owe: 1
 
-unsigned wpa3\_sae: 1
+  - unsigned wpa3\_sae: 1
 
-unsigned wpa2\_entp: 1
+  - unsigned wpa2\_entp: 1
 
-unsigned wpa2\_entp\_sha256: 1
+  - unsigned wpa3\_entp: 1
 
-unsigned wpa3\_1x\_sha256: 1
+  - unsigned wpa3\_1x\_sha256: 1
 
-unsigned wpa3\_1x\_sha384: 1
+  - unsigned wpa3\_1x\_sha384: 1
 
-unsigned ft\_1x: 1
+  - unsigned ft\_1x: 1
 
-unsigned ft\_1x\_sha384: 1
+  - unsigned ft\_1x\_sha384: 1
 
-unsigned ft\_psk: 1
+  - unsigned ft\_psk: 1
 
-unsigned ft\_sae: 1
+  - unsigned ft\_sae: 1
 
-unsigned char rssi
+  - unsigned char rssi
 
-char trans\_ssid \[WLAN\_NETWORK\_NAME\_MAX\_LENGTH+1\]
+  - char trans\_ssid \[WLAN\_NETWORK\_NAME\_MAX\_LENGTH+1\]
 
-unsigned int trans\_ssid\_len
+  - unsigned int trans\_ssid\_len
 
-char trans\_bssid \[IEEEtypes\_ADDRESS\_SIZE\]
+  - char trans\_bssid \[IEEEtypes\_ADDRESS\_SIZE\]
 
-uint16\_t beacon\_period
+  - uint16\_t beacon\_period
 
-uint8\_t dtim\_period
+  - uint8\_t dtim\_period
 
-t\_u8 ap\_mfpc
+  - t\_u8 ap\_mfpc
 
-t\_u8 ap\_mfpr
+  - t\_u8 ap\_mfpr
 
-t\_u8 ap\_pwe
+  - t\_u8 ap\_pwe
 
-bool neighbor\_report\_supported
+  - bool neighbor\_report\_supported
 
-bool bss\_transition\_supported
+  - bool bss\_transition\_supported
 
 ### Detailed Description
 
@@ -1817,9 +1905,9 @@ Scan result
 
 > The network uses WPA2 Enterprise security
 
-#### unsigned wlan\_scan\_result::wpa2\_entp\_sha256
+#### unsigned wlan\_scan\_result::wpa3\_entp
 
-> The network uses WPA2 Enterprise SHA256 security
+> The network uses WPA3 Enterprise security
 
 #### unsigned wlan\_scan\_result::wpa3\_1x\_sha256
 
@@ -1893,7 +1981,7 @@ Scan result
 
 #### The documentation for this struct was generated from the following file:
 
-wlan.h
+  - wlan.h
 
 # File Documentation
 
@@ -4574,7 +4662,7 @@ offset value range: 0x80 to 0x7F
 > 
 > \-WM\_FAIL if command fails.
 
-#### int wlan\_wowlan\_cfg\_ptn\_match (wlan\_wowlan\_ptn\_cfg\_t \* *ptn\_cfg*)
+#### int wlan\_wowlan\_cfg\_ptn\_match (enum wlan\_bss\_type *bss\_type*, wlan\_wowlan\_ptn\_cfg\_t \* *ptn\_cfg*)
 
 > Use this API to enable WOWLAN (wake-on-wireless-LAN) on magic packet
 > RX in Wi-Fi firmware
@@ -4584,6 +4672,11 @@ offset value range: 0x80 to 0x7F
 <table>
 <tbody>
 <tr class="odd">
+<td>in</td>
+<td><em>bss_type</em></td>
+<td>0–for bss type as sta, 1–for bss type as uap</td>
+</tr>
+<tr class="even">
 <td>in</td>
 <td><em>ptn_cfg</em></td>
 <td>A pointer to wlan_wowlan_ptn_cfg_t containing wake on Wi-Fi pattern configuration</td>
@@ -4750,9 +4843,12 @@ rekey) 7: Magic pattern matched Others: reserved. (set to 0)
 > 
 > \-WM\_FAIL if command fails.
 
-#### int wlan\_get\_stats (wlan\_stats\_t  \* *stats*, enum wlan\_bss\_type *bss\_type*)
+#### int wlan\_get\_stats (wlan\_stats\_t \* *stats*, enum wlan\_bss\_type *bss\_type*)
 
-> Use this API to get the various statistics of STA/uAP from Wi-Fi driver
+> Use this API to get the various statistics of STA/uAP from Wi-Fi
+> driver
+
+##### Parameters
 
 <table>
 <tbody>
@@ -4778,7 +4874,10 @@ rekey) 7: Magic pattern matched Others: reserved. (set to 0)
 
 #### int wlan\_reset\_stats (enum wlan\_bss\_type *bss\_type*)
 
-> Use this API to reset the various statistics of STA/uAP from Wi-Fi driver
+> Use this API to reset the various statistics of STA/uAP from Wi-Fi
+> driver
+
+##### Parameters
 
 <table>
 <tbody>
@@ -5339,7 +5438,7 @@ rekey) 7: Magic pattern matched Others: reserved. (set to 0)
 
 > Set worldwide safe mode TX power limits. Set TX power limit and ru TX
 > power limit according to the region code. TX power limit:
-> rg\_power\_cfg\_rw610 ru TX power limit: ru\_power\_cfg\_rw610
+> rg\_power\_cfg\_info ru TX power limit: ru\_power\_cfg\_info
 
 ##### Returns
 
@@ -7186,6 +7285,14 @@ rekey) 7: Magic pattern matched Others: reserved. (set to 0)
 
 > WM\_SUCCESS if successful otherwise return -WM\_FAIL.
 
+#### int wlan\_channel\_load (wlan\_802\_11\_chan\_load\_t \* *chan\_load*)
+
+> Set Wi-Fi channel load info.
+
+#### int wlan\_get\_channel\_load (wlan\_802\_11\_chan\_load\_t \* *chan\_load*)
+
+> Get Wi-Fi channel load info.
+
 #### int wlan\_set\_clocksync\_cfg (const wlan\_clock\_sync\_gpio\_tsf\_t \* *tsf\_latch*)
 
 > Set clock sync GPIO based TSF (time synchronization function).
@@ -7374,6 +7481,75 @@ rekey) 7: Magic pattern matched Others: reserved. (set to 0)
 <td>in</td>
 <td><em>query_reason</em></td>
 <td>[0..16] IEEE 802.11v BTM (BSS transition management) Query reasons. Refer to IEEE Std 802.11v-2011 - Table 7-43x-Transition and Transition Query reasons table.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_mbo\_peferch\_cfg (const char \* *non\_pref\_chan*)
+
+> Multi band operation (MBO) non-preferred channels
+> 
+> A space delimited list of non-preferred channels where each channel is
+> a colon delimited list of values.
+> 
+> Format:
+> 
+> non\_pref\_chan=oper\_class:chan:preference:reason Example:
+> 
+> non\_pref\_chan=81:5:10:2 81:1:0:2 81:9:0:2
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>non_pref_chan</em></td>
+<td>list of non-preferred channels.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_mbo\_set\_cell\_capa (t\_u8 *cell\_capa*)
+
+> MBO set cellular data capabilities
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>cell_capa</em></td>
+<td>1 = Cellular data connection available 2 = Cellular data connection not available 3 = Not cellular capable (default)</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_mbo\_set\_oce (t\_u8 *oce*)
+
+> Optimized connectivity experience (OCE)
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>oce</em></td>
+<td>Enable OCE features 1 = Enable OCE in non-AP STA mode (default; disabled if the driver does not indicate support for OCE in STA mode). 2 = Enable OCE in STA-CFON mode.</td>
 </tr>
 </tbody>
 </table>
@@ -8111,6 +8287,54 @@ CSI data
 #### int wlan\_wps\_cancel (void )
 
 > Cancel WPS session.
+> 
+> This function cancels ongoing WPS session.
+
+##### Returns
+
+> WM\_SUCCESS if successful
+> 
+> \-WM\_FAIL if invalid pin entered.
+
+#### int wlan\_start\_ap\_wps\_pin (const char \* *pin*)
+
+> Start WPS pin session.
+> 
+> This function starts AP WPS pin session.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>pin</em></td>
+<td>Pin for WPS session.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if the pin entered is valid.
+> 
+> \-WM\_FAIL if invalid pin entered.
+
+#### int wlan\_start\_ap\_wps\_pbc (void )
+
+> Start WPS PBC session.
+> 
+> This function starts AP WPS PBC session.
+
+##### Returns
+
+> WM\_SUCCESS if successful
+> 
+> \-WM\_FAIL if invalid pin entered.
+
+#### int wlan\_wps\_ap\_cancel (void )
+
+> Cancel AP's WPS session.
 > 
 > This function cancels ongoing WPS session.
 
@@ -9212,6 +9436,10 @@ CSI data
 
 ### Macro Documentation
 
+#### \#define WLAN\_STATS\_INC( priv, x)  (++(priv-\>x))
+
+> Wi-Fi statistics
+
 #### \#define ACTION\_GET  (0U)
 
 > Action GET
@@ -9765,14 +9993,6 @@ WLAN\_KEY\_MGMT\_FT\_FILS\_SHA256 | WLAN\_KEY\_MGMT\_FT\_FILS\_SHA384)
 <tr class="even">
 <td>WLAN_IEEE_DEEP_SLEEP</td>
 <td>IEEE and deep sleep power save mode</td>
-</tr>
-<tr class="odd">
-<td>WLAN_WNM</td>
-<td>WNM power save mode</td>
-</tr>
-<tr class="even">
-<td>WLAN_WNM_DEEP_SLEEP</td>
-<td>WNM and Deep sleep power save mode</td>
 </tr>
 </tbody>
 </table>
