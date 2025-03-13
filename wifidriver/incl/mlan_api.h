@@ -321,6 +321,10 @@ int wifi_send_add_wpa3_password(int mode, char *ssid, char *password, unsigned i
 int wifi_send_add_wpa_pmk(int mode, char *ssid, char *bssid, char *pmk, unsigned int len);
 bool wifi_11d_is_channel_allowed(int channel);
 
+#if CONFIG_WPA_SUPP_P2P
+int wifi_set_p2p_mode_config(uint16_t mode_value);
+#endif
+
 #if CONFIG_11AX
 void wifi_request_get_fw_info(mlan_private *priv, mlan_fw_info *fw_info);
 

@@ -1475,6 +1475,10 @@ typedef enum _ENH_PS_MODES
 #define CSI_CMD_DISABLE 0x0002
 #endif
 
+#if CONFIG_WPA_SUPP_P2P
+#define HostCmd_CMD_WIFI_DIRECT_MODE_CONFIG 0x00EB
+#endif
+
 #if CONFIG_11AX
 /** Host Command ID: 11AX config */
 #define HostCmd_CMD_11AX_CFG 0x0266
@@ -2997,6 +3001,16 @@ typedef MLAN_PACK_START struct _MrvlIETypes_ChanTRPCConfig_t
     t_u8 chan_num;
     mod_group_setting mod_group[0];
 } MLAN_PACK_END MrvlIETypes_ChanTRPCConfig_t;
+
+#if CONFIG_WPA_SUPP_P2P
+typedef MLAN_PACK_START struct _HostCmd_P2P_MODE_CONFIG
+{
+    /** Action Set or get */
+    t_u16 action;
+    /** P2P Mode */
+    t_u16 mode;
+} MLAN_PACK_END HostCmd_P2P_MODE_CONFIG;
+#endif
 
 /** Address type: broadcast */
 #define ADDR_TYPE_BROADCAST 1
@@ -8012,6 +8026,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_802_11_GET_CH_LOAD  channel_load;
 #endif
         HostCmd_DS_80211_TX_FRAME tx_frame;
+#if CONFIG_WPA_SUPP_P2P
+        HostCmd_P2P_MODE_CONFIG p2p_mode_config;
+#endif
     } params;
 } MLAN_PACK_END HostCmd_DS_COMMAND;
 

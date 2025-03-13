@@ -62,6 +62,7 @@ const rtos_wpa_supp_dev_ops wpa_supp_ops = {
     .send_mlme                = wifi_nxp_wpa_send_mlme,
     .remain_on_channel        = wifi_nxp_wpa_supp_remain_on_channel,
     .cancel_remain_on_channel = wifi_nxp_wpa_supp_cancel_remain_on_channel,
+    .probe_req_report         = wifi_nxp_wpa_supp_probe_req_report,
     .get_survey_results       = wifi_nxp_wpa_supp_survey_results_get,
     .dpp_listen               = wifi_nxp_wpa_dpp_listen,
     .get_modes                = wifi_nxp_wpa_get_modes,

@@ -6000,6 +6000,28 @@ int wifi_send_mgmt_auth_request(const unsigned int bss_type,
 }
 #endif
 
+#if CONFIG_WPA_SUPP_P2P
+int wifi_set_p2p_mode_config(uint16_t mode_value)
+{
+    int ret;
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    HostCmd_P2P_MODE_CONFIG *pmode = &cmd->params.p2p_mode_config;
+
+    wifi_get_command_lock();
+
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_WIFI_DIRECT_MODE_CONFIG);
+    cmd->size    = wlan_cpu_to_le16(sizeof(HostCmd_P2P_MODE_CONFIG) + S_DS_GEN);;
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, MLAN_BSS_TYPE_WIFIDIRECT);
+    cmd->result  = 0x0;
+
+    pmode->action= wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);
+    pmode->mode  = wlan_cpu_to_le16(mode_value);
+
+    ret = wifi_wait_for_cmdresp(NULL);
+    return ret;
+}
+#endif
+
 #if CONFIG_WMM_UAPSD
 int wifi_set_wmm_qos_cfg(t_u8 qos_cfg)
 {
