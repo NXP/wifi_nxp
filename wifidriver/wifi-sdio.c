@@ -50,7 +50,9 @@ static uint8_t vdll_cmd_buf[WIFI_FW_CMDBUF_SIZE] = {0};
 #endif
 static int seqnum;
 // static int pm_handle;
-
+#ifdef IW610
+bool cal_data_valid_fw;
+#endif
 /*
  * Used to authorize the SDIO interrupt handler to accept the incoming
  * packet from the SDIO interface. If this flag is set a semaphore is
@@ -528,6 +530,11 @@ static mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
 #endif
         case HostCmd_CMD_GET_HW_SPEC:
             (void)wlan_ret_get_hw_spec((mlan_private *)mlan_adap->priv[0], (HostCmd_DS_COMMAND *)(void *)cmdresp, NULL);
+#ifdef IW610
+            t_u32 fw_cap_ext;
+            fw_cap_ext = mlan_adap->priv[0]->adapter->fw_cap_ext;
+            cal_data_valid_fw = (((fw_cap_ext & 0x0800) == 0) ? 0 : 1);
+#endif
             break;
         case HostCmd_CMD_VERSION_EXT:
             wifi_get_firmware_ver_ext_from_cmdresp((HostCmd_DS_COMMAND *)(void *)cmdresp, dev_fw_ver_ext);
@@ -1278,33 +1285,6 @@ static void wlan_fw_init_cfg(void)
     }
 #endif
 
-    if (cal_data_valid)
-    {
-#if CONFIG_FW_VDLL
-        while (pmadapter->vdll_in_progress == MTRUE)
-        {
-            OSA_TimeDelay(50);
-        }
-#endif
-        wifi_io_d("CMD : SET_CAL_DATA (0x8f)");
-
-        _wlan_set_cal_data();
-    }
-
-    /* When cal data set command is sent, fimrware looses alignment of SDIO Tx buffers.
-     * So we need to send reconfigure command. This can be removed if fix is added in firmware.
-     */
-    wifi_io_d("CMD : RECONFIGURE_TX_BUFF (0xd9)");
-
-#if CONFIG_FW_VDLL
-    while (pmadapter->vdll_in_progress == MTRUE)
-    {
-        OSA_TimeDelay(50);
-    }
-#endif
-
-    wlan_reconfigure_tx_buffers();
-
     if (mac_addr_valid)
     {
         wifi_io_d("CMD : SET_MAC_ADDR (0x4d)");
@@ -1340,6 +1320,37 @@ static void wlan_fw_init_cfg(void)
 #endif
 
     wlan_get_hw_spec();
+
+    if (cal_data_valid
+#ifdef IW610
+        && !cal_data_valid_fw
+#endif
+    )
+    {
+#if CONFIG_FW_VDLL
+        while (pmadapter->vdll_in_progress == MTRUE)
+        {
+            OSA_TimeDelay(50);
+        }
+#endif
+        wifi_io_d("CMD : SET_CAL_DATA (0x8f)");
+
+        _wlan_set_cal_data();
+    }
+
+    /* When cal data set command is sent, fimrware looses alignment of SDIO Tx buffers.
+     * So we need to send reconfigure command. This can be removed if fix is added in firmware.
+     */
+    wifi_io_d("CMD : RECONFIGURE_TX_BUFF (0xd9)");
+
+#if CONFIG_FW_VDLL
+    while (pmadapter->vdll_in_progress == MTRUE)
+    {
+        OSA_TimeDelay(50);
+    }
+#endif
+
+    wlan_reconfigure_tx_buffers();
 
 #if CONFIG_FW_VDLL
     while (pmadapter->vdll_in_progress == MTRUE)
