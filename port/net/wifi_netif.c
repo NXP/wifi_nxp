@@ -504,6 +504,10 @@ static void process_data_packet(const t_u8 *rcvdata,
                 category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_WNM &&
                 category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_UNPROTECT_WNM)
             {
+#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+                (void)pbuf_free(p);
+                p = NULL;
+#endif
                 return;
             }
         }
@@ -757,9 +761,6 @@ static struct pbuf *wifi_low_level_input(struct nxp_wifi_device *ps_nxp_wifi_dev
 
         /* Set pbuf total packet size. */
         LINK_STATS_INC(link.recv);
-
-        /* Fill empty descriptors with new pbufs. */
-        nxp_wifi_rx_populate_queue(ps_nxp_wifi_dev);
 
         ps_nxp_wifi_dev->us_rx_tail = (ps_nxp_wifi_dev->us_rx_tail + 1) % NETIF_RX_BUFFERS;
 
