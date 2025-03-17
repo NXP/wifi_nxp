@@ -159,7 +159,11 @@ typedef struct
 
 #define UAP_DEFAULT_CHANNEL       0
 #define UAP_DEFAULT_BANDWIDTH     2
+#ifdef RW610
 #define UAP_DEFAULT_BEACON_PERIOD 100
+#else
+#define UAP_DEFAULT_BEACON_PERIOD 200
+#endif
 #define UAP_DEFAULT_HIDDEN_SSID   0
 
 enum wifi_bss_security
