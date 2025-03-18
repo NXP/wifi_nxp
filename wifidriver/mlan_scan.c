@@ -207,6 +207,7 @@ static t_u8 is_rsn_oui_present(mlan_adapter *pmadapter, BSSDescriptor_t *pbss_de
         {
             ie_body = (IEBody *)(void *)((t_u8 *)(&hdr->oui_subtype) + RSN_GTK_OUI_OFFSET);
             oui     = &rsn_oui[cipher][0];
+            // coverity[overrun-local:SUPPRESS]
             if ((ret = search_oui_in_ie(pmadapter, ie_body, oui)) != 0U)
             {
                 LEAVE();
@@ -224,6 +225,7 @@ static t_u8 is_rsn_oui_present(mlan_adapter *pmadapter, BSSDescriptor_t *pbss_de
         {
             ie_body = (IEBody *)(void *)((t_u8 *)(&hdr->oui_subtype) + RSN_GTK_OUI_OFFSET);
             oui     = &rsn_oui[cipher][0];
+            // coverity[overrun-local:SUPPRESS]
             if ((ret = search_oui_in_ie(pmadapter, ie_body, oui)) != 0U)
             {
                 LEAVE();

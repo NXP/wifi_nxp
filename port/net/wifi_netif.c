@@ -297,6 +297,7 @@ static void deliver_packet_above(struct pbuf *p, int recv_interface)
                     goto retry;
                 }
                 LINK_STATS_INC(link.proterr);
+                // coverity[overrun-local:SUPPRESS]
                 WLAN_STATS_INC(mlan_adap->priv[recv_interface], stats.errors.rx);
                 LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
                 (void)pbuf_free(p);
@@ -305,6 +306,7 @@ static void deliver_packet_above(struct pbuf *p, int recv_interface)
 #if CONFIG_WIFI_GET_LOG
             else
             {
+                // coverity[overrun-call:SUPPRESS]
                 (void)wifi_iface_rx_stats(p->payload, recv_interface);
             }
 #endif

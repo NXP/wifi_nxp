@@ -4762,6 +4762,7 @@ void wifi_nxp_uap_disconnect(mlan_private *priv, t_u16 reason_code, t_u8 *mac)
     {
         __memset(NULL, mgmt_rx, 0, sizeof(nxp_wifi_event_mlme_t));
         mgmt_rx->frame.frame_len = payload_len;
+        // coverity[overrun-buffer-arg:SUPPRESS]
         __memcpy(NULL, (void *)mgmt_rx->frame.frame, (const void *)(&pmgmt_pkt_hdr->wlan_header), mgmt_rx->frame.frame_len);
         if (wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn)
         {

@@ -1846,6 +1846,7 @@ wpa_ie_picked:
     priv->sec_info.wpa_enabled = true;
     if (d->wpa_ie_buff_len <= sizeof(priv->wpa_ie))
     {
+        // coverity[overrun-buffer-arg:SUPPRESS]
         (void)memcpy((void *)priv->wpa_ie, (const void *)d->wpa_ie_buff, d->wpa_ie_buff_len);
         priv->wpa_ie_len = (t_u8)d->wpa_ie_buff_len;
     }
@@ -4948,6 +4949,7 @@ void wifi_handle_event_data_pause(void *data)
             void *tx_pause_tlv = OSA_MemoryPoolAllocate(buf_32_MemoryPool);
 #endif
 
+            // coverity[overrun-buffer-arg:SUPPRESS]
             (void)memcpy(tx_pause_tlv, (void *)tlv, sizeof(MrvlIEtypes_tx_pause_t));
             if (evt->bss_type == MLAN_BSS_TYPE_STA)
             {
