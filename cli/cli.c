@@ -750,6 +750,7 @@ static int get_input(char *get_inbuf, unsigned int *bp)
         if (get_inbuf[*bp] == '\t')
         {
             get_inbuf[*bp] = '\0';
+            // coverity[overflow_sink:SUPPRESS]
             tab_complete(get_inbuf, bp);
             continue;
         }
