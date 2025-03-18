@@ -1789,7 +1789,7 @@ void wifi_pmip_v33_enable();
 #if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
 int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type);
 int wifi_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type);
-int wifi_test_independent_reset();
+int wifi_trigger_inband_indrst();
 int wifi_trigger_oob_indrst();
 #endif
 

@@ -8405,24 +8405,10 @@ int wifi_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type)
     return ret;
 }
 
-int wifi_test_independent_reset()
+int wifi_trigger_inband_indrst()
 {
-    wifi_get_command_lock();
-    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    wlan_process_hang(FW_RELOAD_SDIO_INBAND_RESET);
 
-    HostCmd_DS_IND_RST ind;
-    /** Action */
-    ind.action = 0;
-    /** CMD_SUBID */
-    ind.sub_id = 0x117;
-    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_STA);
-    cmd->result  = 0x0;
-    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_DBGS_CFG);
-    cmd->size    = sizeof(HostCmd_DS_IND_RST) + S_DS_GEN;
-    (void)memcpy(&cmd->params.ind_rst, &ind, sizeof(HostCmd_DS_IND_RST));
-
-    wifi_wait_for_cmdresp(NULL);
     return WM_SUCCESS;
 }
 
