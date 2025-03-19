@@ -10194,7 +10194,7 @@ static void test_wlan_11d_enable(int argc, char **argv)
         dump_wlan_11d_enable_usage();
 }
 
-#if defined(RW610)
+#if defined(RW610) || defined(IW610)
 static void dump_wlan_country_code(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -10237,7 +10237,7 @@ static void dump_wlan_country_code(void)
 
 static void test_wlan_set_country_code(int argc, char **argv)
 {
-#if defined(RW610)
+#if defined(RW610) || defined(IW610)
     int ret;
     char country_code[3] = {0};
 
