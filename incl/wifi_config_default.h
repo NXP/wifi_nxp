@@ -408,12 +408,6 @@
 #endif
 #endif
 
-#if !defined CONFIG_WIFI_RESET
-#if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177) || defined(IW610)
-#define CONFIG_WIFI_RESET 1
-#endif
-#endif
-
 #if !defined CONFIG_WIFI_CHANNEL_LOAD
 #if defined(RW610) || defined(IW610)
 #define CONFIG_WIFI_CHANNEL_LOAD 1
@@ -663,6 +657,21 @@
 #if defined(RW610) || defined(SD8801)
 #undef CONFIG_WIFI_IND_RESET
 #define CONFIG_WIFI_IND_RESET 0
+#endif
+#endif
+
+#if !defined CONFIG_WIFI_RESET
+#if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177) || defined(IW610)
+#define CONFIG_WIFI_RESET 1
+#endif
+#endif
+
+#if CONFIG_WIFI_RESET
+#if defined(SD8978) || defined(SD8987) || defined(SD9177) || defined(IW610)
+#undef CONFIG_WIFI_IND_DNLD
+#define CONFIG_WIFI_IND_DNLD 1
+#undef CONFIG_WIFI_IND_RESET
+#define CONFIG_WIFI_IND_RESET 1
 #endif
 #endif
 

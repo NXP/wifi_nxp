@@ -119,6 +119,7 @@ int retry_attempts;
 wm_wifi_t wm_wifi;
 static bool xfer_pending;
 static bool scan_thread_in_process = false;
+static bool wifi_reset_in_process  = false;
 
 #if CONFIG_HOST_SLEEP
 OSA_SEMAPHORE_HANDLE_DEFINE(wakelock);
@@ -372,6 +373,16 @@ static int wifi_put_mcastf_lock(void)
     }
 
     return WM_SUCCESS;
+}
+
+bool wifi_reset_in_progress(void)
+{
+    return (wifi_reset_in_process == true);
+}
+
+void wifi_reset_set_state(bool enable)
+{
+    wifi_reset_in_process = enable;
 }
 
 #if CONFIG_WIFI_FW_DEBUG
@@ -1086,7 +1097,6 @@ int wifi_wait_for_vdllcmdresp(void *cmd_resp_priv)
 #endif
 
 #if (CONFIG_WIFI_IND_DNLD)
-static int wifi_reinit(uint8_t fw_reload);
 t_u8 wifi_rx_block_cnt;
 t_u8 wifi_tx_block_cnt;
 
@@ -1141,7 +1151,7 @@ void wlan_process_hang(uint8_t fw_reload)
 
     (void)wifi_event_completion(WIFI_EVENT_FW_HANG, WIFI_EVENT_REASON_SUCCESS, NULL);
 
-    ret = wifi_reinit(fw_reload);
+    ret = wifi_reinit(wm_wifi.fw_start_addr, wm_wifi.size, fw_reload);
 
     if (ret != WM_SUCCESS)
     {
@@ -2441,11 +2451,24 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size)
 }
 
 #if (CONFIG_WIFI_IND_DNLD)
-static int wifi_reinit(uint8_t fw_reload)
+int wifi_reinit(const uint8_t *fw_start_addr, const size_t size, uint8_t fw_reload)
 {
     int ret = WM_SUCCESS;
 
-    ret = (int)sd_wifi_reinit(WLAN_TYPE_NORMAL, wm_wifi.fw_start_addr, wm_wifi.size, fw_reload);
+#if (CONFIG_WIFI_IND_DNLD) && (CONFIG_WIFI_IND_RESET)
+    if (wifi_reset_in_progress() == true)
+    {
+        (void)memset(&wm_wifi, 0, sizeof(wm_wifi_t));
+
+        wm_wifi.fw_start_addr = fw_start_addr;
+        wm_wifi.size          = size;
+    }
+    else
+    { /* Do Nothing */
+    }
+#endif
+
+    ret = (int)sd_wifi_reinit(WLAN_TYPE_NORMAL, fw_start_addr, size, fw_reload);
 #if CONFIG_WIFI_IND_RESET
     wifi_ind_reset_stop();
 #endif
@@ -2478,16 +2501,31 @@ static int wifi_reinit(uint8_t fw_reload)
                 ret = -WM_FAIL;
                 break;
         }
+        return ret;
     }
 #ifndef RW610
-    else
+#if (CONFIG_WIFI_IND_RESET)
+    if (wifi_reset_in_progress() == true)
     {
-        ret = (int)sd_wifi_post_init(WLAN_TYPE_NORMAL);
+        ret = wifi_core_init();
         if (ret != WM_SUCCESS)
         {
-            wifi_e("sd_wifi_post_init failed. status code %d", ret);
+            wifi_e("wifi core re-init failed. status code %d", ret);
             return ret;
         }
+
+        if (ret == WM_SUCCESS)
+        {
+            wm_wifi.wifi_init_done = 1;
+        }
+    }
+#endif
+
+    ret = (int)sd_wifi_post_init(WLAN_TYPE_NORMAL);
+    if (ret != WM_SUCCESS)
+    {
+        wifi_e("sd_wifi_post_init failed. status code %d", ret);
+        return ret;
     }
 #endif
 
