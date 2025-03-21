@@ -532,7 +532,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177)
 #define DEFAULT_11N_CAP_MASK_BG \
     (HWSPEC_SHORTGI20_SUPP | HWSPEC_RXSTBC_SUPP | HWSPEC_SHORTGI40_SUPP | HWSPEC_CHANBW40_SUPP | HWSPEC_LDPC_SUPP)
-#elif defined(SD8801) || defined(RW610)
+#elif defined(SD8801) || defined(RW610) || defined(IW610)
 #define DEFAULT_11N_CAP_MASK_BG (HWSPEC_SHORTGI20_SUPP | HWSPEC_RXSTBC_SUPP | HWSPEC_LDPC_SUPP)
 #endif
 /** Default 11n capability mask for 5GHz */
@@ -743,7 +743,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #if defined(SD8987)
 #define FW_CAPINFO_EXT_CMD_TX_DATA          MBIT(29)
 #define IS_FW_SUPPORT_CMD_TX_DATA(_adapter) (_adapter->fw_cap_info & FW_CAPINFO_EXT_CMD_TX_DATA)
-#elif defined(SD9177)
+#elif defined(SD9177) || defined(IW610)
 #define FW_CAPINFO_EXT_CMD_TX_DATA          MBIT(16)
 /** Check if transmit mgmt pkt through command supported by firmware */
 #define IS_FW_SUPPORT_CMD_TX_DATA(_adapter) (_adapter->fw_cap_ext & FW_CAPINFO_EXT_CMD_TX_DATA)
@@ -1746,7 +1746,7 @@ typedef enum _ENH_PS_MODES
 /** Event definition: RXBA_SYNC */
 #define EVENT_RXBA_SYNC 0x00000059
 
-#ifdef SD9177
+#if defined(SD9177) || defined(IW610)
 #define EVENT_IMD3_CAL_START 0x000000A0
 #define EVENT_IMD3_CAL_END   0x000000A1
 #endif
@@ -3471,8 +3471,13 @@ typedef MLAN_PACK_START struct _HostCmd_DS_GET_HW_SPEC
     t_u32 fw_release_number;
     /** hw dev cap */
     t_u32 hw_dev_cap;
-    /** Reserved field */
-    t_u32 reserved_2;
+    /** Board type or Reserved field */
+#if defined(IW610)
+    t_u8 board_type;
+    t_u8 reserved_2[3];
+#else
+     t_u32 reserved_2;
+#endif
     /** Reserved field */
     t_u32 reserved_3;
     /** FW/HW Capability */
@@ -8213,7 +8218,7 @@ typedef MLAN_PACK_START struct _opt_sleep_confirm_buffer
 #define VDLL_IND_TYPE_ERR_SIG 2
 /** notify vdll download error: ID error */
 #define VDLL_IND_TYPE_ERR_ID 3
-#if defined(SD9177)
+#if defined(SD9177) || defined(IW610)
 /** notify vdll download error: Secure error */
 #define VDLL_IND_TYPE_ERR_SECURE 4
 /** notify vdll download vdll complete */

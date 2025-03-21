@@ -28,6 +28,10 @@ zephyr_compile_definitions_ifdef(CONFIG_NXP_88W8801
     SD8801
 )
 
+zephyr_compile_definitions_ifdef(CONFIG_NXP_IW610X
+    IW610
+)
+
 zephyr_compile_definitions_ifdef(CONFIG_NXP_RW610
     RW610
     WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW_rw610.h"
@@ -181,6 +185,20 @@ zephyr_compile_definitions_ifdef(CONFIG_NXP_88W8801_MURATA_2DS_M2
     CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0E
 )
 
+zephyr_compile_definitions_ifdef(CONFIG_NXP_IW610_MURATA_2LL_M2
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_NH.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0A
+    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0A
+    WIFI_BT_USE_M2_INTERFACE
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_NXP_IW610_RD_USD
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_NH.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0A
+    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0A
+    WIFI_BT_USE_USD_INTERFACE
+)
+
 zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_BT_USE_USD_INTERFACE
     WIFI_BT_USE_USD_INTERFACE
 )
@@ -225,6 +243,7 @@ zephyr_include_directories(
     wifi_bt_firmware/IW416
     wifi_bt_firmware/nw61x
     wifi_bt_firmware/8801
+    wifi_bt_firmware/iw610
     cli
     ${MCUX_SDK_DIR}/components/osa/
     ${MCUX_SDK_DIR}/components/lists/

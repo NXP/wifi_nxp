@@ -648,7 +648,7 @@ void wifi_sdio_reg_dbg()
 }
 #endif
 #elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
-    defined(SD9177) || defined(RW610_SERIES)
+    defined(SD9177) || defined(RW610_SERIES) || defined(IW610)
 
 #define DEBUG_HOST_READY     0xCC
 #define DEBUG_FW_DONE        0xFF
@@ -2073,7 +2073,7 @@ static int wifi_core_init(void)
     wm_wifi.wifi_core_init_done = 1;
 
 #if UAP_SUPPORT
-#if defined(SD8801) || defined(RW610)
+#if defined(SD8801) || defined(RW610) || defined(IW610)
     wifi_uap_set_bandwidth(BANDWIDTH_20MHZ);
     wifi_uap_set_beacon_period(UAP_DEFAULT_BEACON_PERIOD);
 #else

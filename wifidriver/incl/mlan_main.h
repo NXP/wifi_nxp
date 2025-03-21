@@ -462,7 +462,7 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 /** Maximum number of CFP codes for A */
 #define MRVDRV_MAX_CFP_CODE_A 5
 
-#ifdef RW610
+#if defined(RW610) || defined(IW610)
 /** Default region code */
 #define MRVDRV_DEFAULT_REGION_CODE 0x10
 #else
@@ -470,7 +470,7 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 #define MRVDRV_DEFAULT_REGION_CODE 0x00
 #endif
 
-#ifdef RW610
+#if defined(RW610) || defined(IW610)
 /** Default country code */
 #define MRVDRV_DEFAULT_COUNTRY_CODE "US"
 #else
@@ -515,7 +515,7 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 /** Default buffer space for beacons retrieved from scan responses */
 #define DEFAULT_SCAN_BEACON_BUFFER 4096
 
-#ifdef RW610
+#if defined(RW610) || defined(IW610)
 #define DEFAULT_11N_TX_BF_CAP 0x19870408
 #endif
 
@@ -2493,6 +2493,10 @@ struct _mlan_adapter
     t_s16 noise;
     /** rx quality info */
     t_u16 rx_quality;
+#endif
+#if defined(IW610)
+    /* board type info from FW */
+    t_u8 board_type;
 #endif
 };
 

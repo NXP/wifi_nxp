@@ -1093,7 +1093,7 @@ typedef PACK_START struct
     /** Number of Channels */
     t_u8 num_chans;
     /** TRPC config */
-#if defined(SD9177)
+#if defined(SD9177) || defined(IW610)
     wifi_txpwrlimit_config_t txpwrlimit_config[43];
 #else
     wifi_txpwrlimit_config_t txpwrlimit_config[40];

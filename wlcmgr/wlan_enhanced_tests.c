@@ -593,7 +593,7 @@ static void dump_wlan_set_txratecfg_usage(void)
     (void)PRINTF("\t        7       18 Mbps\r\n");
     (void)PRINTF("\t        8       24 Mbps\r\n");
     (void)PRINTF("\t        9       36 Mbps\r\n");
-#ifndef RW610
+#if !defined(RW610) && !defined(IW610)
     (void)PRINTF("\t        10      48 Mbps\r\n");
     (void)PRINTF("\t        11      54 Mbps\r\n");
 #endif
@@ -617,7 +617,7 @@ static void dump_wlan_set_txratecfg_usage(void)
     (void)PRINTF("\t        6       MCS6\r\n");
     (void)PRINTF("\t        7       MCS7\r\n");
     (void)PRINTF("\t        8       MCS8\r\n");
-#ifndef RW610
+#if !defined(RW610) && !defined(IW610)
     (void)PRINTF("\t        9       MCS9\r\n");
 #endif
 #endif
@@ -633,7 +633,7 @@ static void dump_wlan_set_txratecfg_usage(void)
     (void)PRINTF("\t        7       MCS7\r\n");
     (void)PRINTF("\t        8       MCS8\r\n");
     (void)PRINTF("\t        9       MCS9\r\n");
-#ifndef RW610
+#if !defined(RW610) && !defined(IW610)
     (void)PRINTF("\t        10      MCS10\r\n");
     (void)PRINTF("\t        11      MCS11\r\n");
 #endif
@@ -642,7 +642,7 @@ static void dump_wlan_set_txratecfg_usage(void)
     (void)PRINTF("\t<nss> - This parameter specifies the NSS. It is valid only for VHT and HE\r\n");
     (void)PRINTF("\tIf <format> is 2 (VHT) or 3 (HE),\r\n");
     (void)PRINTF("\t        1       NSS1\r\n");
-#ifndef RW610
+#if !defined(RW610) && !defined(IW610)
     (void)PRINTF("\t        2       NSS2\r\n");
 #endif
 #endif
@@ -802,7 +802,7 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
 #endif /* CONFIG_11N */
 #if CONFIG_11AC
             || ((ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_VHT) &&
-#ifndef RW610
+#if !defined(RW610) && !defined(IW610)
                 (ds_rate.param.rate_cfg.rate_index > MLAN_RATE_INDEX_MCS9))
 #else
                 (ds_rate.param.rate_cfg.rate_index > MLAN_RATE_INDEX_MCS8))
@@ -810,7 +810,7 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
 #endif
 #if CONFIG_11AX
             || ((ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_HE) &&
-#ifndef RW610
+#if !defined(RW610) && !defined(IW610)
                 (ds_rate.param.rate_cfg.rate_index > MLAN_RATE_INDEX_MCS11))
 #else
                 (ds_rate.param.rate_cfg.rate_index > MLAN_RATE_INDEX_MCS9))
@@ -822,7 +822,7 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
             goto done;
         }
 #if (CONFIG_11AC) || (CONFIG_11AX)
-#ifndef RW610
+#if !defined(RW610) && !defined(IW610)
         /* NSS is supported up to 2 */
         if ((ds_rate.param.rate_cfg.nss <= 0) || (ds_rate.param.rate_cfg.nss >= 3))
 #else
@@ -848,7 +848,7 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
 
             rate_setting = (wlan_txrate_setting *)&ds_rate.param.rate_cfg.rate_setting;
 
-#ifdef RW610
+#if defined(RW610) || defined(IW610)
             if(ds_rate.param.rate_cfg.rate_setting != 0xffff)
             {
                 if(rate_setting->stbc != 0)
@@ -1293,9 +1293,11 @@ static void test_wlan_set_chanlist(int argc, char **argv)
 {
     wlan_chanlist_t chanlist;
 
-#if (CONFIG_COMPRESS_TX_PWTBL) && !defined(RW610)
+#if (CONFIG_COMPRESS_TX_PWTBL)
+#if !defined(RW610) && !defined(IW610)
     ARG_UNUSED(rg_table_fc);
     ARG_UNUSED(rg_table_fc_len);
+#endif
 #endif
 
 #if (CONFIG_COMPRESS_TX_PWTBL) && defined(RW610)
@@ -1376,30 +1378,16 @@ static void test_wlan_set_rutxpwrlimit(int argc, char **argv)
     int rv;
 
 #if CONFIG_COMPRESS_RU_TX_PWTBL
-#ifdef RW610
-    uint32_t region_code = (t_u16)strtol(argv[1], NULL, 0);
-    switch (region_code)
+#if defined(RW610) || defined(IW610)
+    if (argc != 2)
     {
-        case RW610_PACKAGE_TYPE_WW:
-            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set_WW, sizeof(rutxpowerlimit_cfg_set_WW));
-            break;
-        case RW610_PACKAGE_TYPE_FCC:
-            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set_FCC, sizeof(rutxpowerlimit_cfg_set_FCC));
-            break;
-        case RW610_PACKAGE_TYPE_EU:
-            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set_EU, sizeof(rutxpowerlimit_cfg_set_EU));
-            break;
-        case RW610_PACKAGE_TYPE_CN:
-            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set_CN, sizeof(rutxpowerlimit_cfg_set_CN));
-            break;
-        case RW610_PACKAGE_TYPE_JP:
-            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set_JP, sizeof(rutxpowerlimit_cfg_set_JP));
-            break;
-        default:
-            PRINTF("Unknown region code, use WW rutx power limit cfg \r\n");
-            rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set_WW, sizeof(rutxpowerlimit_cfg_set_WW));
-            break;
+        (void)PRINTF("Usage:\r\n");
+        (void)PRINTF("wlan-set-rutxpwrlimit <region-code>\r\n");
+        return;
     }
+
+    t_u16 region_code = (t_u16)strtol(argv[1], NULL, 0);
+    rv = wlan_set_ru_power_cfg(region_code);
 #else
     rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set, sizeof(rutxpowerlimit_cfg_set));
 #endif

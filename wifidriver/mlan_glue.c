@@ -3189,7 +3189,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 
                         memset(&acs_params, 0, sizeof(nxp_wifi_acs_params));
 
-#if defined(SD8801) || defined(RW610)
+#if defined(SD8801) || defined(RW610) || defined(IW610)
 #ifdef SD8801
                         acs_params.pri_freq = channel_to_frequency(acs_scan->chan, 0);
                         acs_params.hw_mode  = 1;
@@ -5992,7 +5992,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
         }
         break;
 #endif
-#ifdef SD9177
+#if defined(SD9177) || defined(IW610)
         case EVENT_IMD3_CAL_START:
             wifi_d("got event: IMD3 cal started");
             break;
@@ -9054,6 +9054,11 @@ uint32_t wifi_get_board_type()
     }
 
     return wifi_rw610_package_type;
+}
+#elif defined(IW610)
+uint32_t wifi_get_board_type()
+{
+    return mlan_adap->board_type;
 }
 #endif
 

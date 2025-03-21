@@ -192,6 +192,9 @@ typedef enum
 #elif defined(WIFI_88W8987_BOARD_MURATA_1ZM_M2) || defined(WIFI_IW416_BOARD_MURATA_1XK_M2)
 #define HOST_WAKEUP_GPIO_PIN 2
 #define CARD_WAKEUP_GPIO_PIN 16
+#elif defined(WIFI_IW610_BOARD_MURATA_2LL_M2)
+#define HOST_WAKEUP_GPIO_PIN 4
+#define CARD_WAKEUP_GPIO_PIN 16
 #else
 #define HOST_WAKEUP_GPIO_PIN 1
 #define CARD_WAKEUP_GPIO_PIN 16
@@ -4131,6 +4134,11 @@ int wlan_send_host_sleep(uint32_t wakeup_condition);
  * \return -WM_FAIL if command fails.
  */
 int wlan_get_wakeup_reason(uint16_t *hs_wakeup_reason);
+
+#ifdef IW610
+/** Use this API to register call back for host sleep confirm done*/
+void wlan_register_hs_callback(void (*hs_notify_cb)(void));
+#endif
 #endif
 
 /**
@@ -4567,8 +4575,8 @@ int wlan_set_sta_tx_power(t_u32 power_level);
 /**
  * Set worldwide safe mode TX power limits.
  * Set TX power limit and ru TX power limit according to the region code.
- * TX power limit: \ref rg_power_cfg_rw610
- * ru TX power limit: \ref ru_power_cfg_rw610
+ * TX power limit: \ref rg_power_cfg_info
+ * ru TX power limit: \ref ru_power_cfg_info
  *
  * \return WM_SUCCESS if successful.
  * \return -WM_FAIL if unsuccessful.
@@ -7044,7 +7052,7 @@ int wlan_get_bandcfg(wlan_bandcfg_t *bandcfg);
 int wlan_set_rg_power_cfg(t_u16 region_code);
 #endif
 
-#if defined(RW610) && ((CONFIG_COMPRESS_RU_TX_PWTBL) && (CONFIG_11AX))
+#if ((CONFIG_COMPRESS_RU_TX_PWTBL) && (CONFIG_11AX))
 /**
  * set ru tx power table
  * \param[in] region_code: region code

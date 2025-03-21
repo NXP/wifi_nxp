@@ -435,7 +435,7 @@ static void dump_wlan_set_tx_cont_mode_usage(void)
     (void)PRINTF("Tx Data Rate          (Rate Index corresponding to legacy/HT/VHT rates)\r\n");
     (void)PRINTF("\r\n");
     (void)PRINTF("To Disable:\r\n");
-#ifdef SD9177
+#if defined(SD9177) || defined(IW610)
     (void)PRINTF("Set all parameters with expected values\r\n");
 #else
     (void)PRINTF("  In Continuous Wave Mode:\r\n");
@@ -684,7 +684,7 @@ static void dump_wlan_set_tx_power_usage(void)
     (void)PRINTF("\r\n");
 }
 
-#if !defined(SD8978) && !defined(SD8987) && !defined(SD9177) && !defined(SD8801)
+#if !defined(SD8978) && !defined(SD8987) && !defined(SD9177) && !defined(SD8801) && !defined(IW610)
 /*
  *  @brief PowerLevelToDUT11Bits
  *
@@ -716,7 +716,7 @@ static void wlan_rf_tx_power_set(int argc, char *argv[])
     uint32_t power;
     uint8_t mod;
     uint8_t path_id;
-#if !defined(SD8978) && !defined(SD8987) && !defined(SD9177) && !defined(SD8801)
+#if !defined(SD8978) && !defined(SD8987) && !defined(SD9177) && !defined(SD8801) && !defined(IW610)
     uint32_t power_converted = 0xffffffff;
 #endif
 
@@ -758,7 +758,7 @@ static void wlan_rf_tx_power_set(int argc, char *argv[])
         return;
     }
 
-#if !defined(SD8978) && !defined(SD8987) && !defined(SD9177) && !defined(SD8801)
+#if !defined(SD8978) && !defined(SD8987) && !defined(SD9177) && !defined(SD8801) && !defined(IW610)
     /* We need to convert user power vals including -ve vals as per labtool */
     PowerLevelToDUT11Bits((int)power, &power_converted);
     ret = wlan_set_rf_tx_power(power_converted, mod, path_id);

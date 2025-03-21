@@ -131,7 +131,7 @@ static int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action, t_u8 band
         }
 
         vht_cfg.vht_cap_info &= ~DEFALUT_11AC_CAP_BEAMFORMING_RESET_MASK;
-#ifdef RW610
+#if defined(RW610) || defined(IW610)
         vht_cfg.vht_cap_info &= ~DEFALUT_11AC_CAP_SHORTGI_80MHZ_RESET_MASK;
 #endif
         vht_cfg.vht_tx_mcs            = pmadapter->usr_dot_11ac_mcs_support >> 16;
@@ -237,7 +237,7 @@ int wifi_uap_set_11ax_status(mlan_private *pmpriv, t_u8 action, t_u8 band, t_u8 
         goto done;
     }
 
-#ifdef RW610
+#if defined(RW610) || defined(IW610)
     he_cfg.he_cap.he_phy_cap[0] &= ~DEFAULT_11AX_CAP_40MHZIH2_4GHZBAND_RESET_MASK;
 #endif
 
@@ -752,7 +752,7 @@ static int wifi_cmd_uap_config(char *ssid,
     if (!ISSUPP_CHANWIDTH40(mlan_adap->hw_dot_11n_dev_cap))
         bss.param.bss_config.ht_cap_info &= (~MBIT(12));
 
-#ifdef RW610
+#if defined(RW610) || defined(IW610)
     /* Set Tx Beam Forming Cap */
     bss.param.bss_config.tx_bf_cap = mlan_adap->priv[1]->tx_bf_cap;
 #endif
@@ -3333,7 +3333,7 @@ int wifi_uap_set_11ax_status2(mlan_private *pmpriv, t_u8 action, t_u8 band, IEEE
         ret = -WM_E_INVAL;
         goto done;
     }
-#ifdef RW610
+#if defined(RW610) || defined(IW610)
     he_cfg.he_cap.he_phy_cap[0] &= ~DEFAULT_11AX_CAP_40MHZIH2_4GHZBAND_RESET_MASK;
 #endif
 #if CONFIG_11AX_TWT

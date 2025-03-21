@@ -40,7 +40,7 @@ Change Log:
 #define WLAN_TX_PWR_200MW 23
 /** 2000mW */
 #define WLAN_TX_PWR_CN_2000MW 33
-#if defined(RW610)
+#if defined(RW610) || defined(IW610)
 /** 22dBm */
 #define WLAN_TX_PWR_WW_DEFAULT 22
 #else

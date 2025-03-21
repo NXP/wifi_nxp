@@ -1920,12 +1920,14 @@ int wifi_nxp_wpa_supp_set_country(void *if_priv, const char *alpha2)
     }
 #endif
 
-#if defined(RW610) && ((CONFIG_COMPRESS_RU_TX_PWTBL) && (CONFIG_11AX))
+#if ((CONFIG_COMPRESS_RU_TX_PWTBL) && (CONFIG_11AX))
+#if defined(RW610) || defined(IW610)
     ret = wlan_set_ru_power_cfg(region_code);
     if (ret != WM_SUCCESS)
     {
         return -WM_FAIL;
     }
+#endif
 #endif
 
     return ret;

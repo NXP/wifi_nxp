@@ -2441,7 +2441,7 @@ static void test_wlan_send_hostcmd(int argc, char **argv)
     }
 }
 
-#if defined(RW610) || defined(SD9177)
+#if defined(RW610) || defined(SD9177) || defined(IW610)
 static void test_wlan_ext_coex_uwb_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -9072,7 +9072,7 @@ static struct cli_command tests[] = {
 #endif /*RW610*/
 #endif /*CONFIG_HOST_SLEEP*/
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},
-#if defined(RW610) || defined(SD9177)
+#if defined(RW610) || defined(SD9177) || defined(IW610)
     {"wlan-ext-coex-uwb", NULL, test_wlan_ext_coex_uwb},
 #endif
 #ifdef SD8801

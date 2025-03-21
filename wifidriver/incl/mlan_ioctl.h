@@ -289,7 +289,7 @@ typedef enum _mlan_scan_type
     MLAN_SCAN_TYPE_UNCHANGED = 0,
     MLAN_SCAN_TYPE_ACTIVE,
     MLAN_SCAN_TYPE_PASSIVE,
-#if defined(RW610) || defined(SD9177) || defined(SD8978)
+#if defined(RW610) || defined(SD9177) || defined(SD8978) || defined(IW610)
     MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE,
 #endif
 } mlan_scan_type;
@@ -2418,7 +2418,11 @@ typedef struct _mlan_ds_hs_cfg
 #define DEEP_SLEEP_OFF 0
 
 /** Default idle time in milliseconds for auto deep sleep */
+#if defined(IW610)
+#define DEEP_SLEEP_IDLE_TIME 300
+#else
 #define DEEP_SLEEP_IDLE_TIME 100
+#endif
 
 typedef struct _mlan_ds_auto_ds
 {

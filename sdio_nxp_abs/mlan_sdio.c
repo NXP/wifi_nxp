@@ -127,7 +127,11 @@ static int sdio_card_init(void)
     /* Enable IO in card */
     (void)sdio_drv_creg_write(0x2, 0, 0x2, &resp);
 
+#if defined(IW610)
+    (void)sdio_set_block_size(&g_sdio_funcs[0], 1);
+#else
     (void)sdio_set_block_size(&g_sdio_funcs[0], 256);
+#endif
     (void)sdio_set_block_size(&g_sdio_funcs[1], 256);
     (void)sdio_set_block_size(&g_sdio_funcs[2], 256);
 

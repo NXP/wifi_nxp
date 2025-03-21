@@ -93,7 +93,7 @@
 #define IR_OUTBAND_TRIGGER_GPIO_PIN		(23U)
 #define IR_OUTBAND_TRIGGER_GPIO_NAME   "GPIO1"
 //#define IOMUXC_GPIO_IR_OUTBAND_TRIGGER IOMUXC_GPIO_AD_B1_07_GPIO1_IO23
-#elif defined(SD9177)
+#elif defined(SD9177) || defined(IW610)
 /* IR-OOB TRIGGER for 2EL-M2, Internal Routing to M2 Slot*/
 #define IR_OUTBAND_TRIGGER_GPIO			GPIO1
 #define IR_OUTBAND_TRIGGER_GPIO_PIN		(24U)
@@ -281,6 +281,10 @@ extern OSA_SEMAPHORE_HANDLE_DEFINE(wakelock);
 extern int wakeup_by;
 
 bool wlan_is_manual = false;
+
+#ifdef IW610
+void (*wlan_hs_notify_cb)(void) = NULL;
+#endif
 #endif
 
 #if CONFIG_SCAN_CHANNEL_GAP
@@ -718,6 +722,22 @@ static void dbg_lock_info(void)
 /*
  * Utility Functions
  */
+#if CONFIG_HOST_SLEEP
+#ifdef IW610
+void wlan_register_hs_callback(void (*hs_notify_cb)(void))
+{
+	wlan_hs_notify_cb = hs_notify_cb;
+}
+
+static void wlan_notify_hs_status()
+{
+    if (wlan_hs_notify_cb != NULL)
+    {
+        wlan_hs_notify_cb();
+    }
+}
+#endif
+#endif
 
 int verify_scan_duration_value(int scan_duration)
 {
@@ -1024,7 +1044,11 @@ static int wlan_send_host_sleep_int(uint32_t wake_up_conds, bool is_config)
         ipv4_addr = 0;
     }
 
-    if (wlan.hs_dummy_send == MFALSE || is_config == MFALSE)
+    if (
+#ifndef IW610
+    wlan.hs_dummy_send == MFALSE ||
+#endif
+    is_config == MFALSE)
     {
         ret = wifi_send_hs_cfg_cmd((mlan_bss_type)type, ipv4_addr, HS_CONFIGURE, wlan.hs_wakeup_condition);
         if (ret == WM_SUCCESS)
@@ -1044,8 +1068,10 @@ void wlan_hs_pre_cfg(void)
     if (wlan.hs_enabled == MTRUE)
     {
         (void)wlan_send_host_sleep_int(wlan.hs_wakeup_condition, MFALSE);
+#ifndef IW610
         /** Wait for HS Activate to complete */
         OSA_TimeDelay(1000);
+#endif
     }
 }
 
@@ -2204,7 +2230,7 @@ static int do_start(struct wlan_network *network)
 
         t_u8 bandwidth = wifi_uap_get_bandwidth();
 
-#if defined(SD8801) || defined(RW610)
+#if defined(SD8801) || defined(RW610) || defined(IW610)
         wpa_supp_set_ap_bw(netif, 1);
 #else
         wpa_supp_set_ap_bw(netif, bandwidth);
@@ -5800,7 +5826,7 @@ static void wlcm_process_init(enum cm_sta_state *next)
 
     wifi_set_packet_retry_count(MAX_RETRY_TICKS);
 
-#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177)
+#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || defined(IW610)
 
     wifi_set_txbfcap(0x19e74608);
 
@@ -7119,6 +7145,9 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
                     (void)OSA_TimerDeactivate((osa_timer_handle_t)temperature_mon_timer);
 #endif
                 }
+#endif
+#ifdef IW610
+                wlan_notify_hs_status();
 #endif
             }
             break;
@@ -12839,7 +12868,7 @@ void wlan_uap_set_beacon_period(const uint16_t beacon_period)
 int wlan_uap_set_bandwidth(const uint8_t bandwidth)
 {
 #if UAP_SUPPORT
-#if defined(RW610) || defined(SD8801)
+#if defined(RW610) || defined(SD8801) || defined(IW610)
     if (bandwidth > BANDWIDTH_20MHZ)
     {
         return -WM_FAIL;
@@ -15723,10 +15752,10 @@ int wlan_set_ips(int option)
 int wlan_set_country_code(const char *alpha2)
 {
     int ret;
-    t_u8 region_code_rw610;
+    t_u8 rg_code_cfg;
     unsigned char country3 = 0x20;
     char country_code[COUNTRY_CODE_LEN] = {0};
-#ifndef RW610
+#if !defined RW610 && !defined IW610
     char region_code[COUNTRY_CODE_LEN] = {0};
     const char *wlan_region_code       = NULL;
 
@@ -15751,7 +15780,7 @@ int wlan_set_country_code(const char *alpha2)
     country_code[1] = alpha2[1];
     country_code[2] = country3;
 
-    ret = wlan_11d_region_2_code(mlan_adap, (t_u8 *)country_code, &region_code_rw610);
+    ret = wlan_11d_region_2_code(mlan_adap, (t_u8 *)country_code, &rg_code_cfg);
     if(ret != WM_SUCCESS)
     {
         wlcm_e("%s: Invalid country code.",country_code);
@@ -15762,20 +15791,24 @@ int wlan_set_country_code(const char *alpha2)
     if (ret != WM_SUCCESS)
         return ret;
 
-#if defined(RW610) && (CONFIG_COMPRESS_TX_PWTBL)
-    ret = wlan_set_rg_power_cfg(region_code_rw610);
+#if (CONFIG_COMPRESS_TX_PWTBL)
+#if defined(RW610) || defined(IW610)
+    ret = wlan_set_rg_power_cfg(rg_code_cfg);
     if (ret != WM_SUCCESS)
     {
         return -WM_FAIL;
     }
 #endif
+#endif
 
-#if defined(RW610) && ((CONFIG_COMPRESS_RU_TX_PWTBL) && (CONFIG_11AX))
-    ret = wlan_set_ru_power_cfg(region_code_rw610);
+#if (CONFIG_COMPRESS_RU_TX_PWTBL) && (CONFIG_11AX)
+#if defined(RW610) || defined(IW610)
+    ret = wlan_set_ru_power_cfg(rg_code_cfg);
     if (ret != WM_SUCCESS)
     {
         return -WM_FAIL;
     }
+#endif
 #endif
 
     return ret;
@@ -16167,7 +16200,7 @@ uint32_t wlan_get_board_type()
 {
     uint32_t board_type = 0xff;
 
-#ifdef RW610
+#if defined(RW610) || defined(IW610)
     board_type = wifi_get_board_type();
 #endif
 

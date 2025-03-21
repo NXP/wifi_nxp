@@ -221,13 +221,13 @@ int wlan_cmd_append_11ax_tlv(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc, t
  */
 void wlan_update_11ax_cap(mlan_adapter *pmadapter,
                           MrvlIEtypes_Extension_t *hw_he_cap
-#ifdef RW610
+#if defined(RW610) || defined(IW610)
                           ,
                           int tlv_idx
 #endif
 )
 {
-#ifndef RW610
+#if !defined(RW610) && !defined(IW610)
     MrvlIEtypes_He_cap_t *phe_cap = MNULL;
 #endif
     t_u8 i         = 0;
@@ -243,7 +243,7 @@ void wlan_update_11ax_cap(mlan_adapter *pmadapter,
         LEAVE();
         return;
     }
-#ifndef RW610
+#if !defined(RW610) && !defined(IW610)
     phe_cap = (MrvlIEtypes_He_cap_t *)hw_he_cap;
     if (phe_cap->he_phy_cap[0] & (AX_2G_20MHZ_SUPPORT | AX_2G_40MHZ_SUPPORT))
 #else
