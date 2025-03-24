@@ -1320,6 +1320,32 @@ typedef PACK_START struct
     uint16_t qos_ctrl;
 } PACK_END wifi_data_info_t;
 #endif
+
+#if HOST_TXRX_MGMT_FRAME
+/** host tx frame params structure */
+typedef PACK_START struct
+{
+    /** Packet Length */
+    t_u16 frm_len;
+    /** Frame Control */
+    t_u16 frm_ctl;
+    /** Duration ID */
+    t_u16 duration_id;
+    /** Address1 */
+    t_u8 addr1[MLAN_MAC_ADDR_LENGTH];
+    /** Address2 */
+    t_u8 addr2[MLAN_MAC_ADDR_LENGTH];
+    /** Address3 */
+    t_u8 addr3[MLAN_MAC_ADDR_LENGTH];
+    /** Sequence Control */
+    t_u16 seq_ctl;
+    /** Address4 */
+    t_u8 addr4[MLAN_MAC_ADDR_LENGTH];
+    /** Frame payload */
+    t_u8 payload[];
+} PACK_END wifi_host_tx_frame_params_t;
+#endif
+
 /** Wifi frame types */
 typedef enum
 {

@@ -417,15 +417,23 @@
 #endif
 
 #if !defined CONFIG_NET_MONITOR
-#if defined(RW610)
+#if defined(RW610) || defined(IW610)
 #define CONFIG_NET_MONITOR 1
-#elif defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177) || defined(IW610)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
 #define CONFIG_NET_MONITOR 0
 #endif
 #endif
 
+#if !defined HOST_TXRX_MGMT_FRAME
+#if defined(RW610) || defined(IW610)
+#define HOST_TXRX_MGMT_FRAME 1
+#elif defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
+#define HOST_TXRX_MGMT_FRAME 0
+#endif
+#endif
+
 #if CONFIG_NET_MONITOR
-#if defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177) || defined(IW610)
+#if defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
 #undef CONFIG_NET_MONITOR
 #define CONFIG_NET_MONITOR 0
 #endif

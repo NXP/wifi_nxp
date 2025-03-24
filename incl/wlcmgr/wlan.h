@@ -1544,6 +1544,17 @@ typedef wifi_csi_config_params_t wlan_csi_config_params_t;
 typedef wifi_net_monitor_t wlan_net_monitor_t;
 #endif
 
+#if HOST_TXRX_MGMT_FRAME
+#define TXRX_MGMT_FRAME_HEADER_SIZE 8
+// frmctl + durationid + addr1 + addr2 + addr3 + seqctl + addr4
+#define TXRX_MGMT_FRAME_HEADER_LEN (2 + 2 + 6 + 6 + 6 + 2 + 6)
+
+/** Configuration for host tx frame from
+ * \ref wifi_host_tx_frame_params_t
+ */
+typedef wifi_host_tx_frame_params_t wlan_host_tx_frame_params_t;
+#endif
+
 #if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
 /** Configuration for GPIO independent reset
  * \ref wifi_indrst_cfg_t
@@ -6822,6 +6833,16 @@ void wlan_register_monitor_user_callback(int (*monitor_data_recv_callback)(void 
  *
  */
 void wlan_deregister_net_monitor_user_callback(void);
+#endif
+
+#if HOST_TXRX_MGMT_FRAME
+/**
+ * Send the mgmt/data frame config parameter and payload to FW.
+ *
+ *\param[in] mgmtframe: Frame header and payload
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_mgmtframe_tx_cfg(wlan_host_tx_frame_params_t *mgmtframe);
 #endif
 
 #if CONFIG_WIFI_CAPA

@@ -1752,6 +1752,15 @@ bool get_monitor_flag();
 
 #endif
 
+#if HOST_TXRX_MGMT_FRAME
+/**
+ * Send the frame header parameter and payload to FW.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_mgmtframe_tx_cfg(wifi_host_tx_frame_params_t *mgmtframe);
+#endif
+
 int wifi_send_mgmt_auth_request(const t_u8 channel,
                                 const t_u8 auth_alg,
                                 const t_u8 *auth_seq_num,
