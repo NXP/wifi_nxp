@@ -1137,10 +1137,12 @@ void wlan_process_hang(uint8_t fw_reload)
             if (mlan_adap->priv[i]->bss_type == MLAN_BSS_TYPE_STA)
             {
             }
+#if UAP_SUPPORT
             else if (mlan_adap->priv[i]->bss_type == MLAN_BSS_TYPE_UAP)
             {
                 mlan_adap->priv[i]->uap_bss_started = MFALSE;
             }
+#endif
         }
 
         if (mlan_adap->priv[i])

@@ -7582,11 +7582,14 @@ int wifi_set_clocksync_cfg(const wifi_clock_sync_gpio_tsf_t *tsf_latch, mlan_bss
 
     wm_wifi.cmd_resp_ioctl = NULL;
 
+    if(misc != NULL)
+    {
 #if !CONFIG_MEM_POOLS
-    OSA_MemoryFree(misc);
+        OSA_MemoryFree(misc);
 #else
-    OSA_MemoryPoolFree(buf_3072_MemoryPool, misc);
+        OSA_MemoryPoolFree(buf_3072_MemoryPool, misc);
 #endif
+    }
 
     return ret;
 }
@@ -7626,11 +7629,14 @@ int wifi_get_tsf_info(wifi_tsf_info_t *tsf_info)
         (void)memcpy((void *)tsf_info, (void *)&misc->param.tsf_info, sizeof(mlan_ds_tsf_info));
     }
 
+    if(misc != NULL)
+    {
 #if !CONFIG_MEM_POOLS
-    OSA_MemoryFree(misc);
+        OSA_MemoryFree(misc);
 #else
-    OSA_MemoryPoolFree(buf_3072_MemoryPool, misc);
+        OSA_MemoryPoolFree(buf_3072_MemoryPool, misc);
 #endif
+    }
 
     return ret;
 }
@@ -7739,6 +7745,7 @@ int wifi_get_mc_cfg(uint32_t *channel_time)
 #endif
     if (ioctl_cfg == NULL)
     {
+        wifi_put_command_lock();
         return -WM_FAIL;
     }
 
@@ -7755,11 +7762,14 @@ int wifi_get_mc_cfg(uint32_t *channel_time)
     wm_wifi.cmd_resp_ioctl = NULL;
     (*channel_time)        = ioctl_cfg->param.multi_chan_cfg.channel_time;
 
+    if (ioctl_cfg != NULL)
+    {
 #if !CONFIG_MEM_POOLS
-    OSA_MemoryFree(ioctl_cfg);
+        OSA_MemoryFree(ioctl_cfg);
 #else
-    OSA_MemoryPoolFree(buf_3072_MemoryPool, ioctl_cfg);
+        OSA_MemoryPoolFree(buf_3072_MemoryPool, ioctl_cfg);
 #endif
+    }
 
     return wm_wifi.cmd_resp_status;
 }
@@ -7780,6 +7790,7 @@ int wifi_set_mc_policy(const int status)
 #endif
     if (ioctl_cfg == NULL)
     {
+        wifi_put_command_lock();
         return -WM_FAIL;
     }
 
@@ -7796,11 +7807,14 @@ int wifi_set_mc_policy(const int status)
     (void)wifi_wait_for_cmdresp(NULL);
     wm_wifi.cmd_resp_ioctl = NULL;
 
+    if (ioctl_cfg != NULL)
+    {
 #if !CONFIG_MEM_POOLS
-    OSA_MemoryFree(ioctl_cfg);
+        OSA_MemoryFree(ioctl_cfg);
 #else
-    OSA_MemoryPoolFree(buf_3072_MemoryPool, ioctl_cfg);
+        OSA_MemoryPoolFree(buf_3072_MemoryPool, ioctl_cfg);
 #endif
+    }
 
     return wm_wifi.cmd_resp_status;
 }
@@ -7855,6 +7869,7 @@ int wifi_get_mc_cfg_ext(wifi_drcs_cfg_t *drcs, int num)
 #endif
     if (ioctl_cfg == NULL)
     {
+        wifi_put_command_lock();
         return -WM_FAIL;
     }
 
@@ -7874,11 +7889,14 @@ int wifi_get_mc_cfg_ext(wifi_drcs_cfg_t *drcs, int num)
     (void)memcpy(drcs, &ioctl_cfg->param.drcs_cfg[0], sizeof(mlan_ds_drcs_cfg));
     (void)memcpy(drcs + 1, &ioctl_cfg->param.drcs_cfg[1], sizeof(mlan_ds_drcs_cfg));
 
+    if (ioctl_cfg != NULL)
+    {
 #if !CONFIG_MEM_POOLS
-    OSA_MemoryFree(ioctl_cfg);
+        OSA_MemoryFree(ioctl_cfg);
 #else
-    OSA_MemoryPoolFree(buf_3072_MemoryPool, ioctl_cfg);
+        OSA_MemoryPoolFree(buf_3072_MemoryPool, ioctl_cfg);
 #endif
+    }
 
     return wm_wifi.cmd_resp_status;
 }
@@ -8471,11 +8489,14 @@ int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_t
 
     wm_wifi.cmd_resp_ioctl = NULL;
 
+    if (misc != NULL)
+    {
 #if !CONFIG_MEM_POOLS
-    OSA_MemoryFree(misc);
+        OSA_MemoryFree(misc);
 #else
-    OSA_MemoryPoolFree(buf_3072_MemoryPool, misc);
+        OSA_MemoryPoolFree(buf_3072_MemoryPool, misc);
 #endif
+    }
 
     return ret;
 }
@@ -8514,11 +8535,14 @@ int wifi_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type)
         indrst_cfg->gpio_pin = misc->param.ind_rst_cfg.gpio_pin;
     }
 
+    if (misc != NULL)
+    {
 #if !CONFIG_MEM_POOLS
-    OSA_MemoryFree(misc);
+        OSA_MemoryFree(misc);
 #else
-    OSA_MemoryPoolFree(buf_3072_MemoryPool, misc);
+        OSA_MemoryPoolFree(buf_3072_MemoryPool, misc);
 #endif
+    }
 
     return ret;
 }
