@@ -4075,8 +4075,10 @@ typedef MLAN_PACK_START struct _MrvlRateScope_t
     t_u16 ofdm_rate_bitmap;
     /** Bitmap of HT-MCSs allowed for initial rate */
     t_u16 ht_mcs_rate_bitmap[8];
+#if CONFIG_11AC
     /** VHT MCS rate bitmap */
     t_u16 vht_mcs_rate_bitmap[8];
+#endif
 #if CONFIG_11AX
     /** HE MCS rate bitmap */
     t_u16 he_mcs_rate_bitmap[8];
