@@ -3307,6 +3307,8 @@ static int wlan_get_privs_by_two_cond(mlan_adapter *pmadapter,
 t_u8 wifi_check_no_packet_indication(mlan_private *priv);
 /** Check if this is the last packet */
 t_u8 wifi_check_last_packet_indication(mlan_private *priv);
+/** Exit the UAPSD mode */
+void wifi_exit_uapsd_mode(mlan_private *priv);
 #endif
 
 mlan_status wlan_cmd_hs_wakeup_reason(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_void *pdata_buf);
