@@ -827,7 +827,7 @@ static void wlan_rf_tx_frame_set(int argc, char *argv[])
     if (argc == 2 && strtol(argv[1], NULL, 10) == 0)
     {
         enable            = 0;
-        data_rate         = 0;
+        data_rate         = 0xFFFFFFFF;
         frame_pattern     = 0;
         frame_length      = 1;
         adjust_burst_sifs = 0;
