@@ -7596,6 +7596,16 @@ t_u8 wifi_check_last_packet_indication(mlan_private *priv)
         return false;
 }
 
+void wifi_exit_uapsd_mode(mlan_private *priv)
+{
+    if (priv->adapter->pps_uapsd_mode)
+    {
+        OSA_SemaphorePost((osa_semaphore_handle_t)uapsd_sem);
+    }
+    priv->adapter->tx_lock_flag   = MFALSE;
+    priv->adapter->pps_uapsd_mode = MFALSE;
+}
+
 int wifi_wmm_qos_cfg(t_u8 *qos_cfg, t_u8 action)
 {
     mlan_status ret = MLAN_STATUS_SUCCESS;

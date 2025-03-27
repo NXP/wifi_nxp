@@ -3211,6 +3211,9 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
 
             wlan_abort_split_scan();
             wifi_user_scan_config_cleanup();
+#if CONFIG_WMM_UAPSD
+            wifi_exit_uapsd_mode(priv);
+#endif
 
             if (payload_len <= (int)sizeof(deauth_resp->frame.frame))
             {
@@ -3235,6 +3238,9 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
 
             wlan_abort_split_scan();
             wifi_user_scan_config_cleanup();
+#if CONFIG_WMM_UAPSD
+            wifi_exit_uapsd_mode(priv);
+#endif
 
             if (payload_len <= (int)sizeof(disassoc_resp->frame.frame))
             {
