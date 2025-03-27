@@ -975,6 +975,7 @@ static uint8_t rx_antenna_set = 0;
 int wifi_get_set_rf_test_generic(t_u16 cmd_action, wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg)
 {
     int ret = 0;
+    mlan_status rv = MLAN_STATUS_FAILURE;
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     mlan_ds_misc_cfg *misc = NULL;
@@ -993,7 +994,7 @@ int wifi_get_set_rf_test_generic(t_u16 cmd_action, wifi_mfg_cmd_generic_cfg_t *w
         goto out;
     }
 
-    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
+    rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
                                               0, NULL, wifi_mfg_cmd_generic_cfg, cmd);
     if (rv != MLAN_STATUS_SUCCESS)
     {
@@ -1025,6 +1026,7 @@ int wifi_get_set_rf_test_tx_frame(t_u16 cmd_action,
                                   wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg)
 {
     int ret = 0;
+    mlan_status rv = MLAN_STATUS_FAILURE;
     wifi_get_command_lock();
     mlan_ds_misc_cfg *misc = NULL;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -1043,7 +1045,7 @@ int wifi_get_set_rf_test_tx_frame(t_u16 cmd_action,
 
     cmd->seq_num   = 0x0;
     cmd->result    = 0x0;
-    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
+    rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
                                               0, NULL, wifi_mfg_cmd_tx_frame, cmd);
     if (rv != MLAN_STATUS_SUCCESS)
     {
@@ -1075,6 +1077,7 @@ int wifi_get_set_rf_trigger_frame_cfg(t_u16 cmd_action,
                                       wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg)
 {
     int ret = 0;
+    mlan_status rv = MLAN_STATUS_FAILURE;
     wifi_get_command_lock();
     mlan_ds_misc_cfg *misc = NULL;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -1093,7 +1096,7 @@ int wifi_get_set_rf_trigger_frame_cfg(t_u16 cmd_action,
 
     cmd->seq_num   = 0x0;
     cmd->result    = 0x0;
-    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
+    rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
                                               0, NULL, wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr, cmd);
     if (rv != MLAN_STATUS_SUCCESS)
     {
@@ -1125,6 +1128,7 @@ int wifi_get_set_rf_he_tb_tx(t_u16 cmd_action,
                              wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg)
 {
     int ret = 0;
+    mlan_status rv = MLAN_STATUS_FAILURE;
     wifi_get_command_lock();
     mlan_ds_misc_cfg *misc = NULL;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -1143,7 +1147,7 @@ int wifi_get_set_rf_he_tb_tx(t_u16 cmd_action,
 
     cmd->seq_num   = 0x0;
     cmd->result    = 0x0;
-    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
+    rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
                                               0, NULL, wifi_mfg_cmd_he_tb_tx, cmd);
     if (rv != MLAN_STATUS_SUCCESS)
     {
@@ -1173,6 +1177,7 @@ out:
 int wifi_get_set_rf_otp_mac_addr(t_u16 cmd_action, wifi_mfg_cmd_otp_mac_addr_rd_wr_t *wifi_mfg_cmd_otp_mac_addr_rd_wr)
 {
     int ret = 0;
+    mlan_status rv = MLAN_STATUS_FAILURE;
     wifi_get_command_lock();
     mlan_ds_misc_cfg *misc = NULL;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -1191,7 +1196,7 @@ int wifi_get_set_rf_otp_mac_addr(t_u16 cmd_action, wifi_mfg_cmd_otp_mac_addr_rd_
 
     cmd->seq_num   = 0x0;
     cmd->result    = 0x0;
-    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
+    rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
                                               0, NULL, wifi_mfg_cmd_otp_mac_addr_rd_wr, cmd);
     if (rv != MLAN_STATUS_SUCCESS)
     {
@@ -1221,6 +1226,7 @@ out:
 int wifi_get_set_rf_otp_cal_data(t_u16 cmd_action, wifi_mfg_cmd_otp_cal_data_rd_wr_t *wifi_mfg_cmd_otp_cal_data_rd_wr)
 {
     int ret = 0;
+    mlan_status rv = MLAN_STATUS_FAILURE;
     wifi_get_command_lock();
     mlan_ds_misc_cfg *misc  = NULL;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -1239,7 +1245,7 @@ int wifi_get_set_rf_otp_cal_data(t_u16 cmd_action, wifi_mfg_cmd_otp_cal_data_rd_
 
     cmd->seq_num   = 0x0;
     cmd->result    = 0x0;
-    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
+    rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
                                               0, NULL, wifi_mfg_cmd_otp_cal_data_rd_wr, cmd);
     if (rv != MLAN_STATUS_SUCCESS)
     {
@@ -1271,6 +1277,7 @@ int wifi_get_set_rf_test_tx_cont(t_u16 cmd_action,
                                  wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg)
 {
     int ret = 0;
+    mlan_status rv = MLAN_STATUS_FAILURE;
     wifi_get_command_lock();
     mlan_ds_misc_cfg *misc = NULL;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -1289,7 +1296,7 @@ int wifi_get_set_rf_test_tx_cont(t_u16 cmd_action,
 
     cmd->seq_num   = 0x0;
     cmd->result    = 0x0;
-    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
+    rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
                                               0, NULL, wifi_mfg_cmd_tx_cont, cmd);
     if (rv != MLAN_STATUS_SUCCESS)
     {
@@ -3335,6 +3342,7 @@ int wifi_get_region_code(t_u32 *region_code)
 int wifi_set_region_code(t_u32 region_code)
 {
     int ret = 0;
+    mlan_status mrv = MLAN_STATUS_FAILURE;
     mlan_ds_misc_cfg *misc = NULL;
 
 #if !CONFIG_MEM_POOLS
@@ -3347,6 +3355,12 @@ int wifi_set_region_code(t_u32 region_code)
         return -WM_FAIL;
     }
 
+    mlan_ioctl_req req = {
+        .bss_index = 0,
+        .pbuf      = (t_u8 *)misc,
+        .action    = MLAN_ACT_SET,
+    };
+
     misc->param.region_code = region_code;
 
     if ((misc->param.region_code == 0x41) || (misc->param.region_code == 0xFE))
@@ -3357,13 +3371,7 @@ int wifi_set_region_code(t_u32 region_code)
         goto out;
     }
 
-    mlan_ioctl_req req = {
-        .bss_index = 0,
-        .pbuf      = (t_u8 *)misc,
-        .action    = MLAN_ACT_SET,
-    };
-
-    mlan_status mrv = wlan_misc_ioctl_region(mlan_adap, &req);
+    mrv = wlan_misc_ioctl_region(mlan_adap, &req);
     if (mrv != MLAN_STATUS_SUCCESS)
     {
         wifi_w("Unable to set region code");
@@ -6204,6 +6212,7 @@ int wifi_net_monitor_cfg(wifi_net_monitor_t *monitor)
 #if HOST_TXRX_MGMT_FRAME
 int wifi_mgmtframe_tx_cfg(wifi_host_tx_frame_params_t *mgmtframe)
 {
+    mlan_status rv = MLAN_STATUS_FAILURE;
     (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     wifi_host_tx_frame_params_t *phost_tx_frame_hdr = MNULL;
@@ -6243,7 +6252,7 @@ int wifi_mgmtframe_tx_cfg(wifi_host_tx_frame_params_t *mgmtframe)
     cmd->seq_num = 0x0;
     cmd->result  = 0x0;
 
-    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_TX_FRAME,
+    rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_TX_FRAME,
                                                HostCmd_ACT_GEN_SET, 0, NULL, tx_frame, cmd);
     if (rv != MLAN_STATUS_SUCCESS)
     {

@@ -15487,7 +15487,6 @@ int wlan_net_monitor_cfg(wlan_net_monitor_t *monitor)
 #if HOST_TXRX_MGMT_FRAME
 int wlan_mgmtframe_tx_cfg(wlan_host_tx_frame_params_t *tx_frame)
 {
-    t_u16 pkt_len = 0;
     int ret = -WM_FAIL;
 
     if (is_sta_connected() || is_uap_started())
