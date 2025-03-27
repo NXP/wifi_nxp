@@ -5732,11 +5732,9 @@ static void wlcm_process_init(enum cm_sta_state *next)
 #if CONFIG_11K
     (void)wifi_host_11k_cfg(1);
 #endif
-#if !CONFIG_RF_TEST_MODE
 #if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_1AS)
 #if !CONFIG_WPA_SUPP
     (void)wlan_rx_mgmt_indication(WLAN_BSS_TYPE_STA, WLAN_MGMT_ACTION, NULL);
-#endif
 #endif
 #endif
 
@@ -13304,6 +13302,11 @@ int wlan_set_rf_test_mode(void)
 {
     wlan_ieeeps_off();
     wlan_deepsleepps_off();
+#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_1AS)
+    /* Mask all mgmt subtype to cancel mgmt frame forwarding for rf test mode */
+    (void)wlan_rx_mgmt_indication(WLAN_BSS_TYPE_STA, 0U, NULL);
+    (void)wlan_rx_mgmt_indication(WLAN_BSS_TYPE_UAP, 0U, NULL);
+#endif
     return wifi_set_rf_test_mode();
 }
 
