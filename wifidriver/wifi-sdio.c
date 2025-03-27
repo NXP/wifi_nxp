@@ -2499,14 +2499,7 @@ static void handle_sdio_packet_read(mlan_adapter *pmadapter)
         ret = _handle_sdio_packet_read(pmadapter, &packet, &datalen, &pkt_type);
         if (ret != MLAN_STATUS_SUCCESS)
         {
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-           if (wm_wifi.wifi_flush_rxbuf_desc != NULL)
-           {
-                wm_wifi.wifi_flush_rxbuf_desc();
-                sg_rx_init_table();
-           }
-#endif
-	/* nothing to read. break out of while loop */
+            /* nothing to read. break out of while loop */
             break;
         }
 

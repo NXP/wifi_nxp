@@ -184,8 +184,10 @@ static void *wifi_11n_save_request(Event_Ext_t *evt)
 void wrapper_deliver_amsdu_subframe(pmlan_buffer amsdu_pmbuf, t_u8 *data, t_u16 pkt_len)
 {
     RxPD *prx_pd = (RxPD *)(void *)amsdu_pmbuf->pbuf;
+    t_u8 *bkp_ptr = amsdu_pmbuf->pbuf;
     w_pkt_d("[amsdu] [push]: BSS Type: %d L: %d", prx_pd->bss_type, pkt_len);
     wm_wifi.amsdu_data_input_callback(prx_pd->bss_type, data, pkt_len);
+    amsdu_pmbuf->pbuf = bkp_ptr;
 }
 
 static mlan_status wrapper_moal_recv_packet(IN t_void *pmoal_handle, IN pmlan_buffer pmbuf)

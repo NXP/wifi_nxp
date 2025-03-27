@@ -97,7 +97,7 @@ struct eth_llc_hdr
 
 #if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
 #define NETIF_TX_BUFFERS 32
-#define NETIF_RX_BUFFERS 32
+#define NETIF_RX_BUFFERS 48
 
 /**
  * npx wifi driver structure.

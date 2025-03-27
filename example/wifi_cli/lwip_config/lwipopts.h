@@ -167,7 +167,7 @@
    ------------------------------------
 */
 
-#define MEM_ALIGNMENT 4
+#define MEM_ALIGNMENT 32
 
 /* Value of TCP_SND_BUF_COUNT denotes the number of buffers and is set by
  * CONFIG option available in the SDK
@@ -310,7 +310,7 @@
 #if CONFIG_LWIP_LOW_MEM_FOOTPRINT
 #define PBUF_POOL_SIZE 20
 #elif FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-#define PBUF_POOL_SIZE 64
+#define PBUF_POOL_SIZE 48
 #else
 #define PBUF_POOL_SIZE 40
 #endif
@@ -345,7 +345,7 @@
  */
 #define PBUF_LINK_ENCAPSULATION_HLEN 26
 
-#define PBUF_POOL_BUFSIZE 2048
+#define PBUF_POOL_BUFSIZE 4096
 #else
 #define PBUF_POOL_BUFSIZE 1580
 #endif

@@ -74,10 +74,12 @@ static mlan_status wlan_11n_dispatch_amsdu_pkt(mlan_private *priv, pmlan_buffer 
         net_stack_buffer_free(pmbuf->lwip_pbuf);
 #endif
 #else
+#if !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
 #if !CONFIG_MEM_POOLS
         OSA_MemoryFree(pmbuf);
 #else
         OSA_MemoryPoolFree(buf_128_MemoryPool, pmbuf);
+#endif
 #endif
 #endif
         LEAVE();

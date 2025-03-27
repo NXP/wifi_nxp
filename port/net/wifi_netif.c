@@ -124,40 +124,6 @@ void nxp_wifi_rxpbuf_reset()
 }
 
 /**
- * \brief Insert at header of the RX descriptor ring buffers with pbufs.
- *
- * \param p_nxp_wifi_dev Pointer to driver data structure.
- */
-static struct pbuf* nxp_wifi_rx_insert_queue(struct nxp_wifi_device *p_nxp_wifi_dev, uint32_t ul_index)
-{
-	struct pbuf *p    = 0;
-    if (p_nxp_wifi_dev->rx_pbuf[ul_index] == 0)
-    {
-        /* Allocate a new pbuf with the maximum size. */
-        p = pbuf_alloc(PBUF_RAW, PBUF_POOL_BUFSIZE, PBUF_POOL);
-        if (0 == p)
-        {
-            PRINTF("ERROR! nxp_wifi_rx_insert_queue: pbuf allocation failure\r\n");
-            return NULL;
-        }
-
-        /* Make sure lwIP is well configured so one pbuf can contain the maximum packet size. */
-        LWIP_ASSERT("nxp_wifi_rx_insert_queue: pbuf size too small!", pbuf_clen(p) <= 1);
-
-        /* Set owner as Wi-Fi. */
-        p_nxp_wifi_dev->rx_desc[ul_index] = 0;
-
-        /* Save pbuf pointer to be sent to lwIP upper layer. */
-        p_nxp_wifi_dev->rx_pbuf[ul_index] = p;
-
-        PRINTF("nxp_wifi_rx_insert_queue: new pbuf allocated with size %d: 0x%p [pos=%u]\r\n",
-                                                  PBUF_POOL_BUFSIZE, p, ul_index);
-    }
-    return p;
-
-}
-
-/**
  * \brief Populate the RX descriptor ring buffers with pbufs.
  *
  * \param p_nxp_wifi_dev Pointer to driver data structure.
@@ -366,27 +332,21 @@ retry:
 #if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
 void *wifi_get_rxbuf_desc(t_u16 rx_len)
 {
-    struct pbuf *p;
     struct nxp_wifi_device *ps_nxp_wifi_dev = (struct nxp_wifi_device *)&gs_nxp_wifi_dev;
+    struct pbuf *p = NULL;
 
-    LWIP_ASSERT("wifi_get_rxbuf_desc: Wi-Fi rx_len greater than PBUF_POOL_BUFSIZE!", rx_len <= PBUF_POOL_BUFSIZE);
+    if(rx_len > 2048)
+        p = pbuf_alloc(PBUF_RAW, PBUF_POOL_BUFSIZE, PBUF_POOL);
+    else
+        p = pbuf_alloc(PBUF_RAW, rx_len + sizeof(mlan_buffer), PBUF_POOL);
 
-    if (ps_nxp_wifi_dev->rx_desc[ps_nxp_wifi_dev->us_rx_head])
+    if (p == NULL)
     {
-        PRINTF("ERROR! wifi_get_rxbuf_desc: out of free descriptor!  [tail=%u head=%u]\r\n",
-                                  ps_nxp_wifi_dev->us_rx_tail, ps_nxp_wifi_dev->us_rx_head);
-        return NULL;
-    }
-    if (0 == ps_nxp_wifi_dev->rx_pbuf[ps_nxp_wifi_dev->us_rx_head])
-    {
-        PRINTF("ERROR! wifi_get_rxbuf_desc: NULL pbuf! [head=%u]\r\n", ps_nxp_wifi_dev->us_rx_head);
-        if(!nxp_wifi_rx_insert_queue(ps_nxp_wifi_dev, ps_nxp_wifi_dev->us_rx_head))
-            return NULL;
+       return NULL;
     }
 
-    p          = ps_nxp_wifi_dev->rx_pbuf[ps_nxp_wifi_dev->us_rx_head];
+    ps_nxp_wifi_dev->rx_pbuf[ps_nxp_wifi_dev->us_rx_head] = p;
     p->tot_len = rx_len + sizeof(mlan_buffer);
-
     ps_nxp_wifi_dev->rx_desc[ps_nxp_wifi_dev->us_rx_head] = 1;
     ps_nxp_wifi_dev->us_rx_head                           = (ps_nxp_wifi_dev->us_rx_head + 1) % NETIF_RX_BUFFERS;
 
@@ -405,7 +365,6 @@ void wifi_flush_rxbuf_desc()
     {
         if (ps_nxp_wifi_dev->rx_desc[ul_index] == 1)
         {
-            PRINTF("Free pbuf\r\n");
             p = ps_nxp_wifi_dev->rx_pbuf[ul_index];
 
             (void)pbuf_free(p);
@@ -744,7 +703,7 @@ static struct pbuf *wifi_low_level_input(struct nxp_wifi_device *ps_nxp_wifi_dev
     struct pbuf *p = 0;
 
     /* Check that descriptor is owned by software (ie packet received). */
-    if (ps_nxp_wifi_dev->rx_desc[ps_nxp_wifi_dev->us_rx_tail])
+    if ((ps_nxp_wifi_dev->us_rx_head != ps_nxp_wifi_dev->us_rx_tail) && (ps_nxp_wifi_dev->rx_desc[ps_nxp_wifi_dev->us_rx_tail]))
     {
         /* Fetch pre-allocated pbuf. */
         p = ps_nxp_wifi_dev->rx_pbuf[ps_nxp_wifi_dev->us_rx_tail];
@@ -780,30 +739,19 @@ void handle_data_packet(const t_u8 interface, const t_u8 *rcvdata, const t_u16 d
 #if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
     struct nxp_wifi_device *ps_nxp_wifi_dev = (struct nxp_wifi_device *)&gs_nxp_wifi_dev;
     struct pbuf *p;
-//    t_u8 interface2;
 
     while ((p = wifi_low_level_input(ps_nxp_wifi_dev)) != NULL)
     {
         /* Directly use rxpd from pbuf */
         RxPD *rxpd = (RxPD *)(void *)((t_u8 *)p->payload + INTF_HEADER_LEN);
-//        u16_t header_len = INTF_HEADER_LEN + rxpd->rx_pkt_offset;
-        /* Skip interface header and RxPD */
-//        pbuf_header(p, -(s16_t)header_len);
-
         mlan_bss_type interface2 = (mlan_bss_type)(rxpd->bss_type);
 
-//        interface2 = *((t_u8 *)p->payload + sizeof(mlan_buffer) + INTF_HEADER_LEN);
         if (interface2 < MAX_INTERFACES_SUPPORTED && netif_arr[interface2] != NULL)
         {
-//            process_data_packet((t_u8 *)p->payload + sizeof(mlan_buffer), p->tot_len, p);
             process_data_packet((t_u8 *)p->payload, p->tot_len, p);
 
         }
     }
-
-    /* Fill empty descriptors with new pbufs. */
-    nxp_wifi_rx_populate_queue(ps_nxp_wifi_dev);
-
 #else
     if (interface < MAX_INTERFACES_SUPPORTED && netif_arr[interface] != NULL)
     {
@@ -814,7 +762,6 @@ void handle_data_packet(const t_u8 interface, const t_u8 *rcvdata, const t_u16 d
 
 void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen)
 {
-
     struct pbuf *p = gen_pbuf_from_data(rcvdata, datalen);
     if (p == NULL)
     {
@@ -1454,10 +1401,6 @@ err_t lwip_netif_init(struct netif *netif)
 
     /* initialize the hardware */
     low_level_init(netif);
-
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-    nxp_wifi_rx_init(&gs_nxp_wifi_dev);
-#endif
 
     /* set sta MAC hardware address */
     (void)wlan_get_mac_address(netif->hwaddr);
