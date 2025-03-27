@@ -631,14 +631,6 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
         msg.event = (uint16_t)upld_type;
         (void)memcpy((void *)msg.data, (const void *)pmbuf, sdiopkt->size);
 
-#if CONFIG_WMM
-        if (upld_type == MLAN_TYPE_EVENT && sdiopkt->hostcmd.command == EVENT_TX_DATA_PAUSE)
-        {
-            wifi_handle_event_data_pause(msg.data);
-            wifi_free_eventbuf(msg.data);
-            return MLAN_STATUS_SUCCESS;
-        }
-#endif
         status = OSA_MsgQPut(bus.event_queue, &msg);
 
         if (status != KOSA_StatusSuccess)
