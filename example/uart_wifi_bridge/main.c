@@ -57,8 +57,13 @@
  * Definitions
  ******************************************************************************/
 #define SERIAL_PORT_NVIC_PRIO 5
-
-#if !defined(RW610_SERIES) && !defined(RW612_SERIES)
+    /* TODO: Currently using SoC based macro for FRDM-MCXN947 board as name of FRDM board series
+     * is not known yet. Need to change SoC name with FRDM board series name. */
+#if defined(WIFI_BT_USE_ARDUINO_SHIELD)
+#define DEMO_LPUART          LPUART4
+#define DEMO_LPUART_CLK_FREQ BOARD_DEBUG_UART_CLK_FREQ
+#define DEMO_LPUART_IRQn     LP_FLEXCOMM4_IRQn
+#elif !defined(RW610_SERIES) && !defined(RW612_SERIES)
 #define DEMO_LPUART          LPUART1
 #define DEMO_LPUART_CLK_FREQ BOARD_DebugConsoleSrcFreq()
 #define DEMO_LPUART_IRQn     LPUART1_IRQn
@@ -1163,11 +1168,23 @@ static void main_task(osa_task_param_t arg)
         (void)vTaskSuspend(NULL);
     }
 #else
+    /* TODO: Currently using SoC based macro for FRDM-MCXN947 board as name of FRDM board series
+     * is not known yet. Need to change SoC name with FRDM board series name. */
+#if defined(WIFI_BT_USE_ARDUINO_SHIELD)
+    (void)NVIC_SetPriority(LP_FLEXCOMM4_IRQn, 5);
+#else
     (void)NVIC_SetPriority(LPUART1_IRQn, 5);
+#endif
 #if defined(MIMXRT1176_cm7_SERIES)
     (void)NVIC_SetPriority(LPUART2_IRQn, HAL_UART_ISR_PRIORITY);
+    /* TODO: Currently using SoC based macro for FRDM-MCXN947 board as name of FRDM board series
+     * is not known yet. Need to change SoC name with FRDM board series name. */
+#elif defined(WIFI_BT_USE_ARDUINO_SHIELD)
+    /* TODO: BT has to add BOARD_BT_UART_IRQ information below for FRDM-MCXN947 board */
+    //(void)NVIC_SetPriority(LP_FLEXCOMM3_IRQn, HAL_UART_ISR_PRIORITY);
 #else
     (void)NVIC_SetPriority(LPUART3_IRQn, HAL_UART_ISR_PRIORITY);
+
 #endif
 
     lpuart_config.srcclk = DEMO_LPUART_CLK_FREQ;
