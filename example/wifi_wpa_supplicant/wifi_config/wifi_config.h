@@ -50,6 +50,15 @@
 #define CONFIG_11V              1
 #endif
 
+#if defined(SD8978) || defined(SD8987) || defined(SD9177) || defined(IW610)
+#ifndef CONFIG_WIFI_IND_DNLD
+#define CONFIG_WIFI_IND_DNLD 1
+#endif
+#ifndef CONFIG_WIFI_IND_RESET
+#define CONFIG_WIFI_IND_RESET 1
+#endif
+#endif
+
 /*
  * Config options for wpa supplicant
  */
