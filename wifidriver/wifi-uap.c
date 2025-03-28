@@ -33,11 +33,6 @@
 /* fixme: Some of the following options could be added to kconfig. While
    adding the ranges in kconfig use the ones given as macros in
    mlan_uap_cmdevent.c */
-#ifdef RW610
-#define UAP_BEACON_PERIOD 100U
-#else
-#define UAP_BEACON_PERIOD 200U
-#endif
 #define UAP_DTIM_PERIOD 1
 #define MAX_RATES       14U
 
@@ -1098,7 +1093,7 @@ int wifi_uap_start(mlan_bss_type type,
     /* Configure SSID */
     int rv = wifi_cmd_uap_config(ssid, mac_addr, (enum wlan_security_type)security, key_mgmt, passphrase, password,
                                  (t_u8)channel, scan_chan_list, pwe_derivation, transition_disable,
-                                 wm_wifi.beacon_period == 0U ? UAP_BEACON_PERIOD : wm_wifi.beacon_period,
+                                 wm_wifi.beacon_period == 0U ? UAP_DEFAULT_BEACON_PERIOD : wm_wifi.beacon_period,
                                  wm_wifi.bandwidth == 0U ? BANDWIDTH_40MHZ : wm_wifi.bandwidth,
 #if CONFIG_WIFI_DTIM_PERIOD
                                  dtim == 0 ? UAP_DTIM_PERIOD : dtim,
