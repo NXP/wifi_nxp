@@ -1925,6 +1925,7 @@ static void wifi_assoc_clear_rsn_sae_suite(t_u8 *rsn_ie)
     }
 }
 
+#if !CONFIG_WPA_SUPP
 static void wifi_assoc_rsno_2_rsn(t_u8 *rsno_ie, size_t rsno_len, t_u8 *rsn_ie, t_u8 *rsn_len)
 {
     t_u8 tag_len = (t_u8)(rsno_len - MLAN_RSNO_SUITE_OFFSET - sizeof(IEEEtypes_Header_t));
@@ -1936,6 +1937,7 @@ static void wifi_assoc_rsno_2_rsn(t_u8 *rsno_ie, size_t rsno_len, t_u8 *rsn_ie, 
                  rsno_ie + MLAN_RSNO_SUITE_OFFSET + sizeof(IEEEtypes_Header_t), tag_len);
     (*rsn_len) = tag_len + sizeof(IEEEtypes_Header_t);
 }
+#endif
 
 /**
  * Pick preferrence IE from RSNE, RSNO, RSNO2 and WPA IE to
@@ -1949,12 +1951,15 @@ static int wifi_assoc_pick_security_ie(mlan_private *priv, BSSDescriptor_t *d,
     int wlan_security, int wlan_key_mgmt, bool is_wpa_tkip)
 {
     t_u32 key_mgmt_network = (t_u32)wlan_key_mgmt;
+#if !CONFIG_WPA_SUPP
     t_u32 key_mgmt_ie_rsno2 = 0;
     t_u32 key_mgmt_ie_rsno = 0;
+#endif
     t_u32 key_mgmt_ie_rsn = 0;
 
     if (d->prsn_ie)
     {
+#if !CONFIG_WPA_SUPP
         if (d->prsno2_ie &&
             d->rsno2_ie_buff_len > MLAN_RSNO_SUITE_OFFSET + sizeof(IEEEtypes_Header_t))
         {
@@ -1996,15 +2001,19 @@ static int wifi_assoc_pick_security_ie(mlan_private *priv, BSSDescriptor_t *d,
                 }
             }
         }
+#endif
 
         key_mgmt_ie_rsn = wifi_rsn_to_key_map((t_u8 *)d->prsn_ie);
         if (key_mgmt_network & key_mgmt_ie_rsn)
         {
+#if !CONFIG_WPA_SUPP
             if (d->prsno_ie || d->prsno2_ie)
             {
                 priv->sec_info.rsn_selector = MLAN_RSN_SELECTOR_RSN;
             }
-            else {
+            else
+#endif
+            {
                 priv->sec_info.rsn_selector = MLAN_RSN_SELECTOR_INVALID;
             }
 
@@ -2029,7 +2038,7 @@ static int wifi_assoc_pick_security_ie(mlan_private *priv, BSSDescriptor_t *d,
         goto wpa_ie_picked;
     }
 
-    wifi_d("wifi assoc selecting security profile failed, "
+    wifi_d("wifi assoc select none security profile, "
            "key mgmt network 0x%x rsno2 0x%x rsno 0x%x rsn 0x%x",
            key_mgmt_network, key_mgmt_ie_rsno2, key_mgmt_ie_rsno, key_mgmt_ie_rsn);
     priv->sec_info.rsn_selector = MLAN_RSN_SELECTOR_INVALID;
@@ -6950,6 +6959,7 @@ int wrapper_bssdesc_first_set(int bss_index,
             /* use superset of RSNE, RSNO and RSNO2 to match with network security profile */
             process_rsn_ie(d->rsn_ie_buff, rsn_mcstCipher, rsn_ucstCipher, ap_mfpc, ap_mfpr, WPA_WPA2_WEP);
 
+#if !CONFIG_WPA_SUPP
             if (d->prsno_ie != MNULL)
             {
                 process_rsn_ie(d->rsno_ie_buff, rsn_mcstCipher, rsn_ucstCipher, ap_mfpc, ap_mfpr, WPA_WPA2_WEP);
@@ -6958,6 +6968,7 @@ int wrapper_bssdesc_first_set(int bss_index,
             {
                 process_rsn_ie(d->rsno2_ie_buff, rsn_mcstCipher, rsn_ucstCipher, ap_mfpc, ap_mfpr, WPA_WPA2_WEP);
             }
+#endif
         }
     }
     else
@@ -6987,6 +6998,9 @@ int wrapper_bssdesc_first_set(int bss_index,
         pwe_rsnx = MBIT(0);
     }
 
+#if CONFIG_WPA_SUPP
+    pwe_rsnxo = 0;
+#else
     if (!d->prsnxo_ie)
     {
         pwe_rsnxo = 0;
@@ -7007,6 +7021,7 @@ int wrapper_bssdesc_first_set(int bss_index,
     {
         pwe_rsnxo = MBIT(0);
     }
+#endif
 
     pwe_superset = (pwe_rsnx | pwe_rsnxo);
     if (pwe_superset >= 3)
