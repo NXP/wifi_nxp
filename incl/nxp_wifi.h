@@ -126,6 +126,10 @@ extern "C" {
 #define CONFIG_NET_MONITOR 1
 #endif
 
+#if CONFIG_NXP_WIFI_HOST_TXRX_MGMT_FRAME
+#define HOST_TXRX_MGMT_FRAME 1
+#endif
+
 #if CONFIG_NXP_WIFI_ECSA
 #define CONFIG_ECSA 1
 #endif

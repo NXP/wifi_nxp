@@ -6149,6 +6149,74 @@ int wifi_net_monitor_cfg(wifi_net_monitor_t *monitor)
 }
 #endif
 
+#if HOST_TXRX_MGMT_FRAME
+int wifi_mgmtframe_tx_cfg(wifi_host_tx_frame_params_t *mgmtframe)
+{
+    (void)wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    wifi_host_tx_frame_params_t *phost_tx_frame_hdr = MNULL;
+    mlan_ds_misc_tx_frame *tx_frame = NULL;
+    t_u8 *pBuf = NULL;
+    int ret = WM_SUCCESS;
+
+#if !CONFIG_MEM_POOLS
+    tx_frame = (mlan_ds_misc_tx_frame *)OSA_MemoryAllocate(sizeof(mlan_ds_misc_tx_frame));
+#else
+    tx_frame = (mlan_ds_misc_tx_frame *)OSA_MemoryPoolAllocate(buf_1024_MemoryPool);
+#endif
+
+    if(NULL == tx_frame)
+    {
+         wifi_e("tx_frame alloc memory failed");
+         wifi_put_command_lock();
+         ret = -WM_FAIL;
+         goto fail;
+    }
+
+    (void)memset((uint8_t *)tx_frame, 0, sizeof(mlan_ds_misc_tx_frame));
+    pBuf = &tx_frame->tx_buf[0];
+
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    //pkt_header contains TxPktType and TxControl both with t_u32 type
+    *(t_u32 *)pBuf = MRVL_PKT_TYPE_MGMT_FRAME;
+
+    //802.11 header packet and payload
+    phost_tx_frame_hdr = (wifi_host_tx_frame_params_t *)(void *)(pBuf + TXRX_MGMT_FRAME_HEADER_SIZE);
+    (void)memcpy((uint8_t *)phost_tx_frame_hdr, (uint8_t *)mgmtframe, sizeof(mgmtframe->frm_len) + mgmtframe->frm_len);
+
+    tx_frame->data_len         = sizeof(mgmtframe->frm_len) + TXRX_MGMT_FRAME_HEADER_SIZE + mgmtframe->frm_len;
+    tx_frame->buf_type         = MLAN_BUF_TYPE_RAW_DATA;
+    tx_frame->priority         = 7;
+
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+
+    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_TX_FRAME,
+                                               HostCmd_ACT_GEN_SET, 0, NULL, tx_frame, cmd);
+    if (rv != MLAN_STATUS_SUCCESS)
+    {
+        wifi_put_command_lock();
+        ret = -WM_FAIL;
+        goto fail;
+    }
+
+    (void)wifi_wait_for_cmdresp(NULL);
+    ret = wm_wifi.cmd_resp_status;
+
+fail:
+    if(NULL != tx_frame)
+    {
+#if !CONFIG_MEM_POOLS
+        OSA_MemoryFree(tx_frame);
+#else
+        OSA_MemoryPoolFree(buf_1024_MemoryPool, tx_frame);
+#endif
+    }
+
+    return ret;
+}
+#endif
+
 #if CONFIG_TSP
 int wifi_tsp_cfg(const t_u16 action,
                  t_u16 *enable,

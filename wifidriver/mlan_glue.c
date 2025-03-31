@@ -1723,7 +1723,11 @@ static int wifi_send_tx_rate_cfg_ioctl(mlan_act_ioctl action, mlan_ds_rate *ds_r
     }
     else if (bss_type == MLAN_BSS_TYPE_STA)
     {
-        if (is_sta_connected())
+        if (is_sta_connected()
+#if CONFIG_NET_MONITOR && HOST_TXRX_MGMT_FRAME
+         || get_monitor_flag()
+#endif
+        )
         {
             rv = wlan_ops_sta_ioctl(mlan_adap, &req);
         }

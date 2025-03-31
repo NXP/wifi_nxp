@@ -15582,6 +15582,30 @@ int wlan_net_monitor_cfg(wlan_net_monitor_t *monitor)
 }
 #endif
 
+#if HOST_TXRX_MGMT_FRAME
+int wlan_mgmtframe_tx_cfg(wlan_host_tx_frame_params_t *tx_frame)
+{
+    int ret = -WM_FAIL;
+
+    if (is_sta_connected() || is_uap_started())
+    {
+        (void)PRINTF("monitor mode tx: disable uap and disconnect sta first\n\r");
+        return -WM_FAIL;
+    }
+
+    if(get_monitor_flag() != true)
+    {
+        (void)PRINTF("enable monitor mode first\n\r");
+        return -WM_FAIL;
+    }
+
+    //Todo: add this condition if (mlan_adap->cmd_tx_data == 1U)
+    ret = wifi_mgmtframe_tx_cfg(tx_frame);
+
+    return ret;
+}
+#endif
+
 #if CONFIG_TSP
 int wlan_get_tsp_cfg(t_u16 *enable,
                      t_u32 *back_off,

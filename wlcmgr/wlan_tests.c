@@ -45,6 +45,10 @@ wlan_csi_config_params_t g_csi_params;
 wlan_net_monitor_t g_net_monitor_param;
 #endif
 
+#if HOST_TXRX_MGMT_FRAME
+wlan_host_tx_frame_params_t *pmgmtframe_tx_param = NULL;
+#endif
+
 #if CONFIG_HOST_SLEEP
 extern uint64_t rtc_timeout;
 #endif
@@ -5468,6 +5472,161 @@ static void test_wlan_net_monitor_cfg(int argc, char **argv)
 }
 #endif
 
+#if HOST_TXRX_MGMT_FRAME
+static void test_wlan_set_mgmtframetx_header(int argc, char **argv)
+{
+    t_u16 type = 0, subtype = 0, from_ds = 0, to_ds = 0;
+    t_u16 seq_num = 0, frag_num = 0;
+    t_u8 raw_mac[MLAN_MAC_ADDR_LENGTH];
+    int i = 0;
+
+    if(argc !=11)
+     {
+         (void)PRINTF("Error             : invalid number of arguments\r\n");
+         (void)PRINTF("Usage             : %s <PktType> <PktSubType> <FromDS> <ToDS> <SeqNum> <FragNum> <Addr1> <Addr2> <Addr3> <Addr4>\r\n", argv[0]);
+
+         (void)PRINTF("\r\nPktType           : Should be zero for MGMT frames \r\n");
+         (void)PRINTF("PktSubType        : Mgmt frame subtypes. For example: Assoc Request 0x0\r\n");
+         (void)PRINTF("FromDS            : From DS \r\n");
+         (void)PRINTF("ToDS              : To DS \r\n");
+         (void)PRINTF("SeqNum            : Sequence number \r\n");
+         (void)PRINTF("FragNum           : Fragment number \r\n");
+         (void)PRINTF("Addr1             : Destination address \r\n");
+         (void)PRINTF("Addr2             : Source address \r\n");
+         (void)PRINTF("Addr3             : BSSID \r\n");
+         (void)PRINTF("Addr4             : Addr4 \r\n");
+
+         (void)PRINTF("\r\nUsage example ：\r\n");
+         (void)PRINTF("wlan-set-mgmtframetx-header 0 5 0 0 0 0 00:50:43:27:B0:41 00:50:43:21:0F:84 00:50:43:21:0F:84 FF:FF:FF:FF:FF:FF\r\n");
+
+         return;
+     }
+
+    if(NULL == pmgmtframe_tx_param)
+    {
+
+#if !CONFIG_MEM_POOLS
+        pmgmtframe_tx_param = (wlan_host_tx_frame_params_t *)OSA_MemoryAllocate(1024);
+#else
+        pmgmtframe_tx_param = (wlan_host_tx_frame_params_t *)OSA_MemoryPoolAllocate(buf_1024_MemoryPool);
+#endif
+    }
+
+    if(NULL == pmgmtframe_tx_param)
+    {
+        (void)PRINTF("Alloc memory for tx frame failed \r\n");
+        return;
+    }
+
+    //frm_ctl
+    type = (t_u16)atoi(argv[1]);
+    pmgmtframe_tx_param->frm_ctl = (type & 0x3) << 2;
+    subtype = (t_u16)atoi(argv[2]);
+    pmgmtframe_tx_param->frm_ctl |= (subtype & 0xf) << 4;
+    from_ds = (t_u16)atoi(argv[3]);
+    pmgmtframe_tx_param->frm_ctl |= (from_ds & 0x1) << 9;
+    to_ds = (t_u16)atoi(argv[4]);
+    pmgmtframe_tx_param->frm_ctl |= (to_ds & 0x1) << 8;
+
+    //seq_ctl
+    seq_num = (t_u16)atoi(argv[5]);
+    pmgmtframe_tx_param->seq_ctl = seq_num << 4;
+    frag_num = (t_u16)atoi(argv[6]);
+    pmgmtframe_tx_param->seq_ctl |= (frag_num & 0xf);
+
+    for(i = 1; i <= 4; i++)
+    {
+        if(0 != get_mac(argv[i+6], (char *)raw_mac, ':'))
+        {
+            (void)PRINTF("Error: Addr%d invalid MAC argument\r\n",i);
+            return;
+        }
+
+        switch(i)
+        {
+            case 1:
+                memcpy(pmgmtframe_tx_param->addr1, raw_mac, MLAN_MAC_ADDR_LENGTH);
+                break;
+            case 2:
+                memcpy(pmgmtframe_tx_param->addr2, raw_mac, MLAN_MAC_ADDR_LENGTH);
+                break;
+            case 3:
+                memcpy(pmgmtframe_tx_param->addr3, raw_mac, MLAN_MAC_ADDR_LENGTH);
+                break;
+            case 4:
+                memcpy(pmgmtframe_tx_param->addr4, raw_mac, MLAN_MAC_ADDR_LENGTH);
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+static void test_wlan_set_mgmtframetx_payload(int argc, char **argv)
+{
+    int i = 0;
+    t_u16 data_len = argc - 1;
+
+    if(argc < 2)
+    {
+        (void)PRINTF("Error             : invalid number of arguments\r\n");
+        (void)PRINTF("Usage             : %s <Data0 Data1 ... Datan>\r\n", argv[0]);
+        (void)PRINTF("\r\nUsage example : \r\n");
+        (void)PRINTF("wlan-set-mgmtframetx-payload 0x01 0x01 0x00 0x0c 0x00 0x58 0x02 0x40\r\n");
+
+        return;
+    }
+
+    if(NULL == pmgmtframe_tx_param)
+    {
+
+#if !CONFIG_MEM_POOLS
+        pmgmtframe_tx_param = (wlan_host_tx_frame_params_t *)OSA_MemoryAllocate(1024);
+#else
+        pmgmtframe_tx_param = (wlan_host_tx_frame_params_t *)OSA_MemoryPoolAllocate(buf_1024_MemoryPool);
+#endif
+    }
+
+    if(NULL == pmgmtframe_tx_param)
+    {
+        (void)PRINTF("Alloc memory for tx frame failed \r\n");
+        return;
+    }
+
+    for(i = 0; i < data_len; i++)
+    {
+        pmgmtframe_tx_param->payload[i] = (t_u8)a2hex_or_atoi(argv[i + 1]);
+    }
+
+    pmgmtframe_tx_param->frm_len = data_len + TXRX_MGMT_FRAME_HEADER_LEN;
+}
+
+static void test_wlan_set_mgmtframetx_cfg(int argc, char ** argv)
+{
+    int ret;
+
+    if(NULL == pmgmtframe_tx_param)
+    {
+        (void)PRINTF("Error: No tx frame buff\r\n");
+        return;
+    }
+
+    ret = wlan_mgmtframe_tx_cfg(pmgmtframe_tx_param);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to sent mgmt frame\r\n");
+    }
+
+#if !CONFIG_MEM_POOLS
+    OSA_MemoryFree(pmgmtframe_tx_param);
+#else
+    OSA_MemoryPoolFree(buf_1024_MemoryPool, pmgmtframe_tx_param);
+#endif
+    pmgmtframe_tx_param = NULL;
+}
+#endif
+
 #if CONFIG_CPU_TASK_STATUS
 void test_wlan_cpu_task_info(int argc, char **argv)
 {
@@ -9001,6 +9160,12 @@ static struct cli_command tests[] = {
     {"wlan-set-monitor-filter", "<opt> <macaddr>", test_wlan_set_monitor_filter},
     {"wlan-set-monitor-param", "<action> <monitor_activity> <filter_flags> <radio_type> <chan_number>",
      test_wlan_set_monitor_param},
+#endif
+#if HOST_TXRX_MGMT_FRAME
+    {"wlan-set-mgmtframetx-cfg", NULL, test_wlan_set_mgmtframetx_cfg},
+    {"wlan-set-mgmtframetx-header", "<PktType> <PktSubType> <FromDS> <ToDS> <SeqNum> <FragNum> <Addr1> <Addr2> <Addr3> <Addr4>",
+    test_wlan_set_mgmtframetx_header},
+    {"wlan-set-mgmtframetx-payload", "<Data0 Data1 ... Datan>", test_wlan_set_mgmtframetx_payload},
 #endif
 #if CONFIG_TSP
     {"wlan-set-tsp-cfg",
