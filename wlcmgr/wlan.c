@@ -1075,7 +1075,7 @@ static int wlan_send_host_sleep_int(uint32_t wake_up_conds, bool is_config)
     {
         wlan.hs_enabled = MTRUE;
         wlan.hs_wakeup_condition = wake_up_conds;
-        if (g_flt_cfg.nentries == 0 && (is_config == MFALSE))
+        if (g_flt_cfg.nentries == 0 && (is_config == MTRUE))
         {
             (void)PRINTF("No user configured MEF entries, use default ARP filters.\r\n");
             /* User doesn't configure MEF, use default MEF entry */
