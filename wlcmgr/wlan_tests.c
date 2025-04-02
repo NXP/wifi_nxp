@@ -5440,12 +5440,25 @@ static void test_wlan_add_packet_filter(int argc, char **argv)
        return;
     }
 
-    if (((argc > 4) && !(((atoi(argv[3]) * (atoi(argv[4]) + 2)) + 4) == argc)))
+    if (argc > 4)
     {
-        (void)PRINTF("Usage: %s sta/uap 0/1 <patterns number> <ptn_len> <pkt_offset> <ptn> ...........\r\n", argv[0]);
-        dump_wlan_add_packet_filter();
-        return;
+        /* argv[3]: number of patterns
+         * argv[4]: ptn_len
+         */
+        int n_param = 4;
+        for (int k = 0; k < atoi(argv[3]); k++)
+        {
+            n_param += atoi(argv[n_param]) + 2;
+        }
+
+        if (n_param != argc)
+        {
+            (void)PRINTF("Usage: %s sta/uap 0/1 <patterns number> <ptn_len> <pkt_offset> <ptn> ...........\r\n", argv[0]);
+            dump_wlan_add_packet_filter();
+            return;
+        }
     }
+
     (void)memset(&wowlan_ptn_cfg, 0, sizeof(wlan_wowlan_ptn_cfg_t));
     wowlan_ptn_cfg.enable = atoi(argv[2]);
     if (argc > 3)
@@ -5458,7 +5471,7 @@ static void test_wlan_add_packet_filter(int argc, char **argv)
             wowlan_ptn_cfg.patterns[k].pkt_offset = atoi(argv[i]);
             i++;
             for (j = 0; j < wowlan_ptn_cfg.patterns[k].pattern_len; j++)
-                wowlan_ptn_cfg.patterns[k].pattern[j] = atoi(argv[j + i]);
+                wowlan_ptn_cfg.patterns[k].pattern[j] = a2hex_or_atoi(argv[j + i]);
             i += j;
             (void)memset(wowlan_ptn_cfg.patterns[k].mask, 0x3f, 6);
         }

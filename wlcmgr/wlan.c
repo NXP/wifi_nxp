@@ -12470,7 +12470,6 @@ int wlan_wowlan_cfg_ptn_match(enum wlan_bss_type bss_type, wlan_wowlan_ptn_cfg_t
         //   (void)memset(&flt_cfg, 0, sizeof(wlan_flt_cfg_t));
 
         g_flt_cfg.criteria = CRITERIA_UNICAST | CRITERIA_BROADCAST | CRITERIA_MULTICAST;
-        g_flt_cfg.nentries = 1;
 
         g_flt_cfg.mef_entry[0].mode   = MEF_MODE_HOST_SLEEP;
         g_flt_cfg.mef_entry[0].action = MEF_ACTION_ALLOW_AND_WAKEUP_HOST;
@@ -12523,6 +12522,11 @@ int wlan_wowlan_cfg_ptn_match(enum wlan_bss_type bss_type, wlan_wowlan_ptn_cfg_t
         filt_num++;
     }
     g_flt_cfg.mef_entry[0].filter_num = filt_num;
+    if (!g_flt_cfg.criteria)
+    {
+        g_flt_cfg.criteria = CRITERIA_UNICAST | CRITERIA_BROADCAST | CRITERIA_MULTICAST;
+    }
+    g_flt_cfg.nentries = 1;
     return wifi_set_packet_filters(&g_flt_cfg);
 }
 #endif
