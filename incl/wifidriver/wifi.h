@@ -936,9 +936,9 @@ int wrapper_wlan_cmd_11n_delba_rspgen(void *saved_event_buff);
 
 int wrapper_wlan_ecsa_enable(void);
 
-int wrapper_wlan_sta_ampdu_enable(const t_u8 interface,
+int wrapper_wlan_sta_ampdu_enable(const t_u8 interface
 #if CONFIG_WMM
-    t_u8 tid
+    ,t_u8 tid
 #endif
 );
 

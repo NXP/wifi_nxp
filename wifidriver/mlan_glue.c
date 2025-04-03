@@ -803,9 +803,9 @@ static mlan_status do_wlan_ret_11n_delba(mlan_private *priv, HostCmd_DS_COMMAND 
 }
 
 // Only Enable AMPDU for station interface
-int wrapper_wlan_sta_ampdu_enable(const t_u8 interface,
+int wrapper_wlan_sta_ampdu_enable(const t_u8 interface
 #if CONFIG_WMM
-    t_u8 tid
+    ,t_u8 tid
 #endif
 )
 {
@@ -6213,9 +6213,9 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #if CONFIG_WMM
             send_wifi_driver_tx_data_event(MLAN_BSS_TYPE_STA);
             send_wifi_driver_tx_data_event(MLAN_BSS_TYPE_UAP);
-#endif
 #ifdef CONFIG_WPA_SUPP_P2P
             send_wifi_driver_tx_data_event(MLAN_BSS_TYPE_WIFIDIRECT);
+#endif
 #endif
             break;
         default:
