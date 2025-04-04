@@ -1181,8 +1181,7 @@ static void main_task(osa_task_param_t arg)
     /* TODO: Currently using SoC based macro for FRDM-MCXN947 board as name of FRDM board series
      * is not known yet. Need to change SoC name with FRDM board series name. */
 #elif defined(WIFI_BT_USE_ARDUINO_SHIELD)
-    /* TODO: BT has to add BOARD_BT_UART_IRQ information below for FRDM-MCXN947 board */
-    //(void)NVIC_SetPriority(LP_FLEXCOMM3_IRQn, HAL_UART_ISR_PRIORITY);
+    (void)NVIC_SetPriority(LP_FLEXCOMM2_IRQn, HAL_UART_ISR_PRIORITY);
 #else
     (void)NVIC_SetPriority(LPUART3_IRQn, HAL_UART_ISR_PRIORITY);
 
@@ -1197,7 +1196,7 @@ static void main_task(osa_task_param_t arg)
     }
 
     lpuart_config_bt.srcclk = BOARD_BT_UART_CLK_FREQ;
-#if defined(MIMXRT1176_cm7_SERIES)
+#if defined(MIMXRT1176_cm7_SERIES) || defined(WIFI_BT_USE_ARDUINO_SHIELD)
     lpuart_config_bt.base   = LPUART2;
 #else
     lpuart_config_bt.base = LPUART3;
