@@ -4465,6 +4465,11 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     }
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
                 }
+                else if (resp->result == HostCmd_RESULT_NOT_SUPPORT)
+                {
+                    rv                      = MLAN_STATUS_FAILURE;
+                    wm_wifi.cmd_resp_status = -WM_E_PERM;
+                }
                 else
                 {
                     rv                      = MLAN_STATUS_FAILURE;
@@ -8220,12 +8225,20 @@ int wifi_twt_information(wifi_twt_information_t *twt_information)
     ret = wifi_wait_for_cmdresp(NULL);
     if (ret == WM_SUCCESS)
     {
-        if (wm_wifi.cmd_resp_status != WM_SUCCESS)
+        if (wm_wifi.cmd_resp_status == WM_SUCCESS)
+        {
+            /* do nothing */
+        }
+        else if (wm_wifi.cmd_resp_status == -WM_E_PERM)
+        {
+            wifi_e("TWT information not supported");
+        }
+        else
         {
             wifi_e("TWT information error");
         }
     }
-    
+
     return WM_SUCCESS;
 }
 #endif /* CONFIG_11AX_TWT */

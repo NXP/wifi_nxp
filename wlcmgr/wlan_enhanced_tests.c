@@ -1590,7 +1590,8 @@ static uint8_t g_twt_teardown_cfg[3] = {0};
 static test_cfg_param_t g_twt_teardown_cfg_param[] = {
     /* name             offset  len  notes */
     {"FlowIdentifier", 0, 1, "Range: [0-7]"},
-    {"NegotiationType", 1, 1, "0: Future Individual TWT SP start time, 1: Next Wake TBTT tim"},
+    {"NegotiationType", 1, 1, "0: Future Individual TWT SP start time, 1: Next Wake TBTT tim"
+        ", 3：Broadcast TWT"},
     {"TearDownAllTWT", 2, 1, "1: To teardown all TWT, 0 otherwise"},
 };
 #endif /* CONFIG_11AX_TWT */
@@ -1614,7 +1615,7 @@ static void dump_wlan_btwt_usage(void)
 static void test_wlan_bcast_twt(int argc, char **argv)
 {
     int ret = 0;
-    wlan_btwt_cfg_t btwt_cfg;
+    wlan_btwt_config_t btwt_cfg;
 
     if (argc < 2)
     {

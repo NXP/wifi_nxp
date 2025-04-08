@@ -13847,12 +13847,12 @@ wlan_11ax_config_t *wlan_get_11ax_cfg(void)
 }
 
 #if CONFIG_11AX_TWT
-int wlan_set_btwt_cfg(const wlan_btwt_cfg_t *btwt_cfg)
+int wlan_set_btwt_cfg(wlan_btwt_config_t *btwt_cfg)
 {
     return wifi_set_btwt_cfg(btwt_cfg);
 }
 
-int wlan_get_btwt_cfg(wlan_btwt_cfg_t *btwt_cfg)
+int wlan_get_btwt_cfg(wlan_btwt_config_t *btwt_cfg)
 {
     return wifi_get_btwt_cfg(btwt_cfg);
 }
