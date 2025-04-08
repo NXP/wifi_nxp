@@ -567,12 +567,14 @@ struct netif *net_get_sta_interface(void);
 struct netif *net_get_uap_interface(void);
 #endif
 
+#if CONFIG_WPA_SUPP_P2P
 /** Get wfd interface netif structure pointer
  *
  * \rerurn A pointer to wfd interface netif structure
  *
  */
 struct netif *net_get_wfd_interface(void);
+#endif
 
 #if defined(SDK_OS_FREE_RTOS)
 
@@ -627,6 +629,7 @@ void *net_get_uap_handle(void);
  */
 void net_interface_up(void *intrfc_handle);
 
+#if CONFIG_WPA_SUPP_P2P
 /** Get wfd interface handle
  *
  * Some APIs require the interface handle to be passed to them. The handle can
@@ -635,6 +638,7 @@ void net_interface_up(void *intrfc_handle);
  * \return wfd interface handle
  */
 void *net_get_wfd_handle(void);
+#endif
 
 /** Take interface down
  *

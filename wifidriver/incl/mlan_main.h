@@ -1143,6 +1143,7 @@ typedef struct
     t_u8 session_enable;
 } wps_t;
 
+#if CONFIG_WPA_SUPP_P2P
 /** Data structure for P2P information */
 typedef struct
 {
@@ -1151,6 +1152,7 @@ typedef struct
     /** Session enable flag */
     t_u8 session_enable;
 } p2p_t;
+#endif
 
 typedef struct _mlan_private mlan_private;
 typedef struct _mlan_private *pmlan_private;
@@ -1523,7 +1525,7 @@ struct _mlan_private
 #endif
 
 #if CONFIG_WPA_SUPP
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
     p2p_t p2p;
     int p2p_mgmt_bitmap_index;
     int p2p_gc_network;
@@ -2226,7 +2228,7 @@ struct _mlan_adapter
 #if CONFIG_WPA_SUPP
     /** WPA supplicant scan triggered */
     t_u8 wpa_supp_scan_triggered;
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
     /** WPA supplicant p2p scan triggered */
     t_u8 wpa_supp_p2p_scan_triggered;
 #endif

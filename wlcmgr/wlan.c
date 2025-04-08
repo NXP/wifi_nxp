@@ -75,7 +75,7 @@
 #include <supp_crypto.h>
 #include <wifi_nxp.h>
 #include "utils/common.h"
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
 #include <netif_decl.h>
 #endif
 #if CONFIG_WIFI_SHELL
@@ -4936,7 +4936,7 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
 #if CONFIG_WPA_SUPP_P2P
         else if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
             if_handle = net_get_wfd_handle();
-#endif /* CONFIG_EMBEDDED_P2P */
+#endif
         (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
         // net_inet_ntoa(network->ip.ipv4.address, ip);
         wlan.sta_state      = CM_STA_CONNECTED;
@@ -5265,7 +5265,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
 #endif
     struct netif *sta_netif = net_get_sta_interface();
     struct wlan_network *network = &wlan.networks[wlan.cur_network_idx];
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
     mlan_private *priv_wfd = (mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_WIFIDIRECT];
 #endif
 
@@ -5353,7 +5353,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         if (hwaddr_aton(s + 1, addr))
             return;
 
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
         if (strstr(buf, " p2p_dev_addr="))
         {
             netif = net_get_wfd_interface();
@@ -5385,7 +5385,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         if (hwaddr_aton(s + 1, disassoc_resp.sta_addr))
             return;
 
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
         if (strstr(buf, " p2p_dev_addr="))
         {
             bss_type = MLAN_BSS_TYPE_WIFIDIRECT;
@@ -5468,7 +5468,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     }
     else
 #endif
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
     if (strstr(buf, P2P_EVENT_FIND_STOPPED))
     {
         wlcm_d("p2p find stoped");
@@ -5963,7 +5963,7 @@ static void wlcm_process_init(enum cm_sta_state *next)
 
     wlan_set_11d_state(WLAN_BSS_TYPE_UAP, 1);
     wlan_set_11d_state(WLAN_BSS_TYPE_STA, 1);
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
     wlan_set_11d_state(WLAN_BSS_TYPE_WIFIDIRECT, 1);
 #endif
 }
@@ -7754,7 +7754,7 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
     (void)PRINTF("STA MAC Address: ");
     print_mac((const char *)&wlan.sta_mac);
     (void)PRINTF("\r\n");
-#if defined(CONFIG_EMBEDDED_P2P) || defined(CONFIG_WPA_SUPP_P2P)
+#if CONFIG_WPA_SUPP_P2P
     (void)memcpy((void *)&wlan.wfd_mac[0], (const void *)mac_addr.mac, MLAN_MAC_ADDR_LENGTH);
     wlan.wfd_mac[0] |= (0x01 << 1);
 #endif
@@ -9284,7 +9284,7 @@ int wlan_add_network(struct wlan_network *network)
     }
 
 
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
     if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
     {
         netif = net_get_wfd_interface();
@@ -11071,7 +11071,7 @@ int wlan_set_mac_addr(uint8_t *mac)
 
     if (wlan.status == WLCMGR_INIT_DONE || wlan.status == WLCMGR_ACTIVATED)
     {
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
         uint8_t wfd_mac[MLAN_MAC_ADDR_LENGTH];
 #endif
 #if UAP_SUPPORT
@@ -11488,7 +11488,7 @@ int wlan_get_uap_connection_state(enum wlan_connection_state *state)
 int wlan_get_address(struct wlan_ip_config *addr)
 {
     void *if_handle = NULL;
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
     mlan_private *priv_wfd = (mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_WIFIDIRECT];
 #endif
 
@@ -11504,7 +11504,7 @@ int wlan_get_address(struct wlan_ip_config *addr)
 
     if_handle = net_get_mlan_handle();
 
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
     if (priv_wfd->p2p_gc_network)
     {
         if_handle = net_get_wfd_handle();

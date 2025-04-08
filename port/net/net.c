@@ -115,10 +115,6 @@ static void netif_ext_status_callback(struct netif *netif,
                                       netif_nsc_reason_t reason,
                                       const netif_ext_callback_args_t *args)
 {
-//    interface_t *if_handle = (interface_t *)net_get_mlan_handle();
-
-//    if (&if_handle->netif == netif)
-    {
 #if CONFIG_IPV6
         if ((reason & (LWIP_NSC_IPV6_ADDR_STATE_CHANGED | LWIP_NSC_IPV6_SET)) != LWIP_NSC_NONE)
         {
@@ -136,7 +132,6 @@ static void netif_ext_status_callback(struct netif *netif,
                 }
             }
         }
-    }
 }
 
 #if CONFIG_IPV6
@@ -741,7 +736,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
 #if UAP_SUPPORT
         || if_handle == &g_uap
 #endif
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
         || if_handle == &g_wfd
 #endif
         )
@@ -811,7 +806,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
             break;
     }
     /* Finally this should send the following event. */
-    if ((if_handle == &g_mlan)
+    if (if_handle == &g_mlan
 #if CONFIG_WPA_SUPP_P2P
         || ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_STA))
 #endif
@@ -826,7 +821,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
          */
     }
 #if UAP_SUPPORT
-    else if ((if_handle == &g_uap)
+    else if (if_handle == &g_uap
 #if CONFIG_WPA_SUPP_P2P
              || ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_UAP))
 #endif

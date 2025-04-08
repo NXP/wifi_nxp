@@ -3400,7 +3400,7 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
     if (priv->bss_role == MLAN_BSS_ROLE_STA)
     {
         if_priv = wm_wifi.if_priv;
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
         if (priv->bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
             if_priv = wm_wifi.if_priv_wfd;
 #endif
@@ -4569,7 +4569,7 @@ int wifi_low_level_output(const t_u8 interface,
 #if CONFIG_11AX
 #if CONFIG_TCP_ACK_ENH
     if ((interface == MLAN_BSS_TYPE_STA
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
          || ((interface == MLAN_BSS_TYPE_WIFIDIRECT) && (mlan_adap->priv[interface]->bss_role == MLAN_BSS_ROLE_STA))
 #endif
              ) &&
@@ -4767,7 +4767,7 @@ int wifi_low_level_output(const t_u8 interface,
 
 #if CONFIG_STA_AMPDU_TX
     if ((interface == BSS_TYPE_STA
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
          || ((interface == MLAN_BSS_TYPE_WIFIDIRECT) && (mlan_adap->priv[interface]->bss_role == MLAN_BSS_ROLE_STA))
 #endif
              ) &&
@@ -4790,7 +4790,7 @@ int wifi_low_level_output(const t_u8 interface,
 
 #if CONFIG_UAP_AMPDU_TX
     if ((interface == BSS_TYPE_UAP
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
          || ((interface == MLAN_BSS_TYPE_WIFIDIRECT) && (mlan_adap->priv[interface]->bss_role == MLAN_BSS_ROLE_UAP))
 #endif
              ) &&
@@ -5465,7 +5465,7 @@ int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_tim
     memset(buf, 0x00, sizeof(buf));
 
     if (((bss_type == BSS_TYPE_STA) && (pmpriv->media_connected == MFALSE))
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
         || ((bss_type == MLAN_BSS_TYPE_WIFIDIRECT) && (mlan_adap->priv[bss_type]->bss_role == MLAN_BSS_ROLE_STA))
 #endif
     )
@@ -5548,7 +5548,7 @@ int wifi_remain_on_channel(const enum wlan_bss_type bss_type, const bool status,
 
         send_wifi_driver_tx_data_event(MLAN_BSS_TYPE_STA);
         send_wifi_driver_tx_data_event(MLAN_BSS_TYPE_UAP);
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
         send_wifi_driver_tx_data_event(MLAN_BSS_TYPE_WIFIDIRECT);
 #endif
     }

@@ -1122,7 +1122,7 @@ int wifi_uap_start(mlan_bss_type type,
     if (wifi_is_remain_on_channel() && remain_priv)
     {
         wuap_d("Cancel Remain on Channel before Starting AP");
-        wifi_remain_on_channel(type, false, 0, 0);
+        wifi_remain_on_channel((enum wlan_bss_type)type, false, 0, 0);
     }
 
     if (wm_wifi.enable_11d_support && wm_wifi.uap_support_11d_apis)

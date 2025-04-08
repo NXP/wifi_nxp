@@ -1147,6 +1147,9 @@ typedef struct _mlan_ds_bss
 {
     /** Sub-command */
     mlan_ioctl_req_id sub_command;
+    t_u8 bss_type;
+    /** Action: set or get */
+    mlan_act_ioctl action;
     /** BSS parameter */
     union
     {
@@ -1200,11 +1203,6 @@ typedef struct _mlan_ds_bss
 #endif
 #endif
     } param;
-#if CONFIG_WPA_SUPP_P2P
-    t_u8 bss_type;
-    /** Action: set or get */
-    mlan_act_ioctl action;
-#endif
 } mlan_ds_bss, *pmlan_ds_bss;
 
 #ifdef OTP_CHANINFO
@@ -1886,6 +1884,7 @@ typedef enum _mlan_psk_type
     MLAN_PSK_PASSWORD,
 } mlan_psk_type;
 
+#if CONFIG_WPA_SUPP_P2P
 typedef enum
 {
     WIFI_DIRECT_MODE_NONE = 0,
@@ -1894,6 +1893,7 @@ typedef enum
     WIFI_DIRECT_MODE_CLIENT,
     WIFI_DIRECT_MODE_NOT_SPECIFIED,
 } WifiDirect_op_mode;
+#endif
 
 /** The bit to indicate the key is for unicast */
 #define MLAN_KEY_INDEX_UNICAST 0x40000000
@@ -3224,6 +3224,7 @@ typedef struct _mlan_ds_11n_cfg
 {
     /** Sub-command */
     t_u32 sub_command;
+    t_u8 bss_type;
     /** 802.11n configuration parameter */
     union
     {
@@ -3248,9 +3249,6 @@ typedef struct _mlan_ds_11n_cfg
         /** DelBA for MLAN_OID_11N_CFG_DELBA */
         mlan_ds_11n_delba del_ba;
     } param;
-#ifdef CONFIG_WPA_SUPP_P2P
-    t_u8 bss_type;
-#endif
 } mlan_ds_11n_cfg, *pmlan_ds_11n_cfg;
 
 /** Country code length */

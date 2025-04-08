@@ -159,7 +159,7 @@ void wifi_process_mgmt_tx_status(struct wifi_message *msg)
     resp->frame.frame_len       = 0;
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.if_priv;
 
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
     if ((t_u32)(msg->data) == MLAN_BSS_TYPE_WIFIDIRECT)
     {
         wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.if_priv_wfd;

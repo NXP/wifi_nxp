@@ -740,7 +740,7 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
         num_chans = 0;
     }
 
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
     if (wifi_if_ctx_rtos->bss_type == BSS_TYPE_WFD)
     {
         wm_wifi.wpa_supp_p2p_scan = true;

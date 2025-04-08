@@ -91,6 +91,8 @@
 #define CONFIG_WPA_SUPP_WPA3              1
 #define CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE 0
 
+#define CONFIG_WPA_SUPP_P2P 0
+
 #if defined(SD9177) || defined(IW610)
 #define CONFIG_WPA_SUPP_DPP 0
 
@@ -158,10 +160,8 @@
 /*
  * wpa supplicant debug options
  */
-#define CONFIG_WPA_SUPP_DEBUG_LEVEL 3
+#define CONFIG_WPA_SUPP_DEBUG_LEVEL 6
 
 #define CONFIG_SUPP_DEBUG 0
-
-#define CONFIG_WPA_SUPP_P2P 1
 
 #endif /* _WIFI_CONFIG_H_ */

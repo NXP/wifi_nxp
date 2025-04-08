@@ -7332,7 +7332,7 @@ int wlan_dpp_reconfig(const char *cmd);
 int wlan_dpp_configurator_sign(int is_ap, const char *cmd);
 #endif
 
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
 int wlan_p2p_find(const char *cmd);
 int wlan_p2p_stop_find(void);
 int wlan_p2p_connect(char *cmd);

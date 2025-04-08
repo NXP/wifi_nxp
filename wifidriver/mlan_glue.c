@@ -534,7 +534,7 @@ int wrapper_wlan_cmd_11n_addba_rspgen(void *saved_event_buff)
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
 
     if (evt->bss_type == BSS_TYPE_STA
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
         ||
         ((evt->bss_type == MLAN_BSS_TYPE_WIFIDIRECT) && (mlan_adap->priv[evt->bss_type]->bss_role == MLAN_BSS_ROLE_STA))
 #endif
@@ -545,7 +545,7 @@ int wrapper_wlan_cmd_11n_addba_rspgen(void *saved_event_buff)
     }
 #if UAP_SUPPORT
     else if (evt->bss_type == BSS_TYPE_UAP
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
              || ((evt->bss_type == MLAN_BSS_TYPE_WIFIDIRECT) &&
                  (mlan_adap->priv[evt->bss_type]->bss_role == MLAN_BSS_ROLE_UAP))
 #endif
@@ -1382,9 +1382,7 @@ static int wifi_send_uap_11n_cfg_ioctl(mlan_act_ioctl action, mlan_ds_11n_cfg *d
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
     req.pbuf      = (t_u8 *)ds_11n_cfg;
     req.buf_len   = sizeof(mlan_ds_11n_cfg);
-#if CONFIG_WPA_SUPP_P2P
     req.bss_index = ds_11n_cfg->bss_type;
-#endif
     req.req_id    = MLAN_IOCTL_11N_CFG;
     req.action    = action;
 
@@ -1456,9 +1454,7 @@ int wifi_uap_set_httxcfg_int(unsigned int bss_type, unsigned short httxcfg)
 #else
     ds_11n_cfg.param.tx_cfg.misc_cfg    = BAND_SELECT_BG;
 #endif
-#if CONFIG_WPA_SUPP_P2P
     ds_11n_cfg.bss_type = bss_type;
-#endif
 
     return wifi_send_uap_11n_cfg_ioctl(MLAN_ACT_SET, &ds_11n_cfg);
 }
@@ -2735,9 +2731,7 @@ int wifi_nxp_send_assoc(unsigned int bss_type, nxp_wifi_assoc_info_t *assoc_info
     (void)memset(&bss, 0x00, sizeof(mlan_ds_bss));
     bss.sub_command          = MLAN_OID_BSS_START;
     bss.param.ssid_bssid.idx = (t_u32)idx + 1UL; /* + 1 req. by mlan */
-#ifdef CONFIG_WPA_SUPP_P2P
     bss.bss_type = bss_type;
-#endif
     return wifi_send_bss_ioctl(&bss);
 }
 #endif
@@ -3132,7 +3126,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     if (bss_type == MLAN_BSS_TYPE_UAP)
                         pmpriv = (mlan_private *)mlan_adap->priv[1];
 #endif
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
                     else if (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
                         pmpriv = (mlan_private *)mlan_adap->priv[2];
 #endif
@@ -6213,7 +6207,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #if CONFIG_WMM
             send_wifi_driver_tx_data_event(MLAN_BSS_TYPE_STA);
             send_wifi_driver_tx_data_event(MLAN_BSS_TYPE_UAP);
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
             send_wifi_driver_tx_data_event(MLAN_BSS_TYPE_WIFIDIRECT);
 #endif
 #endif

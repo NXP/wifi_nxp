@@ -293,7 +293,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             PRINTF("Soft AP \"%s\" started successfully\r\n", ssid);
             printSeparator();
 
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
 	    struct wlan_network uap_network;
 	    ret = wlan_get_current_uap_network(&uap_network);
 	    if (ret != WM_SUCCESS)

@@ -2176,7 +2176,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
         {
 #if CONFIG_WPA_SUPP
             mlan_adap->wpa_supp_scan_triggered = MFALSE;
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
             mlan_adap->wpa_supp_p2p_scan_triggered = MFALSE;
 #endif
 #endif
@@ -2193,7 +2193,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     {
 #if CONFIG_WPA_SUPP
         mlan_adap->wpa_supp_scan_triggered = MFALSE;
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
         mlan_adap->wpa_supp_p2p_scan_triggered = MFALSE;
 #endif
 #endif
@@ -2239,7 +2239,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     }
 #endif
 
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
         if ((mlan_adap->wpa_supp_p2p_scan_triggered) && (!memcmp((const void *)ssid, "DIRECT-", 7)))
             user_scan_cfg->ssid_list[0].max_len = 0xFE;
 #endif
@@ -5760,7 +5760,7 @@ static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
     t_u8 baserates[] = {0x82, 0x84, 0x8b, 0x96, 0x8c, 0x98, 0xb0};
 
     if (pmpriv->bss_index != (t_u8)MLAN_BSS_ROLE_STA
-#ifdef CONFIG_WPA_SUPP_P2P
+#if CONFIG_WPA_SUPP_P2P
         && (pmpriv->bss_type != (t_u8)MLAN_BSS_TYPE_WIFIDIRECT)
 #endif
 		)
@@ -5932,7 +5932,7 @@ static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
         pkt_len                = (t_u16)meas_pkt_len;
         pmgmt_pkt_hdr->frm_len = pkt_len - (t_u16)sizeof(pmgmt_pkt_hdr->frm_len);
 
-        (void)wifi_inject_frame(pmpriv->bss_type, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
+        (void)wifi_inject_frame((enum wlan_bss_type)pmpriv->bss_type, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
 
 #if !CONFIG_MEM_POOLS
         OSA_MemoryFree(pmgmt_pkt_hdr);
