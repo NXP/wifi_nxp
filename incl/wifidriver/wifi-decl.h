@@ -1175,7 +1175,7 @@ typedef PACK_START struct
     /** TWT Flow Identifier. Range: [0-7] */
     t_u8 flow_identifier;
     /** Negotiation Type. 0: Future Individual TWT SP start time, 1: Next
-     * Wake TBTT time */
+     * Wake TBTT time, 3：Broadcast TWT */
     t_u8 negotiation_type;
     /** Tear down all TWT. 1: To teardown all TWT, 0 otherwise */
     t_u8 teardown_all_twt;
@@ -1185,10 +1185,11 @@ typedef PACK_START struct
 #define BTWT_AGREEMENT_MAX 5
 typedef PACK_START struct
 {
+    /** BTWT ID */
     t_u8 btwt_id;
-    /** TWT Mantissa */
+    /** BTWT Mantissa */
     t_u16 bcast_mantissa;
-    /** TWT Exponent */
+    /** BTWT Exponent */
     t_u8 bcast_exponent;
     /** Range 64-255 */
     t_u8 nominal_wake;
@@ -1196,11 +1197,15 @@ typedef PACK_START struct
 /** BTWT AP Config parameters */
 typedef PACK_START struct
 {
+    /** Reserved */
     t_u8 bcast_bet_sta_wait;
-    /** TWT Offset */
+    /** Reserved */
     t_u16 bcast_offset;
+    /** Reserved */
     t_u8 bcast_twtli;
+    /** Count of BTWT agreement sets */
     t_u8 count;
+    /** BTWT agreement sets */
     btwt_set_t btwt_sets[BTWT_AGREEMENT_MAX];
 } PACK_END wifi_btwt_config_t;
 
