@@ -2015,6 +2015,7 @@ enum wlan_mon_task_event
 {
     HOST_SLEEP_HANDSHAKE = 1,
     HOST_SLEEP_EXIT,
+    HOST_SLEEP_HANDSHAKE_SKIP,
     WIFI_RECOVERY_REQ,
 };
 

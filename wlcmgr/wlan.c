@@ -312,6 +312,8 @@ OSA_TIMER_HANDLE_DEFINE(wake_timer);
 #endif
 int is_hs_handshake_done = 0;
 bool wlan_hs_pre_cfg_done = false;
+/* indicate that we did not notify FW after host sleep wake up */
+bool skip_hs_handshake = false;
 
 extern OSA_SEMAPHORE_HANDLE_DEFINE(wakelock);
 extern int wakeup_by;
@@ -1249,6 +1251,7 @@ static void wake_timer_cb(osa_timer_arg_t arg)
 #endif
 
 #ifndef __ZEPHYR__
+
 status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, void *data)
 {
     int ret;
@@ -1285,14 +1288,27 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
         if (powerState == PM_LP_STATE_PM1)
             goto done;
 #endif
-        if (!is_hs_handshake_done)
+        if (is_hs_handshake_done == 0)
         {
             is_hs_handshake_done = WLAN_HOSTSLEEP_IN_PROCESS;
             ret = wlan_hs_send_event(HOST_SLEEP_HANDSHAKE, NULL);
             if (ret != 0)
+            {
                 return kStatus_PMNotifyEventError;
+            }
             return kStatus_PMPowerStateNotAllowed;
         }
+#if !(CONFIG_WIFI_BLE_COEX_APP) && !(CONFIG_NCP)
+        else if (skip_hs_handshake == true && is_hs_handshake_done == WLAN_HOSTSLEEP_SUCCESS)
+        {
+            ret = wlan_hs_send_event(HOST_SLEEP_HANDSHAKE_SKIP, NULL);
+            if (ret != 0)
+            {
+                return kStatus_PMNotifyEventError;
+            }
+        }
+#endif
+
         /* If hanshake is still in process, entring low power mode is not allowed */
         if (is_hs_handshake_done == WLAN_HOSTSLEEP_IN_PROCESS)
             return kStatus_PMPowerStateNotAllowed;
@@ -1321,11 +1337,33 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
 #endif
         if (is_hs_handshake_done == WLAN_HOSTSLEEP_SUCCESS && wlan_hs_pre_cfg_done == true)
         {
-            ret = wlan_hs_send_event(HOST_SLEEP_EXIT, NULL);
-            if (ret != 0)
-                return kStatus_PMNotifyEventError;
-            /* reset hs hanshake flag after waking up */
-            is_hs_handshake_done = 0;
+#if CONFIG_POWER_MANAGER
+#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE) && (!CONFIG_NCP_OT)
+            if(!wlan_is_manual && wlan_host_sleep_state == HOST_SLEEP_PERIODIC)
+            {
+                wakelock_get();
+                (void)OSA_TimerActivate((osa_timer_handle_t)wake_timer);
+            }
+#endif
+#endif
+            /* If we are not woken up by WLAN, skip posting host sleep exit event.
+             * And skip host sleep handshake next time we are about to sleep.
+             */
+            if (wakeup_by == WAKEUP_BY_WLAN || POWER_GetWakeupStatus(WL_MCI_WAKEUP0_IRQn))
+            {
+                ret = wlan_hs_send_event(HOST_SLEEP_EXIT, NULL);
+                if (ret != 0)
+                {
+                    return kStatus_PMNotifyEventError;
+                }
+                skip_hs_handshake = false;
+                /* reset hs hanshake flag after waking up */
+                is_hs_handshake_done = 0;
+            }
+            else
+            {
+                skip_hs_handshake = true;
+            }
             wlan_hs_pre_cfg_done = false;
 #if !(CONFIG_WIFI_BLE_COEX_APP) && !(CONFIG_NCP)
 #ifdef RW610
@@ -1333,8 +1371,14 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
 #endif
             /* If periodic host sleep is not enabled, reset the flag to disable host sleep */
             if (wlan_host_sleep_state == HOST_SLEEP_ONESHOT)
+            {
                 wlan_host_sleep_state = HOST_SLEEP_DISABLE;
+                is_hs_handshake_done = 0;
+                skip_hs_handshake = false;
+            }
+            host_sleep_dump_wakeup_source();
 #endif
+            wakeup_by = 0;
         }
     }
 #ifdef RW610
@@ -10846,20 +10890,20 @@ static void wlcmgr_mon_task(void * data)
             }
             else if (msg.id == HOST_SLEEP_EXIT)
             {
-#if CONFIG_POWER_MANAGER
-#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE) && (!CONFIG_NCP_OT)
-                if(!wlan_is_manual && wlan_host_sleep_state == HOST_SLEEP_PERIODIC)
+                if (wakeup_by == WAKEUP_BY_WLAN || POWER_GetWakeupStatus(WL_MCI_WAKEUP0_IRQn))
                 {
-                    wakelock_get();
-                    (void)OSA_TimerActivate((osa_timer_handle_t)wake_timer);
+                    wlan_cancel_host_sleep();
+                    /* Check fw status and write temperature to firmware after waking up */
+                    temperature_mon_cb(NULL);
+                    (void)OSA_TimerActivate((osa_timer_handle_t)temperature_mon_timer);
                 }
-#endif
-#endif
-                wlan_cancel_host_sleep();
-                /* Check fw status and write temperature to firmware after waking up */
-                temperature_mon_cb(NULL);
-                (void)OSA_TimerActivate((osa_timer_handle_t)temperature_mon_timer);
             }
+#if !(CONFIG_WIFI_BLE_COEX_APP)
+            else if (msg.id == HOST_SLEEP_HANDSHAKE_SKIP)
+            {
+                host_sleep_cli_notify();
+            }
+#endif
 #endif
 #if CONFIG_WIFI_RECOVERY
             else if (msg.id == WIFI_RECOVERY_REQ)
