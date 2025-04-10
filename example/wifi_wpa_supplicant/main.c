@@ -294,9 +294,9 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
 
 #if CONFIG_WPA_SUPP_P2P
-	    struct wlan_network uap_network;
-	    ret = wlan_get_current_uap_network(&uap_network);
-	    if (ret != WM_SUCCESS)
+            struct wlan_network uap_network;
+            ret = wlan_get_current_uap_network(&uap_network);
+            if (ret != WM_SUCCESS)
             {
                 PRINTF("Failed to get Soft AP network\r\n");
                 return 0;

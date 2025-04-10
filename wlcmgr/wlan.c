@@ -5518,6 +5518,11 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
                 }
             }
         }
+        if (wlcm_process_add_unspecified_network("wps_network") == WM_SUCCESS)
+        {
+            wlan.wps_session_attempt = 0;
+        }
+
     }
     else if(strstr(buf, P2P_EVENT_GO_NEG_SUCCESS))
     {
