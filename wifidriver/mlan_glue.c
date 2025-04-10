@@ -6523,7 +6523,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 break;
             }
 
-            memcpy(chan_load, (t_u8 *)(msg->data + sizeof(ch_load_event_t)), sizeof(wifi_802_11_chan_load_t));
+            memcpy(chan_load, ((t_u8 *)msg->data + sizeof(ch_load_event_t)), sizeof(wifi_802_11_chan_load_t));
 
             if(wifi_event_completion(WIFI_EVENT_CHAN_LOAD, WIFI_EVENT_REASON_SUCCESS, chan_load) != WM_SUCCESS)
             {
