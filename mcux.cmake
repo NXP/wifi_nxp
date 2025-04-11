@@ -194,7 +194,7 @@ if (CONFIG_MCUX_COMPONENT_middleware.wifi.fwdnld)
                 # TODO please change to relative dir
                 wifi_bt_firmware/iw610/sd_iw610.bin.se.inc
                 # TODO please change to relative dir
-                wifi_bt_firmware/iw610/uartspi_iw610_bt.bin.se.inc
+                wifi_bt_firmware/iw610/uartspi_iw610.bin.se.inc
                 # TODO please change to relative dir
                 wifi_bt_firmware/iw610/sduart_iw610_se.h
                 # TODO please change to relative dir

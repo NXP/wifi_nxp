@@ -19,7 +19,7 @@ const uint8_t fw_cpu2[] = {
 };
 #else
 const uint8_t fw_cpu2[] = {
-    #include <uartspi_iw610_bt.bin.se.inc>
+    #include <uartspi_iw610.bin.se.inc>
 };
 #endif
 
