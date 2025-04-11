@@ -220,7 +220,7 @@ lpuart_rtos_handle_t handle_bt;
 struct _lpuart_handle t_handle_bt;
 
 lpuart_rtos_config_t lpuart_config_bt = {
-#ifdef WIFI_BT_USE_M2_INTERFACE
+#if defined(WIFI_BT_USE_M2_INTERFACE) && !defined(WIFI_IW610_BOARD_MURATA_2LL_M2)
     .baudrate    = 115200,/* Tested for FC 2EL M2 */
 #else
     .baudrate    = 3000000,
@@ -1065,6 +1065,7 @@ static void main_task(osa_task_param_t arg)
 #ifdef CONFIG_BT_IND_DNLD
     void *intf = NULL;
     /* BTonly firmware download over UART */
+    BOARD_WIFI_BT_Enable(false);
     BOARD_WIFI_BT_Enable(true);
     intf = (void *)uart_init_interface();
     assert(intf != NULL);
