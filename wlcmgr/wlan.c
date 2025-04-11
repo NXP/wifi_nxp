@@ -10408,6 +10408,9 @@ void wlan_reset(cli_reset_option ResetOption)
                     OSA_TimeDelay(1000);
                 }
             }
+#if CONFIG_CSI
+            wlan_reset_csi_filter_data();
+#endif
 
 #if UAP_SUPPORT
             /*Stop current uAP if uAP is started.*/
