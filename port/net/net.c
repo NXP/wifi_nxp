@@ -458,6 +458,15 @@ int net_wlan_deinit(void)
     }
 #endif
 
+#if CONFIG_WPA_SUPP_P2P
+    ret = net_netif_deinit(&g_wfd.netif);
+    if (ret != WM_SUCCESS)
+    {
+        net_e("WFD interface deinit failed");
+        return -WM_FAIL;
+    }
+#endif
+
 #if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
     nxp_wifi_rxpbuf_reset();
 #endif
