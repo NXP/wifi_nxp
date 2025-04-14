@@ -1071,10 +1071,10 @@ static int wlan_send_host_sleep_int(uint32_t wake_up_conds, bool is_config)
 
 #ifndef RW610
 #if CONFIG_MEF_CFG
-    if (wake_up_conds == HOST_SLEEP_NO_COND)
+    if (wake_up_conds == HOST_SLEEP_COND_MEF)
     {
         wlan.hs_enabled = MTRUE;
-        wlan.hs_wakeup_condition = wake_up_conds;
+        wlan.hs_wakeup_condition = HOST_SLEEP_NO_COND;
         if (g_flt_cfg.nentries == 0 && (is_config == MTRUE))
         {
             (void)PRINTF("No user configured MEF entries, use default ARP filters.\r\n");

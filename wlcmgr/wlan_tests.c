@@ -5195,7 +5195,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
 #if CONFIG_MEF_CFG
         else if (string_equal(argv[2], "mef"))
         {
-            ret = wlan_send_host_sleep(HOST_SLEEP_NO_COND);
+            ret = wlan_send_host_sleep(HOST_SLEEP_COND_MEF);
             if (ret == WM_SUCCESS)
             {
                 (void)PRINTF("Host sleep configuration successs with MEF");

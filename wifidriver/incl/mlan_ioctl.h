@@ -2276,6 +2276,8 @@ typedef struct _mlan_ds_power_cfg
 #define HOST_SLEEP_COND_MAC_EVENT MBIT(2)
 /** Host sleep config condition: multicast data */
 #define HOST_SLEEP_COND_MULTICAST_DATA MBIT(3)
+/** Host sleep config condition: used for mef */
+#define HOST_SLEEP_COND_MEF MBIT(31)
 
 /** Host sleep config conditions: Default */
 #define HOST_SLEEP_DEF_COND (HOST_SLEEP_COND_BROADCAST_DATA | HOST_SLEEP_COND_UNICAST_DATA | HOST_SLEEP_COND_MAC_EVENT)
