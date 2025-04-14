@@ -694,7 +694,9 @@ static struct
 } wlan;
 
 OSA_TASK_HANDLE_DEFINE(wlcmgr_mon_task_Handle);
-
+#if defined(SD8978)
+bool wlan_in_reset = false;
+#endif
 #if CONFIG_CLOUD_KEEP_ALIVE
 #define MIN_KEEP_ALIVE_ID 0
 #define MAX_KEEP_ALIVE_ID 4
@@ -7752,12 +7754,14 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
     }
 #endif
 
+#if !defined(SD8978)
 #if (CONFIG_WIFI_IND_DNLD) && (CONFIG_WIFI_IND_RESET)
     if (wifi_reset_in_progress() == true)
     {
         ret = wifi_reinit(fw_start_addr, size, FW_RELOAD_SDIO_INBAND_RESET);
     }
     else
+#endif
 #endif
     {
         ret = wifi_init(fw_start_addr, size);
@@ -9962,7 +9966,11 @@ int wlan_remove_network(const char *name)
         if (wlan.networks[i].name[0] != '\0' && strlen(wlan.networks[i].name) == len &&
             !strncmp(wlan.networks[i].name, name, len))
         {
+#if defined(SD8978)
+            if (false == wlan_in_reset)
+#else
             if (false == wifi_reset_in_progress())
+#endif
             {
                 if (wlan.running && wlan.cur_network_idx == i)
                 {
@@ -10625,7 +10633,11 @@ int wlan_remove_all_networks(void)
      * Moreover, removing and adding net interface will increase netif_num cumulatively,
      * which will mismatch with "ua2" during creating dhcpd.
      */
+#if defined(SD8978)
+    wlan_in_reset = true;
+#else
     wifi_reset_set_state(true);
+#endif
     wlan_remove_all_network_profiles();
 
     intrfc_handle = net_get_sta_handle();
@@ -10836,9 +10848,12 @@ void wlan_reset(cli_reset_option ResetOption)
         }
     }
 
+#if defined(SD8978)
+    wlan_in_reset = false;
+#else
     wifi_reset_set_state(false);
+#endif
     OSA_MutexUnlock((osa_mutex_handle_t)reset_lock);
-
     PRINTF("--- Done ---\r\n");
 }
 
@@ -10867,7 +10882,11 @@ static void wlcmgr_mon_task(void * data)
         if (status == KOSA_StatusSuccess)
         {
             /*Elements of wlan is not avaliable during wlan reset, so wait ending of wlan reset*/
+#if defined(SD8978)
+            while(wlan_in_reset)
+#else
             while(wifi_reset_in_progress() == true)
+#endif
             {
                 OSA_TimeDelay(10);
             }
@@ -16332,10 +16351,12 @@ int wlan_get_indrst_cfg(wlan_indrst_cfg_t *indrst_cfg)
     return wifi_get_indrst_cfg(indrst_cfg, (mlan_bss_type)WLAN_BSS_TYPE_STA);
 }
 
+#if !defined(SD8978)
 static int wlan_trigger_inband_ind_reset()
 {
     return wifi_trigger_inband_indrst();
 }
+#endif
 
 static int wlan_trigger_oob_ind_reset()
 {
@@ -16368,7 +16389,11 @@ int wlan_independent_reset(void)
     else if (wlan.ir_mode == 2)
     {
         wlan.ir_mode = 0;
+#if defined(SD8978)
+        return wifi_test_independent_reset();
+#else
         return wlan_trigger_inband_ind_reset();
+#endif
     }
 
     PRINTF("No IR mode is set. Configure correct IR mode. \r\n");

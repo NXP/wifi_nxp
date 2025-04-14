@@ -119,7 +119,9 @@ int retry_attempts;
 wm_wifi_t wm_wifi;
 static bool xfer_pending;
 static bool scan_thread_in_process = false;
+#if !defined(SD8978)
 static bool wifi_reset_in_process  = false;
+#endif
 
 #if CONFIG_HOST_SLEEP
 OSA_SEMAPHORE_HANDLE_DEFINE(wakelock);
@@ -375,6 +377,7 @@ static int wifi_put_mcastf_lock(void)
     return WM_SUCCESS;
 }
 
+#if !defined(SD8978)
 bool wifi_reset_in_progress(void)
 {
     return (wifi_reset_in_process == true);
@@ -384,6 +387,7 @@ void wifi_reset_set_state(bool enable)
 {
     wifi_reset_in_process = enable;
 }
+#endif
 
 #if CONFIG_WIFI_FW_DEBUG
 
@@ -1097,6 +1101,9 @@ int wifi_wait_for_vdllcmdresp(void *cmd_resp_priv)
 #endif
 
 #if (CONFIG_WIFI_IND_DNLD)
+#if defined(SD8978)
+static int wifi_reinit(uint8_t fw_reload);
+#endif
 t_u8 wifi_rx_block_cnt;
 t_u8 wifi_tx_block_cnt;
 
@@ -1153,7 +1160,11 @@ void wlan_process_hang(uint8_t fw_reload)
 
     (void)wifi_event_completion(WIFI_EVENT_FW_HANG, WIFI_EVENT_REASON_SUCCESS, NULL);
 
+#if defined(SD8978)
+	ret = wifi_reinit(fw_reload);
+#else
     ret = wifi_reinit(wm_wifi.fw_start_addr, wm_wifi.size, fw_reload);
+#endif
 
     if (ret != WM_SUCCESS)
     {
@@ -1168,6 +1179,7 @@ void wlan_process_hang(uint8_t fw_reload)
     wifi_tx_block_cnt   = 0;
     wifi_rx_block_cnt   = 0;
 
+#if !defined(SD8978)
     /* Put sleep_rwlock before resetting FW to avoid wakeing up FW
        before enabling ieee-ps/deep-ps */
     if (mlan_adap->ps_state == PS_STATE_SLEEP)
@@ -1175,6 +1187,7 @@ void wlan_process_hang(uint8_t fw_reload)
         OSA_RWLockWriteUnlock(&sleep_rwlock);
         mlan_adap->ps_state = PS_STATE_AWAKE;
     }
+#endif
 
     (void)wifi_event_completion(WIFI_EVENT_FW_RESET, WIFI_EVENT_REASON_SUCCESS, NULL);
 
@@ -2451,10 +2464,17 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size)
 }
 
 #if (CONFIG_WIFI_IND_DNLD)
+#if defined(SD8978)
+static int wifi_reinit(uint8_t fw_reload)
+#else
 int wifi_reinit(const uint8_t *fw_start_addr, const size_t size, uint8_t fw_reload)
+#endif
 {
     int ret = WM_SUCCESS;
 
+#if defined(SD8978)
+	ret = (int)sd_wifi_reinit(WLAN_TYPE_NORMAL, wm_wifi.fw_start_addr, wm_wifi.size, fw_reload);
+#else
 #if CONFIG_WIFI_IND_RESET
     if (wifi_reset_in_progress() == true)
     {
@@ -2469,6 +2489,7 @@ int wifi_reinit(const uint8_t *fw_start_addr, const size_t size, uint8_t fw_relo
 #endif
 
     ret = (int)sd_wifi_reinit(WLAN_TYPE_NORMAL, fw_start_addr, size, fw_reload);
+#endif
 #if CONFIG_WIFI_IND_RESET
     wifi_ind_reset_stop();
 #endif
@@ -2501,9 +2522,22 @@ int wifi_reinit(const uint8_t *fw_start_addr, const size_t size, uint8_t fw_relo
                 ret = -WM_FAIL;
                 break;
         }
+#if !defined(SD8978)
         return ret;
+#endif
     }
 #ifndef RW610
+#if defined(SD8978)
+	else
+	{
+        ret = (int)sd_wifi_post_init(WLAN_TYPE_NORMAL);
+        if (ret != WM_SUCCESS)
+        {
+            wifi_e("sd_wifi_post_init failed. status code %d", ret);
+            return ret;
+        }
+    }
+#else
 #if CONFIG_WIFI_IND_RESET
     if (wifi_reset_in_progress() == true)
     {
@@ -2527,6 +2561,7 @@ int wifi_reinit(const uint8_t *fw_start_addr, const size_t size, uint8_t fw_relo
     {
         wm_wifi.wifi_init_done = 1;
     }
+#endif
 #endif
 
     return ret;
