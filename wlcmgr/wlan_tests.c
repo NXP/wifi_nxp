@@ -5470,10 +5470,16 @@ static void test_wlan_add_packet_filter(int argc, char **argv)
             i++;
             wowlan_ptn_cfg.patterns[k].pkt_offset = atoi(argv[i]);
             i++;
+            if (wowlan_ptn_cfg.patterns[k].pattern_len > MAX_NUM_BYTE_SEQ)
+            {
+                (void)PRINTF("Invalid pattern length, maximum 6\r\n");
+                dump_wlan_add_packet_filter();
+                return;
+            }
             for (j = 0; j < wowlan_ptn_cfg.patterns[k].pattern_len; j++)
                 wowlan_ptn_cfg.patterns[k].pattern[j] = a2hex_or_atoi(argv[j + i]);
             i += j;
-            (void)memset(wowlan_ptn_cfg.patterns[k].mask, 0x3f, 6);
+            wowlan_ptn_cfg.patterns[k].mask[0] = (1 << wowlan_ptn_cfg.patterns[k].pattern_len) - 1;
         }
     }
     ret = wlan_wowlan_cfg_ptn_match(bss_type, &wowlan_ptn_cfg);
