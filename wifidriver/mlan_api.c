@@ -5350,11 +5350,6 @@ bool get_ecsa_block_tx_flag()
     return ecsa_status_control.required;
 }
 
-void wifi_put_ecsa_sem()
-{
-    OSA_SemaphorePost((osa_semaphore_handle_t)ecsa_status_control.ecsa_sem);
-}
-
 int wlan_get_nonglobal_operclass_by_bw_channel(t_u8 bandwidth, t_u8 channel, t_u8 *oper_class)
 {
     int ret = 0;
@@ -5591,7 +5586,7 @@ int wifi_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_
     }
     set_ie_index(mgmt_ie_index);
 
-    OSA_SemaphoreWait((osa_semaphore_handle_t)ecsa_status_control.ecsa_sem, (switch_count + 2) * wm_wifi.beacon_period);
+    OSA_TimeDelay((switch_count + 2) * wm_wifi.beacon_period);
     set_ecsa_block_tx_flag(false);
 
     if (!ie_index_is_set(mgmt_ie_index))

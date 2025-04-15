@@ -3539,7 +3539,6 @@ static void wlcm_process_channel_switch_supp(struct wifi_message *msg)
         }
 
 #if CONFIG_ECSA
-        wifi_put_ecsa_sem();
         set_ecsa_block_tx_flag(false);
 #endif
     }
@@ -3591,7 +3590,6 @@ static void wlcm_process_channel_switch(struct wifi_message *msg)
         }
 
 #if CONFIG_ECSA
-        wifi_put_ecsa_sem();
         set_ecsa_block_tx_flag(false);
 #endif
     }
