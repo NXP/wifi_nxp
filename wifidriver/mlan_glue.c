@@ -1995,19 +1995,11 @@ int wrapper_wifi_assoc(
     {
         if (priv->support_11d != NULL)
         {
-            if (priv->support_11d->wlan_11d_create_dnld_countryinfo_p(priv, BAND_B) != MLAN_STATUS_SUCCESS)
+            if (wifi_create_dnld_countryinfo() != MLAN_STATUS_SUCCESS)
             {
-                PRINTM(MERROR, "Dnld_countryinfo_11d failed\n");
                 return -WM_FAIL;
             }
-#if CONFIG_5GHz_SUPPORT
-            if ((!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
-                && (priv->support_11d->wlan_11d_create_dnld_countryinfo_p(priv, BAND_A) != MLAN_STATUS_SUCCESS))
-            {
-                PRINTM(MERROR, "Dnld_countryinfo_11d failed\n");
-                return -WM_FAIL;
-            }
-#endif
+
             if (priv->support_11d->wlan_11d_parse_dnld_countryinfo_p(priv, d) != MLAN_STATUS_SUCCESS)
             {
                 return -WM_FAIL;
@@ -2561,19 +2553,11 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
     {
         if (priv->support_11d != NULL)
         {
-            if (priv->support_11d->wlan_11d_create_dnld_countryinfo_p(priv, BAND_B) != MLAN_STATUS_SUCCESS)
+            if (wifi_create_dnld_countryinfo() != MLAN_STATUS_SUCCESS)
             {
-                PRINTM(MERROR, "Dnld_countryinfo_11d failed\n");
                 return -WM_FAIL;
             }
-#if CONFIG_5GHz_SUPPORT
-            if ((!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
-                && (priv->support_11d->wlan_11d_create_dnld_countryinfo_p(priv, BAND_A) != MLAN_STATUS_SUCCESS))
-            {
-                PRINTM(MERROR, "Dnld_countryinfo_11d failed\n");
-                return -WM_FAIL;
-            }
-#endif
+
             if (priv->support_11d->wlan_11d_parse_dnld_countryinfo_p(priv, d) != MLAN_STATUS_SUCCESS)
             {
                 return -WM_FAIL;

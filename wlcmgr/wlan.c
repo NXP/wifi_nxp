@@ -15680,6 +15680,7 @@ int wlan_set_country_ie_ignore(uint8_t *ignore)
 int wlan_set_region_code(unsigned int region_code)
 {
     char *country;
+    int ret;
 
     if ((region_code == 0x40) || (region_code == 0x41) || (region_code == 0xFE))
     {
@@ -15688,7 +15689,13 @@ int wlan_set_region_code(unsigned int region_code)
     }
 
     country = (char *)wlan_11d_code_2_region(mlan_adap, (unsigned char)region_code);
-    return wlan_set_country_code(country);
+    ret = wlan_set_country_code(country);
+    if (ret != WM_SUCCESS)
+    {
+        return ret;
+    }
+
+    return wifi_create_dnld_countryinfo();
 }
 
 int wlan_get_region_code(unsigned int *region_code)

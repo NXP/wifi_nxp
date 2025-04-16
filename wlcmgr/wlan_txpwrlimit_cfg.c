@@ -215,14 +215,6 @@ int wlan_set_rg_power_cfg(t_u16 region_code)
 int wlan_set_wwsm_txpwrlimit()
 {
     int rv = WM_SUCCESS;
-#ifdef WLAN_REGION_CODE
-    rv = wlan_set_country_code(WLAN_REGION_CODE);
-    if (rv != WM_SUCCESS)
-    {
-        (void)PRINTF("Unable to set country code\r\n");
-        return -WM_FAIL;
-    }
-#endif
 #if defined(RW610) || defined(IW610)
     unsigned int region_code = 0;
 #endif
@@ -278,6 +270,11 @@ int wlan_set_wwsm_txpwrlimit()
     }
 #endif
 
+    rv = wifi_create_dnld_countryinfo();
+    if (rv != WM_SUCCESS)
+    {
+        return -WM_FAIL;
+    }
 #else
     rv = wlan_set_region_power_cfg(rg_table_fc, rg_table_fc_len);
     if (rv != WM_SUCCESS)
