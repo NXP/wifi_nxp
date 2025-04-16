@@ -2065,16 +2065,6 @@ static int wifi_core_init(void)
     OSA_SemaphorePost((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem);
 #endif
 
-#if CONFIG_ECSA
-    /* Semaphore to wait ECSA complete */
-    status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)ecsa_status_control.ecsa_sem);
-    if (status != KOSA_StatusSuccess)
-    {
-        PRINTF("Create ecsa sem failed");
-        goto fail;
-    }
-#endif
-
 #if CONFIG_FW_VDLL
     (void)mlan_adap->callbacks.moal_init_timer(mlan_adap->pmoal_handle, &mlan_adap->vdll_timer, wlan_vdll_complete,
                                                NULL);
@@ -2085,6 +2075,7 @@ static int wifi_core_init(void)
 #if UAP_SUPPORT
 #if defined(SD8801) || defined(RW610)
     wifi_uap_set_bandwidth(BANDWIDTH_20MHZ);
+    wifi_uap_set_beacon_period(UAP_DEFAULT_BEACON_PERIOD);
 #else
     wifi_uap_set_bandwidth(BANDWIDTH_40MHZ);
 #endif
@@ -2161,9 +2152,7 @@ static void wifi_core_deinit(void)
 #if CONFIG_CSI
     (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem);
 #endif
-#if CONFIG_ECSA
-    (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)ecsa_status_control.ecsa_sem);
-#endif
+
 #if CONFIG_FW_VDLL
     (void)mlan_adap->callbacks.moal_stop_timer(mlan_adap->pmoal_handle, mlan_adap->vdll_timer);
     (void)mlan_adap->callbacks.moal_free_timer(mlan_adap->pmoal_handle, &mlan_adap->vdll_timer);
