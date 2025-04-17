@@ -12806,7 +12806,14 @@ int wlan_uap_set_bandwidth(const uint8_t bandwidth)
 {
 #if UAP_SUPPORT
 #if defined(RW610) || defined(SD8801)
-    return WM_SUCCESS;
+    if (bandwidth > BANDWIDTH_20MHZ)
+    {
+        return -WM_FAIL;
+    }
+    else
+    {
+        return WM_SUCCESS;
+    }
 #else
     return wifi_uap_set_bandwidth(bandwidth);
 #endif
