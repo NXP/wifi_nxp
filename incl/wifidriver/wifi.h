@@ -852,6 +852,7 @@ int wifi_set_region_code(t_u32 region_code);
  */
 int wifi_set_country_code(const char *alpha2);
 int wifi_get_country_code(char *alpha2);
+int wifi_create_dnld_countryinfo(void);
 int wifi_set_country_ie_ignore(uint8_t *ignore);
 
 bool wifi_11d_is_channel_allowed(int channel);

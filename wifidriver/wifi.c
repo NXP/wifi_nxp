@@ -4750,6 +4750,29 @@ int wifi_get_country_code(char *alpha2)
     return WM_SUCCESS;
 }
 
+int wifi_create_dnld_countryinfo(void)
+{
+    mlan_private *priv = (mlan_private *)mlan_adap->priv[0];
+
+    if (priv->support_11d != NULL)
+    {
+        if (priv->support_11d->wlan_11d_create_dnld_countryinfo_p(priv, BAND_B) != MLAN_STATUS_SUCCESS)
+        {
+            PRINTM(MERROR, "Dnld_countryinfo_11d failed\n");
+            return -WM_FAIL;
+        }
+#if CONFIG_5GHz_SUPPORT
+        if ((!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
+            && (priv->support_11d->wlan_11d_create_dnld_countryinfo_p(priv, BAND_A) != MLAN_STATUS_SUCCESS))
+        {
+            PRINTM(MERROR, "Dnld_countryinfo_11d failed\n");
+            return -WM_FAIL;
+        }
+#endif
+    }
+    return WM_SUCCESS;
+}
+
 int wifi_set_country_ie_ignore(uint8_t *ignore)
 {
     mlan_adap->country_ie_ignore = *ignore;
@@ -5030,6 +5053,7 @@ int wifi_supp_inject_frame(const unsigned int bss_type, const uint8_t *buff, con
 int wifi_nxp_set_country(const unsigned int bss_type, const char *alpha2)
 {
     (void)wifi_set_country_code(alpha2);
+    (void)wifi_create_dnld_countryinfo();
     return WM_SUCCESS;
 }
 

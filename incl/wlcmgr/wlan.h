@@ -7230,6 +7230,13 @@ int wlan_set_region_code(unsigned int region_code);
  */
 int wlan_get_region_code(unsigned int *region_code);
 
+/** Generates 11D info from user specified regioncode
+ *  and download to FW
+ *
+ * \return WM_SUCCESS if successful otherwise fail.
+ */
+int wlan_create_dnld_countryinfo(void);
+
 const chan_freq_power_t  *wlan_get_regulatory_domain(uint8_t chan_freq, int *cfp_no);
 
 /** Set STA/uAP 802.11d feature Enable/Disable.
