@@ -3498,6 +3498,9 @@ int wifi_nxp_beacon_config(unsigned int bss_type, nxp_wifi_ap_info_t *params)
 #if CONFIG_5GHz_SUPPORT
     t_u8 rates_a[9] = {0x8c, 0x12, 0x98, 0x24, 0xb0, 0x48, 0x60, 0x6c, 0x00};
 #endif
+#if CONFIG_WPA_SUPP_P2P
+    t_u8 rates_wfd[9] = {0x8c, 0x12, 0x18, 0x24, 0x30, 0x48, 0x60, 0x6c, 0x00};
+#endif
     t_u8 supported_mcs_set[] = {0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     t_u8 chan2Offset         = SEC_CHAN_NONE;
@@ -3616,6 +3619,13 @@ int wifi_nxp_beacon_config(unsigned int bss_type, nxp_wifi_ap_info_t *params)
 
         if (sys_config->channel <= MAX_CHANNELS_BG)
         {
+#if CONFIG_WPA_SUPP_P2P
+            if (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
+            {
+                __memcpy(NULL, sys_config->rates, rates_wfd, sizeof(rates_wfd));
+            }
+            else
+#endif
             if (sys_config->channel == 14)
             {
                 __memcpy(NULL, sys_config->rates, rates_b, sizeof(rates_b));
@@ -3628,7 +3638,18 @@ int wifi_nxp_beacon_config(unsigned int bss_type, nxp_wifi_ap_info_t *params)
 #if CONFIG_5GHz_SUPPORT
         else
         {
-            __memcpy(NULL, sys_config->rates, rates_a, sizeof(rates_a));
+#if CONFIG_WPA_SUPP_P2P
+            if (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
+            {
+                __memcpy(NULL, sys_config->rates, rates_wfd, sizeof(rates_wfd));
+            }
+            else
+            {
+#endif
+               __memcpy(NULL, sys_config->rates, rates_a, sizeof(rates_a));
+#if CONFIG_WPA_SUPP_P2P
+            }
+#endif
         }
 #endif
 
