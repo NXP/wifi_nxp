@@ -10541,9 +10541,9 @@ void wlan_reset(cli_reset_option ResetOption)
         }
     }
 
+    wifi_reset_set_state(false);
     OSA_MutexUnlock((osa_mutex_handle_t)reset_lock);
 
-    wifi_reset_set_state(false);
     PRINTF("--- Done ---\r\n");
 }
 
