@@ -4431,29 +4431,36 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
             }
 #endif
 
-            if (pmpriv->ssid_filter)
+#if CONFIG_WPA_SUPP_P2P
+            if (pmpriv->p2p.session_enable == MFALSE)
             {
-                for (idx2 = 0; idx2 < NELEMENTS(pmpriv->filter_ssid); idx2 ++)
-                {
-                    if (pmpriv->filter_ssid[idx2].ssid_len && (bss_new_entry->ssid.ssid_len == pmpriv->filter_ssid[idx2].ssid_len)
-                       && (!__memcmp(pmadapter, bss_new_entry->ssid.ssid, pmpriv->filter_ssid[idx2].ssid, bss_new_entry->ssid.ssid_len)))
-                    {
-                        break;
-                    }
-                }
-
-                if (idx2 == NELEMENTS(pmpriv->filter_ssid))
-                {
-#if CONFIG_WPA_SUPP
-                    if (bss_new_entry->ies != NULL)
-                    {
-                        OSA_MemoryFree(bss_new_entry->ies);
-                        bss_new_entry->ies = NULL;
-                    }
 #endif
-                    continue;
+                if (pmpriv->ssid_filter)
+                {
+                    for (idx2 = 0; idx2 < NELEMENTS(pmpriv->filter_ssid); idx2 ++)
+                    {
+                        if (pmpriv->filter_ssid[idx2].ssid_len && (bss_new_entry->ssid.ssid_len == pmpriv->filter_ssid[idx2].ssid_len)
+                           && (!__memcmp(pmadapter, bss_new_entry->ssid.ssid, pmpriv->filter_ssid[idx2].ssid, bss_new_entry->ssid.ssid_len)))
+                        {
+                            break;
+                        }
+                    }
+
+                    if (idx2 == NELEMENTS(pmpriv->filter_ssid))
+                    {
+#if CONFIG_WPA_SUPP
+                        if (bss_new_entry->ies != NULL)
+                        {
+                            OSA_MemoryFree(bss_new_entry->ies);
+                            bss_new_entry->ies = NULL;
+                        }
+#endif
+                        continue;
+                    }
                 }
+#if CONFIG_WPA_SUPP_P2P
             }
+#endif
 
             /*
              * Search the scan table for the same bssid

@@ -3957,7 +3957,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
             else if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
             {
                 if_handle = net_get_wfd_handle();
-		netif = net_get_wfd_interface();
+                netif = net_get_wfd_interface();
             }
             else
             {
