@@ -4953,7 +4953,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
     return WM_SUCCESS;
 }
 
-#if (CONFIG_UAP_AMPDU_TX) || (CONFIG_UAP_AMPDU_RX)
+#if UAP_SUPPORT
 /**
  *  @brief This function will search for the specific ie
  *
@@ -5155,7 +5155,9 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
 
     return;
 }
+#endif /* UAP_SUPPORT */
 
+#if (CONFIG_UAP_AMPDU_TX) || (CONFIG_UAP_AMPDU_RX)
 /** Fixed size of bss start event */
 #define BSS_START_EVENT_FIX_SIZE 12U
 
@@ -5702,10 +5704,9 @@ int wifi_handle_fw_event(struct bus_message *msg)
     Event_AutoLink_SW_Node_t *pnewNode = NULL;
     char *pinfo                        = NULL;
 #endif
-
-#if (CONFIG_UAP_AMPDU_TX) || (CONFIG_UAP_AMPDU_RX)
+#if UAP_SUPPORT
     sta_node *sta_node_ptr;
-#endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
+#endif /* UAP_SUPPORT */
 #if CONFIG_EXT_SCAN_SUPPORT
     mlan_event_scan_result *pext_scan_result;
 #endif
@@ -6132,20 +6133,6 @@ int wifi_handle_fw_event(struct bus_message *msg)
             event_sta_addr = (t_u8 *)&evt->src_mac_addr;
             (void)memcpy((void *)sta_addr, (const void *)event_sta_addr, MLAN_MAC_ADDR_LENGTH);
 
-#if (CONFIG_UAP_AMPDU_TX) || (CONFIG_UAP_AMPDU_RX)
-            wlan_request_ralist_lock(mlan_adap->priv[1]);
-            /* Clear corresponding tx/rx table if necessary */
-            if (wlan_11n_get_txbastream_tbl((mlan_private *)mlan_adap->priv[1], sta_addr))
-                wlan_11n_delete_txbastream_tbl_entry((mlan_private *)mlan_adap->priv[1], sta_addr);
-
-            wlan_cleanup_reorder_tbl((mlan_private *)mlan_adap->priv[1], sta_addr);
-#if CONFIG_WMM
-            wlan_ralist_del_enh(mlan_adap->priv[1], sta_addr);
-#endif
-            /* txbastream table also is used as connected STAs data base */
-            wlan_11n_create_txbastream_tbl((mlan_private *)mlan_adap->priv[1], sta_addr, BA_STREAM_NOT_SETUP);
-            wlan_11n_update_txbastream_tbl_tx_thresh((mlan_private *)mlan_adap->priv[1], sta_addr, 3);
-
 #if !CONFIG_MEM_POOLS
             sta_node_ptr = OSA_MemoryAllocate(sizeof(sta_node));
 #else
@@ -6162,9 +6149,24 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
                 break;
             }
+
             memset(sta_node_ptr, 0x00, sizeof(sta_node));
 
             wrapper_wlan_check_sta_capability((mlan_private *)mlan_adap->priv[1], msg->data, sta_node_ptr);
+
+#if (CONFIG_UAP_AMPDU_TX) || (CONFIG_UAP_AMPDU_RX)
+            wlan_request_ralist_lock(mlan_adap->priv[1]);
+            /* Clear corresponding tx/rx table if necessary */
+            if (wlan_11n_get_txbastream_tbl((mlan_private *)mlan_adap->priv[1], sta_addr))
+                wlan_11n_delete_txbastream_tbl_entry((mlan_private *)mlan_adap->priv[1], sta_addr);
+
+            wlan_cleanup_reorder_tbl((mlan_private *)mlan_adap->priv[1], sta_addr);
+#if CONFIG_WMM
+            wlan_ralist_del_enh(mlan_adap->priv[1], sta_addr);
+#endif
+            /* txbastream table also is used as connected STAs data base */
+            wlan_11n_create_txbastream_tbl((mlan_private *)mlan_adap->priv[1], sta_addr, BA_STREAM_NOT_SETUP);
+            wlan_11n_update_txbastream_tbl_tx_thresh((mlan_private *)mlan_adap->priv[1], sta_addr, 3);
 
             if (sta_node_ptr->is_11n_enabled)
             {
@@ -6173,25 +6175,26 @@ int wifi_handle_fw_event(struct bus_message *msg)
 
             wlan_release_ralist_lock(mlan_adap->priv[1]);
 
-#if !CONFIG_MEM_POOLS
-            OSA_MemoryFree(sta_node_ptr);
-#else
-            OSA_MemoryPoolFree(buf_256_MemoryPool, sta_node_ptr);
-#endif
-
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
 
 #if CONFIG_WMM
             wlan_ralist_add_enh(mlan_adap->priv[1], sta_addr);
 #endif
 
-            if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_ASSOC, WIFI_EVENT_REASON_SUCCESS, sta_addr) != WM_SUCCESS)
+            (void)memcpy((void *)sta_node_ptr->mac_addr, (const void *)sta_addr, MLAN_MAC_ADDR_LENGTH);
+#if !CONFIG_MEM_POOLS
+            OSA_MemoryFree((void *)sta_addr);
+#else
+            OSA_MemoryPoolFree(buf_32_MemoryPool, sta_addr);
+#endif
+
+            if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_ASSOC, WIFI_EVENT_REASON_SUCCESS, sta_node_ptr) != WM_SUCCESS)
             {
                 /* If fail to send message on queue, free allocated memory ! */
 #if !CONFIG_MEM_POOLS
-                OSA_MemoryFree((void *)sta_addr);
+                OSA_MemoryFree(sta_node_ptr);
 #else
-                OSA_MemoryPoolFree(buf_32_MemoryPool, sta_addr);
+                OSA_MemoryPoolFree(buf_256_MemoryPool, sta_node_ptr);
 #endif
             }
         }
