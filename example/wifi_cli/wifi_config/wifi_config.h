@@ -15,9 +15,9 @@
 
 #if defined(SD9177) || defined(IW610) || defined(SD8978)
 #define CONFIG_WMM 1
-#define CONFIG_SDIO_MULTI_PORT_TX_AGGR 1
 #endif
 #if defined(SD9177) || defined(IW610)
+#define CONFIG_SDIO_MULTI_PORT_TX_AGGR 1
 #define CONFIG_WIFI_FEATURES 1
 #define CONFIG_OFFLOAD       1
 #endif
