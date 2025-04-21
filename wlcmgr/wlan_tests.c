@@ -2180,12 +2180,12 @@ static void test_wlan_host_sleep(int argc, char **argv)
         (void)PRINTF("	       bit 4: WAKE_ON_ARP_BROADCAST\r\n");
         (void)PRINTF("	       bit 6: WAKE_ON_MGMT_FRAME\r\n");
         (void)PRINTF("	       All bit 0 discard and not wakeup host\r\n");
-        (void)PRINTF("	       All bit 1 cancel host sleep configuration\r\n");
 #if CONFIG_MEF_CFG
         (void)PRINTF("    mef     -- MEF host wakeup\r\n");
+#endif
         (void)PRINTF("Example:\r\n");
+#if CONFIG_MEF_CFG
         (void)PRINTF("    wlan-host-sleep <1/0> mef\r\n");
-        (void)PRINTF("    wlan-host-sleep <1/0> wowlan 0x1e\r\n");
 #endif
         (void)PRINTF("    wlan-host-sleep <1/0> wowlan 0x1e\r\n");
         return;
