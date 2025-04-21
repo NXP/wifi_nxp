@@ -1132,24 +1132,16 @@ static int wlan_send_host_sleep_int(uint32_t wake_up_conds, bool is_config)
     return ret;
 }
 
-int wlan_hs_pre_cfg(void)
+void wlan_hs_pre_cfg(void)
 {
-    int ret = -WM_FAIL;
-
     if (wlan.hs_enabled == MTRUE)
     {
-        ret = wlan_send_host_sleep_int(wlan.hs_wakeup_condition, MFALSE);
+        (void)wlan_send_host_sleep_int(wlan.hs_wakeup_condition, MFALSE);
 #ifndef IW610
         /** Wait for HS Activate to complete */
         OSA_TimeDelay(1000);
 #endif
     }
-    else
-    {
-        PRINTF("pls configure host sleep parameters first\r\n");
-    }
-
-    return ret;
 }
 
 void wlan_hs_post_cfg(void)
