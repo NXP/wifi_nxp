@@ -4014,7 +4014,7 @@ int wlan_set_ipv6_ns_offload(void);
 #if CONFIG_HOST_SLEEP
 
 /** Use this API to set configuration before going to host sleep */
-void wlan_hs_pre_cfg(void);
+int wlan_hs_pre_cfg(void);
 
 /** Use this API to get and print the reason of waking up from host sleep */
 void wlan_hs_post_cfg(void);
