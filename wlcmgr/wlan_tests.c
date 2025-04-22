@@ -13318,15 +13318,17 @@ static struct cli_command tests[] = {
      test_wlan_dpp_configurator_sign},
 #endif
 #if CONFIG_WPA_SUPP_P2P
-    {"wlan-p2p-find", NULL, test_wlan_p2p_find},
+    {"wlan-p2p-find", " [timeout]", test_wlan_p2p_find},
     {"wlan-p2p-stop-find", NULL, test_wlan_p2p_stop_find},
-    {"wlan-p2p-connect", NULL, test_wlan_p2p_connect},
-    {"wlan-p2p-group-add", NULL, test_wlan_p2p_group_add},
+    {"wlan-p2p-connect", " <peer_address> <method>", test_wlan_p2p_connect},
+    {"wlan-p2p-group-add", " [freq=<frequency>]", test_wlan_p2p_group_add},
     {"wlan-p2p-get-passphrase", NULL, test_wlan_p2p_get_passphrase},
     {"wlan-p2p-start-wps-pbc", NULL, test_wlan_p2p_start_wps_pbc},
     {"wlan-p2p-start-wps-pin", "<8 digit pin>", test_wlan_p2p_start_wps_pin},
+    {"wlan-p2p-prov-disc", " <peer_address> <method> [join]", test_wlan_p2p_prov_disc},
+#endif
+#if 0
     {"wlan-p2p-invite", NULL, test_wlan_p2p_invite},
-    {"wlan-p2p-prov-disc", NULL, test_wlan_p2p_prov_disc},
     {"wlan-p2p-cancel", NULL, test_wlan_p2p_cancel},
     {"wlan-p2p-remove-client", NULL, test_wlan_p2p_remove_client},
 #endif

@@ -1492,7 +1492,7 @@ err_t lwip_netif_wfd_init(struct netif *netif)
         return ERR_MEM;
     }
 
-    ethernetif->interface = MLAN_BSS_TYPE_WIFIDIRECT;
+    ethernetif->intf      = MLAN_BSS_TYPE_WIFIDIRECT;
     netif->state          = ethernetif;
     netif->name[0]        = 'w';
     netif->name[1]        = 'f';
