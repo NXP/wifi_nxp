@@ -1388,6 +1388,7 @@ start:
 #endif
 #endif
 #if CONFIG_WIFI_RECOVERY
+#if defined(RW610)
         wifi_recovery_enable = true;
 #else
         /* assert as command flow cannot work anymore */
@@ -1395,6 +1396,7 @@ start:
         wlan_process_hang(FW_RELOAD_SDIO_INBAND_RESET);
 #else
         ASSERT(0);
+#endif
 #endif
 #endif
     }
