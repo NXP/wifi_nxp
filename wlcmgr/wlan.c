@@ -5388,7 +5388,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     {
         wlcm_d("AP: Station connected");
         t_u8 addr[MLAN_MAC_ADDR_LENGTH];
-	t_u8 bss_type = MLAN_BSS_TYPE_UAP;
+        t_u8 bss_type = MLAN_BSS_TYPE_UAP;
 
         s = strchr(buf, ' ');
         if (s == NULL)
@@ -5418,7 +5418,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         wlcm_d("AP: Station dis-connected");
 
         wifi_uap_client_disassoc_t disassoc_resp;
-	t_u8 bss_type = MLAN_BSS_TYPE_UAP;
+        t_u8 bss_type = MLAN_BSS_TYPE_UAP;
 
         disassoc_resp.reason_code = 0;
 

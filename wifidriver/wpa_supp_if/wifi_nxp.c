@@ -296,6 +296,15 @@ void wifi_supp_deinit(void)
         OSA_MemoryFree(wm_wifi.hapd_if_priv);
         wm_wifi.hapd_if_priv = NULL;
     }
+
+#if CONFIG_WPA_SUPP_P2P
+    if (wm_wifi.if_priv_wfd)
+    {
+        OSA_MemoryFree(wm_wifi.if_priv_wfd);
+        wm_wifi.if_priv_wfd = NULL;
+    }
+#endif
+
     wifi_supp_init_done = 0U;
 }
 
