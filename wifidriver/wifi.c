@@ -2257,7 +2257,7 @@ int wifi_reinit(const uint8_t *fw_start_addr, const size_t size, uint8_t fw_relo
 {
     int ret = WM_SUCCESS;
 
-#if (CONFIG_WIFI_IND_DNLD) && (CONFIG_WIFI_IND_RESET)
+#if CONFIG_WIFI_IND_RESET
     if (wifi_reset_in_progress() == true)
     {
         (void)memset(&wm_wifi, 0, sizeof(wm_wifi_t));
@@ -2308,7 +2308,7 @@ int wifi_reinit(const uint8_t *fw_start_addr, const size_t size, uint8_t fw_relo
         return ret;
     }
 #ifndef RW610
-#if (CONFIG_WIFI_IND_RESET)
+#if CONFIG_WIFI_IND_RESET
     if (wifi_reset_in_progress() == true)
     {
         ret = wifi_core_init();
@@ -2316,11 +2316,6 @@ int wifi_reinit(const uint8_t *fw_start_addr, const size_t size, uint8_t fw_relo
         {
             wifi_e("wifi core re-init failed. status code %d", ret);
             return ret;
-        }
-
-        if (ret == WM_SUCCESS)
-        {
-            wm_wifi.wifi_init_done = 1;
         }
     }
 #endif
@@ -2330,6 +2325,11 @@ int wifi_reinit(const uint8_t *fw_start_addr, const size_t size, uint8_t fw_relo
     {
         wifi_e("sd_wifi_post_init failed. status code %d", ret);
         return ret;
+    }
+
+    if (ret == WM_SUCCESS)
+    {
+        wm_wifi.wifi_init_done = 1;
     }
 #endif
 
