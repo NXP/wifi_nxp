@@ -15922,6 +15922,11 @@ int wlan_get_indrst_cfg(wlan_indrst_cfg_t *indrst_cfg)
     return wifi_get_indrst_cfg(indrst_cfg, (mlan_bss_type)WLAN_BSS_TYPE_STA);
 }
 
+static int wlan_trigger_inband_ind_reset()
+{
+    return wifi_trigger_inband_indrst();
+}
+
 static int wlan_trigger_oob_ind_reset()
 {
     (void)wlan_ieeeps_off();
@@ -15951,7 +15956,7 @@ int wlan_independent_reset()
     }
     else if (wlan.ir_mode == 2)
     {
-        return wifi_test_independent_reset();
+        return wlan_trigger_inband_ind_reset();
     }
 
     return -WM_FAIL;

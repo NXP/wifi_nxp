@@ -1100,6 +1100,14 @@ void wlan_process_hang(uint8_t fw_reload)
     wifi_ind_reset_stop();
 #endif
 
+    /* Put sleep_rwlock before resetting FW to avoid wakeing up FW
+       before enabling ieee-ps/deep-ps */
+    if (mlan_adap->ps_state == PS_STATE_SLEEP)
+    {
+        OSA_RWLockWriteUnlock(&sleep_rwlock);
+        mlan_adap->ps_state = PS_STATE_AWAKE;
+    }
+
     (void)wifi_event_completion(WIFI_EVENT_FW_RESET, WIFI_EVENT_REASON_SUCCESS, NULL);
 
 #if CONFIG_WIFI_IND_RESET
