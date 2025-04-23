@@ -166,6 +166,25 @@ typedef struct wifi_uap_client_disassoc
  */
 int wifi_init(const uint8_t *fw_start_addr, const size_t size);
 
+#if (CONFIG_WIFI_IND_DNLD)
+/**
+ * Re-initialize Wi-Fi driver module.
+ *
+ * Performs downloads Wi-Fi Firmware, creates Wi-Fi Driver
+ * and command response processor thread.
+ *
+ * Also creates mutex, and semaphores used in command and data synchronizations.
+ *
+ * \param[in] fw_start_addr address of stored Wi-Fi Firmware.
+ * \param[in] size Size of Wi-Fi Firmware.
+ * \param[in] fw_reload Type of Firmware reset.
+ *
+ * \return WM_SUCCESS on success or -WM_FAIL on error.
+ *
+ */
+int wifi_reinit(const uint8_t *fw_start_addr, const size_t size, uint8_t fw_reload);
+#endif
+
 /**
  * Initialize Wi-Fi driver module for FCC Certification.
  *

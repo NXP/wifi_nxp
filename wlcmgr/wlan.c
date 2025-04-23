@@ -636,7 +636,6 @@ static struct
 } wlan;
 
 OSA_TASK_HANDLE_DEFINE(wlcmgr_mon_task_Handle);
-bool wlan_in_reset = false;
 
 #if CONFIG_CLOUD_KEEP_ALIVE
 #define MIN_KEEP_ALIVE_ID 0
@@ -7723,10 +7722,19 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
     }
 #endif
 
-    ret = wifi_init(fw_start_addr, size);
+#if (CONFIG_WIFI_IND_DNLD) && (CONFIG_WIFI_IND_RESET)
+    if (wifi_reset_in_progress() == true)
+    {
+        ret = wifi_reinit(fw_start_addr, size, FW_RELOAD_SDIO_INBAND_RESET);
+    }
+    else
+#endif
+    {
+        ret = wifi_init(fw_start_addr, size);
+    }
     if (ret != 0)
     {
-        wlcm_e("wifi_init failed. status code %d", ret);
+        wlcm_e("wifi init/reinit failed. status code %d", ret);
         return ret;
     }
 
@@ -9763,7 +9771,7 @@ int wlan_remove_network(const char *name)
         if (wlan.networks[i].name[0] != '\0' && strlen(wlan.networks[i].name) == len &&
             !strncmp(wlan.networks[i].name, name, len))
         {
-            if (false == wlan_in_reset)
+            if (false == wifi_reset_in_progress())
             {
                 if (wlan.running && wlan.cur_network_idx == i)
                 {
@@ -10463,7 +10471,7 @@ int wlan_remove_all_networks(void)
      * Moreover, removing and adding net interface will increase netif_num cumulatively,
      * which will mismatch with "ua2" during creating dhcpd.
      */
-    wlan_in_reset = true;
+    wifi_reset_set_state(true);
     wlan_remove_all_network_profiles();
 
     intrfc_handle = net_get_sta_handle();
@@ -10698,9 +10706,9 @@ void wlan_reset(cli_reset_option ResetOption)
         }
     }
 
+    wifi_reset_set_state(false);
     OSA_MutexUnlock((osa_mutex_handle_t)reset_lock);
 
-    wlan_in_reset = false;
     PRINTF("--- Done ---\r\n");
 }
 
@@ -10744,7 +10752,7 @@ static void wlcmgr_mon_task(void * data)
         if (status == KOSA_StatusSuccess)
         {
             /*Elements of wlan is not avaliable during wlan reset, so wait ending of wlan reset*/
-            while(wlan_in_reset)
+            while(wifi_reset_in_progress() == true)
                 OSA_TimeDelay(10);
 #if CONFIG_HOST_SLEEP
              wlcm_d("got mon thread event: %d", msg.id);

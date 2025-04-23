@@ -3001,6 +3001,27 @@ mlan_status sd_wifi_reinit(enum wlan_type type, const uint8_t *fw_start_addr, co
 {
     mlan_status ret = MLAN_STATUS_SUCCESS;
 
+#if (CONFIG_WIFI_IND_RESET)
+    if (wifi_reset_in_progress() == true)
+    {
+        /* During wifi reset, need to initializes
+           the wifi driver struct */
+        ret = sd_wifi_preinit();
+        if (ret != MLAN_STATUS_SUCCESS)
+        {
+            return MLAN_STATUS_FAILURE;
+        }
+        else
+        { /* Do Nothing */
+        }
+
+        mlan_adap->fw_start_addr = fw_start_addr;
+    }
+    else
+    { /* Do Nothing */
+    }
+#endif
+
     if (fw_reload == FW_RELOAD_NO_EMULATION)
     {
         OSA_SR_ALLOC();
@@ -3058,7 +3079,17 @@ void sd_wifi_deinit(void)
     //	pm_deregister_cb(pm_handle);
 
     (void)wlan_cmd_shutdown();
-    sdio_drv_deinit();
+#if (CONFIG_WIFI_IND_DNLD) && (CONFIG_WIFI_IND_RESET)
+    if (wifi_reset_in_progress() == true)
+    { /* wifi_reset is based on inband IR, which does not do SDIO device re-enumerate,
+        so could not deinit SD Host and SD Card */
+    }
+    else
+#endif
+    {
+        (void)sdio_drv_deinit();
+    }
+
     (void)mlan_subsys_deinit();
     (void)wlan_deinit_struct();
     g_txrx_flag = false;
