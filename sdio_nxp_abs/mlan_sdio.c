@@ -105,6 +105,7 @@ static OSA_MUTEX_HANDLE_DEFINE(sdio_mutex);
 int sdio_drv_creg_read(int addr, int fn, uint32_t *resp)
 {
     osa_status_t status;
+    uint8_t read_val = 0;
 
     status = OSA_MutexLock((osa_mutex_handle_t)sdio_mutex, osaWaitForever_c);
     if (status != KOSA_StatusSuccess)
@@ -113,11 +114,13 @@ int sdio_drv_creg_read(int addr, int fn, uint32_t *resp)
         return 0;
     }
 
-    if (SDIO_IO_Read_Direct(&wm_g_sd, (sdio_func_num_t)fn, (uint32_t)addr, (uint8_t *)resp) != KOSA_StatusSuccess)
+    if (SDIO_IO_Read_Direct(&wm_g_sd, (sdio_func_num_t)fn, (uint32_t)addr, &read_val) != KOSA_StatusSuccess)
     {
         (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
         return 0;
     }
+
+    *resp = read_val;
 
     (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
 

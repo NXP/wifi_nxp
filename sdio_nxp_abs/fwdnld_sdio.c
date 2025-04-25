@@ -132,7 +132,7 @@ int32_t wlan_reset_fw()
     t_u32 tries = 0;
     int32_t ret = FWDNLD_INTF_SUCCESS;
     bool rv;
-    uint32_t resp;
+    uint32_t resp = 1;
 
     //	wlan_pm_sdio_wakeup_card(pmadapter, MFALSE);
 
