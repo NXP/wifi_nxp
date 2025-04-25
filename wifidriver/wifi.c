@@ -1171,9 +1171,6 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
          * this error will help to localize the problem.
          */
         wifi_e("cmd size greater than WIFI_FW_CMDBUF_SIZE\r\n");
-#if CONFIG_WIFI_IND_RESET
-        wifi_ind_reset_unlock();
-#endif
         (void)wifi_put_command_lock();
         return -WM_FAIL;
     }
@@ -1182,9 +1179,6 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     if (wifi_recovery_enable)
     {
         wifi_w("Recovery in progress. command 0x%x skipped", cmd->command);
-#if CONFIG_WIFI_IND_RESET
-        wifi_ind_reset_unlock();
-#endif
         wifi_put_command_lock();
         return -WM_FAIL;
     }
@@ -1192,9 +1186,6 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     if (wifi_shutdown_enable)
     {
         wifi_w("FW shutdown in progress. command 0x%x skipped", cmd->command);
-#if CONFIG_WIFI_IND_RESET
-        wifi_ind_reset_unlock();
-#endif
         wifi_put_command_lock();
         return -WM_FAIL;
     }
@@ -1209,9 +1200,6 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     {
 #if CONFIG_WIFI_PS_DEBUG
         wifi_e("Failed to wakeup card");
-#endif
-#if CONFIG_WIFI_IND_RESET
-        wifi_ind_reset_unlock();
 #endif
         // wakelock_put(WL_ID_LL_OUTPUT);
         (void)wifi_put_command_lock();
@@ -1305,9 +1293,6 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     OSA_SemaphorePost((osa_semaphore_handle_t)uapsd_sem);
 #endif
     wifi_set_xfer_pending(false);
-#if CONFIG_WIFI_IND_RESET
-    wifi_ind_reset_unlock();
-#endif
     (void)wifi_put_command_lock();
     return ret;
 }

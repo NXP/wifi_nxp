@@ -62,9 +62,6 @@ static t_u8 txportno;
 static t_u32 last_cmd_sent, fw_init_cfg;
 
 OSA_MUTEX_HANDLE_DEFINE(txrx_mutex);
-#if CONFIG_WIFI_IND_RESET
-OSA_MUTEX_HANDLE_DEFINE(ind_reset_mutex);
-#endif
 OSA_SEMAPHORE_HANDLE_DEFINE(sdio_command_resp_sem);
 
 #if CONFIG_TX_RX_ZERO_COPY
@@ -187,18 +184,6 @@ void wifi_sdio_unlock(void)
 }
 
 #if CONFIG_WIFI_IND_RESET
-int wifi_ind_reset_lock(void)
-{
-    return OSA_MutexLock((osa_mutex_handle_t)ind_reset_mutex, osaWaitForever_c);
-}
-
-void wifi_ind_reset_unlock(void)
-{
-    (void)OSA_MutexUnlock((osa_mutex_handle_t)ind_reset_mutex);
-}
-#endif
-
-#if CONFIG_WIFI_IND_RESET
 static bool ind_reset_in_progress = false;
 
 bool wifi_ind_reset_in_progress(void)
@@ -271,13 +256,6 @@ static int wlan_init_struct(void)
     {
         return -WM_FAIL;
     }
-#if CONFIG_WIFI_IND_RESET
-    status = OSA_MutexCreate((osa_mutex_handle_t)ind_reset_mutex);
-    if (status != KOSA_StatusSuccess)
-    {
-        return -WM_FAIL;
-    }
-#endif
 
     status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)sdio_command_resp_sem);
     if (status != KOSA_StatusSuccess)
@@ -298,14 +276,7 @@ static int wlan_deinit_struct(void)
         wifi_io_e("%s mutex deletion error %d", __FUNCTION__, status);
         return -WM_FAIL;
     }
-#if CONFIG_WIFI_IND_RESET
-    status = OSA_MutexDestroy((osa_mutex_handle_t)ind_reset_mutex);
-    if (status != KOSA_StatusSuccess)
-    {
-        wifi_io_e("%s mutex deletion error %d", __FUNCTION__, status);
-        return -WM_FAIL;
-    }
-#endif
+
     status = OSA_SemaphoreDestroy((osa_semaphore_handle_t)sdio_command_resp_sem);
     if (status != KOSA_StatusSuccess)
     {
