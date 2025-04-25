@@ -1391,6 +1391,15 @@ typedef MLAN_PACK_START struct _OverlapBSSScanParam_t
 } MLAN_PACK_END OBSSScanParam_t, *pOBSSScanParam_t;
 
 /** HT Capabilities IE */
+typedef MLAN_PACK_START struct _IEEEtypes_SupportRates_t
+{
+    /** Generic IE header */
+    IEEEtypes_Header_t ieee_hdr;
+    /** Support rates */
+    t_u8 rates[WLAN_SUPPORTED_RATES];
+} MLAN_PACK_END IEEEtypes_SupportRates_t, *pIEEEtypes_SupportRates_t;
+
+/** HT Capabilities IE */
 typedef MLAN_PACK_START struct _IEEEtypes_HTCap_t
 {
     /** Generic IE header */

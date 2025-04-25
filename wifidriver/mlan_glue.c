@@ -5049,7 +5049,9 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
     t_u16 frame_control, frame_sub_type = 0;
     t_u8 *assoc_req_ie = MNULL;
     t_u8 ie_len = 0, assoc_ie_len = 0;
+    bool legacy_mode_ag = MFALSE;
     IEEEtypes_HTCap_t *pht_cap = MNULL;
+    IEEEtypes_SupportRates_t *support_rates = MNULL;
 #if CONFIG_11AC
     IEEEtypes_VHTCap_t *pvht_cap = MNULL;
 #endif
@@ -5093,6 +5095,24 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
 
                 ie_len       = (t_u8)tlv_len - (t_u8)sizeof(IEEEtypes_FrameCtl_t) - assoc_ie_len;
                 assoc_req_ie = (t_u8 *)tlv + sizeof(MrvlIETypes_MgmtFrameSet_t) + assoc_ie_len;
+
+                support_rates = 
+                    (IEEEtypes_SupportRates_t *)(void *)wlan_get_specific_ie(priv, assoc_req_ie, ie_len, SUPPORTED_RATES, 0);
+
+                if(support_rates != NULL)
+                {
+                    t_u8 rate;
+                    for (int i = 0; i < support_rates->ieee_hdr.len; i++)
+                    {
+                        rate = support_rates->rates[i] & 0x7f;
+                        if(rate == 0x0c || rate == 0x21 || rate == 0x18 || rate == 0x24)
+                        {
+                            legacy_mode_ag = MTRUE;
+                            break;
+                        }
+                    }
+                }
+
                 pht_cap =
                     (IEEEtypes_HTCap_t *)(void *)wlan_get_specific_ie(priv, assoc_req_ie, ie_len, HT_CAPABILITY, 0);
 
@@ -5114,6 +5134,10 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
                     PRINTM(MCMND,
                            "STA doesn't "
                            "support 11n\n");
+                    if(!legacy_mode_ag)
+                    {
+                        sta_ptr->bandmode = BAND_B;
+                    }
                 }
 #if CONFIG_11AC
                 pvht_cap =
