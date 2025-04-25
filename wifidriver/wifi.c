@@ -1050,10 +1050,7 @@ void wlan_process_hang(uint8_t fw_reload)
     wifi_d("Start to process hanging");
 
 #if CONFIG_WIFI_IND_RESET
-    if (fw_reload == FW_RELOAD_NO_EMULATION)
-    {
-        (void)wifi_ind_reset_lock();
-    }
+    wifi_ind_reset_start();
 #endif
 
     /* Block TX data */
@@ -1077,10 +1074,12 @@ void wlan_process_hang(uint8_t fw_reload)
             if (mlan_adap->priv[i]->bss_type == MLAN_BSS_TYPE_STA)
             {
             }
+#if UAP_SUPPORT
             else if (mlan_adap->priv[i]->bss_type == MLAN_BSS_TYPE_UAP)
             {
                 mlan_adap->priv[i]->uap_bss_started = MFALSE;
             }
+#endif
         }
 
         if (mlan_adap->priv[i])
@@ -1106,10 +1105,6 @@ void wlan_process_hang(uint8_t fw_reload)
     wifi_tx_block_cnt   = 0;
     wifi_rx_block_cnt   = 0;
 
-#if CONFIG_WIFI_IND_RESET
-    wifi_ind_reset_stop();
-#endif
-
     /* Put sleep_rwlock before resetting FW to avoid wakeing up FW
        before enabling ieee-ps/deep-ps */
     if (mlan_adap->ps_state == PS_STATE_SLEEP)
@@ -1119,10 +1114,6 @@ void wlan_process_hang(uint8_t fw_reload)
     }
 
     (void)wifi_event_completion(WIFI_EVENT_FW_RESET, WIFI_EVENT_REASON_SUCCESS, NULL);
-
-#if CONFIG_WIFI_IND_RESET
-    wifi_ind_reset_unlock();
-#endif
 }
 #endif
 
@@ -2271,6 +2262,9 @@ int wifi_reinit(const uint8_t *fw_start_addr, const size_t size, uint8_t fw_relo
 #endif
 
     ret = (int)sd_wifi_reinit(WLAN_TYPE_NORMAL, fw_start_addr, size, fw_reload);
+#if CONFIG_WIFI_IND_RESET
+    wifi_ind_reset_stop();
+#endif
     if (ret != WM_SUCCESS)
     {
         if (ret != MLAN_STATUS_FW_DNLD_SKIP)

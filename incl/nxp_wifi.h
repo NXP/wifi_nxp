@@ -122,6 +122,14 @@ extern "C" {
 #define CONFIG_WIFI_RESET 1
 #endif
 
+#if CONFIG_NXP_WIFI_IND_DNLD
+#define CONFIG_WIFI_IND_DNLD 1
+#endif
+
+#if CONFIG_NXP_WIFI_IND_RESET
+#define CONFIG_WIFI_IND_RESET 1
+#endif
+
 #if CONFIG_NXP_WIFI_NET_MONITOR
 #define CONFIG_NET_MONITOR 1
 #endif

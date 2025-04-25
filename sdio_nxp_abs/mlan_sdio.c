@@ -86,6 +86,12 @@ void sdio_enable_interrupt(void)
     return;
 }
 
+void sdio_disable_interrupt(void)
+{
+    sdhc_disable_interrupt(sdhc_dev, SDHC_INT_SDIO);
+    return;
+}
+
 static void sdio_controller_init(void)
 {
     (void)memset(&wm_g_sd, 0, sizeof(struct sd_card));

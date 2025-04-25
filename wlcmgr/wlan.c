@@ -84,7 +84,7 @@
 #endif
 
 #if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
-#include "board.h"
+// #include "board.h"
 
 #if (defined(CPU_MIMXRT1062DVMAA_cm7) || defined(CPU_MIMXRT1062DVL6A_cm7) || defined (CPU_MIMXRT1062DVL6B_cm7))
 #if defined(SD8978) || defined(SD8987)
