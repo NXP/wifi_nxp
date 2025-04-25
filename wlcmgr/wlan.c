@@ -274,6 +274,8 @@ bool usart_suspend_flag = false;
 OSA_TIMER_HANDLE_DEFINE(wake_timer);
 #endif
 int is_hs_handshake_done = 0;
+/* indicate that we did not notify FW after host sleep wake up */
+bool skip_hs_handshake = false;
 
 extern OSA_SEMAPHORE_HANDLE_DEFINE(wakelock);
 extern int wakeup_by;
@@ -10674,6 +10676,23 @@ void wlan_reset(cli_reset_option ResetOption)
 }
 
 #if defined(RW610)
+#if CONFIG_HOST_SLEEP
+void wlan_hs_hanshake_cfg(bool skip)
+{
+    /* Clear flags to do host sleep hanshake */
+    if (skip == false)
+    {
+        skip_hs_handshake = false;
+        is_hs_handshake_done = 0;
+    }
+    /* Skip host sleep handshake */
+    else
+    {
+        skip_hs_handshake = true;
+    }
+}
+#endif
+
 static void wlcmgr_mon_task(void * data)
 {
 #if CONFIG_HOST_SLEEP
@@ -10711,17 +10730,29 @@ static void wlcmgr_mon_task(void * data)
             else if (msg.id == HOST_SLEEP_EXIT)
             {
 #if CONFIG_POWER_MANAGER
+#ifndef CONFIG_BT
                 if(!wlan_is_manual && wlan_host_sleep_state == HOST_SLEEP_PERIODIC)
                 {
                     wakelock_get();
                     (void)OSA_TimerActivate((osa_timer_handle_t)wake_timer);
                 }
 #endif
+#endif
                 wlan_cancel_host_sleep();
                 /* Check fw status and write temperature to firmware after waking up */
                 temperature_mon_cb(NULL);
                 (void)OSA_TimerActivate((osa_timer_handle_t)temperature_mon_timer);
             }
+#ifndef CONFIG_BT
+            else if (msg.id == HOST_SLEEP_HANDSHAKE_SKIP)
+            {
+                if(wlan_host_sleep_state == HOST_SLEEP_PERIODIC)
+                {
+                    wakelock_get();
+                    (void)OSA_TimerActivate((osa_timer_handle_t)wake_timer);
+                }
+            }
+#endif
 #endif
 #if CONFIG_WIFI_RECOVERY
             else if (msg.id == WIFI_RECOVERY_REQ)
