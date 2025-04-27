@@ -2372,24 +2372,27 @@ static int do_start(struct wlan_network *network)
                 wpa_supp_set_ap_bw(netif, 1);
             }
 #else
-            if (network->channel > MAX_CHANNELS_BG)
-                wifi_get_active_channel_list(active_chan_list, &active_num_chans, BAND_5GHZ);
-            else
-                wifi_get_active_channel_list(active_chan_list, &active_num_chans, BAND_2GHZ);
+            if (is_sta_connected() != true)
+            {
+                if (network->channel > MAX_CHANNELS_BG)
+                    wifi_get_active_channel_list(active_chan_list, &active_num_chans, BAND_5GHZ);
+                else
+                    wifi_get_active_channel_list(active_chan_list, &active_num_chans, BAND_2GHZ);
 
-            for (i = 0; i < active_num_chans; i++)
-            {
-                if (network->channel == active_chan_list[i])
+                for (i = 0; i < active_num_chans; i++)
                 {
-                    break;
+                    if (network->channel == active_chan_list[i])
+                    {
+                        break;
+                    }
                 }
-            }
-            if (i == active_num_chans)
-            {
-                wlcm_e("uAP configured channel not allowed");
-                CONNECTION_EVENT(WLAN_REASON_UAP_START_FAILED, NULL);
-                wlan.cur_uap_network_idx = -1;
-                return -WM_FAIL;
+                if (i == active_num_chans)
+                {
+                    wlcm_e("uAP configured channel not allowed");
+                    CONNECTION_EVENT(WLAN_REASON_UAP_START_FAILED, NULL);
+                    wlan.cur_uap_network_idx = -1;
+                    return -WM_FAIL;
+                }
             }
 #endif
         }
