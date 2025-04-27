@@ -8520,8 +8520,8 @@ static void test_wlan_set_monitor_param(int argc, char **argv)
         (void)PRINTF("Error             : invalid number of arguments\r\n");
         (void)PRINTF("Usage             : %s <action> <monitor_activity> <filter_flags> <radio_type> <chan_number>\r\n",
                      argv[0]);
-        (void)PRINTF("action            : 0/1 to Action Get/Set \r\n");
-        (void)PRINTF("monitor_activity  : 1 to enable and other parameters to disable monitor activity \r\n");
+        (void)PRINTF("action            : 0/1 to Action Get/Set \r\n");      
+        (void)PRINTF("monitor_activity  : 1 to enable and 0 to disable monitor activity \r\n");
         (void)PRINTF("filter_flags      : network monitor fitler flag \r\n");
         (void)PRINTF("chan_number       : channel to monitor \r\n");
 
