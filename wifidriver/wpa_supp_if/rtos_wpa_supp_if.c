@@ -3562,7 +3562,13 @@ out:
 
 bool wifi_nxp_wpa_get_modes(void *if_priv)
 {
-    return (!ISSUPP_NO5G(mlan_adap->fw_cap_ext));
+    return (!ISSUPP_NO5G(mlan_adap->fw_cap_ext)
+            && ((mlan_adap->fw_bands & BAND_A)
+            || (mlan_adap->fw_bands & BAND_AN)
+#if CONFIG_11AC
+            || (mlan_adap->fw_bands & BAND_AAC)
+#endif
+           ));
 }
 
 void wifi_nxp_wpa_supp_cancel_action_wait(void *if_priv)
