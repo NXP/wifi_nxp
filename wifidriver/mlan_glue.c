@@ -6532,6 +6532,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             break;
 #if CONFIG_WIFI_CHANNEL_LOAD
         case EVENT_CHAN_LOAD:
+        {
             wifi_802_11_chan_load_t *chan_load = NULL;
 #if !CONFIG_MEM_POOLS
             chan_load = OSA_MemoryAllocate(sizeof(wifi_802_11_chan_load_t));
@@ -6556,6 +6557,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
             }
             break;
+        }
 #endif
 #if CONFIG_WMM
         case EVENT_REMAIN_ON_CHANNEL_EXPIRED:
