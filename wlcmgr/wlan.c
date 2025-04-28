@@ -2597,6 +2597,11 @@ static void update_network_params(struct wlan_network *network, const struct wif
             t = WLAN_SECURITY_WPA3_SAE;
             key_mgmt = WLAN_KEY_MGMT_SAE;
         }
+        else if (res->WPA_WPA2_WEP.wpa2_sha256 != 0U)
+        {
+            t = WLAN_SECURITY_WPA2;
+            key_mgmt = WLAN_KEY_MGMT_PSK_SHA256;
+        }
         else if (res->WPA_WPA2_WEP.wpa2 != 0U)
         {
             t = WLAN_SECURITY_WPA2;
