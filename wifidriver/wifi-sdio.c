@@ -106,6 +106,7 @@ void wrapper_wlan_cmd_11n_cfg(HostCmd_DS_COMMAND *cmd);
 static uint32_t dev_value1 = -1;
 uint8_t dev_mac_addr[MLAN_MAC_ADDR_LENGTH];
 uint8_t dev_mac_addr_uap[MLAN_MAC_ADDR_LENGTH];
+uint8_t dev_mac_addr_wfd[MLAN_MAC_ADDR_LENGTH];
 static uint8_t dev_fw_ver_ext[MLAN_MAX_VER_STR_LEN];
 
 static mlan_status wifi_send_fw_data(t_u8 *data, t_u32 txlen)
@@ -264,6 +265,12 @@ int wifi_get_device_mac_addr(wifi_mac_addr_t *mac_addr)
 int wifi_get_device_uap_mac_addr(wifi_mac_addr_t *mac_addr_uap)
 {
     (void)memcpy(mac_addr_uap->mac, dev_mac_addr_uap, MLAN_MAC_ADDR_LENGTH);
+    return WM_SUCCESS;
+}
+
+int wifi_get_device_wfd_mac_addr(wifi_mac_addr_t *mac_addr_wfd)
+{
+    (void)memcpy(mac_addr_wfd->mac, dev_mac_addr_wfd, MLAN_MAC_ADDR_LENGTH);
     return WM_SUCCESS;
 }
 
@@ -516,6 +523,10 @@ static mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
             if (bss_type == MLAN_BSS_TYPE_UAP)
             {
                 wifi_get_mac_address_from_cmdresp((HostCmd_DS_COMMAND *)(void *)cmdresp, dev_mac_addr_uap);
+            }
+            else if (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
+            {
+                wifi_get_mac_address_from_cmdresp((HostCmd_DS_COMMAND *)(void *)cmdresp, dev_mac_addr_wfd);
             }
             else
             {
@@ -982,6 +993,40 @@ static void wlan_get_mac_addr_uap(void)
 }
 #endif
 
+#if CONFIG_WPA_SUPP_P2P
+static void wlan_get_mac_addr_wfd(void)
+{
+    t_u32 tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
+    uint32_t resp;
+    t_u16 seq_number = 0;
+
+    wifi_sdio_lock();
+
+    (void)memset(outbuf, 0, buflen);
+    seq_number = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, MLAN_BSS_TYPE_WIFIDIRECT);
+
+    /* sdiopkt = outbuf */
+    wifi_prepare_get_mac_addr_cmd(&sdiopkt->hostcmd, seq_number);
+
+    sdiopkt->pkttype = MLAN_TYPE_CMD;
+    sdiopkt->size    = sdiopkt->hostcmd.size + INTF_HEADER_LEN;
+
+    last_cmd_sent = HostCmd_CMD_802_11_MAC_ADDRESS;
+
+    /* send CMD53 to write the command to get mac address */
+#if defined(SD8801)
+    sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || defined(IW610)
+    (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
+#endif
+
+    wifi_sdio_unlock();
+
+    wifi_sdio_wait_for_cmdresp();
+
+}
+#endif
+
 void wifi_prepare_get_fw_ver_ext_cmd(HostCmd_DS_COMMAND *cmd, int seq_number, int version_str_sel);
 static void wlan_get_fw_ver_ext(int version_str_sel)
 {
@@ -1394,6 +1439,10 @@ static void wlan_fw_init_cfg(void)
 
 #if UAP_SUPPORT
     wlan_get_mac_addr_uap();
+#endif
+
+#if CONFIG_WPA_SUPP_P2P
+    wlan_get_mac_addr_wfd();
 #endif
 
     if (wm_wifi.wifi_init_done == 0U)

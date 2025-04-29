@@ -353,9 +353,10 @@ static inline uint32_t net_inet_aton(const char *cp)
  *
  * \param[in] stamac sta MAC address.
  * \param[in] uapmac uap MAC address.
+ * \param[in] wfdmac wfd MAC address.
  *
  */
-void net_wlan_set_mac_address(unsigned char *stamac, unsigned char *uapmac);
+void net_wlan_set_mac_address(unsigned char *stamac, unsigned char *uapmac, unsigned char *wfdmac);
 
 #if defined(SDK_OS_FREE_RTOS)
 

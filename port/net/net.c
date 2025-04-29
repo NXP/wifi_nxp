@@ -260,7 +260,7 @@ static void wm_netif_ipv6_status_callback(struct netif *n)
 }
 #endif /* CONFIG_IPV6 */
 
-void net_wlan_set_mac_address(unsigned char *stamac, unsigned char *uapmac)
+void net_wlan_set_mac_address(unsigned char *stamac, unsigned char *uapmac, unsigned char *wfdmac)
 {
     if (stamac != NULL)
     {
@@ -273,6 +273,14 @@ void net_wlan_set_mac_address(unsigned char *stamac, unsigned char *uapmac)
     }
 #else
     (void)uapmac;
+#endif
+#if CONFIG_WPA_SUPP_P2P
+    if (wfdmac != NULL)
+    {
+        (void)memcpy(&g_wfd.netif.hwaddr[0], &wfdmac[0], MLAN_MAC_ADDR_LENGTH);
+    }
+#else
+    (void)wfdmac;
 #endif
 }
 

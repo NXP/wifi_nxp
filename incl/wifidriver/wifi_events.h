@@ -112,6 +112,8 @@ enum wifi_event
     WIFI_EVENT_STA_MAC_ADDR_CONFIG,
     /** UAP MAC address configuration */
     WIFI_EVENT_UAP_MAC_ADDR_CONFIG,
+    /** WFD MAC address configuration */
+    WIFI_EVENT_WFD_MAC_ADDR_CONFIG,
     /** Network DHCP configuration */
     WIFI_EVENT_NET_DHCP_CONFIG,
     /** Supplicant PMK */

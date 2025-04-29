@@ -7394,6 +7394,19 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             }
             break;
 #endif
+#if CONFIG_WPA_SUPP_P2P
+        case WIFI_EVENT_WFD_MAC_ADDR_CONFIG:
+            if (msg->data != NULL)
+            {
+                (void)memcpy((void *)&wlan.wfd_mac[0], (const void *)msg->data, MLAN_MAC_ADDR_LENGTH);
+#if !CONFIG_MEM_POOLS
+                OSA_MemoryFree(msg->data);
+#else
+                OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
+            }
+            break;
+#endif
 #if CONFIG_BG_SCAN
         case WIFI_EVENT_BG_SCAN_STOPPED:
             wlcm_d("got event: BG scan stopped");
@@ -7815,6 +7828,8 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
         return ret;
     }
 
+    (void)memcpy((void *)&wlan.sta_mac[0], (const void *)mac_addr.mac, MLAN_MAC_ADDR_LENGTH);
+
 #if UAP_SUPPORT
     wifi_mac_addr_t mac_addr_uap;
     ret = wifi_get_device_uap_mac_addr(&mac_addr_uap);
@@ -7826,15 +7841,22 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
 
     (void)memcpy((void *)&wlan.uap_mac[0], (const void *)mac_addr_uap.mac, MLAN_MAC_ADDR_LENGTH);
 #endif
-    (void)memcpy((void *)&wlan.sta_mac[0], (const void *)mac_addr.mac, MLAN_MAC_ADDR_LENGTH);
+
+#if CONFIG_WPA_SUPP_P2P
+    wifi_mac_addr_t mac_addr_wfd;
+    ret = wifi_get_device_wfd_mac_addr(&mac_addr_wfd);
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("Failed to get wfd mac address");
+        return ret;
+    }
+
+    (void)memcpy((void *)&wlan.wfd_mac[0], (const void *)mac_addr_wfd.mac, MLAN_MAC_ADDR_LENGTH);
+#endif
 
     (void)PRINTF("STA MAC Address: ");
     print_mac((const char *)&wlan.sta_mac);
     (void)PRINTF("\r\n");
-#if CONFIG_WPA_SUPP_P2P
-    (void)memcpy((void *)&wlan.wfd_mac[0], (const void *)mac_addr.mac, MLAN_MAC_ADDR_LENGTH);
-    wlan.wfd_mac[0] |= (0x01 << 1);
-#endif
     ret = wifi_get_device_firmware_version_ext(&wlan.fw_ver_ext);
     if (ret != WM_SUCCESS)
     {
@@ -10867,10 +10889,12 @@ void wlan_reset(cli_reset_option ResetOption)
             }
 
             /* update the netif hwaddr after reset */
+            net_wlan_set_mac_address(&wlan.sta_mac[0], NULL, NULL);
 #if UAP_SUPPORT
-            net_wlan_set_mac_address(&wlan.sta_mac[0], &wlan.uap_mac[0]);
-#else
-            net_wlan_set_mac_address(&wlan.sta_mac[0], NULL);
+            net_wlan_set_mac_address(NULL, &wlan.uap_mac[0], NULL);
+#endif
+#if CONFIG_WPA_SUPP_P2P
+            net_wlan_set_mac_address(NULL, NULL, &wlan.wfd_mac[0]);
 #endif
             /* Unblock TX data */
             wifi_set_tx_status(WIFI_DATA_RUNNING);
@@ -11170,30 +11194,28 @@ int wlan_set_mac_addr(uint8_t *mac)
 
     if (wlan.status == WLCMGR_INIT_DONE || wlan.status == WLCMGR_ACTIVATED)
     {
-#if CONFIG_WPA_SUPP_P2P
-        uint8_t wfd_mac[MLAN_MAC_ADDR_LENGTH];
-#endif
+        net_wlan_set_mac_address((unsigned char *)mac, NULL, NULL);
+        /* save the sta mac */
+        _wifi_set_mac_addr(mac, MLAN_BSS_TYPE_STA);
+        (void)memcpy(&wlan.sta_mac[0], mac, MLAN_MAC_ADDR_LENGTH);
 #if UAP_SUPPORT
         uint8_t ap_mac[MLAN_MAC_ADDR_LENGTH];
         (void)memcpy(ap_mac, mac, MLAN_MAC_ADDR_LENGTH);
         ap_mac[0] |= 2;
         ap_mac[4] += 1;
-        net_wlan_set_mac_address((unsigned char *)mac, (unsigned char *)ap_mac);
-#else
-        net_wlan_set_mac_address((unsigned char *)mac, NULL);
-#endif
-        /* save the sta mac */
-        _wifi_set_mac_addr(mac, MLAN_BSS_TYPE_STA);
-        (void)memcpy(&wlan.sta_mac[0], mac, MLAN_MAC_ADDR_LENGTH);
-#if UAP_SUPPORT
+        net_wlan_set_mac_address(NULL, (unsigned char *)ap_mac, NULL);
         /* save the uap mac */
         _wifi_set_mac_addr(&ap_mac[0], MLAN_BSS_TYPE_UAP);
         (void)memcpy(&wlan.uap_mac[0], &ap_mac[0], MLAN_MAC_ADDR_LENGTH);
 #endif
 #if CONFIG_WPA_SUPP_P2P
-         (void)memcpy(wfd_mac, mac, MLAN_MAC_ADDR_LENGTH);
-         wfd_mac[0] |= (0x01 << 1);
-         _wifi_set_mac_addr(&wfd_mac[0], MLAN_BSS_TYPE_WIFIDIRECT);
+        uint8_t wfd_mac[MLAN_MAC_ADDR_LENGTH];
+        (void)memcpy(wfd_mac, mac, MLAN_MAC_ADDR_LENGTH);
+        wfd_mac[0] |= 0x02;
+        net_wlan_set_mac_address(NULL, NULL, (unsigned char *)wfd_mac);
+        /* save the wfd mac */
+        _wifi_set_mac_addr(&wfd_mac[0], MLAN_BSS_TYPE_WIFIDIRECT);
+        (void)memcpy(&wlan.wfd_mac[0], &wfd_mac[0], MLAN_MAC_ADDR_LENGTH);
 #endif
     }
     else
@@ -11229,7 +11251,7 @@ int wlan_set_uap_mac_addr(uint8_t *mac)
 
     if (wlan.status == WLCMGR_INIT_DONE || wlan.status == WLCMGR_ACTIVATED)
     {
-        net_wlan_set_mac_address(NULL, (unsigned char *)mac);
+        net_wlan_set_mac_address(NULL, (unsigned char *)mac, NULL);
 
         _wifi_set_mac_addr(mac, MLAN_BSS_TYPE_UAP);
 
@@ -11270,7 +11292,7 @@ int wlan_set_sta_mac_addr(uint8_t *mac)
 
     if (wlan.status == WLCMGR_INIT_DONE || wlan.status == WLCMGR_ACTIVATED)
     {
-        net_wlan_set_mac_address((unsigned char *)mac, NULL);
+        net_wlan_set_mac_address((unsigned char *)mac, NULL, NULL);
 
         _wifi_set_mac_addr(mac, MLAN_BSS_TYPE_STA);
 

@@ -60,6 +60,7 @@ extern t_u32 last_resp_rcvd;
 
 extern uint8_t dev_mac_addr[MLAN_MAC_ADDR_LENGTH];
 extern uint8_t dev_mac_addr_uap[MLAN_MAC_ADDR_LENGTH];
+extern uint8_t dev_mac_addr_wfd[MLAN_MAC_ADDR_LENGTH];
 
 #if (CONFIG_11MC) || (CONFIG_11AZ)
 extern ftm_start_param ftm_param;
@@ -3536,6 +3537,11 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 {
                     (void)memcpy(dev_mac_addr_uap, sta_addr, MLAN_MAC_ADDR_LENGTH);
                     ret = wifi_event_completion(WIFI_EVENT_UAP_MAC_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, sta_addr);
+                }
+                else if (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
+                {
+                    (void)memcpy(dev_mac_addr_wfd, sta_addr, MLAN_MAC_ADDR_LENGTH);
+                    ret = wifi_event_completion(WIFI_EVENT_WFD_MAC_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, sta_addr);
                 }
 
                 if (ret != WM_SUCCESS)

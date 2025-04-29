@@ -506,6 +506,15 @@ int wifi_get_device_mac_addr(wifi_mac_addr_t *mac_addr);
 int wifi_get_device_uap_mac_addr(wifi_mac_addr_t *mac_addr_uap);
 
 /**
+ * Get the device wfd MAC address
+ *
+ * @param[out] mac_addr_wfd Mac address
+ *
+ * @return WM_SUCESS
+ */
+int wifi_get_device_wfd_mac_addr(wifi_mac_addr_t *mac_addr_wfd);
+
+/**
  * Get the cached string representation of the wlan firmware extended version.
  *
  * @param[in] fw_ver_ext Firmware Version Extended
