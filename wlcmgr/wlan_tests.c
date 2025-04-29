@@ -2286,6 +2286,7 @@ static void test_wlan_add_packet_filter(int argc, char **argv)
 {
     int ret = -WM_FAIL;
     t_u8 i = 0, j = 0, k = 0;
+    t_u32 *pmask = NULL;
     wlan_wowlan_ptn_cfg_t wowlan_ptn_cfg;
     enum wlan_bss_type bss_type = WLAN_BSS_TYPE_STA;
 
@@ -2346,7 +2347,8 @@ static void test_wlan_add_packet_filter(int argc, char **argv)
             for (j = 0; j < wowlan_ptn_cfg.patterns[k].pattern_len; j++)
                 wowlan_ptn_cfg.patterns[k].pattern[j] = a2hex_or_atoi(argv[j + i]);
             i += j;
-            (void)memset(wowlan_ptn_cfg.patterns[k].mask, 0x3f, 6);
+            pmask = (t_u32 *)wowlan_ptn_cfg.patterns[k].mask;
+            *pmask = (1 << wowlan_ptn_cfg.patterns[k].pattern_len) - 1;
         }
     }
     ret = wlan_wowlan_cfg_ptn_match(&wowlan_ptn_cfg);
