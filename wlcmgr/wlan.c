@@ -15834,11 +15834,13 @@ int wlan_mgmtframe_tx_cfg(wlan_host_tx_frame_params_t *tx_frame)
         return -WM_FAIL;
     }
 
+#if CONFIG_NET_MONITOR
     if(get_monitor_flag() != true)
     {
         (void)PRINTF("enable monitor mode first\n\r");
         return -WM_FAIL;
     }
+#endif
 
     //Todo: add this condition if (mlan_adap->cmd_tx_data == 1U)
     ret = wifi_mgmtframe_tx_cfg(tx_frame);
