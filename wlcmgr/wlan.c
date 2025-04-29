@@ -5260,6 +5260,7 @@ static int wlcm_process_add_unspecified_network(const char *name)
     {
         wfd_bss_type = network->role = WLAN_BSS_ROLE_UAP;
         network->type = WLAN_BSS_TYPE_WIFIDIRECT;
+        (void)wpa_supp_p2p_update_security_info(network);
         network->channel = priv_wfd->p2p_go_chan;
         /* Set IP address to 192.168.49.1 */
         network->ip.ipv4.address = htonl(0xc0a83101UL);
@@ -5535,11 +5536,10 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     else if (strstr(buf, P2P_EVENT_GROUP_STARTED))
     {
         char *pos;
-
         if (strstr(buf, " GO "))
         {
             priv_wfd->p2p_go_network = true;
-
+            
             pos = strstr(buf, " ssid=");
             if (pos)
             {
