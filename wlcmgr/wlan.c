@@ -5987,7 +5987,7 @@ static void wlcm_process_fw_hang_event(struct wifi_message *msg, enum cm_sta_sta
     }
 
 #if UAP_SUPPORT
-    if (wlan.uap_state > CM_UAP_INITIALIZING)
+    if (is_uap_starting())
     {
         (void)do_stop(&wlan.networks[wlan.cur_uap_network_idx]);
     }
@@ -7499,7 +7499,7 @@ static void wlcmgr_task(void *data)
 #if UAP_SUPPORT
                 /* uAP related msg */
                 next_uap_state = uap_state_machine(&msg);
-                if (wlan.uap_state == next_uap_state)
+                if (is_uap_state(next_uap_state))
                 {
                     continue;
                 }
@@ -8335,22 +8335,7 @@ int wlan_stop(void)
     wifi_free_fw_region_and_cfp_tables();
 #endif
 
-#ifndef RW610
-    wlan.running = 0;
-    wlan.scan_cb = NULL;
-
-#if CONFIG_WPA_SUPP
-
-    wifi_supp_deinit();
-
-    ret = wpa_supp_deinit();
-    if (ret != 0)
-    {
-        wlcm_e("wpa_supp_deinit failed. status code %d", ret);
-        return WLAN_ERROR_STATE;
-    }
-#endif
-#else
+#ifdef RW610
 #if CONFIG_WIFI_RECOVERY && UAP_SUPPORT
     /* If CONFIG_WIFI_RECOVERY is defined, 0xb2 CMD will be skipped, but dhcp_server_stop()
      * is called in 0xb2 CMD response. So it needs to be called here to stop DHCP server
