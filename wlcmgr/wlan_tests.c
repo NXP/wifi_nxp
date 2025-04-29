@@ -2287,32 +2287,64 @@ static void test_wlan_add_packet_filter(int argc, char **argv)
     int ret = -WM_FAIL;
     t_u8 i = 0, j = 0, k = 0;
     wlan_wowlan_ptn_cfg_t wowlan_ptn_cfg;
-    if (argc < 2)
+    enum wlan_bss_type bss_type = WLAN_BSS_TYPE_STA;
+
+    if (argc < 3)
     {
-        (void)PRINTF("Usage: %s <0/1>\r\n", argv[0]);
+        (void)PRINTF("Usage: %s <sta/uap> <0/1> \r\n", argv[0]);
         (void)PRINTF("Error: Specify 1 to magic filter\r\n");
         dump_wlan_add_packet_filter();
         return;
     }
-    if (argc > 3 && atoi(argv[2]) != argc - 3)
+
+    if (string_equal("sta", argv[1]))
     {
-        (void)PRINTF("Usage: %s 0/1 <patterns number> <ptn_len> <pkt_offset> <ptn> ...........\r\n", argv[0]);
-        dump_wlan_add_packet_filter();
-        return;
+        bss_type = MLAN_BSS_TYPE_STA;
     }
-    (void)memset(&wowlan_ptn_cfg, 0, sizeof(wlan_wowlan_ptn_cfg_t));
-    wowlan_ptn_cfg.enable = atoi(argv[1]);
-    if (argc > 2)
+    else if (string_equal("uap", argv[1]))
     {
-        wowlan_ptn_cfg.n_patterns = atoi(argv[2]);
-        for (i = 3, k = 0; (i < argc) && k < MAX_NUM_FILTERS; k++)
+        bss_type = MLAN_BSS_TYPE_UAP;
+    }
+    else
+    {
+       (void)PRINTF("Error: provide BSS type\r\n");
+       (void)PRINTF("Usage: %s <sta/uap> <0/1> \r\n", argv[0]);
+       dump_wlan_add_packet_filter();
+       return;
+    }
+
+    if (argc > 4)
+    {
+        /* argv[3]: number of patterns
+         * argv[4]: ptn_len
+         */
+        int n_param = 4;
+        for (int k = 0; k < atoi(argv[3]); k++)
+        {
+            n_param += atoi(argv[n_param]) + 2;
+        }
+
+        if (n_param != argc)
+        {
+            (void)PRINTF("Usage: %s sta/uap 0/1 <patterns number> <ptn_len> <pkt_offset> <ptn> ...........\r\n", argv[0]);
+            dump_wlan_add_packet_filter();
+            return;
+        }
+    }
+
+    (void)memset(&wowlan_ptn_cfg, 0, sizeof(wlan_wowlan_ptn_cfg_t));
+    wowlan_ptn_cfg.enable = atoi(argv[2]);
+    if (argc > 3)
+    {
+        wowlan_ptn_cfg.n_patterns = atoi(argv[3]);
+        for (i = 4, k = 0; (i < argc) && k < MAX_NUM_FILTERS; k++)
         {
             wowlan_ptn_cfg.patterns[k].pattern_len = atoi(argv[i]);
             i++;
             wowlan_ptn_cfg.patterns[k].pkt_offset = atoi(argv[i]);
             i++;
             for (j = 0; j < wowlan_ptn_cfg.patterns[k].pattern_len; j++)
-                wowlan_ptn_cfg.patterns[k].pattern[j] = atoi(argv[j + i]);
+                wowlan_ptn_cfg.patterns[k].pattern[j] = a2hex_or_atoi(argv[j + i]);
             i += j;
             (void)memset(wowlan_ptn_cfg.patterns[k].mask, 0x3f, 6);
         }
