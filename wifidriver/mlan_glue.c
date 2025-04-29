@@ -8274,17 +8274,26 @@ int wifi_twt_information(wifi_twt_information_t *twt_information)
 int wifi_set_clocksync_cfg(const wifi_clock_sync_gpio_tsf_t *tsf_latch, mlan_bss_type bss_type)
 {
     int ret;
-    mlan_ds_misc_cfg misc;
+    mlan_ds_misc_cfg *misc = NULL;
     mlan_ioctl_req req;
-    (void)memset(&misc, 0x00, sizeof(mlan_ds_misc_cfg));
+
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+#if !CONFIG_MEM_POOLS
+    misc = OSA_MemoryAllocate(sizeof(mlan_ds_misc_cfg));
+#else
+    misc = OSA_MemoryPoolAllocate(buf_3072_MemoryPool);
+#endif
+    if (misc == NULL)
+    {
+        return -WM_FAIL;
+    }
 
-    (void)memcpy((void *)&misc.param.gpio_tsf_latch_config, (const void *)tsf_latch,
-                 sizeof(misc.param.gpio_tsf_latch_config));
+    (void)memcpy((void *)&misc->param.gpio_tsf_latch_config, (const void *)tsf_latch,
+                 sizeof(misc->param.gpio_tsf_latch_config));
 
-    misc.sub_command       = (t_u32)MLAN_OID_MISC_GPIO_TSF_LATCH;
+    misc->sub_command       = (t_u32)MLAN_OID_MISC_GPIO_TSF_LATCH;
     wm_wifi.cmd_resp_ioctl = &req;
-    req.pbuf               = (t_u8 *)&misc;
+    req.pbuf               = (t_u8 *)misc;
     req.buf_len            = sizeof(mlan_ds_misc_cfg);
     req.req_id             = (t_u32)MLAN_IOCTL_MISC_CFG;
     req.action             = MLAN_ACT_SET;
@@ -8301,22 +8310,41 @@ int wifi_set_clocksync_cfg(const wifi_clock_sync_gpio_tsf_t *tsf_latch, mlan_bss
     }
 
     wm_wifi.cmd_resp_ioctl = NULL;
+
+    if(misc != NULL)
+    {
+#if !CONFIG_MEM_POOLS
+        OSA_MemoryFree(misc);
+#else
+        OSA_MemoryPoolFree(buf_3072_MemoryPool, misc);
+#endif
+    }
+
     return ret;
 }
 
 int wifi_get_tsf_info(wifi_tsf_info_t *tsf_info)
 {
     int ret;
-    mlan_ds_misc_cfg misc;
+    mlan_ds_misc_cfg *misc = NULL;
     mlan_ioctl_req req;
-    (void)memset(&misc, 0x00, sizeof(mlan_ds_misc_cfg));
+
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+#if !CONFIG_MEM_POOLS
+    misc = OSA_MemoryAllocate(sizeof(mlan_ds_misc_cfg));
+#else
+    misc = OSA_MemoryPoolAllocate(buf_3072_MemoryPool);
+#endif
+    if (misc == NULL)
+    {
+        return -WM_FAIL;
+    }
 
-    (void)memcpy((void *)&misc.param.tsf_info, (void *)tsf_info, sizeof(misc.param.tsf_info));
+    (void)memcpy((void *)&misc->param.tsf_info, (void *)tsf_info, sizeof(misc->param.tsf_info));
 
-    misc.sub_command       = (t_u32)MLAN_OID_MISC_GET_TSF_INFO;
+    misc->sub_command       = (t_u32)MLAN_OID_MISC_GET_TSF_INFO;
     wm_wifi.cmd_resp_ioctl = &req;
-    req.pbuf               = (t_u8 *)&misc;
+    req.pbuf               = (t_u8 *)misc;
     req.buf_len            = sizeof(mlan_ds_misc_cfg);
     req.bss_index          = 0;
     req.req_id             = (t_u32)MLAN_IOCTL_MISC_CFG;
@@ -8327,8 +8355,18 @@ int wifi_get_tsf_info(wifi_tsf_info_t *tsf_info)
 
     if (ret == WM_SUCCESS)
     {
-        (void)memcpy((void *)tsf_info, (void *)&misc.param.tsf_info, sizeof(mlan_ds_tsf_info));
+        (void)memcpy((void *)tsf_info, (void *)&misc->param.tsf_info, sizeof(mlan_ds_tsf_info));
     }
+
+    if(misc != NULL)
+    {
+#if !CONFIG_MEM_POOLS
+        OSA_MemoryFree(misc);
+#else
+        OSA_MemoryPoolFree(buf_3072_MemoryPool, misc);
+#endif
+    }
+
     return ret;
 }
 #endif /* CONFIG_WIFI_CLOCKSYNC */
@@ -8426,21 +8464,42 @@ int wifi_get_mc_cfg(uint32_t *channel_time)
     (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd    = wifi_get_command_buffer();
     mlan_ioctl_req ioctl_req   = {0};
-    mlan_ds_misc_cfg ioctl_cfg = {0};
+    mlan_ds_misc_cfg *ioctl_cfg = NULL;
 
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+#if !CONFIG_MEM_POOLS
+    ioctl_cfg = OSA_MemoryAllocate(sizeof(mlan_ds_misc_cfg));
+#else
+    ioctl_cfg = OSA_MemoryPoolAllocate(buf_3072_MemoryPool);
+#endif
+    if (ioctl_cfg == NULL)
+    {
+        wifi_put_command_lock();
+        return -WM_FAIL;
+    }
+
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, 0U /* bss_type */);
     cmd->result  = 0x0;
 
     wm_wifi.cmd_resp_ioctl = &ioctl_req;
-    ioctl_req.pbuf         = (t_u8 *)&ioctl_cfg;
+    ioctl_req.pbuf         = (t_u8 *)ioctl_cfg;
     ioctl_req.buf_len      = sizeof(ioctl_cfg);
 
     (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MULTI_CHAN_CONFIG,
-                                   HostCmd_ACT_GEN_GET, 0, NULL, &ioctl_cfg.param.multi_chan_cfg, cmd);
+                                   HostCmd_ACT_GEN_GET, 0, NULL, &ioctl_cfg->param.multi_chan_cfg, cmd);
     (void)wifi_wait_for_cmdresp(NULL);
     wm_wifi.cmd_resp_ioctl = NULL;
-    (*channel_time)        = ioctl_cfg.param.multi_chan_cfg.channel_time;
+    (*channel_time)        = ioctl_cfg->param.multi_chan_cfg.channel_time;
+
+    if (ioctl_cfg != NULL)
+    {
+#if !CONFIG_MEM_POOLS
+        OSA_MemoryFree(ioctl_cfg);
+#else
+        OSA_MemoryPoolFree(buf_3072_MemoryPool, ioctl_cfg);
+#endif
+    }
+
     return wm_wifi.cmd_resp_status;
 }
 
@@ -8450,21 +8509,42 @@ int wifi_set_mc_policy(const int status)
     HostCmd_DS_COMMAND *cmd    = wifi_get_command_buffer();
     t_u16 mc_policy            = (t_u16)status;
     mlan_ioctl_req ioctl_req   = {0};
-    mlan_ds_misc_cfg ioctl_cfg = {0};
+    mlan_ds_misc_cfg *ioctl_cfg = NULL;
 
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+#if !CONFIG_MEM_POOLS
+    ioctl_cfg = OSA_MemoryAllocate(sizeof(mlan_ds_misc_cfg));
+#else
+    ioctl_cfg = OSA_MemoryPoolAllocate(buf_3072_MemoryPool);
+#endif
+    if (ioctl_cfg == NULL)
+    {
+        wifi_put_command_lock();
+        return -WM_FAIL;
+    }
+
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, 0U /* bss_type */);
     cmd->result  = 0x0;
 
     wm_wifi.cmd_resp_ioctl            = &ioctl_req;
     ioctl_req.action                  = (mlan_act_ioctl)HostCmd_ACT_GEN_SET;
-    ioctl_req.pbuf                    = (t_u8 *)&ioctl_cfg;
+    ioctl_req.pbuf                    = (t_u8 *)ioctl_cfg;
     ioctl_req.buf_len                 = sizeof(ioctl_cfg);
-    ioctl_cfg.param.multi_chan_policy = mc_policy;
+    ioctl_cfg->param.multi_chan_policy = mc_policy;
     (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MULTI_CHAN_POLICY,
                                    HostCmd_ACT_GEN_SET, 0, NULL, &mc_policy, cmd);
     (void)wifi_wait_for_cmdresp(NULL);
     wm_wifi.cmd_resp_ioctl = NULL;
+
+    if (ioctl_cfg != NULL)
+    {
+#if !CONFIG_MEM_POOLS
+        OSA_MemoryFree(ioctl_cfg);
+#else
+        OSA_MemoryPoolFree(buf_3072_MemoryPool, ioctl_cfg);
+#endif
+    }
+
     return wm_wifi.cmd_resp_status;
 }
 
@@ -8501,7 +8581,7 @@ int wifi_get_mc_cfg_ext(wifi_drcs_cfg_t *drcs, int num)
     (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd    = wifi_get_command_buffer();
     mlan_ioctl_req ioctl_req   = {0};
-    mlan_ds_misc_cfg ioctl_cfg = {0};
+    mlan_ds_misc_cfg *ioctl_cfg = NULL;
 
     if (num != 2)
     {
@@ -8511,21 +8591,42 @@ int wifi_get_mc_cfg_ext(wifi_drcs_cfg_t *drcs, int num)
     }
 
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+#if !CONFIG_MEM_POOLS
+    ioctl_cfg = OSA_MemoryAllocate(sizeof(mlan_ds_misc_cfg));
+#else
+    ioctl_cfg = OSA_MemoryPoolAllocate(buf_3072_MemoryPool);
+#endif
+    if (ioctl_cfg == NULL)
+    {
+        wifi_put_command_lock();
+        return -WM_FAIL;
+    }
+
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, 0U /* bss_type */);
     cmd->result  = 0x0;
 
     wm_wifi.cmd_resp_ioctl = &ioctl_req;
-    ioctl_req.pbuf         = (t_u8 *)&ioctl_cfg;
+    ioctl_req.pbuf         = (t_u8 *)ioctl_cfg;
     ioctl_req.buf_len      = sizeof(ioctl_cfg);
 
     (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_DRCS_CONFIG, HostCmd_ACT_GEN_GET, 0,
-                                   NULL, &ioctl_cfg.param.drcs_cfg[0], cmd);
+                                   NULL, &ioctl_cfg->param.drcs_cfg[0], cmd);
     (void)wifi_wait_for_cmdresp(NULL);
     wm_wifi.cmd_resp_ioctl = NULL;
 
     /* struct align is different */
-    (void)memcpy(drcs, &ioctl_cfg.param.drcs_cfg[0], sizeof(mlan_ds_drcs_cfg));
-    (void)memcpy(drcs + 1, &ioctl_cfg.param.drcs_cfg[1], sizeof(mlan_ds_drcs_cfg));
+    (void)memcpy(drcs, &ioctl_cfg->param.drcs_cfg[0], sizeof(mlan_ds_drcs_cfg));
+    (void)memcpy(drcs + 1, &ioctl_cfg->param.drcs_cfg[1], sizeof(mlan_ds_drcs_cfg));
+
+    if (ioctl_cfg != NULL)
+    {
+#if !CONFIG_MEM_POOLS
+        OSA_MemoryFree(ioctl_cfg);
+#else
+        OSA_MemoryPoolFree(buf_3072_MemoryPool, ioctl_cfg);
+#endif
+    }
+
     return wm_wifi.cmd_resp_status;
 }
 #endif
@@ -9147,18 +9248,26 @@ void wifi_pmip_v33_enable()
 int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type)
 {
     int ret;
-    mlan_ds_misc_cfg misc;
+    mlan_ds_misc_cfg *misc = NULL;
     mlan_ioctl_req req;
 
-    (void)memset(&misc, 0x00, sizeof(mlan_ds_misc_cfg));
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+#if !CONFIG_MEM_POOLS
+    misc = OSA_MemoryAllocate(sizeof(mlan_ds_misc_cfg));
+#else
+    misc = OSA_MemoryPoolAllocate(buf_3072_MemoryPool);
+#endif
+    if (misc == NULL)
+    {
+        return -WM_FAIL;
+    }
 
-    misc.param.ind_rst_cfg.ir_mode  = indrst_cfg->ir_mode;
-    misc.param.ind_rst_cfg.gpio_pin = indrst_cfg->gpio_pin;
+    misc->param.ind_rst_cfg.ir_mode  = indrst_cfg->ir_mode;
+    misc->param.ind_rst_cfg.gpio_pin = indrst_cfg->gpio_pin;
 
-    misc.sub_command       = (t_u32)MLAN_OID_MISC_IND_RST_CFG;
+    misc->sub_command       = (t_u32)MLAN_OID_MISC_IND_RST_CFG;
     wm_wifi.cmd_resp_ioctl = &req;
-    req.pbuf               = (t_u8 *)&misc;
+    req.pbuf               = (t_u8 *)misc;
     req.buf_len            = sizeof(mlan_ds_misc_cfg);
     req.req_id             = (t_u32)MLAN_IOCTL_MISC_CFG;
     req.action             = MLAN_ACT_SET;
@@ -9175,21 +9284,40 @@ int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_t
     }
 
     wm_wifi.cmd_resp_ioctl = NULL;
+
+    if (misc != NULL)
+    {
+#if !CONFIG_MEM_POOLS
+        OSA_MemoryFree(misc);
+#else
+        OSA_MemoryPoolFree(buf_3072_MemoryPool, misc);
+#endif
+    }
+
     return ret;
 }
 
 int wifi_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type)
 {
     int ret;
-    mlan_ds_misc_cfg misc;
+    mlan_ds_misc_cfg *misc = NULL;
     mlan_ioctl_req req;
-    (void)memset(&misc, 0x00, sizeof(mlan_ds_misc_cfg));
-    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
 
-    misc.sub_command = (t_u32)MLAN_OID_MISC_IND_RST_CFG;
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+#if !CONFIG_MEM_POOLS
+    misc = OSA_MemoryAllocate(sizeof(mlan_ds_misc_cfg));
+#else
+    misc = OSA_MemoryPoolAllocate(buf_3072_MemoryPool);
+#endif
+    if (misc == NULL)
+    {
+        return -WM_FAIL;
+    }
+
+    misc->sub_command = (t_u32)MLAN_OID_MISC_IND_RST_CFG;
 
     wm_wifi.cmd_resp_ioctl = &req;
-    req.pbuf               = (t_u8 *)&misc;
+    req.pbuf               = (t_u8 *)misc;
     req.buf_len            = sizeof(mlan_ds_misc_cfg);
     req.req_id             = (t_u32)MLAN_IOCTL_MISC_CFG;
     req.action             = MLAN_ACT_GET;
@@ -9199,9 +9327,19 @@ int wifi_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type)
 
     if (ret == WM_SUCCESS)
     {
-        indrst_cfg->ir_mode  = misc.param.ind_rst_cfg.ir_mode;
-        indrst_cfg->gpio_pin = misc.param.ind_rst_cfg.gpio_pin;
+        indrst_cfg->ir_mode  = misc->param.ind_rst_cfg.ir_mode;
+        indrst_cfg->gpio_pin = misc->param.ind_rst_cfg.gpio_pin;
     }
+
+    if (misc != NULL)
+    {
+#if !CONFIG_MEM_POOLS
+        OSA_MemoryFree(misc);
+#else
+        OSA_MemoryPoolFree(buf_3072_MemoryPool, misc);
+#endif
+    }
+
     return ret;
 }
 
