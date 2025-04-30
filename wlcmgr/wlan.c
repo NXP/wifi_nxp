@@ -10635,6 +10635,8 @@ void wlan_reset(cli_reset_option ResetOption)
 #if defined(RW610)
             if (!wifi_fw_is_hang())
                 wifi_send_shutdown_cmd();
+#else
+            wifi_send_shutdown_cmd();
 #endif
 
 #if CONFIG_WPA_SUPP

@@ -81,7 +81,6 @@ int wifi_send_disable_supplicant(int mode);
 int wifi_send_rf_channel_cmd(wifi_rf_channel_t *rf_channel);
 int wifi_get_set_rf_tx_power(t_u16 cmd_action, wifi_tx_power_t *tx_power);
 
-#ifdef RW610
 int wifi_send_shutdown_cmd()
 {
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -96,7 +95,7 @@ int wifi_send_shutdown_cmd()
     wifi_wait_for_cmdresp(NULL);
     return WM_SUCCESS;
 }
-#endif
+
 int wifi_deauthenticate(uint8_t *bssid)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];

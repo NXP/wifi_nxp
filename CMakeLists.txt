@@ -28,7 +28,7 @@ zephyr_compile_definitions_ifdef(CONFIG_NXP_88W8801
     SD8801
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_NXP_IW610X
+zephyr_compile_definitions_ifdef(CONFIG_NXP_IW610
     IW610
 )
 

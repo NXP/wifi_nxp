@@ -230,11 +230,13 @@ int wifi_imu_put_task_lock(void);
  * This API can be used to judge if wifi firmware is hang.
  */
 bool wifi_fw_is_hang(void);
+#endif
+
 /**
  * This API can be used to send shutdown command to FW.
  */
 int wifi_send_shutdown_cmd(void);
-#endif
+
 /**
  * This API can be used to set wifi driver tx status.
  *
