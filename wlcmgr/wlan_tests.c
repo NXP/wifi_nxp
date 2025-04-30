@@ -5013,6 +5013,15 @@ void set_csi_filter(t_u8 pkt_type, t_u8 subtype, t_u8 flags, int op_index, t_u8 
     switch (op_index)
     {
         case CSI_FILTER_OPT_ADD:
+            for (int i = 0; i < g_csi_params.csi_filter_cnt; i++)
+            {
+                if (!memcmp(g_csi_params.csi_filter[i].mac_addr, mac, MLAN_MAC_ADDR_LENGTH))
+                {
+                    temp_filter_cnt = i;
+                    g_csi_params.csi_filter_cnt--;
+                    break;
+                }
+            }
             if (temp_filter_cnt < CSI_FILTER_MAX)
             {
                 (void)memcpy(&g_csi_params.csi_filter[temp_filter_cnt].mac_addr[0], mac, MLAN_MAC_ADDR_LENGTH);
@@ -5363,6 +5372,13 @@ void set_monitor_filter(int op_index, t_u8 *mac)
     switch (op_index)
     {
         case MONITOR_FILTER_OPT_ADD_MAC:
+            for (int i = 0; i < g_net_monitor_param.filter_num; i++)
+            {
+                if (!memcmp(g_net_monitor_param.mac_addr[i], mac, MLAN_MAC_ADDR_LENGTH))
+                {
+                    return;
+                }
+            }
             if (temp_filter_num < MAX_MONIT_MAC_FILTER_NUM)
             {
                 (void)memcpy(&g_net_monitor_param.mac_addr[temp_filter_num], mac, MLAN_MAC_ADDR_LENGTH);
