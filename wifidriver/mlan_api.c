@@ -1981,13 +1981,6 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
 
     wifi_mfg_cmd_tx_frame.enable    = enable;
     wifi_mfg_cmd_tx_frame.data_rate = data_rate;
-#ifdef RW610
-    /* on fw side, data rate id of 802.11n/a/g/b start from 0, the data rate id need reduce 1 */
-    if (data_rate <= HT_MCS7)
-    {
-        wifi_mfg_cmd_tx_frame.data_rate--;
-    }
-#endif
 
     wifi_mfg_cmd_tx_frame.frame_pattern = frame_pattern;
     wifi_mfg_cmd_tx_frame.frame_length  = frame_length;
