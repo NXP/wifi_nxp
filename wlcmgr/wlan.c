@@ -10776,10 +10776,8 @@ void wlan_reset(cli_reset_option ResetOption)
 #endif
             wifi_scan_stop();
             mlan_adap->skip_dfs = false;
-#if defined(RW610)
             if (!wifi_fw_is_hang())
                 wifi_send_shutdown_cmd();
-#endif
 
 #if CONFIG_WPA_SUPP
             wifi_supp_deinit();

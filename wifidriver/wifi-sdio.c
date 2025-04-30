@@ -1136,6 +1136,9 @@ static void wlan_enable_amsdu(void)
 #endif /* CONFIG_ENABLE_AMSDU_RX */
 #endif /* CONFIG_11N */
 
+/* This function was only used in sd_wifi_deinit, and now is replaced by wifi_send_shutdown_cmd with the same 0xaa cmd
+ */
+ #if 0
 static void wlan_cmd_shutdown(void)
 {
     t_u32 tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
@@ -1156,6 +1159,7 @@ static void wlan_cmd_shutdown(void)
 
     (void)sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 }
+#endif
 
 void wlan_prepare_mac_control_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number);
 static void wlan_set_mac_ctrl(void)
@@ -2923,7 +2927,12 @@ mlan_status sd_wifi_init(enum wlan_type type, const uint8_t *fw_start_addr, cons
 
         } else {
             ret = MLAN_STATUS_FAILURE;
-	}
+        }
+    }
+
+    if (wifi_shutdown_enable)
+    {
+        wifi_shutdown_enable = false;
     }
     return ret;
 }
@@ -2988,6 +2997,10 @@ mlan_status sd_wifi_reinit(enum wlan_type type, const uint8_t *fw_start_addr, co
         }
     }
 
+    if (wifi_shutdown_enable)
+    {
+        wifi_shutdown_enable = false;
+    }
     return ret;
 }
 #endif
@@ -3002,7 +3015,7 @@ void sd_wifi_deinit(void)
     mac_addr_valid = false;
     //	pm_deregister_cb(pm_handle);
 
-    (void)wlan_cmd_shutdown();
+    // (void)wlan_cmd_shutdown();
 #if !defined(SD8978)
 #if (CONFIG_WIFI_IND_DNLD) && (CONFIG_WIFI_IND_RESET)
     if (wifi_reset_in_progress() == true)
