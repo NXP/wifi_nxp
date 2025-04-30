@@ -5883,9 +5883,11 @@ static void wlcm_process_init(enum cm_sta_state *next)
     (void)wifi_11k_cfg(1);
     (void)wifi_11h_enable();
 #endif
+#if !CONFIG_RF_TEST_MODE
 #if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_1AS)
 #if !CONFIG_WPA_SUPP
     (void)wlan_rx_mgmt_indication(WLAN_BSS_TYPE_STA, WLAN_MGMT_ACTION, NULL);
+#endif
 #endif
 #endif
 
