@@ -409,9 +409,9 @@
 #endif
 
 #if !defined CONFIG_WIFI_CHANNEL_LOAD
-#if defined(RW610) || defined(IW610)
+#if defined(RW610) || defined(IW610) || defined(SD8978) || defined(SD8987) || defined(SD9177)
 #define CONFIG_WIFI_CHANNEL_LOAD 1
-#elif defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
+#elif defined(SD8801)
 #define CONFIG_WIFI_CHANNEL_LOAD 0
 #endif
 #endif
