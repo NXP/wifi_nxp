@@ -2148,9 +2148,9 @@ typedef struct _rx_pkt_he_rate_info
 /** Sum of RX packets. */
 typedef struct _rx_pkt_rate_info
 {
-    /** Sum of RX NSS (N*N MIMO spatial stream) packets. 
+    /** Sum of RX NSS (N*N MIMO spatial stream) packets.
     nss_txcnt[0] is for NSS 1,
-    nss_txcnt[1] is for NSS 2. 
+    nss_txcnt[1] is for NSS 2.
     */
     t_u32 nss_rxcnt[2];
     /** Sum of received packets for all STBC rates. */
@@ -3506,7 +3506,7 @@ int wlan_set_ieeeps_cfg(struct wlan_ieeeps_config *ps_cfg);
  * periodically wakes up to check if the AP has any pending packets for it. A
  * longer listen interval implies that the Wi-Fi SoC stays in power save for a
  * longer duration at the cost of additional delays while receiving data.
- * Note that choosing incorrect value for listen interval 
+ * Note that choosing incorrect value for listen interval
  * causes poor response from device during data transfer.
  * Actual listen interval selected by firmware is equal to closest DTIM.\n
  * For example:\n
@@ -4132,7 +4132,7 @@ int wlan_uap_get_log(wlan_pkt_stats_t *stats);
  * 	      more information on stats.
  *
  * \param[in] bss_type: 0: STA, 1: uAP
- * 
+ *
  * \return WM_SUCCESS if operation is successful.
  * \return -WM_FAIL if command fails.
  */
@@ -5691,7 +5691,7 @@ int wlan_set_crypto_AES_WRAP_encrypt(
 int wlan_set_crypto_AES_WRAP_decrypt(
     const t_u8 *Key, const t_u16 KeyLength, const t_u8 *KeyIV, const t_u16 KeyIVLength, t_u8 *Data, t_u16 *DataLength);
 
-/** Set crypto AES_CCMP (counter mode with cipher block chaining message authentication code protocol) 
+/** Set crypto AES_CCMP (counter mode with cipher block chaining message authentication code protocol)
  * algorithm encrypt command parameters.
  *
  * \param[in] Key: key
@@ -6694,7 +6694,7 @@ wlan_csi_config_params_t *wlan_get_csi_cfg_param_default(void);
  */
 int wlan_set_csi_cfg_param_default(wlan_csi_config_params_t *in_csi_cfg);
 
-/** 
+/**
  * This function reset Wi-Fi CSI filter data.
  */
 void wlan_reset_csi_filter_data(void);
@@ -7333,15 +7333,174 @@ int wlan_dpp_configurator_sign(int is_ap, const char *cmd);
 #endif
 
 #if CONFIG_WPA_SUPP_P2P
+/**
+ * Initiate P2P discovery.
+ *
+ * This function triggers the P2P discovery process by instructing
+ * wpa_supplicant to scan for available P2P devices. Optional arguments
+ * (such as scan timeout, scan type, or device filters) can be used to
+ * tailor the search behavior. Use this function when you want to start
+ * discovering nearby P2P devices for later connection or service discovery.
+ *
+ * \param[in] cmd Optional parameters for discovery (e.g., timeout, type).
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
 int wlan_p2p_find(const char *cmd);
+
+/**
+ * Stop the P2P discovery process.
+ *
+ * This command stops an ongoing P2P discovery process initiated by a previous
+ * call to wlan_p2p_find. It frees up radio resources and halts further
+ * scanning.
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
 int wlan_p2p_stop_find(void);
+
+/**
+ * Initiate a P2P connection.
+ *
+ * After identifying a target P2P device using the discovery process, this
+ * function begins the connection sequence. It negotiates connection parameters
+ * (often involving WPS configuration) and starts the group formation process.
+ *
+ * \param[in] cmd Connection parameters (e.g. Peer device address, WPS method
+ *                etc).
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
 int wlan_p2p_connect(char *cmd);
+
+/**
+ * Create a new P2P group.
+ *
+ * This function requests the creation of a new P2P group (i.e., starting a
+ * group owner instance) in wpa_supplicant. It configures the group parameters,
+ * including the SSID and security settings, so that client devices can join.
+ *
+ * \param[in] cmd Group configuration parameters.
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
 int wlan_p2p_group_add(char *cmd);
+
+/**
+ * Retrieve the group passphrase.
+ *
+ * Once a P2P group has been established, this function prints the WPA-PSK
+ * passphrase that secures the group. Client devices can use this passphrase to
+ * connect to the group.
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
 int wlan_p2p_get_passphrase(void);
+
+/**
+ * Issue a group invitation.
+ *
+ * This function sends an invitation request to a target P2P device,
+ * inviting it to join an existing P2P group. The invitation bypasses
+ * the standard negotiation procedure by directly inviting a device.
+ *
+ * \param[in] cmd Invitation parameters (e.g. Peer address, Group address etc).
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
 int wlan_p2p_invite(char *cmd);
+
+/**
+ * Initiate provisioning discovery.
+ *
+ * This command starts the provisioning discovery phase, which is used
+ * to determine the optimal method (e.g., PIN or PBC) for configuring a new
+ * P2P connection as part of the WPS process.
+ *
+ * \param[in] cmd Povisioning discovery parameters (e.g. device_addr,
+ *                config_methods etc).
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
 int wlan_p2p_prov_disc(char *cmd);
+
+/**
+ * Cancel ongoing P2P operations.
+ *
+ * This function cancels any active P2P operations, including discovery,
+ * connection attempts, or group formation. It resets the P2P state to idle,
+ * making it possible to start a new operation afterward.
+ *
+ *  \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
 int wlan_p2p_cancel(void);
+
+/**
+ * Remove a client from the P2P group.
+ *
+ * When a P2P group owner needs to disconnect a client, this function
+ * removes the specified client from the group. It ensures that the client’s
+ * association with the group is terminated, and cleans up related state.
+ *
+ * \param[in] cmd  The address of the client to be removed.
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
 int wlan_p2p_remove_client(char *cmd);
+
+/**
+ * Advertise a service.
+ *
+ * This function adds a service advertisement to the device’s P2P service
+ * discovery framework. It allows the device to broadcast information about
+ * services (e.g., file sharing, printing) that may be available to peers.
+ *
+ * \param[in] cmd  A string or binary blob representing the service data.
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_p2p_servvice_add(char *cmd);
+
+/**
+ * Send a service discovery request.
+ *
+ * A device can use this function to query a discovered P2P peer for details
+ * about available services. The request typically includes the type of service
+ * or specific query parameters, and the peer is expected to respond with
+ * matching service information.
+ *
+ * \param[in] cmd Service discovery request parameters.
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_p2p_serv_disc_req(char *cmd);
+
+/**
+ * Send a service discovery response.
+ *
+ * This function is used by a P2P device to respond to a service discovery
+ * request. It sends detailed information about the services that are available,
+ * enabling the requesting peer to decide if the advertised service meets its
+ * requirements.
+ *
+ * \param[in] cmd  Service discovery response parameters.
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_p2p_serv_disc_resp(char *cmd);
+
+/**
+ * Tear down an existing P2P group.
+ *
+ * This function ends an active P2P group by terminating the group owner
+ * instance and disconnecting all associated clients. It performs necessary
+ * resource cleanup and notifies clients that the group has been disbanded.
+ *
+ * \param[in] cmd  The wfd interface name
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_p2p_group_remove(char *cmd);
 #endif
 
 #if CONFIG_IMD3_CFG

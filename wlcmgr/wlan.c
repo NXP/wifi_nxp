@@ -5327,6 +5327,11 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
 
     wlcm_d("%s: %s", __func__, buf);
 
+#if CONFIG_WPA_SUPP_P2P
+    if (strstr(buf, "P2P-"))
+        PRINTF("%s\r\n", buf);
+#endif
+
 #if CONFIG_WPA_SUPP && CONFIG_ROAMING
 	if (strstr(buf, "selected current BSS ") != NULL)
 	{
@@ -16323,6 +16328,33 @@ int wlan_p2p_remove_client(char *cmd)
     return wpa_supp_p2p_remove_client(netif, cmd);
 }
 
+int wlan_p2p_servvice_add(char *cmd)
+{
+    struct netif *netif = net_get_wfd_interface();
+
+    return wpa_supp_p2p_service_add(netif, cmd);
+}
+
+int wlan_p2p_serv_disc_req(char *cmd)
+{
+    struct netif *netif = net_get_wfd_interface();
+
+    return wpa_supp_p2p_serv_disc_req(netif, cmd);
+}
+
+int wlan_p2p_serv_disc_resp(char *cmd)
+{
+    struct netif *netif = net_get_wfd_interface();
+
+    return wpa_supp_p2p_serv_disc_resp(netif, cmd);
+}
+
+int wlan_p2p_group_remove(char *cmd)
+{
+    struct netif *netif = net_get_wfd_interface();
+
+    return wpa_supp_p2p_group_remove(netif, cmd);
+}
 #endif
 
 #if CONFIG_IMD3_CFG

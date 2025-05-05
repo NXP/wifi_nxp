@@ -11320,7 +11320,7 @@ static void test_wlan_p2p_find(int argc, char **argv)
 
         totallen += len;
     }
-    pos[totallen] = '\0';
+    cmd[totallen - 1] = '\0';
 
     ret = wlan_p2p_find(cmd);
     if (ret == -WM_FAIL)
@@ -11370,7 +11370,7 @@ static void test_wlan_p2p_connect(int argc, char **argv)
 
         totallen += len;
     }
-    pos[totallen] = '\0';
+    cmd[totallen - 1] = '\0';
 
     ret = wlan_p2p_connect(cmd);
 
@@ -11422,7 +11422,7 @@ static void test_wlan_p2p_group_add(int argc, char **argv)
 
         totallen += len;
     }
-    pos[totallen] = '\0';
+    cmd[totallen - 1] = '\0';
 
     ret = wlan_p2p_group_add(cmd);
     if (ret == -WM_FAIL)
@@ -11504,7 +11504,7 @@ static void test_wlan_p2p_invite(int argc, char **argv)
 
         totallen += len;
     }
-    pos[totallen] = '\0';
+    cmd[totallen - 1] = '\0';
 
     ret = wlan_p2p_invite(cmd);
     if (ret == -WM_FAIL)
@@ -11539,7 +11539,7 @@ static void test_wlan_p2p_prov_disc(int argc, char **argv)
 
         totallen += len;
     }
-    pos[totallen] = '\0';
+    cmd[totallen - 1] = '\0';
 
     ret = wlan_p2p_prov_disc(cmd);
     if (ret == -WM_FAIL)
@@ -11589,7 +11589,7 @@ static void test_wlan_p2p_remove_client(int argc, char **argv)
 
         totallen += len;
     }
-    pos[totallen] = '\0';
+    cmd[totallen - 1] = '\0';
 
     ret = wlan_p2p_remove_client(cmd);
     if (ret == -WM_FAIL)
@@ -11602,6 +11602,145 @@ static void test_wlan_p2p_remove_client(int argc, char **argv)
     }
 }
 
+static void test_wlan_p2p_service_add(int argc, char **argv)
+{
+    int ret, i;
+    int totallen = 0;
+    int len      = 0;
+    static char cmd[P2P_CMD_SIZE];
+    char *pos = cmd;
+
+    (void)memset(cmd, 0, sizeof(cmd));
+
+    for (i = 1; i < argc; i++)
+    {
+        len = strlen(argv[i]);
+        // len = (strlen(argv[i]) <= (P2P_FIND_CMD_SIZE - 1)) ? strlen(argv[i]) : (P2P_FIND_CMD_SIZE - 1);
+
+        strncpy(pos, argv[i], len);
+        pos[len] = ' ';
+        len++;
+        pos += len;
+
+        totallen += len;
+    }
+    cmd[totallen - 1] = '\0';
+
+    ret = wlan_p2p_servvice_add(cmd);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n p2p_servvice_add failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n p2p_servvice_add ok!\r\n");
+    }
+}
+
+static void test_wlan_p2p_serv_disc_req(int argc, char **argv)
+{
+    int ret, i;
+    int totallen = 0;
+    int len      = 0;
+    static char cmd[P2P_CMD_SIZE];
+    char *pos = cmd;
+
+    (void)memset(cmd, 0, sizeof(cmd));
+
+    for (i = 1; i < argc; i++)
+    {
+        len = strlen(argv[i]);
+        // len = (strlen(argv[i]) <= (P2P_FIND_CMD_SIZE - 1)) ? strlen(argv[i]) : (P2P_FIND_CMD_SIZE - 1);
+
+        strncpy(pos, argv[i], len);
+        pos[len] = ' ';
+        len++;
+        pos += len;
+
+        totallen += len;
+    }
+    cmd[totallen - 1] = '\0';
+
+    ret = wlan_p2p_serv_disc_req(cmd);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n p2p_serv_disc_req failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n p2p_serv_disc_req ok!\r\n");
+    }
+}
+
+static void test_wlan_p2p_serv_disc_resp(int argc, char **argv)
+{
+    int ret, i;
+    int totallen = 0;
+    int len      = 0;
+    static char cmd[P2P_CMD_SIZE];
+    char *pos = cmd;
+
+    (void)memset(cmd, 0, sizeof(cmd));
+
+    for (i = 1; i < argc; i++)
+    {
+        len = strlen(argv[i]);
+        // len = (strlen(argv[i]) <= (P2P_FIND_CMD_SIZE - 1)) ? strlen(argv[i]) : (P2P_FIND_CMD_SIZE - 1);
+
+        strncpy(pos, argv[i], len);
+        pos[len] = ' ';
+        len++;
+        pos += len;
+
+        totallen += len;
+    }
+    cmd[totallen - 1] = '\0';
+
+    ret = wlan_p2p_serv_disc_resp(cmd);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n p2p_serv_disc_resp failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n p2p_serv_disc_resp ok!\r\n");
+    }
+}
+
+static void test_wlan_p2p_group_remove(int argc, char **argv)
+{
+    int ret, i;
+    int totallen = 0;
+    int len      = 0;
+    static char cmd[P2P_CMD_SIZE];
+    char *pos = cmd;
+
+    (void)memset(cmd, 0, sizeof(cmd));
+
+    for (i = 1; i < argc; i++)
+    {
+        len = strlen(argv[i]);
+        // len = (strlen(argv[i]) <= (P2P_FIND_CMD_SIZE - 1)) ? strlen(argv[i]) : (P2P_FIND_CMD_SIZE - 1);
+
+        strncpy(pos, argv[i], len);
+        pos[len] = ' ';
+        len++;
+        pos += len;
+
+        totallen += len;
+    }
+    cmd[totallen - 1] = '\0';
+
+    ret = wlan_p2p_group_remove(cmd);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n p2p_group_remove failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n p2p_group_remove ok!\r\n");
+    }
+}
 #endif
 
 #if CONFIG_IMD3_CFG
@@ -13342,6 +13481,10 @@ static struct cli_command tests[] = {
     {"wlan-p2p-start-wps-pbc", NULL, test_wlan_p2p_start_wps_pbc},
     {"wlan-p2p-start-wps-pin", "<8 digit pin>", test_wlan_p2p_start_wps_pin},
     {"wlan-p2p-prov-disc", " <peer_address> <method> [join]", test_wlan_p2p_prov_disc},
+    {"wlan-p2p-service-add", " <service_type> <query_tlv> <response_tlv>", test_wlan_p2p_service_add},
+    {"wlan-p2p-serv-disc-req", " <device_address> <query_tlv>", test_wlan_p2p_serv_disc_req},
+    {"wlan-p2p-serv-disc-resp", " <frequency> <destination_address> <dialog_token> <response_tlv>", test_wlan_p2p_serv_disc_resp},
+    {"wlan-p2p-group-remove", " <group_interface_name>", test_wlan_p2p_group_remove},
 #endif
 #if 0
     {"wlan-p2p-invite", NULL, test_wlan_p2p_invite},

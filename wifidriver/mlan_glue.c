@@ -2511,7 +2511,7 @@ int wifi_assocreq_p2p_ie_cfg(mlan_private *priv)
     pos += wpsie_len;
     (void)__memcpy(priv->adapter, pos, (t_u8 *)&priv->p2p.p2p_ie, p2pie_len);
 
-#ifdef CONFIG_WIFI_IO_DUMP
+#if CONFIG_WIFI_IO_DUMP
     PRINTF("ASSOCREQ VENDOR IE\r\n");
     dump_hex(buf, total_len);
 #endif
