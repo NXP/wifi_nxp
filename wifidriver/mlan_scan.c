@@ -183,8 +183,10 @@ static t_u8 is_rsn_oui_present(mlan_adapter *pmadapter, BSSDescriptor_t *pbss_de
     t_u8 *oui       = MNULL;
     IEBody *ie_body = MNULL;
     t_u8 ret        = MLAN_OUI_NOT_PRESENT;
+#if !CONFIG_WPA_SUPP
     IEEEtypes_VendorHeader_t *hdr = MNULL;
     const t_u8 wfa_oui[3] = {0x50, 0x6f, 0x9a};
+#endif
 
     ENTER();
     if (((pbss_desc->prsn_ie != MNULL) && ((*(pbss_desc->prsn_ie)).ieee_hdr.element_id == RSN_IE)))
@@ -1658,9 +1660,12 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
     const t_u8 epigram_oui[3]   = {0x00, 0x90, 0x4c};
     const t_u8 epigram_type1[1] = {0x33};
     const t_u8 epigram_type2[1] = {0x34};
+#if CONFIG_DRIVER_OWE || CONFIG_DRIVER_MBO || !CONFIG_WPA_SUPP
     const t_u8 wfa_oui[3]       = {0x50, 0x6f, 0x9a};
+#endif
+#if !CONFIG_WPA_SUPP
     const t_u8 rsno_type[3]     = {0x29, 0x2a, 0x2b};
-
+#endif
 #if CONFIG_DRIVER_OWE
     const t_u8 owe_type[1] = {0x01c};
 #endif
@@ -3881,8 +3886,8 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
 #endif
     IEEEtypes_ExtCap_t *pextcap = MNULL;
     IEEEtypes_Generic_t *prsnx  = MNULL;
-    IEEEtypes_VendorHeader_t *pvdr = MNULL;
 #if !CONFIG_WPA_SUPP
+    IEEEtypes_VendorHeader_t *pvdr = MNULL;
     IEEEtypes_Generic_t *prsno = MNULL;
     IEEEtypes_Generic_t *prsno2 = MNULL;
     IEEEtypes_Generic_t *prsnxo = MNULL;
