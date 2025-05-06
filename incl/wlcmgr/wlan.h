@@ -3540,7 +3540,7 @@ void wlan_configure_delay_to_ps(unsigned int timeout_ms);
  *
  * param [in] timeout_ms: timout time, in milliseconds.
  *
- * \note The minimum value of \ref timeout_ms is 100.
+ * \note The minimum value of \ref timeout_ms is 10.
  */
 void wlan_configure_idle_time(unsigned int timeout_ms);
 

@@ -1434,12 +1434,14 @@ hal_imumc_status_t imumc_cmdrsp_handler(IMU_Msg_t *pImuMsg, uint32_t length)
         mlan_adap->wlan_wakeup.id      = *(uint16_t *)((uint8_t *)pImuMsg->PayloadPtr[0] + 4);
         POWER_ClearWakeupStatus(WL_MCI_WAKEUP0_IRQn);
     }
+#if CONFIG_POWER_MANAGER
     /* Clear host sleep flags to enable host sleep for next low power round */
     else if (wakeup_by == 0 && skip_hs_handshake == true)
     {
         skip_hs_handshake = false;
         is_hs_handshake_done = 0;
     }
+#endif
 #endif
 
     wlan_decode_rx_packet((t_u8 *)pImuMsg->PayloadPtr[0], MLAN_TYPE_CMD);
@@ -1462,12 +1464,14 @@ hal_imumc_status_t imumc_event_handler(IMU_Msg_t *pImuMsg, uint32_t length)
         mlan_adap->wlan_wakeup.id      = *(uint16_t *)((uint8_t *)pImuMsg->PayloadPtr[0] + 4);
         POWER_ClearWakeupStatus(WL_MCI_WAKEUP0_IRQn);
     }
+#if CONFIG_POWER_MANAGER
     /* Clear host sleep flags to enable host sleep for next low power round */
     else if (wakeup_by == 0 && skip_hs_handshake == true)
     {
         skip_hs_handshake = false;
         is_hs_handshake_done = 0;
     }
+#endif
 #endif
 
 #if CONFIG_CSI
@@ -1503,12 +1507,14 @@ hal_imumc_status_t imumc_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length)
         mlan_adap->wlan_wakeup.id      = 0;
         POWER_ClearWakeupStatus(WL_MCI_WAKEUP0_IRQn);
     }
+#if CONFIG_POWER_MANAGER
     /* Clear host sleep flags to enable host sleep for next low power round */
     else if (wakeup_by == 0 && skip_hs_handshake == true)
     {
         skip_hs_handshake = false;
         is_hs_handshake_done = 0;
     }
+#endif
 #endif
 
     for (i = 0; i < pImuMsg->Hdr.length; i++)

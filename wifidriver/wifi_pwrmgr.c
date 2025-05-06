@@ -89,9 +89,9 @@ void wifi_configure_idle_time(unsigned int timeout_ms)
 {
     pmlan_adapter pmadapter = ((mlan_private *)mlan_adap->priv[0])->adapter;
 
-    if (timeout_ms < (unsigned int)DEEP_SLEEP_IDLE_TIME)
+    if (timeout_ms < (unsigned int)MIN_DEEP_SLEEP_IDLE_TIME)
     {
-        pwr_e("The idle time is too small. Minimum value: 100ms");
+        pwr_e("The idle time is too small. Minimum value: 10ms");
         return;
     }
     pmadapter->idle_time = (t_u16)timeout_ms;

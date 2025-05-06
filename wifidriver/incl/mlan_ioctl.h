@@ -2333,11 +2333,13 @@ typedef struct _mlan_ds_hs_cfg
 #define DEEP_SLEEP_OFF 0
 
 /** Default idle time in milliseconds for auto deep sleep */
-#if defined(SD9177) || defined(IW610)
+#if defined(SD9177)
 #define DEEP_SLEEP_IDLE_TIME 300
 #else
 #define DEEP_SLEEP_IDLE_TIME 100
 #endif
+/* Minimum idle time in milliseconds for auto deep sleep */
+#define MIN_DEEP_SLEEP_IDLE_TIME 10
 
 typedef struct _mlan_ds_auto_ds
 {

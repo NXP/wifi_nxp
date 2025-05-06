@@ -309,11 +309,11 @@ bool usart_suspend_flag = false;
 #if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE) && (!CONFIG_NCP_OT)
 OSA_TIMER_HANDLE_DEFINE(wake_timer);
 #endif
-#endif
-int is_hs_handshake_done = 0;
-bool wlan_hs_pre_cfg_done = false;
 /* indicate that we did not notify FW after host sleep wake up */
 bool skip_hs_handshake = false;
+#endif /* CONFIG_POWER_MANAGER */
+int is_hs_handshake_done = 0;
+bool wlan_hs_pre_cfg_done = false;
 
 extern OSA_SEMAPHORE_HANDLE_DEFINE(wakelock);
 extern int wakeup_by;
@@ -321,7 +321,7 @@ extern int wakeup_by;
 bool wlan_is_manual = false;
 
 void (*wlan_hs_notify_cb)(void) = NULL;
-#endif
+#endif /* CONFIG_HOST_SLEEP */
 
 #if CONFIG_SCAN_CHANNEL_GAP
 static t_u16 scan_channel_gap = (t_u16)SCAN_CHANNEL_GAP_VALUE;
@@ -10902,13 +10902,10 @@ static void wlcmgr_mon_task(void * data)
             }
             else if (msg.id == HOST_SLEEP_EXIT)
             {
-                if (wakeup_by == WAKEUP_BY_WLAN || POWER_GetWakeupStatus(WL_MCI_WAKEUP0_IRQn))
-                {
-                    wlan_cancel_host_sleep();
-                    /* Check fw status and write temperature to firmware after waking up */
-                    temperature_mon_cb(NULL);
-                    (void)OSA_TimerActivate((osa_timer_handle_t)temperature_mon_timer);
-                }
+                wlan_cancel_host_sleep();
+                /* Check fw status and write temperature to firmware after waking up */
+                temperature_mon_cb(NULL);
+                (void)OSA_TimerActivate((osa_timer_handle_t)temperature_mon_timer);
             }
 #if !(CONFIG_WIFI_BLE_COEX_APP)
             else if (msg.id == HOST_SLEEP_HANDSHAKE_SKIP)
