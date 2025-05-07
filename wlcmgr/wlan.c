@@ -1922,6 +1922,9 @@ static void do_scan(struct wlan_network *network)
 #if CONFIG_WLAN_BRIDGE
     char *bridge_ssid = NULL;
 #endif
+#if CONFIG_SCAN_CHANNEL_GAP
+    t_u16 scan_chan_gap = 0;
+#endif
     unsigned int channel = 0;
     IEEEtypes_Bss_t type;
     wlan_scan_channel_list_t chan_list[1];
@@ -1981,6 +1984,17 @@ static void do_scan(struct wlan_network *network)
     else
     */
     {
+#if CONFIG_SCAN_CHANNEL_GAP
+        if (is_uap_started() || is_sta_connected())
+        {
+            scan_chan_gap = scan_channel_gap;
+        }
+        else
+        {
+            scan_chan_gap = 0;
+        }
+#endif
+
         if (channel != 0)
         {
             chan_list[0].chan_number = (t_u8)channel;
@@ -1989,20 +2003,20 @@ static void do_scan(struct wlan_network *network)
 #if CONFIG_WLAN_BRIDGE
             ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, bridge_ssid, 1, chan_list, 0,
 #if CONFIG_SCAN_CHANNEL_GAP
-                                     scan_channel_gap,
+                                     scan_chan_gap,
 #endif
                                      false, false);
 #else
 #if CONFIG_SCAN_WITH_RSSIFILTER
             ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, 1, 1, chan_list, 0, 0,
 #if CONFIG_SCAN_CHANNEL_GAP
-                                     scan_channel_gap,
+                                     scan_chan_gap,
 #endif
                                      false, false);
 #else
             ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, 1, 1, chan_list, 0,
 #if CONFIG_SCAN_CHANNEL_GAP
-                                     scan_channel_gap,
+                                     scan_chan_gap,
 #endif
                                      false, false);
 #endif
@@ -2013,13 +2027,13 @@ static void do_scan(struct wlan_network *network)
 #if CONFIG_SCAN_WITH_RSSIFILTER
             ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, 1, 0, NULL, 0, 0,
 #if CONFIG_SCAN_CHANNEL_GAP
-                                     scan_channel_gap,
+                                     scan_chan_gap,
 #endif
                                      false, false);
 #else
             ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, 1, 0, NULL, 0,
 #if CONFIG_SCAN_CHANNEL_GAP
-                                     scan_channel_gap,
+                                     scan_chan_gap,
 #endif
                                      false, false);
 #endif

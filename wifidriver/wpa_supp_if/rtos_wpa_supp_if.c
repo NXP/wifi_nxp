@@ -823,6 +823,9 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
     wifi_scan_channel_list_t *chan_list    = NULL;
     t_u8 channels[WIFI_SCAN_MAX_NUM_CHAN]  = {0};
     mlan_scan_type scan_type               = MLAN_SCAN_TYPE_ACTIVE;
+#if CONFIG_SCAN_CHANNEL_GAP
+    t_u16 scan_chan_gap = 0;
+#endif
 
     if (!if_priv || !params)
     {
@@ -946,13 +949,23 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
         wm_wifi.hostapd_op = true;
     }
 #endif
+#if CONFIG_SCAN_CHANNEL_GAP
+    if (is_uap_started() || is_sta_connected())
+    {
+        scan_chan_gap = SCAN_CHANNEL_GAP_VALUE;
+    }
+    else
+    {
+        scan_chan_gap = 0;
+    }
+#endif
 
     status = wifi_send_scan_cmd(bss_mode, bssid, ssid, params->num_ssids, num_chans, chan_list, 0,
 #if CONFIG_SCAN_WITH_RSSIFILTER
                                 params->filter_rssi,
 #endif
 #if CONFIG_SCAN_CHANNEL_GAP
-                                50U,
+                                scan_chan_gap,
 #endif
                                 false, false);
     if (status != WM_SUCCESS)
