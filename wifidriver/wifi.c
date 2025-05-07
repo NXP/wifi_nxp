@@ -1273,14 +1273,15 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 #endif
 #if CONFIG_WIFI_RECOVERY
         wifi_recovery_enable = true;
-#else
+#ifndef RW610
         /* assert as command flow cannot work anymore */
-#if (CONFIG_WIFI_IND_DNLD)
+#if CONFIG_WIFI_IND_DNLD
         wlan_process_hang(FW_RELOAD_SDIO_INBAND_RESET);
+#endif /* CONFIG_WIFI_IND_DNLD */
+#endif /* !RW610 */
 #else
         ASSERT(0);
-#endif
-#endif
+#endif /* CONFIG_WIFI_RECOVERY */
     }
 
     if (cmd->command == HostCmd_CMD_FUNC_SHUTDOWN)

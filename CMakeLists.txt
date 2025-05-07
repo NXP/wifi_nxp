@@ -186,14 +186,14 @@ zephyr_compile_definitions_ifdef(CONFIG_NXP_88W8801_MURATA_2DS_M2
 )
 
 zephyr_compile_definitions_ifdef(CONFIG_NXP_IW610_MURATA_2LL_M2
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_NH.h"
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_2LL.h"
     CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0A
     CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0A
     WIFI_BT_USE_M2_INTERFACE
 )
 
 zephyr_compile_definitions_ifdef(CONFIG_NXP_IW610_RD_USD
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_NH.h"
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_2LL.h"
     CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0A
     CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0A
     WIFI_BT_USE_USD_INTERFACE

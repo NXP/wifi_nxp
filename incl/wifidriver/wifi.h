@@ -226,11 +226,12 @@ int wifi_imu_get_task_lock(void);
  * This API can be used to put IMU task lock.
  */
 int wifi_imu_put_task_lock(void);
+#endif
+
 /**
  * This API can be used to judge if wifi firmware is hang.
  */
 bool wifi_fw_is_hang(void);
-#endif
 
 /**
  * This API can be used to send shutdown command to FW.
