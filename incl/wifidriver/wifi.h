@@ -1274,6 +1274,8 @@ int wakelock_put(void);
 int wakelock_isheld(void);
 void wifi_print_wakeup_reason(t_u16 hs_wakeup_reason);
 void wifi_clear_wakeup_reason(void);
+void hs_config_put_sem(void);
+void hs_config_get_sem(void);
 #endif
 
 int wifi_raw_packet_send(const t_u8 *packet, t_u32 length);

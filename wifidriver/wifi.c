@@ -125,6 +125,7 @@ static bool wifi_reset_in_process  = false;
 
 #if CONFIG_HOST_SLEEP
 OSA_SEMAPHORE_HANDLE_DEFINE(wakelock);
+OSA_SEMAPHORE_HANDLE_DEFINE(hs_config_sem);
 int wakeup_by = 0;
 #endif
 #if CONFIG_WIFI_RECOVERY
@@ -246,7 +247,18 @@ int wakelock_isheld(void)
     return 1;
 #endif
 }
+
+void hs_config_put_sem(void)
+{
+    OSA_SemaphorePost((osa_semaphore_handle_t)hs_config_sem);
+}
+
+void hs_config_get_sem(void)
+{
+    OSA_SemaphoreWait((osa_semaphore_handle_t)hs_config_sem, 1000);
+}
 #endif
+
 extern void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid, t_u32 tx_control);
 
 unsigned wifi_get_last_cmd_sent_ms(void)

@@ -3134,7 +3134,7 @@ void wifi_print_wakeup_reason(t_u16 hs_wakeup_reason)
 {
     if (hs_wakeup_reason == 0)
     {
-        PRINTF("Woken up by unknown reason\r\n");
+        PRINTF("Woken up by pin\r\n");
     }
     else if (hs_wakeup_reason == 1)
     {

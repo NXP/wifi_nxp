@@ -3397,7 +3397,6 @@ int wlan_get_roaming_status(void);
 #endif
 
 #if CONFIG_HOST_SLEEP
-#ifdef RW610
 #if CONFIG_MEF_CFG
 /** Wowlan (wake on wireless LAN) configuration.
  * This function may be called to configure host sleep in firmware.
@@ -3435,7 +3434,6 @@ void wlan_config_host_sleep(bool is_manual, t_u8 is_periodic);
  * \return kStatus_Success if successful else return -WM_FAIL.
  */
 status_t wlan_hs_send_event(int id, void *data);
-#endif /*RW610*/
 
 /** Cancel host sleep.
  * This function is called to cancel the host sleep in the firmware.
@@ -4044,22 +4042,6 @@ void wlan_hs_pre_cfg(void);
 void wlan_hs_post_cfg(void);
 
 /**
- * Use this API to configure host sleep parameters in Wi-Fi firmware.
- *
- * \param[in] wakeup_condition: bit 0: WAKE_ON_ALL_BROADCAST
- *                              bit 1: WAKE_ON_UNICAST
- *                              bit 2: WAKE_ON_MAC_EVENT
- *                              bit 3: WAKE_ON_MULTICAST
- *                              bit 4: WAKE_ON_ARP_BROADCAST
- *                              bit 6: WAKE_ON_MGMT_FRAME
- *                              All bit 0 discard and not wakeup host
- *
- * \return WM_SUCCESS if operation is successful.
- * \return -WM_FAIL if command fails.
- */
-int wlan_send_host_sleep(uint32_t wakeup_condition);
-
-/**
  * Use this API to get host sleep wakeup reason from Wi-Fi firmware after waking up from host sleep by Wi-Fi.
  *
  * \param[out] hs_wakeup_reason: wakeupReason:
@@ -4077,10 +4059,6 @@ int wlan_send_host_sleep(uint32_t wakeup_condition);
  * \return -WM_FAIL if command fails.
  */
 int wlan_get_wakeup_reason(uint16_t *hs_wakeup_reason);
-
-
-/** Use this API to register call back for host sleep confirm done*/
-void wlan_register_hs_callback(void (*hs_notify_cb)(void));
 #endif
 
 /**
