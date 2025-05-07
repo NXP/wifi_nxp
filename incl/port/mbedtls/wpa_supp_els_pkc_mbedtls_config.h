@@ -3758,6 +3758,7 @@
  * CBC-MAC is not yet supported via the PSA API in Mbed TLS.
  */
 //#define PSA_WANT_ALG_CBC_MAC                    1
+#define PSA_WANT_ALG_JPAKE                      1
 #define PSA_WANT_ALG_CBC_NO_PADDING             1
 #define PSA_WANT_ALG_CBC_PKCS7                  1
 #define PSA_WANT_ALG_CCM                        1
@@ -3831,5 +3832,4 @@
 #define PSA_WANT_KEY_TYPE_RSA_KEY_PAIR_IMPORT   1
 #define PSA_WANT_KEY_TYPE_RSA_KEY_PAIR_EXPORT   1
 #define PSA_WANT_KEY_TYPE_RSA_KEY_PAIR_GENERATE 1
-
 #endif /* MBEDTLS_USER_CONFIG_H */
