@@ -4492,7 +4492,7 @@ static mlan_status wifi_uap_sta_remove(mlan_private *priv, const uint8_t *addr)
     data_buf.reason_code = WLAN_REASON_UNSPECIFIED;
 
     ret = wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_STA_DEAUTH, 0, 0, NULL, &data_buf,
-                                        MLAN_BSS_TYPE_UAP, NULL);
+                                        priv->bss_type, NULL);
     if (ret != WM_SUCCESS)
     {
         return MLAN_STATUS_FAILURE;
@@ -4663,7 +4663,7 @@ done:
 
 int wifi_nxp_sta_remove(unsigned int bss_type, const uint8_t *addr)
 {
-    mlan_private *priv         = (mlan_private *)mlan_adap->priv[1];
+    mlan_private *priv         = (mlan_private *)mlan_adap->priv[bss_type];
     int ret                    = 0;
     mlan_ds_sta_info *sta_info = NULL;
 
