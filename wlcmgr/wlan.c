@@ -4882,6 +4882,7 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
     struct netif *netif = net_get_sta_interface();
     struct wifi_connect_req_params params = {0};
 
+    wlan_handle_disconnect_event(mlan_adap->priv[0]);
     supplicant_get_wifi_conn_params(net_if_get_device((void *)netif), &params);
 #endif
 
@@ -4917,8 +4918,6 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
     }
 
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
-    wlan_handle_disconnect_event(mlan_adap->priv[0]);
-
 #if UAP_SUPPORT
     if(is_uap_started())
     {
