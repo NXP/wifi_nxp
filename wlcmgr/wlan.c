@@ -131,6 +131,13 @@
 #define IR_OUTBAND_TRIGGER_GPIO_PIN   	(12U)
 #define IR_OUTBAND_TRIGGER_GPIO_NAME  	"GPIO5"
 #endif
+#elif defined(CPU_MCXN947VDF_cm33_core0) || defined(CPU_MCXN947VPB_cm33_core0) // For FRDM-MCXN947
+#if defined(IW610)
+/* IR OUT-BAND TRIGGER GPIO */
+#define IR_OUTBAND_TRIGGER_GPIO          GPIO1
+#define IR_OUTBAND_TRIGGER_GPIO_PIN      (22U)
+#define IR_OUTBAND_TRIGGER_GPIO_NAME     "GPIO1"
+#endif
 #endif /* (defined(CPU_MIMXRT1062DVMAA) || (CPU_MIMXRT1062DVL6A)) */
 #endif
 
@@ -8417,8 +8424,11 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 
 #if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
 #ifdef IR_OUTBAND_TRIGGER_GPIO
+#if defined(CPU_MCXN947VDF_cm33_core0) || defined(CPU_MCXN947VPB_cm33_core0)
+    gpio_pin_config_t out_config = {kGPIO_DigitalOutput, 1};
+#else
     gpio_pin_config_t out_config = {kGPIO_DigitalOutput, 1, kGPIO_NoIntmode};
-
+#endif
 #if defined(IOMUXC_GPIO_IR_OUTBAND_TRIGGER)
     IOMUXC_SetPinMux(IOMUXC_GPIO_IR_OUTBAND_TRIGGER, /* GPIO_AD_B0_10 is configured as GPIO1_IO10 */
                      0U);
