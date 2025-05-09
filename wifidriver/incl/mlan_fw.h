@@ -727,7 +727,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #if defined(SD8987)
 #define FW_CAPINFO_EXT_CMD_TX_DATA          MBIT(29)
 #define IS_FW_SUPPORT_CMD_TX_DATA(_adapter) (_adapter->fw_cap_info & FW_CAPINFO_EXT_CMD_TX_DATA)
-#elif defined(SD9177) || defined(IW610)
+#elif defined(SD9177) || defined(IW610) || defined (SD8978)
 #define FW_CAPINFO_EXT_CMD_TX_DATA          MBIT(16)
 /** Check if transmit mgmt pkt through command supported by firmware */
 #define IS_FW_SUPPORT_CMD_TX_DATA(_adapter) (_adapter->fw_cap_ext & FW_CAPINFO_EXT_CMD_TX_DATA)
