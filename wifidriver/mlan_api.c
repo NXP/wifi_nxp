@@ -6097,7 +6097,11 @@ static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
 
         tx_frame.bandcfg.chanBand = channel > 14 ? BAND_5GHZ : BAND_2GHZ;
         tx_frame.channel          = channel;
+#ifdef SD8978
+        tx_frame.data_len         = HEADER_SIZE + pkt_len - 2 + 2 * sizeof(pkt_len);
+#else
         tx_frame.data_len         = HEADER_SIZE + pkt_len + 2 * sizeof(pkt_len);
+#endif
         tx_frame.buf_type         = MLAN_BUF_TYPE_RAW_DATA;
         tx_frame.priority         = 7;
 
