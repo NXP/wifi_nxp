@@ -218,12 +218,13 @@ void wifi_nxp_wpa_supp_event_proc_chan_list_changed(void *if_priv, const char *a
     event.channel_list_changed.alpha2[2] = alpha2[2];
 
 #if CONFIG_WPA_SUPP_AP
-    if (wifi_if_ctx_rtos->hostapd)
+    if (wifi_if_ctx_rtos->hostapd && wifi_if_ctx_rtos->hostapd_callbk_fns.chan_list_changed)
     {
         wifi_if_ctx_rtos->hostapd_callbk_fns.chan_list_changed(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
     }
     else
 #endif
+    if (wifi_if_ctx_rtos->supp_callbk_fns.chan_list_changed)
     {
         wifi_if_ctx_rtos->supp_callbk_fns.chan_list_changed(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
     }

@@ -4750,7 +4750,6 @@ int wifi_set_country_code(const char *alpha2)
     (void)memcpy(pmadapter->country_code, country_code, COUNTRY_CODE_LEN);
 
 #if CONFIG_WPA_SUPP
-#if defined(RW610)
     if (wm_wifi.supp_if_callbk_fns->chan_list_changed_callbk_fn)
     {
 #if CONFIG_WPA_SUPP_AP
@@ -4765,7 +4764,6 @@ int wifi_set_country_code(const char *alpha2)
         wm_wifi.hostapd_op = false;
 #endif
     }
-#endif
 #endif
     return WM_SUCCESS;
 }
