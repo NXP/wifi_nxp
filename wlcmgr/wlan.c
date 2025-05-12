@@ -5422,7 +5422,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
             return;
 
 #if CONFIG_WPA_SUPP_P2P
-        if (strstr(buf, " p2p_dev_addr="))
+        if (priv_wfd->p2p_go_network || strstr(buf, " p2p_dev_addr="))
         {
             netif = net_get_wfd_interface();
             bss_type = MLAN_BSS_TYPE_WIFIDIRECT;
@@ -5454,7 +5454,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
             return;
 
 #if CONFIG_WPA_SUPP_P2P
-        if (strstr(buf, " p2p_dev_addr="))
+        if (priv_wfd->p2p_go_network || strstr(buf, " p2p_dev_addr="))
         {
             bss_type = MLAN_BSS_TYPE_WIFIDIRECT;
         }
@@ -5519,18 +5519,11 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     else if (strstr(buf, WPS_EVENT_SUCCESS))
     {
         wlcm_d("WPS registration completed successfully");
-        if (wlan.wps_session_attempt
-#if CONFIG_WPA_SUPP_P2P
-             || priv_wfd->p2p_go_network
-#endif
-		)
+        if (wlan.wps_session_attempt)
         {
             if (wlcm_process_add_unspecified_network("wps_network") == WM_SUCCESS)
             {
                 wlan.wps_session_attempt = 0;
-#if CONFIG_WPA_SUPP_P2P
-                priv_wfd->p2p_go_network = false;
-#endif
             }
         }
     }
@@ -5541,7 +5534,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     {
         wlcm_d("p2p find stoped");
         priv_wfd->p2p.session_enable = MFALSE;
-#ifdef CONFIG_WPA_SUPP_WPS
+#if CONFIG_WPA_SUPP_WPS
         priv_wfd->wps.session_enable = MFALSE;
 #endif
     }
@@ -5584,10 +5577,11 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
                         priv_wfd->p2p_go_chan = freq_to_chan(freq);
                 }
             }
-        }
-        if (wlcm_process_add_unspecified_network("wps_network") == WM_SUCCESS)
-        {
-            wlan.wps_session_attempt = 0;
+
+            if (wlcm_process_add_unspecified_network("wps_network") == WM_SUCCESS)
+            {
+                wlan.wps_session_attempt = 0;
+            }
         }
 
     }
@@ -5603,6 +5597,17 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         {
             priv_wfd->p2p_go_network = true;
             priv_wfd->bss_role = MLAN_BSS_ROLE_UAP;
+        }
+    }
+    else if(strstr(buf, P2P_EVENT_GROUP_REMOVED))
+    {
+        if (strstr(buf, " GO "))
+        {
+            priv_wfd->p2p_go_network = false;
+        }
+        else if (strstr(buf, " client "))
+        {
+            priv_wfd->p2p_gc_network = false;
         }
     }
     else
@@ -10041,6 +10046,13 @@ int wlan_remove_network(const char *name)
             {
                 /* Do nothing */
             }
+
+#if CONFIG_WPA_SUPP_P2P
+            if (wlan.networks[i].type == WLAN_BSS_TYPE_WIFIDIRECT)
+            {
+                netif = net_get_wfd_interface();
+            }
+#endif
             wpa_supp_remove_network(netif, &wlan.networks[i]);
 
             if (wlan.networks[i].security.sae_groups)

@@ -660,7 +660,7 @@ int wrapper_wlan_uap_ampdu_enable(const t_u8 interface,
                 return MLAN_STATUS_FAILURE;
             }
 
-            addba->interface = WLAN_BSS_TYPE_UAP;
+            addba->interface = interface;
 #if CONFIG_WMM
             addba->tid = tid;
 #else
@@ -873,7 +873,7 @@ int wrapper_wlan_sta_ampdu_enable(const t_u8 interface
             return MLAN_STATUS_FAILURE;
         }
 
-        addba->interface = WLAN_BSS_TYPE_STA;
+        addba->interface = interface;
 #if CONFIG_WMM
         addba->tid = tid;
 #else
