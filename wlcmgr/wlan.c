@@ -5999,16 +5999,21 @@ static void wlcm_process_fw_hang_event(struct wifi_message *msg, enum cm_sta_sta
     if (wlan.sta_state > CM_STA_IDLE)
     {
 #if CONFIG_WPA_SUPP
-        wpa_supp_disconnect(netif);
-#endif
+        supplicant_disconnect(net_if_get_device((void *)netif));
+#else
         wlcm_request_disconnect(next, &wlan.networks[wlan.cur_network_idx]);
         wlan_dhcp_cleanup();
+#endif
     }
 
 #if UAP_SUPPORT
     if (is_uap_starting())
     {
+#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+        net_mgmt(NET_REQUEST_WIFI_AP_DISABLE, (struct net_if *)netif, NULL, 0);
+#else
         (void)do_stop(&wlan.networks[wlan.cur_uap_network_idx]);
+#endif
     }
 #endif
 }
