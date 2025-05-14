@@ -1057,7 +1057,7 @@
 #endif
 
 #if !defined CONFIG_MMSF
-#if defined(RW610)
+#if defined(RW610) || defined(IW610)
 #define CONFIG_MMSF 1
 #endif
 #endif
