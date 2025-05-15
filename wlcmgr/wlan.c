@@ -5322,6 +5322,38 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
 
     wlcm_d("%s: %s", __func__, buf);
 
+#if CONFIG_WPA_SUPP && CONFIG_ROAMING
+    if (strstr(buf, "selected current BSS ") != NULL)
+    {
+        t_u8 addr[MLAN_MAC_ADDR_LENGTH];
+
+        s = strstr(buf, "BSS");
+        if (s == NULL)
+        {
+            return;
+        }
+
+        s = s + 4;
+        if (hwaddr_aton(s, addr))
+        {
+            return;
+        }
+
+        if (memcmp(addr, network->bssid, MLAN_MAC_ADDR_LENGTH) == 0)
+        {
+            (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
+            wlan.roam_reassoc = false;
+        }
+        return;
+    }
+    if (strstr(buf, "Skip roam ") != NULL)
+    {
+        (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
+        wlan.roam_reassoc = false;
+        return;
+    }
+#endif
+
     if (strstr(buf, WPA_EVENT_SCAN_FAILED))
     {
         wlcm_process_scan_failed();
