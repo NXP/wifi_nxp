@@ -2017,6 +2017,11 @@ struct wlan_network
     /** Neighbor report support */
     bool neighbor_report_supported;
 #endif
+#if CONFIG_11AX
+#if CONFIG_11AX_TWT
+    bool twt_capab;
+#endif
+#endif
 };
 
 /** This structure is for IEEE PS (power save) configuration */

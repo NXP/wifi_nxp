@@ -2502,6 +2502,9 @@ static void update_network_params(struct wlan_network *network, const struct wif
 #endif
 #if CONFIG_11AX
     network->dot11ax = res->phecap_ie_present;
+#ifdef CONFIG_11AX_TWT
+    network->twt_capab = res->twt_capab;
+#endif
 #endif
 
 #if CONFIG_11R

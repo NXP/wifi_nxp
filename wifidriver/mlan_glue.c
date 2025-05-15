@@ -7071,6 +7071,9 @@ int wrapper_bssdesc_second_set(int bss_index,
 #endif
 #if CONFIG_11AX
                                bool *phecap_ie_present,
+#if CONFIG_11AX_TWT
+                                bool *twt_capab,
+#endif
 #endif
                                bool *wmm_ie_present,
                                uint16_t *band,
@@ -7101,7 +7104,10 @@ int wrapper_bssdesc_second_set(int bss_index,
         wifi_w("Unable to find given entry %d in BSS table", bss_index);
         return -WM_FAIL;
     }
-    const BSSDescriptor_t *d = &mlan_adap->pscan_table[bss_index];
+    BSSDescriptor_t *d = &mlan_adap->pscan_table[bss_index];
+#if CONFIG_11AX_TWT
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+#endif
 #if CONFIG_11R
     IEEEtypes_MobilityDomain_t *pmd_ie;
 #endif
@@ -7142,6 +7148,16 @@ int wrapper_bssdesc_second_set(int bss_index,
     {
         *phecap_ie_present = false;
     }
+#if CONFIG_11AX_TWT
+    if(*phecap_ie_present == true)
+    {
+        *twt_capab = wlan_check_11ax_twt_supported(pmpriv, d);
+    }
+    else
+    {
+        *twt_capab = false;
+    }
+#endif
 #endif
     if (d->wmm_ie.vend_hdr.element_id == WMM_IE)
     {
