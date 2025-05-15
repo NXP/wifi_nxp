@@ -5389,6 +5389,12 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
 		}
 		return;
 	}
+    if (strstr(buf, "Skip roam ") != NULL)
+    {
+        (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
+        wlan.roam_reassoc = false;
+        return;
+    }
 #endif
 
     if (strstr(buf, WPA_EVENT_SCAN_FAILED))
