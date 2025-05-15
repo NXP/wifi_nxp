@@ -2649,6 +2649,18 @@ static void update_network_params(struct wlan_network *network, const struct wif
         }
     }
 
+    network->dot11n = res->phtcap_ie_present;
+
+#if CONFIG_11AC
+    network->dot11ac = res->pvhtcap_ie_present;
+#endif
+#if CONFIG_11AX
+    network->dot11ax = res->phecap_ie_present;
+#ifdef CONFIG_11AX_TWT
+    network->twt_capab = res->twt_capab;
+#endif
+#endif
+
 #if CONFIG_11R
 
     network->mdid = res->mdid;

@@ -556,6 +556,9 @@ int wrapper_bssdesc_second_set(int bss_index,
 #endif
 #if CONFIG_11AX
                                bool *phecap_ie_present,
+#if CONFIG_11AX_TWT
+                               bool *twt_capab,
+#endif
 #endif
                                bool *wmm_ie_present,
                                uint16_t *band,
