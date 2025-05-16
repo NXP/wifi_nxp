@@ -7105,9 +7105,6 @@ int wrapper_bssdesc_second_set(int bss_index,
         return -WM_FAIL;
     }
     BSSDescriptor_t *d = &mlan_adap->pscan_table[bss_index];
-#if CONFIG_11AX_TWT
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
-#endif
 #if CONFIG_11R
     IEEEtypes_MobilityDomain_t *pmd_ie;
 #endif
@@ -7151,7 +7148,7 @@ int wrapper_bssdesc_second_set(int bss_index,
 #if CONFIG_11AX_TWT
     if(*phecap_ie_present == true)
     {
-        *twt_capab = wlan_check_11ax_twt_supported(pmpriv, d);
+        *twt_capab = wlan_check_ap_11ax_twt_supported(d);
     }
     else
     {
