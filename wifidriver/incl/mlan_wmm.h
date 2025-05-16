@@ -204,7 +204,11 @@ mlan_status wlan_cmd_wmm_param_config(pmlan_private pmpriv,
 mlan_status wlan_ret_wmm_param_config(pmlan_private pmpriv, const HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);
 
 /* wmm enhance buffer pool */
+#if CONFIG_WIFI_SLIM_WMM
+#define MAX_WMM_BUF_NUM 8
+#else
 #define MAX_WMM_BUF_NUM 16
+#endif
 #define WMM_DATA_LEN    1580
 #define OUTBUF_WMM_LEN  (sizeof(outbuf_t))
 
