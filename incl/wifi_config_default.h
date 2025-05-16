@@ -690,6 +690,9 @@
 #undef CONFIG_FIPS
 #endif
 
+/* 802.11k and 802.11v are necessary for Wi-Fi6 MBO certification.
+   Keep the same capability with 802.11ax. */
+
 #if !defined CONFIG_11K
 #if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177) || defined(IW610)
 #define CONFIG_11K 0
@@ -1422,16 +1425,6 @@
 #if CONFIG_ROAMING
 #undef CONFIG_ROAMING
 #define CONFIG_ROAMING 0
-#endif
-
-#if CONFIG_11K
-#undef CONFIG_11K
-#define CONFIG_11K 0
-#endif
-
-#if CONFIG_11V
-#undef CONFIG_11V
-#define CONFIG_11V 0
 #endif
 
 #if CONFIG_11R
