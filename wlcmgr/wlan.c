@@ -661,6 +661,9 @@ static struct
     unsigned int bgscan_attempt;
 #endif
     bool roam_reassoc : 1;
+#if CONFIG_WPA_SUPP
+    bool okc : 1;
+#endif
 #if CONFIG_WIFI_FW_DEBUG
     void (*wlan_usb_init_cb)(void);
 #endif
@@ -13607,6 +13610,7 @@ int wlan_set_okc(t_u8 okc)
         return -WM_E_PERM;
     }
 
+    wlan.okc = okc;
     return wpa_supp_set_okc(netif, okc);
 
 }
@@ -13698,7 +13702,7 @@ int wlan_set_roaming(const int enable, const uint8_t rssi_low_threshold)
     wlan.roaming_enabled = enable;
 
 #if CONFIG_WPA_SUPP
-    wpa_supp_set_okc(netif, wlan.roaming_enabled == true ? 0 : 1);
+    wpa_supp_set_okc(netif, wlan.okc);
 #endif
 
     wlan.rssi_low_threshold = rssi_low_threshold;
