@@ -10,9 +10,7 @@
 
 #include <osa.h>
 
-#if defined(SD8801)
-#include "sd8801_wlan.h"
-#elif defined(SD8978)
+#if defined(SD8978)
 #if !(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
 #include "sduartIW416_wlan_bt.h"
 #else

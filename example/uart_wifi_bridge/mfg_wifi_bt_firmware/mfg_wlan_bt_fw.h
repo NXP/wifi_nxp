@@ -10,9 +10,7 @@
 
 #include <wifi_config_default.h>
 
-#if defined(SD8801)
-#include "sd8801_mfg_wlan.h"
-#elif defined(SD8978)
+#if defined(SD8978)
 #include "sduartIW416_mfg_wlan_bt.h"
 #elif defined(SD8987)
 #include "sduart8987_mfg_wlan_bt.h"
