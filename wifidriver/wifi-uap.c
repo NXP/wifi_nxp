@@ -58,7 +58,7 @@ static bool wifi_check_11ac_capability(mlan_private *pmpriv, t_u8 band)
 
     ENTER();
 #if CONFIG_WIFI_CAPA
-    if (pmadapter->usr_dot_11ac_enable == 0U) 
+    if (pmadapter->usr_dot_11ac_enable == 0U)
     {
         return enable_11ac;
     }
@@ -496,7 +496,7 @@ static int wifi_cmd_uap_config(char *ssid,
         }
         else
         {
-            ; 
+            ;
         }
         if (chan_sw_count != 0U)
         {
@@ -1149,9 +1149,20 @@ int wifi_uap_bss_sta_list(wifi_sta_list_t **list)
 
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
 
+    int bss_type = MLAN_BSS_TYPE_UAP;
+
+#if CONFIG_WPA_SUPP_P2P
+    mlan_private *priv_wfd = (mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_WIFIDIRECT];
+    if (priv_wfd->p2p_go_network)
+    {
+        pmpriv   = priv_wfd;
+        bss_type = MLAN_BSS_TYPE_WIFIDIRECT;
+    }
+#endif
+
     /* Start BSS */
     return wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_STA_LIST, HostCmd_ACT_GEN_GET, 0, NULL, NULL,
-                                         MLAN_BSS_TYPE_UAP, list);
+                                         bss_type, list);
 
     /* *list must have been filled now if everything went well */
 }
