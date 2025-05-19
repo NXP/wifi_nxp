@@ -8432,7 +8432,7 @@ static void test_wlan_set_monitor_param(int argc, char **argv)
         (void)PRINTF("Error             : invalid number of arguments\r\n");
         (void)PRINTF("Usage             : %s <action> <monitor_activity> <filter_flags> <radio_type> <chan_number>\r\n",
                      argv[0]);
-        (void)PRINTF("action            : 0/1 to Action Get/Set \r\n");      
+        (void)PRINTF("action            : 0/1 to Action Get/Set \r\n");
         (void)PRINTF("monitor_activity  : 1 to enable and 0 to disable monitor activity \r\n");
         (void)PRINTF("filter_flags      : network monitor fitler flag \r\n");
         (void)PRINTF("chan_number       : channel to monitor \r\n");
@@ -11260,6 +11260,41 @@ static void test_wlan_p2p_stop_find(int argc, char **argv)
     }
 }
 
+static void test_wlan_p2p_listen(int argc, char **argv)
+{
+    int ret, i;
+    int totallen = 0;
+    int len      = 0;
+    static char cmd[P2P_CMD_SIZE];
+    char *pos = cmd;
+
+    (void)memset(cmd, 0, sizeof(cmd));
+
+    for (i = 1; i < argc; i++)
+    {
+        len = strlen(argv[i]);
+        // len = (strlen(argv[i]) <= (P2P_FIND_CMD_SIZE - 1)) ? strlen(argv[i]) : (P2P_FIND_CMD_SIZE - 1);
+
+        strncpy(pos, argv[i], len);
+        pos[len] = ' ';
+        len++;
+        pos += len;
+
+        totallen += len;
+    }
+    cmd[totallen - 1] = '\0';
+
+    ret = wlan_p2p_listen(cmd);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n p2p_listen start failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n p2p_listen start ok!\r\n");
+    }
+}
+
 static void test_wlan_p2p_connect(int argc, char **argv)
 {
     int ret, i;
@@ -11651,6 +11686,72 @@ static void test_wlan_p2p_group_remove(int argc, char **argv)
     else
     {
         (void)PRINTF("\r\n p2p_group_remove ok!\r\n");
+    }
+}
+
+static void test_wlan_p2p_peers(int argc, char **argv)
+{
+    int ret;
+    char peers_list[256];
+    int resp_len = 0, i;
+
+    ret = wlan_p2p_peers(peers_list, sizeof(peers_list), &resp_len);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n p2p_peers failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n p2p_peers list: \r\n");
+        for (i = 0; i < resp_len; i++)
+        {
+            PRINTF("%c", peers_list[i]);
+        }
+    }
+}
+
+static void test_wlan_p2p_peer(int argc, char **argv)
+{
+    int ret, i;
+    int totallen = 0;
+    int len      = 0;
+    static char cmd[P2P_CMD_SIZE];
+    char *pos = cmd;
+    char peer_info_buf[1024];
+    int peer_info_len = 0;
+
+    (void)memset(cmd, 0, sizeof(cmd));
+
+    for (i = 1; i < argc; i++)
+    {
+        len = strlen(argv[i]);
+        // len = (strlen(argv[i]) <= (P2P_FIND_CMD_SIZE - 1)) ? strlen(argv[i]) : (P2P_FIND_CMD_SIZE - 1);
+
+        strncpy(pos, argv[i], len);
+        pos[len] = ' ';
+        len++;
+        pos += len;
+
+        totallen += len;
+    }
+    cmd[totallen - 1] = '\0';
+
+    ret = wlan_p2p_peer(cmd, peer_info_buf, sizeof(peer_info_buf), &peer_info_len);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n wlan_p2p_peer failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n p2p_peers info: \r\n");
+        for (i = 0; i < peer_info_len; i++)
+        {
+            PRINTF("%c", peer_info_buf[i]);
+            if (peer_info_buf[i] == '\n')
+            {
+                PRINTF("\r");
+            }
+        }
     }
 }
 #endif
@@ -13379,6 +13480,7 @@ static struct cli_command tests[] = {
 #if CONFIG_WPA_SUPP_P2P
     {"wlan-p2p-find", " [timeout]", test_wlan_p2p_find},
     {"wlan-p2p-stop-find", NULL, test_wlan_p2p_stop_find},
+    {"wlan-p2p-listen", " [timeout]", test_wlan_p2p_listen},
     {"wlan-p2p-connect", " <peer_address> <method>", test_wlan_p2p_connect},
     {"wlan-p2p-group-add", " [freq=<frequency>]", test_wlan_p2p_group_add},
     {"wlan-p2p-get-passphrase", NULL, test_wlan_p2p_get_passphrase},
@@ -13389,6 +13491,8 @@ static struct cli_command tests[] = {
     {"wlan-p2p-serv-disc-req", " <device_address> <query_tlv>", test_wlan_p2p_serv_disc_req},
     {"wlan-p2p-serv-disc-resp", " <frequency> <destination_address> <dialog_token> <response_tlv>", test_wlan_p2p_serv_disc_resp},
     {"wlan-p2p-group-remove", " <group_interface_name>", test_wlan_p2p_group_remove},
+    {"wlan-p2p-peers", NULL, test_wlan_p2p_peers},
+    {"wlan-p2p-peer", " <peer_address>", test_wlan_p2p_peer},
 #endif
 #if 0
     {"wlan-p2p-invite", NULL, test_wlan_p2p_invite},

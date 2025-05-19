@@ -7343,6 +7343,18 @@ int wlan_p2p_find(const char *cmd);
 int wlan_p2p_stop_find(void);
 
 /**
+ * Initiates P2P listen mode.
+ *
+ * This function sends a generic command to wpa_wpa_supplicant to initiate P2P
+ * listen mode.
+ *
+ * \param[in] cmd Optional parameters for listen (e.g. timeout).
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_p2p_listen(const char *cmd);
+
+/**
  * Initiate a P2P connection.
  *
  * After identifying a target P2P device using the discovery process, this
@@ -7484,6 +7496,48 @@ int wlan_p2p_serv_disc_resp(char *cmd);
  * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
  */
 int wlan_p2p_group_remove(char *cmd);
+
+/**
+ * Retrieves the list of available P2P peers.
+ *
+ * This function executes the equivalent of the wpa_cli 'p2p_peers' command.
+ * It fills the provided @p peers_buf with peer information and sets
+ * peers_buf_len to reflect the number of bytes written to the buffer.
+ *
+ * \param[out] peers_buf     Pointer to the buffer that will receive the list of
+ *                           peer addresses or identifiers.
+ * \param[in]  peer_buf_size The total size of the peers_buf in bytes.
+ * \param[out] peers_buf_len Pointer to an integer where the actual length
+ *                           (in bytes) of data written to @p peers_buf will be
+ *                           stored.
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_p2p_peers(char *peers_buf, int peer_buf_size, int *peers_buf_len);
+
+/**
+ *Retrieves detailed information for a specified P2P peer.
+ *
+ * This function sends a generic wpa_cli command (given by p2p_peer cmd) to
+ * obtain detailed information about a specific P2P peer. The resulting output
+ * is stored in the buffer provided by peer_info_buf, and the length of the
+ * retrieved information is returned via peer_info_len.
+ *
+ * \param[in]  cmd                A generic command string passed to wpa_cli. It
+ *                                should include the necessary parameters (e.g.,
+ *                                "p2p_peer <peer_address>") to specify the
+ *                                target peer.
+ * \param[out] peer_info_buf      Pointer to the buffer that will receive the
+ *                                detailed peer information.
+ * \param[in]  peer_info_buf_size The total size of the @p peer_info_buf in
+ *                                bytes.
+ * \param[out] peer_info_len      Pointer to an integer where the actual length
+ *                                (in bytes) of data written to @p peer_info_buf
+ *                                will be stored.
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_p2p_peer(char *cmd, char *peer_info_buf, int peer_info_buf_size, int *peer_info_len);
 #endif
 
 #if CONFIG_IMD3_CFG

@@ -4969,7 +4969,7 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
         {
             /*Do nothing*/
         }
-#endif 
+#endif
         (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
         CONNECTION_EVENT(WLAN_REASON_ADDRESS_SUCCESS, NULL);
         wlan.sta_state      = CM_STA_CONNECTED;
@@ -5453,7 +5453,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         if (strstr(buf, " GO "))
         {
             priv_wfd->p2p_go_network = true;
-            
+
             pos = strstr(buf, " ssid=");
             if (pos)
             {
@@ -6799,7 +6799,7 @@ static void wlcm_set_rssi_low_threshold(enum cm_sta_state *next, struct wlan_net
 static void wlcm_process_chan_load(void *ch_load)
 {
     HostCmd_DS_802_11_GET_CH_LOAD *ch_load_info = (HostCmd_DS_802_11_GET_CH_LOAD *)ch_load;
-    
+
     mlan_adap->noise = ch_load_info->noise;
     mlan_adap->ch_load_param = ch_load_info->ch_load;
     mlan_adap->rx_quality = ch_load_info->rx_quality;
@@ -7346,7 +7346,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case WIFI_EVENT_REGION_POWER_CFG:
             wlcm_process_region_power_cfg(msg);
             break;
-#if CONFIG_WIFI_CHANNEL_LOAD        
+#if CONFIG_WIFI_CHANNEL_LOAD
         case WIFI_EVENT_CHAN_LOAD:
             wlcm_process_chan_load(msg->data);
 #if !CONFIG_MEM_POOLS
@@ -16229,6 +16229,13 @@ int wlan_p2p_stop_find(void)
     return wpa_supp_p2p_stop_find(netif);
 }
 
+int wlan_p2p_listen(const char *cmd)
+{
+    struct netif *netif = net_get_wfd_interface();
+
+    return wpa_supp_p2p_listen(netif, cmd);
+}
+
 int wlan_p2p_connect(char *cmd)
 {
     struct netif *netif = net_get_wfd_interface();
@@ -16304,6 +16311,41 @@ int wlan_p2p_group_remove(char *cmd)
     struct netif *netif = net_get_wfd_interface();
 
     return wpa_supp_p2p_group_remove(netif, cmd);
+}
+
+int wlan_p2p_peers(char *peers_buf, int peers_buf_size, int *peers_buf_len)
+{
+    struct netif *netif = net_get_wfd_interface();
+    int ret, res = 0;
+    char addr[32], cmd[64];
+    *peers_buf_len = 0;
+
+    if (wpa_supp_p2p_peer(netif, "FIRST", addr, sizeof(addr)))
+        return -1;
+    do
+    {
+        memcpy(peers_buf + *peers_buf_len, addr, 19);
+        *peers_buf_len += 19;
+        os_snprintf(cmd, sizeof(cmd), "NEXT-%s", addr);
+    } while (wpa_supp_p2p_peer(netif, cmd, addr, sizeof(addr)) == 0);
+
+    return 0;
+}
+
+int wlan_p2p_peer(char *cmd, char *peer_info_buf, int peer_info_buf_size, int *peer_info_len)
+{
+    struct netif *netif = net_get_wfd_interface();
+    int len;
+    len = wpa_supp_p2p_peer(netif, cmd, peer_info_buf, peer_info_buf_size);
+    if (len > 0)
+    {
+        *peer_info_len = len;
+        return 0;
+    }
+    else
+    {
+        return -1;
+    }
 }
 #endif
 
