@@ -23,7 +23,7 @@
 #include <wifi.h>
 #include "lwip/netif.h"
 
-#define WLAN_DRV_VERSION "v1.3.r48.p40"
+#define WLAN_DRV_VERSION "v1.3.r48.p41"
 
 #if CONFIG_WPA2_ENTP
 #include <wm_mbedtls_helper_api.h>
