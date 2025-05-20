@@ -503,6 +503,8 @@ int wifi_set_custom_ie(custom_ie *beacon_ies_data,
                        custom_ie *assocresp_ies_data);
 #endif
 
+unsigned int get_ie_index();
+
 #if CONFIG_11K
 /**
  * rrm scan callback function to process scan results
@@ -580,6 +582,8 @@ int wrapper_bssdesc_second_set(int bss_index,
 int wifi_get_mgmt_ie2(mlan_bss_type bss_type, void *buf, unsigned int *buf_len);
 int wifi_set_mgmt_ie2(mlan_bss_type bss_type, unsigned short mask, void *buf, unsigned int buf_len);
 int wifi_clear_mgmt_ie2(mlan_bss_type bss_type, int mgmt_bitmap_index);
+
+int wifi_get_mgmt_ie_by_index(mlan_bss_type bss_type, void *buffer, unsigned int *ie_len, int index);
 
 #if CONFIG_BG_SCAN
 int wifi_request_bgscan(mlan_private *pmpriv);
