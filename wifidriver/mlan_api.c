@@ -333,11 +333,20 @@ int wifi_send_rssi_info_cmd(wifi_rssi_info_t *rssi_info)
 {
     (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    mlan_bss_type bss_type  = MLAN_BSS_TYPE_STA;
 
-    cmd->seq_num = 0x0;
+#if CONFIG_WPA_SUPP_P2P
+    mlan_private *priv_wfd = (mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_WIFIDIRECT];
+    if (priv_wfd->p2p_gc_network)
+    {
+        bss_type = MLAN_BSS_TYPE_WIFIDIRECT;
+    }
+#endif
+
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, bss_type);
     cmd->result  = 0x0;
 
-    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_RSSI_INFO,
+    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[bss_type], HostCmd_CMD_RSSI_INFO,
                                               HostCmd_ACT_GEN_GET, 0, NULL, NULL, cmd);
     if (rv != MLAN_STATUS_SUCCESS)
     {
@@ -6228,7 +6237,7 @@ int wifi_channel_load(wlan_802_11_chan_load_t *cfg)
 
     mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_GET_CH_LOAD, HostCmd_ACT_GEN_GET, 0,
                                               NULL, &chan_load_cmd, cmd);
-    
+
     if (rv != MLAN_STATUS_SUCCESS)
     {
         wifi_put_command_lock();

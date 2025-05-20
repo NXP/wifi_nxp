@@ -159,8 +159,24 @@ out:
     return;
 }
 
-static const char *print_role(enum wlan_bss_role role)
+static const char *print_role(char *ssid, enum wlan_bss_role role)
 {
+#if CONFIG_WPA_SUPP_P2P
+    if (memcmp(ssid, "DIRECT-", 7) == 0)
+    {
+        if (role == WLAN_BSS_ROLE_STA)
+        {
+            return "P2P Client";
+        }
+        else if (role == WLAN_BSS_ROLE_UAP)
+        {
+            return "P2P GO";
+        }
+    }
+#else
+    (void)ssid;
+#endif
+
     if (role == WLAN_BSS_ROLE_STA)
     {
         return "Infra";
@@ -291,7 +307,7 @@ static void print_network(struct wlan_network *network)
     {
         (void)PRINTF("\r\n\tchannel: %s", "(Auto)");
     }
-    (void)PRINTF("\r\n\trole: %s\r\n", print_role(network->role));
+    (void)PRINTF("\r\n\trole: %s\r\n", print_role(network->ssid, network->role));
 
     if (network->role == WLAN_BSS_ROLE_STA)
     {
@@ -2126,11 +2142,11 @@ static int __scan_cb(unsigned int count)
 
         if (res.ssid[0] != '\0')
         {
-            (void)PRINTF(" \"%s\" %s\r\n", res.ssid, print_role(res.role));
+            (void)PRINTF(" \"%s\" %s\r\n", res.ssid, print_role(res.ssid, res.role));
         }
         else
         {
-            (void)PRINTF(" (hidden) %s\r\n", print_role(res.role));
+            (void)PRINTF(" (hidden) %s\r\n", print_role(res.ssid, res.role));
         }
         (void)PRINTF("\tmode: ");
 #if CONFIG_11AC
