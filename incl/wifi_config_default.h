@@ -176,6 +176,25 @@
 #define CONFIG_SDIO_MULTI_PORT_TX_AGGR 0
 #endif
 
+/* TX/RX aggregation SLIM*/
+#ifndef CONFIG_WIFI_SLIM_TX_RX_AGGR
+#define CONFIG_WIFI_SLIM_TX_RX_AGGR 0
+#endif
+
+#if CONFIG_WIFI_SLIM_TX_RX_AGGR
+
+#if CONFIG_SDIO_MULTI_PORT_RX_AGGR
+#undef CONFIG_SDIO_MULTI_PORT_RX_AGGR
+#define CONFIG_SDIO_MULTI_PORT_RX_AGGR 0
+#endif
+
+#if CONFIG_SDIO_MULTI_PORT_TX_AGGR
+#undef CONFIG_SDIO_MULTI_PORT_TX_AGGR
+#define CONFIG_SDIO_MULTI_PORT_TX_AGGR 0
+#endif
+
+#endif /* CONFIG_WIFI_SLIM_TX_RX_AGGR */
+
 /** Multi port aggregation packet limit */
 #if !defined CONFIG_SDIO_MP_AGGR_DEF_PKT_LIMIT
 #if defined(SD8978) || defined(SD8987) || defined(SD9177) || defined(IW610)

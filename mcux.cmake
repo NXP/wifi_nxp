@@ -787,6 +787,7 @@ if(CONFIG_MCUX_COMPONENT_middleware.wifi.slim)
         "-DCONFIG_WIFI_SLIM_ROAM=1\
          -DCONFIG_WIFI_SLIM_STA=1\
          -DCONFIG_WIFI_SLIM_UAP=1\
-         -DCONFIG_WIFI_SLIM_WMM=1"
+         -DCONFIG_WIFI_SLIM_WMM=1\
+         -DCONFIG_WIFI_SLIM_TX_RX_AGGR=1"
     )
 endif()
