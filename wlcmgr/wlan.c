@@ -16439,6 +16439,22 @@ int wlan_p2p_peer(char *cmd, char *peer_info_buf, int peer_info_buf_size, int *p
         return -1;
     }
 }
+
+int wlan_p2p_status(char *buf, size_t buflen, int *reslen)
+{
+    struct netif *netif = net_get_wfd_interface();
+    int len;
+    len = wpa_supp_p2p_status(netif, buf, buflen);
+    if (len > 0)
+    {
+        *reslen = len;
+        return 0;
+    }
+    else
+    {
+        return -1;
+    }
+}
 #endif
 
 #if CONFIG_IMD3_CFG

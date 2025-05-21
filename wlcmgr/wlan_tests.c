@@ -11770,6 +11770,31 @@ static void test_wlan_p2p_peer(int argc, char **argv)
         }
     }
 }
+
+static void test_wlan_p2p_status(int argc, char **argv)
+{
+    int ret;
+    char buf[1024];
+    int reslen = 0, i;
+
+    ret = wlan_p2p_status(buf, sizeof(buf), &reslen);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n p2p_status failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n p2p_status: \r\n");
+        for (i = 0; i < reslen; i++)
+        {
+            PRINTF("%c", buf[i]);
+            if (buf[i] == '\n')
+            {
+                PRINTF("\r");
+            }
+        }
+    }
+}
 #endif
 
 #if CONFIG_IMD3_CFG
@@ -13509,6 +13534,7 @@ static struct cli_command tests[] = {
     {"wlan-p2p-group-remove", " <group_interface_name>", test_wlan_p2p_group_remove},
     {"wlan-p2p-peers", NULL, test_wlan_p2p_peers},
     {"wlan-p2p-peer", " <peer_address>", test_wlan_p2p_peer},
+    {"wlan-p2p-status", NULL, test_wlan_p2p_status},
 #endif
 #if 0
     {"wlan-p2p-invite", NULL, test_wlan_p2p_invite},

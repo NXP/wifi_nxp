@@ -7539,6 +7539,25 @@ int wlan_p2p_peers(char *peers_buf, int peer_buf_size, int *peers_buf_len);
  * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
  */
 int wlan_p2p_peer(char *cmd, char *peer_info_buf, int peer_info_buf_size, int *peer_info_len);
+
+/**
+ *Retrieves detailed information for a P2P interface.
+ *
+ * This function sends a generic wpa_cli command (given by status cmd) to
+ * obtain detailed information about a P2P interface. The resulting output
+ * is stored in the buffer provided by buf, and the length of the
+ * retrieved information is returned via reslen.
+ *
+ * \param[out] buf      Pointer to the buffer that will receive the
+ *                      detailed information.
+ * \param[in]  buflen   The total size of the buf in bytes.
+ * \param[out] reslen   Pointer to an integer where the actual length
+ *                      (in bytes) of data written to buf
+ *                      will be stored.
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_p2p_status(char *buf, size_t buflen, int *reslen);
 #endif
 
 #if CONFIG_IMD3_CFG
