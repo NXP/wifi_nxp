@@ -9420,6 +9420,13 @@ int wlan_add_network(struct wlan_network *network)
 #endif
     }
 
+#if CONFIG_WPA_SUPP_P2P
+    if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
+    {
+        wpa_supp_p2p_update_mode_info(network);
+    }
+#endif
+
 #if CONFIG_WPA_SUPP
 #if CONFIG_HOSTAPD
     if (network->role == WLAN_BSS_ROLE_UAP)
