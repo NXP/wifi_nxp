@@ -776,12 +776,17 @@ if (CONFIG_MCUX_COMPONENT_middleware.wifi.wls)
     )
 endif()
 
+if(CONFIG_MCUX_COMPONENT_middleware.wifi.slim_debug)
+    mcux_add_macro(
+        "-DCONFIG_WIFI_SLIM_DISABLE_DBG=1"
+    )
+endif()
+
 if(CONFIG_MCUX_COMPONENT_middleware.wifi.slim)
     mcux_add_macro(
         "-DCONFIG_WIFI_SLIM_ROAM=1\
          -DCONFIG_WIFI_SLIM_STA=1\
          -DCONFIG_WIFI_SLIM_UAP=1\
-         -DCONFIG_WIFI_SLIM_DISABLE_DBG=1\
          -DCONFIG_WIFI_SLIM_WMM=1"
     )
 endif()
