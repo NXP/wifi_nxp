@@ -138,7 +138,7 @@ int wlan_set_rg_power_cfg(t_u16 region_code)
     int rv              = WM_SUCCESS;
 
     board_type = wifi_get_board_type();
-    (void)PRINTF("baord_type: %d, baord_type mapping: \r\n", board_type);
+    (void)PRINTF("board_type: %d, board_type mapping: \r\n", board_type);
 
 #if defined(RW610)
     (void)PRINTF("0----QFN\r\n");
