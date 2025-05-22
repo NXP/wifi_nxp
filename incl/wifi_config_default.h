@@ -302,6 +302,11 @@
 #endif
 #endif
 
+#if !CONFIG_HOSTAPD
+#undef CONFIG_WPA_SUPP_P2P
+#define CONFIG_WPA_SUPP_P2P 0
+#endif
+
 /* WLAN white/black list opt */
 #if !defined CONFIG_UAP_STA_MAC_ADDR_FILTER
 #if defined(RW610) && CONFIG_HOSTAPD

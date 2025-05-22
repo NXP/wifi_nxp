@@ -8290,8 +8290,10 @@ void wifi_wmm_tx_stats_dump(int bss_type)
 
     if (bss_type == MLAN_BSS_TYPE_STA)
         priv = mlan_adap->priv[0];
+#if CONFIG_HOSTAPD
     else if (bss_type == MLAN_BSS_TYPE_UAP)
         priv = mlan_adap->priv[1];
+#endif
     else
         return;
 
