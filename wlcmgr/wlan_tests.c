@@ -5289,30 +5289,6 @@ static void test_wlan_auto_host_sleep(int argc, char **argv)
 #endif /* CONFIG_WIFI_BLE_COEX_APP */
 
 #if CONFIG_MEF_CFG
-static void test_wlan_ns_offload(int argc, char **argv)
-{
-    int ret = -WM_FAIL;
-    ret     = wlan_set_ipv6_ns_offload();
-    if (ret == WM_SUCCESS)
-    {
-        (void)PRINTF("Enabled  wlan IPv6 NS offload feature");
-    }
-    else
-    {
-        (void)PRINTF("Failed to enabled wlan auto arp offload, error: %d", ret);
-    }
-}
-
-static void test_wlan_auto_arp(int argc, char **argv)
-{
-    int ret = -WM_FAIL;
-    ret     = wlan_set_auto_arp();
-    if (ret == WM_SUCCESS)
-        (void)PRINTF("Enabled  wlan auto arp offload feature\r\n");
-    else
-        (void)PRINTF("Failed to enabled wlan auto arp offload, error: %d\r\n", ret);
-}
-
 static void dump_wlan_add_packet_filter()
 {
     (void)PRINTF("Usage:\r\n");
@@ -13359,8 +13335,6 @@ static struct cli_command tests[] = {
 #if CONFIG_HOST_SLEEP
 #if CONFIG_MEF_CFG
     {"wlan-wakeup-condition", "<mef/wowlan wake_up_conds>", test_wlan_wakeup_condition},
-    {"enable-ns-offload", NULL, test_wlan_ns_offload},
-    {"wlan-auto-arp", NULL, test_wlan_auto_arp},
     {"wlan-add-packet-filter", " sta/uap 0/1 <patterns number> <ptn_len> <pkt_offset> <ptn> ...........",
      test_wlan_add_packet_filter},
 #else

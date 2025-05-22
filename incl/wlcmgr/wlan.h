@@ -3995,14 +3995,6 @@ int wlan_uap_get_pmfcfg(uint8_t *mfpc, uint8_t *mfpr);
  */
 int wlan_set_packet_filters(wlan_flt_cfg_t *flt_cfg);
 
-/**
- * Use this API to enable ARP (address resolution protocol) offload in Wi-Fi firmware
- *
- * \return WM_SUCCESS if operation is successful.
- * \return -WM_FAIL if command fails.
- */
-int wlan_set_auto_arp(void);
-
 #if CONFIG_AUTO_PING
 /**
  * Use this API to enable ping offload in Wi-Fi firmware.
@@ -4025,14 +4017,6 @@ int wlan_set_auto_ping(void);
  */
 int wlan_wowlan_cfg_ptn_match(enum wlan_bss_type bss_type, wlan_wowlan_ptn_cfg_t *ptn_cfg);
 #endif
-
-/**
- * Use this API to enable NS offload in Wi-Fi firmware.
- *
- * \return WM_SUCCESS if operation is successful.
- * \return -WM_FAIL if command fails.
- */
-int wlan_set_ipv6_ns_offload(void);
 
 #if CONFIG_HOST_SLEEP
 
@@ -6600,7 +6584,17 @@ int wlan_mef_set_auto_arp(t_u8 mef_action);
  *
  */
 int wlan_mef_set_auto_ping(t_u8 mef_action);
-
+/** This function set multicast packet as low power wake up condition.
+ *
+ * \param[in] mef_action: To be\n
+ *                        0--discard multicast packet and not wake host\n
+ *                        1--discard multicast packet and wake host\n
+ *                        3--allow multicast packet and wake host.
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ *
+ */
+int wlan_mef_set_multicast(t_u8 mef_action);
 /** This function set/delete MEF entries configuration.
  *
  * \param[in] type:       MEF type: MEF_TYPE_DELETE, MEF_TYPE_AUTO_PING, MEF_TYPE_AUTO_ARP
