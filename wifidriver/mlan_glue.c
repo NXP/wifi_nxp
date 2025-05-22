@@ -1713,6 +1713,7 @@ void wifi_io_dump_hex(const void *data, unsigned len)
 #endif
 }
 
+#if UAP_SUPPORT
 int wlan_set_uap_coutry_regd_by_conn_bss(pmlan_private priv, BSSDescriptor_t *d)
 {
     t_u32 country_ie_len = 0;
@@ -1720,13 +1721,11 @@ int wlan_set_uap_coutry_regd_by_conn_bss(pmlan_private priv, BSSDescriptor_t *d)
 
 	wifi_d("%s: Enter", __FUNCTION__);
 
-#if UAP_SUPPORT
     if (mlan_adap->priv[1]->uap_bss_started != MTRUE)
     {
         wifi_d("%s: uap not started.", __FUNCTION__);
         return WM_SUCCESS;
     }
-#endif
 
     if (d == NULL)
     {
@@ -1897,6 +1896,7 @@ int wlan_set_uap_coutry_regd_by_conn_bss(pmlan_private priv, BSSDescriptor_t *d)
 
     return ret;
 }
+#endif
 
 
 bool wrapper_wlan_11d_support_is_enabled(void)
@@ -2287,7 +2287,9 @@ int wrapper_wifi_assoc(
     bss.param.ssid_bssid.idx = (t_u32)idx + 1UL; /* + 1 req. by mlan */
     ret = wifi_send_bss_ioctl(&bss);
 
+#if UAP_SUPPORT
     wlan_set_uap_coutry_regd_by_conn_bss(priv,d);
+#endif
 
     return ret;
 }
@@ -2991,7 +2993,9 @@ int wifi_nxp_send_assoc(unsigned int bss_type, nxp_wifi_assoc_info_t *assoc_info
     bss.bss_type = bss_type;
     ret = wifi_send_bss_ioctl(&bss);
 
+#if UAP_SUPPORT
     wlan_set_uap_coutry_regd_by_conn_bss(priv, d);
+#endif
 
     return ret;
 }
