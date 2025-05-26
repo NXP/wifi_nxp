@@ -58,7 +58,7 @@ static bool wifi_check_11ac_capability(mlan_private *pmpriv, t_u8 band)
 
     ENTER();
 #if CONFIG_WIFI_CAPA
-    if (pmadapter->usr_dot_11ac_enable == 0U)
+    if (pmpriv->bss_type == MLAN_BSS_TYPE_UAP && pmadapter->usr_dot_11ac_enable == 0U)
     {
         return enable_11ac;
     }
@@ -172,7 +172,7 @@ static t_u8 wifi_check_11ax_capability(mlan_private *pmpriv, t_u8 band)
 
     ENTER();
 #if CONFIG_WIFI_CAPA
-    if (!pmadapter->usr_dot_11ax_enable)
+    if (pmpriv->bss_type == MLAN_BSS_TYPE_UAP && pmadapter->usr_dot_11ax_enable == 0U)
     {
         return enable_11ax;
     }
