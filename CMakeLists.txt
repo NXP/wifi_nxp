@@ -35,6 +35,8 @@ zephyr_compile_definitions_ifdef(CONFIG_NXP_IW610
 zephyr_compile_definitions_ifdef(CONFIG_NXP_RW610
     RW610
     WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW_rw610.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x08
+    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x08
 )
 
 zephyr_compile_definitions_ifdef(CONFIG_NXP_88W8987_AW_CM358_USD
