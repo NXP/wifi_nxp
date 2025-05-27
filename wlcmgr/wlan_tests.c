@@ -5398,7 +5398,7 @@ static void test_wlan_add_packet_filter(int argc, char **argv)
 
 #if CONFIG_SEND_HOSTCMD
 #define HOSTCMD_RESP_BUFF_SIZE 1024
-#if defined(CPU_MIMXRT1176DVMAA_cm7) && defined(SD9177)
+#if defined(SD9177) && (defined(MIMXRT1176_cm7_SERIES) || defined(MIMXRT1175_cm7_SERIES) || defined(MIMXRT1173_cm7_SERIES) || defined(MIMXRT1172_SERIES) || defined(MIMXRT1171_SERIES))
     static uint8_t __attribute__((section(".wlan_data"))) host_cmd_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
 #else
     static uint8_t host_cmd_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};

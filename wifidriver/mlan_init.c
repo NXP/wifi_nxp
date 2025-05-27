@@ -43,7 +43,7 @@ SDK_ALIGN(uint8_t mp_regs_buffer[MAX_MP_REGS], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZ
 #endif
 
 /* We are allocating BSS list globally as we need heap for other purposes */
-#if defined(CPU_MIMXRT1176DVMAA_cm7) && defined(SD9177)
+#if defined(SD9177) && (defined(MIMXRT1176_cm7_SERIES) || defined(MIMXRT1175_cm7_SERIES) || defined(MIMXRT1173_cm7_SERIES) || defined(MIMXRT1172_SERIES) || defined(MIMXRT1171_SERIES))
 SDK_ALIGN(BSSDescriptor_t __attribute__((section(".wlan_data"))) BSS_List[MRVDRV_MAX_BSSID_LIST], 32);
 #else
 SDK_ALIGN(BSSDescriptor_t BSS_List[MRVDRV_MAX_BSSID_LIST], 32);

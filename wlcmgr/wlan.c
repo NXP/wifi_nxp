@@ -104,7 +104,7 @@
 #if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
 #include "board.h"
 
-#if (defined(CPU_MIMXRT1062DVMAA) || defined(CPU_MIMXRT1062DVL6A) || defined (CPU_MIMXRT1062DVL6B))
+#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
 #if defined(SD8978) || defined(SD8987)
 /* IR-OOB TRIGGER Connect Fly-Wire between J16.1 and J108.4 for 1XK-M2, 1ZM-M2*/
 #define IR_OUTBAND_TRIGGER_GPIO			GPIO1
@@ -119,7 +119,7 @@
 //#define IOMUXC_GPIO_IR_OUTBAND_TRIGGER IOMUXC_GPIO_AD_B1_08_GPIO1_IO24
 #endif
 
-#elif defined(CPU_MIMXRT1176DVMAA_cm7) // For RT1170
+#elif (defined(MIMXRT1176_cm7_SERIES) || defined(MIMXRT1175_cm7_SERIES) || defined(MIMXRT1173_cm7_SERIES) || defined(MIMXRT1172_SERIES) || defined(MIMXRT1171_SERIES)) // For RT1170
 #if defined(IW610)
 #define IR_OUTBAND_TRIGGER_GPIO   	   	GPIO9
 #define IR_OUTBAND_TRIGGER_GPIO_PIN   	(15U)
