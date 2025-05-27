@@ -542,9 +542,13 @@ static mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
         case HostCmd_CMD_GET_HW_SPEC:
             (void)wlan_ret_get_hw_spec((mlan_private *)mlan_adap->priv[0], (HostCmd_DS_COMMAND *)(void *)cmdresp, NULL);
 #ifdef IW610
+#if !defined(OVERRIDE_CALIBRATION_DATA)
             t_u32 fw_cap_ext;
             fw_cap_ext = mlan_adap->priv[0]->adapter->fw_cap_ext;
             cal_data_valid_fw = (((fw_cap_ext & 0x0800) == 0) ? 0 : 1);
+#else
+            cal_data_valid_fw = 0;
+#endif
 #endif
             break;
         case HostCmd_CMD_VERSION_EXT:

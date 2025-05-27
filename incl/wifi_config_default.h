@@ -21,7 +21,7 @@
 #if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD9177) || defined(IW610)
 
 /*
- * #define OVERRIDE_CALIBRATION_DATA "wifi_cal_data_rw61x_override.h"
+ * #define OVERRIDE_CALIBRATION_DATA "wifi_cal_data_override.h"
  * if use the specific calibration data
  */
 #if !defined(OVERRIDE_CALIBRATION_DATA)
