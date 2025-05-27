@@ -19,6 +19,8 @@
 #include <stdint.h>
 #ifndef RW610
 #include <mlan_sdio_api.h>
+#else
+#include "wifi_bt_module_config.h"
 #endif
 #if (CONFIG_HOST_PMK) || (CONFIG_WPS2)
 #include <wm_mbedtls_helper_api.h>
@@ -5988,21 +5990,9 @@ static void wlcm_process_init(enum cm_sta_state *next)
 
     (void)wrapper_wlan_cmd_get_hw_spec();
 
-#ifndef RW610
-#ifndef __ZEPHYR__
     wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl = WLAN_ED_MAC_CTRL;
-#else
-    wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl = {
-        0x01,
-        CONFIG_NXP_WIFI_ED_OFFSET_2G
-#if CONFIG_5GHz_SUPPORT
-        ,
-        0x01,
-        CONFIG_NXP_WIFI_ED_OFFSET_5G
-#endif
-    };
-#endif
     (void)wlan_set_ed_mac_mode(wlan_ed_mac_ctrl);
+#if UAP_SUPPORT
     (void)wlan_set_uap_ed_mac_mode(wlan_ed_mac_ctrl);
 #endif
 

@@ -95,6 +95,7 @@ config MCUX_COMPONENT_middleware.wifi
     depends on MCUX_COMPONENT_utility.debug_console || MCUX_COMPONENT_utility.debug_console_lite
     select MCUX_COMPONENT_middleware.wifi.template
     select MCUX_COMPONENT_middleware.wifi.wifidriver
+    select MCUX_COMPONENT_component.wifi_bt_module.config
 
 config MCUX_COMPONENT_middleware.wifi.sdio
     bool "Component middleware.wifi.sdio"
