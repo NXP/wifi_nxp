@@ -1613,6 +1613,7 @@ static void test_wlan_11ax_cfg(int argc, char **argv)
 }
 
 #if CONFIG_11AX_TWT
+#if defined(RW610) || defined(IW610)
 static void dump_wlan_btwt_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -1676,7 +1677,7 @@ static void test_wlan_bcast_twt(int argc, char **argv)
         (void)ret;
     }
 }
-
+#endif
 static void test_wlan_twt_setup(int argc, char **argv)
 {
     test_wlan_cfg_process(TEST_WLAN_TWT_SETUP, argc, argv);
@@ -2105,7 +2106,9 @@ static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-set-rutxpwrlimit", NULL, test_wlan_set_rutxpwrlimit},
     {"wlan-11ax-cfg", "<11ax_cfg>", test_wlan_11ax_cfg},
 #if CONFIG_11AX_TWT
+#if defined(RW610) || defined(IW610)
     {"wlan-11ax-bcast-twt", "<set/get>", test_wlan_bcast_twt},
+#endif
     {"wlan-11ax-twt-setup", "<dump/set/done> [<param_id> <param_data>]", test_wlan_twt_setup},
     {"wlan-11ax-twt-teardown", "<dump/set/done> [<param_id> <param_data>]", test_wlan_twt_teardown},
     {"wlan-11ax-twt-report", "", test_wlan_twt_report},
