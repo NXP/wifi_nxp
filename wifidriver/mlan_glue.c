@@ -2293,9 +2293,15 @@ static int wifi_assoc_pick_security_ie(mlan_private *priv, BSSDescriptor_t *d,
         goto wpa_ie_picked;
     }
 
+#if CONFIG_WPA_SUPP
+    wifi_d("wifi assoc select none security profile, "
+           "key mgmt network 0x%x rsn 0x%x",
+           key_mgmt_network, key_mgmt_ie_rsn);
+#else
     wifi_d("wifi assoc select none security profile, "
            "key mgmt network 0x%x rsno2 0x%x rsno 0x%x rsn 0x%x",
            key_mgmt_network, key_mgmt_ie_rsno2, key_mgmt_ie_rsno, key_mgmt_ie_rsn);
+#endif
     priv->sec_info.rsn_selector = MLAN_RSN_SELECTOR_INVALID;
     return WM_SUCCESS;
 
@@ -2319,9 +2325,15 @@ rsn_ie_picked:
     priv->sec_info.is_wpa_tkip  = is_wpa_tkip;
     priv->sec_info.wpa2_enabled = true;
 
+#if CONFIG_WPA_SUPP
+    wifi_d("assoc_pick_rsn: "
+           "key mgmt network 0x%x rsn 0x%x",
+           key_mgmt_network, key_mgmt_ie_rsn);
+#else
     wifi_d("assoc_pick_rsn: "
            "key mgmt network 0x%x rsno2 0x%x rsno 0x%x rsn 0x%x",
            key_mgmt_network, key_mgmt_ie_rsno2, key_mgmt_ie_rsno, key_mgmt_ie_rsn);
+#endif
 
 #if CONFIG_11R
     if (wlan_security == WLAN_SECURITY_WPA2 || wlan_security == WLAN_SECURITY_WPA3_SAE ||
