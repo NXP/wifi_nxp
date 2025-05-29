@@ -1191,7 +1191,6 @@ void wlan_process_hang(uint8_t fw_reload)
     wifi_tx_block_cnt   = 0;
     wifi_rx_block_cnt   = 0;
 
-#if !defined(SD8978)
     /* Put sleep_rwlock before resetting FW to avoid wakeing up FW
        before enabling ieee-ps/deep-ps */
     if (mlan_adap->ps_state == PS_STATE_SLEEP)
@@ -1199,7 +1198,6 @@ void wlan_process_hang(uint8_t fw_reload)
         OSA_RWLockWriteUnlock(&sleep_rwlock);
         mlan_adap->ps_state = PS_STATE_AWAKE;
     }
-#endif
 
     (void)wifi_event_completion(WIFI_EVENT_FW_RESET, WIFI_EVENT_REASON_SUCCESS, NULL);
 
