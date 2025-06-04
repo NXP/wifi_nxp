@@ -5390,7 +5390,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     wlcm_d("%s: %s", __func__, buf);
 
 #if CONFIG_WPA_SUPP_P2P
-    if (strstr(buf, "P2P-"))
+    if (strstr(buf, "P2P-SERV"))
         PRINTF("%s\r\n", buf);
 #endif
 
