@@ -11367,6 +11367,12 @@ static void test_wlan_p2p_group_add(int argc, char **argv)
     if (ret == -WM_FAIL)
     {
         (void)PRINTF("\r\n p2p_group_add failed!!\r\n");
+        (void)PRINTF("Usage:\r\n");
+        (void)PRINTF("wlan-p2p-group-add [freq=<freq in MHz>] [ht40] [vht] [he]\r\n");
+        (void)PRINTF("Examples:\r\n");
+        (void)PRINTF("    wlan-p2p-group-add freq=2437\r\n");
+        (void)PRINTF("    wlan-p2p-group-add freq=5180 he\r\n");
+        (void)PRINTF("If not specify [ht40] [vht] [he], use 11n(ht) as default\r\n");
     }
     else
     {
@@ -13497,7 +13503,7 @@ static struct cli_command tests[] = {
     {"wlan-p2p-stop-find", NULL, test_wlan_p2p_stop_find},
     {"wlan-p2p-listen", " [timeout]", test_wlan_p2p_listen},
     {"wlan-p2p-connect", " <peer_address> <method>", test_wlan_p2p_connect},
-    {"wlan-p2p-group-add", " [freq=<frequency>]", test_wlan_p2p_group_add},
+    {"wlan-p2p-group-add", " [freq=<freq in MHz>] [ht40] [vht] [he]", test_wlan_p2p_group_add},
     {"wlan-p2p-get-passphrase", NULL, test_wlan_p2p_get_passphrase},
     {"wlan-p2p-start-wps-pbc", NULL, test_wlan_p2p_start_wps_pbc},
     {"wlan-p2p-start-wps-pin", "<8 digit pin>", test_wlan_p2p_start_wps_pin},
