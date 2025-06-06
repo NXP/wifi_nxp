@@ -4073,10 +4073,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 #else
             network->dot11n = wlan_11n_allowed(network);
 #if CONFIG_11AC
-            if (network->channel > MAX_CHANNELS_BG)
-            {
-                network->dot11ac = wlan_11ac_allowed(network);
-            }
+            network->dot11ac = wlan_11ac_allowed(network);
 #endif
 #if CONFIG_11AX
             network->dot11ax = wlan_11ax_allowed(network);
