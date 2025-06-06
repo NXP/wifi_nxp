@@ -5102,11 +5102,31 @@ static void wlcm_process_net_ipv6_config(struct wifi_message *msg,
                                          enum cm_sta_state *next,
                                          struct wlan_network *network)
 {
-    void *if_handle = net_get_mlan_handle();
+    struct netif *sta_netif = net_get_sta_interface();
+#if CONFIG_WPA_SUPP_P2P
+    struct netif *wfd_netif = net_get_wfd_interface();
+    struct netif *net = (struct netif *)msg->data;
+#endif
+    void *if_handle;
     int i, found = 0;
-    if (network->type != WLAN_BSS_TYPE_STA || (if_handle == NULL))
+
+#if CONFIG_WPA_SUPP_P2P
+    if (net != NULL && net == wfd_netif)
     {
-        return;
+        if_handle = net_get_wfd_handle();
+        if (network->type != WLAN_BSS_TYPE_WIFIDIRECT || (if_handle == NULL))
+        {
+            return;
+        }
+    }
+    else
+#endif
+    {
+        if_handle = net_get_mlan_handle();
+        if (network->type != WLAN_BSS_TYPE_STA || (if_handle == NULL))
+        {
+            return;
+        }
     }
 
     net_get_if_ipv6_addr((struct net_ip_config *)&network->ip, if_handle);

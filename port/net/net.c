@@ -256,7 +256,7 @@ static void wm_netif_ipv6_status_callback(struct netif *n)
     /*	TODO: Implement appropriate functionality here*/
     net_d("Received callback on IPv6 address state change");
 
-    (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_IPV6_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
+    (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_IPV6_CONFIG, WIFI_EVENT_REASON_SUCCESS, (void *)n);
 }
 #endif /* CONFIG_IPV6 */
 

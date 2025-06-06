@@ -1502,6 +1502,9 @@ err_t lwip_netif_wfd_init(struct netif *netif)
      * is available...) */
     netif->output     = etharp_output;
     netif->linkoutput = low_level_output;
+#if CONFIG_IPV6
+    netif->output_ip6 = ethip6_output;
+#endif
 
     ethernetif->ethaddr = (struct eth_addr *)&(netif->hwaddr[0]);
 
