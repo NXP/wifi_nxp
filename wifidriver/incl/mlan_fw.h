@@ -1365,6 +1365,8 @@ typedef enum _ENH_PS_MODES
 #define HostCmd_ACT_GEN_GET 0x0000U
 /** General purpose action : Set */
 #define HostCmd_ACT_GEN_SET 0x0001U
+/** General purpose action : Set Default */
+#define HostCmd_ACT_GEN_SET_DEFAULT 0x0002U
 /** Special purpose action : Set */
 #define HostCmd_ACT_SPC_SET 0x8001
 
@@ -4790,7 +4792,7 @@ typedef PACK_START struct
 } PACK_END hostcmd_btwt_set_t;
 /** BTWT AP Config parameters */
 
-typedef MLAN_PACK_START struct 
+typedef MLAN_PACK_START struct
 {
     t_u8 bcast_bet_sta_wait;
     t_u16 bcast_offset;
