@@ -5150,6 +5150,12 @@ static void wlcm_process_net_ipv6_config(struct wifi_message *msg,
                     wlan.reassoc_request = false;
                 }
             }
+#if CONFIG_NCP
+            if (ip6_addr_ispreferred((network->ip.ipv6[i].addr_state)) != 0U)
+            {
+                app_notify_event(APP_EVT_INET_DAD_DONE, APP_EVT_REASON_SUCCESS, NULL, 0);
+            }
+#endif
         }
     }
 
