@@ -321,8 +321,10 @@ if(CONFIG_SPEED_OPTIMIZATIONS OR CONFIG_SIZE_OPTIMIZATIONS)
 
 if(CONFIG_NXP_RW610)
 	set(QUICK_ACCESS_CODE_AREA RAM_TEXT)
+	set(QUICK_ACCESS_CODE_AREA_2 RAM_TEXT)
 else()
 	set(QUICK_ACCESS_CODE_AREA ITCM_TEXT)
+	set(QUICK_ACCESS_CODE_AREA_2 DTCM)
 endif()
 
 # critical path code relocated to SRAM
@@ -367,21 +369,24 @@ zephyr_code_relocate(FILES
 endif()
 
 file(GLOB ZPERF_SRC ${ZEPHYR_BASE}/subsys/net/lib/zperf/*.c)
-zephyr_code_relocate(FILES ${ZPERF_SRC} LOCATION RAM_TEXT)
+zephyr_code_relocate(FILES ${ZPERF_SRC} LOCATION ${QUICK_ACCESS_CODE_AREA_2})
 
 zephyr_code_relocate(FILES
                      ${ZEPHYR_BASE}/subsys/net/ip/connection.c
-                     ${ZEPHYR_BASE}/subsys/net/ip/ipv6.c
-                     ${ZEPHYR_BASE}/subsys/net/ip/ipv6_fragment.c
                      ${ZEPHYR_BASE}/subsys/net/ip/packet_socket.c
                      ${ZEPHYR_BASE}/subsys/net/ip/utils.c
+                     LOCATION ${QUICK_ACCESS_CODE_AREA_2})
+
+zephyr_code_relocate(FILES
+                     ${ZEPHYR_BASE}/subsys/net/ip/ipv6_fragment.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/ipv4_fragment.c
                      LOCATION RAM_TEXT)
 
 zephyr_code_relocate(FILES
                      ${ZEPHYR_BASE}/subsys/net/lib/sockets/sockets_packet.c
                      ${ZEPHYR_BASE}/subsys/net/lib/sockets/sockets.c
                      ${ZEPHYR_BASE}/subsys/net/ip/ipv4.c
-                     ${ZEPHYR_BASE}/subsys/net/ip/ipv4_fragment.c
+                     ${ZEPHYR_BASE}/subsys/net/ip/ipv6.c
                      ${ZEPHYR_BASE}/subsys/net/ip/net_context.c
                      ${ZEPHYR_BASE}/subsys/net/ip/net_core.c
                      ${ZEPHYR_BASE}/subsys/net/ip/net_if.c
