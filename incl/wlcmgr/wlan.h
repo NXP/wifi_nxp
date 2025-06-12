@@ -21,7 +21,11 @@
 #include <stdint.h>
 #include <wifi_events.h>
 #include <wifi.h>
+#if CONFIG_WPA_SUPP
+#if CONFIG_WPA_SUPP_WPS
 #include "lwip/netif.h"
+#endif
+#endif
 
 #define WLAN_DRV_VERSION "v1.3.r48.p43"
 
