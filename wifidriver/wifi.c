@@ -1368,6 +1368,9 @@ start:
 #else
     (void)wifi_send_cmdbuffer(tx_blocks, buf_len);
 #endif
+#if CONFIG_WMM_UAPSD
+    OSA_SemaphorePost((osa_semaphore_handle_t)uapsd_sem);
+#endif
 #if !CONFIG_UART_WIFI_BRIDGE
     /* put the sleep_rwlock after send command but not wait for the command response,
      * for sleep confirm command, sleep confirm response(in wifi_process_ps_enh_response())
@@ -1430,9 +1433,6 @@ start:
     }
 
     wm_wifi.cmd_resp_priv = NULL;
-#if CONFIG_WMM_UAPSD
-    OSA_SemaphorePost((osa_semaphore_handle_t)uapsd_sem);
-#endif
 #ifndef SD9177
     wifi_set_xfer_pending(false);
 
