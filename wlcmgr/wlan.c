@@ -7032,13 +7032,19 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 {
     enum cm_sta_state next       = wlan.sta_state;
     struct wlan_network *network = NULL;
+    struct netif *netif = NULL;
 #if CONFIG_WPA_SUPP
     int ret;
-    struct netif *netif = net_get_sta_interface();
+    netif = net_get_sta_interface();
 #endif
 
     network = &wlan.networks[wlan.cur_network_idx];
-
+#if CONFIG_WPA_SUPP_P2P
+    if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
+    {	
+        netif = net_get_wfd_interface();
+    }
+#endif    
     switch (msg->event)
     {
         case CM_STA_USER_REQUEST_CONNECT:
