@@ -324,7 +324,7 @@ if(CONFIG_NXP_RW610)
 	set(QUICK_ACCESS_CODE_AREA_2 RAM_TEXT)
 else()
 	set(QUICK_ACCESS_CODE_AREA ITCM_TEXT)
-	set(QUICK_ACCESS_CODE_AREA_2 DTCM)
+	set(QUICK_ACCESS_CODE_AREA_2 DTCM_TEXT)
 endif()
 
 # critical path code relocated to SRAM
@@ -343,6 +343,12 @@ if(CONFIG_SDIO_STACK)
 zephyr_code_relocate(FILES
                      sdio_nxp_abs/mlan_sdio.c
                      wifidriver/wifi-sdio.c
+                     wifidriver/sdio.c
+                     ${ZEPHYR_BASE}/subsys/sd/sdio.c
+                     LOCATION ${QUICK_ACCESS_CODE_AREA} NOKEEP)
+
+zephyr_code_relocate(FILES ${ZEPHYR_BASE}/drivers/wifi/nxp/nxp_wifi_drv.c
+                     FILTER ".*\\.nxp_wifi_send|.*\\.nxp_wifi_recv"
                      LOCATION ${QUICK_ACCESS_CODE_AREA} NOKEEP)
 endif()
 
