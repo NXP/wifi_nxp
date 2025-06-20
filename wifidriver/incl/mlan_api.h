@@ -502,6 +502,10 @@ extern t_u8 g_csi_event_for_wls;
 #endif
 #endif
 
+#if (CONFIG_CSI) && (CONFIG_CSI_PROC)
+void wifi_process_csi_data(void);
+#endif
+
 #if UAP_SUPPORT
 int wifi_set_custom_ie(unsigned int bss_type,
 		       custom_ie *beacon_ies_data,

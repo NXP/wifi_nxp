@@ -3460,6 +3460,14 @@ void wlcm_process_csi_status_report(struct wifi_message *msg)
 #endif
     }
 }
+
+#if CONFIG_CSI_PROC
+static void wlcm_process_csi_data(void)
+{
+    wifi_process_csi_data();
+}
+#endif
+
 #endif
 
 #if CONFIG_WPA_SUPP
@@ -7367,6 +7375,12 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_d("got event: csi status report");
             wlcm_process_csi_status_report(msg);
             break;
+#if CONFIG_CSI_PROC
+        case WIFI_EVENT_CSI_PROC:
+            wlcm_d("got event: csi data process");
+            wlcm_process_csi_data();
+            break;
+#endif
 #endif
 
         case WIFI_EVENT_SLEEP:

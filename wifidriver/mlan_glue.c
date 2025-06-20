@@ -6342,7 +6342,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
         case EVENT_CSI:
         {
             PRINTM(MEVENT, "EVENT: EVENT_CSI\n");
-#if CONFIG_CSI
+#if (CONFIG_CSI) && (!CONFIG_CSI_PROC)
             csi_deliver_data_to_user();
 #endif
 #if (CONFIG_11AZ) || (CONFIG_11MC)
@@ -6353,6 +6353,16 @@ int wifi_handle_fw_event(struct bus_message *msg)
             {
                 memcpy(wls_data, (t_u8 *)msg->data, WLS_CSI_DATA_LEN);
                 wifi_event_completion(WIFI_EVENT_WLS_CSI, WIFI_EVENT_REASON_SUCCESS, wls_data);
+            }
+            else
+            {
+#endif
+#endif
+#if (CONFIG_CSI) && (CONFIG_CSI_PROC)
+                wifi_event_completion(WIFI_EVENT_CSI_PROC, WIFI_EVENT_REASON_SUCCESS, NULL);
+#endif
+#if (CONFIG_11AZ) || (CONFIG_11MC)
+#if CONFIG_WLS_CSI_PROC
             }
 #endif
 #endif

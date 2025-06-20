@@ -413,6 +413,15 @@
 #endif
 #endif
 
+#if !defined CONFIG_CSI_PROC
+#define CONFIG_CSI_PROC 0
+#endif
+
+#if CONFIG_CSI_PROC
+#undef CONFIG_CSI
+#define CONFIG_CSI 1
+#endif
+
 #if !defined CONFIG_WIFI_CHANNEL_LOAD
 #if defined(RW610) || defined(IW610) || defined(SD8978) || defined(SD8987) || defined(SD9177)
 #define CONFIG_WIFI_CHANNEL_LOAD 1

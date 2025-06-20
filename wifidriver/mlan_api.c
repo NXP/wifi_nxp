@@ -33,8 +33,8 @@
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
 
-#if (CONFIG_11MC) || (CONFIG_11AZ)
-#if CONFIG_WLS_CSI_PROC
+#if (CONFIG_11MC) || (CONFIG_11AZ) || (CONFIG_CSI)
+#if (CONFIG_WLS_CSI_PROC) || (CONFIG_CSI_PROC)
 #include <wls_param_defines.h>
 #include <wls_api.h>
 #include <wls_structure_defs.h>
@@ -47,8 +47,10 @@ static const char driver_version[]        = "702.1.0";
 
 static unsigned int mgmt_ie_index_bitmap = 0x0000000F;
 
-#if (CONFIG_11MC) || (CONFIG_11AZ)
+#if (CONFIG_11MC) || (CONFIG_11AZ) || (CONFIG_CSI)
+# if (CONFIG_11MC) || (CONFIG_11AZ)
 ftm_start_param ftm_param;
+#endif
 #if CONFIG_WLS_CSI_PROC
 #define NL_MAX_PAYLOAD (3 * 1024)
 unsigned int csi_res_array[8];
@@ -58,9 +60,23 @@ range_kalman_state range_input_str = {0};
 #define RANGE_MEASUREMENT_VAR 4e-2f // in meter^2
 #define RANGE_RATE_INIT       1e-3f // in (meter/s)^2
 #define CSI_TSF_LEN           6 * sizeof(uint32_t)
+#endif
+#if (CONFIG_WLS_CSI_PROC) || CONFIG_CSI_PROC
 #define FFT_INBUFFER_LEN_DW   (MAX_RX * MAX_TX + NUM_PROC_BUF) * (MAX_IFFT_SIZE_CSI)
+#endif
+#if CONFIG_WLS_CSI_PROC
 uint32_t fftInBuffer_t[FFT_INBUFFER_LEN_DW];
 #endif
+#endif
+
+#if (CONFIG_CSI) && (CONFIG_CSI_PROC)
+extern t_u8 csi_local_buff[MAX_CSI_LOCAL_BUF][CSI_LOCAL_BUF_ENTRY_SIZE];
+extern csi_local_buff_statu csi_buff_stat;
+extern wlan_csi_config_params_t g_csi_params_default;
+static int setRef = 0;
+float referenceBuffer[2 * (MAX_RX * MAX_TX) * MAX_IFFT_SIZE_CSI];
+unsigned int fftInBuffer[FFT_INBUFFER_LEN_DW] = {0};
+unsigned int scratchBuffer1[FFT_INBUFFER_LEN_DW] = {0};
 #endif
 
 /* This were static functions in mlan file */
@@ -6225,6 +6241,169 @@ int wifi_csi_cfg(wifi_csi_config_params_t *csi_params)
 
     return wifi_wait_for_cmdresp(NULL);
 }
+
+#if CONFIG_CSI_PROC
+
+static void set_csi_filter(unsigned int *headerBuffer, hal_wls_packet_params_t *packetparams)
+{
+	hal_csirxinfo_t *csirxinfo = (hal_csirxinfo_t*)headerBuffer;
+	hal_pktinfo_t *pktinfo;
+	unsigned int tempVec[2] = {0, 0};
+
+	tempVec[0] = (unsigned int)csirxinfo->pktinfo;
+	pktinfo = (hal_pktinfo_t*)tempVec;
+
+	// set sig format and BW
+	packetparams->ftmSignalBW = pktinfo->sigBw;
+	packetparams->ftmPacketType = pktinfo->packetType;
+	// set MAC address
+	packetparams->peerMacAddress_lo = csirxinfo->addr2_lo;
+	packetparams->peerMacAddress_hi = csirxinfo->addr2_hi;
+
+	PRINTF("CSI filter set MAC: %x.%x.%x.%x.%x.%x, sig BW/format %d|%d\n",
+		csirxinfo->addr2_lo & 0xff, (csirxinfo->addr2_lo >> 8) & 0xff,
+		csirxinfo->addr2_hi & 0xff, (csirxinfo->addr2_hi >> 8) & 0xff,
+		(csirxinfo->addr2_hi >> 16) & 0xff, (csirxinfo->addr2_hi >> 24) & 0xff,
+		pktinfo->sigBw, pktinfo->packetType);
+}
+
+static int check_csi_filter(unsigned int *headerBuffer, hal_wls_packet_params_t *packetparams)
+{
+	hal_csirxinfo_t *csirxinfo = (hal_csirxinfo_t*)headerBuffer;
+	hal_pktinfo_t *pktinfo;
+	unsigned int tempVec[2] = {0, 0};
+
+	tempVec[0] = (unsigned int)csirxinfo->pktinfo;
+	pktinfo = (hal_pktinfo_t*)tempVec;
+
+	// check sig format and BW
+	if ((packetparams->ftmSignalBW != pktinfo->sigBw) || (packetparams->ftmPacketType != pktinfo->packetType))
+    {
+		return -WM_FAIL;
+    }
+
+	// set MAC address
+	if ((packetparams->peerMacAddress_lo != csirxinfo->addr2_lo) || (packetparams->peerMacAddress_hi != csirxinfo->addr2_hi))
+    {
+		return -WM_FAIL;
+    }
+
+	return WM_SUCCESS;
+}
+
+static void proc_csi_event(void)
+{
+    unsigned int *rdPtr;
+    unsigned int *csiBuffer = NULL;
+    unsigned int csi_len;
+	int firstPathDelay;
+	float perturbVal_dB = 0.0f;
+	unsigned int headerBuffer[HEADER_LEN];
+	unsigned int totalpower[MAX_RX * MAX_TX + 1];
+
+    hal_wls_packet_params_t packetparams;
+    hal_wls_processing_input_params_t inputVals;
+
+    OSA_SemaphoreWait((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem, osaWaitForever_c);
+
+    /* Get CSI data from csi_local_buff*/
+    rdPtr = (unsigned int *)((void *)(t_u8 *)csi_local_buff[csi_buff_stat.read_index]);
+
+	(void)memcpy(headerBuffer, rdPtr, HEADER_LEN);
+
+    csi_len = headerBuffer[0] & 0x1fff; // 13 LSBs
+#if !CONFIG_MEM_POOLS
+    csiBuffer = (unsigned int *)OSA_MemoryAllocate(sizeof(unsigned int) * csi_len);
+#else
+    csiBuffer = (unsigned int *)OSA_MemoryPoolAllocate(buf_1024_MemoryPool);
+#endif
+
+    if(!csiBuffer)
+    {
+        wifi_e("%s: Failed to alloc csiBuffer",__func__);
+        OSA_SemaphorePost((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem);
+        return;
+    }
+    (void)memcpy(csiBuffer, rdPtr, csi_len);
+    OSA_SemaphorePost((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem);
+
+    /* deliver CSI data to user */
+    csi_deliver_data_to_user();
+
+    (void)memset(fftInBuffer, 0x00, FFT_INBUFFER_LEN_DW);
+    (void)memset(scratchBuffer1, 0x00, FFT_INBUFFER_LEN_DW);
+    (void)memset(&packetparams, 0x00, sizeof(hal_wls_packet_params_t));
+    (void)memset(&inputVals, 0x00, sizeof(hal_wls_processing_input_params_t));
+
+    packetparams.chNum = g_csi_params_default.channel;
+
+    inputVals.enableCsi		            = 1; // turn on CSI processing
+	inputVals.enableAoA		            = AOA_DEFAULT; // turn on AoA (req. enableCsi==1)
+	inputVals.nTx				        = MAX_TX; // limit # tx streams to process
+	inputVals.nRx				        = MAX_RX; // limit # rx to process
+	inputVals.selCal			        = 0; // choose cal values
+	inputVals.dumpMul			        = 0; // dump extra peaks in AoA
+	inputVals.enableAntCycling          = 0; // enable antenna cycling
+	inputVals.dumpRawAngle 	            = 0;  // Dump Raw Angle
+	inputVals.useToaMin		            = TOA_MIN_DEFAULT; // 1: use min combining, 0: power combining;
+	inputVals.useSubspace		        = SUBSPACE_DEFAULT; // 1: use subspace algo; 0: no;
+	inputVals.useFindAngleDelayPeaks    = ENABLE_DELAY_PEAKS; // use this algorithm for AoA
+
+    wls_unpack_csi(csiBuffer, fftInBuffer, &packetparams, &inputVals, totalpower);
+
+    firstPathDelay = wls_calculate_toa(headerBuffer, fftInBuffer, scratchBuffer1, totalpower,
+		&packetparams, &inputVals);
+
+    if (setRef == 0)
+	{	// initialize
+		setRef = 1;
+		wls_intialize_reference(headerBuffer, fftInBuffer, referenceBuffer);
+
+		set_csi_filter(headerBuffer, &packetparams);
+	}
+    else if (check_csi_filter(headerBuffer, &packetparams) == WM_SUCCESS)
+    {
+        perturbVal_dB = wls_update_cross_corr_pi_calc(headerBuffer, fftInBuffer, referenceBuffer, scratchBuffer1);
+
+        {
+			hal_pktinfo_t *pktinfo = (hal_pktinfo_t*)&(headerBuffer[2]);
+			char myStr[4] = {'V','H','T','\0'};
+			int BW = 20 << pktinfo->sigBw;
+			// record TSF
+			UINT64 TSF = (((UINT64)headerBuffer[4]) << 32) + headerBuffer[3];
+			// calculate ToA in ns
+			float toa_ns = 1.e3f * firstPathDelay / (1 << 16);
+			if (pktinfo->packetType == 0)
+			{
+				myStr[0] = 'l';
+				myStr[1] = 'e';
+				myStr[2] = 'g';
+			}
+			else if ((pktinfo->packetType == 1) || (pktinfo->packetType == 4))
+			{
+				myStr[0] = 'H';
+				myStr[1] = (pktinfo->packetType == 4)? 'E' : 'T';
+				myStr[2] = '\0';
+			}
+			PRINTF("CSI Processing results: %s(%d), %0.2f\tTSF %llx, PI %0.1f \r\n",
+				myStr, BW, toa_ns, TSF, perturbVal_dB);
+		}
+    }
+
+#if !CONFIG_MEM_POOLS
+        OSA_MemoryFree(csiBuffer);
+#else
+        OSA_MemoryPoolFree(buf_1024_MemoryPool, csiBuffer);
+#endif
+}
+
+void wifi_process_csi_data(void)
+{
+    return proc_csi_event();
+}
+
+#endif
+
 #endif
 
 #if CONFIG_WIFI_CHANNEL_LOAD
@@ -6706,7 +6885,7 @@ static int send_csi_ack(unsigned int *resArray)
     return ret;
 }
 
-static void proc_csi_event(void *event, unsigned int *resArray)
+static void proc_csi_event_wls(void *event, unsigned int *resArray)
 {
     uint8_t *csiBuffer = (uint8_t *)(event);
     hal_wls_packet_params_t packetparams;
@@ -6734,7 +6913,7 @@ static void proc_csi_event(void *event, unsigned int *resArray)
     resArray[2] = 0xffffffff;
     resArray[3] = 0xffffffff;
 
-    wls_process_csi((unsigned int *)csiBuffer, (unsigned int *)fftInBuffer_t, &packetparams, &inputVals, resArray);
+    wls_process_csi((unsigned int *)csiBuffer, (unsigned int *)fftInBuffer, &packetparams, &inputVals, resArray);
     // record TSF
     resArray[3] = tsf;
 
@@ -6747,7 +6926,7 @@ int wifi_process_wls_csi_event(void *p_data)
 {
     int ret;
 
-    proc_csi_event(((t_u8 *)p_data + sizeof(csi_event_t)), csi_res_array);
+    proc_csi_event_wls(((t_u8 *)p_data + sizeof(csi_event_t)), csi_res_array);
     // wifi_put_wls_csi_sem(); // After processing CSI raw data, release csi sem for next CSI event.
     ret = send_csi_ack(csi_res_array);
     return ret;
