@@ -312,6 +312,76 @@ int sdio_drv_write_mb(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize)
 }
 #endif
 
+#if CONFIG_TX_RX_ZERO_COPY
+int sdio_drv_read_sg(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, void *sg_list)
+{
+    osa_status_t status;
+    uint32_t flags = 0;
+    uint32_t param;
+
+    status = OSA_MutexLock((osa_mutex_handle_t)sdio_mutex, osaWaitForever_c);
+    if (status != KOSA_StatusSuccess)
+    {
+        sdio_e("failed to get mutex\r\n");
+        return 0;
+    }
+
+    if (bcnt > 1U)
+    {
+        flags |= SDIO_EXTEND_CMD_BLOCK_MODE_MASK;
+        param = bcnt;
+    }
+    else
+    {
+        param = bsize;
+    }
+
+    if (SDIO_IO_Read_Extended_Scatter_Gather(&wm_g_sd, (sdio_func_num_t)fn, addr, sg_list, param, flags) != KOSA_StatusSuccess)
+    {
+        (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
+        return 0;
+    }
+
+    (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
+
+    return 1;
+}
+
+int sdio_drv_write_sg(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, void *sg_list)
+{
+    osa_status_t status;
+    uint32_t flags = 0;
+    uint32_t param;
+
+    status = OSA_MutexLock((osa_mutex_handle_t)sdio_mutex, osaWaitForever_c);
+    if (status != KOSA_StatusSuccess)
+    {
+        sdio_e("failed to get mutex\r\n");
+        return 0;
+    }
+
+    if (bcnt > 1U)
+    {
+        flags |= SDIO_EXTEND_CMD_BLOCK_MODE_MASK;
+        param = bcnt;
+    }
+    else
+    {
+        param = bsize;
+    }
+
+    if (SDIO_IO_Write_Extended_Scatter_Gather(&wm_g_sd, (sdio_func_num_t)fn, addr, sg_list, param, flags) != KOSA_StatusSuccess)
+    {
+        (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
+        return 0;
+    }
+
+    (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
+
+    return 1;
+}
+#endif
+
 static void SDIO_CardInterruptCallBack(void *userData)
 {
     SDMMCHOST_EnableCardInt(wm_g_sd.host, false);

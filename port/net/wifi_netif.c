@@ -414,6 +414,8 @@ static void process_data_packet(const t_u8 *rcvdata,
 {
 #if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
     RxPD *rxpd                   = (RxPD *)(void *)((t_u8 *)p->payload + INTF_HEADER_LEN);
+#elif CONFIG_TX_RX_ZERO_COPY && !defined(RW610)
+    RxPD *rxpd                   = (RxPD *)(void *)((t_u8 *)(((struct pbuf *)rcvdata)->payload) + INTF_HEADER_LEN);
 #else
     RxPD *rxpd                   = (RxPD *)(void *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
 #endif
@@ -512,7 +514,11 @@ static void process_data_packet(const t_u8 *rcvdata,
 #if !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
 #if CONFIG_TX_RX_ZERO_COPY
     payload_len = rxpd->rx_pkt_length + header_len + sizeof(mlan_buffer);
+#ifdef RW610
     p           = gen_pbuf_from_data_for_zerocopy((t_u8 *)rcvdata, payload_len);
+#else
+    p           = (struct pbuf *)(void *)rcvdata;
+#endif
 #else
     p = gen_pbuf_from_data(payload, payload_len);
 #endif

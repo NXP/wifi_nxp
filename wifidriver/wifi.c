@@ -3601,8 +3601,12 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
 void wifi_is_wpa_supplicant_input(const uint8_t interface, const uint8_t *buffer, const uint16_t len)
 {
     mlan_private *priv           = (mlan_private *)mlan_adap->priv[interface];
-    RxPD *prx_pd                 = (RxPD *)(void *)((t_u8 *)buffer + INTF_HEADER_LEN);
     wlan_mgmt_pkt *pmgmt_pkt_hdr = MNULL;
+#if CONFIG_TX_RX_ZERO_COPY && !defined(RW610)
+    RxPD *prx_pd = (RxPD *)(void *)net_stack_buffer_skip((void *)buffer, INTF_HEADER_LEN);
+#else
+    RxPD *prx_pd = (RxPD *)(void *)((t_u8 *)buffer + INTF_HEADER_LEN);
+#endif
 
     /* Check if this is mgmt packet and needs to
      * forwarded to app as an event
@@ -3650,11 +3654,13 @@ static t_u8 rfc1042_eth_hdr[MLAN_MAC_ADDR_LENGTH] = {0xaa, 0xaa, 0x03, 0x00, 0x0
 
 static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, const uint16_t len)
 {
+    int ret = WM_SUCCESS;
+
 #if !UAP_SUPPORT
     if (interface > MLAN_BSS_ROLE_STA)
     {
         wifi_w("wifi_low_level_input receive UAP packet when UAP not supported");
-        return -WM_FAIL;
+        goto fail;
     }
 #endif
     if (mlan_adap->ps_state == PS_STATE_SLEEP)
@@ -3663,15 +3669,19 @@ static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, 
         mlan_adap->ps_state = PS_STATE_AWAKE;
     }
 #if CONFIG_WPA_SUPP
+#if CONFIG_TX_RX_ZERO_COPY && !defined(RW610)
+    RxPD *prx_pd = (RxPD *)(void *)net_stack_buffer_skip((void *)buffer, INTF_HEADER_LEN);
+#else
     RxPD *prx_pd  = (RxPD *)(void *)((t_u8 *)buffer + INTF_HEADER_LEN);
+#endif
     eth_hdr *ethh = MNULL;
     t_u16 eth_proto;
     t_u8 offset = 0;
 
-    if (*((t_u16 *)buffer + RX_PKT_TYPE_OFFSET) == PKT_TYPE_MGMT_FRAME)
+    if (prx_pd->rx_pkt_type == PKT_TYPE_MGMT_FRAME)
     {
         wifi_is_wpa_supplicant_input(interface, buffer, len);
-        return WM_SUCCESS;
+        goto consumed;
     }
 
     ethh = (eth_hdr *)((t_u8 *)prx_pd + prx_pd->rx_pkt_offset);
@@ -3690,13 +3700,13 @@ static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, 
     {
         wifi_wpa_supplicant_eapol_input(interface, ethh->src_addr, (uint8_t *)(ethh + 1) + offset,
                                         prx_pd->rx_pkt_length - sizeof(eth_hdr) - offset);
-        return WM_SUCCESS;
+        goto consumed;
     }
 #endif
     if (wifi_rx_status == WIFI_DATA_BLOCK)
     {
         wifi_rx_block_cnt++;
-        return WM_SUCCESS;
+        goto consumed;
     }
 
     if (wm_wifi.data_input_callback != NULL)
@@ -3705,8 +3715,16 @@ static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, 
         return WM_SUCCESS;
     }
 
-
-    return -WM_FAIL;
+fail:
+    ret = -WM_FAIL;
+consumed:
+#if !defined(RW610)
+    if (buffer != NULL)
+    {
+        net_stack_buffer_free((void *)buffer);
+    }
+#endif
+    return ret;
 }
 
 #define ERR_INPROGRESS -5
@@ -3982,7 +4000,9 @@ static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist
 #if CONFIG_WIFI_GET_LOG
     wifi_iface_tx_stats((uint8_t *)buf, priv->bss_index);
 #endif
+#if !(!defined(RW610) && CONFIG_TX_RX_ZERO_COPY)
     wifi_wmm_buf_put(buf);
+#endif
     priv->wmm.pkts_queued[ac]--;
 
     return MLAN_STATUS_SUCCESS;
@@ -4748,7 +4768,11 @@ int wifi_low_level_output(const t_u8 interface,
 #if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
         sg_tx_init_table();
 #endif
+#if CONFIG_TX_RX_ZERO_COPY && !defined(RW610)
+        i = wlan_xmit_pkt_sg((t_u8 *)sd_buffer, len, interface, tx_control);
+#else
         i = wlan_xmit_pkt((t_u8 *)sd_buffer, len, interface, tx_control);
+#endif
 #if defined(RW610)
         wifi_imu_unlock();
 #else
@@ -4800,7 +4824,7 @@ int wifi_low_level_output(const t_u8 interface,
 
     wifi_tx_card_awake_unlock();
 
-#if !CONFIG_WMM && FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+#if !CONFIG_WMM && (FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER || CONFIG_TX_RX_ZERO_COPY)
     /* Free driver's reference count for network buffer */
     net_stack_buffer_free(((outbuf_t *)sd_buffer)->buffer);
 #endif

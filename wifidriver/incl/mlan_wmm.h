@@ -226,6 +226,8 @@ typedef struct
     t_u8 *payload;
     /* Packet buffer structure pointer */
     void *buffer;
+    /* Flag to Indicate whether Header is in Payload */
+    int is_hdr_in_payload;
 #else
     t_u8 data[WMM_DATA_LEN];
 #endif
