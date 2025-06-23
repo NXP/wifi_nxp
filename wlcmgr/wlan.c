@@ -48,6 +48,10 @@
 #include "wifi_ping.h"
 #endif
 
+#if (CONFIG_CSI) && (CONFIG_CSI_PROC)
+#include "event.h"
+#endif
+
 #if CONFIG_HOST_SLEEP
 #ifdef RW610
 #include  "fsl_power.h"
@@ -177,6 +181,11 @@ static bool p2p_stop_find_active;
 
 #if UAP_SUPPORT
 static bool wlan_uap_scan_chan_list_set;
+#endif
+
+#if (CONFIG_CSI) && (CONFIG_CSI_PROC)
+csi_proc_cfg_t g_csi_proc_cfg;
+static void wlan_init_csi_proc_cfg(void);
 #endif
 
 #if CONFIG_MEF_CFG
@@ -3466,7 +3475,35 @@ static void wlcm_process_csi_data(void)
 {
     wifi_process_csi_data();
 }
-#endif
+
+static void wlan_init_csi_proc_cfg(void)
+{
+    (void)memset(&g_csi_proc_cfg, 0x00, sizeof(csi_proc_cfg_t));
+
+    g_csi_proc_cfg.channel                                      = 0;
+    g_csi_proc_cfg.wls_processing_input.enableCsi		        = 1; // turn on CSI processing
+	g_csi_proc_cfg.wls_processing_input.enableAoA		        = AOA_DEFAULT; // turn on AoA (req. enableCsi==1)
+	g_csi_proc_cfg.wls_processing_input.nTx				        = MAX_TX; // limit # tx streams to process
+	g_csi_proc_cfg.wls_processing_input.nRx				        = MAX_RX; // limit # rx to process
+	g_csi_proc_cfg.wls_processing_input.selCal			        = 0; // choose cal values
+	g_csi_proc_cfg.wls_processing_input.dumpMul			        = 0; // dump extra peaks in AoA
+	g_csi_proc_cfg.wls_processing_input.enableAntCycling        = 0; // enable antenna cycling
+	g_csi_proc_cfg.wls_processing_input.dumpRawAngle 	        = 0;  // Dump Raw Angle
+	g_csi_proc_cfg.wls_processing_input.useToaMin		        = TOA_MIN_DEFAULT; // 1: use min combining, 0: power combining;
+	g_csi_proc_cfg.wls_processing_input.useSubspace		        = SUBSPACE_DEFAULT; // 1: use subspace algo; 0: no;
+	g_csi_proc_cfg.wls_processing_input.useFindAngleDelayPeaks  = ENABLE_DELAY_PEAKS; // use this algorithm for AoA
+
+	g_csi_proc_cfg.gcsi_filter_param.IIR_alpha    = PI_ALPHA_FACTOR;
+	g_csi_proc_cfg.gcsi_filter_param.kalman_p0    = KALMAN_P0;
+	g_csi_proc_cfg.gcsi_filter_param.kalman_alpha = KALMAN_ALPHA;
+	g_csi_proc_cfg.gcsi_filter_param.kalman_N0    = KALMAN_N0;
+
+    g_csi_proc_cfg.csiFilterSet                   = 1;
+
+    return;
+}
+
+#endif /* CONFIG_CSI_PROC */
 
 #endif
 
@@ -7966,6 +8003,10 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
 #ifdef RW610
     supp_set_mbedtls_set_time();
 #endif
+#endif
+
+#if (CONFIG_CSI) && (CONFIG_CSI_PROC)
+    wlan_init_csi_proc_cfg();
 #endif
 
     return ret;

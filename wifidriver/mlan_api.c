@@ -39,6 +39,7 @@
 #include <wls_api.h>
 #include <wls_structure_defs.h>
 #include <range_kalman.h>
+#include <event.h>
 #endif
 #endif
 
@@ -73,10 +74,15 @@ uint32_t fftInBuffer_t[FFT_INBUFFER_LEN_DW];
 extern t_u8 csi_local_buff[MAX_CSI_LOCAL_BUF][CSI_LOCAL_BUF_ENTRY_SIZE];
 extern csi_local_buff_statu csi_buff_stat;
 extern wlan_csi_config_params_t g_csi_params_default;
-static int setRef = 0;
+extern csi_proc_cfg_t g_csi_proc_cfg;
 float referenceBuffer[2 * (MAX_RX * MAX_TX) * MAX_IFFT_SIZE_CSI];
 unsigned int fftInBuffer[FFT_INBUFFER_LEN_DW] = {0};
 unsigned int scratchBuffer1[FFT_INBUFFER_LEN_DW] = {0};
+#define LEG_RATE 0
+#define HT_RATE 1
+#define VHT_RATE 2
+#define HE_RATE 3
+t_u8 convertPktInfo[8] = {LEG_RATE, HT_RATE, HT_RATE, VHT_RATE, HE_RATE, LEG_RATE, LEG_RATE, LEG_RATE};
 #endif
 
 /* This were static functions in mlan file */
@@ -6244,46 +6250,52 @@ int wifi_csi_cfg(wifi_csi_config_params_t *csi_params)
 
 #if CONFIG_CSI_PROC
 
-static void set_csi_filter(unsigned int *headerBuffer, hal_wls_packet_params_t *packetparams)
+static void set_csi_proc_filter(unsigned int *headerBuffer, csi_filter_param_t *csi_filter_param_ptr)
 {
 	hal_csirxinfo_t *csirxinfo = (hal_csirxinfo_t*)headerBuffer;
 	hal_pktinfo_t *pktinfo;
+    t_u16 addr2_lo = csirxinfo->addr2_lo;
+	t_u32 addr2_hi = csirxinfo->addr2_hi;
 	unsigned int tempVec[2] = {0, 0};
 
 	tempVec[0] = (unsigned int)csirxinfo->pktinfo;
 	pktinfo = (hal_pktinfo_t*)tempVec;
 
 	// set sig format and BW
-	packetparams->ftmSignalBW = pktinfo->sigBw;
-	packetparams->ftmPacketType = pktinfo->packetType;
+	csi_filter_param_ptr->packet_bandwidth = pktinfo->sigBw;
+	csi_filter_param_ptr->packet_format = convertPktInfo[pktinfo->packetType];
 	// set MAC address
-	packetparams->peerMacAddress_lo = csirxinfo->addr2_lo;
-	packetparams->peerMacAddress_hi = csirxinfo->addr2_hi;
+	(void)memcpy(&(csi_filter_param_ptr->peer_mac[0]), &addr2_lo, sizeof(t_u16));
+	(void)memcpy(&(csi_filter_param_ptr->peer_mac[2]), &addr2_hi, sizeof(t_u32));
 
-	PRINTF("CSI filter set MAC: %x.%x.%x.%x.%x.%x, sig BW/format %d|%d\n",
-		csirxinfo->addr2_lo & 0xff, (csirxinfo->addr2_lo >> 8) & 0xff,
-		csirxinfo->addr2_hi & 0xff, (csirxinfo->addr2_hi >> 8) & 0xff,
-		(csirxinfo->addr2_hi >> 16) & 0xff, (csirxinfo->addr2_hi >> 24) & 0xff,
-		pktinfo->sigBw, pktinfo->packetType);
+	(void)PRINTF("Compare CSI filter set MAC: %02x.%02x.%02x.%02x.%02x.%02x, sig BW/format %d|%d\n",
+		csi_filter_param_ptr->peer_mac[0], csi_filter_param_ptr->peer_mac[1],
+		csi_filter_param_ptr->peer_mac[2], csi_filter_param_ptr->peer_mac[3],
+		csi_filter_param_ptr->peer_mac[4], csi_filter_param_ptr->peer_mac[5],
+		csi_filter_param_ptr->packet_bandwidth, csi_filter_param_ptr->packet_format);
 }
 
-static int check_csi_filter(unsigned int *headerBuffer, hal_wls_packet_params_t *packetparams)
+static int check_csi_filter(unsigned int *headerBuffer, csi_filter_param_t *csi_filter_param_ptr)
 {
 	hal_csirxinfo_t *csirxinfo = (hal_csirxinfo_t*)headerBuffer;
 	hal_pktinfo_t *pktinfo;
+    t_u16 addr2_lo = csirxinfo->addr2_lo;
+	t_u32 addr2_hi = csirxinfo->addr2_hi;
 	unsigned int tempVec[2] = {0, 0};
 
 	tempVec[0] = (unsigned int)csirxinfo->pktinfo;
 	pktinfo = (hal_pktinfo_t*)tempVec;
 
 	// check sig format and BW
-	if ((packetparams->ftmSignalBW != pktinfo->sigBw) || (packetparams->ftmPacketType != pktinfo->packetType))
+	if ((csi_filter_param_ptr->packet_bandwidth != pktinfo->sigBw)
+		|| (csi_filter_param_ptr->packet_format != convertPktInfo[pktinfo->packetType]))
     {
 		return -WM_FAIL;
     }
 
 	// set MAC address
-	if ((packetparams->peerMacAddress_lo != csirxinfo->addr2_lo) || (packetparams->peerMacAddress_hi != csirxinfo->addr2_hi))
+	if (memcmp(&addr2_lo, &(csi_filter_param_ptr->peer_mac[0]), sizeof(t_u16))
+		|| memcmp(&addr2_hi, &(csi_filter_param_ptr->peer_mac[2]), sizeof(t_u32)))
     {
 		return -WM_FAIL;
     }
@@ -6302,7 +6314,6 @@ static void proc_csi_event(void)
 	unsigned int totalpower[MAX_RX * MAX_TX + 1];
 
     hal_wls_packet_params_t packetparams;
-    hal_wls_processing_input_params_t inputVals;
 
     OSA_SemaphoreWait((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem, osaWaitForever_c);
 
@@ -6333,56 +6344,53 @@ static void proc_csi_event(void)
     (void)memset(fftInBuffer, 0x00, FFT_INBUFFER_LEN_DW);
     (void)memset(scratchBuffer1, 0x00, FFT_INBUFFER_LEN_DW);
     (void)memset(&packetparams, 0x00, sizeof(hal_wls_packet_params_t));
-    (void)memset(&inputVals, 0x00, sizeof(hal_wls_processing_input_params_t));
 
-    packetparams.chNum = g_csi_params_default.channel;
+    //packetparams.chNum = g_csi_params_default.channel;
+    packetparams.chNum = g_csi_proc_cfg.channel;
 
-    inputVals.enableCsi		            = 1; // turn on CSI processing
-	inputVals.enableAoA		            = AOA_DEFAULT; // turn on AoA (req. enableCsi==1)
-	inputVals.nTx				        = MAX_TX; // limit # tx streams to process
-	inputVals.nRx				        = MAX_RX; // limit # rx to process
-	inputVals.selCal			        = 0; // choose cal values
-	inputVals.dumpMul			        = 0; // dump extra peaks in AoA
-	inputVals.enableAntCycling          = 0; // enable antenna cycling
-	inputVals.dumpRawAngle 	            = 0;  // Dump Raw Angle
-	inputVals.useToaMin		            = TOA_MIN_DEFAULT; // 1: use min combining, 0: power combining;
-	inputVals.useSubspace		        = SUBSPACE_DEFAULT; // 1: use subspace algo; 0: no;
-	inputVals.useFindAngleDelayPeaks    = ENABLE_DELAY_PEAKS; // use this algorithm for AoA
-
-    wls_unpack_csi(csiBuffer, fftInBuffer, &packetparams, &inputVals, totalpower);
+    wls_unpack_csi(csiBuffer, fftInBuffer, &packetparams, &g_csi_proc_cfg.wls_processing_input, totalpower);
 
     firstPathDelay = wls_calculate_toa(headerBuffer, fftInBuffer, scratchBuffer1, totalpower,
-		&packetparams, &inputVals);
+		&packetparams, &g_csi_proc_cfg.wls_processing_input);
 
-    if (setRef == 0)
-	{	// initialize
-		setRef = 1;
-		wls_intialize_reference(headerBuffer, fftInBuffer, referenceBuffer);
+    if (g_csi_proc_cfg.csiFilterSet < 2)
+	{
+        // initialize
+        if(g_csi_proc_cfg.csiFilterSet == 0)
+        {
+            set_csi_proc_filter(headerBuffer, &g_csi_proc_cfg.gcsi_filter_param);
+        }
 
-		set_csi_filter(headerBuffer, &packetparams);
+        if(check_csi_filter(headerBuffer, &g_csi_proc_cfg.gcsi_filter_param))
+        {
+            wls_intialize_reference(headerBuffer, &g_csi_proc_cfg.gcsi_filter_param, fftInBuffer, referenceBuffer);
+            g_csi_proc_cfg.csiFilterSet = 2;
+        }
 	}
-    else if (check_csi_filter(headerBuffer, &packetparams) == WM_SUCCESS)
+    else if (check_csi_filter(headerBuffer, &g_csi_proc_cfg.gcsi_filter_param) == WM_SUCCESS)
     {
-        perturbVal_dB = wls_update_cross_corr_pi_calc(headerBuffer, fftInBuffer, referenceBuffer, scratchBuffer1);
+        perturbVal_dB = wls_update_cross_corr_pi_calc(headerBuffer, &g_csi_proc_cfg.gcsi_filter_param,
+            fftInBuffer, referenceBuffer, scratchBuffer1);
 
         {
 			hal_pktinfo_t *pktinfo = (hal_pktinfo_t*)&(headerBuffer[2]);
 			char myStr[4] = {'V','H','T','\0'};
 			int BW = 20 << pktinfo->sigBw;
+            t_u8 packet_format = convertPktInfo[pktinfo->packetType];
 			// record TSF
 			UINT64 TSF = (((UINT64)headerBuffer[4]) << 32) + headerBuffer[3];
 			// calculate ToA in ns
 			float toa_ns = 1.e3f * firstPathDelay / (1 << 16);
-			if (pktinfo->packetType == 0)
+			if (pktinfo->packetType == LEG_RATE)
 			{
 				myStr[0] = 'l';
 				myStr[1] = 'e';
 				myStr[2] = 'g';
 			}
-			else if ((pktinfo->packetType == 1) || (pktinfo->packetType == 4))
+			else if ((pktinfo->packetType == HT_RATE) || (pktinfo->packetType == HE_RATE))
 			{
 				myStr[0] = 'H';
-				myStr[1] = (pktinfo->packetType == 4)? 'E' : 'T';
+				myStr[1] = (pktinfo->packetType == HE_RATE)? 'E' : 'T';
 				myStr[2] = '\0';
 			}
 			PRINTF("CSI Processing results: %s(%d), %0.2f\tTSF %llx, PI %0.1f \r\n",
