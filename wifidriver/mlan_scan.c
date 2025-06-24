@@ -967,6 +967,14 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
 
     LEAVE();
 
+    /* Do sleep confirm handshake if sleep event is received while preparing
+     * to send scan cmd for the last channel or in case scan cmd was already sent
+     * for the last channel */
+    if (mlan_adap->ps_state == PS_STATE_PRE_SLEEP && (split_scan_in_progress == false))
+    {
+        send_sleep_confirm_command((mlan_bss_type)WLAN_BSS_TYPE_STA);
+    }
+
     if (ret != MLAN_STATUS_SUCCESS)
     {
         return MLAN_STATUS_FAILURE;
