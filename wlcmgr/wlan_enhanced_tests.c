@@ -1570,7 +1570,7 @@ const static test_cfg_param_t g_11ax_cfg_param[] = {
     {"he_mac_cap_info", 6, 6, NULL},
     {"he_phy_cap_info", 12, 11, NULL},
     {"he_mcs_nss_support", 23, 4, NULL},
-    {"pe", 27, 2, NULL},
+    {"pe", 27, 4, NULL},
 };
 
 #if CONFIG_11AX_TWT
@@ -1786,7 +1786,7 @@ static void wlan_init_g_test_cfg_arrays()
  *  param_num:     number of cfg param list
  */
 static test_cfg_table_t g_test_cfg_table_list[] = { /*  name         data           total_len    param_list param_num*/
-                                                    {"11axcfg", g_11ax_cfg, 29, g_11ax_cfg_param, 8},
+                                                    {"11axcfg", g_11ax_cfg, 31, g_11ax_cfg_param, 8},
 #if CONFIG_11AX_TWT
                                                     {"twt_setup", g_twt_setup_cfg, 15, g_twt_setup_cfg_param, 12},
                                                     {"twt_teardown", g_twt_teardown_cfg, 3, g_twt_teardown_cfg_param,
