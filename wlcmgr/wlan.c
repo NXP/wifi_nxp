@@ -9592,7 +9592,7 @@ int wlan_add_network(struct wlan_network *network)
 #endif
             if (network->security.type != WLAN_SECURITY_NONE)
         {
-                if ((network->security.pairwise_cipher != WLAN_CIPHER_CCMP) && (network->security.pairwise_cipher != WLAN_CIPHER_TKIP))
+                if (!(network->security.pairwise_cipher & WLAN_CIPHER_CCMP) && !(network->security.pairwise_cipher & WLAN_CIPHER_TKIP))
                 {
                     wlcm_e("Pairwise cipher configuration not allowed");
                     goto INVAL;
