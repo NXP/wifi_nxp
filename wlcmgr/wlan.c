@@ -9811,7 +9811,7 @@ int wlan_add_network(struct wlan_network *network)
                 }
                 /* Specify Client certificate2 */
                 network->security.client_cert2_len =
-                    wlan_get_entp_cert_files(FILE_TYPE_ENTP_CLIENT_CERT, &network->security.client_cert2_data);
+                    wlan_get_entp_cert_files(FILE_TYPE_ENTP_CLIENT_CERT2, &network->security.client_cert2_data);
                 if (network->security.client_cert2_len == 0)
                 {
                     wlan_free_entp_cert_files();
@@ -9826,7 +9826,7 @@ int wlan_add_network(struct wlan_network *network)
                 }
                 /* Specify Client key2 */
                 network->security.client_key2_len =
-                    wlan_get_entp_cert_files(FILE_TYPE_ENTP_CLIENT_KEY, &network->security.client_key2_data);
+                    wlan_get_entp_cert_files(FILE_TYPE_ENTP_CLIENT_KEY2, &network->security.client_key2_data);
                 if (network->security.client_key_len == 0)
                 {
                     wlan_free_entp_cert_files();
@@ -15641,6 +15641,7 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
         }
 #endif
         wlan.ca_cert_data = NULL;
+        wlan.ca_cert_len = 0;
     }
     else if (cert_type == FILE_TYPE_ENTP_CLIENT_CERT)
     {
@@ -15654,6 +15655,7 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
         }
 #endif
         wlan.client_cert_data = NULL;
+        wlan.client_cert_len = 0;
     }
     else if (cert_type == FILE_TYPE_ENTP_CLIENT_KEY)
     {
@@ -15667,6 +15669,7 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
         }
 #endif
         wlan.client_key_data = NULL;
+        wlan.client_key_len = 0;
     }
     if (cert_type == FILE_TYPE_ENTP_CA_CERT2)
     {
@@ -15680,6 +15683,7 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
         }
 #endif
         wlan.ca_cert2_data = NULL;
+        wlan.ca_cert2_len = 0;
     }
     else if (cert_type == FILE_TYPE_ENTP_CLIENT_CERT2)
     {
@@ -15693,6 +15697,7 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
         }
 #endif
         wlan.client_cert2_data = NULL;
+        wlan.client_cert2_len = 0;
     }
     else if (cert_type == FILE_TYPE_ENTP_CLIENT_KEY2)
     {
@@ -15706,6 +15711,7 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
         }
 #endif
         wlan.client_key2_data = NULL;
+        wlan.client_key2_len = 0;
     }
 #if CONFIG_HOSTAPD
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
@@ -15721,6 +15727,7 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
         }
 #endif
         wlan.dh_data = NULL;
+        wlan.dh_len = 0;
     }
 #endif
 #endif
@@ -15738,6 +15745,7 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
         }
 #endif
         wlan.server_cert_data = NULL;
+        wlan.server_cert_len = 0;
     }
     else if (cert_type == FILE_TYPE_ENTP_SERVER_KEY)
     {
@@ -15751,6 +15759,7 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
         }
 #endif
         wlan.server_key_data = NULL;
+        wlan.server_key_len = 0;
     }
 #endif
 #endif
