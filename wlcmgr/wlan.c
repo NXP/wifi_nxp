@@ -87,8 +87,11 @@
 
 #if (CONFIG_WPA2_ENTP) || ((CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) && !(CONFIG_WIFI_USB_FILE_ACCESS))
 #include "ca-cert.h"
+#include "ca-cert2.h"
 #include "client-cert.h"
+#include "client-cert2.h"
 #include "client-key.h"
+#include "client-key2.h"
 #include "dh-param.h"
 #if CONFIG_HOSTAPD
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
@@ -15678,8 +15681,8 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
 #if !CONFIG_WIFI_USB_FILE_ACCESS
         if (!wlan.ca_cert2_data)
         {
-            *data = (t_u8 *)ca_der;
-            len   = ca_der_len;
+            *data = (t_u8 *)ca2_der;
+            len   = ca2_der_len;
         }
 #endif
         wlan.ca_cert2_data = NULL;
@@ -15692,8 +15695,8 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
 #if !CONFIG_WIFI_USB_FILE_ACCESS
         if (!wlan.client_cert2_data)
         {
-            *data = (t_u8 *)client_der;
-            len   = client_der_len;
+            *data = (t_u8 *)client2_der;
+            len   = client2_der_len;
         }
 #endif
         wlan.client_cert2_data = NULL;
@@ -15706,8 +15709,8 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
 #if !CONFIG_WIFI_USB_FILE_ACCESS
         if (!wlan.client_key2_data)
         {
-            *data = (t_u8 *)client_key_der;
-            len   = client_key_der_len;
+            *data = (t_u8 *)client_key2_der;
+            len   = client_key2_der_len;
         }
 #endif
         wlan.client_key2_data = NULL;

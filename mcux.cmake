@@ -454,9 +454,15 @@ if (CONFIG_MCUX_COMPONENT_middleware.wifi.wifidriver)
                 # TODO please change to relative dir
                 certs/ca-cert.h
                 # TODO please change to relative dir
+                certs/ca-cert2.h
+                # TODO please change to relative dir
                 certs/client-cert.h
                 # TODO please change to relative dir
+                certs/client-cert2.h
+                # TODO please change to relative dir
                 certs/client-key.h
+                # TODO please change to relative dir
+                certs/client-key2.h
                 # TODO please change to relative dir
                 certs/server-cert.h
                 # TODO please change to relative dir
