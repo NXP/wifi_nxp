@@ -1023,13 +1023,12 @@
 #endif
 
 /** If define CONFIG_TX_RX_ZERO_COPY 1, please make sure
- *  #define PBUF_POOL_BUFSIZE 1752
+ *  #define PBUF_POOL_BUFSIZE 1752 for RW610
+ #  #define PBUF_POOL_BUFSIZE 2048 for SDIO interfaces
  *  in lwipopts.h
  */
 #if !defined CONFIG_TX_RX_ZERO_COPY
-#if defined(RW610) || defined(IW610)
 #define CONFIG_TX_RX_ZERO_COPY 0
-#endif
 #endif
 
 #if !defined CONFIG_WIFI_CLOCKSYNC

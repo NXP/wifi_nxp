@@ -217,7 +217,7 @@ typedef struct
     mlan_linked_list entry;
     t_u8 intf_header[INTF_HEADER_LEN];
     TxPD tx_pd;
-#if CONFIG_TX_RX_ZERO_COPY || FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+#if CONFIG_TX_RX_ZERO_COPY
     t_u8 eth_header[ETH_HDR_LEN];
 #if CONFIG_AMSDU_IN_AMPDU
     t_u8 llc_header[LLC_SNAP_LEN];

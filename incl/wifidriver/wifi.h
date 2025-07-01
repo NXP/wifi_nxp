@@ -271,21 +271,6 @@ int wifi_register_data_input_callback(void (*data_input_callback)(const uint8_t 
 /** Deregister Data callback function from Wi-Fi Driver */
 void wifi_deregister_data_input_callback(void);
 
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-
-int wifi_register_get_rxbuf_desc_callback(void *(*wifi_get_rxbuf_desc)(t_u16 rx_len));
-
-void wifi_deregister_get_rxbuf_desc_callback(void);
-
-int wifi_register_flush_rxbuf_desc_callback(void (*wifi_flush_rxbuf_desc)());
-
-void wifi_deregister_flush_rxbuf_desc_callback(void);
-
-int wifi_register_rxpbuf_reset_callback(void (*nxp_wifi_rxpbuf_reset)());
-
-void wifi_deregister_rxpbuf_reset_callback(void);
-#endif
-
 /**
  * Register Data callback function with Wi-Fi Driver to receive
  * processed AMSDU DATA from Wi-Fi driver.

@@ -92,11 +92,6 @@ err_t lwip_netif_uap_init(struct netif *netif);
 err_t lwip_netif_wfd_init(struct netif *netif);
 #endif
 
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-void *wifi_get_rxbuf_desc(t_u16 rx_len);
-void wifi_flush_rxbuf_desc();
-void nxp_wifi_rxpbuf_reset();
-#endif
 void handle_data_packet(const t_u8 interface, const t_u8 *rcvdata, const t_u16 datalen);
 void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen);
 void handle_deliver_packet_above(t_void *rxpd, t_u8 interface, t_void *lwip_pbuf);
@@ -307,11 +302,6 @@ int net_wlan_init(void)
 #endif
 
 #ifndef RW610
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-        (void)wifi_register_get_rxbuf_desc_callback(&wifi_get_rxbuf_desc);
-        (void)wifi_register_flush_rxbuf_desc_callback(&wifi_flush_rxbuf_desc);
-        (void)wifi_register_rxpbuf_reset_callback(&nxp_wifi_rxpbuf_reset);
-#endif
         (void)wifi_register_data_input_callback(&handle_data_packet);
         (void)wifi_register_amsdu_data_input_callback(&handle_amsdu_data_packet);
         (void)wifi_register_deliver_packet_above_callback(&handle_deliver_packet_above);
@@ -473,10 +463,6 @@ int net_wlan_deinit(void)
         net_e("WFD interface deinit failed");
         return -WM_FAIL;
     }
-#endif
-
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-    nxp_wifi_rxpbuf_reset();
 #endif
 
     status = OSA_TimerDestroy((osa_timer_handle_t)dhcp_timer);

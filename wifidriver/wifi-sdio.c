@@ -35,12 +35,6 @@
 
 #define SDIO_COMMAND_RESPONSE_WAIT_MS 20000
 
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-//SDK_ALIGN(uint8_t rx_bufs[SDIO_MP_AGGR_DEF_PKT_LIMIT][2 * DATA_BUFFER_SIZE], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
-
-static size_t num_sg = 0;
-#endif
-
 /* Buffer pointers to point to command and, command response buffer */
 static uint8_t ctrl_cmd_buf[WIFI_FW_CMDBUF_SIZE];
 
@@ -74,12 +68,6 @@ static t_u32 last_cmd_sent, fw_init_cfg;
 OSA_MUTEX_HANDLE_DEFINE(txrx_mutex);
 
 OSA_SEMAPHORE_HANDLE_DEFINE(sdio_command_resp_sem);
-
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-void net_tx_sg_zerocopy_process_cb(void *srcAddr, uint32_t len);
-t_u8 * net_tx_sg_zerocopy_process_header(void *Addr);
-void net_tx_sg_zerocopy_process_set_buf(void *Addr, uint32_t len);
-#endif
 
 static struct
 {
@@ -751,13 +739,8 @@ mlan_status wlan_xmit_pkt_sg(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx
 
 static mlan_status wifi_send_fw_data(t_u8 *data, t_u32 txlen)
 {
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-    t_u32 blksize = MLAN_SDIO_BLOCK_SIZE;
-#endif
     t_u32 tx_blocks = 0, buflen = 0;
-#if !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
     uint32_t resp;
-#endif
     bool ret;
 #if CONFIG_WIFI_FW_DEBUG
     int ret_cb;
@@ -802,12 +785,7 @@ static mlan_status wifi_send_fw_data(t_u8 *data, t_u32 txlen)
         mlan_adap->mp_wr_bitmap &= ~(1U << txportno);
     }
 
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-    ret = sdio_drv_write_mb(mlan_adap->ioport + txportno, 1, tx_blocks, blksize);
-#else
-    /* send CMD53 */
     ret = sdio_drv_write(mlan_adap->ioport + txportno, 1, tx_blocks, buflen, data, &resp);
-#endif
 
     txportno++;
     if (txportno == mlan_adap->mp_end_port)
@@ -1414,21 +1392,7 @@ static t_u8 *wlan_read_rcv_packet(t_u32 port, t_u32 rxlen, t_u32 rx_blocks, t_u3
     while (true)
     {
         /* addr = 0 fn = 1 */
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-        if ((aggr == false) && (port & (CMD_PORT_SLCT | MLAN_SDIO_BYTE_MODE_MASK)))
-        {
-            ret = sdio_drv_read(port, 1, rx_blocks, blksize, inbuf, &resp);
-        }
-        else
-        {
-            ret = sdio_drv_read_mb(port, 1, rx_blocks, blksize);
-            *type = MLAN_TYPE_DATA;
-        }
-#else
-        {
-            ret = sdio_drv_read(port, 1, rx_blocks, blksize, inbuf, &resp);
-        }
-#endif
+        ret = sdio_drv_read(port, 1, rx_blocks, blksize, inbuf, &resp);
         if (aggr && !ret)
         {
             PRINTF("sdio mp cmd53 read failed: %d ioport=0x%x retry=%d\r\n", ret, port, i);
@@ -1495,24 +1459,16 @@ static t_u8 *wlan_read_rcv_packet(t_u32 port, t_u32 rxlen, t_u32 rx_blocks, t_u3
     }
 #endif
 
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || defined(IW610)
-    if ((aggr == false) && (port & (CMD_PORT_SLCT | MLAN_SDIO_BYTE_MODE_MASK)))
-#endif
-#endif
-    {
-        SDIOPkt *insdiopkt = (SDIOPkt *)(void *)inbuf;
-        *type              = insdiopkt->pkttype;
+    SDIOPkt *insdiopkt = (SDIOPkt *)(void *)inbuf;
+    *type              = insdiopkt->pkttype;
 
 #if CONFIG_WIFI_IO_DUMP
-        if (insdiopkt->pkttype != 0)
-        {
-            (void)PRINTF("wlan_read_rcv_packet: DUMP: %d", insdiopkt->pkttype);
-            dump_hex((t_u8 *)inbuf, rx_blocks * blksize);
-        }
-#endif
-/* CONFIG_WIFI_IO_DUMP */
+    if (insdiopkt->pkttype != 0)
+    {
+        (void)PRINTF("wlan_read_rcv_packet: DUMP: %d", insdiopkt->pkttype);
+        dump_hex((t_u8 *)inbuf, rx_blocks * blksize);
     }
+#endif /* CONFIG_WIFI_IO_DUMP */
 
     return inbuf;
 }
@@ -2370,13 +2326,8 @@ mlan_status wlan_get_wr_port_data(t_u8 *pport)
 static mlan_status wifi_tx_data(t_u8 start_port, t_u8 ports, t_u8 pkt_cnt, t_u32 txlen)
 {
     t_u32 cmd53_port;
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-    t_u32 blksize = MLAN_SDIO_BLOCK_SIZE;
-#endif
     t_u32 tx_blocks = 0, buflen = 0;
-#if !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
     uint32_t resp;
-#endif
     bool ret;
 #if CONFIG_WIFI_FW_DEBUG
     int ret_cb;
@@ -2411,13 +2362,8 @@ static mlan_status wifi_tx_data(t_u8 start_port, t_u8 ports, t_u8 pkt_cnt, t_u32
 
     //(void)PRINTF("cmd53_port=%x, ports=%x, start_port=%x, pkt_cnt=%d, txlen=%d, txblocks=%d\r\n", cmd53_port, ports, start_port, pkt_cnt, txlen, tx_blocks);
 
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-    ret = sdio_drv_write_mb(cmd53_port, 1, tx_blocks, blksize);
-#else
     /* send CMD53 */
     ret = sdio_drv_write(cmd53_port, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-#endif
-
     if (ret == false)
     {
         wifi_io_e("sdio_drv_write failed (%d)", ret);
@@ -2593,7 +2539,7 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
     if (mlan_adap->priv[interface]->adapter->pps_uapsd_mode &&
         wifi_check_last_packet_indication(mlan_adap->priv[interface]))
     {
-#if CONFIG_TX_RX_ZERO_COPY || FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+#if CONFIG_TX_RX_ZERO_COPY
         process_pkt_hdrs_flags(&((outbuf_t *)tx_buf)->intf_header[0], MRVDRV_TxPD_POWER_MGMT_LAST_PACKET);
 #else
         process_pkt_hdrs_flags((t_u8 *)tx_buf, MRVDRV_TxPD_POWER_MGMT_LAST_PACKET);
@@ -2609,8 +2555,6 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
 
 #if CONFIG_TX_RX_ZERO_COPY
     net_tx_zerocopy_process_cb(outbuf + buf_block_len, tx_buf, txlen);
-#elif FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-    net_tx_sg_zerocopy_process_cb(tx_buf, tx_blocks * buflen);
 #else
     memcpy(outbuf + buf_block_len, tx_buf, txlen);
 #endif
@@ -2800,27 +2744,9 @@ mlan_status wlan_flush_wmm_pkt(t_u8 pkt_count)
 
 mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx_control)
 {
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-    t_u32 tx_blocks = 0, buflen = 0;
-//    t_u8 *payload = NULL;
-#endif
-
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
 
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-    process_pkt_hdrs((void *)(buffer + sizeof(mlan_linked_list)), txlen, interface, 0, tx_control);
-
-    calculate_sdio_write_params(txlen, &tx_blocks, &buflen);
-
-    net_tx_sg_zerocopy_process_cb((void *)buffer, tx_blocks * buflen);
-//    payload = net_tx_sg_zerocopy_process_header((outbuf_t *)buffer);
-
-//    process_pkt_hdrs((t_u8 *)payload, txlen, interface, 0, tx_control);
-
-//    net_tx_sg_zerocopy_process_set_buf((outbuf_t *)buffer, tx_blocks * buflen);
-#else
     process_pkt_hdrs((t_u8 *)buffer, txlen, interface, 0, tx_control);
-#endif
 
     return wifi_send_fw_data(buffer, txlen);
 }
@@ -2966,9 +2892,6 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
 #if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || defined(IW610)
     t_u32 port_count = 0;
 #endif
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-    uint32_t *rxdataAddr = NULL;
-#endif
 
     *pport    = -1;
     *rxlen    = 0;
@@ -3045,18 +2968,7 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
             rx_len |= (t_u16)pmadapter->mp_regs[len_reg_l];
             rx_blocks = (rx_len + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
             rx_len    = (t_u16)(rx_blocks * MLAN_SDIO_BLOCK_SIZE);
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-            if (wm_wifi.wifi_get_rxbuf_desc != NULL)
-            {
-                rxdataAddr = (uint32_t *)wm_wifi.wifi_get_rxbuf_desc(rx_len);
-
-                if (rxdataAddr == NULL)
-                {
-                    PRINTF("No pbuf\r\n");
-                    break;
-                }
-            }
-#elif CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY
             if (inbuf_2_sg_data(rx_len) != WM_SUCCESS)
             {
                 if (pkt_cnt == 0)
@@ -3098,13 +3010,6 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
             else
             {
                 ports |= (1 << (pkt_cnt + 1));
-            }
-#endif
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-            if (rxdataAddr)
-            {
-                sg_rx_set_buf(rxdataAddr, rx_len);
-                num_sg++;
             }
 #endif
 
@@ -3372,18 +3277,12 @@ static void handle_sdio_packet_read(mlan_adapter *pmadapter)
     while (true)
     {
         t_u32 pkt_type = 0;
-//#if !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
         t_u8 interface;
         t_u32 rx_blocks;
         t_u32 total_size = 0;
         t_u32 size       = 0;
-//#endif
         t_u8 *packet     = NULL;
 
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-        num_sg = 0;
-        sg_rx_init_table();
-#endif
 #if CONFIG_TX_RX_ZERO_COPY
         if (wifi_rx_status == WIFI_DATA_BLOCK)
         {
@@ -3425,24 +3324,6 @@ static void handle_sdio_packet_read(mlan_adapter *pmadapter)
                 }
 
                 sg_data_rx_process();
-            }
-            else
-#elif FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-            if (num_sg > 0)
-            {
-                if (wifi_rx_status == WIFI_DATA_BLOCK)
-                {
-                    wifi_rx_block_cnt++;
-                    return;
-                }
-
-                if (mlan_adap->ps_state == PS_STATE_SLEEP)
-                {
-                    OSA_RWLockWriteUnlock(&sleep_rwlock);
-                    mlan_adap->ps_state = PS_STATE_AWAKE;
-                }
-
-                wm_wifi.data_input_callback(0, NULL, 0);
             }
             else
 #endif

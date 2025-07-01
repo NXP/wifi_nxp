@@ -56,7 +56,7 @@ static mlan_status wlan_11n_dispatch_amsdu_pkt(mlan_private *priv, pmlan_buffer 
 #if defined(SDK_OS_FREE_RTOS)
         net_stack_buffer_copy_partial(pmbuf->lwip_pbuf, amsdu_inbuf + pmbuf->data_offset, prx_pd->rx_pkt_length, 0);
 #endif
-#if !CONFIG_TX_RX_ZERO_COPY && !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+#if !CONFIG_TX_RX_ZERO_COPY
 #if !CONFIG_MEM_POOLS
         OSA_MemoryFree(pmbuf->pbuf);
         net_stack_buffer_free(pmbuf->lwip_pbuf);
@@ -68,18 +68,16 @@ static mlan_status wlan_11n_dispatch_amsdu_pkt(mlan_private *priv, pmlan_buffer 
 
         (void)wlan_11n_deaggregate_pkt(priv, pmbuf);
 
-#if CONFIG_TX_RX_ZERO_COPY || FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+#if CONFIG_TX_RX_ZERO_COPY
         /* Free the net stack buffer after deaggregation and delivered to stack */
 #if defined(SDK_OS_FREE_RTOS)
         net_stack_buffer_free(pmbuf->lwip_pbuf);
 #endif
 #else
-#if !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
 #if !CONFIG_MEM_POOLS
         OSA_MemoryFree(pmbuf);
 #else
         OSA_MemoryPoolFree(buf_128_MemoryPool, pmbuf);
-#endif
 #endif
 #endif
         LEAVE();
@@ -247,7 +245,7 @@ static mlan_status wlan_11n_free_rxreorder_pkt(t_void *priv, RxReorderTbl *rx_re
 #if defined(SDK_OS_FREE_RTOS)
             net_stack_buffer_free(((pmlan_buffer)rx_tmp_ptr)->lwip_pbuf);
 #endif
-#if !CONFIG_TX_RX_ZERO_COPY && !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+#if !CONFIG_TX_RX_ZERO_COPY
 #if !CONFIG_MEM_POOLS
             OSA_MemoryFree(((pmlan_buffer)rx_tmp_ptr)->pbuf);
             OSA_MemoryFree(rx_tmp_ptr);
@@ -931,7 +929,7 @@ t_u8 wlan_is_rsn_replay_attack(mlan_private *pmpriv, t_void *payload, RxReorderT
                prx_pd->seq_num, rx_reor_tbl_ptr->hi_curr_rx_count32, rx_reor_tbl_ptr->lo_curr_rx_count16,
                prx_pd->hi_rx_count32, prx_pd->lo_rx_count16);
         net_stack_buffer_free(((pmlan_buffer)payload)->lwip_pbuf);
-#if !CONFIG_TX_RX_ZERO_COPY && !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+#if !CONFIG_TX_RX_ZERO_COPY
 #if !CONFIG_MEM_POOLS
         OSA_MemoryFree(((pmlan_buffer)payload)->pbuf);
         OSA_MemoryFree(payload);

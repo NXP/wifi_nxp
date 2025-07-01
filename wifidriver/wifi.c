@@ -2852,59 +2852,6 @@ t_u8 wifi_uap_ampdu_rx_enable_per_tid_is_allowed(t_u8 tid)
 }
 #endif /* CONFIG_STA_AMPDU_RX */
 
-#if ((FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER) && FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER > 0U)
-int wifi_register_get_rxbuf_desc_callback(void *(*wifi_get_rxbuf_desc)(t_u16 rx_len))
-{
-    if (wm_wifi.wifi_get_rxbuf_desc != NULL)
-    {
-        return -WM_FAIL;
-    }
-
-    wm_wifi.wifi_get_rxbuf_desc = wifi_get_rxbuf_desc;
-
-    return WM_SUCCESS;
-}
-
-void wifi_deregister_get_rxbuf_desc_callback(void)
-{
-    wm_wifi.wifi_get_rxbuf_desc = NULL;
-}
-
-int wifi_register_flush_rxbuf_desc_callback(void (*wifi_flush_rxbuf_desc)())
-{
-    if (wm_wifi.wifi_flush_rxbuf_desc != NULL)
-    {
-        return -WM_FAIL;
-    }
-
-    wm_wifi.wifi_flush_rxbuf_desc = wifi_flush_rxbuf_desc;
-
-    return WM_SUCCESS;
-}
-
-void wifi_deregister_flush_rxbuf_desc_callback(void)
-{
-    wm_wifi.wifi_flush_rxbuf_desc = NULL;
-}
-
-int wifi_register_rxpbuf_reset_callback(void (*nxp_wifi_rxpbuf_reset)())
-{
-    if (wm_wifi.nxp_wifi_rxpbuf_reset != NULL)
-    {
-        return -WM_FAIL;
-    }
-
-    wm_wifi.nxp_wifi_rxpbuf_reset = nxp_wifi_rxpbuf_reset;
-
-    return WM_SUCCESS;
-}
-
-void wifi_deregister_rxpbuf_reset_callback(void)
-{
-    wm_wifi.nxp_wifi_rxpbuf_reset = NULL;
-}
-#endif
-
 int wifi_register_data_input_callback(void (*data_input_callback)(const uint8_t interface,
                                                                   const uint8_t *buffer,
                                                                   const uint16_t len))
@@ -3976,7 +3923,7 @@ static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist
 
     /* TODO: this may go wrong for TxPD->tx_pkt_type 0xe5 */
     /* this will get card port lock and probably sleep */
-#if CONFIG_TX_RX_ZERO_COPY || FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+#if CONFIG_TX_RX_ZERO_COPY
     ret = wlan_xmit_wmm_pkt(priv->bss_index, buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN, (t_u8 *)buf);
 #else
     ret = wlan_xmit_wmm_pkt(priv->bss_index, buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN,
@@ -4067,9 +4014,6 @@ static int wifi_xmit_wmm_ac_pkts_enh(mlan_private *priv)
 #if CONFIG_WIFI_TP_STAT
     g_wifi_xmit_schedule_end = OSA_GetTimestamp();
 #endif
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-    sg_tx_init_table();
-#endif
 
     for (ac = WMM_AC_VO; ac >= 0; ac--)
     {
@@ -4122,12 +4066,6 @@ t_void wlan_process_bypass_txq(t_u8 interface)
         priv->bypass_txq_cnt--;
         wlan_put_bypass_lock(interface);
 
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-        t_u32 tx_blocks = 0, buflen = 0;
-        calculate_sdio_write_params(buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN, &tx_blocks, &buflen);
-        sg_tx_init_table();
-        sg_tx_set_buf((uint32_t *)&buf->intf_header[0], tx_blocks * buflen);
-#endif
         status = wlan_xmit_bypass_pkt((t_u8 *)&buf->intf_header[0],
                                       buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN, interface);
         if (status != MLAN_STATUS_SUCCESS)
@@ -4594,8 +4532,6 @@ int wifi_low_level_output(const t_u8 interface,
     int ret;
 #if CONFIG_TX_RX_ZERO_COPY
     const t_u8 *buffer = ((outbuf_t *)sd_buffer)->eth_header;
-#elif FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-    const t_u8 *buffer = (t_u8 *)((outbuf_t *)sd_buffer)->payload;
 #else
     const t_u8 *buffer = sd_buffer +
 #if CONFIG_WMM
@@ -4765,9 +4701,6 @@ int wifi_low_level_output(const t_u8 interface,
 
     while (true)
     {
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-        sg_tx_init_table();
-#endif
 #if CONFIG_TX_RX_ZERO_COPY && !defined(RW610)
         i = wlan_xmit_pkt_sg((t_u8 *)sd_buffer, len, interface, tx_control);
 #else
@@ -4784,10 +4717,6 @@ int wifi_low_level_output(const t_u8 interface,
         }
         else
         {
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-            ret = -WM_E_BUSY;
-            goto exit_fn;
-#endif
             if (i == MLAN_STATUS_FAILURE)
             {
                 ret = -WM_E_NOMEM;
@@ -4824,7 +4753,7 @@ int wifi_low_level_output(const t_u8 interface,
 
     wifi_tx_card_awake_unlock();
 
-#if !CONFIG_WMM && (FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER || CONFIG_TX_RX_ZERO_COPY)
+#if !CONFIG_WMM && CONFIG_TX_RX_ZERO_COPY
     /* Free driver's reference count for network buffer */
     net_stack_buffer_free(((outbuf_t *)sd_buffer)->buffer);
 #endif
