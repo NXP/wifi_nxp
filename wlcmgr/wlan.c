@@ -1157,6 +1157,7 @@ static void temperature_mon_cb(osa_timer_arg_t arg)
     }
 }
 
+#if CONFIG_POWER_MANAGER
 static void start_temperature_mon_timer(void)
 {
     /* Check fw status and write temperature to firmware after waking up */
@@ -1174,6 +1175,7 @@ static void stop_temperature_mon_timer(void)
         (void)OSA_TimerDeactivate((osa_timer_handle_t)temperature_mon_timer);
     }
 }
+#endif
 #endif
 
 #if CONFIG_HOST_SLEEP
@@ -5099,7 +5101,6 @@ static void wlcm_process_net_ipv6_config(struct wifi_message *msg,
                                          enum cm_sta_state *next,
                                          struct wlan_network *network)
 {
-    struct netif *sta_netif = net_get_sta_interface();
 #if CONFIG_WPA_SUPP_P2P
     struct netif *wfd_netif = net_get_wfd_interface();
     struct netif *net = (struct netif *)msg->data;
@@ -7032,8 +7033,8 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 {
     enum cm_sta_state next       = wlan.sta_state;
     struct wlan_network *network = NULL;
-    struct netif *netif = NULL;
 #if CONFIG_WPA_SUPP
+    struct netif *netif = NULL;
     int ret;
     netif = net_get_sta_interface();
 #endif
