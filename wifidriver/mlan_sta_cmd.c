@@ -115,6 +115,14 @@ static mlan_status wlan_cmd_mfg_tx_frame(pmlan_private pmpriv, HostCmd_DS_COMMAN
         mcmd->tx_bf             = wlan_cpu_to_le32(cfg->tx_bf);
         mcmd->gf_mode           = wlan_cpu_to_le32(cfg->gf_mode);
         mcmd->stbc              = wlan_cpu_to_le32(cfg->stbc);
+        mcmd->signal_bw         = wlan_cpu_to_le32(cfg->signal_bw);
+        mcmd->NumPkt            = wlan_cpu_to_le32(cfg->NumPkt);
+        mcmd->MaxPE             = wlan_cpu_to_le32(cfg->MaxPE);
+        mcmd->BeamChange        = wlan_cpu_to_le32(cfg->BeamChange);
+        mcmd->Dcm               = wlan_cpu_to_le32(cfg->Dcm);
+        mcmd->Doppler           = wlan_cpu_to_le32(cfg->Doppler);
+        mcmd->MidP              = wlan_cpu_to_le32(cfg->MidP);
+        mcmd->QNum              = wlan_cpu_to_le32(cfg->QNum);
         (void)__memcpy(pmpriv->adapter, mcmd->bssid, cfg->bssid, MLAN_MAC_ADDR_LENGTH);
     }
 

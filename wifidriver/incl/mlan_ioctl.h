@@ -3914,7 +3914,23 @@ typedef MLAN_PACK_START struct _mlan_ds_mfg_cmd_tx_frame2
     /** STBC */
     t_u32 stbc;
     /** power id */
-    t_u32 rsvd[2];
+    t_u32 rsvd[1];
+    /**signal bw*/
+    t_u32 signal_bw;
+    /** NumPkt */
+    t_u32 NumPkt;
+    /** MaxPE */
+    t_u32 MaxPE;
+    /** BeamChange */
+    t_u32 BeamChange;
+    /** Dcm */
+    t_u32 Dcm;
+    /** Doppler */
+    t_u32 Doppler;
+    /** MidP */
+    t_u32 MidP;
+    /** QNum */
+    t_u32 QNum;
 } MLAN_PACK_END mlan_ds_mfg_cmd_tx_frame2;
 
 /** Configuration for Manufacturing command Tx Continuous */
