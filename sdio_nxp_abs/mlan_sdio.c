@@ -503,6 +503,11 @@ void sdio_drv_deinit(void)
     }
 }
 
+uint8_t sdio_get_version(void)
+{
+    return wm_g_sd.sdioVersion;
+}
+
 #elif defined(__ZEPHYR__)
 
 #include <mlan_sdio_api.h>

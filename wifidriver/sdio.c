@@ -29,6 +29,7 @@
 #include "fsl_common.h"
 #include "sdio.h"
 #include "firmware_dnld.h"
+#include "mlan_sdio_api.h"
 
 /*
  * Used to authorize the SDIO interrupt handler to accept the incoming
@@ -216,13 +217,15 @@ int sdio_init(void)
 {
     uint32_t resp = 0;
     /* Initialize SDIO driver */
-    int rv = sdio_drv_init(NULL);
-    if (rv != WM_SUCCESS)
+    if (sdio_get_version() == 0)
     {
-        sdio_io_e("SDIO driver init failed.");
-        return -1;
+        int rv = sdio_drv_init(NULL);
+        if (rv != WM_SUCCESS)
+        {
+            sdio_io_e("SDIO driver init failed.");
+            return -1;
+        }
     }
-
 #if 0
 	sdio_drv = sdio_drv_open("MDEV_SDIO");
 	if (!sdio_drv) {

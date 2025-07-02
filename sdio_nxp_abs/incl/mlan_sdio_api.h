@@ -140,4 +140,10 @@ int sdio_drv_init(void (*cd_int)(int));
  */
 void sdio_drv_deinit(void);
 
+/** Get SDIO version
+ *
+ *  \return SDIO version, return value 3 is SDIO 2.0, 4 is SDIO 3.0
+ */
+uint8_t sdio_get_version(void);
+
 #endif /* !_MDEV_SDIO_API_H_ */

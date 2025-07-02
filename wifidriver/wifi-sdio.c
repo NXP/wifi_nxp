@@ -2958,6 +2958,7 @@ static void *intf;
 mlan_status sd_wifi_init(enum wlan_type type, const uint8_t *fw_start_addr, const size_t size)
 {
     mlan_status ret = MLAN_STATUS_SUCCESS;
+    uint32_t resp;
 
     ret = sd_wifi_preinit();
 
@@ -2968,7 +2969,7 @@ mlan_status sd_wifi_init(enum wlan_type type, const uint8_t *fw_start_addr, cons
         if (intf != MNULL)
         {
             mlan_adap->fw_start_addr = fw_start_addr;
-
+            wifi_wake_up_card(&resp);
             ret = (mlan_status)firmware_download(fw_start_addr, size, intf, 0);
 
         } else {
