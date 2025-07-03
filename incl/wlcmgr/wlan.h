@@ -6708,6 +6708,7 @@ void wlan_wps_generate_pin(uint32_t *pin);
  *
  *  This function starts WPS pin session.
  *
+ * \param[in] netif Pointer to network interface structure.
  * \param[in]  pin: Pin for WPS session.
  *
  * \return WM_SUCCESS if the pin entered is valid.
@@ -6718,6 +6719,8 @@ int wlan_start_wps_pin(const struct netif *netif, const char *pin);
 /** Start WPS PBC (push button configuration) session.
  *
  *  This function starts WPS PBC (push button configuration) session.
+ *
+ * \param[in] netif Pointer to network interface structure.
  *
  * \return  WM_SUCCESS if successful
  * \return -WM_FAIL if invalid pin entered.
@@ -7340,6 +7343,19 @@ int wlan_p2p_find(const char *cmd);
  * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
  */
 int wlan_p2p_stop_find(void);
+
+/**
+ * Set P2P Listen channel.
+ *
+ * This command is mainly meant for testing purposes and changing the Listen
+ * channel during normal operations can result in protocol failures.
+ *
+ * \param[in] channel Channel to listen on.
+ * \param[in] op_class Operating class of for listen channel.
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_p2p_set_listen_channel(t_u8 channel, t_u8 op_class);
 
 /**
  * Initiates P2P listen mode.

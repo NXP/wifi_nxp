@@ -11252,6 +11252,33 @@ static void test_wlan_p2p_stop_find(int argc, char **argv)
     }
 }
 
+static void test_wlan_p2p_set_listen_channel(int argc, char **argv)
+{
+    int ret;
+    t_u8 channel, op_class = 0;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+
+    channel  = (t_u8)atoi(argv[1]);
+    op_class = (t_u8)atoi(argv[2]);
+
+    op_class = op_class ? op_class : 81;
+
+    ret = wlan_p2p_set_listen_channel(channel, op_class);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n p2p_set_listen_channel failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n p2p_set_listen_channel ok!\r\n");
+    }
+}
+
 static void test_wlan_p2p_listen(int argc, char **argv)
 {
     int ret, i;
@@ -13501,6 +13528,7 @@ static struct cli_command tests[] = {
 #if CONFIG_WPA_SUPP_P2P
     {"wlan-p2p-find", " [timeout]", test_wlan_p2p_find},
     {"wlan-p2p-stop-find", NULL, test_wlan_p2p_stop_find},
+    {"wlan-p2p-set-listen-channel", "<channel> [op_class]", test_wlan_p2p_set_listen_channel},
     {"wlan-p2p-listen", " [timeout]", test_wlan_p2p_listen},
     {"wlan-p2p-connect", " <peer_address> <method>", test_wlan_p2p_connect},
     {"wlan-p2p-group-add", " [freq=<freq in MHz>] [ht40] [vht] [he]", test_wlan_p2p_group_add},
@@ -13510,16 +13538,18 @@ static struct cli_command tests[] = {
     {"wlan-p2p-prov-disc", " <peer_address> <method> [join]", test_wlan_p2p_prov_disc},
     {"wlan-p2p-service-add", " <service_type> <query_tlv> <response_tlv>", test_wlan_p2p_service_add},
     {"wlan-p2p-serv-disc-req", " <device_address> <query_tlv>", test_wlan_p2p_serv_disc_req},
-    {"wlan-p2p-serv-disc-resp", " <frequency> <destination_address> <dialog_token> <response_tlv>", test_wlan_p2p_serv_disc_resp},
+    {"wlan-p2p-serv-disc-resp", " <frequency> <destination_address> <dialog_token> <response_tlv>",
+     test_wlan_p2p_serv_disc_resp},
     {"wlan-p2p-group-remove", " <group_interface_name>", test_wlan_p2p_group_remove},
     {"wlan-p2p-peers", NULL, test_wlan_p2p_peers},
     {"wlan-p2p-peer", " <peer_address>", test_wlan_p2p_peer},
     {"wlan-p2p-status", NULL, test_wlan_p2p_status},
-#endif
-#if 0
-    {"wlan-p2p-invite", NULL, test_wlan_p2p_invite},
+    {"wlan-p2p-invite",
+     "[persistent=<network id>|group=<group ifname>] [peer=address][go_dev_addr=address] [freq=<freq in MHz>] [ht40] "
+     "[vht] [he] [pref=<MHz>]",
+     test_wlan_p2p_invite},
     {"wlan-p2p-cancel", NULL, test_wlan_p2p_cancel},
-    {"wlan-p2p-remove-client", NULL, test_wlan_p2p_remove_client},
+    {"wlan-p2p-remove-client", "<address|iface=address> = remove a peer from all groups", test_wlan_p2p_remove_client},
 #endif
 #if CONFIG_NET_MONITOR
     {"wlan-net-monitor-cfg", NULL, test_wlan_net_monitor_cfg},
@@ -13529,8 +13559,9 @@ static struct cli_command tests[] = {
 #endif
 #if HOST_TXRX_MGMT_FRAME
     {"wlan-set-mgmtframetx-cfg", NULL, test_wlan_set_mgmtframetx_cfg},
-    {"wlan-set-mgmtframetx-header", "<PktType> <PktSubType> <FromDS> <ToDS> <SeqNum> <FragNum> <Addr1> <Addr2> <Addr3> <Addr4>",
-    test_wlan_set_mgmtframetx_header},
+    {"wlan-set-mgmtframetx-header",
+     "<PktType> <PktSubType> <FromDS> <ToDS> <SeqNum> <FragNum> <Addr1> <Addr2> <Addr3> <Addr4>",
+     test_wlan_set_mgmtframetx_header},
     {"wlan-set-mgmtframetx-payload", "<Data0 Data1 ... Datan>", test_wlan_set_mgmtframetx_payload},
 #endif
 #if CONFIG_TSP

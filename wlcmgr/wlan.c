@@ -7045,7 +7045,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
     network = &wlan.networks[wlan.cur_network_idx];
 #if CONFIG_WPA_SUPP_P2P
     if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
-    {	
+    {
         netif = net_get_wfd_interface();
     }
 #endif
@@ -16274,6 +16274,13 @@ int wlan_p2p_stop_find(void)
     struct netif *netif = net_get_wfd_interface();
 
     return wpa_supp_p2p_stop_find(netif);
+}
+
+int wlan_p2p_set_listen_channel(t_u8 channel, t_u8 op_class)
+{
+    struct netif *netif = net_get_wfd_interface();
+
+    return wpa_supp_p2p_set_listen_channel(netif, channel, op_class);
 }
 
 int wlan_p2p_listen(const char *cmd)
