@@ -4658,7 +4658,11 @@ int wifi_host_11k_cfg(int enable_11k)
         if (pmpriv->rrm_mgmt_bitmap_index != -1)
         {
             ret = wifi_clear_mgmt_ie(MLAN_BSS_TYPE_STA, MGMT_RRM_ENABLED_CAP, pmpriv->rrm_mgmt_bitmap_index);
-
+            if (ret != (int)MLAN_STATUS_SUCCESS)
+            {
+                wifi_e("Failed to clear RRM IE");
+                return ret;
+            }
             pmpriv->rrm_mgmt_bitmap_index = -1;
         }
         rrmCap.element_id = (t_u8)MGMT_RRM_ENABLED_CAP;
@@ -5201,6 +5205,9 @@ int wifi_send_scan_query(void)
         PRINTM(MERROR, "Failed to get scan results\n");
         goto done;
     }
+
+    return ret;
+
 done:
     /* config rssi low threshold again */
     pmpriv->rssi_low = DEFAULT_RSSI_LOW_THRESHOLD;

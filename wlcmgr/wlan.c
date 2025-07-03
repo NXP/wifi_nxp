@@ -383,7 +383,7 @@ enum user_request_type
     CM_STA_USER_REQUEST_CONNECT = WIFI_EVENT_LAST + 1,
     CM_STA_USER_REQUEST_DISCONNECT,
     CM_STA_USER_REQUEST_SCAN,
-#if (CONFIG_11K) || (CONFIG_11V)
+#if CONFIG_ROAMING
     CM_STA_USER_REQUEST_SET_RSSI_THRESHOLD,
 #endif
     CM_STA_USER_REQUEST_PS_ENTER,
@@ -698,7 +698,7 @@ static struct
     wlan_nlist_report_param nlist_rep_param;
     wlan_rrm_neighbor_report_t nbr_rpt;
 #endif
-#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_11R) || (CONFIG_ROAMING)
+#if CONFIG_ROAMING
     uint8_t rssi_low_threshold;
 #endif
     uint8_t ind_reset;
@@ -2824,7 +2824,6 @@ static int start_association(struct wlan_network *network, struct wifi_scan_resu
     bool is_ft                  = false;
 
     wlcm_d("starting association to \"%s\"", network->name);
-    wlan.roam_reassoc = false;
     ret               = configure_security(network, res);
     if (ret != 0)
     {
@@ -3316,15 +3315,49 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
         }
 
         wifi_scan_done(msg);
+#if CONFIG_ROAMING
+        if (msg->reason != WIFI_EVENT_REASON_SUCCESS)
+        {
+            if (wlan.roam_reassoc == true)
+            {
+                /*
+                 * Subscribe EVENT_RSSI_LOW if roaming is enabled.
+                 * Do this here in case scan is failed.
+                 */
+                wlan.roam_reassoc = false;
+                wlan_subscribe_rssi_low_event();
+            }
+        }
+#endif
         return;
 #else
         if (wlan.roam_reassoc == true)
         {
             if (wlan.sta_state == CM_STA_CONNECTED)
             {
-                wlcm_d("SM: returned to %s", dbg_sta_state_name(*next));
-                handle_scan_results();
+                if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
+                {
+                    handle_scan_results();
+                }
+#if CONFIG_ROAMING
+                else
+                {
+                    wlan.roam_reassoc = false;
+                }
+
+                if (wlan.roam_reassoc == false)
+                {
+                    /*
+                     * Subscribe EVENT_RSSI_LOW if roaming is enabled.
+                     * Do this here in case roaming is not happened
+                     * (already connected to the best AP or not found AP)
+                     * or scan is failed.
+                     */
+                    wlan_subscribe_rssi_low_event();
+                }
+#endif
                 *next = wlan.sta_state;
+                wlcm_d("SM: returned to %s", dbg_sta_state_name(*next));
                 return;
             }
         }
@@ -4190,22 +4223,23 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
             CONNECTION_EVENT(WLAN_REASON_AUTH_SUCCESS, NULL);
 
 #if CONFIG_WPA_SUPP
-
-#if CONFIG_ROAMING
-			if (wlan.roaming_enabled == true)
-			{
-				/* Set rssi low threshold and subscribe rssi low event again */
-				(void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
-			}
-#endif
             wlan.same_ess =
 #if CONFIG_11R
-			wifi_same_ess_ft() |
+            wifi_same_ess_ft() |
 #endif
-			wlan.roam_reassoc;
+            wlan.roam_reassoc;
+#endif
+
+#if CONFIG_ROAMING
+            /*
+             * Subscribe EVENT_RSSI_LOW if roaming is enabled.
+             * Do this here for next roaming.
+             */
             wlan.roam_reassoc = false;
+            wlan_subscribe_rssi_low_event();
 #endif
-			if ((wlan.same_ess == true) && (wlan.sta_ipv4_state == CM_STA_CONNECTED))
+
+            if ((wlan.same_ess == true) && (wlan.sta_ipv4_state == CM_STA_CONNECTED))
             {
 #if CONFIG_11R
                 wlan.ft_bss = false;
@@ -4221,9 +4255,6 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
                     wlan.reassoc_request = false;
                 }
                 mlan_adap->skip_dfs = false;
-#if CONFIG_WPA_SUPP
-				wpa_supp_stop_bgscan(netif);
-#endif
                 CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
                 return;
             }
@@ -4329,100 +4360,107 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
     }
 }
 
-#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_ROAMING)
+#if CONFIG_ROAMING
+/** Try to roaming if enabled based on priority:
+ * 1. 11R roaming (Prioritize using 11KV optimized scan, if 11KV is not supported,
+ *    go for the full channel scan.)
+ * 2. 11K roaming
+ * 3. 11V roaming
+ * 4. Legacy roaming (full channel scan)
+ *
+ * If not trigger roaming, subscribe RSSI low event again
+ */
 static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_state *next, struct wlan_network *network)
 {
-    bool set_rssi_threshold = false;
-#if CONFIG_WPA_SUPP
     int ret;
-#endif
 
-#if CONFIG_ROAMING
-	if (wlan.roaming_enabled == true)
-	{
-		if (wlan.roam_reassoc == false)
-		{
-			wlan.roam_reassoc = true;
+    if (wlan.roaming_enabled == false)
+    {
+        wlcm_d("%s: Roaming disabled", __func__);
+        return;
+    }
+
+    if (wlan.roam_reassoc == true)
+    {
+        wlcm_d("Roaming already in progress");
+        return;
+    }
+
+    wlan.roam_reassoc = true;
+
+#if !CONFIG_WPA_SUPP
 #if CONFIG_11R
-			wlan.ft_bss = false;
-			if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
-			{
-				wlan.ft_bss = true;
-			}
+    if ((network->mdid == MOBILITY_DOMAIN) && (network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
+    {
+        wlan.ft_bss = true;
+    }
+#endif /* CONFIG_11R */
 #endif
-#if CONFIG_WPA_SUPP
-			wm_wifi.wpa_supp_scan = true;
-
-			ret = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, NULL, network->ssid, 1, 0,
-									 NULL, 0,
-#if CONFIG_SCAN_WITH_RSSIFILTER
-									 wlan.rssi_low_threshold,
-#endif
-#if CONFIG_SCAN_CHANNEL_GAP
-									 scan_channel_gap,
-#endif
-									 false, false);
-			if (ret == WM_SUCCESS)
-			{
-				wlcm_d("bgscan config successful");
-				return;
-			}
-#else
-#if CONFIG_BG_SCAN
-			int ret = wifi_config_bgscan_and_rssi(network->ssid);
-			if (ret == WM_SUCCESS)
-			{
-				wlcm_d("bgscan config successful");
-				return;
-			}
-#endif
-#endif
-			wlan.roam_reassoc = false;
-			set_rssi_threshold = true;
-		}
-		else
-		{
-			wlcm_d("Roaming already in progress");
-			(void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
-			return;
-		}
-	}
-#endif /* CONFIG_ROAMING */
 
 #if CONFIG_11K
     if (network->neighbor_report_supported == true)
     {
-        int ret;
         ret = wlan_host_11k_neighbor_req((const char *)network->ssid);
         if (ret == WM_SUCCESS)
         {
             wlcm_d("Sent 11K neighbor request");
             return;
         }
-        set_rssi_threshold = true;
     }
 #endif /* CONFIG_11K */
 
 #if CONFIG_11V
     if (network->bss_transition_supported == true)
     {
-        int ret;
         ret = wlan_host_11v_bss_trans_query(0x10);
         if (ret == WM_SUCCESS)
         {
             wlcm_d("Sent 11V bss transition query");
             return;
         }
-        set_rssi_threshold = true;
     }
 #endif /* CONFIG_11V */
 
-    if (set_rssi_threshold == true)
-    {
-        (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
-    }
-}
+#if CONFIG_WPA_SUPP
+    wm_wifi.wpa_supp_scan = true;
+#endif /* CONFIG_WPA_SUPP */
+    ret = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, NULL, network->ssid, 1, 0,
+                                NULL, 0,
+#if CONFIG_SCAN_WITH_RSSIFILTER
+                                wlan.rssi_low_threshold,
 #endif
+#if CONFIG_SCAN_CHANNEL_GAP
+                                scan_channel_gap,
+#endif
+                                false, false);
+    if (ret == WM_SUCCESS)
+    {
+        wlcm_d("Sent full channel scan request");
+        return;
+    }
+
+    /** Error handling
+     * If it reaches here, it means that roaming is not possible.
+     * Failed to send 11K neighbor request, 11V bss transition query,
+     * or full channel scan request.
+     * So, need to reset roaming state and subscribe RSSI low event again.
+     */
+    wlcm_d("Failed to send request for roaming");
+#if CONFIG_WPA_SUPP
+    wm_wifi.wpa_supp_scan = false;
+#else
+#if CONFIG_11R
+    if ((network->mdid == MOBILITY_DOMAIN) && (network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
+    {
+        wlan.ft_bss = false;
+    }
+#endif /* CONFIG_11R */
+#endif /* CONFIG_WPA_SUPP */
+    wlan.roam_reassoc = false;
+
+    wlan_subscribe_rssi_low_event();
+}
+#endif /* CONFIG_ROAMING */
 
 #if (CONFIG_11K) || (CONFIG_11V)
 static void wlan_sort_nlist_channels(wlan_nlist_report_param *pnlist_rep_param)
@@ -4473,17 +4511,10 @@ int wlan_11k_roam()
 
     }
 
-    ret = wpa_supp_roam(netif, NULL);
-    if (ret != WM_SUCCESS)
-    {
-        wlcm_e("wlan ft roam failed");
-        return -WM_FAIL;
-    }
-
     ret = wpa_supp_scan(netif, &params);
     if (ret != WM_SUCCESS)
     {
-        wlcm_e("wlan ft roam scan failed");
+        wlcm_e("wlan 11k roam scan failed");
         return -WM_FAIL;
     }
 
@@ -4494,7 +4525,6 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
                                                     enum cm_sta_state *next,
                                                     struct wlan_network *network)
 {
-    // unsigned int i;
     int ret;
     wlan_nlist_report_param *pnlist_rep_param = (wlan_nlist_report_param *)&wlan.nlist_rep_param;
 
@@ -4504,20 +4534,19 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
         return;
     }
 
-#if CONFIG_11K
-    if (pnlist_rep_param->nlist_mode == WLAN_NLIST_11K)
-    {
-        wlan.neighbor_req = false;
-        (void)OSA_TimerDeactivate((osa_timer_handle_t)wlan.neighbor_req_timer);
-    }
-#endif
-
     wlan_sort_nlist_channels(pnlist_rep_param);
 
     ret = wlan_11k_roam();
     if (ret != WM_SUCCESS)
     {
         wlcm_e("11k roam failed");
+#if CONFIG_ROAMING
+        if (wlan.roam_reassoc == true)
+        {
+            wlan.roam_reassoc = false;
+            wlan_subscribe_rssi_low_event();
+        }
+#endif
     }
 
     memset(&wlan.nlist_rep_param, 0x00, sizeof(wlan_nlist_report_param));
@@ -4532,8 +4561,6 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
     wlan_scan_channel_list_t chan_list[MAX_NUM_CHANS_IN_NBOR_RPT];
     t_u8 *bssid                               = NULL;
     wlan_nlist_report_param *pnlist_rep_param = (wlan_nlist_report_param *)msg->data;
-
-    wlan.roam_reassoc = false;
 
     if (is_state(CM_STA_IDLE) || (pnlist_rep_param == NULL))
     {
@@ -4582,7 +4609,7 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
         wlan.ft_bss = true;
     }
 #endif
-    wlan.roam_reassoc = true;
+
     ret = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, bssid, network->ssid, 1, pnlist_rep_param->num_channels,
                              chan_list, 0,
 #if CONFIG_SCAN_WITH_RSSIFILTER
@@ -4598,7 +4625,13 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
 #if CONFIG_11R
         wlan.ft_bss = false;
 #endif
-        wlan.roam_reassoc = false;
+#if CONFIG_ROAMING
+        if (wlan.roam_reassoc == true)
+        {
+            wlan.roam_reassoc = false;
+            wlan_subscribe_rssi_low_event();
+        }
+#endif
     }
 
     if (pnlist_rep_param != NULL)
@@ -5398,7 +5431,6 @@ static void wlan_parse_neighbor_report_response(const char *nbr_response, wlan_r
 }
 #endif
 
-#if CONFIG_WPA_SUPP
 static int wlcm_process_add_unspecified_network(const char *name)
 {
     int ret, i;
@@ -5479,7 +5511,6 @@ static int wlcm_process_add_unspecified_network(const char *name)
     }
     return WM_SUCCESS;
 }
-#endif
 
 static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
 {
@@ -5503,7 +5534,7 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
         PRINTF("%s\r\n", buf);
 #endif
 
-#if CONFIG_WPA_SUPP && CONFIG_ROAMING
+#if CONFIG_ROAMING
 	if (strstr(buf, "selected current BSS ") != NULL)
 	{
 		t_u8 addr[MLAN_MAC_ADDR_LENGTH];
@@ -5522,22 +5553,32 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
 
 		if (memcmp(addr, network->bssid, MLAN_MAC_ADDR_LENGTH) == 0)
 		{
-			(void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
-			wlan.roam_reassoc = false;
+            wlan.roam_reassoc = false;
+            wlan_subscribe_rssi_low_event();
 		}
 		return;
 	}
     if (strstr(buf, "Skip roam ") != NULL)
     {
-        (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
         wlan.roam_reassoc = false;
+        wlan_subscribe_rssi_low_event();
         return;
     }
 #endif
 
     if (strstr(buf, WPA_EVENT_SCAN_FAILED))
     {
-        wlcm_process_scan_failed();
+#if CONFIG_ROAMING
+        if (wlan.roam_reassoc == true)
+        {
+            wlan.roam_reassoc = false;
+            wlan_subscribe_rssi_low_event();
+        }
+        else
+#endif
+        {
+            wlcm_process_scan_failed();
+        }
     }
     else if (strstr(buf, WPA_EVENT_DISCONNECTED))
     {
@@ -5548,14 +5589,14 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
     {
         wlcm_d("No suitable network was found");
 
+#if CONFIG_ROAMING
         if (wlan.roam_reassoc == true)
         {
-#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_ROAMING)
-            (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
             wlan.roam_reassoc = false;
-#endif
+            wlan_subscribe_rssi_low_event();
         }
         else
+#endif
         {
             wlan.scan_count++;
 
@@ -5571,11 +5612,18 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
     else if (strstr(buf, WPA_EVENT_AUTH_REJECT))
     {
         wlcm_d("Authentication rejected during connection attempt");
-        if ((wlan.roam_reassoc != true) && (!(strlen(buf) > strlen(WPA_EVENT_AUTH_REJECT))))
+#if CONFIG_ROAMING
+        if (wlan.roam_reassoc == true)
         {
-            (void)send_user_request(CM_STA_USER_REQUEST_CONNECT, wlan.cur_network_idx);
+            wlan.roam_reassoc = false;
+            wlan_subscribe_rssi_low_event();
         }
-        wlan.roam_reassoc = false;
+        else
+#endif
+        {
+            if (!(strlen(buf) > strlen(WPA_EVENT_AUTH_REJECT)))
+                (void)send_user_request(CM_STA_USER_REQUEST_CONNECT, wlan.cur_network_idx);
+        }
     }
 #if CONFIG_HOSTAPD
     else if (strstr(buf, AP_STA_CONNECTED))
@@ -5820,6 +5868,13 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
     else if (strstr(buf, RRM_EVENT_NEIGHBOR_REP_FAILED))
     {
         wlcm_d("11K RRM event neighbor report request failed");
+#if CONFIG_ROAMING
+        if (wlan.roam_reassoc == true)
+        {
+            wlan.roam_reassoc = false;
+            wlan_subscribe_rssi_low_event();
+        }
+#endif
     }
     else
 #endif
@@ -6947,9 +7002,9 @@ static void wifi_process_bg_scan_stopped(struct wifi_message *msg)
 static void wlcm_process_bg_scan_report(void)
 {
     wifi_send_scan_query();
-#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_ROAMING)
+#if CONFIG_ROAMING
     /* Set rssi low threshold and subscribe rssi low event again */
-    (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
+    wlan_subscribe_rssi_low_event();
 #endif
 }
 #endif
@@ -7055,13 +7110,13 @@ static void wlcm_process_region_power_cfg(struct wifi_message *msg)
     OSA_MemoryFree(country_code);
 }
 
-#if (CONFIG_11K) || (CONFIG_11V)
+#if CONFIG_ROAMING
 static void wlcm_set_rssi_low_threshold(enum cm_sta_state *next, struct wlan_network *curr_nw)
 {
     (void)next;
     (void)curr_nw;
 
-    (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
+    (void)wifi_set_rssi_low_threshold(wlan.rssi_low_threshold);
 }
 #endif
 
@@ -7209,7 +7264,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case CM_STA_USER_REQUEST_SCAN:
             wlcm_request_scan(msg, &next);
             break;
-#if (CONFIG_11K) || (CONFIG_11V)
+#if CONFIG_ROAMING
         case CM_STA_USER_REQUEST_SET_RSSI_THRESHOLD:
             wlcm_set_rssi_low_threshold(&next, network);
             break;
@@ -7325,8 +7380,8 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_process_link_loss_event(msg, &next, network);
             break;
         case WIFI_EVENT_RSSI_LOW:
-            wlcm_d("got event: rssi low");
-#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_ROAMING)
+            wlcm_d("got event: RSSI low");
+#if CONFIG_ROAMING
             wlcm_process_rssi_low_event(msg, &next, network);
 #else
             CONNECTION_EVENT(WLAN_REASON_RSSI_LOW, NULL);
@@ -8234,7 +8289,9 @@ static void neighbor_req_timer_cb(osa_timer_arg_t arg)
     if (wlan.neighbor_req == true)
     {
         wlan.neighbor_req = false;
+#if CONFIG_ROAMING
         (void)send_user_request(CM_STA_USER_REQUEST_SET_RSSI_THRESHOLD, 0);
+#endif
     }
 }
 #endif
@@ -8387,7 +8444,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 
     wlcm_process_init_params();
 
-#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_ROAMING)
+#if CONFIG_ROAMING
     wlan.rssi_low_threshold = 70;
 #endif
 
@@ -8579,7 +8636,6 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 
 
 #if CONFIG_11K
-
     memset(&wlan.nbr_rpt, 0x00, sizeof(wlan_rrm_neighbor_report_t));
 #endif
 
@@ -13581,12 +13637,18 @@ void wlan_set_scan_channel_gap(unsigned scan_chan_gap)
 #if CONFIG_11K
 int wlan_host_11k_cfg(int enable_11k)
 {
-#if CONFIG_WPA_SUPP
+    int ret = -WM_FAIL;
+
+    ret = wifi_host_11k_cfg(enable_11k);
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("Failed to configure 11k support");
+        return ret;
+    }
+
     wlan.enable_11k = enable_11k;
-    return WM_SUCCESS;
-#else
-    return wifi_host_11k_cfg(enable_11k);
-#endif
+
+    return ret;
 }
 
 bool wlan_get_host_11k_status(void)
@@ -13611,12 +13673,12 @@ int wlan_host_11k_neighbor_req(const char *ssid)
     ret = wpa_supp_send_neighbor_rep(netif, (char *)ssid, 0, 0);
 #else
     ret = wifi_host_11k_neighbor_req(ssid);
-#endif
     if (ret == WM_SUCCESS)
     {
         wlan.neighbor_req = true;
         (void)OSA_TimerActivate((osa_timer_handle_t)wlan.neighbor_req_timer);
     }
+#endif
     return ret;
 }
 #endif
@@ -13834,24 +13896,35 @@ void wlan_set_txrx_histogram(struct wlan_txrx_histogram_info *txrx_histogram, t_
 #if CONFIG_ROAMING
 int wlan_set_roaming(const int enable, const uint8_t rssi_low_threshold)
 {
+    int ret = WM_SUCCESS;
 #if CONFIG_WPA_SUPP
     struct netif *netif = net_get_sta_interface();
 #endif
 
-    wlan.roaming_enabled = enable;
-
+    ret = wifi_config_roaming(enable, rssi_low_threshold);
+    if (ret == WM_SUCCESS)
+    {
+        wlan.roaming_enabled    = enable;
+        wlan.rssi_low_threshold = rssi_low_threshold;
 #if CONFIG_WPA_SUPP
-    wpa_supp_set_okc(netif, wlan.okc);
+        wpa_supp_set_okc(netif, wlan.okc);
 #endif
+    }
 
-    wlan.rssi_low_threshold = rssi_low_threshold;
-
-    return wifi_config_roaming(enable, &wlan.rssi_low_threshold);
+    return ret;
 }
 
 int wlan_get_roaming_status(void)
 {
     return wlan.roaming_enabled;
+}
+
+void wlan_subscribe_rssi_low_event(void)
+{
+    if (wlan.roaming_enabled)
+    {
+        (void)wifi_set_rssi_low_threshold(wlan.rssi_low_threshold);
+    }
 }
 #endif
 
@@ -14216,7 +14289,6 @@ int wlan_set_11ax_tol_time(const t_u32 tol_time)
     {
         wlcm_d("Error: invalid tolerance time value, range[[1..3600]].");
         return -WM_FAIL;
-        ;
     }
 
     if (is_sta_connecting())
@@ -15517,27 +15589,6 @@ int wlan_csi_cfg(wlan_csi_config_params_t *csi_params)
     ret = wifi_csi_cfg(csi_params);
 
     return ret;
-}
-#endif
-
-#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_11R) || (CONFIG_ROAMING)
-void wlan_set_rssi_low_threshold(uint8_t threshold)
-{
-    wlan.rssi_low_threshold = threshold;
-
-    if (is_sta_connected())
-    {
-#if CONFIG_ROAMING
-        if (wlan.roaming_enabled == true)
-        {
-            (void)wifi_config_roaming(true, &wlan.rssi_low_threshold);
-        }
-        else
-#endif
-        {
-            (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
-        }
-    }
 }
 #endif
 

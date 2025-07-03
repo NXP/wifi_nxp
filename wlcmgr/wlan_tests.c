@@ -8584,32 +8584,6 @@ static void test_wlan_start_stop_ami(int argc, char **argv)
 
 #endif
 
-#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_11R) || (CONFIG_ROAMING)
-static void test_wlan_rssi_low_threshold(int argc, char **argv)
-{
-    uint8_t rssi_threshold;
-
-    if (argc < 2)
-    {
-        (void)PRINTF("Usage: %s <rssi threshold value>\r\n", argv[0]);
-        (void)PRINTF("Error: Default value is 70. Specify the value you want to set as threshold.\r\n");
-        return;
-    }
-
-    errno          = 0;
-    rssi_threshold = (uint8_t)strtol(argv[1], NULL, 10);
-    if (errno != 0)
-    {
-        (void)PRINTF("Error during strtol:rssi_threshold errno:%d\r\n", errno);
-        return;
-    }
-
-    wlan_set_rssi_low_threshold(rssi_threshold);
-
-    (void)PRINTF("rssi threshold set successfully.\r\n");
-}
-#endif
-
 #if CONFIG_NET_MONITOR
 static void dump_wlan_set_monitor_filter_usage()
 {
@@ -14220,9 +14194,6 @@ static struct cli_command tests[] = {
 #endif
 #if CONFIG_TX_AMPDU_PROT_MODE
     {"wlan-tx-ampdu-prot-mode", "<mode>", test_wlan_tx_ampdu_prot_mode},
-#endif
-#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_11R) || (CONFIG_ROAMING)
-    {"wlan-rssi-low-threshold", "<threshold_value>", test_wlan_rssi_low_threshold},
 #endif
 #if CONFIG_RX_ABORT_CFG
     {"wlan-rx-abort-cfg", NULL, test_wlan_rx_abort_cfg},

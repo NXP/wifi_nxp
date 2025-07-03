@@ -101,7 +101,6 @@ Running the demo
    wlan-scan-channel-gap <channel_gap_value>
    wlan-set-regioncode <region-code>
    wlan-get-regioncode
-   wlan-rssi-low-threshold <threshold_value>
    wlan-generate-wps-pin
    wlan-start-wps-pbc
    wlan-start-wps-pin <8 digit pin>

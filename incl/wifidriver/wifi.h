@@ -517,7 +517,7 @@ int wifi_set_txrx_histogram(void *cfg, t_u8 *data);
 #endif
 
 #if CONFIG_ROAMING
-int wifi_config_roaming(const int enable, uint8_t *rssi_low);
+int wifi_config_roaming(const int enable, uint8_t rssi_low);
 #endif
 #if CONFIG_BG_SCAN
 int wifi_config_bgscan_and_rssi(const char *ssid);
@@ -1462,7 +1462,7 @@ void wifi_handle_event_data_pause(void *data);
 void wifi_wmm_tx_stats_dump(int bss_type);
 #endif /* CONFIG_WMM */
 
-int wifi_set_rssi_low_threshold(uint8_t *low_rssi);
+int wifi_set_rssi_low_threshold(uint8_t low_rssi);
 
 #if CONFIG_HEAP_DEBUG
 /**

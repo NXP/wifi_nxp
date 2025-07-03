@@ -370,6 +370,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             break;
         case WLAN_REASON_PS_EXIT:
             break;
+        case WLAN_REASON_RSSI_LOW:
 #if CONFIG_SUBSCRIBE_EVENT_SUPPORT
         case WLAN_REASON_RSSI_HIGH:
         case WLAN_REASON_SNR_LOW:
@@ -382,8 +383,8 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
         case WLAN_REASON_DATA_SNR_HIGH:
         case WLAN_REASON_LINK_QUALITY:
         case WLAN_REASON_PRE_BEACON_LOST:
-            break;
 #endif
+            break;
         case WLAN_REASON_FW_HANG:
         case WLAN_REASON_FW_RESET:
 #ifdef RW610
