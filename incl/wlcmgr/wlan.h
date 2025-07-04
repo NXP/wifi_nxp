@@ -7601,6 +7601,123 @@ int wlan_p2p_status(char *buf, size_t buflen, int *reslen);
 int wlan_p2p_list_network(char *buf, size_t buflen, int *reslen);
 #endif
 
+#if CONFIG_WPA_SUPP_NAN_USD
+/** NAN service protocol types */
+typedef enum
+{
+    /* Bonjour */
+    NAN_SERVICE_PROTO_BONJOUR = 1,
+    /* Generic */
+    NAN_SERVICE_PROTO_GENERIC = 2,
+    /* CSA Matter */
+    NAN_SERVICE_PROTO_CSA_MATTER = 3,
+} nan_service_protocol_type_t;
+
+/** This structure is used to configure wlan nan publish parameters */
+typedef struct _wlan_nan_publish_params
+{
+    /* Service name for NAN */
+    char *service_name;
+    /* Time to live (in seconds); 0 = one TX only */
+    unsigned int ttl;
+    /* Default frequency (defaultPublishChannel) */
+    unsigned int freq;
+    /* Multi-channel frequencies */
+    char *freq_list;
+    /* NAN service protocol type */
+    nan_service_protocol_type_t srv_proto_type;
+    /* Service specific information (hexdump) */
+    char *ssi;
+} wlan_nan_publish_params_t;
+
+/** This structure is used to configure wlan nan subscribe parameters */
+typedef struct _wlan_nan_subscribe_params
+{
+    /* Service name for NAN */
+    char *service_name;
+    /* Subscribe type */
+    bool active;
+    /* Time to live (in seconds); 0 = until first result */
+    unsigned int ttl;
+    /* Selected frequency */
+    unsigned int freq;
+    /* NAN service protocol type */
+    nan_service_protocol_type_t srv_proto_type;
+    /* Service specific information (hexdump) */
+    char *ssi;
+} wlan_nan_subscribe_params_t;
+
+/**
+ * Initiate NAN USD publisher.
+ *
+ * This function start publish.
+ *
+ * \param[in] nan_publish: A pointer to \ref wlan_nan_publish_params_t to store nan publish parameters.
+ *
+ * \return publish id if successful otherwise return -WM_FAIL.
+ */
+int wlan_nan_publish(wlan_nan_publish_params_t *nan_publish);
+
+/**
+ * Cancel NAN USD publish.
+ *
+ * This function cancel publish.
+ *
+ * \param[in] publish_id: publish id to cancel
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_nan_cancel_publish(int publish_id);
+
+/**
+ * Update NAN USD publish.
+ *
+ * This function update publish.
+ *
+ * \param[in] publish_id: publish id to update\n
+ * \param[in] ssi:        service specific information (hexdump)\n
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_nan_update_publish(int publish_id, char *ssi_update);
+
+/**
+ * Initiate NAN USD subscriber.
+ *
+ * This function start subscribe.
+ *
+ * \param[in] nan_subscribe: A pointer to \ref wlan_nan_subscribe_params_t to store nan subscribe parameters.
+ *
+ * \return subscribe id if successful otherwise return -WM_FAIL.
+ */
+int wlan_nan_subscribe(wlan_nan_subscribe_params_t *nan_subscribe);
+
+/**
+ * Cancel NAN USD subscribe.
+ *
+ * This function cancel subscribe.
+ *
+ * \param[in] subscribe_id: subscribe id to cancel
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_nan_cancel_subscribe(int subscribe_id);
+
+/**
+ * Initiate NAN USD subscriber.
+ *
+ * This function start subscribe.
+ *
+ * \param[in] own_id:   own publish id or subscribe id \n
+ * \param[in] peer_id:  peer's id\n
+ * \param[in] peer_mac: peer's MAC address\n
+ * \param[in] ssi_tx:   service specific information (hexdump)\n
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_nan_transmit(int own_id, int peer_id, uint8_t *peer_mac, char *ssi_tx);
+#endif /* CONFIG_WPA_SUPP_NAN_USD */
+
 #if CONFIG_IMD3_CFG
 /**
  * Set imd validation parameters.

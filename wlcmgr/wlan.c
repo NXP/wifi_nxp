@@ -8215,6 +8215,16 @@ static void wlan_wait_wlmgr_ready()
     }
 }
 
+#if CONFIG_WPA_SUPP_NAN_USD
+static int wlan_set_nan_mcast_addr()
+{
+    uint8_t nan_network_addr[6] = {0x51, 0x6f, 0x9a, 0x01, 0, 0};
+
+    /* Add NAN network mcast addr to multicast table */
+    return wifi_add_mcast_filter(nan_network_addr);
+}
+#endif
+
 int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 {
     static bool reset_mutex_init = 0;
@@ -8551,6 +8561,15 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     }
 #endif
 #endif
+#endif
+
+#if CONFIG_WPA_SUPP_NAN_USD
+    ret = wlan_set_nan_mcast_addr();
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("Add NAN network mcast addr to multicast table failed\r\n");
+        return 0;
+    }
 #endif
 
     return WM_SUCCESS;
@@ -16441,6 +16460,67 @@ int wlan_p2p_list_network(char *buf, size_t buflen, int *reslen)
     }
 }
 #endif
+
+#if CONFIG_WPA_SUPP_NAN_USD
+int wlan_nan_publish(wlan_nan_publish_params_t *nan_publish)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    wlan_ieeeps_off();
+    wlan_deepsleepps_off();
+
+    wifi_set_rx_mgmt_indication(WLAN_BSS_ROLE_STA, WLAN_MGMT_ACTION);
+
+    return wpa_supp_nan_publish(netif, nan_publish);
+}
+
+int wlan_nan_cancel_publish(int publish_id)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    wlan_deepsleepps_on();
+    wlan_ieeeps_on(wlan.wakeup_conditions);
+
+    return wpa_supp_nan_cancel_publish(netif, publish_id);
+}
+
+int wlan_nan_update_publish(int publish_id, char *ssi_update)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    return wpa_supp_nan_update_publish(netif, publish_id, ssi_update);
+}
+
+int wlan_nan_subscribe(wlan_nan_subscribe_params_t *nan_subscribe)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    wlan_ieeeps_off();
+    wlan_deepsleepps_off();
+
+    wifi_set_rx_mgmt_indication(WLAN_BSS_ROLE_STA, WLAN_MGMT_ACTION);
+
+    return wpa_supp_nan_subscribe(netif, nan_subscribe);
+}
+
+int wlan_nan_cancel_subscribe(int subscribe_id)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    wlan_deepsleepps_on();
+    wlan_ieeeps_on(wlan.wakeup_conditions);
+
+    return wpa_supp_nan_cancel_subscribe(netif, subscribe_id);
+}
+
+int wlan_nan_transmit(int own_id, int peer_id, uint8_t *peer_mac, char *ssi_tx)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    return wpa_supp_nan_transmit(netif, own_id, peer_id, peer_mac, ssi_tx);
+}
+
+#endif /* CONFIG_WPA_SUPP_NAN_USD */
 
 #if CONFIG_IMD3_CFG
 int wlan_imd3_cfg(t_u8 imd3_value)

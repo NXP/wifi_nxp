@@ -11831,6 +11831,481 @@ static void test_wlan_p2p_list_network(int argc, char **argv)
 }
 #endif
 
+#if CONFIG_WPA_SUPP_NAN_USD
+static void dump_wlan_nan_publish_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-nan-publish service_name <name> [ttl <time-to-live-in-sec>] [freq <in MHz>]\r\n"
+                 "                 [freq_list <comma separate list of MHz>] [srv_proto_type <type>]\r\n"
+                 "                 [ssi <service specific information (hexdump)>]\r\n");
+    (void)PRINTF("Examples:\r\n");
+    (void)PRINTF("    wlan-nan-publish service_name test ttl 300 freq 2437 rv_proto_type 3 ssi 6677\r\n");
+    (void)PRINTF("    wlan-nan-publish service_name test ttl 300 freq 2437 freq_list all rv_proto_type 3 ssi 6677\r\n");
+}
+
+static void test_wlan_nan_publish(int argc, char **argv)
+{
+    int ret;
+    wlan_nan_publish_params_t nan_publish;
+    int arg = 1;
+
+    (void)memset(&nan_publish, 0, sizeof(wlan_nan_publish_params_t));
+
+    if (argc < 3)
+    {
+        dump_wlan_nan_publish_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+
+    do
+    {
+        if ((arg + 1 < argc) && (string_equal(argv[arg], "service_name") != false))
+        {
+            nan_publish.service_name = string_dup(argv[arg + 1]);
+            arg += 2;
+        }
+        else if ((arg + 1 < argc )&& (string_equal(argv[arg], "ttl") != false))
+        {
+            if (get_uint(argv[arg + 1], &nan_publish.ttl, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid ttl argument\r\n");
+                return;
+            }
+            arg += 2;
+        }
+        else if ((arg + 1 < argc) && (string_equal(argv[arg], "freq") != false))
+        {
+            if (get_uint(argv[arg + 1], &nan_publish.freq, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid freq argument\r\n");
+                return;
+            }
+            arg += 2;
+        }
+        else if ((arg + 1 < argc) && (string_equal(argv[arg], "freq_list") != false))
+        {
+            nan_publish.freq_list = string_dup(argv[arg + 1]);
+            arg += 2;
+        }
+        else if ((arg + 1 < argc) && (string_equal(argv[arg], "srv_proto_type") != false))
+        {
+            unsigned int type = 0;
+            if (get_uint(argv[arg + 1], &type, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid srv_proto_type argument\r\n");
+                return;
+            }
+            if((type >= NAN_SERVICE_PROTO_BONJOUR) && (type <= NAN_SERVICE_PROTO_CSA_MATTER))
+            {
+                nan_publish.srv_proto_type = (nan_service_protocol_type_t)type;
+            }
+            arg += 2;
+        }
+        else if ((arg + 1 < argc) && (string_equal(argv[arg], "ssi") != false))
+        {
+            nan_publish.ssi = string_dup(argv[arg + 1]);
+            arg += 2;
+        }
+        else
+        {
+            dump_wlan_nan_publish_usage();
+            (void)PRINTF("Error: argument %d is invalid\r\n", arg);
+            return;
+        }
+    } while (arg < argc);
+
+    ret = wlan_nan_publish(&nan_publish);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n wlan-nan-publish failed!\r\n");
+        dump_wlan_nan_publish_usage();
+    }
+    else
+    {
+        (void)PRINTF("\r\n wlan-nan-publish success!\r\n");
+        (void)PRINTF("\r\n nan publish id: %d\r\n", ret);
+    }
+
+    if (nan_publish.service_name)
+    {
+        OSA_MemoryFree(nan_publish.service_name);
+        nan_publish.service_name = NULL;
+    }
+    if (nan_publish.freq_list)
+    {
+        OSA_MemoryFree(nan_publish.freq_list);
+        nan_publish.freq_list = NULL;
+    }
+    if (nan_publish.ssi)
+    {
+        OSA_MemoryFree(nan_publish.ssi);
+        nan_publish.ssi = NULL;
+    }
+}
+
+static void dump_wlan_nan_cancel_publish_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-nan-cancel-publish publish_id <id from wlan-nan-publish>\r\n");
+    (void)PRINTF("Examples:\r\n");
+    (void)PRINTF("    wlan-nan-cancel-publish publish_id 1\r\n");
+}
+
+static void test_wlan_nan_cancel_publish(int argc, char **argv)
+{
+    int ret;
+    int publish_id = 0;
+    int arg = 1;
+
+    if (argc < 3)
+    {
+        dump_wlan_nan_cancel_publish_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+
+    if (string_equal(argv[arg], "publish_id") != false)
+    {
+        if (get_uint(argv[arg + 1], (unsigned int *)&publish_id, strlen(argv[arg + 1])) || (publish_id <= 0))
+        {
+            (void)PRINTF("Error: invalid publish_id argument\r\n");
+            return;
+        }
+        arg += 2;
+    }
+    else
+    {
+        dump_wlan_nan_cancel_publish_usage();
+        (void)PRINTF("Error: invalid arguments\r\n");
+        return;
+    }
+
+    ret = wlan_nan_cancel_publish(publish_id);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n wlan-nan-cancel-publish failed!\r\n");
+        dump_wlan_nan_cancel_publish_usage();
+    }
+    else
+    {
+        (void)PRINTF("\r\n wlan-nan-cancel-publish success!\r\n");
+    }
+}
+
+static void dump_wlan_nan_update_publish_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-nan-update-publish publish_id <id from wlan-nan-publish> [ssi <service specific information (hexdump)>]\r\n");
+    (void)PRINTF("Examples:\r\n");
+    (void)PRINTF("    wlan-nan-update-publish publish_id 1 ssi 7676\r\n");
+}
+
+static void test_wlan_nan_update_publish(int argc, char **argv)
+{
+    int ret;
+    int publish_id = 0;
+    char *ssi_update = NULL;
+    int arg = 1;
+
+    if (argc < 3)
+    {
+        dump_wlan_nan_update_publish_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+
+    if (string_equal(argv[arg], "publish_id") != false)
+    {
+        if (get_uint(argv[arg + 1], (unsigned int *)&publish_id, strlen(argv[arg + 1])) || (publish_id <= 0))
+        {
+            (void)PRINTF("Error: invalid publish_id argument\r\n");
+            return;
+        }
+        arg += 2;
+    }
+    else
+    {
+        dump_wlan_nan_update_publish_usage();
+        (void)PRINTF("Error: invalid arguments\r\n");
+        return;
+    }
+
+    if ((arg + 1 < argc) && (string_equal(argv[arg], "ssi") != false))
+    {
+        ssi_update = string_dup(argv[arg + 1]);
+        arg += 2;
+    }
+
+    ret = wlan_nan_update_publish(publish_id, ssi_update);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n wlan-nan-update-publish failed!\r\n");
+        dump_wlan_nan_update_publish_usage();
+    }
+    else
+    {
+        (void)PRINTF("\r\n wlan-nan-update-publish success!\r\n");
+    }
+
+    if (ssi_update)
+    {
+        OSA_MemoryFree(ssi_update);
+        ssi_update = NULL;
+    }
+}
+
+static void dump_wlan_nan_subscribe_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-nan-subscribe service_name <name> [active 0/1] [ttl <time-to-live-in-sec>]\r\n"
+                 "                   [freq <in MHz>] [srv_proto_type <type>]\r\n"
+                 "                   [ssi <service specific information (hexdump)>]\r\n");
+    (void)PRINTF("Examples:\r\n");
+    (void)PRINTF("    wlan-nan-subscribe service_name test active 1 ttl 300 freq 2437 srv_proto_type 3 ssi 1122334455\r\n");
+}
+
+static void test_wlan_nan_subscribe(int argc, char **argv)
+{
+    int ret;
+    wlan_nan_subscribe_params_t nan_subscribe;
+    int arg = 1;
+
+    (void)memset(&nan_subscribe, 0, sizeof(wlan_nan_subscribe_params_t));
+
+    if (argc < 3)
+    {
+        dump_wlan_nan_subscribe_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+
+    do
+    {
+        if ((arg + 1 < argc) && (string_equal(argv[arg], "service_name") != false))
+        {
+            nan_subscribe.service_name = string_dup(argv[arg + 1]);
+            arg += 2;
+        }
+        else if ((arg + 1 < argc) && (string_equal(argv[arg], "active") != false))
+        {
+            int active = atoi(argv[arg + 1]);
+            if ((active == 0) || (active == 1))
+            {
+                nan_subscribe.active = active;
+            }
+            else
+            {
+                (void)PRINTF("Error: invalid active argument\r\n");
+                return;
+            }
+            arg += 2;
+        }
+        else if ((arg + 1 < argc )&& (string_equal(argv[arg], "ttl") != false))
+        {
+            if (get_uint(argv[arg + 1], &nan_subscribe.ttl, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid ttl argument\r\n");
+                return;
+            }
+            arg += 2;
+        }
+        else if ((arg + 1 < argc) && (string_equal(argv[arg], "freq") != false))
+        {
+            if (get_uint(argv[arg + 1], &nan_subscribe.freq, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid freq argument\r\n");
+                return;
+            }
+            arg += 2;
+        }
+        else if ((arg + 1 < argc) && (string_equal(argv[arg], "srv_proto_type") != false))
+        {
+            unsigned int type = 0;
+            if (get_uint(argv[arg + 1], &type, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid srv_proto_type argument\r\n");
+                return;
+            }
+            if((type >= NAN_SERVICE_PROTO_BONJOUR) && (type <= NAN_SERVICE_PROTO_CSA_MATTER))
+            {
+                nan_subscribe.srv_proto_type = (nan_service_protocol_type_t)type;
+            }
+            arg += 2;
+        }
+        else if ((arg + 1 < argc) && (string_equal(argv[arg], "ssi") != false))
+        {
+            nan_subscribe.ssi = string_dup(argv[arg + 1]);
+            arg += 2;
+        }
+        else
+        {
+            dump_wlan_nan_subscribe_usage();
+            (void)PRINTF("Error: argument %d is invalid\r\n", arg);
+            return;
+        }
+    } while (arg < argc);
+
+    ret = wlan_nan_subscribe(&nan_subscribe);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n wlan-nan-subscribe failed!\r\n");
+        dump_wlan_nan_subscribe_usage();
+    }
+    else
+    {
+        (void)PRINTF("\r\n wlan-nan-subscribe success!\r\n");
+        (void)PRINTF("\r\n nan subscribe id: %d\r\n", ret);
+    }
+
+    if (nan_subscribe.service_name)
+    {
+        OSA_MemoryFree(nan_subscribe.service_name);
+        nan_subscribe.service_name = NULL;
+    }
+    if (nan_subscribe.ssi)
+    {
+        OSA_MemoryFree(nan_subscribe.ssi);
+        nan_subscribe.ssi = NULL;
+    }
+}
+
+static void dump_wlan_nan_cancel_subscribe_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-nan-cancel-subscribe subscribe_id <id from wlan-nan-subscribe>\r\n");
+    (void)PRINTF("Examples:\r\n");
+    (void)PRINTF("    wlan-nan-cancel-subscribe subscribe_id 1\r\n");
+}
+
+static void test_wlan_nan_cancel_subscribe(int argc, char **argv)
+{
+    int ret;
+    int subscribe_id = 0;
+    int arg = 1;
+
+   if (argc < 3)
+    {
+        dump_wlan_nan_cancel_subscribe_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+
+    if (string_equal(argv[arg], "subscribe_id") != false)
+    {
+        if (get_uint(argv[arg + 1], (unsigned int *)&subscribe_id, strlen(argv[arg + 1])) || (subscribe_id <= 0))
+        {
+            (void)PRINTF("Error: invalid subscribe_id argument\r\n");
+            return;
+        }
+        arg += 2;
+    }
+    else
+    {
+        dump_wlan_nan_cancel_publish_usage();
+        (void)PRINTF("Error: invalid arguments\r\n");
+        return;
+    }
+
+    ret = wlan_nan_cancel_subscribe(subscribe_id);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n wlan-nan-cancel-subscribe failed!\r\n");
+        dump_wlan_nan_cancel_subscribe_usage();
+    }
+    else
+    {
+        (void)PRINTF("\r\n wlan-nan-cancel-subscribe success!\r\n");
+    }
+}
+
+static void dump_wlan_nan_transmit_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-nan-transmit own_id <id from wlan-nan-publish or wlan-nan-subscribe> peer_id <peer's id>\r\n"
+                 "                  peer_mac <peer's MAC address> ssi <service specific information (hexdump)>\r\n");
+    (void)PRINTF("Examples:\r\n");
+    (void)PRINTF("    wlan-nan-transmit own_id 1 peer_id 1 peer_mac 00:50:43:12:34:56 ssi 8899\r\n");
+}
+
+static void test_wlan_nan_transmit(int argc, char **argv)
+{
+    int ret;
+    int own_id = 0;
+    int peer_id = 0;
+    uint8_t peer_mac[MLAN_MAC_ADDR_LENGTH];
+    char *ssi_tx = NULL;
+    int arg = 1;
+
+    if (argc != 9)
+    {
+        dump_wlan_nan_transmit_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+
+    do
+    {
+        if ((arg + 1 < argc) && (string_equal(argv[arg], "own_id") != false))
+        {
+            if (get_uint(argv[arg + 1], (unsigned int *)&own_id, strlen(argv[arg + 1])) || (own_id <= 0))
+            {
+                (void)PRINTF("Error: invalid own_id argument\r\n");
+                return;
+            }
+            arg += 2;
+        }
+        else if ((arg + 1 < argc) && (string_equal(argv[arg], "peer_id") != false))
+        {
+            if (get_uint(argv[arg + 1], (unsigned int *)&peer_id, strlen(argv[arg + 1])) || (peer_id <= 0))
+            {
+                (void)PRINTF("Error: invalid peer_id argument\r\n");
+                return;
+            }
+            arg += 2;
+        }
+        else if ((arg + 1 < argc) && (string_equal(argv[arg], "peer_mac") != false))
+        {
+            ret = get_mac(argv[arg + 1], (char *)peer_mac, ':');
+            if (ret != 0)
+            {
+                (void)PRINTF("Error: invalid peer_mac argument\r\n");
+                return;
+            }
+            arg += 2;
+        }
+        else if ((arg + 1 < argc) && (string_equal(argv[arg], "ssi") != false))
+        {
+            ssi_tx = string_dup(argv[arg + 1]);
+            arg += 2;
+        }
+        else
+        {
+            dump_wlan_nan_transmit_usage();
+            (void)PRINTF("Error: argument %d is invalid\r\n", arg);
+            return;
+        }
+    } while (arg < argc);
+
+    ret = wlan_nan_transmit(own_id, peer_id, peer_mac, ssi_tx);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n wlan-nan-transmit failed!\r\n");
+
+    }
+    else
+    {
+        (void)PRINTF("\r\n wlan-nan-transmit success!\r\n");
+    }
+
+    if (ssi_tx)
+    {
+        OSA_MemoryFree(ssi_tx);
+        ssi_tx = NULL;
+    }
+}
+#endif /* CONFIG_WPA_SUPP_NAN_USD */
+
 #if CONFIG_IMD3_CFG
 
 static void dump_wlan_imd3_cfg_usage(void)
@@ -13576,6 +14051,14 @@ static struct cli_command tests[] = {
     {"wlan-p2p-cancel", NULL, test_wlan_p2p_cancel},
     {"wlan-p2p-remove-client", "<address|iface=address> = remove a peer from all groups", test_wlan_p2p_remove_client},
     {"wlan-p2p-list-network", NULL, test_wlan_p2p_list_network},
+#endif
+#if CONFIG_WPA_SUPP_NAN_USD
+    {"wlan-nan-publish", " service_name=<service name> ...", test_wlan_nan_publish},
+    {"wlan-nan-cancel-publish", " publish_id=<id from wlan-nan-publish>", test_wlan_nan_cancel_publish},
+    {"wlan-nan-update-publish", " publish_id=<id from wlan-nan-publish> [ssi=<service specific information (hexdump)>]", test_wlan_nan_update_publish},
+    {"wlan-nan-subscribe", " service_name=<service name> ...", test_wlan_nan_subscribe},
+    {"wlan-nan-cancel-subscribe", " subscribe_id=<id from wlan-nan-subscribe>", test_wlan_nan_cancel_subscribe},
+    {"wlan-nan-transmit", " handle=<id from wlan-nan-publish or wlan-nan-subscribe> ...", test_wlan_nan_transmit},
 #endif
 #if CONFIG_NET_MONITOR
     {"wlan-net-monitor-cfg", NULL, test_wlan_net_monitor_cfg},

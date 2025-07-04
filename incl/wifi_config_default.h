@@ -846,6 +846,19 @@
 #define CONFIG_TXPD_RXPD_V3 0
 #endif
 
+#if !defined CONFIG_WPA_SUPP_NAN_USD
+#if defined(RW610)
+#define CONFIG_WPA_SUPP_NAN_USD CONFIG_WPA_SUPP
+#else
+#define CONFIG_WPA_SUPP_NAN_USD 0
+#endif
+#endif
+
+#if CONFIG_WPA_SUPP_NAN_USD
+#undef CONFIG_WPA_SUPP_NAN_USD
+#define CONFIG_WPA_SUPP_NAN_USD CONFIG_WPA_SUPP
+#endif
+
 #if !defined CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
 #if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD9177) || defined(IW610)
 #define CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE 0
