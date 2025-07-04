@@ -99,7 +99,7 @@ typedef struct wls_csi_cfg
 	/**CSI filter parameters*/
 	 csi_filter_param_t gcsi_filter_param;
 	 
- } wls_csi_cfg_t, csi_proc_cfg_t;
+ } wls_csi_cfg_t, ami_cfg_t;
 
  /*
 int proc_csi_event(event_header * event, unsigned int *resArray);

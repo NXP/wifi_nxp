@@ -73,11 +73,12 @@ uint32_t fftInBuffer_t[FFT_INBUFFER_LEN_DW];
 #if (CONFIG_CSI) && (CONFIG_CSI_PROC)
 extern t_u8 csi_local_buff[MAX_CSI_LOCAL_BUF][CSI_LOCAL_BUF_ENTRY_SIZE];
 extern csi_local_buff_statu csi_buff_stat;
-extern wlan_csi_config_params_t g_csi_params_default;
-extern csi_proc_cfg_t g_csi_proc_cfg;
+extern ami_cfg_t g_ami_cfg;
 float referenceBuffer[2 * (MAX_RX * MAX_TX) * MAX_IFFT_SIZE_CSI];
-unsigned int fftInBuffer[FFT_INBUFFER_LEN_DW] = {0};
-unsigned int scratchBuffer1[FFT_INBUFFER_LEN_DW] = {0};
+unsigned int fftInBuffer[FFT_INBUFFER_LEN_DW];
+unsigned int scratchBuffer1[FFT_INBUFFER_LEN_DW];
+unsigned int headerBuffer[HEADER_LEN]
+unsigned int totalpower[MAX_RX * MAX_TX + 1];
 #define LEG_RATE 0
 #define HT_RATE 1
 #define VHT_RATE 2
@@ -6345,31 +6346,30 @@ static void proc_csi_event(void)
     (void)memset(scratchBuffer1, 0x00, FFT_INBUFFER_LEN_DW);
     (void)memset(&packetparams, 0x00, sizeof(hal_wls_packet_params_t));
 
-    //packetparams.chNum = g_csi_params_default.channel;
-    packetparams.chNum = g_csi_proc_cfg.channel;
+    packetparams.chNum = g_ami_cfg.channel;
 
-    wls_unpack_csi(csiBuffer, fftInBuffer, &packetparams, &g_csi_proc_cfg.wls_processing_input, totalpower);
+    wls_unpack_csi(csiBuffer, fftInBuffer, &packetparams, &g_ami_cfg.wls_processing_input, totalpower);
 
     firstPathDelay = wls_calculate_toa(headerBuffer, fftInBuffer, scratchBuffer1, totalpower,
-		&packetparams, &g_csi_proc_cfg.wls_processing_input);
+		&packetparams, &g_ami_cfg.wls_processing_input);
 
-    if (g_csi_proc_cfg.csiFilterSet < 2)
+    if (g_ami_cfg.csiFilterSet < 2)
 	{
         // initialize
-        if(g_csi_proc_cfg.csiFilterSet == 0)
+        if(g_ami_cfg.csiFilterSet == 0)
         {
-            set_csi_proc_filter(headerBuffer, &g_csi_proc_cfg.gcsi_filter_param);
+            set_csi_proc_filter(headerBuffer, &g_ami_cfg.gcsi_filter_param);
         }
 
-        if(check_csi_filter(headerBuffer, &g_csi_proc_cfg.gcsi_filter_param))
+        if(check_csi_filter(headerBuffer, &g_ami_cfg.gcsi_filter_param) == WM_SUCCESS)
         {
-            wls_intialize_reference(headerBuffer, &g_csi_proc_cfg.gcsi_filter_param, fftInBuffer, referenceBuffer);
-            g_csi_proc_cfg.csiFilterSet = 2;
+            wls_intialize_reference(headerBuffer, &g_ami_cfg.gcsi_filter_param, fftInBuffer, referenceBuffer);
+            g_ami_cfg.csiFilterSet = 2;
         }
 	}
-    else if (check_csi_filter(headerBuffer, &g_csi_proc_cfg.gcsi_filter_param) == WM_SUCCESS)
+    else if (check_csi_filter(headerBuffer, &g_ami_cfg.gcsi_filter_param) == WM_SUCCESS)
     {
-        perturbVal_dB = wls_update_cross_corr_pi_calc(headerBuffer, &g_csi_proc_cfg.gcsi_filter_param,
+        perturbVal_dB = wls_update_cross_corr_pi_calc(headerBuffer, &g_ami_cfg.gcsi_filter_param,
             fftInBuffer, referenceBuffer, scratchBuffer1);
 
         {
@@ -6395,6 +6395,19 @@ static void proc_csi_event(void)
 			}
 			PRINTF("CSI Processing results: %s(%d), %0.2f\tTSF %llx, PI %0.1f \r\n",
 				myStr, BW, toa_ns, TSF, perturbVal_dB);
+            
+            if (g_ami_cfg.gcsi_filter_param.num_csi)
+			{
+				if (g_ami_cfg.gcsi_filter_param.num_csi > 1)
+                {
+                    g_ami_cfg.gcsi_filter_param.num_csi--;
+                }
+                else
+                {
+                    g_ami_cfg.gcsi_filter_param.num_csi--;
+                    g_ami_cfg.start = 0;
+                }
+			}
 		}
     }
 

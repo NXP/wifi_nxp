@@ -8348,6 +8348,229 @@ static void test_wlan_csi_cfg(int argc, char **argv)
         (void)PRINTF("Failed to send csi cfg\r\n");
     }
 }
+
+#if CONFIG_CSI_PROC
+static void dump_wlan_set_ami_cfg_usage(void)
+{
+    (void)PRINTF("Usage : wlan-set-ami-cfg mac <mac_address> channel <channel> type [packet_type] bw [band_width]\r\n");
+    (void)PRINTF("                              ref [update_ref] num [CSI_number]\r\n");
+    (void)PRINTF("Mandatory parameters: < xxxx >\r\n");
+    (void)PRINTF("      For example: mac <mac_address>\r\n");
+    (void)PRINTF("Optional parameters: [ xxxx ]\r\n");
+    (void)PRINTF("      For example: bw [bandwidth]\r\n");
+    (void)PRINTF("mac       : Source address of CSI data being processed. \r\n");
+    (void)PRINTF("channel   : The channel of the connected AP.\r\n");
+    (void)PRINTF("type      : Packet type: \r\n");
+    (void)PRINTF("              0: legacy - 11a/g \r\n");
+    (void)PRINTF("              1: HT     - 11n \r\n");
+    (void)PRINTF("              2: VHT    - 11ac \r\n");
+    (void)PRINTF("              3: HE     - 11ax \r\n");
+    (void)PRINTF("              Defalut value: 0 \r\n");
+    (void)PRINTF("bw        : Bandwidth:\r\n");
+    (void)PRINTF("              0: 20MHz \r\n");
+    (void)PRINTF("              1: 40MHz \r\n");
+    (void)PRINTF("              2: 80MHz \r\n");
+    (void)PRINTF("              Defalut value: 0 \r\n");
+    (void)PRINTF("ref      : Reference update: \r\n");
+    (void)PRINTF("              0: static - first, no updates. \r\n");
+    (void)PRINTF("              1: IIR filter - first CSI is reference, update with IIR fitler coefficient alpha. \r\n");
+    (void)PRINTF("              2: Kalman filter - first CSI is reference, update with Kalaman fitler. \r\n");
+    (void)PRINTF("              Defalut value: 0 \r\n");
+    (void)PRINTF("num      : The number of CSI data to be processed.\r\n");
+    (void)PRINTF("              0: Process CSI data until stop it.\r\n");
+    (void)PRINTF("              [1 - 255]: Number of CSI data to be processed.\r\n");
+    (void)PRINTF("              Defalut value: 0 \r\n");
+}
+
+static void test_wlan_set_ami_cfg(int argc, char **argv)
+{
+    wlan_csi_proc_cfg cfg;
+    int arg = 0, ret = 0;
+    unsigned int value = 0;
+    char raw_mac[MLAN_MAC_ADDR_LENGTH] = {0};
+    struct
+    {
+        unsigned mac : 1;
+        unsigned channel : 1;
+        unsigned type : 1;
+        unsigned bw : 1;
+        unsigned ref : 1;
+        unsigned num : 1;
+    } info;
+
+    (void)memset(&info, 0, sizeof(info));
+
+    (void)memset(&cfg, 0, sizeof(cfg));
+
+    if (argc < 5 && argc > 13)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_set_ami_cfg_usage();
+        return;
+    }
+    arg++;
+
+    do
+    {
+        if(info.mac == 0 && string_equal("mac", argv[arg]))
+        {
+            ret = get_mac(argv[arg + 1], raw_mac, ':');
+            if (ret != 0)
+            {
+                (void)PRINTF("Error: invalid 'mac' setting\r\n");
+                return;
+            }
+            
+            info.mac = 1;
+            (void)memcpy(cfg.peer_mac, raw_mac, MLAN_MAC_ADDR_LENGTH);
+            arg += 2;
+        }
+        else if(info.channel == 0 && string_equal("channel", argv[arg]))
+        {
+            if(get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid 'channel' setting.\r\n");
+                return;
+            }
+
+            info.channel = 1;
+            cfg.channel = value & 0xFF;
+            arg += 2;
+        }
+        else if(info.type == 0 && string_equal("type", argv[arg]))
+        {
+            if(get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid 'packet type' setting.\r\n");
+                return;
+            }
+
+            if(value > 3)
+            {
+                (void)PRINTF("Error: invalid 'packet type' setting.\r\n");
+                dump_wlan_set_ami_cfg_usage();
+                return;
+            }
+
+            info.type = 1;
+            cfg.packet_format = value & 0xFF;
+            arg += 2;
+            
+        }
+        else if(info.bw == 0 && string_equal("bw", argv[arg]))
+        {
+            if(get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid 'bandwidth' setting.\r\n");
+                return;
+            }
+
+            if(value > 2)
+            {
+                (void)PRINTF("Error: invalid 'bandwidth' setting.\r\n");
+                dump_wlan_set_ami_cfg_usage();
+                return;
+            }
+
+            info.bw = 1;
+            cfg.packet_bandwidth = value & 0xFF;
+            arg += 2;
+        }
+        else if(info.ref == 0 && string_equal("ref", argv[arg]))
+        {
+            if(get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid 'update ref' setting.\r\n");
+                return;
+            }
+
+            if(value > 2)
+            {
+                (void)PRINTF("Error: invalid 'update ref' setting.\r\n");
+                dump_wlan_set_ami_cfg_usage();
+                return;
+            }
+
+            info.ref = 1;
+            cfg.reference_update = value & 0xFF;
+            arg += 2;
+        }
+        else if(info.num == 0 && string_equal("num", argv[arg]))
+        {
+            if(get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid 'CSI number' setting.\r\n");
+                return;
+            }
+
+            if(value > 255)
+            {
+                (void)PRINTF("Error: invalid 'CSI number' setting.\r\n");
+                dump_wlan_set_ami_cfg_usage();
+                return;
+            }
+
+            info.num = 1;
+            cfg.num_csi = value & 0xFF;
+            arg += 2;
+        }
+        else
+        {
+            PRINTF("UNKNOW setting.\r\n");
+            dump_wlan_set_ami_cfg_usage();
+            return;
+        }
+    } while (arg < argc);
+
+    if(info.mac == 0 || info.channel == 0)
+    {
+        PRINTF("Please check whether mac or channel is set.\r\n");
+        dump_wlan_set_ami_cfg_usage();
+        return;
+    }
+
+    
+    wlan_set_ami_cfg(&cfg);
+
+    return;
+}
+
+static void dump_test_wlan_start_stop_ami_usage(void)
+{
+    (void)PRINTF("wlan-start-stop-ami <start/stop>\r\n");
+    (void)PRINTF("          1  - start to caculate Ambient Motion Index.\r\n");
+    (void)PRINTF("          0  - stop to caculate Ambient Motion Index.\r\n");
+}
+
+static void test_wlan_start_stop_ami(int argc, char **argv)
+{
+    unsigned int value = 0;
+    uint8_t start = 0;
+
+    if(argc != 2)
+    {
+        (void)PRINTF("Invalid configuration number\r\n");
+        dump_test_wlan_start_stop_ami_usage();
+        return;
+    }
+
+    if(get_uint(argv[1], &value, strlen(argv[1])))
+    {
+        (void)PRINTF("Invalid setting\r\n");
+        dump_test_wlan_start_stop_ami_usage();
+        return;
+    }
+
+    start = value & 0xFF;
+
+    wlan_start_stop_ami(start);
+
+    return;
+
+}
+
+#endif /* CONFIG_CSI_PROC */
+
 #endif
 
 #if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_11R) || (CONFIG_ROAMING)
@@ -13963,6 +14186,12 @@ static struct cli_command tests[] = {
      " <sta/uap> <csi_enable> <head_id> <tail_id> <chip_id> <band_config> <channel> <csi_monitor_enable> <ra4us>",
      test_wlan_set_csi_param_header},
     {"wlan-set-csi-filter", "<opt> <macaddr> <pkt_type> <type> <flag>", test_wlan_set_csi_filter},
+#if CONFIG_CSI_PROC
+    {"wlan-set-ami-cfg", 
+    " mac <mac_address> channel <channel> type <packet_type> bw <band_width> ref <update_ref> num <CSI_number>",
+     test_wlan_set_ami_cfg},
+    {"wlan-start-stop-ami", "<start/stop>", test_wlan_start_stop_ami},
+#endif
 #endif
 #if CONFIG_TX_RX_HISTOGRAM
     {"wlan-txrx-histogram", "<action> <enable>", test_wlan_txrx_histogram},

@@ -184,8 +184,8 @@ static bool wlan_uap_scan_chan_list_set;
 #endif
 
 #if (CONFIG_CSI) && (CONFIG_CSI_PROC)
-csi_proc_cfg_t g_csi_proc_cfg;
-static void wlan_init_csi_proc_cfg(void);
+ami_cfg_t g_ami_cfg;
+static void wlan_init_ami_cfg(void);
 #endif
 
 #if CONFIG_MEF_CFG
@@ -3471,34 +3471,68 @@ void wlcm_process_csi_status_report(struct wifi_message *msg)
 }
 
 #if CONFIG_CSI_PROC
-static void wlcm_process_csi_data(void)
+
+void wlan_set_ami_cfg(wlan_csi_proc_cfg *cfg)
 {
-    wifi_process_csi_data();
+    g_ami_cfg.channel          =  cfg->channel;
+
+    (void)memcpy(g_ami_cfg.gcsi_filter_param.peer_mac, cfg->peer_mac, MLAN_MAC_ADDR_LENGTH);
+    g_ami_cfg.gcsi_filter_param.num_csi            = cfg->num_csi;
+    g_ami_cfg.gcsi_filter_param.packet_bandwidth   = cfg->packet_bandwidth;
+    g_ami_cfg.gcsi_filter_param.packet_format      = cfg->packet_format;
+    g_ami_cfg.gcsi_filter_param.reference_update   = cfg->reference_update;
+
+    g_ami_cfg.csiFilterSet                   = 1;
+
+    return;
 }
 
-static void wlan_init_csi_proc_cfg(void)
+void wlan_start_stop_ami(uint8_t start)
 {
-    (void)memset(&g_csi_proc_cfg, 0x00, sizeof(csi_proc_cfg_t));
+    g_ami_cfg.start = start;
 
-    g_csi_proc_cfg.channel                                      = 0;
-    g_csi_proc_cfg.wls_processing_input.enableCsi		        = 1; // turn on CSI processing
-	g_csi_proc_cfg.wls_processing_input.enableAoA		        = AOA_DEFAULT; // turn on AoA (req. enableCsi==1)
-	g_csi_proc_cfg.wls_processing_input.nTx				        = MAX_TX; // limit # tx streams to process
-	g_csi_proc_cfg.wls_processing_input.nRx				        = MAX_RX; // limit # rx to process
-	g_csi_proc_cfg.wls_processing_input.selCal			        = 0; // choose cal values
-	g_csi_proc_cfg.wls_processing_input.dumpMul			        = 0; // dump extra peaks in AoA
-	g_csi_proc_cfg.wls_processing_input.enableAntCycling        = 0; // enable antenna cycling
-	g_csi_proc_cfg.wls_processing_input.dumpRawAngle 	        = 0;  // Dump Raw Angle
-	g_csi_proc_cfg.wls_processing_input.useToaMin		        = TOA_MIN_DEFAULT; // 1: use min combining, 0: power combining;
-	g_csi_proc_cfg.wls_processing_input.useSubspace		        = SUBSPACE_DEFAULT; // 1: use subspace algo; 0: no;
-	g_csi_proc_cfg.wls_processing_input.useFindAngleDelayPeaks  = ENABLE_DELAY_PEAKS; // use this algorithm for AoA
+    if(!start)
+    {
+        g_ami_cfg.gcsi_filter_param.num_csi = 0;
+    }
 
-	g_csi_proc_cfg.gcsi_filter_param.IIR_alpha    = PI_ALPHA_FACTOR;
-	g_csi_proc_cfg.gcsi_filter_param.kalman_p0    = KALMAN_P0;
-	g_csi_proc_cfg.gcsi_filter_param.kalman_alpha = KALMAN_ALPHA;
-	g_csi_proc_cfg.gcsi_filter_param.kalman_N0    = KALMAN_N0;
+    return;
+}
 
-    g_csi_proc_cfg.csiFilterSet                   = 1;
+static void wlcm_process_csi_data(void *p_data)
+{
+    wifi_process_csi_data(p_data);
+}
+
+static void wlan_init_ami_cfg(void)
+{
+    (void)memset(&g_ami_cfg, 0x00, sizeof(ami_cfg_t));
+
+    g_ami_cfg.channel                                      = 0;
+    g_ami_cfg.start                                        = 0;
+
+    g_ami_cfg.wls_processing_input.enableCsi		        = 1; // turn on CSI processing
+	g_ami_cfg.wls_processing_input.enableAoA		        = AOA_DEFAULT; // turn on AoA (req. enableCsi==1)
+	g_ami_cfg.wls_processing_input.nTx				        = MAX_TX; // limit # tx streams to process
+	g_ami_cfg.wls_processing_input.nRx				        = MAX_RX; // limit # rx to process
+	g_ami_cfg.wls_processing_input.selCal			        = 0; // choose cal values
+	g_ami_cfg.wls_processing_input.dumpMul			        = 0; // dump extra peaks in AoA
+	g_ami_cfg.wls_processing_input.enableAntCycling        = 0; // enable antenna cycling
+	g_ami_cfg.wls_processing_input.dumpRawAngle 	        = 0;  // Dump Raw Angle
+	g_ami_cfg.wls_processing_input.useToaMin		        = TOA_MIN_DEFAULT; // 1: use min combining, 0: power combining;
+	g_ami_cfg.wls_processing_input.useSubspace		        = SUBSPACE_DEFAULT; // 1: use subspace algo; 0: no;
+	g_ami_cfg.wls_processing_input.useFindAngleDelayPeaks  = ENABLE_DELAY_PEAKS; // use this algorithm for AoA
+
+    g_ami_cfg.gcsi_filter_param.num_csi            = 0;
+    g_ami_cfg.gcsi_filter_param.packet_bandwidth   = 0;
+    g_ami_cfg.gcsi_filter_param.packet_format      = 0;
+    g_ami_cfg.gcsi_filter_param.reference_update   = 0;
+	g_ami_cfg.gcsi_filter_param.IIR_alpha          = PI_ALPHA_FACTOR;
+	g_ami_cfg.gcsi_filter_param.kalman_p0          = KALMAN_P0;
+	g_ami_cfg.gcsi_filter_param.kalman_alpha       = KALMAN_ALPHA;
+	g_ami_cfg.gcsi_filter_param.kalman_N0          = KALMAN_N0;
+
+    g_ami_cfg.csiFilterSet                         = 0;
 
     return;
 }
@@ -7414,8 +7448,11 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
 #if CONFIG_CSI_PROC
         case WIFI_EVENT_CSI_PROC:
-            wlcm_d("got event: csi data process");
-            wlcm_process_csi_data();
+            if(g_ami_cfg.start)
+            {
+                wlcm_d("got event: csi data process");
+                wlcm_process_csi_data(msg);
+            }
             break;
 #endif
 #endif
@@ -8006,7 +8043,7 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
 #endif
 
 #if (CONFIG_CSI) && (CONFIG_CSI_PROC)
-    wlan_init_csi_proc_cfg();
+    wlan_init_ami_cfg();
 #endif
 
     return ret;

@@ -526,6 +526,26 @@ enum wlan_csi_opt
     CSI_FILTER_OPT_CLEAR,
     CSI_FILTER_OPT_DUMP,
 };
+
+#if CONFIG_CSI_PROC
+
+typedef struct _wlan_csi_proc_cfg
+{
+    /** peer mac address */
+    uint8_t peer_mac[MLAN_MAC_ADDR_LENGTH];
+    /** channel */
+    uint8_t channel;
+    /** Number of CSI to process */
+    uint8_t num_csi;
+    /** CSI bandwidth: 20/40/80 */
+    uint8_t packet_bandwidth;
+    /** CSI format: legacy/HT/VHT/HE */
+    uint8_t packet_format;
+	/** Reference Update */
+	uint8_t reference_update;
+} wlan_csi_proc_cfg;
+#endif
+
 #endif
 
 enum wlan_monitor_opt
@@ -6680,6 +6700,23 @@ int wlan_set_csi_cfg_param_default(wlan_csi_config_params_t *in_csi_cfg);
  * This function reset Wi-Fi CSI filter data.
  */
 void wlan_reset_csi_filter_data(void);
+
+#if CONFIG_CSI_PROC
+/** This function set Ambient Motion Index configuration.
+ *
+ * \param[in] cfg: Ambient Motion Index configuration..
+ */
+void wlan_set_ami_cfg(wlan_csi_proc_cfg *cfg);
+
+/** Use this API to start or stop caculate Ambient Motion Index.
+ *
+ * \param[in] start: start/stop
+ *                  1: start
+ *                  0: stop
+ */
+void wlan_start_stop_ami(uint8_t start);
+#endif
+
 #endif
 
 #if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_11R) || (CONFIG_ROAMING)
