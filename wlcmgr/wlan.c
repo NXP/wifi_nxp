@@ -186,6 +186,7 @@ static bool wlan_uap_scan_chan_list_set;
 #if (CONFIG_CSI) && (CONFIG_CSI_PROC)
 ami_cfg_t g_ami_cfg;
 static void wlan_init_ami_cfg(void);
+extern uint64_t ami_num;
 #endif
 
 #if CONFIG_MEF_CFG
@@ -3474,8 +3475,6 @@ void wlcm_process_csi_status_report(struct wifi_message *msg)
 
 void wlan_set_ami_cfg(wlan_csi_proc_cfg *cfg)
 {
-    g_ami_cfg.channel          =  cfg->channel;
-
     (void)memcpy(g_ami_cfg.gcsi_filter_param.peer_mac, cfg->peer_mac, MLAN_MAC_ADDR_LENGTH);
     g_ami_cfg.gcsi_filter_param.num_csi            = cfg->num_csi;
     g_ami_cfg.gcsi_filter_param.packet_bandwidth   = cfg->packet_bandwidth;
@@ -3494,6 +3493,8 @@ void wlan_start_stop_ami(uint8_t start)
     if(!start)
     {
         g_ami_cfg.gcsi_filter_param.num_csi = 0;
+        ami_num                             = 0;
+        g_ami_cfg.start                     = 0;
     }
 
     return;
@@ -3533,6 +3534,8 @@ static void wlan_init_ami_cfg(void)
 	g_ami_cfg.gcsi_filter_param.kalman_N0          = KALMAN_N0;
 
     g_ami_cfg.csiFilterSet                         = 0;
+
+    ami_num                                        = 0;
 
     return;
 }

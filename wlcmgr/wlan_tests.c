@@ -8352,14 +8352,13 @@ static void test_wlan_csi_cfg(int argc, char **argv)
 #if CONFIG_CSI_PROC
 static void dump_wlan_set_ami_cfg_usage(void)
 {
-    (void)PRINTF("Usage : wlan-set-ami-cfg mac <mac_address> channel <channel> type [packet_type] bw [band_width]\r\n");
+    (void)PRINTF("Usage : wlan-set-ami-cfg mac <mac_address> type [packet_type] bw [band_width]\r\n");
     (void)PRINTF("                              ref [update_ref] num [CSI_number]\r\n");
     (void)PRINTF("Mandatory parameters: < xxxx >\r\n");
     (void)PRINTF("      For example: mac <mac_address>\r\n");
     (void)PRINTF("Optional parameters: [ xxxx ]\r\n");
     (void)PRINTF("      For example: bw [bandwidth]\r\n");
     (void)PRINTF("mac       : Source address of CSI data being processed. \r\n");
-    (void)PRINTF("channel   : The channel of the connected AP.\r\n");
     (void)PRINTF("type      : Packet type: \r\n");
     (void)PRINTF("              0: legacy - 11a/g \r\n");
     (void)PRINTF("              1: HT     - 11n \r\n");
@@ -8391,7 +8390,6 @@ static void test_wlan_set_ami_cfg(int argc, char **argv)
     struct
     {
         unsigned mac : 1;
-        unsigned channel : 1;
         unsigned type : 1;
         unsigned bw : 1;
         unsigned ref : 1;
@@ -8423,18 +8421,6 @@ static void test_wlan_set_ami_cfg(int argc, char **argv)
             
             info.mac = 1;
             (void)memcpy(cfg.peer_mac, raw_mac, MLAN_MAC_ADDR_LENGTH);
-            arg += 2;
-        }
-        else if(info.channel == 0 && string_equal("channel", argv[arg]))
-        {
-            if(get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
-            {
-                (void)PRINTF("Error: invalid 'channel' setting.\r\n");
-                return;
-            }
-
-            info.channel = 1;
-            cfg.channel = value & 0xFF;
             arg += 2;
         }
         else if(info.type == 0 && string_equal("type", argv[arg]))
@@ -8522,7 +8508,7 @@ static void test_wlan_set_ami_cfg(int argc, char **argv)
         }
     } while (arg < argc);
 
-    if(info.mac == 0 || info.channel == 0)
+    if(info.mac == 0)
     {
         PRINTF("Please check whether mac or channel is set.\r\n");
         dump_wlan_set_ami_cfg_usage();
@@ -8562,6 +8548,17 @@ static void test_wlan_start_stop_ami(int argc, char **argv)
     }
 
     start = value & 0xFF;
+    if(start != 0 && start != 1)
+    {
+        (void)PRINTF("Invalid start/stop setting\r\n");
+        dump_test_wlan_start_stop_ami_usage();
+        return;
+    }
+
+    if(start)
+    {
+        wlan_unregister_csi_user_callback();
+    }
 
     wlan_start_stop_ami(start);
 
@@ -14188,7 +14185,7 @@ static struct cli_command tests[] = {
     {"wlan-set-csi-filter", "<opt> <macaddr> <pkt_type> <type> <flag>", test_wlan_set_csi_filter},
 #if CONFIG_CSI_PROC
     {"wlan-set-ami-cfg", 
-    " mac <mac_address> channel <channel> type <packet_type> bw <band_width> ref <update_ref> num <CSI_number>",
+    " mac <mac_address> type <packet_type> bw <band_width> ref <update_ref> num <CSI_number>",
      test_wlan_set_ami_cfg},
     {"wlan-start-stop-ami", "<start/stop>", test_wlan_start_stop_ami},
 #endif

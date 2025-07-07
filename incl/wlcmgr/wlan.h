@@ -533,8 +533,6 @@ typedef struct _wlan_csi_proc_cfg
 {
     /** peer mac address */
     uint8_t peer_mac[MLAN_MAC_ADDR_LENGTH];
-    /** channel */
-    uint8_t channel;
     /** Number of CSI to process */
     uint8_t num_csi;
     /** CSI bandwidth: 20/40/80 */

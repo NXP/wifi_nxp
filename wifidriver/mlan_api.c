@@ -81,6 +81,7 @@ unsigned int scratchBuffer1[FFT_INBUFFER_LEN_DW];
 #define HE_RATE 3
 t_u8 convertPktInfo[8] = {LEG_RATE, HT_RATE, HT_RATE, VHT_RATE, HE_RATE, LEG_RATE, LEG_RATE, LEG_RATE};
 #define AMI_CSI_RAW_DATA_OFFSET 8 /* interface header size + event type size */
+uint64_t ami_num = 0;
 #endif
 
 /* This were static functions in mlan file */
@@ -6301,13 +6302,17 @@ static int check_csi_filter(unsigned int *headerBuffer, csi_filter_param_t *csi_
 	return WM_SUCCESS;
 }
 
+/*
+* Function that handles CSI event processing for Ambient Motion Index calculation.
+*/
+
 static void proc_csi_event(void *p_data)
 {
     unsigned char *rdPtr;
     unsigned int *csiBuffer = NULL;
     unsigned int csi_len;
 	int firstPathDelay;
-	float perturbVal_dB = 0.0f;
+	float ambientMotionVal_dB= 0.0f;
 	unsigned int headerBuffer[HEADER_LEN];
 	unsigned int totalpower[MAX_RX * MAX_TX + 1];
 
@@ -6362,7 +6367,7 @@ static void proc_csi_event(void *p_data)
 	}
     else if (check_csi_filter(headerBuffer, &g_ami_cfg.gcsi_filter_param) == WM_SUCCESS)
     {
-        perturbVal_dB = wls_update_cross_corr_pi_calc(headerBuffer, &g_ami_cfg.gcsi_filter_param,
+        ambientMotionVal_dB= wls_update_cross_corr_ami_calc(headerBuffer, &g_ami_cfg.gcsi_filter_param,
             fftInBuffer, referenceBuffer, scratchBuffer1);
 
         {
@@ -6386,8 +6391,13 @@ static void proc_csi_event(void *p_data)
 				myStr[1] = (pktinfo->packetType == HE_RATE)? 'E' : 'T';
 				myStr[2] = '\0';
 			}
-			PRINTF("CSI Processing results: %s(%d), %0.2f\tTSF %llx, PI %0.1f \r\n",
-				myStr, BW, toa_ns, TSF, perturbVal_dB);
+            else
+            {
+                /* do nothing */
+            }
+            ami_num++;
+			PRINTF("NUM %lld CSI Processing Results: %s(%d), %0.2f\tTSF %llx, Ambient Motion Index %0.1f dB\r\n",
+				ami_num, myStr, BW, toa_ns, TSF, ambientMotionVal_dB);
             
             if (g_ami_cfg.gcsi_filter_param.num_csi)
 			{
@@ -6399,9 +6409,14 @@ static void proc_csi_event(void *p_data)
                 {
                     g_ami_cfg.gcsi_filter_param.num_csi--;
                     g_ami_cfg.start = 0;
+                    ami_num = 0;
                 }
 			}
 		}
+    }
+    else
+    {
+        /* do nothing */
     }
 
 #if !CONFIG_MEM_POOLS
