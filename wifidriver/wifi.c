@@ -3657,6 +3657,11 @@ static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, 
         return -WM_FAIL;
     }
 #endif
+    if (mlan_adap->ps_state == PS_STATE_SLEEP)
+    {
+        OSA_RWLockWriteUnlock(&sleep_rwlock);
+        mlan_adap->ps_state = PS_STATE_AWAKE;
+    }
 #if CONFIG_WPA_SUPP
     RxPD *prx_pd  = (RxPD *)(void *)((t_u8 *)buffer + INTF_HEADER_LEN);
     eth_hdr *ethh = MNULL;
@@ -3692,12 +3697,6 @@ static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, 
     {
         wifi_rx_block_cnt++;
         return WM_SUCCESS;
-    }
-
-    if (mlan_adap->ps_state == PS_STATE_SLEEP)
-    {
-        OSA_RWLockWriteUnlock(&sleep_rwlock);
-        mlan_adap->ps_state = PS_STATE_AWAKE;
     }
 
     if (wm_wifi.data_input_callback != NULL)
