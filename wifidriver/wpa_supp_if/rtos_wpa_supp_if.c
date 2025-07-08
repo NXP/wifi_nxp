@@ -239,17 +239,6 @@ void wifi_nxp_wpa_supp_event_proc_scan_start(void *if_priv)
     }
 }
 
-void wifi_nxp_wpa_supp_event_proc_scan_abort(void *if_priv)
-{
-    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
-
-    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
-
-    wifi_if_ctx_rtos->scan_in_progress = false;
-
-    wifi_if_ctx_rtos->supp_callbk_fns.scan_abort(wifi_if_ctx_rtos->supp_drv_if_ctx);
-}
-
 void wifi_nxp_wpa_supp_event_signal_change(void *if_priv)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
@@ -292,6 +281,8 @@ void wifi_nxp_wpa_supp_event_proc_scan_done(void *if_priv, int aborted, int exte
     memcpy(&info->scan_start_tsf_bssid, &wifi_if_ctx_rtos->scan_start_tsf_bssid, ETH_ALEN);
 
     wifi_if_ctx_rtos->scan_in_progress = false;
+
+    wifi_nxp_reset_scan_flag();
 
 #if CONFIG_HOSTAPD
     if (wifi_if_ctx_rtos->hostapd)
@@ -1013,6 +1004,7 @@ int wifi_nxp_wpa_supp_scan_abort(void *if_priv)
     }
 
     wlan_abort_split_scan();
+    wifi_user_scan_config_cleanup();
 
     status = WM_SUCCESS;
 
@@ -1609,6 +1601,11 @@ int wifi_nxp_wpa_set_supp_port(void *if_priv, int authorized, char *bssid)
 #if CONFIG_WPA_SUPP_WPS
         }
 #endif
+    }
+    if (authorized == 0U)
+    {
+        wlan_abort_split_scan();
+        wifi_user_scan_config_cleanup();
     }
 
     ret = 0;
