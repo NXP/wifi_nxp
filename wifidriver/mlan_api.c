@@ -6262,6 +6262,8 @@ static void set_csi_proc_filter(unsigned int *headerBuffer, csi_filter_param_t *
 
 	// set sig format and BW
 	csi_filter_param_ptr->packet_bandwidth = pktinfo->sigBw;
+    csi_filter_param_ptr->num_rx = pktinfo->nRx;
+	csi_filter_param_ptr->num_tx = pktinfo->nTx;
 	csi_filter_param_ptr->packet_format = convertPktInfo[pktinfo->packetType];
 	// set MAC address
 	(void)memcpy(&(csi_filter_param_ptr->peer_mac[0]), &addr2_lo, sizeof(t_u16));
@@ -6272,6 +6274,53 @@ static void set_csi_proc_filter(unsigned int *headerBuffer, csi_filter_param_t *
 		csi_filter_param_ptr->peer_mac[2], csi_filter_param_ptr->peer_mac[3],
 		csi_filter_param_ptr->peer_mac[4], csi_filter_param_ptr->peer_mac[5],
 		csi_filter_param_ptr->packet_bandwidth, csi_filter_param_ptr->packet_format);
+}
+
+static int check_csi_filter_partial(unsigned int *headerBuffer, csi_filter_param_t *csi_filter_param_ptr)
+{
+	hal_csirxinfo_t *csirxinfo = (hal_csirxinfo_t*)headerBuffer;
+	hal_pktinfo_t *pktinfo;
+	t_u16 addr2_lo = csirxinfo->addr2_lo;
+	t_u32 addr2_hi = csirxinfo->addr2_hi;
+	unsigned int tempVec[2] = {0, 0};
+	t_u8 broadcast_mac[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+
+	tempVec[0] = (unsigned int)csirxinfo->pktinfo;
+	pktinfo = (hal_pktinfo_t*)tempVec;
+
+	// check sig format and BW
+	if ((csi_filter_param_ptr->packet_bandwidth != 0xff)
+		&& (csi_filter_param_ptr->packet_bandwidth != pktinfo->sigBw))
+	{
+		return -WM_FAIL;
+	}
+
+	if ((csi_filter_param_ptr->packet_format != 0xff)
+		&& (csi_filter_param_ptr->packet_format != convertPktInfo[pktinfo->packetType]))
+	{
+		return -WM_FAIL;
+    }
+
+	// check MIMO dimension
+	if ((csi_filter_param_ptr->num_rx != 0xff) && (csi_filter_param_ptr->num_rx != pktinfo->nRx))
+	{
+		return -WM_FAIL;
+	}
+
+	if ((csi_filter_param_ptr->num_tx != 0xff) && (csi_filter_param_ptr->num_tx != pktinfo->nTx))
+	{
+		return -WM_FAIL;
+	}
+
+	// check MAC address
+	if ( memcmp(&(broadcast_mac[0]), &(csi_filter_param_ptr->peer_mac[0]), sizeof(broadcast_mac))
+		&& (memcmp(&addr2_lo, &(csi_filter_param_ptr->peer_mac[0]), sizeof(t_u16)) 
+		|| memcmp(&addr2_hi, &(csi_filter_param_ptr->peer_mac[2]), sizeof(t_u32))) )
+	{
+		return -WM_FAIL;
+	}
+
+	return WM_SUCCESS;
 }
 
 static int check_csi_filter(unsigned int *headerBuffer, csi_filter_param_t *csi_filter_param_ptr)
@@ -6291,6 +6340,13 @@ static int check_csi_filter(unsigned int *headerBuffer, csi_filter_param_t *csi_
     {
 		return -WM_FAIL;
     }
+
+    // check MIMO dimension
+	if ((csi_filter_param_ptr->num_rx != pktinfo->nRx) 
+		|| (csi_filter_param_ptr->num_tx != pktinfo->nTx))
+	{
+		return -WM_FAIL;
+	}
 
 	// set MAC address
 	if (memcmp(&addr2_lo, &(csi_filter_param_ptr->peer_mac[0]), sizeof(t_u16))
@@ -6359,8 +6415,9 @@ static void proc_csi_event(void *p_data)
             set_csi_proc_filter(headerBuffer, &g_ami_cfg.gcsi_filter_param);
         }
 
-        if(check_csi_filter(headerBuffer, &g_ami_cfg.gcsi_filter_param) == WM_SUCCESS)
+        if(check_csi_filter_partial(headerBuffer, &g_ami_cfg.gcsi_filter_param) == WM_SUCCESS)
         {
+            set_csi_proc_filter(headerBuffer, &g_ami_cfg.gcsi_filter_param);
             wls_intialize_reference(headerBuffer, &g_ami_cfg.gcsi_filter_param, fftInBuffer, referenceBuffer);
             g_ami_cfg.csiFilterSet = 2;
         }
@@ -6374,21 +6431,23 @@ static void proc_csi_event(void *p_data)
 			hal_pktinfo_t *pktinfo = (hal_pktinfo_t*)&(headerBuffer[2]);
 			char myStr[4] = {'V','H','T','\0'};
 			int BW = 20 << pktinfo->sigBw;
+            int nRx = pktinfo->nRx + 1;
+			int nTx = pktinfo->nTx + 1;
             t_u8 packet_format = convertPktInfo[pktinfo->packetType];
 			// record TSF
 			UINT64 TSF = (((UINT64)headerBuffer[4]) << 32) + headerBuffer[3];
 			// calculate ToA in ns
 			float toa_ns = 1.e3f * firstPathDelay / (1 << 16);
-			if (pktinfo->packetType == LEG_RATE)
+			if (packet_format == LEG_RATE)
 			{
 				myStr[0] = 'l';
 				myStr[1] = 'e';
 				myStr[2] = 'g';
 			}
-			else if ((pktinfo->packetType == HT_RATE) || (pktinfo->packetType == HE_RATE))
+			else if ((packet_format == HT_RATE) || (packet_format == HE_RATE))
 			{
 				myStr[0] = 'H';
-				myStr[1] = (pktinfo->packetType == HE_RATE)? 'E' : 'T';
+				myStr[1] = (packet_format == HE_RATE)? 'E' : 'T';
 				myStr[2] = '\0';
 			}
             else
@@ -6396,8 +6455,8 @@ static void proc_csi_event(void *p_data)
                 /* do nothing */
             }
             ami_num++;
-			PRINTF("NUM %lld CSI Processing Results: %s(%d), %0.2f\tTSF %llx, Ambient Motion Index %0.1f dB\r\n",
-				ami_num, myStr, BW, toa_ns, TSF, ambientMotionVal_dB);
+			PRINTF("NUM %lld CSI Processing Results: %s(%d), RX/TX %d/%d, %0.2f\tTSF %llx, Ambient Motion Index %0.1f dB\r\n",
+				ami_num, myStr, BW, nRx, nTx, toa_ns, TSF, ambientMotionVal_dB);
             
             if (g_ami_cfg.gcsi_filter_param.num_csi)
 			{

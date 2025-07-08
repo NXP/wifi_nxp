@@ -3495,6 +3495,7 @@ void wlan_start_stop_ami(uint8_t start)
         g_ami_cfg.gcsi_filter_param.num_csi = 0;
         ami_num                             = 0;
         g_ami_cfg.start                     = 0;
+        g_ami_cfg.csiFilterSet              = 0;
     }
 
     return;
@@ -3532,6 +3533,8 @@ static void wlan_init_ami_cfg(void)
 	g_ami_cfg.gcsi_filter_param.kalman_p0          = KALMAN_P0;
 	g_ami_cfg.gcsi_filter_param.kalman_alpha       = KALMAN_ALPHA;
 	g_ami_cfg.gcsi_filter_param.kalman_N0          = KALMAN_N0;
+	g_ami_cfg.gcsi_filter_param.num_rx             = 0xff;
+	g_ami_cfg.gcsi_filter_param.num_tx             = 0xff;
 
     g_ami_cfg.csiFilterSet                         = 0;
 
