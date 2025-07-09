@@ -2960,10 +2960,8 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
 #endif
         while ((pmadapter->mp_rd_bitmap & (1U << pmadapter->curr_rd_port)) != 0U)
         {
-            *pport = pmadapter->curr_rd_port;
-
-            len_reg_l = RD_LEN_P0_L + (*pport << 1U);
-            len_reg_u = RD_LEN_P0_U + (*pport << 1U);
+            len_reg_l = RD_LEN_P0_L + (pmadapter->curr_rd_port << 1U);
+            len_reg_u = RD_LEN_P0_U + (pmadapter->curr_rd_port << 1U);
             rx_len    = ((t_u16)pmadapter->mp_regs[len_reg_u]) << 8;
             rx_len |= (t_u16)pmadapter->mp_regs[len_reg_l];
             rx_blocks = (rx_len + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
@@ -2985,6 +2983,7 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
             }
 #endif
 
+            *pport = pmadapter->curr_rd_port;
             pmadapter->mp_rd_bitmap &=
 #if defined(SD8801)
                 (t_u16)(~(1 << pmadapter->curr_rd_port));
