@@ -316,7 +316,7 @@
 
 /* WLAN white/black list opt */
 #if !defined CONFIG_UAP_STA_MAC_ADDR_FILTER
-#if defined(RW610) && CONFIG_HOSTAPD
+#if (defined(RW610) || defined(SD8978) || defined(SD9177) || defined(IW610)) && CONFIG_HOSTAPD
 #define CONFIG_UAP_STA_MAC_ADDR_FILTER 1
 #else
 #define CONFIG_UAP_STA_MAC_ADDR_FILTER 0
@@ -346,33 +346,33 @@
 #endif
 
 #if !defined CONFIG_WIFI_RTS_THRESHOLD
-#if defined(RW610)
+#if defined(RW610) || defined(SD8978) || defined(SD9177) || defined(IW610)
 #define CONFIG_WIFI_RTS_THRESHOLD 1
-#elif defined(SD8978) || defined(SD8987) || defined(SD9177) || defined(IW610)
+#elif defined(SD8987)
 #define CONFIG_WIFI_RTS_THRESHOLD 0
 #endif
 #endif
 
 #if !defined CONFIG_WIFI_FRAG_THRESHOLD
-#if defined(RW610)
+#if defined(RW610) || defined(SD8978) || defined(SD9177) || defined(IW610)
 #define CONFIG_WIFI_FRAG_THRESHOLD 1
-#elif defined(SD8978) || defined(SD8987) || defined(SD9177) || defined(IW610)
+#elif defined(SD8987)
 #define CONFIG_WIFI_FRAG_THRESHOLD 0
 #endif
 #endif
 
 #if !defined CONFIG_WMM_UAPSD
-#if defined(RW610)
-#define CONFIG_WMM_UAPSD 1
-#elif defined(SD8978) || defined(SD8987) || defined(SD9177) || defined(IW610)
+#if defined(RW610) || defined(SD8978) || defined(SD9177) || defined(IW610)
+#define CONFIG_WMM_UAPSD CONFIG_WMM
+#elif defined(SD8987)
 #define CONFIG_WMM_UAPSD 0
 #endif
 #endif
 
 #if !defined CONFIG_WIFI_GET_LOG
-#if defined(RW610)
+#if defined(RW610) || defined(SD8978) || defined(SD9177) || defined(IW610)
 #define CONFIG_WIFI_GET_LOG 1
-#elif defined(SD8978) || defined(SD8987) || defined(SD9177) || defined(IW610)
+#elif defined(SD8987)
 #define CONFIG_WIFI_GET_LOG 0
 #endif
 #endif
@@ -525,9 +525,9 @@
 #endif
 
 #if !defined CONFIG_TX_RX_HISTOGRAM
-#if defined(RW610)
+#if defined(RW610) || defined(SD8978) || defined(SD9177) || defined(IW610)
 #define CONFIG_TX_RX_HISTOGRAM 1
-#elif defined(SD8978) || defined(SD8987) || defined(SD9177) || defined(IW610)
+#elif defined(SD8987)
 #define CONFIG_TX_RX_HISTOGRAM 0
 #endif
 #endif
