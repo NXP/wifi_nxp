@@ -7531,7 +7531,7 @@ int wlan_p2p_group_remove(char *cmd);
 int wlan_p2p_peers(char *peers_buf, int peer_buf_size, int *peers_buf_len);
 
 /**
- *Retrieves detailed information for a specified P2P peer.
+ * Retrieves detailed information for a specified P2P peer.
  *
  * This function sends a generic wpa_cli command (given by p2p_peer cmd) to
  * obtain detailed information about a specific P2P peer. The resulting output
@@ -7555,7 +7555,7 @@ int wlan_p2p_peers(char *peers_buf, int peer_buf_size, int *peers_buf_len);
 int wlan_p2p_peer(char *cmd, char *peer_info_buf, int peer_info_buf_size, int *peer_info_len);
 
 /**
- *Retrieves detailed information for a P2P interface.
+ * Retrieves detailed information for a P2P interface.
  *
  * This function sends a generic wpa_cli command (given by status cmd) to
  * obtain detailed information about a P2P interface. The resulting output
@@ -7572,6 +7572,33 @@ int wlan_p2p_peer(char *cmd, char *peer_info_buf, int peer_info_buf_size, int *p
  * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
  */
 int wlan_p2p_status(char *buf, size_t buflen, int *reslen);
+
+/**
+ * Retrieves configured networks on a P2P interface.
+ *
+ * This function sends a generic wpa_cli command (given by list_network cmd)
+ * to obtain configured networks in P2P interface.
+ *
+ * The data is returned in tabular form:
+ *
+ *   network id / ssid / bssid / flags
+ *
+ * where:
+ *   network id  – numeric ID assigned by wpa_supplicant
+ *   ssid        – the network SSID
+ *   bssid       – the currently selected BSSID (or “any”)
+ *   flags       – status flags (e.g., “[CURRENT]”)
+ *
+ * \param[out] buf      Pointer to the buffer that will receive the
+ *                      detailed information.
+ * \param[in]  buflen   The total size of the buf in bytes.
+ * \param[out] reslen   Pointer to an integer where the actual length
+ *                      (in bytes) of data written to buf
+ *                      will be stored.
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_p2p_list_network(char *buf, size_t buflen, int *reslen);
 #endif
 
 #if CONFIG_IMD3_CFG

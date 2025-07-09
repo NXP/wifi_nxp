@@ -11804,6 +11804,31 @@ static void test_wlan_p2p_status(int argc, char **argv)
         }
     }
 }
+
+static void test_wlan_p2p_list_network(int argc, char **argv)
+{
+    int ret;
+    char buf[1024];
+    int reslen = 0, i;
+
+    ret = wlan_p2p_list_network(buf, sizeof(buf), &reslen);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n list_network failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n list_network: \r\n");
+        for (i = 0; i < reslen; i++)
+        {
+            PRINTF("%c", buf[i]);
+            if (buf[i] == '\n')
+            {
+                PRINTF("\r");
+            }
+        }
+    }
+}
 #endif
 
 #if CONFIG_IMD3_CFG
@@ -13550,6 +13575,7 @@ static struct cli_command tests[] = {
      test_wlan_p2p_invite},
     {"wlan-p2p-cancel", NULL, test_wlan_p2p_cancel},
     {"wlan-p2p-remove-client", "<address|iface=address> = remove a peer from all groups", test_wlan_p2p_remove_client},
+    {"wlan-p2p-list-network", NULL, test_wlan_p2p_list_network},
 #endif
 #if CONFIG_NET_MONITOR
     {"wlan-net-monitor-cfg", NULL, test_wlan_net_monitor_cfg},
