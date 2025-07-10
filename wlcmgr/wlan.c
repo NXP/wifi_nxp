@@ -7451,7 +7451,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             if(g_ami_cfg.start)
             {
                 wlcm_d("got event: csi data process");
-                wlcm_process_csi_data(msg);
+                wlcm_process_csi_data(msg->data);
             }
             break;
 #endif

@@ -72,6 +72,11 @@ extern uint8_t wls_data[WLS_CSI_DATA_LEN];
 #endif
 #endif
 
+#if CONFIG_CSI_PROC
+#define CSI_PROC_DATA_SIZE 1000
+uint8_t csi_proc_data[CSI_PROC_DATA_SIZE] = {0};
+#endif
+
 #if CONFIG_WPA2_ENTP
 bool scan_enable_wpa2_enterprise_ap_only;
 #endif
@@ -6342,8 +6347,12 @@ int wifi_handle_fw_event(struct bus_message *msg)
         case EVENT_CSI:
         {
             PRINTM(MEVENT, "EVENT: EVENT_CSI\n");
-#if (CONFIG_CSI) && (!CONFIG_CSI_PROC)
+#if (CONFIG_CSI)
             csi_deliver_data_to_user();
+#if CONFIG_CSI_PROC
+            (void)memcpy(csi_proc_data, (t_u8 *)msg->data, CSI_PROC_DATA_SIZE);
+            wifi_event_completion(WIFI_EVENT_CSI_PROC, WIFI_EVENT_REASON_SUCCESS, csi_proc_data);
+#endif
 #endif
 #if (CONFIG_11AZ) || (CONFIG_11MC)
 #if CONFIG_WLS_CSI_PROC
@@ -6353,16 +6362,6 @@ int wifi_handle_fw_event(struct bus_message *msg)
             {
                 memcpy(wls_data, (t_u8 *)msg->data, WLS_CSI_DATA_LEN);
                 wifi_event_completion(WIFI_EVENT_WLS_CSI, WIFI_EVENT_REASON_SUCCESS, wls_data);
-            }
-            else
-            {
-#endif
-#endif
-#if (CONFIG_CSI) && (CONFIG_CSI_PROC)
-                wifi_event_completion(WIFI_EVENT_CSI_PROC, WIFI_EVENT_REASON_SUCCESS, NULL);
-#endif
-#if (CONFIG_11AZ) || (CONFIG_11MC)
-#if CONFIG_WLS_CSI_PROC
             }
 #endif
 #endif

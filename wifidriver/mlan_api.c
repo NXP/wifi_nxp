@@ -71,19 +71,16 @@ uint32_t fftInBuffer_t[FFT_INBUFFER_LEN_DW];
 #endif
 
 #if (CONFIG_CSI) && (CONFIG_CSI_PROC)
-extern t_u8 csi_local_buff[MAX_CSI_LOCAL_BUF][CSI_LOCAL_BUF_ENTRY_SIZE];
-extern csi_local_buff_statu csi_buff_stat;
 extern ami_cfg_t g_ami_cfg;
 float referenceBuffer[2 * (MAX_RX * MAX_TX) * MAX_IFFT_SIZE_CSI];
 unsigned int fftInBuffer[FFT_INBUFFER_LEN_DW];
 unsigned int scratchBuffer1[FFT_INBUFFER_LEN_DW];
-unsigned int headerBuffer[HEADER_LEN]
-unsigned int totalpower[MAX_RX * MAX_TX + 1];
 #define LEG_RATE 0
 #define HT_RATE 1
 #define VHT_RATE 2
 #define HE_RATE 3
 t_u8 convertPktInfo[8] = {LEG_RATE, HT_RATE, HT_RATE, VHT_RATE, HE_RATE, LEG_RATE, LEG_RATE, LEG_RATE};
+#define AMI_CSI_RAW_DATA_OFFSET 8 /* interface header size + event type size */
 #endif
 
 /* This were static functions in mlan file */
@@ -6304,9 +6301,9 @@ static int check_csi_filter(unsigned int *headerBuffer, csi_filter_param_t *csi_
 	return WM_SUCCESS;
 }
 
-static void proc_csi_event(void)
+static void proc_csi_event(void *p_data)
 {
-    unsigned int *rdPtr;
+    unsigned char *rdPtr;
     unsigned int *csiBuffer = NULL;
     unsigned int csi_len;
 	int firstPathDelay;
@@ -6316,12 +6313,12 @@ static void proc_csi_event(void)
 
     hal_wls_packet_params_t packetparams;
 
-    OSA_SemaphoreWait((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem, osaWaitForever_c);
+    (void)memset(headerBuffer, 0x00, sizeof(headerBuffer));
+    (void)memset(totalpower, 0x00, sizeof(totalpower));
 
-    /* Get CSI data from csi_local_buff*/
-    rdPtr = (unsigned int *)((void *)(t_u8 *)csi_local_buff[csi_buff_stat.read_index]);
+    rdPtr = (unsigned char *)p_data;
 
-	(void)memcpy(headerBuffer, rdPtr, HEADER_LEN);
+	(void)memcpy(headerBuffer, rdPtr, HEADER_LEN * sizeof(unsigned int));
 
     csi_len = headerBuffer[0] & 0x1fff; // 13 LSBs
 #if !CONFIG_MEM_POOLS
@@ -6333,17 +6330,13 @@ static void proc_csi_event(void)
     if(!csiBuffer)
     {
         wifi_e("%s: Failed to alloc csiBuffer",__func__);
-        OSA_SemaphorePost((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem);
         return;
     }
-    (void)memcpy(csiBuffer, rdPtr, csi_len);
-    OSA_SemaphorePost((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem);
 
-    /* deliver CSI data to user */
-    csi_deliver_data_to_user();
+    (void)memcpy(csiBuffer, rdPtr, sizeof(unsigned int) * csi_len);
 
-    (void)memset(fftInBuffer, 0x00, FFT_INBUFFER_LEN_DW);
-    (void)memset(scratchBuffer1, 0x00, FFT_INBUFFER_LEN_DW);
+    (void)memset(fftInBuffer, 0x00, sizeof(fftInBuffer));
+    (void)memset(scratchBuffer1, 0x00, sizeof(scratchBuffer1));
     (void)memset(&packetparams, 0x00, sizeof(hal_wls_packet_params_t));
 
     packetparams.chNum = g_ami_cfg.channel;
@@ -6418,9 +6411,9 @@ static void proc_csi_event(void)
 #endif
 }
 
-void wifi_process_csi_data(void)
+void wifi_process_csi_data(void *p_data)
 {
-    return proc_csi_event();
+    return proc_csi_event(((t_u8 *)p_data + AMI_CSI_RAW_DATA_OFFSET));
 }
 
 #endif

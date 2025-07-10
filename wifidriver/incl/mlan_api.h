@@ -503,7 +503,7 @@ extern t_u8 g_csi_event_for_wls;
 #endif
 
 #if (CONFIG_CSI) && (CONFIG_CSI_PROC)
-void wifi_process_csi_data(void);
+void wifi_process_csi_data(void *p_data);
 #endif
 
 #if UAP_SUPPORT
