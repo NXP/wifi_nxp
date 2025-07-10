@@ -130,6 +130,9 @@ sg_data_list_t *p_rx_sg_data_tail = &g_rx_sg_data_head;
 #if (PBUF_POOL_BUFSIZE_ALIGNED % MLAN_SDIO_BLOCK_SIZE)
 #error "SDIO zero copy should work under block aligned pbuf pool bufsize"
 #endif
+#if (PBUF_POOL_SIZE < MLAN_STA_AMPDU_DEF_RXWINSIZE)
+#error "SDIO zero copy pbuf pool size should be larger than RX reorder window size"
+#endif
 
 static void sg_data_dma_desc_pool_init(void)
 {
@@ -291,25 +294,16 @@ retry:
         wifi_io_d("None RX buf for sg data");
         return NULL;
     }
-    retry_cnt = 3;
 
-retry2:
     head = sg_data_new_rx();
     if (head == NULL)
     {
-        if (retry_cnt)
-        {
-            retry_cnt--;
-            portYIELD();
-            goto retry2;
-        }
         wifi_io_d("None RX sg data head phead 0x%x", (t_u32)phead);
         goto fail;
     }
-    retry_cnt = 3;
 
-    SG_DATA_ADDR(head) = (t_u32 *)phead->payload;
-    SG_DATA_SIZE(head) = (t_u32)phead->len;
+    SG_DATA_ADDR(head) = (uint32_t *)phead->payload;
+    SG_DATA_SIZE(head) = (uint32_t)phead->len;
     head->is_hdr = 1;
     head->pkt_addr = (void *)phead;
 
@@ -317,20 +311,13 @@ retry2:
     tail = head;
     while (p != NULL)
     {
-retry3:
         node = sg_data_new_rx();
         if (node == NULL)
         {
-            if (retry_cnt)
-            {
-                retry_cnt--;
-                portYIELD();
-                goto retry3;
-            }
             goto fail;
         }
 
-        SG_DATA_ADDR(node) = (t_u32 *)p->payload;
+        SG_DATA_ADDR(node) = (uint32_t *)p->payload;
         SG_DATA_SIZE(node) = p->len;
         node->pkt_addr = (void *)p;
         SG_DATA_SET_NEXT(tail, node);
@@ -514,14 +501,14 @@ static sg_data_list_t *sg_data_tx_prepare(t_u8 *out_buf)
 
     if (buf->is_hdr_in_payload)
     {
-        SG_DATA_ADDR(head) = (t_u32 *)p->payload;
+        SG_DATA_ADDR(head) = (uint32_t *)p->payload;
         SG_DATA_SIZE(head) = SG_DATA_ALIGN(p->len, SG_DATA_TX_ALIGN_SIZE);
         last = p;
         p = p->next;
     }
     else
     {
-        SG_DATA_ADDR(head) = (t_u32 *)(void *)&buf->intf_header[0];
+        SG_DATA_ADDR(head) = (uint32_t *)(void *)&buf->intf_header[0];
         SG_DATA_SIZE(head) = SG_DATA_ALIGN(hdr_size, SG_DATA_TX_ALIGN_SIZE);
     }
 
@@ -547,8 +534,8 @@ static sg_data_list_t *sg_data_tx_prepare(t_u8 *out_buf)
             goto fail;
         }
 
-        SG_DATA_ADDR(node) = (t_u32 *)p->payload;
-        SG_DATA_SIZE(node) = (t_u32)SG_DATA_ALIGN(p->len, SG_DATA_TX_ALIGN_SIZE);
+        SG_DATA_ADDR(node) = (uint32_t *)p->payload;
+        SG_DATA_SIZE(node) = (uint32_t)SG_DATA_ALIGN(p->len, SG_DATA_TX_ALIGN_SIZE);
         pkt_len += SG_DATA_SIZE(node);
 
         SG_DATA_SET_NEXT(tail, node);
@@ -594,8 +581,8 @@ clone:
             goto fail;
         }
 
-        SG_DATA_ADDR(node) = (t_u32 *)q->payload;
-        SG_DATA_SIZE(node) = (t_u32)SG_DATA_ALIGN(q->len, SG_DATA_TX_ALIGN_SIZE);
+        SG_DATA_ADDR(node) = (uint32_t *)q->payload;
+        SG_DATA_SIZE(node) = (uint32_t)SG_DATA_ALIGN(q->len, SG_DATA_TX_ALIGN_SIZE);
         pkt_len += SG_DATA_SIZE(node);
 
         SG_DATA_SET_NEXT(tail, node);
@@ -630,7 +617,7 @@ static mlan_status wifi_send_fw_data_sg(t_u8 *data, t_u32 txlen)
     /* IR is in progress so any data sent during progress should be ignored */
     if (wifi_ind_reset_in_progress() == true)
     {
-        return WM_SUCCESS;
+        return MLAN_STATUS_SUCCESS;
     }
 #endif
 
@@ -1298,15 +1285,13 @@ static t_u8 *wlan_read_rcv_packet(t_u32 port, t_u32 rxlen, t_u32 rx_blocks, t_u3
     uint32_t resp;
     int ret;
     t_u32 blksize = MLAN_SDIO_BLOCK_SIZE;
-    t_u32 sg_flags = 0;
-    t_u32 sg_count = 0;
     int i = 0;
 
 #if CONFIG_WIFI_IND_RESET
     /* IR is in progress so any data received during progress should be ignored */
     if (wifi_ind_reset_in_progress() == true)
     {
-        return WM_SUCCESS;
+        return NULL;
     }
 #endif
 
@@ -2264,10 +2249,12 @@ int wifi_send_vdllcmdbuffer(t_u32 tx_blocks, t_u32 len)
 #if CONFIG_WMM
 
 #if CONFIG_SDIO_MULTI_PORT_TX_AGGR
-static t_u32 buf_block_len = 0;
 static t_u8 start_port     = -1;
 static t_u8 ports          = 0;
+#if !CONFIG_TX_RX_ZERO_COPY
 static t_u8 pkt_cnt        = 0;
+static t_u32 buf_block_len = 0;
+#endif
 
 /**
  *  @brief This function gets available SDIO port for writing data
@@ -2320,68 +2307,6 @@ mlan_status wlan_get_wr_port_data(t_u8 *pport)
     wifi_io_d("port=%d mp_wr_bitmap=0x%08x -> 0x%08x\n", *pport, wr_bitmap, mlan_adap->mp_wr_bitmap);
 
     LEAVE();
-    return MLAN_STATUS_SUCCESS;
-}
-
-static mlan_status wifi_tx_data(t_u8 start_port, t_u8 ports, t_u8 pkt_cnt, t_u32 txlen)
-{
-    t_u32 cmd53_port;
-    t_u32 tx_blocks = 0, buflen = 0;
-    uint32_t resp;
-    bool ret;
-#if CONFIG_WIFI_FW_DEBUG
-    int ret_cb;
-#endif
-#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || defined(IW610)
-    t_u32 port_count = 0;
-#endif
-
-#if CONFIG_WIFI_IND_RESET
-    /* IR is in progress so any data sent during progress should be ignored */
-    if (wifi_ind_reset_in_progress() == true)
-    {
-        return WM_SUCCESS;
-    }
-#endif
-
-    calculate_sdio_write_params(txlen, &tx_blocks, &buflen);
-
-    if (pkt_cnt == 1)
-    {
-        cmd53_port = mlan_adap->ioport + start_port;
-    }
-    else
-    {
-#if defined(SD8801)
-        cmd53_port = (mlan_adap->ioport | SDIO_MPA_ADDR_BASE | (ports << 4)) + start_port;
-#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || defined(IW610)
-        port_count = ports - 1U;
-        cmd53_port = (mlan_adap->ioport | SDIO_MPA_ADDR_BASE | (port_count << 8)) + start_port;
-#endif
-    }
-
-    //(void)PRINTF("cmd53_port=%x, ports=%x, start_port=%x, pkt_cnt=%d, txlen=%d, txblocks=%d\r\n", cmd53_port, ports, start_port, pkt_cnt, txlen, tx_blocks);
-
-    /* send CMD53 */
-    ret = sdio_drv_write(cmd53_port, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-    if (ret == false)
-    {
-        wifi_io_e("sdio_drv_write failed (%d)", ret);
-#if CONFIG_WIFI_FW_DEBUG
-        wifi_sdio_reg_dbg(NULL);
-        if (wm_wifi.wifi_usb_mount_cb != NULL)
-        {
-            ret_cb = wm_wifi.wifi_usb_mount_cb();
-            if (ret_cb == WM_SUCCESS)
-                wifi_dump_firmware_info(NULL);
-            else
-                wifi_e("USB mounting failed");
-        }
-        else
-            wifi_e("USB mount callback is not registered");
-#endif
-        return MLAN_STATUS_RESOURCE;
-    }
     return MLAN_STATUS_SUCCESS;
 }
 
@@ -2507,6 +2432,68 @@ mlan_status wlan_flush_wmm_pkt(t_u8 pkt_count)
 }
 
 #else
+static mlan_status wifi_tx_data(t_u8 start_port, t_u8 ports, t_u8 pkt_cnt, t_u32 txlen)
+{
+    t_u32 cmd53_port;
+    t_u32 tx_blocks = 0, buflen = 0;
+    uint32_t resp;
+    bool ret;
+#if CONFIG_WIFI_FW_DEBUG
+    int ret_cb;
+#endif
+#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || defined(IW610)
+    t_u32 port_count = 0;
+#endif
+
+#if CONFIG_WIFI_IND_RESET
+    /* IR is in progress so any data sent during progress should be ignored */
+    if (wifi_ind_reset_in_progress() == true)
+    {
+        return WM_SUCCESS;
+    }
+#endif
+
+    calculate_sdio_write_params(txlen, &tx_blocks, &buflen);
+
+    if (pkt_cnt == 1)
+    {
+        cmd53_port = mlan_adap->ioport + start_port;
+    }
+    else
+    {
+#if defined(SD8801)
+        cmd53_port = (mlan_adap->ioport | SDIO_MPA_ADDR_BASE | (ports << 4)) + start_port;
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || defined(IW610)
+        port_count = ports - 1U;
+        cmd53_port = (mlan_adap->ioport | SDIO_MPA_ADDR_BASE | (port_count << 8)) + start_port;
+#endif
+    }
+
+    //(void)PRINTF("cmd53_port=%x, ports=%x, start_port=%x, pkt_cnt=%d, txlen=%d, txblocks=%d\r\n", cmd53_port, ports, start_port, pkt_cnt, txlen, tx_blocks);
+
+    /* send CMD53 */
+    ret = sdio_drv_write(cmd53_port, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
+    if (ret == false)
+    {
+        wifi_io_e("sdio_drv_write failed (%d)", ret);
+#if CONFIG_WIFI_FW_DEBUG
+        wifi_sdio_reg_dbg(NULL);
+        if (wm_wifi.wifi_usb_mount_cb != NULL)
+        {
+            ret_cb = wm_wifi.wifi_usb_mount_cb();
+            if (ret_cb == WM_SUCCESS)
+                wifi_dump_firmware_info(NULL);
+            else
+                wifi_e("USB mounting failed");
+        }
+        else
+            wifi_e("USB mount callback is not registered");
+#endif
+        return MLAN_STATUS_RESOURCE;
+    }
+    return MLAN_STATUS_SUCCESS;
+}
+
 mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
 {
     t_u32 tx_blocks = 0, buflen = 0;

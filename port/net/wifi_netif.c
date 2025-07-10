@@ -171,7 +171,7 @@ static void deliver_packet_above(struct pbuf *p, int recv_interface)
     }
 }
 
-#if CONFIG_TX_RX_ZERO_COPY
+#if CONFIG_TX_RX_ZERO_COPY && defined(RW610)
 static struct pbuf *gen_pbuf_from_data_for_zerocopy(t_u8 *payload, t_u16 datalen)
 {
     t_u8 retry_cnt = 3;
@@ -317,6 +317,7 @@ static void process_data_packet(const t_u8 *rcvdata,
     p           = gen_pbuf_from_data_for_zerocopy((t_u8 *)rcvdata, payload_len);
 #else
     p           = (struct pbuf *)(void *)rcvdata;
+    (void)payload_len;
 #endif
 #else
     p           = gen_pbuf_from_data(payload, payload_len);
