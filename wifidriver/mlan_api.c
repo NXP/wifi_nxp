@@ -6252,13 +6252,9 @@ int wifi_csi_cfg(wifi_csi_config_params_t *csi_params)
 static void set_csi_proc_filter(unsigned int *headerBuffer, csi_filter_param_t *csi_filter_param_ptr)
 {
 	hal_csirxinfo_t *csirxinfo = (hal_csirxinfo_t*)headerBuffer;
-	hal_pktinfo_t *pktinfo;
+	hal_pktinfo_t *pktinfo = (hal_pktinfo_t*)&(headerBuffer[2]);
     t_u16 addr2_lo = csirxinfo->addr2_lo;
 	t_u32 addr2_hi = csirxinfo->addr2_hi;
-	unsigned int tempVec[2] = {0, 0};
-
-	tempVec[0] = (unsigned int)csirxinfo->pktinfo;
-	pktinfo = (hal_pktinfo_t*)tempVec;
 
 	// set sig format and BW
 	csi_filter_param_ptr->packet_bandwidth = pktinfo->sigBw;
@@ -6279,14 +6275,10 @@ static void set_csi_proc_filter(unsigned int *headerBuffer, csi_filter_param_t *
 static int check_csi_filter_partial(unsigned int *headerBuffer, csi_filter_param_t *csi_filter_param_ptr)
 {
 	hal_csirxinfo_t *csirxinfo = (hal_csirxinfo_t*)headerBuffer;
-	hal_pktinfo_t *pktinfo;
+	hal_pktinfo_t *pktinfo = (hal_pktinfo_t*)&(headerBuffer[2]);
 	t_u16 addr2_lo = csirxinfo->addr2_lo;
 	t_u32 addr2_hi = csirxinfo->addr2_hi;
-	unsigned int tempVec[2] = {0, 0};
 	t_u8 broadcast_mac[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-
-	tempVec[0] = (unsigned int)csirxinfo->pktinfo;
-	pktinfo = (hal_pktinfo_t*)tempVec;
 
 	// check sig format and BW
 	if ((csi_filter_param_ptr->packet_bandwidth != 0xff)
@@ -6326,13 +6318,9 @@ static int check_csi_filter_partial(unsigned int *headerBuffer, csi_filter_param
 static int check_csi_filter(unsigned int *headerBuffer, csi_filter_param_t *csi_filter_param_ptr)
 {
 	hal_csirxinfo_t *csirxinfo = (hal_csirxinfo_t*)headerBuffer;
-	hal_pktinfo_t *pktinfo;
+	hal_pktinfo_t *pktinfo = (hal_pktinfo_t*)&(headerBuffer[2]);
     t_u16 addr2_lo = csirxinfo->addr2_lo;
 	t_u32 addr2_hi = csirxinfo->addr2_hi;
-	unsigned int tempVec[2] = {0, 0};
-
-	tempVec[0] = (unsigned int)csirxinfo->pktinfo;
-	pktinfo = (hal_pktinfo_t*)tempVec;
 
 	// check sig format and BW
 	if ((csi_filter_param_ptr->packet_bandwidth != pktinfo->sigBw)
