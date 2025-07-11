@@ -8349,7 +8349,7 @@ static void test_wlan_csi_cfg(int argc, char **argv)
     }
 }
 
-#if CONFIG_CSI_PROC
+#if CONFIG_CSI_AMI
 static void dump_wlan_set_ami_cfg_usage(void)
 {
     (void)PRINTF("Usage : wlan-set-ami-cfg mac <mac_address> type [packet_type] bw [band_width]\r\n");
@@ -8364,21 +8364,21 @@ static void dump_wlan_set_ami_cfg_usage(void)
     (void)PRINTF("              1: HT     - 11n \r\n");
     (void)PRINTF("              2: VHT    - 11ac \r\n");
     (void)PRINTF("              3: HE     - 11ax \r\n");
-    (void)PRINTF("              Defalut value: 0 \r\n");
+    (void)PRINTF("              Default value: 0 \r\n");
     (void)PRINTF("bw        : Bandwidth:\r\n");
     (void)PRINTF("              0: 20MHz \r\n");
     (void)PRINTF("              1: 40MHz \r\n");
     (void)PRINTF("              2: 80MHz \r\n");
-    (void)PRINTF("              Defalut value: 0 \r\n");
+    (void)PRINTF("              Default value: 0 \r\n");
     (void)PRINTF("ref      : Reference update: \r\n");
     (void)PRINTF("              0: static - first, no updates. \r\n");
     (void)PRINTF("              1: IIR filter - first CSI is reference, update with IIR fitler coefficient alpha. \r\n");
     (void)PRINTF("              2: Kalman filter - first CSI is reference, update with Kalaman fitler. \r\n");
-    (void)PRINTF("              Defalut value: 0 \r\n");
+    (void)PRINTF("              Default value: 0 \r\n");
     (void)PRINTF("num      : The number of CSI data to be processed.\r\n");
     (void)PRINTF("              0: Process CSI data until stop it.\r\n");
     (void)PRINTF("              [1 - 255]: Number of CSI data to be processed.\r\n");
-    (void)PRINTF("              Defalut value: 0 \r\n");
+    (void)PRINTF("              Default value: 0 \r\n");
 }
 
 static void test_wlan_set_ami_cfg(int argc, char **argv)
@@ -8566,7 +8566,7 @@ static void test_wlan_start_stop_ami(int argc, char **argv)
 
 }
 
-#endif /* CONFIG_CSI_PROC */
+#endif /* CONFIG_CSI_AMI */
 
 #endif
 
@@ -14183,7 +14183,7 @@ static struct cli_command tests[] = {
      " <sta/uap> <csi_enable> <head_id> <tail_id> <chip_id> <band_config> <channel> <csi_monitor_enable> <ra4us>",
      test_wlan_set_csi_param_header},
     {"wlan-set-csi-filter", "<opt> <macaddr> <pkt_type> <type> <flag>", test_wlan_set_csi_filter},
-#if CONFIG_CSI_PROC
+#if CONFIG_CSI_AMI
     {"wlan-set-ami-cfg", 
     " mac <mac_address> type <packet_type> bw <band_width> ref <update_ref> num <CSI_number>",
      test_wlan_set_ami_cfg},

@@ -34,7 +34,7 @@
 #include <mlan_remap_mem_operations.h>
 
 #if (CONFIG_11MC) || (CONFIG_11AZ) || (CONFIG_CSI)
-#if (CONFIG_WLS_CSI_PROC) || (CONFIG_CSI_PROC)
+#if (CONFIG_WLS_CSI_PROC) || (CONFIG_CSI_AMI)
 #include <wls_param_defines.h>
 #include <wls_api.h>
 #include <wls_structure_defs.h>
@@ -62,7 +62,7 @@ range_kalman_state range_input_str = {0};
 #define RANGE_RATE_INIT       1e-3f // in (meter/s)^2
 #define CSI_TSF_LEN           6 * sizeof(uint32_t)
 #endif
-#if (CONFIG_WLS_CSI_PROC) || CONFIG_CSI_PROC
+#if (CONFIG_WLS_CSI_PROC) || CONFIG_CSI_AMI
 #define FFT_INBUFFER_LEN_DW   (MAX_RX * MAX_TX + NUM_PROC_BUF) * (MAX_IFFT_SIZE_CSI)
 #endif
 #if CONFIG_WLS_CSI_PROC
@@ -70,8 +70,9 @@ uint32_t fftInBuffer_t[FFT_INBUFFER_LEN_DW];
 #endif
 #endif
 
-#if (CONFIG_CSI) && (CONFIG_CSI_PROC)
+#if (CONFIG_CSI) && (CONFIG_CSI_AMI)
 extern ami_cfg_t g_ami_cfg;
+extern uint8_t g_ami_ongoing;
 float referenceBuffer[2 * (MAX_RX * MAX_TX) * MAX_IFFT_SIZE_CSI];
 unsigned int fftInBuffer[FFT_INBUFFER_LEN_DW];
 unsigned int scratchBuffer1[FFT_INBUFFER_LEN_DW];
@@ -6247,7 +6248,7 @@ int wifi_csi_cfg(wifi_csi_config_params_t *csi_params)
     return wifi_wait_for_cmdresp(NULL);
 }
 
-#if CONFIG_CSI_PROC
+#if CONFIG_CSI_AMI
 
 static void set_csi_proc_filter(unsigned int *headerBuffer, csi_filter_param_t *csi_filter_param_ptr)
 {
@@ -6471,11 +6472,16 @@ static void proc_csi_event(void *p_data)
 #else
         OSA_MemoryPoolFree(buf_1024_MemoryPool, csiBuffer);
 #endif
+
+    return;
 }
 
 void wifi_process_csi_data(void *p_data)
 {
-    return proc_csi_event(((t_u8 *)p_data + AMI_CSI_RAW_DATA_OFFSET));
+    g_ami_ongoing = 1;
+    proc_csi_event(((t_u8 *)p_data + AMI_CSI_RAW_DATA_OFFSET));
+    g_ami_ongoing = 0;
+    return;
 }
 
 #endif

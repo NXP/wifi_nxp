@@ -747,39 +747,127 @@ if (CONFIG_MCUX_COMPONENT_middleware.wifi.ncp_supp_wmcrypto)
     )
 endif()
 
-if (CONFIG_MCUX_COMPONENT_middleware.wifi.wls)
+if (CONFIG_MCUX_COMPONENT_middleware.wifi.libcsi.incl)
     mcux_add_source(
-        SOURCES wls/range_kalman.h
+        SOURCES libcsi/incl/event.h
                 # TODO please change to relative dir
-                wls/range_kalman.c
+                libcsi/incl/range_kalman.h
                 # TODO please change to relative dir
-                wls/wls_api.c
+                libcsi/incl/wls_api.h
                 # TODO please change to relative dir
-                wls/wls_api.h
+                libcsi/incl/wls_param_defines.h
                 # TODO please change to relative dir
-                wls/wls_param_defines.h
+                libcsi/incl/wls_processing.h
                 # TODO please change to relative dir
-                wls/wls_processing.c
+                libcsi/incl/wls_QR_algorithm.h
                 # TODO please change to relative dir
-                wls/wls_processing.h
+                libcsi/incl/wls_radix4Fft.h
                 # TODO please change to relative dir
-                wls/wls_QR_algorithm.c
+                libcsi/incl/wls_structure_defs.h
                 # TODO please change to relative dir
-                wls/wls_QR_algorithm.h
-                # TODO please change to relative dir
-                wls/wls_radix4Fft.h
-                # TODO please change to relative dir
-                wls/wls_radix4Fft.c
-                # TODO please change to relative dir
-                wls/wls_structure_defs.h
-                # TODO please change to relative dir
-                wls/wls_subspace_processing.h
-                # TODO please change to relative dir
-                wls/wls_subspace_processing.c
+                libcsi/incl/wls_subspace_processing.h
     )
     mcux_add_include(
-        INCLUDES wls
+        INCLUDES libcsi/incl
     )
+
+    mcux_add_macro(
+    CC "-DPRINTF_FLOAT_ENABLE=1"
+    )
+
+endif()
+
+if (CONFIG_MCUX_COMPONENT_middleware.wifi.libcsi_cm33)
+    mcux_add_library(
+        LIBS cm33/armgcc/libcsi.a
+        TOOLCHAINS armgcc
+        CORES cm33
+        BASE_PATH ${SdkRootDirPath}/middleware/wifi_nxp/libcsi/
+    )
+
+    mcux_add_library(
+        LIBS cm33/iar/libcsi.a
+        TOOLCHAINS iar
+        CORES cm33
+        BASE_PATH ${SdkRootDirPath}/middleware/wifi_nxp/libcsi/
+    )
+
+    mcux_add_library(
+        LIBS cm33/mdk/libcsi.lib
+        TOOLCHAINS mdk
+        CORES cm33
+        BASE_PATH ${SdkRootDirPath}/middleware/wifi_nxp/libcsi/
+    )
+
+    mcux_add_library(
+        LIBS cm33/mcux/libcsi.a
+        TOOLCHAINS mcux
+        CORES cm33
+        BASE_PATH ${SdkRootDirPath}/middleware/wifi_nxp/libcsi/
+    )
+
+endif()
+
+if (CONFIG_MCUX_COMPONENT_middleware.wifi.libcsi_cm7.cm7f)
+    mcux_add_library(
+        LIBS cm7f/armgcc/libcsi.a
+        TOOLCHAINS armgcc
+        CORES cm7f
+        BASE_PATH ${SdkRootDirPath}/middleware/wifi_nxp/libcsi/cm7
+    )
+
+    mcux_add_library(
+        LIBS cm7f/iar/libcsi.a
+        TOOLCHAINS iar
+        CORES cm7f
+        BASE_PATH ${SdkRootDirPath}/middleware/wifi_nxp/libcsi/cm7
+    )
+
+    mcux_add_library(
+        LIBS cm7f/mdk/libcsi.lib
+        TOOLCHAINS mdk
+        CORES cm7f
+        BASE_PATH ${SdkRootDirPath}/middleware/wifi_nxp/libcsi/cm7
+    )
+
+    mcux_add_library(
+        LIBS cm7f/mcux/libcsi.a
+        TOOLCHAINS mcux
+        CORES cm7f
+        BASE_PATH ${SdkRootDirPath}/middleware/wifi_nxp/libcsi/cm7
+    )
+
+endif()
+
+if (CONFIG_MCUX_COMPONENT_middleware.wifi.libcsi_cm7.cm7f_sta_20_only)
+    mcux_add_library(
+        LIBS cm7f_sta_20_only/armgcc/libcsi.a
+        TOOLCHAINS armgcc
+        CORES cm7f
+        BASE_PATH ${SdkRootDirPath}/middleware/wifi_nxp/libcsi/cm7
+    )
+
+    mcux_add_library(
+        LIBS cm7f_sta_20_only/iar/libcsi.a
+        TOOLCHAINS iar
+        CORES cm7f
+        BASE_PATH ${SdkRootDirPath}/middleware/wifi_nxp/libcsi/cm7
+    )
+
+    mcux_add_library(
+        LIBS cm7f_sta_20_only/mdk/libcsi.lib
+        TOOLCHAINS mdk
+        CORES cm7f
+        BASE_PATH ${SdkRootDirPath}/middleware/wifi_nxp/libcsi/cm7
+    )
+
+    mcux_add_library(
+        LIBS cm7f_sta_20_only/mcux/libcsi.a
+        TOOLCHAINS mcux
+        CORES cm7f
+        BASE_PATH ${SdkRootDirPath}/middleware/wifi_nxp/libcsi/cm7
+    )
+
 endif()
 
 if(CONFIG_MCUX_COMPONENT_middleware.wifi.slim_debug)

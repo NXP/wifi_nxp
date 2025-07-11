@@ -527,7 +527,7 @@ enum wlan_csi_opt
     CSI_FILTER_OPT_DUMP,
 };
 
-#if CONFIG_CSI_PROC
+#if CONFIG_CSI_AMI
 
 typedef struct _wlan_csi_proc_cfg
 {
@@ -6699,7 +6699,7 @@ int wlan_set_csi_cfg_param_default(wlan_csi_config_params_t *in_csi_cfg);
  */
 void wlan_reset_csi_filter_data(void);
 
-#if CONFIG_CSI_PROC
+#if CONFIG_CSI_AMI
 /** This function set Ambient Motion Index configuration.
  *
  * \param[in] cfg: Ambient Motion Index configuration..

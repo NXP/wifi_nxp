@@ -48,7 +48,7 @@
 #include "wifi_ping.h"
 #endif
 
-#if (CONFIG_CSI) && (CONFIG_CSI_PROC)
+#if (CONFIG_CSI) && (CONFIG_CSI_AMI)
 #include "event.h"
 #endif
 
@@ -183,7 +183,7 @@ static bool p2p_stop_find_active;
 static bool wlan_uap_scan_chan_list_set;
 #endif
 
-#if (CONFIG_CSI) && (CONFIG_CSI_PROC)
+#if (CONFIG_CSI) && (CONFIG_CSI_AMI)
 ami_cfg_t g_ami_cfg;
 static void wlan_init_ami_cfg(void);
 extern uint64_t ami_num;
@@ -3471,7 +3471,7 @@ void wlcm_process_csi_status_report(struct wifi_message *msg)
     }
 }
 
-#if CONFIG_CSI_PROC
+#if CONFIG_CSI_AMI
 
 void wlan_set_ami_cfg(wlan_csi_proc_cfg *cfg)
 {
@@ -3543,7 +3543,7 @@ static void wlan_init_ami_cfg(void)
     return;
 }
 
-#endif /* CONFIG_CSI_PROC */
+#endif /* CONFIG_CSI_AMI */
 
 #endif
 
@@ -7452,7 +7452,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_d("got event: csi status report");
             wlcm_process_csi_status_report(msg);
             break;
-#if CONFIG_CSI_PROC
+#if CONFIG_CSI_AMI
         case WIFI_EVENT_CSI_PROC:
             if(g_ami_cfg.start)
             {
@@ -8048,7 +8048,7 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
 #endif
 #endif
 
-#if (CONFIG_CSI) && (CONFIG_CSI_PROC)
+#if (CONFIG_CSI) && (CONFIG_CSI_AMI)
     wlan_init_ami_cfg();
 #endif
 

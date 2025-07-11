@@ -1,4 +1,3 @@
-#if CONFIG_WLS_CSI_PROC
 /** @file wls_param_defines.h
  *
  * @brief This file contains global header file for configuring fft processing of CSI.
@@ -52,7 +51,7 @@
 #endif
 
 #define MAX_RX 1
-#define MAX_TX 4
+#define MAX_TX 2
 
 #if defined(FFT_PARALLEL)
 #define NUM_PARALLEL 4
@@ -180,5 +179,3 @@
 #define SC5_HT20_PILOTS  27
 
 #endif
-
-#endif /* CONFIG_WLS_CSI_PROC */

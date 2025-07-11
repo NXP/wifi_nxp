@@ -413,11 +413,11 @@
 #endif
 #endif
 
-#if !defined CONFIG_CSI_PROC
-#define CONFIG_CSI_PROC 0
+#if !defined CONFIG_CSI_AMI
+#define CONFIG_CSI_AMI 0
 #endif
 
-#if CONFIG_CSI_PROC
+#if CONFIG_CSI_AMI
 #undef CONFIG_CSI
 #define CONFIG_CSI 1
 #endif

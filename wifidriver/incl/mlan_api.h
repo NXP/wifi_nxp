@@ -502,7 +502,7 @@ extern t_u8 g_csi_event_for_wls;
 #endif
 #endif
 
-#if (CONFIG_CSI) && (CONFIG_CSI_PROC)
+#if (CONFIG_CSI) && (CONFIG_CSI_AMI)
 void wifi_process_csi_data(void *p_data);
 #endif
 
