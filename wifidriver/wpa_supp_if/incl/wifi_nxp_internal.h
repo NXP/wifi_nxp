@@ -419,7 +419,9 @@ typedef MLAN_PACK_START struct _wifi_nxp_callbk_fns
 
     void (*scan_start_callbk_fn)(void *if_priv);
 
-    void (*scan_done_callbk_fn)(void *if_priv, int aborted, int external_scan);
+    void (*scan_done_callbk_fn)(void *if_priv, int external_scan);
+
+    void (*scan_abort_callbk_fn)(void *if_priv);
 
     void (*survey_res_callbk_fn)(void *if_priv,
                                  nxp_wifi_event_new_survey_result_t *survey_res,
@@ -451,7 +453,6 @@ typedef MLAN_PACK_START struct _wifi_nxp_callbk_fns
     void (*ecsa_complete_callbk_fn)(void *if_priv, nxp_wifi_ch_switch_info *ch_switch_info);
     void (*dfs_cac_started_callbk_fn)(void *if_priv, nxp_wifi_dfs_cac_info *ch_switch_info);
     void (*dfs_cac_finished_callbk_fn)(void *if_priv, nxp_wifi_dfs_cac_info *ch_switch_info);
-    int (*is_supp_scan_in_progress_callbk_fn)(void *if_priv);
 } MLAN_PACK_END wifi_nxp_callbk_fns_t;
 #endif
 typedef struct _chan_to_freq_t
