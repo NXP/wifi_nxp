@@ -206,6 +206,8 @@ mlan_status wlan_ret_wmm_param_config(pmlan_private pmpriv, const HostCmd_DS_COM
 /* wmm enhance buffer pool */
 #if CONFIG_WIFI_SLIM_WMM
 #define MAX_WMM_BUF_NUM 8
+#elif CONFIG_TX_RX_ZERO_COPY
+#define MAX_WMM_BUF_NUM 32
 #else
 #define MAX_WMM_BUF_NUM 16
 #endif
@@ -228,6 +230,8 @@ typedef struct
     void *buffer;
     /* Flag to Indicate whether Header is in Payload */
     int is_hdr_in_payload;
+    /* Aligned buffer for DMA */
+    void *cache_buffer;
 #else
     t_u8 data[WMM_DATA_LEN];
 #endif

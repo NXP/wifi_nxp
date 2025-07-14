@@ -140,6 +140,8 @@ static void sg_data_dma_desc_pool_init(void)
     sg_data_list_t *tx_free = &g_tx_sg_data_free;
     sg_data_list_t *rx_free = &g_rx_sg_data_free;
 
+    memset(g_tx_sg_data_pool, 0x0, SG_DATA_DMA_DESC_POOL_NUM * sizeof(sg_data_list_t));
+    memset(g_rx_sg_data_pool, 0x0, SG_DATA_DMA_DESC_POOL_NUM * sizeof(sg_data_list_t));
     for (i = 0; i < SG_DATA_DMA_DESC_POOL_NUM; i++)
     {
         tx_free->free_next = &g_tx_sg_data_pool[i];
@@ -242,6 +244,10 @@ static void sg_data_list_clear_rx(void)
     {
         next = SG_DATA_NEXT(cur);
         SG_DATA_SET_NEXT(cur, NULL);
+        if (cur->is_hdr == 1)
+        {
+            net_stack_buffer_free(cur->pkt_addr);
+        }
         sg_data_free_rx(cur);
         cur = next;
     }
@@ -288,7 +294,11 @@ retry:
         if (retry_cnt)
         {
             retry_cnt--;
-            portYIELD();
+#if defined(IW610)
+            OSA_TaskYield();
+#else
+            OSA_TimeDelay(2);
+#endif
             goto retry;
         }
         wifi_io_d("None RX buf for sg data");
@@ -392,6 +402,8 @@ static void sg_data_rx_process(void)
         if (cur->is_hdr == 1)
         {
             sg_data_rx_deliver(cur);
+            /* clear pkt header mark as it is delivered */
+            cur->is_hdr = 0;
         }
 
         cur = SG_DATA_NEXT(cur);
@@ -428,53 +440,61 @@ static sg_data_list_t *sg_data_tx_prepare(t_u8 *out_buf)
 
     p = (struct pbuf *)buf->buffer;
 
-    /* skip adding header when it is already in payload */
-    if (buf->is_hdr_in_payload != 1)
+    /* 1. skip adding header when it is already in payload, else try to add headroom */
+    if (buf->is_hdr_in_payload == 0)
     {
         if (pbuf_header(p, hdr_size) == 0)
         {
             buf->is_hdr_in_payload = 1;
         }
-        else
-        {
-            buf->is_hdr_in_payload = 0;
-        }
     }
 
+    /* 2. check if address is aligned */
     trim = ((t_u32)(void *)p->payload & (SG_DATA_TX_ALIGN_SIZE - 1));
     if (trim != 0)
     {
-        if (pbuf_header(p, trim) == 0)
+        if (buf->is_hdr_in_payload)
         {
-            buf->tx_pd.tx_pkt_offset += trim;
-        }
-        else
-        {
-            if (buf->is_hdr_in_payload)
+            if (pbuf_header(p, trim) == 0)
             {
-                q = pbuf_clone(PBUF_RAW, PBUF_POOL, p);
+                buf->tx_pd.tx_pkt_offset += trim;
             }
             else
             {
-                q = pbuf_clone(PBUF_LINK, PBUF_POOL, p);
+                q = pbuf_clone(PBUF_RAW, PBUF_POOL, p);
+                if (q == NULL)
+                {
+                    goto fail;
+                }
+                buf->buffer = (void *)q;
+                pbuf_free(p);
+                p = q;
             }
+        }
+        else
+        {
+            q = pbuf_clone(PBUF_LINK, PBUF_POOL, p);
             if (q == NULL)
             {
                 goto fail;
             }
+            buf->buffer = (void *)q;
+            buf->is_hdr_in_payload = 1;
             pbuf_free(p);
             p = q;
-            buf->buffer = (void *)q;
         }
     }
 
     if (buf->is_hdr_in_payload)
     {
-        /* always copy hdr in case it is updated */
-        memcpy(p->payload, &buf->intf_header[0], hdr_size);
+        /* 3. always copy hdr in case it is updated */
+        memcpy(p->payload, &buf->intf_header[0], INTF_HEADER_LEN + sizeof(TxPD));
+        /* skip alignment padding */
+        memcpy((t_u8 *)p->payload + INTF_HEADER_LEN + buf->tx_pd.tx_pkt_offset,
+               &buf->eth_header[0], ETH_HDR_LEN);
     }
 
-    /* 1. address is aligned, now check if length is aligned */
+    /* 4. address is aligned, now check if length is aligned */
     if (p->next != NULL && !SG_DATA_IS_ALIGNED(p->len, SG_DATA_TX_ALIGN_SIZE))
     {
         q = pbuf_clone(PBUF_RAW, PBUF_RAM, p);
@@ -492,7 +512,7 @@ static sg_data_list_t *sg_data_tx_prepare(t_u8 *out_buf)
         p = q;
     }
 
-    /* 1. alloc header sg_desc */
+    /* 5. alloc header sg_desc */
     head = sg_data_new_tx();
     if (head == NULL)
     {
@@ -518,10 +538,10 @@ static sg_data_list_t *sg_data_tx_prepare(t_u8 *out_buf)
 
     tail = head;
 
-    /* 2. iterate chained buffers */
+    /* 6. iterate chained buffers */
     while (p != NULL)
     {
-        /* check if chained buffer is aligned */
+        /* 7. check if chained buffer is aligned */
         if ((p->next != NULL && !SG_DATA_IS_ALIGNED(p->len, SG_DATA_TX_ALIGN_SIZE)) ||
             (!SG_DATA_IS_ALIGNED((t_u32)p->payload, SG_DATA_TX_ALIGN_SIZE)))
         {
@@ -544,12 +564,26 @@ static sg_data_list_t *sg_data_tx_prepare(t_u8 *out_buf)
         p = p->next;
     }
 
-    /* 3. add sdio block size padding */
+    /* 8. add sdio block size padding */
     SG_DATA_SIZE(tail) += MLAN_SDIO_BLOCK_SIZE - (pkt_len & (MLAN_SDIO_BLOCK_SIZE - 1));
     return head;
 
 clone:
+    /* 9. for tcp case, not affect original buffer */
     /* to improve: only clone unaligned part */
+    if (buf->cache_buffer != NULL)
+    {
+        if (((struct pbuf *)buf->cache_buffer)->tot_len == p->tot_len)
+        {
+            q = (struct pbuf *)buf->cache_buffer;
+            goto skip_alloc;
+        }
+        else
+        {
+            net_stack_buffer_free(buf->cache_buffer);
+        }
+    }
+
     q = pbuf_clone(PBUF_RAW, PBUF_RAM, p);
     if (q == NULL)
     {
@@ -560,7 +594,7 @@ clone:
         }
     }
 
-    /* replace unaligned buffer with aligned buffer */
+    /* 10. replace unaligned buffer with aligned buffer */
     if (last == NULL)
     {
         buf->buffer = (void *)q;
@@ -568,11 +602,11 @@ clone:
     }
     else
     {
-        last->next = q;
-        pbuf_free(p);
+        buf->cache_buffer = (void *)q;
     }
 
-    /* cloned buffer is surely aligned by lwip config */
+    /* 11. cloned buffer is surely aligned by lwip config */
+skip_alloc:
     while (q != NULL)
     {
         node = sg_data_new_tx();
@@ -591,7 +625,7 @@ clone:
         q = q->next;
     }
 
-    /* 3. add sdio block size padding */
+    /* 12. add sdio block size padding */
     SG_DATA_SIZE(tail) += MLAN_SDIO_BLOCK_SIZE - (pkt_len & (MLAN_SDIO_BLOCK_SIZE - 1));
     return head;
 
@@ -3822,6 +3856,10 @@ void sd_wifi_deinit(void)
     //	pm_deregister_cb(pm_handle);
 
     // (void)wlan_cmd_shutdown();
+#if CONFIG_TX_RX_ZERO_COPY
+    sg_data_list_clear_rx();
+    sg_data_list_clear_tx();
+#endif
 #if !defined(SD8978)
 #if (CONFIG_WIFI_IND_DNLD) && (CONFIG_WIFI_IND_RESET)
     if (wifi_reset_in_progress() == true)

@@ -261,6 +261,9 @@ static void process_data_packet(const t_u8 *rcvdata,
         if (memcmp(mlan_adap->priv[recv_interface]->curr_addr, eth803hdr->dest_addr, MLAN_MAC_ADDR_LENGTH) &&
             ((eth803hdr->dest_addr[0] & 0x01) == 0))
         {
+#if CONFIG_TX_RX_ZERO_COPY && !defined(RW610)
+            net_stack_buffer_free((void *)rcvdata);
+#endif
             return;
         }
     }
@@ -296,6 +299,9 @@ static void process_data_packet(const t_u8 *rcvdata,
                 category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_WNM &&
                 category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_UNPROTECT_WNM)
             {
+#if CONFIG_TX_RX_ZERO_COPY && !defined(RW610)
+            net_stack_buffer_free((void *)rcvdata);
+#endif
                 return;
             }
         }

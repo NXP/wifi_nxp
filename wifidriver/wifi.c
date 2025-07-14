@@ -3662,10 +3662,12 @@ static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, 
         return WM_SUCCESS;
     }
 
+#if !UAP_SUPPORT
 fail:
+#endif
     ret = -WM_FAIL;
 consumed:
-#if !defined(RW610)
+#if CONFIG_TX_RX_ZERO_COPY && !defined(RW610)
     if (buffer != NULL)
     {
         net_stack_buffer_free((void *)buffer);
