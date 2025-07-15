@@ -132,13 +132,7 @@
 #define CONFIG_SUPPORT_15D4 1
 #endif
 
-#define WLAN_CAU_ENABLE_ADDR         (0x45004008U)
-#define WLAN_CAU_TEMPERATURE_ADDR    (0x4500400CU)
-#define WLAN_CAU_TEMPERATURE_FW_ADDR (0x41382490U)
 #define WLAN_FW_WAKE_STATUS_ADDR     (0x40031068U)
-#define WLAN_PMIP_TSEN_ADDR    (0x45004010U)
-#define WLAN_V33_VSEN_ADDR     (0x45004028U)
-#define WLAN_ADC_CTRL_ADDR     (0x45004000U)
 
 #if (CONFIG_SUPPORT_WIFI) && (CONFIG_MONOLITHIC_WIFI)
 extern const uint32_t fw_cpu1[];
@@ -937,111 +931,12 @@ static hal_imumc_status_t imumc_init(void)
     return state;
 }
 
-#define RW610_PACKAGE_TYPE_QFN 0
-#define RW610_PACKAGE_TYPE_CSP 1
-#define RW610_PACKAGE_TYPE_BGA 2
-
-void wifi_cau_temperature_enable(void)
-{
-    uint32_t val;
-
-    val = WIFI_REG32(WLAN_CAU_ENABLE_ADDR);
-    val &= ~(0xCU);
-    val |= (2U << 2U);
-    WIFI_WRITE_REG32(WLAN_CAU_ENABLE_ADDR, val);
-}
-
-void wifi_pmip_v33_enable(void)
-{
-    uint32_t val;
-
-    val = WIFI_REG32(WLAN_PMIP_TSEN_ADDR);
-    val &= ~(0xEU);
-    val |= (5U << 1U);
-    WIFI_WRITE_REG32(WLAN_PMIP_TSEN_ADDR, val);
-
-    val = WIFI_REG32(WLAN_V33_VSEN_ADDR);
-    val &= ~(0xEU);
-    val |= (5U << 1U);
-    WIFI_WRITE_REG32(WLAN_V33_VSEN_ADDR, val);
-
-    val = WIFI_REG32(WLAN_ADC_CTRL_ADDR);
-    val |= 1U << 0U;
-    WIFI_WRITE_REG32(WLAN_ADC_CTRL_ADDR, val);
-
-    val = WIFI_REG32(WLAN_ADC_CTRL_ADDR);
-    val &= ~(1U << 0U);
-    WIFI_WRITE_REG32(WLAN_ADC_CTRL_ADDR, val);
-}
-
-static uint32_t wifi_get_board_type()
-{
-    status_t status;
-    static uint32_t wifi_rw610_package_type = 0xFFFFFFFFU;
-
-    if (0xFFFFFFFFU == wifi_rw610_package_type)
-    {
-        (void)OCOTP_OtpInit();
-        status = OCOTP_ReadPackage(&wifi_rw610_package_type);
-        if (status != kStatus_Success)
-        {
-            /*If status error, use BGA as default type*/
-            wifi_rw610_package_type = RW610_PACKAGE_TYPE_BGA;
-        }
-        (void)OCOTP_OtpDeinit();
-    }
-
-    return wifi_rw610_package_type;
-}
-
-int32_t wifi_get_temperature(void)
-{
-    int32_t val                   = 0;
-    uint32_t reg_val              = 0;
-    uint32_t temp_Cau_Raw_Reading = 0;
-    uint32_t board_type           = 0;
-
-    reg_val              = WIFI_REG32(WLAN_CAU_TEMPERATURE_ADDR);
-    temp_Cau_Raw_Reading = ((reg_val & 0XFFC00) >> 10);
-    board_type           = wifi_get_board_type();
-
-    switch (board_type)
-    {
-        case RW610_PACKAGE_TYPE_QFN:
-            val = (((((int32_t)(temp_Cau_Raw_Reading)) * 484260) - 220040600) / 1000000);
-            break;
-
-        case RW610_PACKAGE_TYPE_CSP:
-            val = (((((int32_t)(temp_Cau_Raw_Reading)) * 480560) - 220707000) / 1000000);
-            break;
-
-        case RW610_PACKAGE_TYPE_BGA:
-            val = (((((int32_t)(temp_Cau_Raw_Reading)) * 480561) - 220707400) / 1000000);
-            break;
-
-        default:
-            (void)PRINTF("Unknown board type, use BGA temperature \r\n");
-            val = (((((int32_t)(temp_Cau_Raw_Reading)) * 480561) - 220707400) / 1000000);
-            break;
-    }
-
-    return val;
-}
-
-void wifi_cau_temperature_write_to_firmware()
-{
-    int32_t val = 0;
-
-    val = wifi_get_temperature();
-    WIFI_WRITE_REG32(WLAN_CAU_TEMPERATURE_FW_ADDR, val);
-}
-
 static void wifi_cau_temperature_timer_cb(TimerHandle_t timer)
 {
     /* write CAU temperature to CPU1 when it is not sleeping */
     if ((WIFI_REG32(WLAN_FW_WAKE_STATUS_ADDR) & 0x0CU) != 0x0CU)
     {
-        wifi_cau_temperature_write_to_firmware();
+        cau_temperature_write_to_firmware();
     }
 }
 #endif
@@ -1117,10 +1012,6 @@ static void main_task(osa_task_param_t arg)
 #if (CONFIG_SUPPORT_WIFI) && (CONFIG_SUPPORT_WIFI == 1)
     sb3_fw_reset(LOAD_WIFI_FIRMWARE, 1, WIFI_FW_ADDRESS);
 #endif
-
-    wifi_cau_temperature_enable();
-    wifi_pmip_v33_enable();
-    wifi_cau_temperature_write_to_firmware();
 
 #if (CONFIG_SUPPORT_15D4 == 1)
     /* 15d4 single and 15d4+ble combo */
