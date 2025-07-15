@@ -88,13 +88,11 @@ void wifi_scan_done(struct wifi_message *msg)
         wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.if_priv;
     }
 
-    wifi_nxp_reset_scan_flag();
-
     if (msg->reason == WIFI_EVENT_REASON_FAILURE)
     {
-        if (wm_wifi.supp_if_callbk_fns->scan_abort_callbk_fn)
+        if (wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn)
         {
-            wm_wifi.supp_if_callbk_fns->scan_abort_callbk_fn(wifi_if_ctx_rtos);
+            wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn(wifi_if_ctx_rtos, 1, 0);
         }
     }
 
@@ -105,12 +103,12 @@ void wifi_scan_done(struct wifi_message *msg)
 #if CONFIG_HOSTAPD
             if (wifi_if_ctx_rtos->hostapd)
             {
-                wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn(wm_wifi.hapd_if_priv, wm_wifi.external_scan);
+                wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn(wifi_if_ctx_rtos, 0, wm_wifi.external_scan);
             }
             else
 #endif
             {
-                wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn(wifi_if_ctx_rtos, wm_wifi.external_scan);
+                wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn(wifi_if_ctx_rtos, 0, wm_wifi.external_scan);
             }
         }
     }

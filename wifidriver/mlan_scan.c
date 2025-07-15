@@ -123,9 +123,44 @@ bool is_split_scan_complete(void)
  */
 void wlan_abort_split_scan(void)
 {
-    if (split_scan_in_progress)
+#if CONFIG_WPA_SUPP
+    int supp_scan_in_process = 0;
+
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+
+#if CONFIG_WPA_SUPP_P2P
+    if (wm_wifi.wpa_supp_p2p_scan == true)
     {
-        abort_split_scan = true;
+        wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.if_priv_wfd;
+    }
+    else
+#endif
+    {
+        wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.if_priv;
+    }
+
+    if (wm_wifi.supp_if_callbk_fns->is_supp_scan_in_progress_callbk_fn)
+    {
+        supp_scan_in_process = wm_wifi.supp_if_callbk_fns->is_supp_scan_in_progress_callbk_fn(wifi_if_ctx_rtos);
+    }
+#endif
+    /*Also check the state of supplicant scan, if it is in progress, abort it*/
+    if ((split_scan_in_progress == true)
+#if CONFIG_WPA_SUPP
+        || (supp_scan_in_process == true)
+#endif
+        )
+    {
+        if(split_scan_in_progress)
+        {
+            abort_split_scan = true;
+        }
+#if CONFIG_WPA_SUPP
+        if (wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn)
+        {
+            wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn(wifi_if_ctx_rtos, 1, 0);
+        }
+#endif
     }
 }
 

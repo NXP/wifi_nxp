@@ -88,12 +88,7 @@ static void wifi_nxp_event_proc_scan_start(void *if_ctx)
     wifi_nxp_wpa_supp_event_proc_scan_start(if_ctx);
 }
 
-static void wifi_nxp_event_proc_scan_abort(void *if_ctx)
-{
-    wifi_nxp_wpa_supp_event_proc_scan_abort(if_ctx);
-}
-
-static void wifi_nxp_event_proc_scan_done(void *if_priv, int external_scan)
+static void wifi_nxp_event_proc_scan_done(void *if_priv, int aborted, int external_scan)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
@@ -104,7 +99,7 @@ static void wifi_nxp_event_proc_scan_done(void *if_priv, int external_scan)
         wifi_e("%s: wifi_if_ctx_rtos is NULL", __func__);
         return;
     }
-    wifi_nxp_wpa_supp_event_proc_scan_done(if_priv, 0, external_scan);
+    wifi_nxp_wpa_supp_event_proc_scan_done(if_priv, aborted, external_scan);
 }
 
 static void wifi_nxp_event_reamin_on_channel(void *if_priv, int cancel_channel)
@@ -121,12 +116,27 @@ static void wifi_nxp_event_reamin_on_channel(void *if_priv, int cancel_channel)
     wifi_nxp_wpa_supp_event_proc_remain_on_channel(if_priv, cancel_channel);
 }
 
+static int wifi_nxp_wpa_is_supp_scan_in_progress(void *if_priv)
+{
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+    if (wifi_if_ctx_rtos == NULL)
+    {
+        wifi_e("%s: wifi_if_ctx_rtos is NULL", __func__);
+        return -WM_FAIL;
+    }
+
+    return wifi_if_ctx_rtos->scan_in_progress;
+}
+
+
 static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
     .mac_changed_callbk_fn         = wifi_nxp_wpa_supp_event_proc_mac_changed,
     .chan_list_changed_callbk_fn   = wifi_nxp_wpa_supp_event_proc_chan_list_changed,
     .scan_start_callbk_fn          = wifi_nxp_event_proc_scan_start,
     .scan_done_callbk_fn           = wifi_nxp_event_proc_scan_done,
-    .scan_abort_callbk_fn          = wifi_nxp_event_proc_scan_abort,
     .survey_res_callbk_fn          = wifi_nxp_wpa_supp_event_proc_survey_res,
     .auth_resp_callbk_fn           = wifi_nxp_wpa_supp_event_proc_auth_resp,
     .assoc_resp_callbk_fn          = wifi_nxp_wpa_supp_event_proc_assoc_resp,
@@ -142,6 +152,7 @@ static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
     .ecsa_complete_callbk_fn       = wifi_nxp_wpa_supp_event_proc_ecsa_complete,
     .dfs_cac_started_callbk_fn     = wifi_nxp_wpa_supp_event_proc_dfs_cac_started,
     .dfs_cac_finished_callbk_fn    = wifi_nxp_wpa_supp_event_proc_dfs_cac_finished,
+    .is_supp_scan_in_progress_callbk_fn = wifi_nxp_wpa_is_supp_scan_in_progress,
 };
 
 #ifndef __ZEPHYR__
