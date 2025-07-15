@@ -4171,7 +4171,14 @@ int wifi_add_to_bypassq(const t_u8 interface, void *pkt, t_u32 len)
         (void)net_stack_buffer_copy_partial(pkt, (void *)((t_u8 *)poutbuf + link_point_len + pkt_len), (t_u16)len, 0);
 
         /* process packet headers with interface header and TxPD */
-        process_pkt_hdrs((void *)((t_u8 *)poutbuf + link_point_len), pkt_len + len, interface, 0, 0);
+        if (eth_type == MLAN_ETHER_PKT_TYPE_EAPOL)
+        {
+            process_pkt_hdrs((void *)((t_u8 *)poutbuf + link_point_len), pkt_len + len, interface, 7, 0);
+        }
+        else
+        {
+            process_pkt_hdrs((void *)((t_u8 *)poutbuf + link_point_len), pkt_len + len, interface, 0, 0);
+        }
 
         wlan_add_buf_bypass_txq((t_u8 *)poutbuf, interface);
         send_wifi_driver_bypass_data_event(interface);
@@ -5007,7 +5014,7 @@ static int supp_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 le
 
     (void)memcpy((void *)((t_u8 *)poutbuf + link_point_len + pkt_len), (const void *)buf, (size_t)len);
     /* process packet headers with interface header and TxPD */
-    process_pkt_hdrs((void *)((t_u8 *)poutbuf + link_point_len), pkt_len + len, interface, 0, 0);
+    process_pkt_hdrs((void *)((t_u8 *)poutbuf + link_point_len), pkt_len + len, interface, 7, 0);
 
     wlan_add_buf_bypass_txq((t_u8 *)poutbuf, interface);
     send_wifi_driver_bypass_data_event(interface);
