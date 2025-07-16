@@ -2782,7 +2782,8 @@ static void handle_scan_results(void)
     {
         if (wlan.roam_reassoc == true)
         {
-            if (memcmp((const void *)network->bssid, (const void *)best_ap->bssid, (size_t)IEEEtypes_ADDRESS_SIZE) == 0)
+            if (memcmp((const void *)mlan_adap->priv[0]->curr_bss_params.bss_descriptor.mac_address,
+                (const void *)best_ap->bssid, MLAN_MAC_ADDR_LENGTH) == 0)
             {
 #if CONFIG_11V
                 if (wlan.nlist_rep_param.nlist_mode == WLAN_NLIST_11V)
