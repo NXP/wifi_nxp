@@ -57,6 +57,14 @@
 #define DMA_BOUNDARY_SIZE (512 * 1024)
 #endif
 
+/*Refer to SDU CCCR register specification*/
+#define SDIO_VERSION_2_0   0X03
+#define SDIO_VERSION_3_0   0X04
+#define CCCR_VERSION_1_2   0X02
+#define CCCR_VERSION_1_3   0X03
+#define SD_PHY_VERSION_2_0 0X02
+#define SD_PHY_VERSION_3_0 0X03
+
 /** Read Card Register
  *
  * This is used to read card register using CMD52.
@@ -140,10 +148,10 @@ int sdio_drv_init(void (*cd_int)(int));
  */
 void sdio_drv_deinit(void);
 
-/** Get SDIO version
+/** Get SDIO enume status
  *
- *  \return SDIO version, return value 3 is SDIO 2.0, 4 is SDIO 3.0
+ *  \return SDIO enume status, return true if SDIO enumeration completed, false otherwise
  */
-uint8_t sdio_get_version(void);
+bool sdio_get_enume_status(void);
 
 #endif /* !_MDEV_SDIO_API_H_ */

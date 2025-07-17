@@ -219,7 +219,7 @@ int sdio_init(void)
     /* Initialize SDIO driver */
 #if !defined(SD8978)
     //TODO need to revert this as part of making wlan_reset same for all SoCs Tag (IW416 RESET)
-    if (sdio_get_version() == 0)
+    if (sdio_get_enume_status() == false)
 #endif
     {
         int rv = sdio_drv_init(NULL);

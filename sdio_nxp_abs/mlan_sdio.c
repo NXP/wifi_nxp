@@ -503,9 +503,11 @@ void sdio_drv_deinit(void)
     }
 }
 
-uint8_t sdio_get_version(void)
+bool sdio_get_enume_status(void)
 {
-    return wm_g_sd.sdioVersion;
+    return ((wm_g_sd.sdioVersion == SDIO_VERSION_2_0) || (wm_g_sd.sdioVersion == SDIO_VERSION_3_0)) &&
+           ((wm_g_sd.cccrVersioin == CCCR_VERSION_1_2) || (wm_g_sd.cccrVersioin == CCCR_VERSION_1_3)) &&
+           ((wm_g_sd.sdVersion == SD_PHY_VERSION_2_0) || (wm_g_sd.sdVersion == SD_PHY_VERSION_3_0));
 }
 
 #elif defined(__ZEPHYR__)
