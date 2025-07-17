@@ -1805,7 +1805,6 @@ int wlan_set_uap_coutry_regd_by_conn_bss(pmlan_private priv, BSSDescriptor_t *d)
                     else
                     {
                         custom_ie *cu_ie = (custom_ie *)(buf + sizeof(tlvbuf_custom_ie));
-                        IEEEtypes_ElementId_e element_id = 0;
                         t_u8 element_len = 0;
 
 						wifi_d("%s: get_mgmt_ie index=%u SUCCESS: len=%u", __FUNCTION__, bit, buf_len);
@@ -1820,7 +1819,7 @@ int wlan_set_uap_coutry_regd_by_conn_bss(pmlan_private priv, BSSDescriptor_t *d)
                         updated_cur_rnd = 0;
                         while (buf_len_left >= 2U)
                         {
-                            element_id	= (IEEEtypes_ElementId_e)(*((t_u8 *)buf_ptr));
+                            IEEEtypes_ElementId_e element_id	= (IEEEtypes_ElementId_e)(*((t_u8 *)buf_ptr));
                             element_len = *((t_u8 *)buf_ptr + 1);
                             if (buf_len_left < (element_len + 2U))
                             {

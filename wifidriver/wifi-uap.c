@@ -1149,7 +1149,7 @@ int wifi_uap_bss_sta_list(wifi_sta_list_t **list)
 
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
 
-    int bss_type = MLAN_BSS_TYPE_UAP;
+    mlan_bss_type bss_type = MLAN_BSS_TYPE_UAP;
 
 #if CONFIG_WPA_SUPP_P2P
     mlan_private *priv_wfd = (mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_WIFIDIRECT];

@@ -38,6 +38,9 @@ typedef void * MemoryPool_t;
 #if (defined(configSUPPORT_STATIC_ALLOCATION) && (configSUPPORT_STATIC_ALLOCATION > 0U)) && \
     !((defined(configSUPPORT_DYNAMIC_ALLOCATION) && (configSUPPORT_DYNAMIC_ALLOCATION > 0U)))
 
+#ifdef CONFIG_MEM_POOLS
+#undef CONFIG_MEM_POOLS
+#endif
 #define CONFIG_MEM_POOLS 1
 
 #include <mem_pool_config.h>
