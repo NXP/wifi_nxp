@@ -74,6 +74,13 @@
 
 #define MAX_NUM_CHANS_IN_NBOR_RPT 6U
 
+/* fixme: duplicated from legacy. needs to be cleaned up later */
+#define IEEEtypes_REASON_UNSPEC                     1U
+#define IEEEtypes_REASON_PRIOR_AUTH_INVALID         2U
+#define IEEEtypes_REASON_DEAUTH_LEAVING             3
+#define IEEEtypes_REASON_DISASSOC_DUE_TO_INACTIVITY 4U
+#define AP_DEAUTH_REASON_MAC_ADDR_BLOCKED           6U
+
 /** BIT value */
 #ifndef MBIT
 #define MBIT(x) (((t_u32)1) << (x))

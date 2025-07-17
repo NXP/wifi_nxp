@@ -5528,13 +5528,6 @@ static void wifi_handle_blocked_sta_report(Event_Ext_t *evt)
         wifi_w("Unknown reason code! Ignore the event");
 }
 
-/* fixme: duplicated from legacy. needs to be cleaned up later */
-#define IEEEtypes_REASON_UNSPEC                     1U
-#define IEEEtypes_REASON_PRIOR_AUTH_INVALID         2U
-#define IEEEtypes_REASON_DEAUTH_LEAVING             3
-#define IEEEtypes_REASON_DISASSOC_DUE_TO_INACTIVITY 4U
-#define AP_DEAUTH_REASON_MAC_ADDR_BLOCKED           6U
-
 #if CONFIG_WIFI_TX_PER_TRACK
 #define OFFSET_SEQNUM 8
 static void wifi_tx_pert_report(void *pbuf)
@@ -5747,7 +5740,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
     {
         case EVENT_LINK_LOST:
             (void)wifi_event_completion(WIFI_EVENT_LINK_LOSS, WIFI_EVENT_REASON_FAILURE,
-                                        (void *)IEEEtypes_REASON_DEAUTH_LEAVING);
+                                        (void *)IEEEtypes_REASON_DISASSOC_DUE_TO_INACTIVITY);
 #if CONFIG_WPA_SUPP
             wifi_if_ctx_rtos->associated = MFALSE;
 

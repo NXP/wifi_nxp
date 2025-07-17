@@ -4849,7 +4849,14 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
         g_ftm_civic_cfg.civic_req = 0;
         g_ftm_location_cfg.lci_req = 0;
 #endif
-        CONNECTION_EVENT(WLAN_REASON_LINK_LOST, NULL);
+        if ((int)msg->data == IEEEtypes_REASON_DEAUTH_LEAVING)
+        {
+            CONNECTION_EVENT(WLAN_REASON_LINK_LOST, (void *)IEEEtypes_REASON_DEAUTH_LEAVING);
+        }
+        else
+        {
+            CONNECTION_EVENT(WLAN_REASON_LINK_LOST, NULL);
+        }
 #if CONFIG_ECSA
         wrapper_clear_media_connected_event();
         wlan_switch_to_nondfs_channel();
@@ -5203,8 +5210,6 @@ static void wlcm_process_scan_failed()
         wlan_disconnect();
     }
 }
-
-#define IEEEtypes_REASON_DEAUTH_LEAVING     3
 
 static void wlcm_process_disconnected()
 {
