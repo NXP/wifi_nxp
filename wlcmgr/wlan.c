@@ -5672,18 +5672,14 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         else if (strstr(buf, " client "))
         {
             priv_wfd->p2p_gc_network = false;
-            if (wlan.networks[wlan.cur_network_idx].name[0] != '\0')
-            {
-                memset(wlan.networks[wlan.cur_network_idx].name, 0, WLAN_NETWORK_NAME_MAX_LENGTH + 1);
-                memset(wlan.networks[wlan.cur_network_idx].ssid, 0, IEEEtypes_SSID_SIZE + 1);
-                memset(wlan.networks[wlan.cur_network_idx].bssid, 0, IEEEtypes_ADDRESS_SIZE);
-            }
             wlan.sta_return_to  = CM_STA_IDLE;
             wlan.sta_state      = CM_STA_IDLE;
             wlan.sta_ipv4_state = CM_STA_IDLE;
 #if CONFIG_IPV6
             wlan.sta_ipv6_state = CM_STA_IDLE;
 #endif
+            wlan.cur_network_idx = -1;
+            wlan_remove_network(network->name);
         }
     }
     else
