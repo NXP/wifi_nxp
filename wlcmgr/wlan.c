@@ -7999,7 +7999,7 @@ static void temperature_mon_cb(osa_timer_arg_t arg)
      */
     if ((mlan_adap != NULL) && (mlan_adap->ps_state == PS_STATE_AWAKE))
     {
-        wifi_cau_temperature_write_to_firmware();
+        cau_temperature_write_to_firmware();
     }
 }
 #endif
@@ -8190,7 +8190,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         }
         mon_thread_init = 1;
     }
-    wifi_cau_temperature_enable();
+    cau_temperature_enable();
     status = OSA_TimerCreate((osa_timer_handle_t)temperature_mon_timer, TEMPERATURE_MON_TIMEOUT,
                              &temperature_mon_cb, NULL, KOSA_TimerPeriodic, OSA_TIMER_AUTO_ACTIVATE);
     if (status != KOSA_StatusSuccess)
@@ -16250,7 +16250,7 @@ int wlan_auto_null_tx(wlan_auto_null_tx_t *auto_null_tx, mlan_bss_type bss_type)
 #ifdef RW610
 int32_t wlan_get_temperature()
 {
-    return wifi_get_temperature();
+    return cau_get_temperature();
 }
 #endif
 
