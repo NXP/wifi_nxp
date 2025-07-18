@@ -224,11 +224,15 @@ int wlan_set_wwsm_txpwrlimit()
         return -WM_FAIL;
     }
 #endif
+#if defined(RW610) || defined(IW610)
 #if defined(RW610)
     ARG_UNUSED(tx_pwrlimit_2g_cfg);
+#endif
     ARG_UNUSED(chanlist_2g_cfg);
 #if CONFIG_5GHz_SUPPORT
+#if defined(RW610)
     ARG_UNUSED(tx_pwrlimit_5g_cfg);
+#endif
     ARG_UNUSED(chanlist_5g_cfg);
 #endif
 #endif
