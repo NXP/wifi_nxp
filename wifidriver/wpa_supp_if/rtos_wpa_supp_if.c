@@ -1110,7 +1110,7 @@ int wifi_nxp_wpa_supp_scan_results_get(void *if_priv, struct wpa_scan_results *s
         goto out;
     }
 
-    num = wifi_nxp_scan_res_num();
+    num = wifi_nxp_scan_res_num(wifi_if_ctx_rtos->bss_type);
 
     if (num == 0)
     {

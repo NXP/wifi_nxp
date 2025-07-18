@@ -475,7 +475,7 @@ int wifi_nxp_set_acl(unsigned int bss_type, nxp_wifi_acl_info_t *acl_params);
 int wifi_nxp_set_country(unsigned int bss_type, const char *alpha2);
 int wifi_nxp_get_country(unsigned int bss_type, char *alpha2);
 int wifi_nxp_get_signal(unsigned int bss_type, nxp_wifi_signal_info_t *signal_params);
-int wifi_nxp_scan_res_num(void);
+int wifi_nxp_scan_res_num(unsigned int bss_type);
 int wifi_nxp_scan_res_get2(unsigned int bss_type, t_u32 table_idx, nxp_wifi_event_new_scan_result_t *scan_res);
 #endif /* CONFIG_WPA_SUPP */
 

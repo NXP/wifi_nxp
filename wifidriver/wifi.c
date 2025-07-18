@@ -5210,9 +5210,9 @@ int wifi_set_country_ie_ignore(uint8_t *ignore)
 }
 
 #if CONFIG_WPA_SUPP
-int wifi_nxp_scan_res_num(void)
+int wifi_nxp_scan_res_num(unsigned int bss_type)
 {
-    mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[bss_type];
     mlan_adapter *pmadapter = pmpriv->adapter;
 
     return pmadapter->num_in_scan_table;

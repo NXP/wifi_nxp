@@ -16268,9 +16268,6 @@ static int wlan_set_p2p_mode_config(uint16_t mode_value)
 int wlan_p2p_find(const char *cmd)
 {
     struct netif *netif = net_get_wfd_interface();
-    wlan_set_p2p_mode_config(0x00);
-    wlan_set_p2p_mode_config(0x01);
-    wlan_set_p2p_mode_config(0x03);
 
     return wpa_supp_p2p_find(netif, cmd);
 }
