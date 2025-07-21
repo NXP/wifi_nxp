@@ -583,11 +583,9 @@ extern int retry_attempts;
  *       to become availale since the stack doesn't retry to send a packet
  *       dropped because of memory failure (except for the TCP timers).
  */
-#if CONFIG_WIFI_PKT_FWD
 #define MAX_RETRY_PKT_FWD 3
-#endif
 
-static err_t low_level_output(struct netif *netif, struct pbuf *p)
+static err_t low_level_output(struct netif *netif, struct pbuf *p, bool pkt_fwd)
 {
     int ret;
     struct ethernetif *ethernetif = netif->state;
@@ -650,13 +648,11 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
         }
         else
         {
-#if CONFIG_WIFI_PKT_FWD
-            if (interface == WLAN_BSS_TYPE_UAP)
+            if (pkt_fwd)
             {
                 retry = MAX_RETRY_PKT_FWD;
             }
             else
-#endif
             {
                 retry = retry_attempts;
             }
@@ -665,12 +661,9 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
         wmm_outbuf = wifi_wmm_get_outbuf_enh(&outbuf_len, (mlan_wmm_ac_e)pkt_prio, interface, ra, &is_tx_pause);
         ret        = (wmm_outbuf == NULL) ? true : false;
 
-        /* uAP case doesn't need to delay to let powersave task run,
-         * as FW won't go into sleep mode when uAP enabled. And this
-         * delay will block uAP packet forward case */
-#if CONFIG_WIFI_PKT_FWD
-        if (interface != WLAN_BSS_TYPE_UAP)
-#endif
+        /* In packet forward case, this function is called by RX thread,
+         * so the time delay is not allowed */
+        if (!pkt_fwd)
         {
             if (ret == true && is_tx_pause == true)
             {
@@ -770,11 +763,16 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 int net_wifi_pkt_fwd(uint8_t interface, void *stack_buffer)
 {
     if (interface == WLAN_BSS_TYPE_UAP)
-        return low_level_output(net_get_uap_interface(), (struct pbuf *)stack_buffer);
+        return low_level_output(net_get_uap_interface(), (struct pbuf *)stack_buffer, true);
     else
-        return low_level_output(net_get_sta_interface(), (struct pbuf *)stack_buffer);
+        return low_level_output(net_get_sta_interface(), (struct pbuf *)stack_buffer, true);
 }
 #endif
+
+static err_t nxp_wifi_send(struct netif *netif, struct pbuf *p)
+{
+    return low_level_output(netif, p, false);
+}
 
 #if CONFIG_WPS2
 void wps_register_rx_callback(void (*WPSEAPoLRxDataHandler)(const t_u8 *buf, const size_t len))
@@ -1091,7 +1089,7 @@ err_t lwip_netif_init(struct netif *netif)
      * from it if you have to do some checks before sending (e.g. if link
      * is available...) */
     netif->output     = etharp_output;
-    netif->linkoutput = low_level_output;
+    netif->linkoutput = nxp_wifi_send;
 #if CONFIG_IPV6
     netif->output_ip6 = ethip6_output;
 #endif
@@ -1131,7 +1129,7 @@ err_t lwip_netif_uap_init(struct netif *netif)
      * from it if you have to do some checks before sending (e.g. if link
      * is available...) */
     netif->output     = etharp_output;
-    netif->linkoutput = low_level_output;
+    netif->linkoutput = nxp_wifi_send;
 #if CONFIG_IPV6
     netif->output_ip6 = ethip6_output;
 #endif
@@ -1173,7 +1171,7 @@ err_t lwip_netif_wfd_init(struct netif *netif)
      * from it if you have to do some checks before sending (e.g. if link
      * is available...) */
     netif->output     = etharp_output;
-    netif->linkoutput = low_level_output;
+    netif->linkoutput = nxp_wifi_send;
 #if CONFIG_IPV6
     netif->output_ip6 = ethip6_output;
 #endif
