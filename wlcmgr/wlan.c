@@ -171,6 +171,10 @@
 #define BG_SCAN_LIMIT 3
 #endif
 
+#if CONFIG_WPA_SUPP_P2P
+static bool p2p_stop_find_active;
+#endif
+
 #if UAP_SUPPORT
 static bool wlan_uap_scan_chan_list_set;
 #endif
@@ -7480,7 +7484,10 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
 #if CONFIG_WPA_SUPP
         case WIFI_EVENT_REMAIN_ON_CHANNEL:
-            wifi_process_remain_on_channel(msg);
+#if CONFIG_WPA_SUPP_P2P
+            if (!p2p_stop_find_active)
+#endif
+                wifi_process_remain_on_channel(msg);
             break;
         case WIFI_EVENT_MGMT_TX_STATUS:
             wifi_process_mgmt_tx_status(msg);
@@ -16275,8 +16282,11 @@ int wlan_p2p_find(const char *cmd)
 int wlan_p2p_stop_find(void)
 {
     struct netif *netif = net_get_wfd_interface();
-
-    return wpa_supp_p2p_stop_find(netif);
+    int ret;
+    p2p_stop_find_active = true;
+    ret                  = wpa_supp_p2p_stop_find(netif);
+    p2p_stop_find_active = false;
+    return ret;
 }
 
 int wlan_p2p_set_listen_channel(t_u8 channel, t_u8 op_class)
