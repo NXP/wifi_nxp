@@ -849,11 +849,7 @@
 #endif
 
 #if !defined CONFIG_WPA_SUPP_NAN_USD
-#if defined(RW610)
-#define CONFIG_WPA_SUPP_NAN_USD CONFIG_WPA_SUPP
-#else
 #define CONFIG_WPA_SUPP_NAN_USD 0
-#endif
 #endif
 
 #if CONFIG_WPA_SUPP_NAN_USD
