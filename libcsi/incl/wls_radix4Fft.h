@@ -115,7 +115,7 @@
 #define INT8 signed char
 #define INT16 short
 #define INT32 int
-#ifdef STA_20_ONLY
+#if STA_20_ONLY
 #define MAX_FFT_SIZE_256
 #define MAX_FFT_SIZE 256
 #else

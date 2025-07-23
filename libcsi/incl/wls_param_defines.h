@@ -47,7 +47,7 @@
 // #define FFT_INPLACE
 // #define TDDE_FIRSTPATH
 #if defined(RW610) || defined(IW610)
-#define STA_20_ONLY
+#define STA_20_ONLY 1
 #endif
 
 #define MAX_RX 1
@@ -59,7 +59,7 @@
 #define NUM_PARALLEL 1
 #endif
 
-#if defined(ENABLE_SUBSPACE_FTIMING) && defined(STA_20_ONLY)
+#if defined(ENABLE_SUBSPACE_FTIMING) && (STA_20_ONLY)
 #define NUM_PROC_BUF (11 + NUM_PARALLEL)
 #elif defined(ENABLE_SUBSPACE_FTIMING)
 #define NUM_PROC_BUF (2 + NUM_PARALLEL)
@@ -145,7 +145,7 @@
 #define COMPUTE_80P80_AS_160       // or true 160 in SC4+Citril
 #define TOA_FPATH_BIPT       12
 
-#ifdef STA_20_ONLY
+#if STA_20_ONLY
 #define MAX_IFFT_SIZE_SHIFT 2
 #else // up to 80 MHz
 #define MAX_IFFT_SIZE_SHIFT 5
