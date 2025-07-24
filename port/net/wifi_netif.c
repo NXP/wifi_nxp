@@ -764,6 +764,10 @@ int net_wifi_pkt_fwd(uint8_t interface, void *stack_buffer)
 {
     if (interface == WLAN_BSS_TYPE_UAP)
         return low_level_output(net_get_uap_interface(), (struct pbuf *)stack_buffer, true);
+#if CONFIG_WPA_SUPP_P2P
+    else if (interface == WLAN_BSS_TYPE_WIFIDIRECT)
+        return low_level_output(net_get_wfd_interface(), (struct pbuf *)stack_buffer, true);
+#endif
     else
         return low_level_output(net_get_sta_interface(), (struct pbuf *)stack_buffer, true);
 }

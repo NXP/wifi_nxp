@@ -96,6 +96,8 @@ mlan_status wlan_process_uap_rx_packet(mlan_private *priv, pmlan_buffer pmbuf)
     RxPacketHdr_t *prx_pkt = (RxPacketHdr_t *)pmbuf->pdesc;
     RxPD *prx_pd = (RxPD *)(void *)(pmbuf->pbuf + pmbuf->data_offset);
 
+    uint8_t interface = pmbuf->bss_index;
+
     /* Don't do packet forwarding in disconnected state */
     if (priv->media_connected == MFALSE)
         goto upload;
@@ -122,15 +124,15 @@ mlan_status wlan_process_uap_rx_packet(mlan_private *priv, pmlan_buffer pmbuf)
             (t_u16)prx_pd->rx_pkt_length, 0);
         /* process packet headers with interface header and TxPD */
         process_pkt_hdrs((void *)((t_u8 *)poutbuf + link_point_len), pkt_len + prx_pd->rx_pkt_length,
-            WLAN_BSS_TYPE_UAP, 0, 0);
-        wlan_add_buf_bypass_txq((t_u8 *)poutbuf, WLAN_BSS_TYPE_UAP);
-        send_wifi_driver_bypass_data_event(WLAN_BSS_TYPE_UAP);
+            interface, 0, 0);
+        wlan_add_buf_bypass_txq((t_u8 *)poutbuf, interface);
+        send_wifi_driver_bypass_data_event(interface);
     }
     else
     {
         if (wlan_11n_get_txbastream_tbl(priv, prx_pkt->eth803_hdr.dest_addr))
         {
-            int iret = net_wifi_pkt_fwd(WLAN_BSS_TYPE_UAP, pmbuf->lwip_pbuf);
+            int iret = net_wifi_pkt_fwd(interface, pmbuf->lwip_pbuf);
             if (iret != WM_SUCCESS)
             {
                 ret = MLAN_STATUS_FAILURE;
