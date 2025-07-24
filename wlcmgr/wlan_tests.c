@@ -14044,6 +14044,7 @@ static struct cli_command tests[] = {
     {"wlan-p2p-peers", NULL, test_wlan_p2p_peers},
     {"wlan-p2p-peer", " <peer_address>", test_wlan_p2p_peer},
     {"wlan-p2p-status", NULL, test_wlan_p2p_status},
+#if !defined(SD8987) && !defined(SD8978)
     {"wlan-p2p-invite",
      "[persistent=<network id>|group=<group ifname>] [peer=address][go_dev_addr=address] [freq=<freq in MHz>] [ht40] "
      "[vht] [he] [pref=<MHz>]",
@@ -14051,6 +14052,7 @@ static struct cli_command tests[] = {
     {"wlan-p2p-cancel", NULL, test_wlan_p2p_cancel},
     {"wlan-p2p-remove-client", "<address|iface=address> = remove a peer from all groups", test_wlan_p2p_remove_client},
     {"wlan-p2p-list-network", NULL, test_wlan_p2p_list_network},
+#endif
 #endif
 #if CONFIG_WPA_SUPP_NAN_USD
     {"wlan-nan-publish", " service_name=<service name> ...", test_wlan_nan_publish},
