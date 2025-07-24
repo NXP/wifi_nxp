@@ -4759,6 +4759,12 @@ int wifi_low_level_output(const t_u8 interface,
 #if !CONFIG_WMM && CONFIG_TX_RX_ZERO_COPY
     /* Free driver's reference count for network buffer */
     net_stack_buffer_free(((outbuf_t *)sd_buffer)->buffer);
+#if !defined(RW610)
+    if (((outbuf_t *)sd_buffer)->cache_buffer)
+    {
+        net_stack_buffer_free(((outbuf_t *)sd_buffer)->cache_buffer);
+    }
+#endif
 #endif
 
 #endif

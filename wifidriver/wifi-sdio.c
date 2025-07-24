@@ -734,7 +734,7 @@ mlan_status wlan_xmit_pkt_sg(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx
 
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
 
-    process_pkt_hdrs((t_u8 *)buffer, txlen, interface, 0, tx_control);
+    process_pkt_hdrs((void *)(buffer + sizeof(mlan_linked_list)), txlen, interface, 0, tx_control);
 
     hdr = sg_data_tx_prepare(buffer);
     if (hdr == NULL)
