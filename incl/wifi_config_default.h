@@ -725,9 +725,7 @@
 #endif
 
 #if !defined CONFIG_DRIVER_OWE
-#if defined(RW610) || defined(IW610)
-#define CONFIG_DRIVER_OWE 1
-#elif defined(SD8978) || defined(SD8987) || defined(SD9177)
+#if defined(RW610) || defined(IW610) || defined(SD8978) || defined(SD8987) || defined(SD9177)
 #define CONFIG_DRIVER_OWE 0
 #endif
 #endif
