@@ -128,14 +128,12 @@ Change log:
 
 /** Default Win size attached during ADDBA response */
 #ifndef MLAN_STA_AMPDU_DEF_RXWINSIZE
-#if defined(SD9177) && !defined(COEX_APP_SUPPORT)
-#define MLAN_STA_AMPDU_DEF_RXWINSIZE 64
-#else
 #if CONFIG_WIFI_SLIM_STA
 #define MLAN_STA_AMPDU_DEF_RXWINSIZE 16
+#elif defined(SD9177) && !defined(COEX_APP_SUPPORT)
+#define MLAN_STA_AMPDU_DEF_RXWINSIZE 64
 #else
 #define MLAN_STA_AMPDU_DEF_RXWINSIZE 32
-#endif
 #endif
 #endif
 #endif /* STA_SUPPORT */

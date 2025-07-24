@@ -219,6 +219,7 @@ static void sg_data_enqueue_rx(sg_data_list_t *node)
     }
 }
 
+#if CONFIG_WMM
 static void sg_data_enqueue_tx(sg_data_list_t *node)
 {
     assert(SG_DATA_NEXT(p_tx_sg_data_tail) == NULL);
@@ -234,6 +235,7 @@ static void sg_data_enqueue_tx(sg_data_list_t *node)
         p_tx_sg_data_tail = SG_DATA_NEXT(p_tx_sg_data_tail);
     }
 }
+#endif
 
 static void sg_data_list_clear_rx(void)
 {
@@ -259,17 +261,21 @@ static void sg_data_list_clear_tx(void)
 {
     sg_data_list_t *cur = SG_DATA_NEXT(&g_tx_sg_data_head);
     sg_data_list_t *next;
+#if CONFIG_WMM
     outbuf_t *buf;
+#endif
 
     while (cur != NULL)
     {
         next = SG_DATA_NEXT(cur);
         SG_DATA_SET_NEXT(cur, NULL);
+#if CONFIG_WMM
         if (cur->is_hdr == 1)
         {
             buf = (outbuf_t *)cur->pkt_addr;
             wifi_wmm_buf_put(buf);
         }
+#endif
         sg_data_free_tx(cur);
         cur = next;
     }
