@@ -7273,9 +7273,9 @@ typedef MLAN_PACK_START struct
     /* Second minimum rate frequency */
     t_u16 link_rate_freq;
     /* Tx latency value (us) */
-    t_u16 link_tx_latency;
+    t_u32 link_tx_latency;
     /* Tx latency frequency */
-    t_u16 link_tx_lantency_freq;
+    t_u32 link_tx_lantency_freq;
 } MLAN_PACK_END MrvlIEtypes_LinkQualityThreshold_t;
 
 /** Supported operating classes element */
