@@ -2023,25 +2023,6 @@ t_u8 wifi_uap_ampdu_rx_enable_per_tid_is_allowed(t_u8 tid)
 }
 #endif /* CONFIG_STA_AMPDU_RX */
 
-#if ((FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER) && FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER > 0U)
-int wifi_register_get_rxbuf_desc_callback(void *(*wifi_get_rxbuf_desc)(t_u16 rx_len))
-{
-    if (wm_wifi.wifi_get_rxbuf_desc != NULL)
-    {
-        return -WM_FAIL;
-    }
-
-    wm_wifi.wifi_get_rxbuf_desc = wifi_get_rxbuf_desc;
-
-    return WM_SUCCESS;
-}
-
-void wifi_deregister_get_rxbuf_desc_callback(void)
-{
-    wm_wifi.wifi_get_rxbuf_desc = NULL;
-}
-#endif
-
 #if !CONFIG_WIFI_RX_REORDER
 int wifi_register_data_input_callback(void (*data_input_callback)(const uint8_t interface,
                                                                   const uint8_t *buffer,

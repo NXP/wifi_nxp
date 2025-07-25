@@ -309,7 +309,7 @@ static mlan_status process_mgmt_packet(t_u8 *data)
         return MLAN_STATUS_RESOURCE;
     }
 
-#if (CONFIG_TX_RX_ZERO_COPY) || (FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
+#if (CONFIG_TX_RX_ZERO_COPY)
     plen = rxpd->rx_pkt_offset + rxpd->rx_pkt_length + sizeof(mlan_buffer);
     p = gen_pkt_from_data_for_zerocopy(MLAN_BSS_TYPE_STA, data, plen);
 #else

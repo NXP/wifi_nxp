@@ -272,14 +272,6 @@ int wifi_register_gen_pbuf_from_data2_callback(void *(*gen_pbuf_from_data2)(t_u8
 void wifi_deregister_gen_pbuf_from_data2_callback(void);
 #endif
 
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-
-int wifi_register_get_rxbuf_desc_callback(void *(*wifi_get_rxbuf_desc)(t_u16 rx_len));
-
-void wifi_deregister_get_rxbuf_desc_callback(void);
-
-#endif
-
 /**
  * Register Data callback function with Wi-Fi Driver to receive
  * processed AMSDU DATA from Wi-Fi driver.

@@ -30,12 +30,6 @@
 
 #define SDIO_COMMAND_RESPONSE_WAIT_MS 20000
 
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-SDK_ALIGN(uint8_t rx_bufs[SDIO_MP_AGGR_DEF_PKT_LIMIT][2 * DATA_BUFFER_SIZE], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
-
-static size_t num_sg = 0;
-#endif
-
 /* Buffer pointers to point to command and, command response buffer */
 static uint8_t ctrl_cmd_buf[WIFI_FW_CMDBUF_SIZE];
 #if CONFIG_FW_VDLL
@@ -709,20 +703,7 @@ static t_u8 *wlan_read_rcv_packet(t_u32 port, t_u32 rxlen, t_u32 rx_blocks, t_u3
     while (true)
     {
         /* addr = 0 fn = 1 */
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-        if (aggr == true)
-        {
-            ret = sdio_drv_read_mb(port, 1, rx_blocks, blksize);
-        }
-        else
-        {
-            ret = sdio_drv_read(port, 1, rx_blocks, blksize, inbuf, &resp);
-        }
-#else
-        {
-            ret = sdio_drv_read(port, 1, rx_blocks, blksize, inbuf, &resp);
-        }
-#endif
+        ret = sdio_drv_read(port, 1, rx_blocks, blksize, inbuf, &resp);
         if (aggr && !ret)
         {
             PRINTF("sdio mp cmd53 read failed: %d ioport=0x%x retry=%d\r\n", ret, port, i);
@@ -750,14 +731,8 @@ static t_u8 *wlan_read_rcv_packet(t_u32 port, t_u32 rxlen, t_u32 rx_blocks, t_u3
     }
 #endif
 
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || defined(IW610)
-    if ((aggr == false) && (port & (CMD_PORT_SLCT | MLAN_SDIO_BYTE_MODE_MASK)))
-#endif
-#endif
-    {
-        SDIOPkt *insdiopkt = (SDIOPkt *)(void *)inbuf;
-        *type              = insdiopkt->pkttype;
+    SDIOPkt *insdiopkt = (SDIOPkt *)(void *)inbuf;
+    *type              = insdiopkt->pkttype;
 
 #if CONFIG_WIFI_IO_DUMP
         if (insdiopkt->pkttype != 0)
@@ -766,7 +741,6 @@ static t_u8 *wlan_read_rcv_packet(t_u32 port, t_u32 rxlen, t_u32 rx_blocks, t_u3
             //dump_hex((t_u8 *)inbuf, rx_blocks * blksize);
         }
 #endif /* CONFIG_WIFI_IO_DUMP */
-    }
 
     return inbuf;
 }
@@ -2087,9 +2061,6 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
 #if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || defined(IW610)
     t_u32 port_count = 0;
 #endif
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-    uint32_t *rxdataAddr = NULL;
-#endif
 
     *pport    = -1;
     *rxlen    = 0;
@@ -2166,23 +2137,11 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
             rx_len |= (t_u16)pmadapter->mp_regs[len_reg_l];
             rx_blocks = (rx_len + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
             rx_len    = (t_u16)(rx_blocks * MLAN_SDIO_BLOCK_SIZE);
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-            if (wm_wifi.wifi_get_rxbuf_desc != NULL)
-            {
-                rxdataAddr = (uint32_t *)wm_wifi.wifi_get_rxbuf_desc(rx_len);
 
-                if (rxdataAddr == NULL)
-                {
-                    PRINTF("No pbuf\r\n");
-                    break;
-                }
-            }
-#else
             if ((*rxlen + rx_len) > INBUF_SIZE)
             {
                 break;
             }
-#endif
 
             pmadapter->mp_rd_bitmap &=
 #if defined(SD8801)
@@ -2209,13 +2168,6 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
             else
             {
                 ports |= (1 << (pkt_cnt + 1));
-            }
-#endif
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-            if (rxdataAddr)
-            {
-                sg_set_buf(rxdataAddr, rx_len);
-                num_sg++;
             }
 #endif
 
@@ -2483,18 +2435,11 @@ static void handle_sdio_packet_read(mlan_adapter *pmadapter)
     while (true)
     {
         t_u32 pkt_type = 0;
-#if !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
         t_u8 interface;
         t_u32 rx_blocks;
         t_u32 total_size = 0;
         t_u32 size       = 0;
-#endif
         t_u8 *packet     = NULL;
-
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-        num_sg = 0;
-        sg_init_table();
-#endif
 
         ret = _handle_sdio_packet_read(pmadapter, &packet, &datalen, &pkt_type);
         if (ret != MLAN_STATUS_SUCCESS)
@@ -2505,35 +2450,20 @@ static void handle_sdio_packet_read(mlan_adapter *pmadapter)
 
         if (pkt_type == MLAN_TYPE_DATA)
         {
-
-#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
-            if (num_sg > 0)
+            while (total_size < datalen)
             {
-//                extern void net_rx_notify();
+                SDIOPkt *insdiopkt = (SDIOPkt *)(void *)packet;
+                size               = insdiopkt->size;
+                pkt_type           = insdiopkt->pkttype;
 
-//                net_rx_notify();
-                wm_wifi.data_input_callback(0, NULL, 0);
-#if 0
-                for (sg_idx = 0; sg_idx < num_sg; sg_idx++)
-                {
-                    SDIOPkt *insdiopkt = (SDIOPkt *)(void *)rx_bufs[sg_idx];
-                    size               = insdiopkt->size;
-                    pkt_type           = insdiopkt->pkttype;
+                rx_blocks = (size + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
+                size      = (t_u16)(rx_blocks * MLAN_SDIO_BLOCK_SIZE);
 
-                    interface = *((t_u8 *)packet + INTF_HEADER_LEN);
+                interface = *((t_u8 *)packet + INTF_HEADER_LEN);
 
-                    //PRINTF("IN: i/f: %d len: %d\r\n", interface, size);
+                //PRINTF("IN: i/f: %d len: %d\r\n", interface, size);
 
-                    if (bus.wifi_low_level_input != NULL)
-                    {
-                        (void)bus.wifi_low_level_input(interface, rx_bufs[sg_idx], size);
-                    }
-                }
-#endif
-            }
-#else
-            {
-                while (total_size < datalen)
+                if (!size)
                 {
                     SDIOPkt *insdiopkt = (SDIOPkt *)(void *)packet;
                     size               = insdiopkt->size;
@@ -2556,11 +2486,9 @@ static void handle_sdio_packet_read(mlan_adapter *pmadapter)
                         (void)bus.wifi_low_level_input(interface, packet, insdiopkt->size);
                     }
 
-                    packet += size;
-                    total_size += size;
-                }
+                packet += size;
+                total_size += size;
             }
-#endif
         }
         else
         {

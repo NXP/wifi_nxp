@@ -352,7 +352,7 @@ static mlan_status wrapper_moal_recv_packet(IN t_void *pmoal_handle, IN pmlan_bu
 
     wm_wifi.deliver_packet_above_callback((void *)prx_pd, prx_pd->bss_type, pmbuf->lwip_pbuf);
 
-#if !(CONFIG_TX_RX_ZERO_COPY) && !(FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
+#if !(CONFIG_TX_RX_ZERO_COPY)
     /* Free RxPD */
 #if !CONFIG_MEM_POOLS
     OSA_MemoryFree(pmbuf->pbuf);
@@ -1224,7 +1224,7 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
 {
     w_pkt_d("[recv]                  : %p T: %d L: %d", p, rxpd->rx_pkt_type, rxpd->rx_pkt_length);
 
-#if !(CONFIG_TX_RX_ZERO_COPY) && !(FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
+#if !(CONFIG_TX_RX_ZERO_COPY)
     /* fixme: Check if mlan buffer can be allocated from standard mlan
        function */
 #if !CONFIG_MEM_POOLS
@@ -1260,7 +1260,7 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
     the code which assumes that there is ethernet packet after RxPD */
     /** Pointer to buffer */
     /* fixme: CHK this*/
-#if !(CONFIG_TX_RX_ZERO_COPY) && !(FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
+#if !(CONFIG_TX_RX_ZERO_COPY)
 #if !CONFIG_MEM_POOLS
     pmbuf->pbuf = (t_u8 *)OSA_MemoryAllocate(sizeof(RxPD));
 #else
@@ -1320,7 +1320,7 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
 
            We need to free allocated structures.
         */
-#if !(CONFIG_TX_RX_ZERO_COPY) && !(FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
+#if !(CONFIG_TX_RX_ZERO_COPY)
 #if !CONFIG_MEM_POOLS
         OSA_MemoryFree(pmbuf->pbuf);
         OSA_MemoryFree(pmbuf);
