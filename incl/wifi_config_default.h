@@ -449,9 +449,7 @@
 #endif
 
 #if !defined CONFIG_WIFI_REG_ACCESS
-#if defined(RW610)
-#define CONFIG_WIFI_REG_ACCESS 1
-#elif defined(SD8978) || defined(SD8987) || defined(SD9177) || defined(IW610)
+#if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD9177) || defined(IW610)
 #define CONFIG_WIFI_REG_ACCESS 0
 #endif
 #endif
@@ -570,11 +568,7 @@
 
 #if CONFIG_TURBO_MODE
 #undef CONFIG_TURBO_MODE
-#if defined(RW610)
-#define CONFIG_TURBO_MODE 0
-#else
 #define CONFIG_TURBO_MODE CONFIG_WMM
-#endif
 #endif
 
 #if !defined CONFIG_AUTO_RECONNECT
@@ -1167,7 +1161,7 @@
 #define UAP_HOST_MLME              1
 
 #if CONFIG_WNM_PS
-#if defined(RW610)
+#if defined(RW610) || defined(IW610)
 #undef CONFIG_WNM_PS
 #define CONFIG_WNM_PS 0
 #endif
