@@ -1711,8 +1711,8 @@ int wlan_parse_getdata(HostCmd_DS_COMMAND *resp, mlan_ds_subscribe_evt *sub_evt)
     sub_evt->link_snr_freq         = wlan_le16_to_cpu(link_quality->link_snr_freq);
     sub_evt->link_rate             = wlan_le16_to_cpu(link_quality->link_rate);
     sub_evt->link_rate_freq        = wlan_le16_to_cpu(link_quality->link_rate_freq);
-    sub_evt->link_tx_latency       = wlan_le16_to_cpu(link_quality->link_tx_latency);
-    sub_evt->link_tx_lantency_freq = wlan_le16_to_cpu(link_quality->link_tx_lantency_freq);
+    sub_evt->link_tx_latency       = wlan_le32_to_cpu(link_quality->link_tx_latency);
+    sub_evt->link_tx_lantency_freq = wlan_le32_to_cpu(link_quality->link_tx_lantency_freq);
     tlv += link_quality->header.len + tyhdsize;
 
     /*pre beacon lost*/
@@ -1897,8 +1897,8 @@ mlan_status wlan_cmd_subscribe_event(IN mlan_private *pmpriv,
         link_quality->link_snr_freq         = wlan_cpu_to_le16(sub_evt->link_snr_freq);
         link_quality->link_rate             = wlan_cpu_to_le16(sub_evt->link_rate);
         link_quality->link_rate_freq        = wlan_cpu_to_le16(sub_evt->link_rate_freq);
-        link_quality->link_tx_latency       = wlan_cpu_to_le16(sub_evt->link_tx_latency);
-        link_quality->link_tx_lantency_freq = wlan_cpu_to_le16(sub_evt->link_tx_lantency_freq);
+        link_quality->link_tx_latency       = wlan_cpu_to_le32(sub_evt->link_tx_latency);
+        link_quality->link_tx_lantency_freq = wlan_cpu_to_le32(sub_evt->link_tx_lantency_freq);
         tlv += sizeof(MrvlIEtypes_LinkQualityThreshold_t);
         cmd_size += (t_u16)sizeof(MrvlIEtypes_LinkQualityThreshold_t);
     }

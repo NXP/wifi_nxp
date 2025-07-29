@@ -1776,7 +1776,7 @@ typedef PACK_START struct
 
 #if CONFIG_SUBSCRIBE_EVENT_SUPPORT
 /** Type definition of mlan_ds_subscribe_evt for subscribe events */
-typedef struct _wifi_ds_subscribe_evt
+typedef PACK_START struct _wifi_ds_subscribe_evt
 {
     /** bitmap for subscribe event */
     t_u16 evt_bitmap;
@@ -1829,12 +1829,12 @@ typedef struct _wifi_ds_subscribe_evt
     /* Second minimum rate frequency */
     t_u16 link_rate_freq;
     /* Tx latency value (us) */
-    t_u16 link_tx_latency;
+    t_u32 link_tx_latency;
     /* Tx latency frequency */
-    t_u16 link_tx_lantency_freq;
+    t_u32 link_tx_lantency_freq;
     /* Number of pre missed beacons */
     t_u8 pre_beacon_miss;
-} wifi_ds_subscribe_evt;
+} PACK_END wifi_ds_subscribe_evt;
 #endif
 
 #if CONFIG_CSI
