@@ -1596,7 +1596,10 @@ int wifi_nxp_wpa_set_supp_port(void *if_priv, int authorized, char *bssid)
 #endif
             if (authorized)
             {
-                (void)wifi_event_completion(WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
+#if CONFIG_WPA_SUPP_P2P
+                if (wifi_if_ctx_rtos->bss_type != MLAN_BSS_TYPE_WIFIDIRECT)
+#endif
+                    (void)wifi_event_completion(WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
             }
 #if CONFIG_WPA_SUPP_WPS
         }
@@ -1767,7 +1770,7 @@ void wifi_nxp_wpa_supp_event_acs_channel_selected(void *if_priv, nxp_wifi_acs_pa
 }
 
 void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv,
-					    nxp_wifi_event_mlme_t *mlme_event, 
+					    nxp_wifi_event_mlme_t *mlme_event,
 					    unsigned int event_len,
 					    enum wifi_event_reason result)
 {
@@ -2024,7 +2027,7 @@ int wifi_nxp_wpa_supp_probe_req_report(void *if_priv, int report)
     }
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
-    if (report && ((wifi_if_ctx_rtos->bss_type == BSS_TYPE_STA) 
+    if (report && ((wifi_if_ctx_rtos->bss_type == BSS_TYPE_STA)
 #if CONFIG_WPA_SUPP_P2P
 		|| (wifi_if_ctx_rtos->bss_type == BSS_TYPE_WFD)
 #endif

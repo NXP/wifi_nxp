@@ -5383,11 +5383,12 @@ static int wlcm_process_add_unspecified_network(const char *name)
 }
 #endif
 
-static void wpa_supplicant_msg_cb(const char *buf, size_t len)
+static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
 {
     const char *s;
     unsigned char is_11n_enabled;
     int ret;
+    struct wpa_supplicant *wpa_s = ctx;
 #if CONFIG_HOSTAPD
     struct netif *netif = net_get_uap_interface();
 #endif
@@ -5592,10 +5593,17 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         wlcm_d("WPS registration completed successfully");
         if (wlan.wps_session_attempt)
         {
-            if (wlcm_process_add_unspecified_network("wps_network") == WM_SUCCESS)
+#if CONFIG_WPA_SUPP_P2P
+            if (strstr(wpa_s->ifname, "wf") == NULL)
             {
-                wlan.wps_session_attempt = 0;
+#endif
+                if (wlcm_process_add_unspecified_network("wps_network") == WM_SUCCESS)
+                {
+                    wlan.wps_session_attempt = 0;
+                }
+#if CONFIG_WPA_SUPP_P2P
             }
+#endif
         }
     }
     else
@@ -5622,7 +5630,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
                 char *end;
                 pos += 6;
                 if (*pos == '"')
-                  pos ++;
+                    pos++;
 
                 end = strchr(pos, '"');
                 if (end)
@@ -5630,7 +5638,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
                     priv_wfd->p2p_go_ssid_len = (end - pos);
                     if (priv_wfd->p2p_go_ssid_len && (priv_wfd->p2p_go_ssid_len < MLAN_MAX_SSID_LENGTH))
                     {
-                       (void)memcpy(priv_wfd->p2p_go_ssid, pos, priv_wfd->p2p_go_ssid_len);
+                        (void)memcpy(priv_wfd->p2p_go_ssid, pos, priv_wfd->p2p_go_ssid_len);
                     }
                 }
             }
@@ -5648,13 +5656,16 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
                         priv_wfd->p2p_go_chan = freq_to_chan(freq);
                 }
             }
-
-            if (wlcm_process_add_unspecified_network("wps_network") == WM_SUCCESS)
-            {
-                wlan.wps_session_attempt = 0;
-            }
         }
-
+        else if (strstr(buf, " client "))
+        {
+            priv_wfd->p2p_gc_network = true;
+        }
+        if (wlcm_process_add_unspecified_network("wps_network") == WM_SUCCESS)
+        {
+            wlan.wps_session_attempt = 0;
+            wifi_event_completion(WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
+        }
     }
     else if(strstr(buf, P2P_EVENT_GO_NEG_SUCCESS))
     {
