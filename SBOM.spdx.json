@@ -2,13 +2,13 @@
   "SPDXID": "SPDXRef-DOCUMENT",
   "spdxVersion": "SPDX-2.3",
   "creationInfo": {
-    "created": "2025-06-17T09:58:30Z",
+    "created": "2025-08-04T04:55:21Z",
     "creators": [
       "Organization: NXP"
     ],
     "licenseListVersion": "3.20"
   },
-  "name": "wifi_nxp-v25.06.00",
+  "name": "wifi_nxp-v25.09.00-pvw2",
   "dataLicense": "CC0-1.0",
   "hasExtractedLicensingInfos": [
     {
@@ -17,12 +17,12 @@
       "name": "FatFs License"
     }
   ],
-  "documentNamespace": "https://nxp.com/spdx/2b6dc525-19f2-42ff-b100-81aa966f56b3",
+  "documentNamespace": "https://nxp.com/spdx/be6676b6-fd73-4d51-a616-6a3496c14fde",
   "packages": [
     {
-      "SPDXID": "SPDXRef-package-2b6dc525-19f2-42ff-b100-81aa966f56b3",
+      "SPDXID": "SPDXRef-package-be6676b6-fd73-4d51-a616-6a3496c14fde",
       "name": "wifi_nxp",
-      "versionInfo": "v25.06.00",
+      "versionInfo": "v25.09.00-pvw2",
       "licenseConcluded": "(BSD-3-Clause)",
       "licenseDeclared": "(BSD-3-Clause)",
       "downloadLocation": "https://github.com/NXP/wifi_nxp",
@@ -39,9 +39,14 @@
       "licenseDeclared": "MIT",
       "homepage": "https://github.com/aws/amazon-freertos",
       "downloadLocation": "https://github.com/aws/amazon-freertos/releases/tag/202203.00",
-      "originator": "Organization: aws",
+      "originator": "Organization: Amazon FreeRTOS",
       "supplier": "NOASSERTION",
       "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:aws:amazon-freertos:202203.00:*:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        },
         {
           "referenceCategory": "SECURITY",
           "referenceLocator": "cpe:2.3:a:amazon:amazon_web_services_freertos:202203.00:*:*:*:*:*:*:*",
@@ -54,23 +59,8 @@
         },
         {
           "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:aws:amazon-freertos:202203.00:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "SECURITY",
           "referenceLocator": "cpe:2.3:a:amazon:freertos:202203.00:*:*:*:*:*:*:*",
           "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:github/aws/amazon-freertos@202203.00",
-          "referenceType": "purl"
-        },
-        {
-          "referenceCategory": "OTHER",
-          "referenceLocator": "9d9229b0-3571-4c31-bdb3-123050900ee5",
-          "referenceType": "BlackDuck-ComponentOrigin"
         }
       ],
       "filesAnalyzed": false
@@ -82,7 +72,7 @@
       "licenseConcluded": "LicenseRef-e5b7758e-198f-4ef0-a1c0-449099001fd5",
       "licenseDeclared": "LicenseRef-e5b7758e-198f-4ef0-a1c0-449099001fd5",
       "homepage": "http://elm-chan.org/fsw/ff/00index_e.html",
-      "downloadLocation": "NOASSERTION",
+      "downloadLocation": "http://elm-chan.org/fsw/ff/00index_e.html",
       "originator": "Organization: FatFs Module",
       "supplier": "NOASSERTION",
       "externalRefs": [],
@@ -112,14 +102,14 @@
       "supplier": "NOASSERTION",
       "externalRefs": [
         {
-          "referenceCategory": "OTHER",
-          "referenceLocator": "22e054be-3a79-484a-9c5f-6a6ca1d63c5c",
-          "referenceType": "BlackDuck-ComponentOrigin"
-        },
-        {
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceLocator": "pkg:github/michaelbecker/freertos-addons@v1.6.0",
           "referenceType": "purl"
+        },
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "22e054be-3a79-484a-9c5f-6a6ca1d63c5c",
+          "referenceType": "BlackDuck-ComponentOrigin"
         }
       ],
       "filesAnalyzed": false
@@ -135,14 +125,14 @@
       "supplier": "NOASSERTION",
       "externalRefs": [
         {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:github/Wi-FiTestSuite/Wi-FiTestSuite-Linux-DUT@v9.2.0",
-          "referenceType": "purl"
-        },
-        {
           "referenceCategory": "OTHER",
           "referenceLocator": "90d44f85-539b-4094-947b-6a93dbe92383",
           "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:github/Wi-FiTestSuite/Wi-FiTestSuite-Linux-DUT@v9.2.0",
+          "referenceType": "purl"
         }
       ],
       "filesAnalyzed": false
@@ -160,12 +150,27 @@
       "externalRefs": [
         {
           "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:wpa_supplicant:wpa_supplicant:2.11:*:*:*:*:*:*:*",
+          "referenceLocator": "cpe:2.3:a:redhat_package:wpa_supplicant:2.11:2.el9:*:*:*:*:*:*",
           "referenceType": "cpe23Type"
         },
         {
           "referenceCategory": "SECURITY",
           "referenceLocator": "cpe:2.3:a:w1.fi:wpa_supplicant:2.11:*:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:almalinux_package:wpa_supplicant:2.11:*:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:redhat_package:wpa_supplicant:2.11:3.el10:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:wpa_supplicant:wpa_supplicant:2.11:*:*:*:*:*:*:*",
           "referenceType": "cpe23Type"
         }
       ],
@@ -176,37 +181,42 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
-      "relatedSpdxElement": "SPDXRef-package-2b6dc525-19f2-42ff-b100-81aa966f56b3"
+      "relatedSpdxElement": "SPDXRef-package-be6676b6-fd73-4d51-a616-6a3496c14fde"
     },
     {
-      "spdxElementId": "SPDXRef-package-2b6dc525-19f2-42ff-b100-81aa966f56b3",
-      "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-package-9bc4a596-0134-458d-9c28-6bf58ab0cfa3"
-    },
-    {
-      "spdxElementId": "SPDXRef-package-2b6dc525-19f2-42ff-b100-81aa966f56b3",
-      "relationshipType": "CONTAINS",
+      "spdxElementId": "SPDXRef-package-be6676b6-fd73-4d51-a616-6a3496c14fde",
+      "relationshipType": "DYNAMIC_LINK",
       "relatedSpdxElement": "SPDXRef-package-18f07cfa-2c43-47ad-b6c4-546506c7a5d7"
     },
     {
-      "spdxElementId": "SPDXRef-package-2b6dc525-19f2-42ff-b100-81aa966f56b3",
-      "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-package-09728c4a-7c4b-4db5-a2a8-e611e30f23ad"
-    },
-    {
-      "spdxElementId": "SPDXRef-package-2b6dc525-19f2-42ff-b100-81aa966f56b3",
+      "spdxElementId": "SPDXRef-package-be6676b6-fd73-4d51-a616-6a3496c14fde",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-package-0d70a0e8-7ab6-48b5-828d-da9a2b7d263c"
     },
     {
-      "spdxElementId": "SPDXRef-package-2b6dc525-19f2-42ff-b100-81aa966f56b3",
+      "spdxElementId": "SPDXRef-package-be6676b6-fd73-4d51-a616-6a3496c14fde",
+      "relationshipType": "DYNAMIC_LINK",
+      "relatedSpdxElement": "SPDXRef-package-0d70a0e8-7ab6-48b5-828d-da9a2b7d263c"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-be6676b6-fd73-4d51-a616-6a3496c14fde",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-package-686a921b-ebd6-4937-87e3-84095df76904"
     },
     {
-      "spdxElementId": "SPDXRef-package-2b6dc525-19f2-42ff-b100-81aa966f56b3",
+      "spdxElementId": "SPDXRef-package-be6676b6-fd73-4d51-a616-6a3496c14fde",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-package-87476701-cd7b-494c-a778-27bd8fecc90f"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-be6676b6-fd73-4d51-a616-6a3496c14fde",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-9bc4a596-0134-458d-9c28-6bf58ab0cfa3"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-be6676b6-fd73-4d51-a616-6a3496c14fde",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-09728c4a-7c4b-4db5-a2a8-e611e30f23ad"
     }
   ]
 }
