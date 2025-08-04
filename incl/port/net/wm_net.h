@@ -492,6 +492,164 @@ static inline uint8_t *net_stack_buffer_skip(void *buf, uint16_t in_offset)
 }
 #endif
 
+/** Net Packet Abstraction Layer
+ *
+ * Control net stack packets in different OS.
+ * To compat with OS, common net packet structure is
+ * - net_pkt
+ *   - net_buf 1
+ *     - data (cursor)
+ *   - net_buf 2
+ *     - data
+ *
+ * net_pkt manages whole packet and all hooked net_bufs.
+ * net_buf carries actual payload.
+ */
+#if defined(SDK_OS_FREE_RTOS)
+#define NAL_PKT_2_BUF(p)    (p)
+#define NAL_BUF_NEXT(p)     ((void *)(((struct pbuf *)(p))->next))
+#define NAL_BUF_PAYLOAD(p)  ((void *)(((struct pbuf *)(p))->payload))
+#define NAL_BUF_LEN(p)      (((struct pbuf *)(p))->len)
+#define NAL_BUF_TOT_LEN(p)  (((struct pbuf *)(p))->tot_len)
+#define NAL_PKT_HEAD_ADDR(p) NAL_BUF_PAYLOAD(p)
+#define NAL_PKT_SET_IFACE(p, if_idx)
+
+/** Allocate net stack buffer in RX path
+ *
+ * \param[in] offset reserved headroom size
+ * \param[in] len payload size
+ *
+ * \return net pkt ptr on success
+ * \return zero ptr on failure
+ */
+static inline void *net_stack_buffer_alloc_rx(int offset, int len)
+{
+    return (void *)pbuf_alloc((pbuf_layer)offset, (uint16_t)len, PBUF_POOL);
+}
+
+/** Allocate and reserve headroom, and copy partial net packet in TX path
+ *
+ * \param[in] pkt net stack packet
+ * \param[in] p buffer hooked in packet, carrying src payload
+ * \param[in] offset reserved headroom size
+ *
+ * \return net pkt ptr on success
+ * \return zero ptr on failure
+ */
+static inline void *net_stack_buffer_clone_tx_frag(void *pkt, void *p, int offset)
+{
+    struct pbuf *tmp;
+
+    tmp = pbuf_clone((pbuf_layer)offset, PBUF_RAM, (struct pbuf *)p);
+    if (tmp == NULL)
+    {
+        tmp = pbuf_clone((pbuf_layer)offset, PBUF_POOL, (struct pbuf *)p);
+    }
+    return (void *)tmp;
+}
+
+/** Extend net buf header size and decrease start address
+ *
+ * \param[in] p net buf hooked in net pkt
+ * \param[in] len extending header size
+ *
+ * \return 0 on success
+ * \return non 0 on failure
+ */
+static inline int net_stack_buffer_push(void *p, int len)
+{
+    return pbuf_header((struct pbuf *)p, len);
+}
+
+/** Set net interface field in net pkt
+ *
+ * \param[in] p net packet
+ * \param[in] interface net interface index
+ *
+ */
+static inline void net_stack_buffer_set_iface(void *p, int interface)
+{
+    return;
+}
+#elif __ZEPHYR__
+#define NAL_PKT_2_BUF(p)    ((void *)(((struct net_pkt *)(p))->cursor.buf))
+#define NAL_BUF_NEXT(p)     ((void *)(((struct net_buf *)(p))->frags))
+#define NAL_BUF_PAYLOAD(p)  ((void *)(((struct net_buf *)(p))->data))
+#define NAL_BUF_LEN(p)      (((struct net_buf *)(p))->len)
+#define NAL_BUF_TOT_LEN(p)  (net_buf_frags_len((struct net_buf *)(p)))
+#define NAL_PKT_HEAD_ADDR(p) ((void *)(((struct net_pkt *)(p))->cursor.pos))
+#define NAL_PKT_SET_IFACE(p, iface) net_pkt_set_iface(p, iface)
+
+/** Allocate net stack buffer in RX path
+ *
+ * \param[in] offset reserved headroom size
+ * \param[in] len payload size
+ *
+ * \return net pkt ptr on success
+ * \return zero ptr on failure
+ */
+void *net_stack_buffer_alloc_rx(int offset, int len);
+
+/** Allocate and reserve headroom, and copy partial net packet in TX path
+ *
+ * \param[in] pkt net stack packet
+ * \param[in] p buffer hooked in packet, carrying src payload
+ * \param[in] offset reserved headroom size
+ *
+ * \return net pkt ptr on success
+ * \return zero ptr on failure
+ */
+void *net_stack_buffer_clone_tx_frag(void *pkt, void *p, int offset);
+
+/** Extend net buf header size and decrease start address
+ *
+ * \param[in] p net buf hooked in net pkt
+ * \param[in] len extending header size
+ *
+ * \return 0 on success
+ * \return non 0 on failure
+ */
+int net_stack_buffer_push(void *p, int len);
+
+/** Set net interface field in net pkt
+ *
+ * \param[in] p net packet
+ * \param[in] interface net interface index
+ *
+ */
+void net_stack_buffer_set_iface(void *p, int interface);
+#endif
+
+#define NAL_SIZE_ALIGN(val, align) (((t_u32)(val) + align - 1U) & ~(align - 1U))
+
+/** Allocate and reserve headroom, and copy whole net packet in TX path
+ *
+ * \param[in] p net stack packet
+ * \param[in] offset reserved headroom size
+ *
+ * \return net pkt ptr on success
+ * \return zero ptr on failure
+ */
+static inline void *net_stack_buffer_clone_tx(void *p, int offset)
+{
+    return net_stack_buffer_clone_tx_frag(p, NAL_PKT_2_BUF(p), offset);
+}
+
+/** Adjust net packet size to actual payload length
+ *
+ * \param[in] p net stack packet
+ * \param[in] len actual payload length
+ *
+ */
+static inline void net_stack_buffer_size_adjust(void *p, int len)
+{
+#if defined(SDK_OS_FREE_RTOS)
+    pbuf_realloc((struct pbuf *)p, len);
+#elif __ZEPHYR__
+    (void)net_pkt_update_length(p, len);
+#endif
+}
+
 /** Converts Internet host address in network byte order to a string in IPv4
  * dotted-decimal notation
  *

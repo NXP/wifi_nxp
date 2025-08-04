@@ -285,8 +285,8 @@ static void sg_data_list_clear_tx(void)
 
 static sg_data_list_t* sg_data_rx_prepare(t_u32 len)
 {
-    struct pbuf *p;
-    struct pbuf *phead;
+    void *p;
+    void *pkt;
     t_u8 retry_cnt = 3;
     sg_data_list_t *head;
     sg_data_list_t *node;
@@ -294,8 +294,8 @@ static sg_data_list_t* sg_data_rx_prepare(t_u32 len)
 
 retry:
     /* reserve mlan buffer space */
-    phead = pbuf_alloc((pbuf_layer)sizeof(mlan_buffer), (t_u16)len, PBUF_POOL);
-    if (phead == NULL)
+    pkt = net_stack_buffer_alloc_rx(sizeof(mlan_buffer), len);
+    if (pkt == NULL)
     {
         if (retry_cnt)
         {
@@ -314,16 +314,18 @@ retry:
     head = sg_data_new_rx();
     if (head == NULL)
     {
-        wifi_io_d("None RX sg data head phead 0x%x", (t_u32)phead);
+        wifi_io_d("None RX sg data head pkt 0x%x", (t_u32)pkt);
         goto fail;
     }
 
-    SG_DATA_ADDR(head) = (uint32_t *)phead->payload;
-    SG_DATA_SIZE(head) = (uint32_t)phead->len;
-    head->is_hdr = 1;
-    head->pkt_addr = (void *)phead;
+    p = NAL_PKT_2_BUF(pkt);
 
-    p = phead->next;
+    SG_DATA_ADDR(head) = (uint32_t *)NAL_BUF_PAYLOAD(p);
+    SG_DATA_SIZE(head) = (uint32_t)NAL_BUF_LEN(p);
+    head->is_hdr = 1;
+    head->pkt_addr = pkt;
+
+    p = NAL_BUF_NEXT(p);
     tail = head;
     while (p != NULL)
     {
@@ -333,13 +335,13 @@ retry:
             goto fail;
         }
 
-        SG_DATA_ADDR(node) = (uint32_t *)p->payload;
-        SG_DATA_SIZE(node) = p->len;
-        node->pkt_addr = (void *)p;
+        SG_DATA_ADDR(node) = (uint32_t *)NAL_BUF_PAYLOAD(p);
+        SG_DATA_SIZE(node) = NAL_BUF_LEN(p);
+        node->pkt_addr = p;
         SG_DATA_SET_NEXT(tail, node);
         tail = node;
 
-        p = p->next;
+        p = NAL_BUF_NEXT(p);
     }
     return head;
 
@@ -351,9 +353,9 @@ fail:
         head = tail;
     }
 
-    if (phead != NULL)
+    if (pkt != NULL)
     {
-        pbuf_free(phead);
+        net_stack_buffer_free(pkt);
     }
     return NULL;
 }
@@ -372,23 +374,24 @@ static int inbuf_2_sg_data(t_u32 len)
 
 static void sg_data_rx_deliver(sg_data_list_t *head)
 {
-    struct pbuf *p = (struct pbuf *)head->pkt_addr;
+    void *p = NAL_PKT_2_BUF(head->pkt_addr);
     RxPD *rxpd;
     t_u32 len;
 
     if (wifi_rx_status == WIFI_DATA_BLOCK)
     {
         wifi_rx_block_cnt++;
-        pbuf_free(p);
+        net_stack_buffer_free(head->pkt_addr);
         return;
     }
 
-    rxpd = (RxPD *)(void *)((t_u8 *)p->payload + INTF_HEADER_LEN);
+    rxpd = (RxPD *)(void *)((t_u8 *)NAL_BUF_PAYLOAD(p) + INTF_HEADER_LEN);
     len = INTF_HEADER_LEN + rxpd->rx_pkt_offset + rxpd->rx_pkt_length;
-    if (p->tot_len > len)
+    if (NAL_BUF_TOT_LEN(p) > len)
     {
-        pbuf_realloc(p, len);
+        net_stack_buffer_size_adjust(head->pkt_addr, len);
     }
+    net_stack_buffer_set_iface(head->pkt_addr, rxpd->bss_type);
 
     /*
      * In some cases, wifi_low_level_input dispatches packets like mgmt and eapol,
@@ -396,7 +399,7 @@ static void sg_data_rx_deliver(sg_data_list_t *head)
      * So we should set RX net stack pool buffer size 2048 bytes to make sure this.
      *
      */
-    (void)bus.wifi_low_level_input(rxpd->bss_type, (t_u8 *)(void *)p, len);
+    (void)bus.wifi_low_level_input(rxpd->bss_type, (t_u8 *)head->pkt_addr, len);
 }
 
 static void sg_data_rx_process(void)
@@ -434,93 +437,120 @@ static int sg_data_total_len_tx(sg_data_list_t *hdr)
 static sg_data_list_t *sg_data_tx_prepare(t_u8 *out_buf)
 {
     outbuf_t *buf = (outbuf_t *)out_buf;
-    struct pbuf *p;
-    struct pbuf *q;
-    struct pbuf *last = NULL;
+    void *pkt = buf->buffer;
+    void *clone_pkt;
+    void *p;
+    void *q;
+    void *prev = NULL;
     sg_data_list_t *head = NULL;
     sg_data_list_t *node;
     sg_data_list_t *tail;
     t_u32 pkt_len = 0;
     t_u32 trim;
-    const t_u32 hdr_size = INTF_HEADER_LEN + sizeof(TxPD) + ETH_HDR_LEN;
+    /* 4 bytes align */
+    const t_u32 hdr_size = SG_DATA_ALIGN(INTF_HEADER_LEN + sizeof(TxPD) + ETH_HDR_LEN, SG_DATA_TX_ALIGN_SIZE);
+    void *payload;
 
-    p = (struct pbuf *)buf->buffer;
+    p = NAL_PKT_2_BUF(pkt);
+    payload = NAL_PKT_HEAD_ADDR(pkt);
 
-    /* 1. skip adding header when it is already in payload, else try to add headroom */
+    /*
+     * 1. skip adding header when it is already in payload, in case this packet is prepared before,
+     * but put back to wmm queue, due to interface queue full.
+     */
     if (buf->is_hdr_in_payload == 0)
     {
-        if (pbuf_header(p, hdr_size) == 0)
+        /* 2. add header for interface header, TxPD and ETH header, to save one SG DMA desc */
+        if (net_stack_buffer_push(pkt, hdr_size) == 0)
         {
             buf->is_hdr_in_payload = 1;
         }
     }
 
-    /* 2. check if address is aligned */
-    trim = ((t_u32)(void *)p->payload & (SG_DATA_TX_ALIGN_SIZE - 1));
+    /* 3. check if address is aligned */
+    trim = ((t_u32)(void *)payload & (SG_DATA_TX_ALIGN_SIZE - 1));
     if (trim != 0)
     {
         if (buf->is_hdr_in_payload)
         {
-            if (pbuf_header(p, trim) == 0)
+            if (net_stack_buffer_push(pkt, trim) == 0)
             {
+                /*
+                 * 4a. add header for address alignment. Payload address remains the same.
+                 * So the payload offset needs to increase by added size
+                 */
                 buf->tx_pd.tx_pkt_offset += trim;
             }
             else
             {
-                q = pbuf_clone(PBUF_RAW, PBUF_POOL, p);
-                if (q == NULL)
+                /*
+                 * 4b. header in payload and not enough headroom, clone packet with 0 headroom.
+                 * The cloned packet will be 4 bytes aligned by address and length.
+                 * And it will contain hdr_size in payload.
+                 */
+                clone_pkt = net_stack_buffer_clone_tx(pkt, 0);
+                if (clone_pkt == NULL)
                 {
                     goto fail;
                 }
-                buf->buffer = (void *)q;
-                pbuf_free(p);
-                p = q;
+                buf->buffer = clone_pkt;
+                net_stack_buffer_free(pkt);
+                pkt = clone_pkt;
+                p = NAL_PKT_2_BUF(pkt);
             }
         }
         else
         {
-            q = pbuf_clone(PBUF_LINK, PBUF_POOL, p);
-            if (q == NULL)
+            /*
+             * 4c. header not in payload and not enough headroom, clone packet with hdr_size headroom.
+             * The cloned packet will be 4 bytes aligned by address and length.
+             * And it will contain hdr_size in headroom. So need to add header after clone.
+             */
+            clone_pkt = net_stack_buffer_clone_tx(pkt, hdr_size);
+            if (clone_pkt == NULL)
             {
                 goto fail;
             }
-            buf->buffer = (void *)q;
+            buf->buffer = clone_pkt;
             buf->is_hdr_in_payload = 1;
-            pbuf_free(p);
-            p = q;
-            /* Add headroom */
-            pbuf_header(p, hdr_size);
+            net_stack_buffer_free(pkt);
+            pkt = clone_pkt;
+            net_stack_buffer_push(pkt, hdr_size);
+            p = NAL_PKT_2_BUF(pkt);
         }
     }
 
+    payload = NAL_PKT_HEAD_ADDR(pkt);
     if (buf->is_hdr_in_payload)
     {
-        /* 3. always copy hdr in case it is updated */
-        memcpy(p->payload, &buf->intf_header[0], INTF_HEADER_LEN + sizeof(TxPD));
+        /* 5. always copy hdr in case it is updated  */
+        memcpy(payload, &buf->intf_header[0], INTF_HEADER_LEN + sizeof(TxPD));
         /* skip alignment padding */
-        memcpy((t_u8 *)p->payload + INTF_HEADER_LEN + buf->tx_pd.tx_pkt_offset,
+        memcpy((t_u8 *)payload + INTF_HEADER_LEN + buf->tx_pd.tx_pkt_offset,
                &buf->eth_header[0], ETH_HDR_LEN);
     }
 
-    /* 4. address is aligned, now check if length is aligned */
-    if (p->next != NULL && !SG_DATA_IS_ALIGNED(p->len, SG_DATA_TX_ALIGN_SIZE))
+    /*
+     * 6. address is aligned, now check if length is aligned.
+     * When length is not aligned, if it is single buffer, ignore and force align
+     * it by extending the length by padding. The padding will be ignored by device.
+     * If it is not single buffer, need to clone packet.
+     */
+    if (NAL_BUF_NEXT(p) != NULL && !SG_DATA_IS_ALIGNED(NAL_BUF_LEN(p), SG_DATA_TX_ALIGN_SIZE))
     {
-        q = pbuf_clone(PBUF_RAW, PBUF_RAM, p);
-        if (q == NULL)
+        clone_pkt = net_stack_buffer_clone_tx(pkt, 0);
+        if (clone_pkt == NULL)
         {
-            q = pbuf_clone(PBUF_RAW, PBUF_POOL, p);
-            if (q == NULL)
-            {
-                goto fail;
-            }
+            goto fail;
         }
 
-        buf->buffer = (void *)q;
-        pbuf_free(p);
-        p = q;
+        buf->buffer = clone_pkt;
+        net_stack_buffer_free(pkt);
+        pkt = clone_pkt;
+        p = NAL_PKT_2_BUF(clone_pkt);
     }
 
-    /* 5. alloc header sg_desc */
+    /* 7. alloc header sg_desc */
     head = sg_data_new_tx();
     if (head == NULL)
     {
@@ -529,29 +559,44 @@ static sg_data_list_t *sg_data_tx_prepare(t_u8 *out_buf)
 
     if (buf->is_hdr_in_payload)
     {
-        SG_DATA_ADDR(head) = (uint32_t *)p->payload;
-        SG_DATA_SIZE(head) = SG_DATA_ALIGN(p->len, SG_DATA_TX_ALIGN_SIZE);
-        last = p;
-        p = p->next;
+        /*
+         * 8a. if header in payload, the header sg_desc includes both header and payload.
+         * Then the p cursor can move to next buffer.
+         */
+        SG_DATA_ADDR(head) = (uint32_t *)payload;
+        SG_DATA_SIZE(head) = SG_DATA_ALIGN(NAL_BUF_LEN(p), SG_DATA_TX_ALIGN_SIZE);
+        prev = p;
+        p = NAL_BUF_NEXT(p);
+        if (p != NULL)
+        {
+            payload = NAL_BUF_PAYLOAD(p);
+        }
     }
     else
     {
+        /* 8b. if header not in payload, the header sg_desc includes only header */
         SG_DATA_ADDR(head) = (uint32_t *)(void *)&buf->intf_header[0];
         SG_DATA_SIZE(head) = SG_DATA_ALIGN(hdr_size, SG_DATA_TX_ALIGN_SIZE);
     }
 
+    /* 9. set the packet header flag and relation to outbuf, to free outbuf after DMA is done */
     head->is_hdr = 1;
     head->pkt_addr = (void *)buf;
     pkt_len = SG_DATA_SIZE(head);
 
     tail = head;
 
-    /* 6. iterate chained buffers */
+    /* 10. iterate remaining chained buffers to check if they are aligned by address and length */
     while (p != NULL)
     {
-        /* 7. check if chained buffer is aligned */
-        if ((p->next != NULL && !SG_DATA_IS_ALIGNED(p->len, SG_DATA_TX_ALIGN_SIZE)) ||
-            (!SG_DATA_IS_ALIGNED((t_u32)p->payload, SG_DATA_TX_ALIGN_SIZE)))
+        /*
+         * 11. if address is not aligned, clone packet.
+         * If length is not aligned, and it is not the last chained buffer, clone packet.
+         * If length is not aligned, but it is the last chained buffer, ignore and force align
+         * it with padding. The padding will be ignored by device.
+         */
+        if ((NAL_BUF_NEXT(p) != NULL && !SG_DATA_IS_ALIGNED(NAL_BUF_LEN(p), SG_DATA_TX_ALIGN_SIZE)) ||
+            (!SG_DATA_IS_ALIGNED((t_u32)payload, SG_DATA_TX_ALIGN_SIZE)))
         {
             goto clone;
         }
@@ -562,59 +607,73 @@ static sg_data_list_t *sg_data_tx_prepare(t_u8 *out_buf)
             goto fail;
         }
 
-        SG_DATA_ADDR(node) = (uint32_t *)p->payload;
-        SG_DATA_SIZE(node) = (uint32_t)SG_DATA_ALIGN(p->len, SG_DATA_TX_ALIGN_SIZE);
+        SG_DATA_ADDR(node) = (uint32_t *)payload;
+        SG_DATA_SIZE(node) = (uint32_t)SG_DATA_ALIGN(NAL_BUF_LEN(p), SG_DATA_TX_ALIGN_SIZE);
         pkt_len += SG_DATA_SIZE(node);
 
         SG_DATA_SET_NEXT(tail, node);
         tail = node;
-        last = p;
-        p = p->next;
+        prev = p;
+        p = NAL_BUF_NEXT(p);
+        if (p != NULL)
+        {
+            payload = NAL_BUF_PAYLOAD(p);
+        }
     }
 
-    /* 8. add sdio block size padding */
+    /* 12. add sdio block size padding */
     SG_DATA_SIZE(tail) += MLAN_SDIO_BLOCK_SIZE - (pkt_len & (MLAN_SDIO_BLOCK_SIZE - 1));
     return head;
 
 clone:
-    /* 9. for tcp case, not affect original buffer */
+    /*
+     * 13. Use cache_buffer to store the cloned packet, so that we don't affect
+     * original buffer in TCP or other reference buffer case.
+     * If cache_buffer is already set, eg. this packet is already prepared but
+     * put back to queue interface queue full, directly use it without clone again.
+     */
     /* to improve: only clone unaligned part */
     if (buf->cache_buffer != NULL)
     {
-        if (((struct pbuf *)buf->cache_buffer)->tot_len == p->tot_len)
+        if (NAL_BUF_TOT_LEN(NAL_PKT_2_BUF(buf->cache_buffer)) == NAL_BUF_TOT_LEN(p))
         {
-            q = (struct pbuf *)buf->cache_buffer;
+            clone_pkt = buf->cache_buffer;
             goto skip_alloc;
         }
         else
         {
+            /* error handling */
             net_stack_buffer_free(buf->cache_buffer);
         }
     }
 
-    q = pbuf_clone(PBUF_RAW, PBUF_RAM, p);
-    if (q == NULL)
+    /* 14. clone from current cursor buffer p, to the last chained buffer */
+    clone_pkt = net_stack_buffer_clone_tx_frag(pkt, p, 0);
+    if (clone_pkt == NULL)
     {
-        q = pbuf_clone(PBUF_RAW, PBUF_POOL, p);
-        if (q == NULL)
-        {
-            goto fail;
-        }
+        goto fail;
     }
 
-    /* 10. replace unaligned buffer with aligned buffer */
-    if (last == NULL)
+    /*
+     * 15. if no prev, means current cursor is the first buffer,
+     * replace buffer with cloned buffer.
+     * If there is prev, means current cursor is not the first buffer,
+     * Use cache buffer to store cloned packet, for later free usage.
+     */
+    if (prev == NULL)
     {
-        buf->buffer = (void *)q;
-        pbuf_free(p);
+        buf->buffer = clone_pkt;
+        net_stack_buffer_free(pkt);
     }
     else
     {
-        buf->cache_buffer = (void *)q;
+        buf->cache_buffer = clone_pkt;
     }
 
-    /* 11. cloned buffer is surely aligned by lwip config */
+    /* 16. make sure cloned buffer is aligned by zero copy default net config */
 skip_alloc:
+    q = NAL_PKT_2_BUF(clone_pkt);
+    payload = NAL_PKT_HEAD_ADDR(clone_pkt);
     while (q != NULL)
     {
         node = sg_data_new_tx();
@@ -623,17 +682,21 @@ skip_alloc:
             goto fail;
         }
 
-        SG_DATA_ADDR(node) = (uint32_t *)q->payload;
-        SG_DATA_SIZE(node) = (uint32_t)SG_DATA_ALIGN(q->len, SG_DATA_TX_ALIGN_SIZE);
+        SG_DATA_ADDR(node) = (uint32_t *)payload;
+        SG_DATA_SIZE(node) = (uint32_t)SG_DATA_ALIGN(NAL_BUF_LEN(q), SG_DATA_TX_ALIGN_SIZE);
         pkt_len += SG_DATA_SIZE(node);
 
         SG_DATA_SET_NEXT(tail, node);
         tail = node;
-        last = q;
-        q = q->next;
+        prev = q;
+        q = NAL_BUF_NEXT(q);
+        if (q != NULL)
+        {
+            payload = NAL_BUF_PAYLOAD(q);
+        }
     }
 
-    /* 12. add sdio block size padding */
+    /* 17. add sdio block size padding */
     SG_DATA_SIZE(tail) += MLAN_SDIO_BLOCK_SIZE - (pkt_len & (MLAN_SDIO_BLOCK_SIZE - 1));
     return head;
 
