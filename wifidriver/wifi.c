@@ -1420,10 +1420,10 @@ start:
         /* assert as command flow cannot work anymore */
 #if (CONFIG_WIFI_IND_DNLD)
         wlan_process_hang(FW_RELOAD_SDIO_INBAND_RESET);
+#endif
+#endif
 #else
         ASSERT(0);
-#endif
-#endif
 #endif
     }
 
