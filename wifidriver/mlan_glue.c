@@ -74,7 +74,6 @@ extern uint8_t wls_data[WLS_CSI_DATA_LEN];
 
 #if CONFIG_CSI_AMI
 #define CSI_PROC_DATA_SIZE 1000
-uint8_t g_ami_ongoing = 0;
 uint8_t csi_proc_data[CSI_PROC_DATA_SIZE] = {0};
 #endif
 
@@ -6351,8 +6350,9 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #if (CONFIG_CSI)
             csi_deliver_data_to_user();
 #if CONFIG_CSI_AMI
-            // If ami calculation is ongoing, discard current csi event data.
-            if(!g_ami_ongoing)
+            /** AMI is used to reflect real-time environmental disturbances.
+            Caching CSI event data and delaying AMI computation is not meaningful. */
+            if(!mlan_adap->ami_ongoing)
             {
                 (void)memcpy(csi_proc_data, (t_u8 *)msg->data, CSI_PROC_DATA_SIZE);
                 wifi_event_completion(WIFI_EVENT_CSI_PROC, WIFI_EVENT_REASON_SUCCESS, csi_proc_data);

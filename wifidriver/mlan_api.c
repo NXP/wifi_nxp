@@ -72,7 +72,6 @@ uint32_t fftInBuffer_t[FFT_INBUFFER_LEN_DW];
 
 #if (CONFIG_CSI) && (CONFIG_CSI_AMI)
 extern ami_cfg_t g_ami_cfg;
-extern uint8_t g_ami_ongoing;
 float referenceBuffer[2 * (MAX_RX * MAX_TX) * MAX_IFFT_SIZE_CSI];
 unsigned int fftInBuffer[FFT_INBUFFER_LEN_DW];
 #if STA_20_ONLY
@@ -87,7 +86,6 @@ unsigned int scratchBuffer1[SCR_INBUFFER_LEN];
 #define HE_RATE 3
 t_u8 convertPktInfo[8] = {LEG_RATE, HT_RATE, HT_RATE, VHT_RATE, HE_RATE, LEG_RATE, LEG_RATE, LEG_RATE};
 #define AMI_CSI_RAW_DATA_OFFSET 8 /* interface header size + event type size */
-uint64_t ami_num = 0;
 #endif
 
 /* This were static functions in mlan file */
@@ -6448,9 +6446,9 @@ static void proc_csi_event(void *p_data)
             {
                 /* do nothing */
             }
-            ami_num++;
-			PRINTF("NUM %lld CSI Processing Results: %s(%d), RX/TX %d/%d, %0.2f\tTSF %llx, Ambient Motion Index %0.1f dB\r\n",
-				ami_num, myStr, BW, nRx, nTx, toa_ns, TSF, ambientMotionVal_dB);
+            mlan_adap->ami_num++;
+			PRINTF("NUM %d CSI Processing Results: %s(%d), RX/TX %d/%d, %-8.2f TSF %llx, Ambient Motion Index %0.1f dB\r\n",
+				mlan_adap->ami_num, myStr, BW, nRx, nTx, toa_ns, TSF, ambientMotionVal_dB);
             
             if (g_ami_cfg.gcsi_filter_param.num_csi)
 			{
@@ -6462,7 +6460,7 @@ static void proc_csi_event(void *p_data)
                 {
                     g_ami_cfg.gcsi_filter_param.num_csi--;
                     g_ami_cfg.start = 0;
-                    ami_num = 0;
+                    mlan_adap->ami_num = 0;
                 }
 			}
 		}
@@ -6483,9 +6481,9 @@ static void proc_csi_event(void *p_data)
 
 void wifi_process_csi_data(void *p_data)
 {
-    g_ami_ongoing = 1;
+    mlan_adap->ami_ongoing = 1;
     proc_csi_event(((t_u8 *)p_data + AMI_CSI_RAW_DATA_OFFSET));
-    g_ami_ongoing = 0;
+    mlan_adap->ami_ongoing = 0;
     return;
 }
 
