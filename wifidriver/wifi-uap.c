@@ -4881,8 +4881,32 @@ int wifi_nxp_stop_ap(unsigned int bss_type)
         wuap_e("Stop BSS failed");
         return -WM_FAIL;
     }
+
+#if CONFIG_WPA_SUPP_P2P
+    if (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
+    {
+        if (MLAN_STATUS_SUCCESS != wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_SYS_RESET, HostCmd_ACT_GEN_SET, 0,
+                                                                 NULL, NULL, bss_type, NULL))
+        {
+            wuap_e("Reset BSS failed\r\n");
+            return -WM_FAIL;
+        }
+
+        wifi_mac_addr_t mac_addr = {0};
+        (void)wifi_get_device_wfd_mac_addr(&mac_addr);
+        _wifi_set_mac_addr((uint8_t *)mac_addr.mac, MLAN_BSS_TYPE_WIFIDIRECT);
+    }
+#endif
+
     wifi_uap_clear_domain_info(bss_type);
     priv->uap_host_based = MFALSE;
+
+#if CONFIG_WPA_SUPP_P2P
+    if (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
+    {
+        priv->bss_role = MLAN_BSS_ROLE_STA;
+    }
+#endif
 
     wuap_d("wlan: AP stopped");
 
