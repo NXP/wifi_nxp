@@ -757,15 +757,7 @@ if (CONFIG_MCUX_COMPONENT_middleware.wifi.libcsi.incl)
                 # TODO please change to relative dir
                 libcsi/incl/wls_param_defines.h
                 # TODO please change to relative dir
-                libcsi/incl/wls_processing.h
-                # TODO please change to relative dir
-                libcsi/incl/wls_QR_algorithm.h
-                # TODO please change to relative dir
-                libcsi/incl/wls_radix4Fft.h
-                # TODO please change to relative dir
                 libcsi/incl/wls_structure_defs.h
-                # TODO please change to relative dir
-                libcsi/incl/wls_subspace_processing.h
     )
     mcux_add_include(
         INCLUDES libcsi/incl

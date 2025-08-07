@@ -1,10 +1,12 @@
-/** @file wls_param_defines.h
+/*
+ *  Copyright 2025 NXP
  *
- * @brief This file contains global header file for configuring fft processing of CSI.
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
- * Copyright 2023-2024 NXP
- *
- * SPDX-License-Identifier: BSD-3-Clause
+ */
+
+/*! \file wls_param_defines.h
+ * \brief This file contains global header file for configuring fft processing of CSI.
  */
 
 /************************************************************************
