@@ -71,15 +71,20 @@ uint32_t fftInBuffer_t[FFT_INBUFFER_LEN_DW];
 #endif
 
 #if (CONFIG_CSI) && (CONFIG_CSI_AMI)
+#if defined __ICCARM__
+#define NO_INIT_AMI __no_init
+#else
+#define NO_INIT_AMI
+#endif
 extern ami_cfg_t g_ami_cfg;
-float referenceBuffer[2 * (MAX_RX * MAX_TX) * MAX_IFFT_SIZE_CSI];
-unsigned int fftInBuffer[FFT_INBUFFER_LEN_DW];
+NO_INIT_AMI float referenceBuffer[2 * (MAX_RX * MAX_TX) * MAX_IFFT_SIZE_CSI];
+NO_INIT_AMI unsigned int fftInBuffer[FFT_INBUFFER_LEN_DW];
 #if STA_20_ONLY
 #define SCR_INBUFFER_LEN (3 * MAX_RX * MAX_TX + NUM_PROC_BUF) * (MAX_IFFT_SIZE_CSI)
 #else
 #define SCR_INBUFFER_LEN FFT_INBUFFER_LEN_DW
 #endif
-unsigned int scratchBuffer1[SCR_INBUFFER_LEN];
+NO_INIT_AMI unsigned int scratchBuffer1[SCR_INBUFFER_LEN];
 #define LEG_RATE 0
 #define HT_RATE 1
 #define VHT_RATE 2
