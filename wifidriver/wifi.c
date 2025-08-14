@@ -3219,7 +3219,11 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
                 category != IEEE_MGMT_ACTION_CATEGORY_PROTECTED_DUAL && category != IEEE_MGMT_ACTION_CATEGORY_QOS &&
                 category != IEEE_MGMT_ACTION_CATEGORY_FAST_BSS_TRANS &&
                 category != IEEE_MGMT_ACTION_CATEGORY_SA_QUERY && category != IEEE_MGMT_ACTION_CATEGORY_AV_STREAMING &&
-                category != IEEE_MGMT_ACTION_CATEGORY_WNM)
+                category != IEEE_MGMT_ACTION_CATEGORY_WNM
+#if CONFIG_WPA_SUPP_P2P
+                && category != IEEE_MGMT_ACTION_CATEGORY_VENDOR_SPEC
+#endif
+            )
             {
                 wifi_d("Drop action frame: category = %d, action_code=%d", category, action_code);
                 LEAVE();
