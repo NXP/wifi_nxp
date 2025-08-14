@@ -2021,7 +2021,7 @@ mlan_status wlan_send_null_packet(pmlan_private priv, t_u8 flags)
     ptxpd->tx_pkt_offset = 0x16; /* we'll just make this constant */
     ptxpd->tx_pkt_length = 0;
     ptxpd->tx_control    = 0;
-    ptxpd->priority      = 0;
+    ptxpd->priority      = 7;
     ptxpd->flags         = flags;
     ptxpd->pkt_delay_2ms = 0;
 
