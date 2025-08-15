@@ -1,7 +1,20 @@
 Name: NXP Wi-Fi driver
 Outgoing License: BSD 3-Clause "New" or "Revised" License
 License File: LICENSE
-Version: v1.3.r48.p43
+Version: v1.3.r48.p45
+
+Package: libcsi
+Outgoing License: NXP Proprietary LA_OPT_NXP_Software_License v63 May 2025 - Additional distribution license granted, Section 2.3 applies
+License File: LA_OPT_NXP_Software_License.txt
+Files: files under libcsi/cm7 and libcsi/cm33
+Format: Binary libraries
+Description: libcsi library
+Location: https://github.com/NXP/wifi_nxp
+Origin: NXP (Proprietary)
+
+Package: NXP Wi-Fi driver except above pbcsi package
+Outgoing License: BSD 3-Clause "New" or "Revised" License
+License File: LICENSE
 Format: source code, header files
 Description: NXP Wi-Fi driver and networking utilities
 Location: https://github.com/NXP/wifi_nxp
@@ -12,3 +25,4 @@ Origin: NXP (BSD-3-Clause)
         FatFs Module (FatFs License) - http://elm-chan.org/fsw/ff/00index_e.html
         Wi-FiTestSuite/Wi-FiTestSuite-Linux-DUT (ISC License) - https://github.com/Wi-FiTestSuite/Wi-FiTestSuite-Linux-DUT
         michaelbecker/freertos-addons (MIT License) - https://github.com/michaelbecker/freertos-addons
+        zephyr (Apache License 2.0) - https://github.com/zephyrproject-rtos/zephyr/

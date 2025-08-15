@@ -2,10 +2,11 @@
  *
  *  @brief  This file provides the support for network utility ping
  *
- *  Copyright 2008-2022 NXP
+ * Copyright (c) 2016 Intel Corporation
+ * Copyright (c) 2023 Nordic Semiconductor ASA
+ * Copyright 2008-2025 NXP
  *
- *  SPDX-License-Identifier: BSD-3-Clause
- *
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 /* wifi_ping.c: This file contains the support for network utility ping */

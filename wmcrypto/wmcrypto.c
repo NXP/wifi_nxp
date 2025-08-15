@@ -2,10 +2,11 @@
  *
  *  @brief This file contains mbed TLS wrap function
  *
- *  Copyright 2008-2022 NXP
+ * Copyright (c) 2003-2005, Jouni Malinen <j@w1.fi>
+ * Copyright 2008-2022 NXP
  *
- *  SPDX-License-Identifier: BSD-3-Clause
- *
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "mbedtls/dhm.h"
