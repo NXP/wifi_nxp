@@ -3304,7 +3304,8 @@ static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist
     ret = wlan_xmit_wmm_pkt(priv->bss_index, buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN,
                             (t_u8 *)&buf->intf_header[0]);
 #endif
-    if (ret != MLAN_STATUS_SUCCESS)
+    /* other cases we return as normal and pass the errcode */
+    if (ret == MLAN_STATUS_FAILURE)
     {
         WLAN_STATS_INC(priv, stats.overrun.tx);
         WLAN_STATS_INC(priv, stats.errors.tx);
@@ -3315,7 +3316,7 @@ static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist
         util_enqueue_list_head(mlan_adap->pmoal_handle, &ralist->buf_head, &buf->entry, MNULL, MNULL);
         ralist->total_pkts++;
         mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
-        return MLAN_STATUS_RESOURCE;
+        return MLAN_STATUS_FAILURE;
 #endif
     }
 
@@ -3327,7 +3328,7 @@ static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist
 #endif
     priv->wmm.pkts_queued[ac]--;
 
-    return MLAN_STATUS_SUCCESS;
+    return ret;
 }
 
 /*
@@ -3355,8 +3356,14 @@ static mlan_status wifi_xmit_ralist_pkts(mlan_private *priv, t_u8 ac, raListTbl 
 #endif
             ret = wifi_xmit_pkts(priv, ac, ralist);
 
-        if (ret != MLAN_STATUS_SUCCESS)
+        if (ret == MLAN_STATUS_FAILURE)
             return ret;
+
+        if (ret == MLAN_STATUS_PENDING)
+        {
+            (*pkt_cnt)++;
+            return ret;
+        }
 
         /*
          * in amsdu case,

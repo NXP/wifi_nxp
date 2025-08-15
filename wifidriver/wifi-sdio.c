@@ -2343,8 +2343,10 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
 #endif
 
 #if CONFIG_WMM_UAPSD
-    if (mlan_adap->priv[interface]->adapter->pps_uapsd_mode &&
-        wifi_check_last_packet_indication(mlan_adap->priv[interface]))
+    if (mlan_adap->pps_uapsd_mode &&
+        mlan_adap->priv[interface]->wmm_qosinfo &&
+        mlan_adap->priv[interface]->curr_bss_params.wmm_uapsd_enabled &&
+        (wifi_wmm_get_packet_cnt() == ports + 1))
     {
         process_pkt_hdrs_flags(&((outbuf_t *)tx_buf)->intf_header[0], MRVDRV_TxPD_POWER_MGMT_LAST_PACKET);
         last_packet = 1;
@@ -2367,6 +2369,12 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
     ret = wlan_get_wr_port_data(&port);
     if (ret != MLAN_STATUS_SUCCESS)
     {
+#if CONFIG_WMM_UAPSD
+        if (last_packet)
+        {
+            process_pkt_hdrs_flags(&((outbuf_t *)tx_buf)->intf_header[0], 0);
+        }
+#endif
         goto fail;
     }
 
@@ -2382,6 +2390,7 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
     {
         mlan_adap->priv[interface]->adapter->tx_lock_flag = MTRUE;
         OSA_SemaphoreWait((osa_semaphore_handle_t)uapsd_sem, osaWaitForever_c);
+        return MLAN_STATUS_PENDING;
     }
 #endif
 
@@ -2394,7 +2403,7 @@ fail:
         sg_data_free_tx(hdr);
         hdr = next;
     }
-    return MLAN_STATUS_RESOURCE;
+    return MLAN_STATUS_FAILURE;
 }
 
 mlan_status wlan_flush_wmm_pkt(t_u8 pkt_count)
@@ -2416,7 +2425,7 @@ mlan_status wlan_flush_wmm_pkt(t_u8 pkt_count)
     }
 #endif
 
-    if (pkt_count == 0)
+    if (pkt_count == 0 || ports == 0)
         return MLAN_STATUS_SUCCESS;
 
     if (ports == 1)
@@ -2527,7 +2536,7 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
     ret = wlan_get_wr_port_data(&port);
     if (ret != WM_SUCCESS)
     {
-        return MLAN_STATUS_RESOURCE;
+        return MLAN_STATUS_FAILURE;
     }
 
 #if CONFIG_WMM_UAPSD
@@ -2650,7 +2659,7 @@ retry_xmit:
     {
         if (!retry)
         {
-            ret = MLAN_STATUS_RESOURCE;
+            ret = MLAN_STATUS_FAILURE;
             goto exit_fn;
         }
         else
