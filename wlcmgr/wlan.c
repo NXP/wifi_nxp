@@ -9349,6 +9349,66 @@ int wlan_add_network(struct wlan_network *network)
         return -WM_E_INVAL;
     }
 
+#if CONFIG_WPA_SUPP
+    if(network->security.type == WLAN_SECURITY_WILDCARD)
+    {
+        unsigned int count            = 0;
+        int i                         = 0;
+        struct wifi_scan_result2 *res = NULL;
+
+        ret                           = wifi_get_scan_result_count(&count);
+        if (ret != 0)
+            count = 0;
+
+        for (i = 0; i < count; i++)
+        {
+            ret = wifi_get_scan_result(i, &res);
+            if (ret == WM_SUCCESS && (memcmp(network->ssid, (char *)res->ssid, strlen(network->ssid)) == 0) && (res->ssid_len == strlen(network->ssid)))
+            {
+                if (res->WPA_WPA2_WEP.wepStatic || res->WPA_WPA2_WEP.wpa || res->WPA_WPA2_WEP.wpa2 || res->WPA_WPA2_WEP.wpa2_sha256 || res->WPA_WPA2_WEP.wpa3_sae)
+                break;
+            }
+        }
+        if (i == count)
+        {
+            wlcm_e("Could not find a proper AP with secure mode.");
+            return -WM_E_INVAL;
+        }
+
+        /* Wildcard: If wildcard security is specified, copy the highest security
+         * available in the scan result to the configuration structure
+         */
+        enum wlan_security_type t;
+        if ((res->WPA_WPA2_WEP.wpa3_sae != 0U) && (res->WPA_WPA2_WEP.wpa2 != 0U))
+            t = WLAN_SECURITY_WPA2_WPA3_SAE_MIXED;
+        else if (res->WPA_WPA2_WEP.wpa3_sae != 0U)
+            t = WLAN_SECURITY_WPA3_SAE;
+        else if (res->WPA_WPA2_WEP.wpa2 != 0U)
+            t = WLAN_SECURITY_WPA2;
+
+        else if (res->WPA_WPA2_WEP.wpa != 0U)
+            t = WLAN_SECURITY_WPA_WPA2_MIXED;
+        else if (res->WPA_WPA2_WEP.wepStatic != 0U)
+            t = WLAN_SECURITY_WEP_OPEN;
+#if CONFIG_DRIVER_OWE
+        else if (res->WPA_WPA2_WEP.wpa2 && res->WPA_WPA2_WEP.owe)
+            t = WLAN_SECURITY_OWE_ONLY;
+#endif
+        else
+            t = WLAN_SECURITY_NONE;
+        network->security.type = t;
+
+        if (res->wpa_mcstCipher.tkip || res->rsn_mcstCipher.tkip)
+            network->security.group_cipher |= BIT(3); /*WPA_CIPHER_TKIP*/
+        if (res->wpa_mcstCipher.ccmp || res->rsn_mcstCipher.ccmp)
+            network->security.group_cipher |= BIT(4); /*WPA_CIPHER_CCMP*/
+        if (res->wpa_ucstCipher.tkip || res->rsn_ucstCipher.tkip)
+            network->security.pairwise_cipher |= BIT(3); /*WPA_CIPHER_TKIP*/
+        if (res->wpa_ucstCipher.ccmp || res->rsn_ucstCipher.ccmp)
+            network->security.pairwise_cipher |= BIT(4); /*WPA_CIPHER_CCMP*/
+    }
+#endif
+
     /* Always set PMF capable by default for sae conditions */
     if(network->security.type != WLAN_SECURITY_WPA2 || network->security.mfpc == -1)
         network->security.mfpc = 1;
