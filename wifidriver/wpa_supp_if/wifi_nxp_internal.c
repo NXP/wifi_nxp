@@ -128,27 +128,32 @@ void wifi_process_remain_on_channel(struct wifi_message *msg)
     }
 #endif
 
-    if (wifi_if_ctx_rtos->supp_called_remain_on_chan == true)
+    if ((msg->reason == WIFI_EVENT_REASON_SUCCESS) &&
+        (wm_wifi.supp_if_callbk_fns->remain_on_channel_callbk_fn != NULL))
     {
-        if ((msg->reason == WIFI_EVENT_REASON_SUCCESS) &&
-            (wm_wifi.supp_if_callbk_fns->remain_on_channel_callbk_fn != NULL))
+        if (remain_channel_info->cancel_channel == true)
         {
-            if (remain_channel_info->cancel_channel == true)
+            wifi_if_ctx_rtos->remain_on_channel = false;
+            if (wifi_if_ctx_rtos->remain_on_channel_cookie != 0)
             {
                 wm_wifi.supp_if_callbk_fns->remain_on_channel_callbk_fn(wifi_if_ctx_rtos, 1);
+                wifi_if_ctx_rtos->remain_on_channel_cookie = 0;
             }
-            else
+        }
+        else
+        {
+            if (wifi_if_ctx_rtos->remain_on_channel_cookie != 0)
             {
                 wm_wifi.supp_if_callbk_fns->remain_on_channel_callbk_fn(wifi_if_ctx_rtos, 0);
             }
         }
-        wifi_if_ctx_rtos->supp_called_remain_on_chan = false;
     }
-    if (msg->data)
-    {
-        OSA_MemoryFree(msg->data);
-        msg->data = NULL;
-    }
+
+#if !CONFIG_MEM_POOLS
+    OSA_MemoryFree(msg->data);
+#else
+    OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
 }
 
 void wifi_process_mgmt_tx_status(struct wifi_message *msg)

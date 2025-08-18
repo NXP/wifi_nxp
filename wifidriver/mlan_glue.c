@@ -4725,9 +4725,9 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #endif
                 if (remain_channel_info != NULL)
                 {
-                    remain_channel_info->cancel_channel              = remain_channel->action == HostCmd_ACT_GEN_REMOVE ? MTRUE : MFALSE;
-		    remain_channel_info->bss_type = bss_type;
-                    mlan_adap->remain_on_channel = remain_channel->action == HostCmd_ACT_GEN_REMOVE ? MFALSE : MTRUE;
+                    remain_channel_info->cancel_channel = remain_channel->action == HostCmd_ACT_GEN_REMOVE ? MTRUE : MFALSE;
+                    remain_channel_info->bss_type       = bss_type;
+                    mlan_adap->remain_on_channel        = remain_channel->action == HostCmd_ACT_GEN_REMOVE ? MFALSE : MTRUE;
                     if (remain_channel_info->cancel_channel)
                     {
                         if (wifi_event_completion(WIFI_EVENT_REMAIN_ON_CHANNEL, WIFI_EVENT_REASON_SUCCESS,
@@ -6497,7 +6497,31 @@ int wifi_handle_fw_event(struct bus_message *msg)
         }
 #endif
         case EVENT_REMAIN_ON_CHANNEL_EXPIRED:
-            mlan_adap->remain_on_channel = MFALSE;
+            if (wifi_is_remain_on_channel() == MTRUE)
+            {
+                mlan_adap->remain_on_channel = MFALSE;
+#if !CONFIG_MEM_POOLS
+                wifi_remain_channel_info *remain_channel_info = (wifi_remain_channel_info *)OSA_MemoryAllocate(sizeof(wifi_remain_channel_info));
+#else
+                wifi_remain_channel_info *remain_channel_info = (wifi_remain_channel_info *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+#endif
+                if (remain_channel_info != NULL)
+                {
+                    remain_channel_info->cancel_channel = MTRUE;
+                    remain_channel_info->bss_type       = pmpriv->bss_type;
+                    if (wifi_event_completion(WIFI_EVENT_REMAIN_ON_CHANNEL, WIFI_EVENT_REASON_SUCCESS,
+                        (void *)remain_channel_info) != WM_SUCCESS)
+                    {
+#if !CONFIG_MEM_POOLS
+                        OSA_MemoryFree(remain_channel_info);
+#else
+                        OSA_MemoryPoolFree(buf_32_MemoryPool, remain_channel_info);
+#endif
+                        remain_channel_info = NULL;
+                    }
+                }
+            }
+
             /* Restore tx after remain on channel expired */
             wifi_set_tx_status(WIFI_DATA_RUNNING);
 

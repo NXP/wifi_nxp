@@ -102,7 +102,7 @@ static void wifi_nxp_event_proc_scan_done(void *if_priv, int aborted, int extern
     wifi_nxp_wpa_supp_event_proc_scan_done(if_priv, aborted, external_scan);
 }
 
-static void wifi_nxp_event_reamin_on_channel(void *if_priv, int cancel_channel)
+static void wifi_nxp_event_remain_on_channel(void *if_priv, int cancel_channel)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
@@ -113,6 +113,7 @@ static void wifi_nxp_event_reamin_on_channel(void *if_priv, int cancel_channel)
         wifi_e("%s: wifi_if_ctx_rtos is NULL", __func__);
         return;
     }
+
     wifi_nxp_wpa_supp_event_proc_remain_on_channel(if_priv, cancel_channel);
 }
 
@@ -145,7 +146,7 @@ static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
     .acs_channel_sel_callbk_fn     = wifi_nxp_wpa_supp_event_acs_channel_selected,
     .mgmt_tx_status_callbk_fn      = wifi_nxp_wpa_supp_event_mgmt_tx_status,
     .unprot_mlme_mgmt_rx_callbk_fn = wifi_nxp_wpa_supp_event_proc_unprot_mgmt,
-    .remain_on_channel_callbk_fn   = wifi_nxp_event_reamin_on_channel,
+    .remain_on_channel_callbk_fn   = wifi_nxp_event_remain_on_channel,
     .mgmt_rx_callbk_fn             = wifi_nxp_wpa_supp_event_proc_mgmt_rx,
     .eapol_rx_callbk_fn            = wifi_nxp_wpa_supp_event_proc_eapol_rx,
     .signal_change_callbk_fn       = wifi_nxp_wpa_supp_event_signal_change,

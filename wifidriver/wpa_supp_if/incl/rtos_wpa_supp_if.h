@@ -96,7 +96,7 @@ int wifi_nxp_wpa_supp_del_key(void *if_priv, const unsigned char *addr, int key_
 int wifi_nxp_wpa_supp_set_rekey_info(
     void *if_priv, const u8 *kek, size_t kek_len, const u8 *kck, size_t kck_len, const u8 *replay_ctr);
 
-int wifi_nxp_wpa_supp_remain_on_channel(void *if_priv, unsigned int freq, unsigned int duration);
+int wifi_nxp_wpa_supp_remain_on_channel(void *if_priv, unsigned int freq, unsigned int duration, u64 *cookie);
 
 int wifi_nxp_wpa_supp_cancel_remain_on_channel(void *if_priv);
 

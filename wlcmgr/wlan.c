@@ -5772,13 +5772,19 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
     else if (strstr(buf, P2P_EVENT_INVITATION_ACCEPTED))
     {
 #if CONFIG_WPA_SUPP_WPS
-        wlan.wps_session_attempt = 1;
+        if (is_uap_started() == false)
+        {
+            wlan.wps_session_attempt = 1;
+        }
 #endif
     }
     else if (strstr(buf, P2P_EVENT_INVITATION_RESULT))
     {
 #if CONFIG_WPA_SUPP_WPS
-        wlan.wps_session_attempt = 1;
+        if (is_uap_started() == false)
+        {
+            wlan.wps_session_attempt = 1;
+        }
 #endif
     }
     else if (strstr(buf, P2P_EVENT_GROUP_STARTED))
@@ -16835,9 +16841,6 @@ int wlan_nan_publish(wlan_nan_publish_params_t *nan_publish)
 {
     struct netif *netif = net_get_sta_interface();
 
-    wlan_ieeeps_off();
-    wlan_deepsleepps_off();
-
     wifi_set_rx_mgmt_indication(WLAN_BSS_ROLE_STA, WLAN_MGMT_ACTION);
 
     return wpa_supp_nan_publish(netif, nan_publish);
@@ -16846,9 +16849,6 @@ int wlan_nan_publish(wlan_nan_publish_params_t *nan_publish)
 int wlan_nan_cancel_publish(int publish_id)
 {
     struct netif *netif = net_get_sta_interface();
-
-    wlan_deepsleepps_on();
-    wlan_ieeeps_on(wlan.wakeup_conditions);
 
     return wpa_supp_nan_cancel_publish(netif, publish_id);
 }
@@ -16864,9 +16864,6 @@ int wlan_nan_subscribe(wlan_nan_subscribe_params_t *nan_subscribe)
 {
     struct netif *netif = net_get_sta_interface();
 
-    wlan_ieeeps_off();
-    wlan_deepsleepps_off();
-
     wifi_set_rx_mgmt_indication(WLAN_BSS_ROLE_STA, WLAN_MGMT_ACTION);
 
     return wpa_supp_nan_subscribe(netif, nan_subscribe);
@@ -16875,9 +16872,6 @@ int wlan_nan_subscribe(wlan_nan_subscribe_params_t *nan_subscribe)
 int wlan_nan_cancel_subscribe(int subscribe_id)
 {
     struct netif *netif = net_get_sta_interface();
-
-    wlan_deepsleepps_on();
-    wlan_ieeeps_on(wlan.wakeup_conditions);
 
     return wpa_supp_nan_cancel_subscribe(netif, subscribe_id);
 }

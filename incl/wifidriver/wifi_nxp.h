@@ -58,10 +58,10 @@ struct wifi_nxp_ctx_rtos
     bool uap_started;
     bool hostapd;
     rtos_wpa_supp_dev_callbk_fns supp_callbk_fns;
-    bool supp_called_remain_on_chan;
+    u64 remain_on_channel_cookie;
     unsigned int remain_on_channel_freq;
     unsigned int remain_on_channel_duration;
-    bool remain_on_chan_is_canceled;
+    bool remain_on_channel;
     int mgmt_tx_status;
     uint8_t *last_mgmt_tx_data;
     size_t last_mgmt_tx_data_len;

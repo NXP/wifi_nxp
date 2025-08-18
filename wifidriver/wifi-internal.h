@@ -458,7 +458,8 @@ int wifi_setup_vht_cap(t_u32 *vht_capab, t_u8 *vht_mcs_set, t_u8 band);
 int wifi_setup_he_cap(nxp_wifi_he_capabilities *he_cap, t_u8 band);
 #endif
 int wifi_nxp_send_assoc(unsigned int bss_type, nxp_wifi_assoc_info_t *assoc_info);
-int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_time, const t_u8 *data, size_t data_len);
+int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_time, const t_u8 *data,
+                       size_t data_len, u16 stype);
 int wifi_nxp_beacon_config(unsigned int bss_type, nxp_wifi_ap_info_t *params);
 int wifi_set_uap_rts(unsigned int bss_type, int rts_threshold);
 int wifi_set_uap_frag(unsigned int bss_type, int frag_threshold);

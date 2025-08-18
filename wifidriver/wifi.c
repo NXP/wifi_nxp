@@ -4844,29 +4844,17 @@ int wifi_nxp_get_signal(unsigned int bss_type, nxp_wifi_signal_info_t *signal_pa
     return WM_SUCCESS;
 }
 
-int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_time, const t_u8 *data, size_t data_len)
+int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_time,
+                       const t_u8 *data, size_t data_len, u16 stype)
 {
-    mlan_private *pmpriv              = (mlan_private *)mlan_adap->priv[bss_type];
-    wlan_mgmt_pkt *pmgmt_pkt_hdr      = MNULL;
-    wlan_802_11_header *pieee_pkt_hdr = MNULL;
+    int status               = -WM_FAIL;
+    mlan_private *pmpriv     = (mlan_private *)mlan_adap->priv[bss_type];
+    wlan_mgmt_pkt *pmgmt_pkt_hdr               = MNULL;
+    wlan_802_11_header *pieee_pkt_hdr          = MNULL;
     t_u8 buf[1580];
 
     // dump_hex(data, data_len);
     memset(buf, 0x00, sizeof(buf));
-
-    if (((bss_type == BSS_TYPE_STA) && (pmpriv->media_connected == MFALSE))
-#if CONFIG_WPA_SUPP_P2P
-        || ((bss_type == MLAN_BSS_TYPE_WIFIDIRECT) && (mlan_adap->priv[bss_type]->bss_role == MLAN_BSS_ROLE_STA) &&
-            !wifi_is_remain_on_channel())
-#endif
-    )
-    {
-        if (wait_time == 0)
-        {
-            wait_time = 1000;
-        }
-        wifi_remain_on_channel(bss_type, true, channel, wait_time);
-    }
 
     pmgmt_pkt_hdr = (wlan_mgmt_pkt *)&buf[0];
 
