@@ -2818,11 +2818,11 @@ static void adjust_pointers_to_internal_buffers(BSSDescriptor_t *pbss_entry, BSS
     {
         pbss_entry->ppoper_mode = &pbss_entry->poper_mode_saved;
     }
+#endif
     if (pbss_entry->pext_cap != NULL)
     {
         pbss_entry->pext_cap = &pbss_entry->ext_cap_saved;
     }
-#endif
 #if CONFIG_11AX
     if (pbss_entry->phe_cap != NULL)
     {
