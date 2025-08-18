@@ -6427,7 +6427,7 @@ static void proc_csi_event(void *p_data)
         {
 			hal_pktinfo_t *pktinfo = (hal_pktinfo_t*)&(headerBuffer[2]);
 			char myStr[4] = {'V','H','T','\0'};
-			int BW = 20 << pktinfo->sigBw;
+			int l_BW = 20 << pktinfo->sigBw;
             int nRx = pktinfo->nRx + 1;
 			int nTx = pktinfo->nTx + 1;
             t_u8 packet_format = convertPktInfo[pktinfo->packetType];
@@ -6453,7 +6453,7 @@ static void proc_csi_event(void *p_data)
             }
             mlan_adap->ami_num++;
 			PRINTF("NUM %d CSI Processing Results: %s(%d), RX/TX %d/%d, %-8.2f TSF %llx, Ambient Motion Index %0.1f dB\r\n",
-				mlan_adap->ami_num, myStr, BW, nRx, nTx, toa_ns, TSF, ambientMotionVal_dB);
+				mlan_adap->ami_num, myStr, l_BW, nRx, nTx, toa_ns, TSF, ambientMotionVal_dB);
             
             if (g_ami_cfg.gcsi_filter_param.num_csi)
 			{
