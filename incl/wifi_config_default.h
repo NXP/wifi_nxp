@@ -138,6 +138,11 @@
 #define CONFIG_SET_SU 0
 #endif
 
+#if CONFIG_WPA_SUPP_P2P
+#undef CONFIG_WMM
+#define CONFIG_WMM 1
+#endif
+
 /* WMM options */
 #if !defined CONFIG_WMM
 #if defined(RW610)
