@@ -8381,6 +8381,19 @@ static void dump_wlan_set_ami_cfg_usage(void)
     (void)PRINTF("              Default value: 0 \r\n");
 }
 
+static void dump_wlan_set_ami_cfg_setting(const wlan_csi_proc_cfg * cfg)
+{
+    (void)PRINTF("The current AMI configuration is:\r\n");
+    (void)PRINTF("  MAC Address       : %02X:%02X:%02X:%02X:%02X:%02X\r\n",
+                 cfg->peer_mac[0], cfg->peer_mac[1], cfg->peer_mac[2],
+                 cfg->peer_mac[3], cfg->peer_mac[4], cfg->peer_mac[5]);
+    (void)PRINTF("  Packet Type       : %d\r\n", cfg->packet_format);
+    (void)PRINTF("  Bandwidth         : %d\r\n", cfg->packet_bandwidth);
+    (void)PRINTF("  Reference Update  : %d\r\n", cfg->reference_update);
+    (void)PRINTF("  Number of Packets : %d\r\n", cfg->num_csi);
+}
+
+
 static void test_wlan_set_ami_cfg(int argc, char **argv)
 {
     wlan_csi_proc_cfg cfg;
@@ -8515,6 +8528,7 @@ static void test_wlan_set_ami_cfg(int argc, char **argv)
         return;
     }
 
+    dump_wlan_set_ami_cfg_setting(&cfg);
     
     wlan_set_ami_cfg(&cfg);
 

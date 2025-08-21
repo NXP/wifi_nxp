@@ -6404,19 +6404,25 @@ static void proc_csi_event(void *p_data)
     firstPathDelay = wls_calculate_toa(headerBuffer, fftInBuffer, scratchBuffer1, totalpower,
 		&packetparams, &g_ami_cfg.wls_processing_input);
 
-    if (g_ami_cfg.csiFilterSet < 2)
+    if (g_ami_cfg.ami_reference_init == AMI_REF_UNINIT)
 	{
         // initialize
-        if(g_ami_cfg.csiFilterSet == 0)
+        if(g_ami_cfg.csiFilterSet == AMI_FILTER_NOT_SET)
         {
+            wifi_w("Missing AMI filter set, setting filter following the first CSI/AMI packet");
             set_csi_proc_filter(headerBuffer, &g_ami_cfg.gcsi_filter_param);
+            g_ami_cfg.csiFilterSet = AMI_FILTER_AUTO_SET;
         }
 
         if(check_csi_filter_partial(headerBuffer, &g_ami_cfg.gcsi_filter_param) == WM_SUCCESS)
         {
-            set_csi_proc_filter(headerBuffer, &g_ami_cfg.gcsi_filter_param);
+            if(g_ami_cfg.csiFilterSet == AMI_FILTER_SET)
+            {
+                set_csi_proc_filter(headerBuffer, &g_ami_cfg.gcsi_filter_param);
+            }
+
             wls_intialize_reference(headerBuffer, &g_ami_cfg.gcsi_filter_param, fftInBuffer, referenceBuffer);
-            g_ami_cfg.csiFilterSet = 2;
+            g_ami_cfg.ami_reference_init = AMI_REF_INITIALIZED;
         }
 	}
     else if (check_csi_filter(headerBuffer, &g_ami_cfg.gcsi_filter_param) == WM_SUCCESS)
@@ -6464,8 +6470,9 @@ static void proc_csi_event(void *p_data)
                 else
                 {
                     g_ami_cfg.gcsi_filter_param.num_csi--;
-                    g_ami_cfg.start = 0;
-                    mlan_adap->ami_num = 0;
+                    g_ami_cfg.start                 = AMI_STOP;
+                    g_ami_cfg.ami_reference_init    = AMI_REF_UNINIT;
+                    mlan_adap->ami_num              = 0;
                 }
 			}
 		}

@@ -3480,7 +3480,7 @@ void wlan_set_ami_cfg(wlan_csi_proc_cfg *cfg)
     g_ami_cfg.gcsi_filter_param.packet_format      = cfg->packet_format;
     g_ami_cfg.gcsi_filter_param.reference_update   = cfg->reference_update;
 
-    g_ami_cfg.csiFilterSet                   = 1;
+    g_ami_cfg.csiFilterSet                   = AMI_FILTER_SET;
 
     return;
 }
@@ -3493,8 +3493,14 @@ void wlan_start_stop_ami(uint8_t start)
     {
         g_ami_cfg.gcsi_filter_param.num_csi = 0;
         mlan_adap->ami_num                  = 0;
-        g_ami_cfg.start                     = 0;
-        g_ami_cfg.csiFilterSet              = 0;
+        g_ami_cfg.start                     = AMI_STOP;
+
+        if (g_ami_cfg.csiFilterSet == AMI_FILTER_AUTO_SET)
+        {
+            g_ami_cfg.csiFilterSet = AMI_FILTER_NOT_SET;
+        }
+
+        g_ami_cfg.ami_reference_init = AMI_REF_UNINIT;
     }
 
     return;
@@ -3510,7 +3516,7 @@ static void wlan_init_ami_cfg(void)
     (void)memset(&g_ami_cfg, 0x00, sizeof(ami_cfg_t));
 
     g_ami_cfg.channel                                      = 0;
-    g_ami_cfg.start                                        = 0;
+    g_ami_cfg.start                                        = AMI_STOP;
 
     g_ami_cfg.wls_processing_input.enableCsi		        = 1; // turn on CSI processing
 	g_ami_cfg.wls_processing_input.enableAoA		        = AOA_DEFAULT; // turn on AoA (req. enableCsi==1)
@@ -3525,8 +3531,8 @@ static void wlan_init_ami_cfg(void)
 	g_ami_cfg.wls_processing_input.useFindAngleDelayPeaks  = ENABLE_DELAY_PEAKS; // use this algorithm for AoA
 
     g_ami_cfg.gcsi_filter_param.num_csi            = 0;
-    g_ami_cfg.gcsi_filter_param.packet_bandwidth   = 0;
-    g_ami_cfg.gcsi_filter_param.packet_format      = 0;
+    g_ami_cfg.gcsi_filter_param.packet_bandwidth   = 0xff;
+    g_ami_cfg.gcsi_filter_param.packet_format      = 0xff;
     g_ami_cfg.gcsi_filter_param.reference_update   = 0;
 	g_ami_cfg.gcsi_filter_param.IIR_alpha          = PI_ALPHA_FACTOR;
 	g_ami_cfg.gcsi_filter_param.kalman_p0          = KALMAN_P0;
@@ -3534,8 +3540,15 @@ static void wlan_init_ami_cfg(void)
 	g_ami_cfg.gcsi_filter_param.kalman_N0          = KALMAN_N0;
 	g_ami_cfg.gcsi_filter_param.num_rx             = 0xff;
 	g_ami_cfg.gcsi_filter_param.num_tx             = 0xff;
+	g_ami_cfg.gcsi_filter_param.peer_mac[0]        = 0xff;
+	g_ami_cfg.gcsi_filter_param.peer_mac[1]        = 0xff;
+	g_ami_cfg.gcsi_filter_param.peer_mac[2]        = 0xff;
+	g_ami_cfg.gcsi_filter_param.peer_mac[3]        = 0xff;
+	g_ami_cfg.gcsi_filter_param.peer_mac[4]        = 0xff;
+	g_ami_cfg.gcsi_filter_param.peer_mac[5]        = 0xff;
 
-    g_ami_cfg.csiFilterSet                         = 0;
+    g_ami_cfg.csiFilterSet                         = AMI_FILTER_NOT_SET;
+    g_ami_cfg.ami_reference_init                   = AMI_REF_UNINIT;
 
     mlan_adap->ami_num                             = 0;
     mlan_adap->ami_ongoing                         = 0;
@@ -7454,7 +7467,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
 #if CONFIG_CSI_AMI
         case WIFI_EVENT_CSI_PROC:
-            if(g_ami_cfg.start)
+            if(g_ami_cfg.start == AMI_START)
             {
                 wlcm_d("got event: csi data process");
                 wlcm_process_csi_data(msg->data);
