@@ -955,7 +955,6 @@ static void dump_wlan_add_usage(void)
 
 static void test_wlan_add(int argc, char **argv)
 {
-    struct wlan_network network;
     int ret    = 0;
     int arg    = 1;
     size_t len = 0U;
@@ -990,32 +989,43 @@ static void test_wlan_add(int argc, char **argv)
         unsigned acs_band : 1;
     } info;
 
+#if !CONFIG_MEM_POOLS
+    struct wlan_network *network = (struct wlan_network *)OSA_MemoryAllocate(sizeof(struct wlan_network));
+#else
+    struct wlan_network *network = OSA_MemoryPoolAllocate(buf_4096_MemoryPool);
+#endif
+    if (!network)
+    {
+        (void)PRINTF("Error: unable to malloc memory\r\n");
+        goto out;
+    }
+
     (void)memset(&info, 0, sizeof(info));
-    (void)memset(&network, 0, sizeof(struct wlan_network));
+    (void)memset(network, 0, sizeof(struct wlan_network));
 
     if (argc < 4)
     {
         dump_wlan_add_usage();
         (void)PRINTF("Error: invalid number of arguments\r\n");
-        return;
+        goto out;
     }
 
     len = strlen(argv[arg]);
     if (len >= WLAN_NETWORK_NAME_MAX_LENGTH)
     {
         (void)PRINTF("Error: network name too long\r\n");
-        return;
+        goto out;
     }
 
-    (void)memcpy(network.name, argv[arg], len);
+    (void)memcpy(network->name, argv[arg], len);
     arg++;
     info.address = (uint8_t)ADDR_TYPE_DHCP;
 
     /* To set default values for mfpc and mfpr following settings are  necessary.
      * Later on in wlan_add_network these values will be compared to set default values (mfpc 1 and mfpr 0).
      * If mfpc and mfpr values are mentioned via command line, those will be considered for non sae conditions */
-    network.security.mfpc = -1;
-    network.security.mfpr = -1;
+    network->security.mfpc = -1;
+    network->security.mfpr = -1;
 
     do
     {
@@ -1025,44 +1035,44 @@ static void test_wlan_add(int argc, char **argv)
             if (len > IEEEtypes_SSID_SIZE)
             {
                 (void)PRINTF("Error: SSID is too long\r\n");
-                return;
+                goto out;
             }
-            (void)memcpy(network.ssid, argv[arg + 1], len);
+            (void)memcpy(network->ssid, argv[arg + 1], len);
             arg += 2;
             info.ssid = 1;
         }
         else if ((info.bssid == 0U) && string_equal("bssid", argv[arg]))
         {
-            if (get_mac(argv[arg + 1], network.bssid, ':') != false)
+            if (get_mac(argv[arg + 1], network->bssid, ':') != false)
             {
                 (void)PRINTF(
                     "Error: invalid BSSID argument"
                     "\r\n");
-                return;
+                goto out;
             }
             arg += 2;
             info.bssid = 1;
         }
         else if ((info.channel == 0U) && string_equal("channel", argv[arg]))
         {
-            if (arg + 1 >= argc || get_uint(argv[arg + 1], &network.channel, strlen(argv[arg + 1])))
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &network->channel, strlen(argv[arg + 1])))
             {
                 (void)PRINTF(
                     "Error: invalid channel"
                     " argument\n");
-                return;
+                goto out;
             }
             arg += 2;
             info.channel = 1;
         }
         else if (strncmp(argv[arg], "ip:", 3) == 0)
         {
-            if (get_address(argv[arg], &network.ip) != 0)
+            if (get_address(argv[arg], &network->ip) != 0)
             {
                 (void)PRINTF(
                     "Error: invalid address"
                     " argument\n");
-                return;
+                goto out;
             }
             arg++;
             info.address = (uint8_t)ADDR_TYPE_STATIC;
@@ -1073,12 +1083,12 @@ static void test_wlan_add(int argc, char **argv)
 
             if (string_equal(argv[arg], "wpa2") != false)
             {
-                network.security.type = WLAN_SECURITY_WPA_WPA2_MIXED;
+                network->security.type = WLAN_SECURITY_WPA_WPA2_MIXED;
                 arg += 1;
 
                 if (string_equal(argv[arg], "psk") != false)
                 {
-                    network.security.key_mgmt |= WLAN_KEY_MGMT_PSK;
+                    network->security.key_mgmt |= WLAN_KEY_MGMT_PSK;
                     arg += 1;
                 }
                 else
@@ -1086,16 +1096,16 @@ static void test_wlan_add(int argc, char **argv)
                     (void)PRINTF(
                         "Error: invalid WPA WPA2 security"
                         " argument\r\n");
-                    return;
+                    goto out;
                 }
             }
             else
             {
-                network.security.type = WLAN_SECURITY_WPA;
+                network->security.type = WLAN_SECURITY_WPA;
 
                 if (string_equal(argv[arg], "psk") != false)
                 {
-                    network.security.key_mgmt |= WLAN_KEY_MGMT_PSK;
+                    network->security.key_mgmt |= WLAN_KEY_MGMT_PSK;
                     arg += 1;
                 }
                 else
@@ -1103,16 +1113,16 @@ static void test_wlan_add(int argc, char **argv)
                     (void)PRINTF(
                         "Error: invalid WPA security"
                         " argument\r\n");
-                    return;
+                    goto out;
                 }
             }
 
-            if (get_security(argc - arg, argv + arg, &network.security) != 0)
+            if (get_security(argc - arg, argv + arg, &network->security) != 0)
             {
                 (void)PRINTF(
                     "Error: invalid WPA security"
                     " argument\r\n");
-                return;
+                goto out;
             }
             arg += 1;
             info.security++;
@@ -1123,13 +1133,13 @@ static void test_wlan_add(int argc, char **argv)
 
             if (string_equal(argv[arg], "wpa") != false)
             {
-                network.security.type = WLAN_SECURITY_WPA_WPA2_MIXED;
+                network->security.type = WLAN_SECURITY_WPA_WPA2_MIXED;
 
                 arg += 1;
 
                 if (string_equal(argv[arg], "psk") != false)
                 {
-                    network.security.key_mgmt |= WLAN_KEY_MGMT_PSK;
+                    network->security.key_mgmt |= WLAN_KEY_MGMT_PSK;
                     arg += 1;
                 }
                 else
@@ -1137,42 +1147,42 @@ static void test_wlan_add(int argc, char **argv)
                     (void)PRINTF(
                         "Error: invalid WPA2 WPA security"
                         " argument\r\n");
-                    return;
+                    goto out;
                 }
             }
             else
             {
-                network.security.type = WLAN_SECURITY_WPA2;
+                network->security.type = WLAN_SECURITY_WPA2;
 
                 if (string_equal(argv[arg], "psk") != false)
                 {
-                    network.security.key_mgmt |= WLAN_KEY_MGMT_PSK;
+                    network->security.key_mgmt |= WLAN_KEY_MGMT_PSK;
                     arg += 1;
 
 #if CONFIG_11R
                     if (string_equal(argv[arg], "ft-psk") != false)
                     {
-                        network.security.key_mgmt |= WLAN_KEY_MGMT_FT_PSK;
+                        network->security.key_mgmt |= WLAN_KEY_MGMT_FT_PSK;
                         arg += 1;
                     }
 #endif
 
                     if (string_equal(argv[arg], "psk-sha256") != false)
                     {
-                        network.security.key_mgmt |= WLAN_KEY_MGMT_PSK_SHA256;
+                        network->security.key_mgmt |= WLAN_KEY_MGMT_PSK_SHA256;
                         arg += 1;
                     }
                 }
                 else if (string_equal(argv[arg], "psk-sha256") != false)
                 {
-                    network.security.key_mgmt = WLAN_KEY_MGMT_PSK_SHA256;
+                    network->security.key_mgmt = WLAN_KEY_MGMT_PSK_SHA256;
                     arg += 1;
                 }
 #if CONFIG_11R
                 else if (string_equal(argv[arg], "ft-psk") != false)
                 {
-                    network.security.type     = WLAN_SECURITY_WPA2_FT;
-                    network.security.key_mgmt = WLAN_KEY_MGMT_FT_PSK;
+                    network->security.type     = WLAN_SECURITY_WPA2_FT;
+                    network->security.key_mgmt = WLAN_KEY_MGMT_FT_PSK;
 
                     arg += 1;
                 }
@@ -1182,16 +1192,16 @@ static void test_wlan_add(int argc, char **argv)
                     (void)PRINTF(
                         "Error: invalid WPA2 security"
                         " argument\r\n");
-                    return;
+                    goto out;
                 }
             }
 
-            if (get_security(argc - arg, argv + arg, &network.security) != 0)
+            if (get_security(argc - arg, argv + arg, &network->security) != 0)
             {
                 (void)PRINTF(
                     "Error: invalid WPA2 security"
                     " argument\r\n");
-                return;
+                goto out;
             }
             arg += 1;
             info.security2++;
@@ -1199,9 +1209,9 @@ static void test_wlan_add(int argc, char **argv)
 #if CONFIG_DRIVER_OWE
         else if (!info.security && string_equal("owe_only", argv[arg]))
         {
-            network.security.type = WLAN_SECURITY_OWE_ONLY;
+            network->security.type = WLAN_SECURITY_OWE_ONLY;
 
-            network.security.key_mgmt = WLAN_KEY_MGMT_OWE;
+            network->security.key_mgmt = WLAN_KEY_MGMT_OWE;
 
             arg += 1;
             info.security++;
@@ -1209,7 +1219,7 @@ static void test_wlan_add(int argc, char **argv)
 #if CONFIG_WPA_SUPP
             if (string_equal(argv[arg], "og") != false)
             {
-                network.security.owe_groups = string_dup(argv[arg + 1]);
+                network->security.owe_groups = string_dup(argv[arg + 1]);
                 arg += 2;
             }
 #endif
@@ -1226,26 +1236,26 @@ static void test_wlan_add(int argc, char **argv)
                 if (string_equal(argv[arg], "ft-sae") != false)
                 {
                     (void)PRINTF("Error: WPA3 FT-SAE not supported\r\n");
-                    return;
+                    goto out;
                 }
 #endif
 
                 if (string_equal(argv[arg], "sae") != false)
                 {
-                    network.security.type = WLAN_SECURITY_WPA3_SAE;
-                    network.security.key_mgmt |= WLAN_KEY_MGMT_SAE;
+                    network->security.type = WLAN_SECURITY_WPA3_SAE;
+                    network->security.key_mgmt |= WLAN_KEY_MGMT_SAE;
                     arg += 1;
 
                     if (string_equal(argv[arg], "sae-ext-key") != false)
                     {
-                        network.security.key_mgmt |= WLAN_KEY_MGMT_SAE_EXT_KEY;
+                        network->security.key_mgmt |= WLAN_KEY_MGMT_SAE_EXT_KEY;
                         arg += 1;
                     }
 #if CONFIG_WPA_SUPP
 #if CONFIG_11R
                     else if (string_equal(argv[arg], "ft-sae") != false)
                     {
-                        network.security.key_mgmt |= WLAN_KEY_MGMT_FT_SAE;
+                        network->security.key_mgmt |= WLAN_KEY_MGMT_FT_SAE;
                         arg += 1;
                     }
 #endif
@@ -1255,13 +1265,13 @@ static void test_wlan_add(int argc, char **argv)
 #if CONFIG_11R
                 else if (string_equal(argv[arg], "ft-sae") != false)
                 {
-                    network.security.type = WLAN_SECURITY_WPA3_FT_SAE;
-                    network.security.key_mgmt |= WLAN_KEY_MGMT_FT_SAE;
+                    network->security.type = WLAN_SECURITY_WPA3_FT_SAE;
+                    network->security.key_mgmt |= WLAN_KEY_MGMT_FT_SAE;
                     arg += 1;
 
                     if (string_equal(argv[arg], "sae") != false)
                     {
-                        network.security.key_mgmt |= WLAN_KEY_MGMT_SAE;
+                        network->security.key_mgmt |= WLAN_KEY_MGMT_SAE;
                         arg += 1;
                     }
                 }
@@ -1269,95 +1279,95 @@ static void test_wlan_add(int argc, char **argv)
 #endif
                 else if (string_equal(argv[arg], "sae-ext-key") != false)
                 {
-                    network.security.type = WLAN_SECURITY_WPA3_SAE_EXT_KEY;
-                    network.security.key_mgmt |= WLAN_KEY_MGMT_SAE_EXT_KEY;
+                    network->security.type = WLAN_SECURITY_WPA3_SAE_EXT_KEY;
+                    network->security.key_mgmt |= WLAN_KEY_MGMT_SAE_EXT_KEY;
                     arg += 1;
 
                     if (string_equal(argv[arg], "sae") != false)
                     {
-                        network.security.key_mgmt |= WLAN_KEY_MGMT_SAE;
+                        network->security.key_mgmt |= WLAN_KEY_MGMT_SAE;
                         arg += 1;
                     }
                 }
                 /* copy the SAE password */
-                network.security.password_len = strlen(argv[arg]);
-                if (network.security.password_len == 0U)
+                network->security.password_len = strlen(argv[arg]);
+                if (network->security.password_len == 0U)
                 {
                     (void)PRINTF(
                         "Error: invalid WPA3 security"
                         " argument\r\n");
-                    return;
+                    goto out;
                 }
-                if (network.security.password_len < sizeof(network.security.password))
+                if (network->security.password_len < sizeof(network->security.password))
                 {
-                    (void)strcpy(network.security.password, argv[arg]);
+                    (void)strcpy(network->security.password, argv[arg]);
                 }
                 else
                 {
                     (void)PRINTF(
                         "Error: invalid WPA3 security"
                         " argument\r\n");
-                    return;
+                    goto out;
                 }
                 arg += 1;
 
 #if CONFIG_WPA_SUPP
                 if (string_equal(argv[arg], "sg") != false)
                 {
-                    network.security.sae_groups = string_dup(argv[arg + 1]);
+                    network->security.sae_groups = string_dup(argv[arg + 1]);
                     arg += 2;
                 }
 #endif
                 if (string_equal(argv[arg], "pwe") != false)
                 {
                     errno                           = 0;
-                    network.security.pwe_derivation = strtol(argv[arg + 1], NULL, 10);
+                    network->security.pwe_derivation = strtol(argv[arg + 1], NULL, 10);
                     if (errno != 0)
                     {
                         (void)PRINTF("Error during strtol:pwe errno:%d\r\n", errno);
-                        return;
+                        goto out;
                     }
                     if (arg + 1 >= argc ||
-                        (network.security.pwe_derivation != 0 && network.security.pwe_derivation != 1 &&
-                         network.security.pwe_derivation != 2))
+                        (network->security.pwe_derivation != 0 && network->security.pwe_derivation != 1 &&
+                         network->security.pwe_derivation != 2))
                     {
                         (void)PRINTF(
                             "Error: invalid wireless"
                             " network pwe derivation\r\n");
-                        return;
+                        goto out;
                     }
                     arg += 2;
 
                     if (string_equal(argv[arg], "tr") != false)
                     {
                         errno                               = 0;
-                        network.security.transition_disable = strtol(argv[arg + 1], NULL, 10);
+                        network->security.transition_disable = strtol(argv[arg + 1], NULL, 10);
                         if (errno != 0)
                         {
                             (void)PRINTF("Error during strtol:pwe errno:%d\r\n", errno);
-                            return;
+                            goto out;
                         }
                         if (arg + 1 >= argc ||
-                            (network.security.transition_disable != 0 && network.security.transition_disable != 1
+                            (network->security.transition_disable != 0 && network->security.transition_disable != 1
 #if CONFIG_WPA_SUPP
-                             && network.security.transition_disable != 2 && network.security.transition_disable != 4 &&
-                             network.security.transition_disable != 8
+                             && network->security.transition_disable != 2 && network->security.transition_disable != 4 &&
+                             network->security.transition_disable != 8
 #endif
                              ))
                         {
                             (void)PRINTF(
                                 "Error: invalid wireless"
                                 " network transition state\r\n");
-                            return;
+                            goto out;
                         }
                         arg += 2;
                     }
                 }
                 else
                 {
-                    if (network.role == WLAN_BSS_ROLE_STA)
+                    if (network->role == WLAN_BSS_ROLE_STA)
                     {
-                        network.security.pwe_derivation = 2;
+                        network->security.pwe_derivation = 2;
                     }
                 }
             }
@@ -1366,26 +1376,26 @@ static void test_wlan_add(int argc, char **argv)
                 (void)PRINTF(
                     "Error: invalid WPA3 security"
                     " argument\r\n");
-                return;
+                goto out;
             }
             info.security3++;
         }
 #if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
         else if ((info.wpa3_ent == 0U) && string_equal("wpa3-ent", argv[arg]))
         {
-            network.security.wpa3_ent = 1;
+            network->security.wpa3_ent = 1;
             arg += 1;
             info.wpa3_ent = 1;
         }
         else if ((info.wpa3_sb == 0U) && string_equal("wpa3-sb", argv[arg]))
         {
-            network.security.wpa3_sb = 1;
+            network->security.wpa3_sb = 1;
             arg += 1;
             info.wpa3_sb = 1;
         }
         else if ((info.wpa3_sb == 0U) && string_equal("wpa3-sb-192", argv[arg]))
         {
-            network.security.wpa3_sb_192 = 1;
+            network->security.wpa3_sb_192 = 1;
             arg += 1;
             info.wpa3_sb = 1;
         }
@@ -1436,32 +1446,32 @@ static void test_wlan_add(int argc, char **argv)
 #if CONFIG_EAP_TLS
             if (string_equal("eap-tls", argv[arg]))
             {
-                network.security.type = WLAN_SECURITY_EAP_TLS;
+                network->security.type = WLAN_SECURITY_EAP_TLS;
             }
             if (string_equal("eap-tls-sha256", argv[arg]))
             {
-                network.security.type = WLAN_SECURITY_EAP_TLS_SHA256;
+                network->security.type = WLAN_SECURITY_EAP_TLS_SHA256;
             }
 #if CONFIG_11R
             if (string_equal("eap-tls-ft", argv[arg]))
             {
-                network.security.type = WLAN_SECURITY_EAP_TLS_FT;
+                network->security.type = WLAN_SECURITY_EAP_TLS_FT;
             }
             if (string_equal("eap-tls-ft-sha384", argv[arg]))
             {
-                network.security.type = WLAN_SECURITY_EAP_TLS_FT_SHA384;
+                network->security.type = WLAN_SECURITY_EAP_TLS_FT_SHA384;
             }
 #endif
 #endif
 #if CONFIG_EAP_TTLS
             if (string_equal("eap-ttls", argv[arg]))
             {
-                network.security.type = WLAN_SECURITY_EAP_TTLS;
+                network->security.type = WLAN_SECURITY_EAP_TTLS;
             }
 #if CONFIG_EAP_MSCHAPV2
             if (string_equal("eap-ttls-mschapv2", argv[arg]))
             {
-                network.security.type = WLAN_SECURITY_EAP_TTLS_MSCHAPV2;
+                network->security.type = WLAN_SECURITY_EAP_TTLS_MSCHAPV2;
             }
 #endif
 #endif
@@ -1469,19 +1479,19 @@ static void test_wlan_add(int argc, char **argv)
 #if CONFIG_EAP_MSCHAPV2
             if (string_equal("eap-peap-mschapv2", argv[arg]))
             {
-                network.security.type = WLAN_SECURITY_EAP_PEAP_MSCHAPV2;
+                network->security.type = WLAN_SECURITY_EAP_PEAP_MSCHAPV2;
             }
 #endif
 #if CONFIG_EAP_TLS
             if (string_equal("eap-peap-tls", argv[arg]))
             {
-                network.security.type = WLAN_SECURITY_EAP_PEAP_TLS;
+                network->security.type = WLAN_SECURITY_EAP_PEAP_TLS;
             }
 #endif
 #if CONFIG_EAP_GTC
             if (string_equal("eap-peap-gtc", argv[arg]))
             {
-                network.security.type = WLAN_SECURITY_EAP_PEAP_GTC;
+                network->security.type = WLAN_SECURITY_EAP_PEAP_GTC;
             }
 #endif
 #endif
@@ -1489,66 +1499,66 @@ static void test_wlan_add(int argc, char **argv)
 #if CONFIG_EAP_MSCHAPV2
             if (string_equal("eap-fast-mschapv2", argv[arg]))
             {
-                network.security.type = WLAN_SECURITY_EAP_FAST_MSCHAPV2;
+                network->security.type = WLAN_SECURITY_EAP_FAST_MSCHAPV2;
             }
 #endif
 #if CONFIG_EAP_GTC
             if (string_equal("eap-fast-gtc", argv[arg]))
             {
-                network.security.type = WLAN_SECURITY_EAP_FAST_GTC;
+                network->security.type = WLAN_SECURITY_EAP_FAST_GTC;
             }
 #endif
 #endif
 #if CONFIG_EAP_SIM
             if (string_equal("eap-sim", argv[arg]))
             {
-                network.security.type = WLAN_SECURITY_EAP_SIM;
+                network->security.type = WLAN_SECURITY_EAP_SIM;
             }
 #endif
 #if CONFIG_EAP_AKA
             if (string_equal("eap-aka", argv[arg]))
             {
-                network.security.type = WLAN_SECURITY_EAP_AKA;
+                network->security.type = WLAN_SECURITY_EAP_AKA;
             }
 #endif
 #if CONFIG_EAP_AKA_PRIME
             if (string_equal("eap-aka-prime", argv[arg]))
             {
-                network.security.type = WLAN_SECURITY_EAP_AKA_PRIME;
+                network->security.type = WLAN_SECURITY_EAP_AKA_PRIME;
             }
 #endif
 
 #if CONFIG_EAP_MSCHAPV2
-            network.security.verify_peer_cert = false;
+            network->security.verify_peer_cert = false;
             if (string_equal(argv[arg + 1], "verify_peer_cert") != false)
             {
                 unsigned int value;
                 if ((arg + 1 >= argc) || get_uint(argv[arg + 2], &value, strlen(argv[arg + 2])) || (value != 0 && value != 1))
                 {
                     (void)PRINTF("Error: invalid verify_peer_cert parameter, please specify 0 or 1\r\n");
-                    return;
+                    goto out;
                 }
-                network.security.verify_peer_cert = !!value;
+                network->security.verify_peer_cert = !!value;
                 arg += 2;
             }
 #endif
 #if CONFIG_EAP_PEAP
-            network.security.eap_ver = 1;
+            network->security.eap_ver = 1;
             if (string_equal(argv[arg + 1], "ver") != false)
             {
                 errno                    = 0;
-                network.security.eap_ver = (bool)strtol(argv[arg + 2], NULL, 10);
+                network->security.eap_ver = (bool)strtol(argv[arg + 2], NULL, 10);
                 if (errno != 0)
                 {
                     (void)PRINTF("Error during strtol:eap_ver errno:%d\r\n", errno);
-                    return;
+                    goto out;
                 }
-                if (arg + 1 >= argc || (network.security.eap_ver != 0U && network.security.eap_ver != 1U))
+                if (arg + 1 >= argc || (network->security.eap_ver != 0U && network->security.eap_ver != 1U))
                 {
                     (void)PRINTF(
                         "Error: invalid wireless"
                         " network peap version\r\n");
-                    return;
+                    goto out;
                 }
                 arg += 2;
             }
@@ -1556,18 +1566,18 @@ static void test_wlan_add(int argc, char **argv)
             if (string_equal(argv[arg + 1], "label") != false)
             {
                 errno                       = 0;
-                network.security.peap_label = (bool)strtol(argv[arg + 2], NULL, 10);
+                network->security.peap_label = (bool)strtol(argv[arg + 2], NULL, 10);
                 if (errno != 0)
                 {
                     (void)PRINTF("Error during strtol:peap_label errno:%d\r\n", errno);
-                    return;
+                    goto out;
                 }
-                if (arg + 1 >= argc || (network.security.peap_label != 0U && network.security.peap_label != 1U))
+                if (arg + 1 >= argc || (network->security.peap_label != 0U && network->security.peap_label != 1U))
                 {
                     (void)PRINTF(
                         "Error: invalid wireless"
                         " network peap label\r\n");
-                    return;
+                    goto out;
                 }
                 arg += 2;
             }
@@ -1575,56 +1585,56 @@ static void test_wlan_add(int argc, char **argv)
             if (string_equal(argv[arg + 1], "eap_crypto_binding") != false)
             {
                 errno                               = 0;
-                network.security.eap_crypto_binding = strtol(argv[arg + 2], NULL, 10);
+                network->security.eap_crypto_binding = strtol(argv[arg + 2], NULL, 10);
                 if (errno != 0)
                 {
                     (void)PRINTF("Error during strtol:eap_crypto_binding errno:%d\r\n", errno);
-                    return;
+                    goto out;
                 }
                 if (arg + 1 >= argc ||
-                    (network.security.eap_crypto_binding != 0U && network.security.eap_crypto_binding != 1U &&
-                     network.security.eap_crypto_binding != 2U))
+                    (network->security.eap_crypto_binding != 0U && network->security.eap_crypto_binding != 1U &&
+                     network->security.eap_crypto_binding != 2U))
                 {
                     (void)PRINTF(
                         "Error: invalid wireless"
                         " network eap_crypto_binding\r\n");
-                    return;
+                    goto out;
                 }
                 arg += 2;
             }
 #endif
 #if (CONFIG_EAP_SIM) || (CONFIG_EAP_AKA) || (CONFIG_EAP_AKA_PRIME)
-            network.security.eap_result_ind = 1;
+            network->security.eap_result_ind = 1;
             if (string_equal(argv[arg + 1], "result_ind") != false)
             {
                 errno                           = 0;
-                network.security.eap_result_ind = (bool)strtol(argv[arg + 2], NULL, 10);
+                network->security.eap_result_ind = (bool)strtol(argv[arg + 2], NULL, 10);
                 if (errno != 0)
                 {
                     (void)PRINTF("Error during strtol:eap_result_ind errno:%d\r\n", errno);
-                    return;
+                    goto out;
                 }
-                if (arg + 1 >= argc || (network.security.eap_result_ind != 0U && network.security.eap_result_ind != 1U))
+                if (arg + 1 >= argc || (network->security.eap_result_ind != 0U && network->security.eap_result_ind != 1U))
                 {
                     (void)PRINTF(
                         "Error: invalid wireless"
                         " network result indication\r\n");
-                    return;
+                    goto out;
                 }
                 arg += 2;
             }
 #endif
 #if CONFIG_EAP_TLS
-            if ((string_equal(argv[arg + 1], "tls_cipher") != false) && network.security.wpa3_sb_192 &&
-                (network.security.type == WLAN_SECURITY_EAP_TLS))
+            if ((string_equal(argv[arg + 1], "tls_cipher") != false) && network->security.wpa3_sb_192 &&
+                (network->security.type == WLAN_SECURITY_EAP_TLS))
             {
                 if (string_equal(argv[arg + 2], "ECC_P384") != false)
                 {
-                    network.security.tls_cipher = EAP_TLS_ECC_P384;
+                    network->security.tls_cipher = EAP_TLS_ECC_P384;
                 }
                 else if (string_equal(argv[arg + 2], "RSA_3K") != false)
                 {
-                    network.security.tls_cipher = EAP_TLS_RSA_3K;
+                    network->security.tls_cipher = EAP_TLS_RSA_3K;
                 }
                 arg += 2;
             }
@@ -1635,9 +1645,9 @@ static void test_wlan_add(int argc, char **argv)
                 if (strlen(argv[arg + 2]) > IDENTITY_MAX_LENGTH)
                 {
                     (void)PRINTF("Error: Aid name exceeded the max length %d\r\n", IDENTITY_MAX_LENGTH);
-                    return;
+                    goto out;
                 }
-                strcpy(network.security.anonymous_identity, argv[arg + 2]);
+                strcpy(network->security.anonymous_identity, argv[arg + 2]);
                 arg += 2;
             }
 
@@ -1647,13 +1657,13 @@ static void test_wlan_add(int argc, char **argv)
                 if (strlen(argv[arg + 2]) > IDENTITY_MAX_LENGTH)
                 {
                     (void)PRINTF("Error: id exceeded the max length %d\r\n", IDENTITY_MAX_LENGTH);
-                    return;
+                    goto out;
                 }
 
-                strcpy(network.security.identity, argv[arg + 2]);
+                strcpy(network->security.identity, argv[arg + 2]);
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
                 /* For uAP Set External Client Identity */
-                strcpy(network.security.identities[network.security.nusers], argv[arg + 2]);
+                strcpy(network->security.identities[network->security.nusers], argv[arg + 2]);
 #endif
 
                 arg += 2;
@@ -1664,18 +1674,18 @@ static void test_wlan_add(int argc, char **argv)
                     if (strlen(argv[arg + 2]) > PASSWORD_MAX_LENGTH)
                     {
                         (void)PRINTF("Error: passwd exceeded the max length %d\r\n", PASSWORD_MAX_LENGTH);
-                        return;
+                        goto out;
                     }
 
-                    strcpy(network.security.eap_password, argv[arg + 2]);
+                    strcpy(network->security.eap_password, argv[arg + 2]);
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
                     /* For uAP Set External Client Identity */
-                    strcpy(network.security.passwords[network.security.nusers], argv[arg + 2]);
+                    strcpy(network->security.passwords[network->security.nusers], argv[arg + 2]);
 #endif
                     arg += 2;
                 }
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
-                network.security.nusers += 1;
+                network->security.nusers += 1;
 #endif
             }
 
@@ -1684,12 +1694,12 @@ static void test_wlan_add(int argc, char **argv)
                 if (strlen(argv[arg + 2]) > PASSWORD_MAX_LENGTH)
                 {
                     (void)PRINTF("Error: key_passwd exceeded the maximum length %d\n", PASSWORD_MAX_LENGTH);
-                    return;
+                    goto out;
                 }
                 /* Set Client/Server Key password */
-                strcpy(network.security.client_key_passwd, argv[arg + 2]);
+                strcpy(network->security.client_key_passwd, argv[arg + 2]);
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
-                strcpy(network.security.server_key_passwd, argv[arg + 2]);
+                strcpy(network->security.server_key_passwd, argv[arg + 2]);
 #endif
                 arg += 2;
             }
@@ -1704,9 +1714,9 @@ static void test_wlan_add(int argc, char **argv)
                 {
                     (void)PRINTF("Error: pac_opa_enc_key exceeded the maximum length %d.\r\n",
                                  PAC_OPAQUE_ENCR_KEY_MAX_LENGTH);
-                    return;
+                    goto out;
                 }
-                strcpy(network.security.pac_opaque_encr_key, argv[arg + 2]);
+                strcpy(network->security.pac_opaque_encr_key, argv[arg + 2]);
                 arg += 2;
             }
 
@@ -1716,9 +1726,9 @@ static void test_wlan_add(int argc, char **argv)
                 if (strlen(argv[arg + 2]) > A_ID_MAX_LENGTH)
                 {
                     (void)PRINTF("Error: a_id exceeded the maximum length %d\r\n", A_ID_MAX_LENGTH);
-                    return;
+                    goto out;
                 }
-                strcpy(network.security.a_id, argv[arg + 2]);
+                strcpy(network->security.a_id, argv[arg + 2]);
                 arg += 2;
             }
 
@@ -1726,19 +1736,19 @@ static void test_wlan_add(int argc, char **argv)
             {
                 /* EAP-FAST provisioning modes */
                 errno                      = 0;
-                network.security.fast_prov = strtol(argv[arg + 2], NULL, 10);
+                network->security.fast_prov = strtol(argv[arg + 2], NULL, 10);
                 if (errno != 0)
                 {
                     (void)PRINTF("Error during strtol:fast_prov errno:%d\r\n", errno);
-                    return;
+                    goto out;
                 }
-                if (arg + 1 >= argc || (network.security.fast_prov != 0U && network.security.fast_prov != 1U &&
-                                        network.security.fast_prov != 2U && network.security.fast_prov != 3U))
+                if (arg + 1 >= argc || (network->security.fast_prov != 0U && network->security.fast_prov != 1U &&
+                                        network->security.fast_prov != 2U && network->security.fast_prov != 3U))
                 {
                     (void)PRINTF(
                         "Error: invalid wireless"
                         " network fast_prov\r\n");
-                    return;
+                    goto out;
                 }
                 arg += 2;
             }
@@ -1750,10 +1760,10 @@ static void test_wlan_add(int argc, char **argv)
                 if (strlen(argv[arg + 2]) > HASH_MAX_LENGTH)
                 {
                     (void)PRINTF("Error: hash exceeded the maximum length %d\r\n", HASH_MAX_LENGTH);
-                    return;
+                    goto out;
                 }
 
-                strcpy(network.security.ca_cert_hash, argv[arg + 2]);
+                strcpy(network->security.ca_cert_hash, argv[arg + 2]);
                 arg += 2;
             }
 
@@ -1763,10 +1773,10 @@ static void test_wlan_add(int argc, char **argv)
                 if (strlen(argv[arg + 2]) > DOMAIN_MATCH_MAX_LENGTH)
                 {
                     (void)PRINTF("Error: domain_match exceeded the maximum length %d\r\n", DOMAIN_MATCH_MAX_LENGTH);
-                    return;
+                    goto out;
                 }
 
-                strcpy(network.security.domain_match, argv[arg + 2]);
+                strcpy(network->security.domain_match, argv[arg + 2]);
                 arg += 2;
             }
 
@@ -1777,9 +1787,9 @@ static void test_wlan_add(int argc, char **argv)
                 {
                     (void)PRINTF("Error: domain_suffix_match exceeded the maximum length %d\r\n",
                                  DOMAIN_MATCH_MAX_LENGTH);
-                    return;
+                    goto out;
                 }
-                strcpy(network.security.domain_suffix_match, argv[arg + 2]);
+                strcpy(network->security.domain_suffix_match, argv[arg + 2]);
                 arg += 2;
             }
 
@@ -1793,38 +1803,38 @@ static void test_wlan_add(int argc, char **argv)
             t_u8 *data   = NULL;
             int data_len = 0;
 
-            network.security.type = WLAN_SECURITY_EAP_TLS;
+            network->security.type = WLAN_SECURITY_EAP_TLS;
             /* Set Client Identity */
-            strcpy(network.identity, (const char *)"client1");
+            strcpy(network->identity, (const char *)"client1");
             /** Set SSID specific network search */
-            network.ssid_specific = 1;
+            network->ssid_specific = 1;
             /* Specify CA certificate */
             data_len = wlan_get_entp_cert_files(FILE_TYPE_ENTP_CA_CERT, &data);
             if (data_len == 0)
             {
                 wlan_free_entp_cert_files();
                 (void)PRINTF("Error: invalid ca cert file\r\n");
-                return;
+                goto out;
             }
-            network.security.tls_cert.ca_chain = wm_mbedtls_parse_cert((const unsigned char *)data, (size_t)data_len);
+            network->security.tls_cert.ca_chain = wm_mbedtls_parse_cert((const unsigned char *)data, (size_t)data_len);
             /* Specify Client certificate */
             data_len = wlan_get_entp_cert_files(FILE_TYPE_ENTP_CLIENT_CERT, &data);
             if (data_len == 0)
             {
                 wlan_free_entp_cert_files();
                 (void)PRINTF("Error: invalid client cert file\r\n");
-                return;
+                goto out;
             }
-            network.security.tls_cert.own_cert = wm_mbedtls_parse_cert((const unsigned char *)data, (size_t)data_len);
+            network->security.tls_cert.own_cert = wm_mbedtls_parse_cert((const unsigned char *)data, (size_t)data_len);
             /* Specify Client key */
             data_len = wlan_get_entp_cert_files(FILE_TYPE_ENTP_CLIENT_KEY, &data);
             if (data_len == 0)
             {
                 wlan_free_entp_cert_files();
                 (void)PRINTF("Error: invalid client key file\r\n");
-                return;
+                goto out;
             }
-            network.security.tls_cert.own_key =
+            network->security.tls_cert.own_key =
                 wm_mbedtls_parse_key((const unsigned char *)data, (size_t)data_len, NULL, 0);
             /* Specify address type as DHCP */
             arg += 1;
@@ -1835,44 +1845,44 @@ static void test_wlan_add(int argc, char **argv)
         else if (!info.security2 && string_equal("peap", argv[arg]))
         {
             /* Specify address type as DHCP */
-            network.security.type = WLAN_SECURITY_EAP_PEAP_MSCHAPV2;
+            network->security.type = WLAN_SECURITY_EAP_PEAP_MSCHAPV2;
             /** Set USERNAME */
             if (strlen(argv[arg + 1]) > IDENTITY_MAX_LENGTH)
             {
                 (void)PRINTF("Error: USERNAME is too long\r\n");
-                return;
+                goto out;
             }
-            (void)memcpy(network.identity, argv[arg + 1], strlen(argv[arg + 1]));
+            (void)memcpy(network->identity, argv[arg + 1], strlen(argv[arg + 1]));
             /* Set PASSWORD */
             if (strlen(argv[arg + 2]) > PASSWORD_MAX_LENGTH)
             {
                 (void)PRINTF("Error: PASSWORD is too long\r\n");
-                return;
+                goto out;
             }
-            (void)memcpy(network.password, argv[arg + 2], strlen(argv[arg + 2]));
+            (void)memcpy(network->password, argv[arg + 2], strlen(argv[arg + 2]));
             /* Set Client Identity(username) */
             //        strcpy(network.anonymous_identity, (const char *)"MSCHAPV2");
-            strcpy(network.anonymous_identity, (const char *)"anon");
+            strcpy(network->anonymous_identity, (const char *)"anon");
             /** Set SSID specific network search */
-            network.ssid_specific = 1;
+            network->ssid_specific = 1;
             /* Set network mode infra */
-            network.type = WLAN_BSS_TYPE_STA;
+            network->type = WLAN_BSS_TYPE_STA;
             /* Set network mode infra */
-            network.role = WLAN_BSS_ROLE_STA;
+            network->role = WLAN_BSS_ROLE_STA;
             /* Specify address type as DHCP */
-            network.ip.ipv4.addr_type = ADDR_TYPE_DHCP;
+            network->ip.ipv4.addr_type = ADDR_TYPE_DHCP;
             arg += 3;
         }
 #endif /* CONFIG_PEAP_MSCHAPV2 */
 #endif /* CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE */
         else if ((info.role == 0U) && string_equal("role", argv[arg]))
         {
-            if (arg + 1 >= argc || get_role(argv[arg + 1], &network.role))
+            if (arg + 1 >= argc || get_role(argv[arg + 1], &network->role))
             {
                 (void)PRINTF(
                     "Error: invalid wireless"
                     " network role\r\n");
-                return;
+                goto out;
             }
             arg += 2;
             info.role++;
@@ -1880,18 +1890,18 @@ static void test_wlan_add(int argc, char **argv)
         else if ((info.mfpc == 0U) && string_equal("mfpc", argv[arg]))
         {
             errno                 = 0;
-            network.security.mfpc = (bool)strtol(argv[arg + 1], NULL, 10);
+            network->security.mfpc = (bool)strtol(argv[arg + 1], NULL, 10);
             if (errno != 0)
             {
                 (void)PRINTF("Error during strtol:mfpc errno:%d\r\n", errno);
-                return;
+                goto out;
             }
-            if (arg + 1 >= argc || (network.security.mfpc != false && network.security.mfpc != true))
+            if (arg + 1 >= argc || (network->security.mfpc != false && network->security.mfpc != true))
             {
                 (void)PRINTF(
                     "Error: invalid wireless"
                     " network mfpc\r\n");
-                return;
+                goto out;
             }
             arg += 2;
             info.mfpc++;
@@ -1899,18 +1909,18 @@ static void test_wlan_add(int argc, char **argv)
         else if ((info.mfpr == 0U) && string_equal("mfpr", argv[arg]))
         {
             errno                 = 0;
-            network.security.mfpr = (bool)strtol(argv[arg + 1], NULL, 10);
+            network->security.mfpr = (bool)strtol(argv[arg + 1], NULL, 10);
             if (errno != 0)
             {
                 (void)PRINTF("Error during strtol:mfpr errno:%d\r\n", errno);
-                return;
+                goto out;
             }
-            if (arg + 1 >= argc || (network.security.mfpr != false && network.security.mfpr != true))
+            if (arg + 1 >= argc || (network->security.mfpr != false && network->security.mfpr != true))
             {
                 (void)PRINTF(
                     "Error: invalid wireless"
                     " network mfpr\r\n");
-                return;
+                goto out;
             }
             arg += 2;
             info.mfpr++;
@@ -1929,11 +1939,11 @@ static void test_wlan_add(int argc, char **argv)
                 (void)PRINTF(
                     "Error: invalid proactive key caching"
                     " argument \r\n");
-                return;
+                goto out;
             }
             pkc = a2hex_or_atoi(argv[arg + 1]);
 
-            network.security.pkc = pkc;
+            network->security.pkc = pkc;
             arg += 2;
             info.pkc = 1;
         }
@@ -1945,11 +1955,11 @@ static void test_wlan_add(int argc, char **argv)
                 (void)PRINTF(
                     "Error: invalid Group cipher"
                     " argument \r\n");
-                return;
+                goto out;
             }
             gcipher = a2hex_or_atoi(argv[arg + 1]);
 
-            network.security.group_cipher = gcipher;
+            network->security.group_cipher = gcipher;
             arg += 2;
             info.gcipher = 1;
         }
@@ -1961,11 +1971,11 @@ static void test_wlan_add(int argc, char **argv)
                 (void)PRINTF(
                     "Error: invalid Pairwise cipher"
                     " argument \r\n");
-                return;
+                goto out;
             }
             pcipher = a2hex_or_atoi(argv[arg + 1]);
 
-            network.security.pairwise_cipher = pcipher;
+            network->security.pairwise_cipher = pcipher;
             arg += 2;
             info.pcipher = 1;
         }
@@ -1977,11 +1987,11 @@ static void test_wlan_add(int argc, char **argv)
                 (void)PRINTF(
                     "Error: invalid Group Mgmt cipher"
                     " argument \r\n");
-                return;
+                goto out;
             }
             gmcipher = a2hex_or_atoi(argv[arg + 1]);
 
-            network.security.group_mgmt_cipher = gmcipher;
+            network->security.group_mgmt_cipher = gmcipher;
             arg += 2;
             info.gmcipher = 1;
         }
@@ -1995,22 +2005,22 @@ static void test_wlan_add(int argc, char **argv)
                 (void)PRINTF(
                     "Error: invalid dtim"
                     " argument \r\n");
-                return;
+                goto out;
             }
-            network.dtim_period = (uint8_t)(dtim_period & 0XFF);
+            network->dtim_period = (uint8_t)(dtim_period & 0XFF);
             arg += 2;
             info.dtim = 1;
         }
 #endif
 #if CONFIG_WIFI_CAPA
-        else if (!info.wlan_capa && network.role == WLAN_BSS_ROLE_UAP && string_equal("capa", argv[arg]))
+        else if (!info.wlan_capa && network->role == WLAN_BSS_ROLE_UAP && string_equal("capa", argv[arg]))
         {
-            if (arg + 1 >= argc || get_capa(argv[arg + 1], &network.wlan_capa))
+            if (arg + 1 >= argc || get_capa(argv[arg + 1], &network->wlan_capa))
             {
                 (void)PRINTF(
                     "Error: invalid wireless"
                     " capability\r\n");
-                return;
+                goto out;
             }
             arg += 2;
             info.wlan_capa++;
@@ -2022,7 +2032,7 @@ static void test_wlan_add(int argc, char **argv)
             if (arg + 1 >= argc || get_uint(argv[arg + 1], &ACS_band, strlen(argv[arg + 1])))
             {
                 (void)PRINTF("Error: invalid acs_band\r\n");
-                return;
+                goto out;
             }
             if (ACS_band != 0 && ACS_band != 1)
             {
@@ -2030,9 +2040,9 @@ static void test_wlan_add(int argc, char **argv)
                 (void)PRINTF(
                     "0: 2.4GHz channel   1: 5GHz channel\r\n"
                     "Not support to select dual band automatically.\r\n");
-                return;
+                goto out;
             }
-            network.acs_band = (uint16_t)ACS_band;
+            network->acs_band = (uint16_t)ACS_band;
             arg += 2;
             info.acs_band = 1;
         }
@@ -2040,7 +2050,7 @@ static void test_wlan_add(int argc, char **argv)
         {
             dump_wlan_add_usage();
             (void)PRINTF("Error: argument %d is invalid\r\n", arg);
-            return;
+            goto out;
         }
     } while (arg < argc);
 
@@ -2048,39 +2058,39 @@ static void test_wlan_add(int argc, char **argv)
     {
         dump_wlan_add_usage();
         (void)PRINTF("Error: specify at least the SSID or BSSID\r\n");
-        return;
+        goto out;
     }
 
     if ((info.security && info.security2 && info.security3) ||
-        ((network.security.type == WLAN_SECURITY_WPA) && info.security && !info.security2))
+        ((network->security.type == WLAN_SECURITY_WPA) && info.security && !info.security2))
     {
         dump_wlan_add_usage();
         (void)PRINTF("Error: not support WPA or WPA/WPA2/WPA3 Mixed\r\n");
-        return;
+        goto out;
     }
 
-    if ((network.security.type == WLAN_SECURITY_WPA2) || (network.security.type == WLAN_SECURITY_WPA3_SAE))
+    if ((network->security.type == WLAN_SECURITY_WPA2) || (network->security.type == WLAN_SECURITY_WPA3_SAE))
     {
-        if ((network.security.psk_len != 0U) && (network.security.password_len != 0U))
+        if ((network->security.psk_len != 0U) && (network->security.password_len != 0U))
         {
-            network.security.type = WLAN_SECURITY_WPA2_WPA3_SAE_MIXED;
+            network->security.type = WLAN_SECURITY_WPA2_WPA3_SAE_MIXED;
         }
     }
 
-    if (info.role == WLAN_BSS_ROLE_UAP && network.ip.ipv4.address == 0)
+    if (info.role == WLAN_BSS_ROLE_UAP && network->ip.ipv4.address == 0)
     {
         (void)PRINTF("No IP address assigned for uAP. This is only for bridge mode.\r\n");
         info.address = ADDR_TYPE_BRIDGE_MODE;
-        network.ip.ipv4.addr_type = ADDR_TYPE_BRIDGE_MODE;
+        network->ip.ipv4.addr_type = ADDR_TYPE_BRIDGE_MODE;
     }
 
-    network.ip.ipv4.addr_type         = (enum address_types)(info.address);
-    network.ssid[IEEEtypes_SSID_SIZE] = '\0';
-    ret                               = wlan_add_network(&network);
+    network->ip.ipv4.addr_type         = (enum address_types)(info.address);
+    network->ssid[IEEEtypes_SSID_SIZE] = '\0';
+    ret                               = wlan_add_network(network);
     switch (ret)
     {
         case WM_SUCCESS:
-            (void)PRINTF("Added \"%s\"\r\n", network.name);
+            (void)PRINTF("Added \"%s\"\r\n", network->name);
             break;
         case -WM_E_INVAL:
             (void)PRINTF("Error: network already exists or invalid arguments\r\n");
@@ -2096,6 +2106,16 @@ static void test_wlan_add(int argc, char **argv)
                 "Error: unable to add network for unknown"
                 " reason\r\n");
             break;
+    }
+
+out:
+    if (network)
+    {
+#if !CONFIG_MEM_POOLS
+        OSA_MemoryFree(network);
+#else
+        OSA_MemoryPoolFree(buf_4096_MemoryPool, network);
+#endif
     }
 }
 
@@ -2684,14 +2704,32 @@ static void test_wlan_start_network(int argc, char **argv)
 static void test_wlan_stop_network(int argc, char **argv)
 {
     int ret;
-    struct wlan_network network;
+#if !CONFIG_MEM_POOLS
+    struct wlan_network *network = (struct wlan_network *)OSA_MemoryAllocate(sizeof(struct wlan_network));
+#else
+    struct wlan_network *network = OSA_MemoryPoolAllocate(buf_4096_MemoryPool);
+#endif
+    if (!network)
+    {
+        (void)PRINTF("Error: unable to malloc memory\r\n");
+        return;
+    }
 
-    (void)memset(&network, 0x00, sizeof(struct wlan_network));
-    (void)wlan_get_current_uap_network(&network);
-    ret = wlan_stop_network(network.name);
+    (void)memset(network, 0x00, sizeof(struct wlan_network));
+    (void)wlan_get_current_uap_network(network);
+    ret = wlan_stop_network(network->name);
     if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Error: unable to stop network\r\n");
+    }
+
+    if (network)
+    {
+#if !CONFIG_MEM_POOLS
+        OSA_MemoryFree(network);
+#else
+        OSA_MemoryPoolFree(buf_4096_MemoryPool, network);
+#endif
     }
 }
 
