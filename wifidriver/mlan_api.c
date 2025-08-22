@@ -70,7 +70,7 @@ uint32_t fftInBuffer_t[FFT_INBUFFER_LEN_DW];
 #endif
 #endif
 
-#if (CONFIG_CSI) && (CONFIG_CSI_AMI)
+#if (CONFIG_CSI) && ((CONFIG_CSI_AMI) || (CONFIG_WLS_CSI_PROC))
 #if defined __ICCARM__
 #define NO_INIT_AMI __no_init
 #else
