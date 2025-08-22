@@ -15584,6 +15584,7 @@ static int wlan_exceed_network_limit(void)
 int wlan_start_wps_pbc(const struct netif *netif)
 {
     int ret = -WM_FAIL;
+    char iface_name[NETIF_NAMESIZE];
 
     if (wlan.wps_session_attempt)
     {
@@ -15591,13 +15592,18 @@ int wlan_start_wps_pbc(const struct netif *netif)
         return ret;
     }
 
-    wlan_remove_wps_network();
+    net_get_if_name(iface_name, (struct netif *)netif);
 
-    ret = wlan_exceed_network_limit();
-    if (ret)
+    if (strstr(iface_name, "ml"))
     {
-        wlcm_e("network array is full");
-        return ret;
+        wlan_remove_wps_network();
+
+        ret = wlan_exceed_network_limit();
+        if (ret)
+        {
+            wlcm_e("network array is full");
+            return ret;
+        }
     }
 
     ret = wpa_supp_start_wps_pbc(netif, 0);
@@ -15618,6 +15624,7 @@ void wlan_wps_generate_pin(uint32_t *pin)
 int wlan_start_wps_pin(const struct netif *netif, const char *pin)
 {
     int ret = -WM_FAIL;
+    char iface_name[NETIF_NAMESIZE];
 
     if (wlan.wps_session_attempt)
     {
@@ -15631,13 +15638,18 @@ int wlan_start_wps_pin(const struct netif *netif, const char *pin)
         return -WM_FAIL;
     }
 
-    wlan_remove_wps_network();
+    net_get_if_name(iface_name, (struct netif *)netif);
 
-    ret = wlan_exceed_network_limit();
-    if (ret)
+    if (strstr(iface_name, "ml"))
     {
-        wlcm_e("network array is full");
-        return ret;
+        wlan_remove_wps_network();
+
+        ret = wlan_exceed_network_limit();
+        if (ret)
+        {
+            wlcm_e("network array is full");
+            return ret;
+        }
     }
 
     return wpa_supp_start_wps_pin(netif, pin, 0);

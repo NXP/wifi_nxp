@@ -2019,6 +2019,9 @@ out:
 int wifi_nxp_wpa_supp_probe_req_report(void *if_priv, int report)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    int ret                                    = -WM_FAIL;
+    int bss_type                               = 0;
+    mlan_private *pmpriv                       = NULL;
 
     if (!if_priv)
     {
@@ -2027,22 +2030,72 @@ int wifi_nxp_wpa_supp_probe_req_report(void *if_priv, int report)
     }
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
-    if (report && ((wifi_if_ctx_rtos->bss_type == BSS_TYPE_STA)
-#if CONFIG_WPA_SUPP_P2P
-		|| (wifi_if_ctx_rtos->bss_type == BSS_TYPE_WFD)
-#endif
-		))
+    bss_type         = wifi_if_ctx_rtos->bss_type;
+    pmpriv           = (mlan_private *)mlan_adap->priv[bss_type];
+
+    if (report)
     {
-        return wifi_set_rx_mgmt_indication(wifi_if_ctx_rtos->bss_type, WLAN_MGMT_PROBE_RQST | WLAN_MGMT_ACTION);
+        if (pmpriv->probe_req_report_on)
+        {
+            supp_d("Probe Request reporting already on!\r\n");
+            ret = WM_SUCCESS;
+            goto out;
+        }
+
+        if (((bss_type == BSS_TYPE_STA)
+#if CONFIG_WPA_SUPP_P2P
+             || (bss_type == BSS_TYPE_WFD)
+#endif
+                 ))
+        {
+            ret = wifi_set_rx_mgmt_indication(bss_type, WLAN_MGMT_PROBE_RQST | WLAN_MGMT_ACTION);
+            if (ret == WM_SUCCESS)
+            {
+                pmpriv->probe_req_report_on = true;
+                supp_d("Probe Request reporting is enabled successfully\r\n");
+            }
+            else
+            {
+                supp_e("Probe Request reporting enabled failed\r\n");
+            }
+        }
     }
     else
     {
-        return wifi_set_rx_mgmt_indication(wifi_if_ctx_rtos->bss_type, WLAN_MGMT_ACTION);
-        ;
+        if ((bss_type == BSS_TYPE_UAP)
+#if CONFIG_WPA_SUPP_P2P
+            || ((bss_type == MLAN_BSS_TYPE_WIFIDIRECT) && (pmpriv->bss_role == MLAN_BSS_ROLE_UAP))
+#endif
+        )
+        {
+            supp_d("Skip disabling of Probe Request reporting in AP mode\r\n");
+            ret = WM_SUCCESS;
+        }
+        else
+        {
+            if (pmpriv->probe_req_report_on)
+            {
+                ret = wifi_set_rx_mgmt_indication(bss_type, WLAN_MGMT_ACTION);
+                if (ret == WM_SUCCESS)
+                {
+                    pmpriv->probe_req_report_on = false;
+                    supp_d("Probe Request reporting disabled successfully\r\n");
+                }
+                else
+                {
+                    supp_e("Probe Request reporting disabled failed\r\n");
+                }
+            }
+            else
+            {
+                supp_d("Probe Request reporting is already disabled!\r\n");
+                ret = WM_SUCCESS;
+            }
+        }
     }
 
 out:
-    return -1;
+    return ret;
 }
 
 void wifi_nxp_wpa_supp_event_proc_mgmt_rx(void *if_priv, nxp_wifi_event_mlme_t *mgmt_rx, unsigned int event_len)
