@@ -1525,6 +1525,7 @@ struct _mlan_private
 #endif
 
 #if CONFIG_WPA_SUPP
+    bool probe_req_report_on;
 #if CONFIG_WPA_SUPP_P2P
     p2p_t p2p;
     int p2p_mgmt_bitmap_index;

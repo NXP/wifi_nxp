@@ -3892,6 +3892,7 @@ int wifi_nxp_beacon_config(unsigned int bss_type, nxp_wifi_ap_info_t *params)
             if (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
             {
                 mgmt_subtype_mask |= MGMT_MASK_PROBE_REQ;
+                priv->probe_req_report_on = true;
             }
 #endif
             wuap_d("Starting BSS");
@@ -4854,6 +4855,8 @@ int wifi_nxp_stop_ap(unsigned int bss_type)
     }
 
     (void)wifi_set_rx_mgmt_indication(bss_type, 0);
+
+    priv->probe_req_report_on = false;
 
     if (priv->beacon_vendor_index != -1)
     {
