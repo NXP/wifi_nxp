@@ -14828,7 +14828,7 @@ int wlan_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action)
 #if CONFIG_MEF_CFG
 int wlan_mef_set_auto_arp(t_u8 mef_action)
 {
-    int ret, index;
+    int ret, index = -1, found = 0;
     unsigned int ipv4_addr[2];
     int ipv4_addr_num = 0;
     int filter_num = 0;
@@ -14869,7 +14869,24 @@ int wlan_mef_set_auto_arp(t_u8 mef_action)
         ipv4_addr_num++;
     }
 #endif
-    index = g_flt_cfg.nentries;
+    for (int i = 0; i < g_flt_cfg.nentries; i++)
+    {
+        if (g_flt_cfg.mef_entry[i].action & MEF_AUTO_ARP)
+        {
+            index = i;
+            found = 1;
+            break;
+        }
+    }
+    if (!found)
+    {
+        index = g_flt_cfg.nentries;
+    }
+    else
+    {
+        g_flt_cfg.mef_entry[index].action = (MEF_AUTO_ARP | (mef_action & 0xF));
+        goto out;
+    }
     g_flt_cfg.criteria |= (CRITERIA_BROADCAST | CRITERIA_UNICAST);
     g_flt_cfg.nentries++;
 
@@ -14908,13 +14925,13 @@ int wlan_mef_set_auto_arp(t_u8 mef_action)
         (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].byte_seq,
                      &ipv4_addr[1], 4); // UAP IP address
     }
-
+out:
     return WM_SUCCESS;
 }
 
 int wlan_mef_set_auto_ping(t_u8 mef_action)
 {
-    int ret, index;
+    int ret, index = -1, found = 0;;
     unsigned int ipv4_addr[2];
     int ipv4_addr_num = 0;
     int filter_num = 0;
@@ -14955,7 +14972,23 @@ int wlan_mef_set_auto_ping(t_u8 mef_action)
         ipv4_addr_num++;
     }
 #endif
-    index = g_flt_cfg.nentries;
+    for (int i = 0; i < g_flt_cfg.nentries; i++)
+    {
+        if (g_flt_cfg.mef_entry[i].action & MEF_AUTO_PING)
+        {
+            index = i;
+            found = 1;
+            break;
+        }
+    }
+    if (!found)
+    {
+        index = g_flt_cfg.nentries;
+    }
+    else
+    {
+        g_flt_cfg.mef_entry[index].action = (MEF_AUTO_PING | (mef_action & 0xF));
+    }
     g_flt_cfg.criteria |= (CRITERIA_BROADCAST | CRITERIA_UNICAST);
     g_flt_cfg.nentries++;
     g_flt_cfg.mef_entry[index].mode                        = MEF_MODE_HOST_SLEEP;
@@ -14999,25 +15032,41 @@ int wlan_mef_set_auto_ping(t_u8 mef_action)
         (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].byte_seq,
                      &ipv4_addr[1], 4); // UAP IP address
     }
-
+out:
     return WM_SUCCESS;
 }
 
 int wlan_set_ipv6_ns_mef(t_u8 mef_action)
 {
-	int index;
-
+    int index = -1, found = 0;
     if (g_flt_cfg.nentries >= MAX_NUM_ENTRIES)
     {
         wlcm_e("Number of MEF entries(%d) exceeds limit(8)!", g_flt_cfg.nentries);
         return -WM_FAIL;
     }
 
-    index = g_flt_cfg.nentries;
+    for (int i = 0; i < g_flt_cfg.nentries; i++)
+    {
+        if (g_flt_cfg.mef_entry[i].action & MEF_NS_RESP)
+        {
+            index = i;
+            found = 1;
+            break;
+        }
+    }
+    if (!found)
+    {
+        index = g_flt_cfg.nentries;
+    }
+    else
+    {
+        g_flt_cfg.mef_entry[index].action = (MEF_NS_RESP | (mef_action & 0xF));
+        goto out;
+    }
     g_flt_cfg.criteria |= (CRITERIA_UNICAST | CRITERIA_MULTICAST);
     g_flt_cfg.nentries++;
     g_flt_cfg.mef_entry[index].mode = MEF_MODE_HOST_SLEEP;
-    g_flt_cfg.mef_entry[index].action = (MEF_NS_RESP| (mef_action & 0xF));
+    g_flt_cfg.mef_entry[index].action = (MEF_NS_RESP | (mef_action & 0xF));
     g_flt_cfg.mef_entry[index].filter_num = 2;
 
 	g_flt_cfg.mef_entry[index].filter_item[0].fill_flag = (FILLING_TYPE | FILLING_REPEAT | FILLING_OFFSET | FILLING_BYTE_SEQ);
@@ -15035,19 +15084,39 @@ int wlan_set_ipv6_ns_mef(t_u8 mef_action)
     g_flt_cfg.mef_entry[index].filter_item[1].num_byte_seq = 1;
     (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[1].byte_seq, "\x87", 1);
 
+out:
     return WM_SUCCESS;
 }
 
 int wlan_mef_set_multicast(t_u8 mef_action)
 {
-    t_u32 index = 0;
+    t_u32 index = -1, found = 0;
 
     if (g_flt_cfg.nentries >= MAX_NUM_ENTRIES)
     {
         wlcm_e("Number of MEF entries(%d) exceeds limit(8)!", g_flt_cfg.nentries);
         return -WM_FAIL;
     }
-    index = g_flt_cfg.nentries;
+
+    for (int i = 0; i < g_flt_cfg.nentries; i++)
+    {
+        if (g_flt_cfg.mef_entry[i].mode == MEF_MODE_HOST_SLEEP
+            && !(g_flt_cfg.mef_entry[i].action & 0xfe) && (g_flt_cfg.mef_entry[i].action & 0x1))
+        {
+            index = i;
+            found = 1;
+            break;
+        }
+    }
+    if (!found)
+    {
+        index = g_flt_cfg.nentries;
+    }
+    else
+    {
+        g_flt_cfg.mef_entry[index].action = mef_action;
+        goto out;
+    }
     g_flt_cfg.criteria |= (CRITERIA_MULTICAST | CRITERIA_UNICAST);
     g_flt_cfg.nentries++;
 
@@ -15068,7 +15137,7 @@ int wlan_mef_set_multicast(t_u8 mef_action)
     g_flt_cfg.mef_entry[index].filter_item[1].byte_seq[0]  = 0xE0;
     g_flt_cfg.mef_entry[index].filter_item[1].num_mask_seq = 1;
     g_flt_cfg.mef_entry[index].filter_item[1].mask_seq[0]  = 0xF0;
-
+out:
     return WM_SUCCESS;
 }
 
