@@ -22,10 +22,9 @@
 #endif
 
 int wls_process_csi(unsigned int *bufferMemory, unsigned int *fftInBuffer, hal_wls_packet_params_t *packetparams, hal_wls_processing_input_params_t *inputVals, unsigned int *resArray);
-void wls_unpack_csi(unsigned int *bufferMemory, unsigned int *outBuffer, hal_wls_packet_params_t *packetparams, hal_wls_processing_input_params_t *inputVals, unsigned int *totalpower);
-int wls_calculate_toa(unsigned int *headerBuffer, unsigned int *fftInBuffer, unsigned int *fftBuffer, unsigned int *totalpower, hal_wls_packet_params_t *packetparams, hal_wls_processing_input_params_t *inputVals);
+int wls_unpack_csi(unsigned int *bufferMemory, unsigned int *outBuffer, hal_wls_packet_params_t *packetparams, hal_wls_processing_input_params_t *inputVals, unsigned int *totalpower, unsigned int *pktInfoPtr);
+int wls_calculate_toa(unsigned int *pktInfoPtr, int bufferSpacing, unsigned int *fftInBuffer, unsigned int *fftBuffer, unsigned int *totalpower, hal_wls_packet_params_t *packetparams, hal_wls_processing_input_params_t *inputVals);
 
-void wls_intialize_reference(unsigned int *headerBuffer, csi_filter_param_t *csi_filter_param_ptr, unsigned int *fftInBuffer, float *fftRefBuffer);
-float wls_update_cross_corr_ami_calc(unsigned int *headerBuffer, csi_filter_param_t *csi_filter_param_ptr, unsigned int *fftInBuffer, float *fftRefBuffer, unsigned int *tempBuffer);
-
+void wls_intialize_reference(unsigned int *headerBuffer, unsigned int *pktInfoPtr, csi_filter_param_t *csi_filter_param_ptr, int bufferSpacing, unsigned int *fftInBuffer, float *fftRefBuffer);
+float wls_update_cross_corr_ami_calc(unsigned int *headerBuffer, unsigned int *pktInfoPtr, csi_filter_param_t *csi_filter_param_ptr, int bufferSpacing, unsigned int *fftInBuffer, float *fftRefBuffer, unsigned int *tempBuffer);
 #endif

@@ -17,6 +17,7 @@
 #define WLS_STRUCTURE_DEFS_H
 
 #include "wls_param_defines.h"
+#include "mlan_decl.h"
 
 #ifndef DEF_TYPES
 #define DEF_TYPES
@@ -34,7 +35,7 @@
 #define SOC_W8864
 #define SOC_W8964
 
-typedef struct hal_rxinfo {
+typedef MLAN_PACK_START struct hal_rxinfo {
     // DWORD-0
 #ifdef SOC_W8X64
     UINT32	reserved0 :16;
@@ -231,9 +232,9 @@ typedef struct hal_rxinfo {
     //7
     UINT32	ht_ctrl;
 #endif
-} hal_rxinfo_t;
+} MLAN_PACK_END hal_rxinfo_t;
 
-typedef struct hal_csirxinfo {
+typedef MLAN_PACK_START struct hal_csirxinfo {
 #if defined(SMAC_BFINFO) && defined(RAW_HEADER)
     // DWORD-0
     UINT32 header_length:13;
@@ -420,9 +421,9 @@ UINT32 chip_id : 8;
 UINT32 fcf : 16;
 UINT32 rsvd3 : 16;
 #endif
-} hal_csirxinfo_t;
+} MLAN_PACK_END hal_csirxinfo_t;
 
-typedef struct hal_tddestruct {
+typedef MLAN_PACK_START struct hal_tddestruct {
 	// DWORD-0
 	UINT32 cfo : 17; 
 	UINT32 dta : 11;
@@ -439,9 +440,9 @@ typedef struct hal_tddestruct {
 	UINT32 rsvd1 : 6;
 	// DWORD-4
 	UINT32 IQ_Data[1];
-} hal_tddestruct_t;
+} MLAN_PACK_END hal_tddestruct_t;
 
-typedef struct hal_pktinfo {
+typedef MLAN_PACK_START struct hal_pktinfo {
     UINT32 packetType:3; // 0: Legacy, 1: HT, 3: VHT, 4: HE;
     UINT32 psb:3;
     UINT32 sigBw:2;
@@ -457,10 +458,10 @@ typedef struct hal_pktinfo {
 	UINT32 scOffset:12;
 	UINT32 dcPhase : 2;
 	UINT32 rsvd2 : 18;
-} hal_pktinfo_t;
+} MLAN_PACK_END hal_pktinfo_t;
 
 #ifndef DFW_CSI_PROC
-typedef struct hal_wls_processing_input_params {
+typedef MLAN_PACK_START struct hal_wls_processing_input_params {
     UINT32 enableCsi:1; // turn on CSI processing
     UINT32 enableAoA:1; // turn on AoA (req. enableCsi==1)
     UINT32 nTx:3; // limit # tx streams to process
@@ -473,9 +474,9 @@ typedef struct hal_wls_processing_input_params {
 	UINT32 useSubspace:1; // 1: use subspace algo; 0: no;
     UINT32 useFindAngleDelayPeaks:1; // use this algorithm for AoA
     UINT32 rsvd1:9;
-} hal_wls_processing_input_params_t;
+} MLAN_PACK_END hal_wls_processing_input_params_t;
 
-typedef struct hal_wls_packet_params {
+typedef MLAN_PACK_START struct hal_wls_packet_params {
     UINT32 chNum:8; // ch_index 1-4, 36:4:140, 149:4:165
     UINT32 isFtmInit:1; // indicate if this is FTM exchange initiator or responder
     UINT32 ftmSignalBW:3; // Channel bandwidth 0: 20 MHz, 1: 40 MHz, 2: 80 MHz, 3: 160 Mhz, 4-7 reserved
@@ -496,11 +497,11 @@ typedef struct hal_wls_packet_params {
 	UINT32 cable_len_B:8;
 	UINT32 cable_len_C:8;
     UINT32 antenna_spacing:8;
-} hal_wls_packet_params_t;
+} MLAN_PACK_END hal_wls_packet_params_t;
 
 /** Structure for ftm command private data*/
-typedef struct _csi_filter_param
- {
+typedef MLAN_PACK_START struct _csi_filter_param
+{
 	/**peer mac address */
 	UINT8 peer_mac[6];
 	/** Number of CSI to process */
@@ -522,31 +523,31 @@ typedef struct _csi_filter_param
 	float kalman_alpha;
 	float kalman_N0;
 	UINT64 kalman_prev_tsf;
- }csi_filter_param_t;
+} MLAN_PACK_END csi_filter_param_t;
 
 #else
 #include "dsp_cmd.h"
 #endif
 
-typedef struct hal_cal_struc{
+typedef MLAN_PACK_START struct hal_cal_struc{
 	short calData[4];
 	short centerFreq;
-} hal_cal_struc_t;
+} MLAN_PACK_END hal_cal_struc_t;
 
-typedef struct reg_buf_config {
+typedef MLAN_PACK_START struct reg_buf_config {
     // DWORD-0
     UINT16 buf_size:13;
     UINT16 rsvd1:3;
     UINT16 buf_num:12;
     UINT16 rsvd0:4;
-} reg_buf_config_t;
+} MLAN_PACK_END reg_buf_config_t;
 
-typedef struct reg_buf_ptr {
+typedef MLAN_PACK_START struct reg_buf_ptr {
     // DWORD-0
     UINT16 wr_ptr:13;
     UINT16 rsvd1:3;
     UINT16 rd_ptr:13;
     UINT16 rsvd0:3;
-} reg_buf_ptr_t;
+} MLAN_PACK_END reg_buf_ptr_t;
 
 #endif

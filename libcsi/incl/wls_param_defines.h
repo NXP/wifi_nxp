@@ -23,7 +23,6 @@
 #define INPUT_FILE _TXT
 // #define SMAC_BFINFO
 // #define RAW_HEADER
-#define LEG_LTF_NG1
 
 #define CSI_PROC
 
@@ -54,6 +53,10 @@
 
 #define MAX_RX 1
 #define MAX_TX 2
+
+#define VHT80_NTONES 234
+#define VHT40_NTONES 108
+#define VHT20_NTONES 52
 
 #if defined(FFT_PARALLEL)
 #define NUM_PARALLEL 4

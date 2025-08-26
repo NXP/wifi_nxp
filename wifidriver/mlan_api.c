@@ -6265,10 +6265,9 @@ int wifi_csi_cfg(wifi_csi_config_params_t *csi_params)
 
 #if CONFIG_CSI_AMI
 
-static void set_csi_proc_filter(unsigned int *headerBuffer, csi_filter_param_t *csi_filter_param_ptr)
+static void set_csi_proc_filter(unsigned int *headerBuffer, hal_pktinfo_t *pktinfo, csi_filter_param_t *csi_filter_param_ptr)
 {
 	hal_csirxinfo_t *csirxinfo = (hal_csirxinfo_t*)headerBuffer;
-	hal_pktinfo_t *pktinfo = (hal_pktinfo_t*)&(headerBuffer[2]);
     t_u16 addr2_lo = csirxinfo->addr2_lo;
 	t_u32 addr2_hi = csirxinfo->addr2_hi;
 
@@ -6288,10 +6287,9 @@ static void set_csi_proc_filter(unsigned int *headerBuffer, csi_filter_param_t *
 		csi_filter_param_ptr->packet_bandwidth, csi_filter_param_ptr->packet_format);
 }
 
-static int check_csi_filter_partial(unsigned int *headerBuffer, csi_filter_param_t *csi_filter_param_ptr)
+static int check_csi_filter_partial(unsigned int *headerBuffer, hal_pktinfo_t *pktinfo, csi_filter_param_t *csi_filter_param_ptr)
 {
 	hal_csirxinfo_t *csirxinfo = (hal_csirxinfo_t*)headerBuffer;
-	hal_pktinfo_t *pktinfo = (hal_pktinfo_t*)&(headerBuffer[2]);
 	t_u16 addr2_lo = csirxinfo->addr2_lo;
 	t_u32 addr2_hi = csirxinfo->addr2_hi;
 	t_u8 broadcast_mac[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
@@ -6331,10 +6329,9 @@ static int check_csi_filter_partial(unsigned int *headerBuffer, csi_filter_param
 	return WM_SUCCESS;
 }
 
-static int check_csi_filter(unsigned int *headerBuffer, csi_filter_param_t *csi_filter_param_ptr)
+static int check_csi_filter(unsigned int *headerBuffer, hal_pktinfo_t *pktinfo, csi_filter_param_t *csi_filter_param_ptr)
 {
 	hal_csirxinfo_t *csirxinfo = (hal_csirxinfo_t*)headerBuffer;
-	hal_pktinfo_t *pktinfo = (hal_pktinfo_t*)&(headerBuffer[2]);
     t_u16 addr2_lo = csirxinfo->addr2_lo;
 	t_u32 addr2_hi = csirxinfo->addr2_hi;
 
@@ -6371,21 +6368,27 @@ static void proc_csi_event(void *p_data)
     unsigned char *rdPtr;
     unsigned int *csiBuffer = NULL;
     unsigned int csi_len;
-	int firstPathDelay;
+	int firstPathDelay, bufferSpacing;
 	float ambientMotionVal_dB= 0.0f;
 	unsigned int headerBuffer[HEADER_LEN];
 	unsigned int totalpower[MAX_RX * MAX_TX + 1];
-
-    hal_wls_packet_params_t packetparams;
+    unsigned int pktInfo[2];
+    hal_csirxinfo_t *csirxinfo;
 
     (void)memset(headerBuffer, 0x00, sizeof(headerBuffer));
     (void)memset(totalpower, 0x00, sizeof(totalpower));
+    (void)memset(pktInfo, 0x00, sizeof(pktInfo));
+
+    hal_pktinfo_t *pktInfoPtr = (hal_pktinfo_t *)(void *)pktInfo;
+
+    hal_wls_packet_params_t packetparams;
 
     rdPtr = (unsigned char *)p_data;
 
 	(void)memcpy(headerBuffer, rdPtr, HEADER_LEN * sizeof(unsigned int));
+    csirxinfo = (hal_csirxinfo_t*)(void *)headerBuffer;
 
-    csi_len = headerBuffer[0] & 0x1fff; // 13 LSBs
+    csi_len = csirxinfo->data_length;
 #if !CONFIG_MEM_POOLS
     csiBuffer = (unsigned int *)OSA_MemoryAllocate(sizeof(unsigned int) * csi_len);
 #else
@@ -6404,12 +6407,10 @@ static void proc_csi_event(void *p_data)
     (void)memset(scratchBuffer1, 0x00, sizeof(scratchBuffer1));
     (void)memset(&packetparams, 0x00, sizeof(hal_wls_packet_params_t));
 
-    packetparams.chNum = g_ami_cfg.channel;
+    packetparams.chNum = csirxinfo->chan;
 
-    wls_unpack_csi(csiBuffer, fftInBuffer, &packetparams, &g_ami_cfg.wls_processing_input, totalpower);
-
-    firstPathDelay = wls_calculate_toa(headerBuffer, fftInBuffer, scratchBuffer1, totalpower,
-		&packetparams, &g_ami_cfg.wls_processing_input);
+    bufferSpacing = wls_unpack_csi(csiBuffer, fftInBuffer, &packetparams, &g_ami_cfg.wls_processing_input, 
+        totalpower, pktInfo);
 
     if (g_ami_cfg.ami_reference_init == AMI_REF_UNINIT)
 	{
@@ -6417,33 +6418,42 @@ static void proc_csi_event(void *p_data)
         if(g_ami_cfg.csiFilterSet == AMI_FILTER_NOT_SET)
         {
             wifi_w("Missing AMI filter set, setting filter following the first CSI/AMI packet");
-            set_csi_proc_filter(headerBuffer, &g_ami_cfg.gcsi_filter_param);
+            set_csi_proc_filter(headerBuffer, pktInfoPtr, &g_ami_cfg.gcsi_filter_param);
             g_ami_cfg.csiFilterSet = AMI_FILTER_AUTO_SET;
         }
 
-        if(check_csi_filter_partial(headerBuffer, &g_ami_cfg.gcsi_filter_param) == WM_SUCCESS)
+        if(check_csi_filter_partial(headerBuffer, pktInfoPtr, &g_ami_cfg.gcsi_filter_param) == WM_SUCCESS)
         {
+
+            firstPathDelay = wls_calculate_toa(pktInfo, bufferSpacing, fftInBuffer, scratchBuffer1, totalpower, 
+                &packetparams, &g_ami_cfg.wls_processing_input);
+
             if(g_ami_cfg.csiFilterSet == AMI_FILTER_SET)
             {
-                set_csi_proc_filter(headerBuffer, &g_ami_cfg.gcsi_filter_param);
+                set_csi_proc_filter(headerBuffer, pktInfoPtr, &g_ami_cfg.gcsi_filter_param);
             }
 
-            wls_intialize_reference(headerBuffer, &g_ami_cfg.gcsi_filter_param, fftInBuffer, referenceBuffer);
+            wls_intialize_reference(headerBuffer, pktInfo, &g_ami_cfg.gcsi_filter_param, bufferSpacing, 
+                fftInBuffer, referenceBuffer);
+
             g_ami_cfg.ami_reference_init = AMI_REF_INITIALIZED;
         }
 	}
-    else if (check_csi_filter(headerBuffer, &g_ami_cfg.gcsi_filter_param) == WM_SUCCESS)
+    else if (check_csi_filter(headerBuffer, pktInfoPtr, &g_ami_cfg.gcsi_filter_param) == WM_SUCCESS)
     {
-        ambientMotionVal_dB= wls_update_cross_corr_ami_calc(headerBuffer, &g_ami_cfg.gcsi_filter_param,
-            fftInBuffer, referenceBuffer, scratchBuffer1);
+
+        firstPathDelay = wls_calculate_toa(pktInfo, bufferSpacing, fftInBuffer, scratchBuffer1, totalpower, 
+                &packetparams, &g_ami_cfg.wls_processing_input);
+
+        ambientMotionVal_dB= wls_update_cross_corr_ami_calc(headerBuffer, pktInfo, &g_ami_cfg.gcsi_filter_param,
+            bufferSpacing, fftInBuffer, referenceBuffer, scratchBuffer1);
 
         {
-			hal_pktinfo_t *pktinfo = (hal_pktinfo_t*)&(headerBuffer[2]);
 			char myStr[4] = {'V','H','T','\0'};
-			int l_BW = 20 << pktinfo->sigBw;
-            int nRx = pktinfo->nRx + 1;
-			int nTx = pktinfo->nTx + 1;
-            t_u8 packet_format = convertPktInfo[pktinfo->packetType];
+			int l_BW = 20 << pktInfoPtr->sigBw;
+            int nRx = pktInfoPtr->nRx + 1;
+			int nTx = pktInfoPtr->nTx + 1;
+            t_u8 packet_format = convertPktInfo[pktInfoPtr->packetType];
 			// record TSF
 			UINT64 TSF = (((UINT64)headerBuffer[4]) << 32) + headerBuffer[3];
 			// calculate ToA in ns
