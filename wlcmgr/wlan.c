@@ -14988,6 +14988,7 @@ int wlan_mef_set_auto_ping(t_u8 mef_action)
     else
     {
         g_flt_cfg.mef_entry[index].action = (MEF_AUTO_PING | (mef_action & 0xF));
+        goto out;
     }
     g_flt_cfg.criteria |= (CRITERIA_BROADCAST | CRITERIA_UNICAST);
     g_flt_cfg.nentries++;
