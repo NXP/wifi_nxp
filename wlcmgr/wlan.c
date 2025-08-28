@@ -6046,6 +6046,7 @@ static void wlcm_process_fw_hang_event(struct wifi_message *msg, enum cm_sta_sta
     if (is_uap_starting())
     {
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
+        netif = net_get_uap_interface();
         net_mgmt(NET_REQUEST_WIFI_AP_DISABLE, (struct net_if *)netif, NULL, 0);
 #else
         (void)do_stop(&wlan.networks[wlan.cur_uap_network_idx]);
