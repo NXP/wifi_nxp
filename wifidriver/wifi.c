@@ -5477,7 +5477,8 @@ int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_tim
 
     if (((bss_type == BSS_TYPE_STA) && (pmpriv->media_connected == MFALSE))
 #if CONFIG_WPA_SUPP_P2P
-        || ((bss_type == MLAN_BSS_TYPE_WIFIDIRECT) && (mlan_adap->priv[bss_type]->bss_role == MLAN_BSS_ROLE_STA))
+        || ((bss_type == MLAN_BSS_TYPE_WIFIDIRECT) && (mlan_adap->priv[bss_type]->bss_role == MLAN_BSS_ROLE_STA) &&
+            !wifi_is_remain_on_channel())
 #endif
     )
     {
