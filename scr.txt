@@ -1,7 +1,7 @@
 Name: NXP Wi-Fi driver
 Outgoing License: BSD 3-Clause "New" or "Revised" License
 License File: LICENSE
-Version: v1.3.r48.p46
+Version: v1.3.r48.p47
 
 Package: libcsi
 Outgoing License: NXP Proprietary LA_OPT_NXP_Software_License v63 May 2025 - Additional distribution license granted, Section 2.3 applies
