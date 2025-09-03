@@ -5768,6 +5768,18 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
         priv_wfd->wps.session_enable = MFALSE;
 #endif
     }
+    else if (strstr(buf, P2P_EVENT_INVITATION_ACCEPTED))
+    {
+#if CONFIG_WPA_SUPP_WPS
+        wlan.wps_session_attempt = 1;
+#endif
+    }
+    else if (strstr(buf, P2P_EVENT_INVITATION_RESULT))
+    {
+#if CONFIG_WPA_SUPP_WPS
+        wlan.wps_session_attempt = 1;
+#endif
+    }
     else if (strstr(buf, P2P_EVENT_GROUP_STARTED))
     {
         char *pos;
@@ -5814,7 +5826,9 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
         }
         if (wlcm_process_add_unspecified_network("wps_network") == WM_SUCCESS)
         {
+#if CONFIG_WPA_SUPP_WPS
             wlan.wps_session_attempt = 0;
+#endif
             wifi_event_completion(WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
         }
     }
