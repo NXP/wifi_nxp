@@ -16673,6 +16673,20 @@ int wlan_p2p_group_add(char *cmd)
 {
     struct netif *netif = net_get_wfd_interface();
 
+#if CONFIG_WIFI_CAPA
+    uint8_t capa = WIFI_SUPPORT_LEGACY | WIFI_SUPPORT_11N;
+
+    if (strstr(cmd, "vht")) {
+        capa |= WIFI_SUPPORT_11AC;
+    }
+
+    if (strstr(cmd, "he")) {
+        capa |= WIFI_SUPPORT_11AX;
+    }
+
+    wifi_uap_config_wifi_capa(capa);
+#endif
+
     return wpa_supp_p2p_group_add(netif, cmd);
 }
 

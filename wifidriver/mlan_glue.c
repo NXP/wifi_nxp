@@ -2812,8 +2812,8 @@ int wifi_set_wifi_direct_mode(unsigned int bss_type, unsigned int role)
     bss.param.wfd_mode = role; /*GC mode 3; GO Mode 2*/
     wifi_send_bss_ioctl(&bss);
 
-    // if (role == WIFI_DIRECT_MODE_GO)
-    // wlan_prepare_cmd(pmpriv, HostCmd_CMD_SET_BSS_MODE, HostCmd_ACT_GEN_SET, 0, MNULL, &bss_mode);
+    if (role == WIFI_DIRECT_MODE_GO)
+        wlan_prepare_cmd(pmpriv, HostCmd_CMD_SET_BSS_MODE, HostCmd_ACT_GEN_SET, 0, MNULL, &bss_mode);
 
     return wm_wifi.cmd_resp_status;
 }

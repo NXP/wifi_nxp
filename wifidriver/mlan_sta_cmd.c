@@ -2256,6 +2256,15 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
         case HOST_CMD_WIFI_DIRECT_MODE_CONFIG:
             ret = wlan_cmd_wifi_direct_mode(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
+        case HostCmd_CMD_SET_BSS_MODE:
+            cmd_ptr->command = wlan_cpu_to_le16(cmd_no);
+            if (pdata_buf)
+                cmd_ptr->params.bss_mode.con_type = *(t_u8 *)pdata_buf;
+            else
+                cmd_ptr->params.bss_mode.con_type = BSS_MODE_WIFIDIRECT_CLIENT;
+            cmd_ptr->size = wlan_cpu_to_le16(sizeof(HostCmd_DS_SET_BSS_MODE) + S_DS_GEN);
+            ret           = MLAN_STATUS_SUCCESS;
+            break;
 #endif
         case HostCmd_CMD_802_11_SUBSCRIBE_EVENT:
             ret = wlan_cmd_subscribe_event(pmpriv, cmd_ptr, cmd_action, pdata_buf);
