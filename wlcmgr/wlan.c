@@ -1623,7 +1623,9 @@ void wlan_clear_host_sleep_config(void)
     wifi_clear_wakeup_reason();
     wlan.wakeup_conditions = 0;
 #ifdef RW610
+#if CONFIG_POWER_MANAGER
     start_temperature_mon_timer();
+#endif
 #endif
 }
 #endif
