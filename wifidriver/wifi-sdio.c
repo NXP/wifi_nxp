@@ -488,6 +488,8 @@ static sg_data_list_t *sg_data_tx_prepare(t_u8 *out_buf)
             buf->is_hdr_in_payload = 1;
             pbuf_free(p);
             p = q;
+            /* Add headroom */
+            pbuf_header(p, hdr_size);
         }
     }
 

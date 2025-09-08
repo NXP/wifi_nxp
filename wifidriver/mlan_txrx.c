@@ -104,29 +104,18 @@ mlan_status wlan_process_uap_rx_packet(mlan_private *priv, pmlan_buffer pmbuf)
 
     if (prx_pkt->eth803_hdr.dest_addr[0] & 0x01)
     {
-        t_u32 pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
-        t_u32 link_point_len = sizeof(mlan_linked_list);
-        bypass_outbuf_t *poutbuf = NULL;
-
-#if !CONFIG_MEM_POOLS
-        poutbuf = OSA_MemoryAllocate(link_point_len + pkt_len + prx_pd->rx_pkt_length);
-#else
-        poutbuf = (bypass_outbuf_t *)OSA_MemoryPoolAllocate(buf_1536_MemoryPool);
-#endif
-        if (!poutbuf)
+        /* Allocate new buffer here, to avoid the conflict between
+         * driver handling and TCP/IP stack handling */
+        void *pkt = (void *)gen_tx_pkt_from_data(interface, net_stack_buffer_get_payload(pmbuf->lwip_pbuf),
+                                               prx_pd->rx_pkt_length);
+        if (pkt == NULL)
         {
-            wuap_e("[%s] ERR:Cannot allocate buffer!\r\n", __func__);
-            return MLAN_STATUS_FAILURE;
+            /* Allocate TX buffer failed, directly upload the packet to TCP/IP stack */
+            goto upload;
         }
 
-        (void)memset((t_u8 *)poutbuf, 0, link_point_len + pkt_len);
-        (void)net_stack_buffer_copy_partial(pmbuf->lwip_pbuf, (void *)((t_u8 *)poutbuf + link_point_len + pkt_len),
-            (t_u16)prx_pd->rx_pkt_length, 0);
-        /* process packet headers with interface header and TxPD */
-        process_pkt_hdrs((void *)((t_u8 *)poutbuf + link_point_len), pkt_len + prx_pd->rx_pkt_length,
-            interface, 0, 0);
-        wlan_add_buf_bypass_txq((t_u8 *)poutbuf, interface);
-        send_wifi_driver_bypass_data_event(interface);
+        net_wifi_pkt_fwd(interface, pkt);
+        net_stack_buffer_free(pkt);
     }
     else
     {

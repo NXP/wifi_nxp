@@ -171,10 +171,11 @@ static void deliver_packet_above(struct pbuf *p, int recv_interface)
     }
 }
 
+#define MAX_RETRY_GEN_PKT 3
 #if CONFIG_TX_RX_ZERO_COPY && defined(RW610)
 static struct pbuf *gen_pbuf_from_data_for_zerocopy(t_u8 *payload, t_u16 datalen)
 {
-    t_u8 retry_cnt = 3;
+    t_u8 retry_cnt = MAX_RETRY_GEN_PKT;
     struct pbuf *p = NULL;
 
 retry:
@@ -205,7 +206,7 @@ retry:
 
 static struct pbuf *gen_pbuf_from_data(t_u8 *payload, t_u16 datalen)
 {
-    t_u8 retry_cnt = 3;
+    t_u8 retry_cnt = MAX_RETRY_GEN_PKT;
     struct pbuf *p = NULL;
 
 retry:
@@ -770,6 +771,34 @@ int net_wifi_pkt_fwd(uint8_t interface, void *stack_buffer)
 #endif
     else
         return low_level_output(net_get_sta_interface(), (struct pbuf *)stack_buffer, true);
+}
+
+struct pbuf *gen_tx_pkt_from_data(uint8_t interface, uint8_t *payload, uint16_t datalen)
+{
+    t_u8 retry_cnt = MAX_RETRY_GEN_PKT;
+    struct pbuf *p = NULL;
+
+retry:
+    /* Includes spare room for additional encapsulation header before ethernet headers */
+    p = pbuf_alloc(PBUF_RAW_TX, datalen, PBUF_POOL);
+    if (p == NULL)
+    {
+        if (retry_cnt)
+        {
+            retry_cnt--;
+            portYIELD();
+            goto retry;
+        }
+        return NULL;
+    }
+
+    if (pbuf_take(p, payload, datalen) != 0)
+    {
+        (void)pbuf_free(p);
+        p = NULL;
+    }
+
+    return p;
 }
 #endif
 

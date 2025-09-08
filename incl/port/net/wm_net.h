@@ -441,6 +441,16 @@ static inline void *net_stack_buffer_get_payload(void *buf)
  * \return -WM_FAIL otherwise
  */
 int net_wifi_pkt_fwd(uint8_t interface, void *stack_buffer);
+
+/** Generate packet buffer
+ *
+ * \param[in] interface Wi-Fi interface.
+ * \param[in] payload source data payload pointer.
+ * \param[in] datalen data length.
+ *
+ * \return the payload pointer of the stack buffer.
+ */
+struct pbuf *gen_tx_pkt_from_data(uint8_t interface, uint8_t *payload, uint16_t datalen);
 #endif
 
 /**
