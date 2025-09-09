@@ -129,6 +129,13 @@ static inline void OSA_UnlockSchedule(void)
     xTaskResumeAll();
 }
 
+/** Get number of tasks */
+static inline uint32_t OSA_GetTaskNum(void)
+{
+
+    return uxTaskGetNumberOfTasks();
+}
+
 /**
  * Returns time in micro-secs since bootup
  *

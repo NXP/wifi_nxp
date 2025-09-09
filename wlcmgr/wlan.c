@@ -246,9 +246,10 @@ OSA_SEMAPHORE_HANDLE_DEFINE(uapsd_sem);
 
 static void cpu_loading_task(osa_task_param_t arg);
 
+extern bool get_uint(const char *arg, unsigned int *dest, unsigned int len);
+
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
 static OSA_TASK_DEFINE(cpu_loading_task, WLAN_TASK_PRI_HIGH, 1, CONFIG_CPU_LOADING_STACK_SIZE, 0);
-
 static struct
 {
     /*The number of tasks.*/
@@ -269,6 +270,8 @@ static struct
     OSA_TIMER_HANDLE_DEFINE(cpu_loading_timer);
     /*CPU loading thread.*/
     OSA_TASK_HANDLE_DEFINE(cpu_loading_task_Handle);
+    /*CPU loading semaphore.*/
+    OSA_SEMAPHORE_HANDLE_DEFINE(cpu_loading_sem);
 
     /*Array of recording names of tasks.*/
     char task_name[CPU_LOADING_TASK_NUM][configMAX_TASK_NAME_LEN];
@@ -7192,7 +7195,7 @@ static void wlan_cpu_loading_request()
     status = OSA_TimerDestroy((osa_timer_handle_t)cpu_loading.cpu_loading_timer);
     if (status != KOSA_StatusSuccess)
     {
-        (void)PRINTF("Failed to delete cpu loading timer: %d.\r\n", ret);
+        (void)PRINTF("Failed to delete cpu loading timer: %d.\r\n", status);
     }
 
     OSA_MemoryFree(cpu_loading.cpu_loading_info);
@@ -7200,7 +7203,13 @@ static void wlan_cpu_loading_request()
     status = OSA_TaskDestroy((osa_task_handle_t)cpu_loading.cpu_loading_task_Handle);
     if (status != KOSA_StatusSuccess)
     {
-        (void)PRINTF("Failed to delete cpu_loading_task: %d.\r\n", ret);
+        (void)PRINTF("Failed to delete cpu_loading_task: %d.\r\n", status);
+    }
+
+    status = OSA_SemaphoreDestroy((osa_semaphore_handle_t)cpu_loading.cpu_loading_sem);
+    if (status != KOSA_StatusSuccess)
+    {
+        (void)PRINTF("Failed to delete cpu loading semaphore: %d.\r\n", status);
     }
 
     cpu_loading.status = CPU_LOADING_STATUS_DEAD;
@@ -16978,7 +16987,7 @@ static void wlan_cpu_loading_record_data(void)
         }while(index < len_data);
 
         cpu_run_data[task_time_index] = '\0';
-        get_uint(cpu_run_data, &value, strlen(cpu_run_data));
+        (void)get_uint(cpu_run_data, &value, strlen(cpu_run_data));
 
         if(cpu_loading.index > 0)
         {
@@ -17033,7 +17042,7 @@ static void cpu_loading_task(osa_task_param_t arg)
     for(;;)
     {
         /* Wait till cpu loading timer time out. */
-        (void)os_event_notify_get(OS_WAIT_FOREVER);
+        (void)OSA_SemaphoreWait((osa_semaphore_handle_t)cpu_loading.cpu_loading_sem, osaWaitForever_c);
 
         if(cpu_loading.sampling_loops == 0)
         {
@@ -17052,7 +17061,7 @@ static void cpu_loading_task(osa_task_param_t arg)
 
 static void cpu_loading_cb(osa_timer_arg_t arg)
 {
-    (void)os_event_notify_put(cpu_loading.cpu_loading_thread);
+    (void)OSA_SemaphorePost((osa_semaphore_handle_t)cpu_loading.cpu_loading_sem);
 }
 
 static int wlan_cpu_loading_start(uint32_t number, uint8_t period)
@@ -17067,6 +17076,13 @@ static int wlan_cpu_loading_start(uint32_t number, uint8_t period)
             cpu_loading.sampling_period = CPU_LOADING_PERIOD;
         else
             cpu_loading.sampling_period = period * (CPU_LOADING_PERIOD / 2);
+
+        status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)cpu_loading.cpu_loading_sem);
+        if (status != KOSA_StatusSuccess)
+        {
+            (void)PRINTF("Unable to create cpu loading semaphore.\r\n");
+            return -WM_FAIL;
+        }
 
         status = OSA_TimerCreate((osa_timer_handle_t)cpu_loading.cpu_loading_timer, cpu_loading.sampling_period,
                           &cpu_loading_cb, NULL, KOSA_TimerPeriodic, OSA_TIMER_NO_ACTIVATE);
@@ -17083,7 +17099,7 @@ static int wlan_cpu_loading_start(uint32_t number, uint8_t period)
             return -WM_FAIL;
         }
 
-        os_get_num_of_tasks(&cpu_loading.task_nums);
+        cpu_loading.task_nums = OSA_GetTaskNum();
         cpu_loading.task_status_len = cpu_loading.task_nums * sizeof(TaskStatus_t);
         cpu_loading.cpu_loading_info = (char *)OSA_MemoryAllocate(cpu_loading.task_status_len);
         if (cpu_loading.cpu_loading_info == NULL)

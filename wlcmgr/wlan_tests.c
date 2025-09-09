@@ -9035,7 +9035,7 @@ static void test_wlan_cpu_loading(int argc, char **argv)
 {
     int arg = 0;
     unsigned int value;
-    uint8_t start, period = 0;
+    uint8_t start = 0, period = 0;
     uint32_t number = 0;
 
     struct
