@@ -987,7 +987,7 @@ int raw_process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
     ptxpd->pkt_delay_2ms = 0;
 
 #if CONFIG_WPA_SUPP
-    if (pmpriv->tx_seq_num == 0)
+    if ((pmpriv->tx_seq_num & 0xFF) == 0)
     {
         pmpriv->tx_seq_num++;
     }
