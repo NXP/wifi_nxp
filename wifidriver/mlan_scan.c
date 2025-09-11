@@ -145,11 +145,11 @@ void wlan_abort_split_scan(void)
     }
 #endif
     /*Also check the state of supplicant scan, if it is in progress, abort it*/
-    if ((split_scan_in_progress == true)
 #if CONFIG_WPA_SUPP
-        || (supp_scan_in_process == true)
+    if ((split_scan_in_progress == true) || (supp_scan_in_process == true))
+#else
+    if (split_scan_in_progress == true)
 #endif
-        )
     {
         if(split_scan_in_progress)
         {

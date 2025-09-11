@@ -65,6 +65,10 @@ u32_t *lwip_hook_tcp_out_add_tcpopts(struct pbuf *p, struct tcp_hdr *hdr, const 
     ack_number = hdr->ackno;
 
     ret = wlan_save_cloud_keep_alive_params(NULL, source_port, destination_port, seq_number, ack_number, 0);
+    if (ret < 0)
+    {
+	    return NULL;
+    }
 
     return opts;
 }

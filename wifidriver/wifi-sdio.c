@@ -1655,7 +1655,7 @@ static void wlan_get_mac_addr_uap(void)
     wifi_sdio_lock();
 
     (void)memset(outbuf, 0, buflen);
-    seq_number = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, MLAN_BSS_TYPE_UAP);
+    seq_number = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, (int)MLAN_BSS_TYPE_UAP);
 
     /* sdiopkt = outbuf */
     wifi_prepare_get_mac_addr_cmd(&sdiopkt->hostcmd, seq_number);
