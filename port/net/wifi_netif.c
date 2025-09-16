@@ -451,7 +451,7 @@ static void process_data_packet(const t_u8 *rcvdata,
                     (void)pbuf_free(p);
                 }
             }
-#if UAP_SUPPORT
+#if 0 /* Comment out unused code */
             else
             {
                 wrapper_wlan_update_uap_rxrate_info(rxpd);

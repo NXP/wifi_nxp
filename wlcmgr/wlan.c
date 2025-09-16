@@ -5459,6 +5459,7 @@ static int wlcm_process_add_unspecified_network(const char *name)
     len = strlen(name);
     network->name[len] = '\0';
     (void)memcpy(network->ssid, ssid, strlen(ssid));
+    network->ssid[IEEEtypes_SSID_SIZE] = '\0';
 
     network->ip.ipv4.addr_type = ADDR_TYPE_DHCP;
 
