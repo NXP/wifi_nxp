@@ -7186,7 +7186,7 @@ static void wlan_cpu_loading_info_display(void)
         if(!memcmp(cpu_loading_task_name, cpu_loading.task_name[i], strlen(cpu_loading_task_name)))
             continue;
         task_runtime_percentage[i] = (float)(((float)(task_runtime[i]) / total_runtime) * 100);
-        (void)PRINTF("%s \t\t%6.2f%%\r\n", task_string_name[i], task_runtime_percentage[i]);
+        (void)PRINTF("%s \t%6.2f%%\r\n", task_string_name[i], (double)task_runtime_percentage[i]);
     }
 }
 
@@ -16986,11 +16986,11 @@ static void wlan_cpu_loading_record_data(void)
     int task_name_index = 0, task_time_index = 0, index = 0, task_index = 0;
 
     OSA_GetRuntimeStats(cpu_loading.cpu_loading_info);
+    (void)memset(run_task_name, 0, sizeof(run_task_name));
 
     uint32_t len_data = strlen(cpu_loading.cpu_loading_info);
     do
     {
-        memset(run_task_name, 0, strlen(run_task_name));
         /*Record task name*/
         do
         {
@@ -17031,16 +17031,18 @@ static void wlan_cpu_loading_record_data(void)
         }
         else
         {
+            /*First time to record task name*/
+            uint8_t temp_len = strlen(run_task_name);
             memset(task_string_name[task_index],' ', configMAX_TASK_NAME_LEN);
-            task_string_name[task_index][configMAX_TASK_NAME_LEN -1] = '\0';
 
-            memcpy(cpu_loading.task_name[task_index], run_task_name, strlen(run_task_name));
-            memcpy(task_string_name[task_index], run_task_name, strlen(run_task_name));
+            memcpy(cpu_loading.task_name[task_index], run_task_name, temp_len);
+            memcpy(task_string_name[task_index], run_task_name, temp_len);
             cpu_loading.data_pre[task_index] = value;
             cpu_loading.data_cur[task_index] = value;
             cpu_loading.first_data[task_index] = value;
 
             cpu_loading.task_name[task_index][strlen(run_task_name)] = '\0';
+            task_string_name[task_index][configMAX_TASK_NAME_LEN -1] = '\0';
         }
 
         /*Filter percentage value*/
@@ -17058,6 +17060,7 @@ static void wlan_cpu_loading_record_data(void)
         task_time_index = 0;
         task_name_index = 0;
         task_index ++;
+        (void)memset(run_task_name, 0, sizeof(run_task_name));
 
     }while (index < len_data);
 
@@ -17083,8 +17086,6 @@ static void cpu_loading_task(osa_task_param_t arg)
                 wlan_cpu_loading_info_display();
         }
     }
-
-    OSA_ThreadSelfComplete(NULL);
 }
 
 static void cpu_loading_cb(osa_timer_arg_t arg)

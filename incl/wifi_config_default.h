@@ -1299,6 +1299,13 @@
 #endif
 
 /*
+ * CPU loading debug options
+ */
+#if !defined CONFIG_CPU_LOADING
+#define CONFIG_CPU_LOADING 0
+#endif
+
+/*
  * Heap debug options
  */
 #if !defined CONFIG_HEAP_DEBUG
