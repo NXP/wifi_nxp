@@ -1,12 +1,12 @@
-#if CONFIG_WLS_CSI_PROC
-/** @file wls_param_defines.h
+/*
+ *  Copyright 2025 NXP
  *
- * @brief This file contains global header file for configuring fft processing of CSI.
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
- * Copyright 2023-2024 NXP
- *
- * SPDX-License-Identifier: BSD-3-Clause
- *
+ */
+
+/*! \file wls_param_defines.h
+ * \brief This file contains global header file for configuring fft processing of CSI.
  */
 
 /************************************************************************
@@ -22,6 +22,9 @@
 
 #define INPUT_FILE _TXT
 // #define SMAC_BFINFO
+// #define RAW_HEADER
+
+#define CSI_PROC
 
 #ifdef SMAC_BFINFO
 #define CSI_SIGNATURE      0x0
@@ -29,8 +32,12 @@
 #define CSI_BUFFER_SIZE_DW (1024 * 2 + 64)
 #define CSI_NUM_BUFFER     32
 #else
+#if defined(RAW_HEADER)
+#define HEADER_LEN 28
+#else
+#define HEADER_LEN 11
+#endif
 #define CSI_SIGNATURE      0xabcd0000
-#define HEADER_LEN         28
 #define CSI_BUFFER_SIZE_DW (512 + 64) // 1536 // 512 //
 #define CSI_NUM_BUFFER     32         // 16 //
 #endif
@@ -40,10 +47,16 @@
 // #define FFT_PARALLEL
 // #define FFT_INPLACE
 // #define TDDE_FIRSTPATH
-#define STA_20_ONLY
+#if defined(RW610) || defined(IW610)
+#define STA_20_ONLY 1
+#endif
 
 #define MAX_RX 1
-#define MAX_TX 4
+#define MAX_TX 2
+
+#define VHT80_NTONES 234
+#define VHT40_NTONES 108
+#define VHT20_NTONES 52
 
 #if defined(FFT_PARALLEL)
 #define NUM_PARALLEL 4
@@ -51,7 +64,7 @@
 #define NUM_PARALLEL 1
 #endif
 
-#if defined(ENABLE_SUBSPACE_FTIMING) && defined(STA_20_ONLY)
+#if defined(ENABLE_SUBSPACE_FTIMING) && (STA_20_ONLY)
 #define NUM_PROC_BUF (11 + NUM_PARALLEL)
 #elif defined(ENABLE_SUBSPACE_FTIMING)
 #define NUM_PROC_BUF (2 + NUM_PARALLEL)
@@ -137,7 +150,7 @@
 #define COMPUTE_80P80_AS_160       // or true 160 in SC4+Citril
 #define TOA_FPATH_BIPT       12
 
-#ifdef STA_20_ONLY
+#if STA_20_ONLY
 #define MAX_IFFT_SIZE_SHIFT 2
 #else // up to 80 MHz
 #define MAX_IFFT_SIZE_SHIFT 5
@@ -171,5 +184,3 @@
 #define SC5_HT20_PILOTS  27
 
 #endif
-
-#endif /* CONFIG_WLS_CSI_PROC */
