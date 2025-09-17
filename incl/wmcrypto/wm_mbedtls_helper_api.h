@@ -353,48 +353,6 @@ int wm_mbedtls_ssl_read(mbedtls_ssl_context *ssl, unsigned char *buf, size_t len
 int wm_mbedtls_ssl_write(mbedtls_ssl_context *ssl, const unsigned char *buf, size_t len);
 
 /**
- * Reset MBEDTLS SSL internal timer
- *
- * This function resets MBEDTLS SSL internal timer. This function call
- * is to done before every new call of 'wm_mbedtls_ssl_read'. Reason behind this
- * is that, in each 'wm_mbedtls_ssl_read' call, if timer is not running, then
- * MBEDTLS starts the timer with internal read timeout value (which can
- * be set using \ref wm_mbedtls_set_read_timeout).
- *
- * In 'wm_mbedtls_ssl_read', timer status check is done before invoking
- * functions * network layer read function (timer needs to be running
- * i.e. status should be 'not expired').
- *
- * After 'wm_mbedtls_ssl_read' call is finished (in success or failure),
- * the timer is still running.
- *
- * If 'wm_mbedtls_ssl_read' is again called, then 2 things
- * are possible, either the timer is expired or not (since the timer is
- * not reset i.e. it is still running from the time when first call to
- * 'wm_mbedtls_ssl_read' was done)
- *
- * If timer is not expired then its fine, 'wm_mbedtls_ssl_read' call will
- * proceed further as expected. But in case timer has expired then
- * 'wm_mbedtls_ssl_read' will return SSL timeout error.
- *
- * @param[in] ssl		Pointer to MBEDTLS SSL context
- *
- */
-void wm_mbedtls_reset_read_timer(mbedtls_ssl_context *ssl);
-
-/**
- * Set read_timeout for MBEDTLS SSL read
- *
- * This function will set read timeout value, which is used
- * by MBEDTLS for setting internal timer. The status of this timer
- * is checked by MBEDTLS before calling network layer read function.
- *
- * @param[in] ssl		Pointer to MBEDTLS SSL context
- * @param[in] timeout	Desired timeout value to be set
- */
-void wm_mbedtls_set_read_timeout(mbedtls_ssl_context *ssl, uint32_t timeout);
-
-/**
  * Start SSL connection
  *
  * This function performs SSL handshake on existing TCP connection

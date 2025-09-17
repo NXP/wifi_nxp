@@ -115,7 +115,8 @@ mbedtls_pk_context *wm_mbedtls_parse_key(const unsigned char *key_buf,
 
     mbedtls_pk_init(key);
 
-    ret = mbedtls_pk_parse_key(key, key_buf, key_len, pwd, pwd_len);
+    ret = mbedtls_pk_parse_key(key, key_buf, key_len, pwd, pwd_len, mbedtls_ctr_drbg_random,
+                               wm_mbedtls_get_ctr_drbg_ctx());
 
     if (ret != 0)
     {
@@ -500,23 +501,3 @@ int wm_mbedtls_ssl_write(mbedtls_ssl_context *ssl, const unsigned char *buf, siz
     return written;
 }
 
-void wm_mbedtls_reset_read_timer(mbedtls_ssl_context *ssl)
-{
-    /*-----------------------------------------------------
-     * Reset internal MBEDTLS timer
-     */
-    if (!ssl || !(ssl->f_set_timer))
-        return;
-
-    ssl->f_set_timer(ssl->p_timer, 0, 0);
-}
-
-void wm_mbedtls_set_read_timeout(mbedtls_ssl_context *ssl, uint32_t timeout)
-{
-    if (!ssl)
-        return;
-    /*-----------------------------------------------------
-     * Set read_timeout to desired value
-     */
-    mbedtls_ssl_conf_read_timeout((struct mbedtls_ssl_config *)ssl->conf, timeout);
-}

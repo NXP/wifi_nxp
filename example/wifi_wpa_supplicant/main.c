@@ -63,6 +63,12 @@
 #include "ksdk_mbedtls.h"
 #endif
 #endif
+#if defined(MBEDTLS_USER_CONFIG_FILE)
+#include MBEDTLS_USER_CONFIG_FILE
+#endif
+#if defined(MBEDTLS_THREADING_C) && defined(MBEDTLS_THREADING_ALT)
+#include "threading_alt.h"
+#endif
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -712,7 +718,12 @@ int main(void)
     printSeparator();
     PRINTF("wifi wpa supplicant demo\r\n");
     printSeparator();
+#ifndef CONFIG_WPA_SUPP_CRYPTO_MBEDTLS_PSA
     (void)CRYPTO_InitHardware();
+#endif
+#if defined(MBEDTLS_THREADING_C) && defined(MBEDTLS_THREADING_ALT)
+    config_mbedtls_threading_alt();
+#endif
 #ifdef RW610
     RTC_Init(RTC);
 #endif

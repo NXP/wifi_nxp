@@ -13,7 +13,7 @@
 #include <mbedtls/entropy.h>
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/platform.h>
-#include <mbedtls/entropy_poll.h>
+#include "entropy_poll.h"
 
 #include <wm_utils.h>
 #include <wm_mbedtls_debug.h>
