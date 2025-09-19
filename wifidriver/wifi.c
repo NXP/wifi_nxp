@@ -4505,7 +4505,7 @@ int wifi_add_to_bypassq(const t_u8 interface, void *pkt, t_u32 len)
 #endif
         if (!poutbuf)
         {
-            wuap_e("[%s] ERR:Cannot allocate buffer!\r\n", __func__);
+            wuap_w("[%s] INFO :Cannot allocate buffer!\r\n", __func__);
             return -WM_E_NOMEM;
         }
 
@@ -4984,7 +4984,7 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
         pmpriv = (mlan_private *)mlan_adap->priv[0];
     if (!poutbuf)
     {
-        wuap_e("[%s] ERR:Cannot allocate buffer!\r\n", __func__);
+        wuap_w("[%s] INFO :Cannot allocate buffer!\r\n", __func__);
         return -WM_FAIL;
     }
 
@@ -5362,7 +5362,7 @@ static int supp_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 le
 #endif
     if (!poutbuf)
     {
-        wuap_e("[%s] ERR:Cannot allocate buffer!\r\n", __func__);
+        wuap_w("[%s] INFO :Cannot allocate buffer!\r\n", __func__);
         return -WM_FAIL;
     }
 
