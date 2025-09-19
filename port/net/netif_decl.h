@@ -116,7 +116,7 @@ void wrapper_wlan_update_uap_rxrate_info(RxPD *rxpd);
 int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payload);
 
 #if CONFIG_NET_MONITOR
-void user_recv_monitor_data(const t_u8 *rcvdata);
+void user_recv_monitor_data(void *p, RxPD *rxpd, t_u16 intf_pkt_len);
 #endif
 
 #if defined(SDK_OS_FREE_RTOS)

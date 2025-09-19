@@ -477,7 +477,7 @@ static void process_data_packet(const t_u8 *rcvdata,
                     frame->frame_type == AUTH_FRAME || frame->frame_type == PROBE_REQ_FRAME ||
                     frame->frame_type == QOS_DATA_FRAME)
                 {
-                    user_recv_monitor_data(rcvdata);
+                    user_recv_monitor_data((void *)p, rxpd, datalen);
                 }
             }
 #endif

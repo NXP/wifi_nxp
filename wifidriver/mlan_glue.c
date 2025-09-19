@@ -28,6 +28,7 @@
 #include <stdio.h>
 #endif
 
+#include <wm_net.h>
 #if CONFIG_WPA_SUPP
 #include "wifi_nxp.h"
 #endif
@@ -1180,24 +1181,22 @@ bool get_monitor_flag()
     return g_monitor_status;
 }
 
-void user_recv_monitor_data(const t_u8 *rcvdata)
+void user_recv_monitor_data(void *p, RxPD *rxpd, t_u16 intf_pkt_len)
 {
     t_s8 rssi              = 0;
     t_u16 datalen          = 0;
     t_u8 *net_monitor_data = NULL;
-    RxPD *rxpd             = (RxPD *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
-    t_u16 inimupkt_len     = *(t_u16 *)rcvdata;
 
     datalen = rxpd->rx_pkt_length + sizeof(t_s8);
     rssi    = rxpd->snr - rxpd->nf;
 
-    if ((rxpd->rx_pkt_length + rxpd->rx_pkt_offset + INTF_HEADER_LEN) != inimupkt_len)
+    if ((rxpd->rx_pkt_length + rxpd->rx_pkt_offset + INTF_HEADER_LEN) != intf_pkt_len)
     {
-        wifi_w("rx_pkt_length + rx_pkt_offset + INTF_HEADER_LEN is not equal to inimupkt_len \n\r");
+        wifi_w("rx_pkt_length + rx_pkt_offset + INTF_HEADER_LEN is not equal to intf_pkt_len \n\r");
         wifi_w("Invalid data, discard \n\r");
         wifi_w("rx_pkt_length :%d \n\r", rxpd->rx_pkt_length);
         wifi_w("rx_pkt_offset :%d \n\r", rxpd->rx_pkt_offset);
-        wifi_w("inimupkt_len  :%d \n\r", inimupkt_len);
+        wifi_w("intf_pkt_len  :%d \n\r", intf_pkt_len);
         return;
     }
 
@@ -1212,8 +1211,8 @@ void user_recv_monitor_data(const t_u8 *rcvdata)
         }
 
         memcpy(net_monitor_data, &rssi, sizeof(t_s8));
-        memcpy(net_monitor_data + sizeof(t_s8), ((t_u8 *)rcvdata + INTF_HEADER_LEN + rxpd->rx_pkt_offset),
-               rxpd->rx_pkt_length);
+
+        (void)net_stack_buffer_copy_partial(p, (void *)(net_monitor_data + sizeof(t_s8)), rxpd->rx_pkt_length, 0);
 
         net_monitor_callback((void *)net_monitor_data, datalen);
 
