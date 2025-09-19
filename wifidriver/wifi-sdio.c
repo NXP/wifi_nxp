@@ -709,19 +709,6 @@ static mlan_status wifi_send_fw_data_sg(t_u8 *data, t_u32 txlen)
     if (ret == false)
     {
         wifi_io_e("sdio_drv_write failed (%d)", ret);
-#if CONFIG_WIFI_FW_DEBUG
-        wifi_sdio_reg_dbg(NULL);
-        if (wm_wifi.wifi_usb_mount_cb != NULL)
-        {
-            ret_cb = wm_wifi.wifi_usb_mount_cb();
-            if (ret_cb == WM_SUCCESS)
-                wifi_dump_firmware_info(NULL);
-            else
-                wifi_e("USB mounting failed");
-        }
-        else
-            wifi_e("USB mount callback is not registered");
-#endif
         return MLAN_STATUS_RESOURCE;
     }
     return MLAN_STATUS_SUCCESS;
@@ -829,19 +816,6 @@ static mlan_status wifi_send_fw_data(t_u8 *data, t_u32 txlen)
     if (ret == false)
     {
         wifi_io_e("sdio_drv_write failed (%d)", ret);
-#if CONFIG_WIFI_FW_DEBUG
-        wifi_sdio_reg_dbg(NULL);
-        if (wm_wifi.wifi_usb_mount_cb != NULL)
-        {
-            ret_cb = wm_wifi.wifi_usb_mount_cb();
-            if (ret_cb == WM_SUCCESS)
-                wifi_dump_firmware_info(NULL);
-            else
-                wifi_e("USB mounting failed");
-        }
-        else
-            wifi_e("USB mount callback is not registered");
-#endif
         return MLAN_STATUS_RESOURCE;
     }
     return MLAN_STATUS_SUCCESS;
@@ -1371,25 +1345,6 @@ static t_u8 *wlan_read_rcv_packet(t_u32 port, t_u32 rxlen, t_u32 rx_blocks, t_u3
             if (i > MAX_READ_IOMEM_RETRY)
             {
                 wifi_io_e("sdio_drv_read failed (%d)", ret);
-#if CONFIG_WIFI_FW_DEBUG
-                wifi_sdio_reg_dbg(NULL);
-                if (wm_wifi.wifi_usb_mount_cb != NULL)
-                {
-                    ret = wm_wifi.wifi_usb_mount_cb();
-                    if (ret == WM_SUCCESS)
-                    {
-                        wifi_dump_firmware_info(NULL);
-                    }
-                    else
-                    {
-                        wifi_e("USB mounting failed");
-                    }
-                }
-                else
-                {
-                    wifi_e("USB mount callback is not registered");
-                }
-#endif
                 return NULL;
             } /* if (i > MAX_READ_IOMEM_RETRY) */
             continue;
@@ -1431,25 +1386,6 @@ static t_u8 *wlan_read_rcv_packet(t_u32 port, t_u32 rxlen, t_u32 rx_blocks, t_u3
             if (i > MAX_READ_IOMEM_RETRY)
             {
                 wifi_io_e("sdio_drv_read failed (%d)", ret);
-#if CONFIG_WIFI_FW_DEBUG
-                wifi_sdio_reg_dbg(NULL);
-                if (wm_wifi.wifi_usb_mount_cb != NULL)
-                {
-                    ret = wm_wifi.wifi_usb_mount_cb();
-                    if (ret == WM_SUCCESS)
-                    {
-                        wifi_dump_firmware_info(NULL);
-                    }
-                    else
-                    {
-                        wifi_e("USB mounting failed");
-                    }
-                }
-                else
-                {
-                    wifi_e("USB mount callback is not registered");
-                }
-#endif
                 return NULL;
             } /* if (i > MAX_READ_IOMEM_RETRY) */
             continue;
@@ -1462,26 +1398,6 @@ static t_u8 *wlan_read_rcv_packet(t_u32 port, t_u32 rxlen, t_u32 rx_blocks, t_u3
     if (!ret)
     {
         wifi_io_e("sdio_drv_read failed (%d)", ret);
-#if CONFIG_WIFI_FW_DEBUG
-        wifi_sdio_reg_dbg(NULL);
-        if (wm_wifi.wifi_usb_mount_cb != NULL)
-        {
-            ret = wm_wifi.wifi_usb_mount_cb();
-            if (ret == WM_SUCCESS)
-            {
-                wifi_dump_firmware_info(NULL);
-            }
-            else
-            {
-                wifi_e("USB mounting failed");
-            }
-        }
-        else
-        {
-            wifi_e("USB mount callback is not registered");
-        }
-
-#endif
         return NULL;
     }
 #endif
@@ -2518,19 +2434,6 @@ static mlan_status wifi_tx_data(t_u8 start_port, t_u8 ports, t_u8 pkt_cnt, t_u32
     if (ret == false)
     {
         wifi_io_e("sdio_drv_write failed (%d)", ret);
-#if CONFIG_WIFI_FW_DEBUG
-        wifi_sdio_reg_dbg(NULL);
-        if (wm_wifi.wifi_usb_mount_cb != NULL)
-        {
-            ret_cb = wm_wifi.wifi_usb_mount_cb();
-            if (ret_cb == WM_SUCCESS)
-                wifi_dump_firmware_info(NULL);
-            else
-                wifi_e("USB mounting failed");
-        }
-        else
-            wifi_e("USB mount callback is not registered");
-#endif
         return MLAN_STATUS_RESOURCE;
     }
     return MLAN_STATUS_SUCCESS;
@@ -2730,19 +2633,6 @@ retry_xmit:
 #endif
 
         wifi_io_e("sdio_drv_write failed (%d)", ret);
-#if CONFIG_WIFI_FW_DEBUG
-        wifi_sdio_reg_dbg(NULL);
-        if (wm_wifi.wifi_usb_mount_cb != NULL)
-        {
-            ret = wm_wifi.wifi_usb_mount_cb();
-            if (ret == WM_SUCCESS)
-                wifi_dump_firmware_info(NULL);
-            else
-                wifi_e("USB mounting failed");
-        }
-        else
-            wifi_e("USB mount callback is not registered");
-#endif
         ret = MLAN_STATUS_RESOURCE;
         goto exit_fn;
     }
