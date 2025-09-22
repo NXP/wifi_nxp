@@ -2631,7 +2631,7 @@ static void handle_sdio_packet_read(mlan_adapter *pmadapter)
 
                     if (bus.wifi_low_level_input != NULL)
                     {
-                        (void)bus.wifi_low_level_input(interface, packet, size);
+                        (void)bus.wifi_low_level_input(interface, packet, insdiopkt->size);
                     }
 
                     packet += size;
