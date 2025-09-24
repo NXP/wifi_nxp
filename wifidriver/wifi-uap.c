@@ -3005,6 +3005,36 @@ static int wifi_nxp_set_mgmt_ies(mlan_private *priv,
 
     if ((ie != NULL) && (ie_len != 0U))
     {
+        if (priv->proberesp_p2p_index != -1)
+        {
+            ret = wifi_clear_mgmt_ie2(priv->bss_type, priv->proberesp_p2p_index);
+            if (ret != WM_SUCCESS)
+            {
+                wuap_e("Clear P2P IE failed");
+                ret = -WM_FAIL;
+                goto done;
+            }
+            priv->proberesp_p2p_index = -1;
+        }
+
+        ie_length = wifi_get_specific_ie(ie, ie_len, ie_buffer, MAX_IE_SIZE, IE_MASK_P2P);
+#if CONFIG_WIFI_IO_DUMP
+        PRINTF("P2P IE\r\n");
+        dump_hex(ie_buffer, ie_length);
+#endif
+        if (ie_length)
+        {
+            priv->proberesp_p2p_index =
+                wifi_set_mgmt_ie2(priv->bss_type, MGMT_MASK_PROBE_RESP, (void *)ie_buffer, ie_length);
+
+            if (priv->proberesp_p2p_index == -1)
+            {
+                wuap_e("Set P2P IE failed");
+                ret = -WM_FAIL;
+                goto done;
+            }
+        }
+
         ie_length =
             wifi_filter_beacon_ies(priv, ie, ie_len, ie_buffer, MAX_IE_SIZE, IE_MASK_P2P | IE_MASK_VENDOR, NULL, 0);
 #if CONFIG_WIFI_IO_DUMP
@@ -4888,6 +4918,13 @@ int wifi_nxp_stop_ap(unsigned int bss_type)
 #if CONFIG_WPA_SUPP_P2P
     if (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
     {
+        if (MLAN_STATUS_SUCCESS != wifi_uap_prepare_and_send_cmd(priv, HostCmd_CMD_SET_BSS_MODE, HostCmd_ACT_GEN_SET, 0,
+                                                                 NULL, NULL, bss_type, NULL))
+        {
+            wuap_e("Reset BSS Mode failed\r\n");
+            return -WM_FAIL;
+        }
+
         if (MLAN_STATUS_SUCCESS != wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_SYS_RESET, HostCmd_ACT_GEN_SET, 0,
                                                                  NULL, NULL, bss_type, NULL))
         {

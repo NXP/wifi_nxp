@@ -1616,6 +1616,7 @@ struct _mlan_private
     int beacon_vendor_index;
     int beacon_index;
     int proberesp_index;
+    int proberesp_p2p_index;
     int assocresp_index;
     int beacon_wps_index;
 #endif

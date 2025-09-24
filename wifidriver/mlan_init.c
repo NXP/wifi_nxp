@@ -240,6 +240,7 @@ mlan_status wlan_init_priv(pmlan_private priv)
 #endif
 #if CONFIG_HOSTAPD
     priv->beacon_vendor_index = -1;
+    priv->proberesp_p2p_index = -1;
     priv->beacon_index        = 0;
     priv->proberesp_index     = 1;
     priv->assocresp_index     = 2;
