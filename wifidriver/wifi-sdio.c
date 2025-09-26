@@ -816,8 +816,8 @@ static t_u8 *wlan_read_rcv_packet(t_u32 port, t_u32 rxlen, t_u32 rx_blocks, t_u3
 #if CONFIG_WIFI_IO_DUMP
         if (insdiopkt->pkttype != 0)
         {
-            (void)PRINTF("wlan_read_rcv_packet: DUMP:");
-            dump_hex((t_u8 *)inbuf, rx_blocks * blksize);
+            //(void)PRINTF("wlan_read_rcv_packet: DUMP:");
+            //dump_hex((t_u8 *)inbuf, rx_blocks * blksize);
         }
 #endif /* CONFIG_WIFI_IO_DUMP */
     }
