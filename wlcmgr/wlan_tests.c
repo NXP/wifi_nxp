@@ -8469,7 +8469,7 @@ static void test_wlan_set_ami_cfg(int argc, char **argv)
                 (void)PRINTF("Error: invalid 'mac' setting\r\n");
                 return;
             }
-            
+
             info.mac = 1;
             (void)memcpy(cfg.peer_mac, raw_mac, MLAN_MAC_ADDR_LENGTH);
             arg += 2;
@@ -8492,7 +8492,7 @@ static void test_wlan_set_ami_cfg(int argc, char **argv)
             info.type = 1;
             cfg.packet_format = value & 0xFF;
             arg += 2;
-            
+
         }
         else if(info.bw == 0 && string_equal("bw", argv[arg]))
         {
@@ -8567,7 +8567,7 @@ static void test_wlan_set_ami_cfg(int argc, char **argv)
     }
 
     dump_wlan_set_ami_cfg_setting(&cfg);
-    
+
     wlan_set_ami_cfg(&cfg);
 
     return;
@@ -11647,6 +11647,11 @@ static void test_wlan_p2p_group_add(int argc, char **argv)
         (void)PRINTF("    wlan-p2p-group-add freq=5180 he\r\n");
         (void)PRINTF("If not specify [ht40] [vht] [he], use 11n(ht) as default\r\n");
     }
+    else if (ret == WLAN_ERROR_STATE)
+    {
+        PRINTF("Cannot add P2P GO: one is already running.\r\n");
+        PRINTF("Please remove the existing GO before starting a new one.\r\n");
+    }
     else
     {
         (void)PRINTF("\r\n p2p_group_add ok!\r\n");
@@ -14210,7 +14215,7 @@ static struct cli_command tests[] = {
      test_wlan_set_csi_param_header},
     {"wlan-set-csi-filter", "<opt> <macaddr> <pkt_type> <type> <flag>", test_wlan_set_csi_filter},
 #if CONFIG_CSI_AMI
-    {"wlan-set-ami-cfg", 
+    {"wlan-set-ami-cfg",
     " mac <mac_address> type <packet_type> bw <band_width> ref <update_ref> num <CSI_number>",
      test_wlan_set_ami_cfg},
     {"wlan-start-stop-ami", "<start/stop>", test_wlan_start_stop_ami},
