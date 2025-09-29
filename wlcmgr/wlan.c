@@ -56,12 +56,8 @@
 #ifdef RW610
 #include  "fsl_power.h"
 #ifndef __ZEPHYR__
-#if !(CONFIG_WIFI_BLE_COEX_APP)
-#if CONFIG_NCP
-#include  "ncp_lpm.h"
-#else
+#if !(CONFIG_WIFI_BLE_COEX_APP) && !CONFIG_NCP
 #include  "lpm.h"
-#endif
 #include  "host_sleep.h"
 #endif
 #if CONFIG_POWER_MANAGER
@@ -108,6 +104,7 @@
 
 #if CONFIG_NCP
 #include "app_notify.h"
+#include "ncp_pm.h"
 #endif
 
 #if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
@@ -1271,19 +1268,16 @@ void wlan_hs_hanshake_cfg(bool skip)
 status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, void *data)
 {
     int ret;
-
 #if CONFIG_NCP
-    if (!ncp_is_pm3_mode(powerState))
-    {
-        return kStatus_PMPowerStateNotAllowed;
-    }
+    pm_notify_state_t *notify_state = (pm_notify_state_t *)data;
 #endif
 
-    if (eventType == kPM_EventEnteringSleep
-#ifdef RW610
-        && powerState > PM_LP_STATE_PM0
-#endif
-       )
+    if (powerState < PM_LP_STATE_PM2)
+    {
+        return kStatus_PMSuccess;
+    }
+
+    if (eventType == kPM_EventEnteringSleep)
     {
         /* If WLAN is disabled, skip hanshake and return success */
         if (wlan_is_stopped() != 0)
@@ -1318,13 +1312,6 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
             return kStatus_PMPowerStateNotAllowed;
         }
 
-#ifdef RW610
-        /* Skip host sleep handshake for PM1 */
-        if (powerState == PM_LP_STATE_PM1)
-        {
-            goto done;
-        }
-#endif
         if (is_hs_handshake_done == 0)
         {
             is_hs_handshake_done = WLAN_HOSTSLEEP_IN_PROCESS;
@@ -1364,26 +1351,22 @@ enter:
             return kStatus_PMPowerStateNotAllowed;
         }
 #endif
+#if CONFIG_NCP
+        notify_state->wlan = 1;
+#else
         wlan_hs_pre_cfg_done = true;
+#endif
 #endif
     }
     else if (eventType == kPM_EventExitingSleep)
     {
-#ifdef RW610
-        /* Skip host sleep handshake for PM1 */
-        if (powerState == PM_LP_STATE_PM1)
-        {
-            goto done;
-        }
-#endif
-
-        if (wlan_hs_pre_cfg_done == true)
-        {
-            if (wlan_is_stopped() != 0
 #if CONFIG_NCP
-                && lpm_getHandshakeState() != NCP_LMP_HANDSHAKE_IN_PROCESS
+        if (notify_state->wlan)
+#else
+        if (wlan_hs_pre_cfg_done == true)
 #endif
-               )
+        {
+            if (wlan_is_stopped() != 0)
             {
 #if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE) && (!CONFIG_NCP_OT)
                 ret = wlan_hs_send_event(HOST_SLEEP_HS_SKIP, NULL);
@@ -1435,7 +1418,11 @@ enter:
         }
 
 exit:
+#if CONFIG_NCP
+        notify_state->wlan = 0;
+#else
         wlan_hs_pre_cfg_done = false;
+#endif
 #if !(CONFIG_WIFI_BLE_COEX_APP) && !(CONFIG_NCP)
 #ifdef RW610
         host_sleep_post_cfg((int)powerState);
