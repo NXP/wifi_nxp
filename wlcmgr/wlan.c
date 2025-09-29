@@ -1109,6 +1109,10 @@ int wlan_send_host_sleep_int()
         ipv4_addr = 0;
     }
 
+#if CONFIG_IPV6
+    wifi_set_ipv6_ra_offload(MTRUE);
+#endif
+
     wifi_send_hs_cfg_cmd((mlan_bss_type)type, ipv4_addr, HS_CONFIGURE, wlan.hs_wakeup_condition);
 
 exit:
@@ -1599,6 +1603,10 @@ void wlan_cancel_host_sleep(void)
         wlcm_e("Error: Failed to send host sleep cancel command");
         return;
     }
+
+#if CONFIG_IPV6
+    wifi_set_ipv6_ra_offload(MFALSE);
+#endif
 }
 
 void wlan_clear_host_sleep_config(void)

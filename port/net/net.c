@@ -886,6 +886,35 @@ int net_get_if_ipv6_pref_addr(struct net_ip_config *addr, void *intrfc_handle)
     }
     return ret;
 }
+
+uint8_t net_get_all_if_ipv6_addr_and_cnt(char *buf, uint32_t buf_size)
+{
+    struct netif *netif;
+    uint8_t count = 0, i;
+    uint32_t offset = 0;
+
+    NETIF_FOREACH(netif)
+    {
+        for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
+        {
+            if (!ip6_addr_ispreferred(netif->ip6_addr_state[i]))
+            {
+                continue;
+            }
+
+            if (offset + 16 > buf_size)
+            {
+                return count;
+            }
+
+            (void)memcpy(buf + offset, ip_2_ip6(&(netif->ip6_addr[i]))->addr, 16);
+            offset +=16;
+            count ++;
+        }
+    }
+
+    return count;
+}
 #endif /* CONFIG_IPV6 */
 
 int net_get_if_name(char *pif_name, void *intrfc_handle)

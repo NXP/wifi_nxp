@@ -418,6 +418,9 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** TLV type : SCAN channel gap */
 #define TLV_TYPE_SCAN_CHANNEL_GAP (PROPRIETARY_TLV_BASE_ID + 0xc5) /* 0x01c5 */
 #endif
+#if CONFIG_IPV6
+#define TLV_TYPE_IPV6_RA_OFFLOAD (PROPRIETARY_TLV_BASE_ID + 0xe6) /* 0x01e6 */
+#endif
 /** TLV type : BridgeParamSet */
 #define TLV_TYPE_BRIDGE_PARAM (PROPRIETARY_TLV_BASE_ID + 0xe0)
 /** TLV type : AutoLinkParamSet */
@@ -1301,6 +1304,11 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 
 /** Host Command ID : Bridge Mode */
 #define HostCmd_CMD_BRIDGE_MODE 0x022e
+
+#if CONFIG_IPV6
+/** Host Command ID: IPv6 RA Offload */
+#define HostCmd_CMD_IPV6_RA_OFFLOAD_CFG 0x0238
+#endif
 
 /** Host Command ID: CW Mode */
 #define HostCmd_CMD_CW_MODE_CTRL 0x0239
@@ -7486,6 +7494,27 @@ typedef MLAN_PACK_START struct _HostCmd_DS_BOOT_SLEEP
     t_u16 enable;
 } MLAN_PACK_END HostCmd_DS_BOOT_SLEEP;
 
+#ifdef CONFIG_IPV6
+typedef MLAN_PACK_START struct {
+    /** Header */
+    MrvlIEtypesHeader_t Header;
+    /** ipv6 address buffer */
+    t_u8 ipv6_addrs[];
+} MLAN_PACK_END MrvlIETypes_IPv6AddrParamSet_t;
+
+typedef MLAN_PACK_START struct _HostCmd_DS_IPV6_RA_OFFLOAD {
+    /** 0x0000: Get IPv6 RA Offload configuration
+     *  0x0001: Set IPv6 RA Offload configuration
+     */
+    t_u16 action;
+    /** 0x00: disable IPv6 RA Offload; 0x01: enable IPv6 RA offload */
+    t_u8 enable;
+    /** Number of IPv6 address configured in FW */
+    t_u8 ipv6_addr_count;
+    MrvlIETypes_IPv6AddrParamSet_t ipv6_addr_param;
+} MLAN_PACK_END HostCmd_DS_IPV6_RA_OFFLOAD;
+#endif
+
 #if CONFIG_TSP
 typedef MLAN_PACK_START struct _HostCmd_DS_TSP_CFG
 {
@@ -8030,6 +8059,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_80211_TX_FRAME tx_frame;
 #if CONFIG_WPA_SUPP_P2P
         HostCmd_P2P_MODE_CONFIG p2p_mode_config;
+#endif
+#ifdef CONFIG_IPV6
+        HostCmd_DS_IPV6_RA_OFFLOAD ipv6_ra_offload;
 #endif
     } params;
 } MLAN_PACK_END HostCmd_DS_COMMAND;

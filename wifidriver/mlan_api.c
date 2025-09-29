@@ -18,6 +18,7 @@
 #include <osa.h>
 
 #include <wifi.h>
+#include <wm_net.h>
 
 #if defined(RW610)
 #include "wifi-imu.h"
@@ -203,6 +204,35 @@ int wifi_get_eeprom_data(uint32_t offset, uint32_t byte_count, uint8_t *buf)
     (void)wifi_wait_for_cmdresp(buf);
     return wm_wifi.cmd_resp_status;
 }
+
+#if CONFIG_IPV6
+int wifi_set_ipv6_ra_offload(t_u8 enable)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    HostCmd_DS_IPV6_RA_OFFLOAD *ipv6_ra_cfg = &cmd->params.ipv6_ra_offload;
+
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_IPV6_RA_OFFLOAD_CFG);
+    ipv6_ra_cfg->action = wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);
+    ipv6_ra_cfg->enable = wlan_cpu_to_le16(enable);
+    ipv6_ra_cfg->ipv6_addr_count = net_get_all_if_ipv6_addr_and_cnt((char *)(&ipv6_ra_cfg->ipv6_addr_param.ipv6_addrs),
+                WIFI_FW_CMDBUF_SIZE - INTF_HEADER_LEN - ((char *)&ipv6_ra_cfg->ipv6_addr_param.ipv6_addrs - (char *)cmd));
+    if (ipv6_ra_cfg->ipv6_addr_count == 0)
+    {
+        wifi_d("No IPv6 address configured");
+        wifi_put_command_lock();
+        return WM_SUCCESS;
+    }
+
+    ipv6_ra_cfg->ipv6_addr_param.Header.type = wlan_cpu_to_le16(TLV_TYPE_IPV6_RA_OFFLOAD);
+    ipv6_ra_cfg->ipv6_addr_param.Header.len = wlan_cpu_to_le16(16 * ipv6_ra_cfg->ipv6_addr_count);
+    cmd->size = S_DS_GEN + sizeof(HostCmd_DS_IPV6_RA_OFFLOAD) + 16 * ipv6_ra_cfg->ipv6_addr_count;
+    cmd->size = wlan_cpu_to_le16(cmd->size);
+
+    return wifi_wait_for_cmdresp(NULL);
+}
+#endif
 
 int wifi_reg_access(wifi_reg_t reg_type, uint16_t action, uint32_t offset, uint32_t *value)
 {
