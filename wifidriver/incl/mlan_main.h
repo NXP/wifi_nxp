@@ -1506,6 +1506,9 @@ struct _mlan_private
     /** Lock for Rx packets */
     t_void *rx_pkt_lock;
 
+    /** management frame subtypes mask */
+    t_u32 mgmt_subtype_mask;
+
 #ifdef STA_SUPPORT
 
     /** Generic IEEE IEs passed from the application to be inserted into the

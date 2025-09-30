@@ -4884,7 +4884,19 @@ int wifi_nxp_stop_ap(unsigned int bss_type)
         return ret;
     }
 
-    (void)wifi_set_rx_mgmt_indication(bss_type, 0);
+#if CONFIG_WPA_SUPP_P2P
+    if (bss_type == BSS_TYPE_WFD)
+    {
+        t_u32 mgmt_subtype_mask = WLAN_MGMT_ACTION;
+        (void)wifi_set_rx_mgmt_indication(bss_type, mgmt_subtype_mask);
+    }
+    else
+    {
+#endif
+        (void)wifi_set_rx_mgmt_indication(bss_type, 0);
+#if CONFIG_WPA_SUPP_P2P
+    }
+#endif
 
     priv->probe_req_report_on = false;
 

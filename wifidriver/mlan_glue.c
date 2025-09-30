@@ -2965,7 +2965,8 @@ int wifi_nxp_send_assoc(unsigned int bss_type, nxp_wifi_assoc_info_t *assoc_info
 #endif
 #endif
 
-    (void)wifi_set_rx_mgmt_indication(bss_type, WIFI_MGMT_DEAUTH | WIFI_MGMT_DIASSOC | WIFI_MGMT_ACTION);
+    t_u32 mgmt_subtype_mask = priv->mgmt_subtype_mask & ~WIFI_MGMT_AUTH;
+    (void)wifi_set_rx_mgmt_indication(bss_type, mgmt_subtype_mask);
 
 #if CONFIG_11R
     if (priv->sec_info.is_ft)

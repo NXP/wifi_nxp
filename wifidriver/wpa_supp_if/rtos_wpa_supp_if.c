@@ -646,6 +646,14 @@ void *wifi_nxp_wpa_supp_dev_init(void *supp_drv_if_ctx,
         return NULL;
     }
 
+#if CONFIG_WPA_SUPP_P2P
+    if (wifi_if_ctx_rtos->bss_type == BSS_TYPE_WFD)
+    {
+        t_u32 mgmt_subtype_mask = WLAN_MGMT_ACTION;
+        (void)wifi_set_rx_mgmt_indication(wifi_if_ctx_rtos->bss_type, mgmt_subtype_mask);
+    }
+#endif
+
     memcpy(&wifi_if_ctx_rtos->supp_callbk_fns, supp_callbk_fns, sizeof(wifi_if_ctx_rtos->supp_callbk_fns));
     return wifi_if_ctx_rtos;
 }
@@ -2100,7 +2108,8 @@ int wifi_nxp_wpa_supp_probe_req_report(void *if_priv, int report)
         if (bss_type == BSS_TYPE_STA)
 #endif
         {
-            ret = wifi_set_rx_mgmt_indication(bss_type, WLAN_MGMT_PROBE_RQST | WLAN_MGMT_ACTION);
+            t_u32 mgmt_subtype_mask_probe = pmpriv->mgmt_subtype_mask | WLAN_MGMT_PROBE_RQST;
+            ret = wifi_set_rx_mgmt_indication(bss_type, mgmt_subtype_mask_probe);
             if (ret == WM_SUCCESS)
             {
                 pmpriv->probe_req_report_on = true;
@@ -2128,7 +2137,8 @@ int wifi_nxp_wpa_supp_probe_req_report(void *if_priv, int report)
         {
             if (pmpriv->probe_req_report_on)
             {
-                ret = wifi_set_rx_mgmt_indication(bss_type, WLAN_MGMT_ACTION);
+                t_u32 mgmt_subtype_mask = pmpriv->mgmt_subtype_mask & ~WLAN_MGMT_PROBE_RQST;
+                ret = wifi_set_rx_mgmt_indication(bss_type, mgmt_subtype_mask);
                 if (ret == WM_SUCCESS)
                 {
                     pmpriv->probe_req_report_on = false;

@@ -182,6 +182,8 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->wpa_is_gtk_set = MFALSE;
 #endif /* STA_SUPPORT */
 
+    priv->mgmt_subtype_mask = 0;
+
 #if defined(RW610) || defined(IW610)
     priv->tx_bf_cap = DEFAULT_11N_TX_BF_CAP;
 #else

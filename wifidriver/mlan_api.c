@@ -5353,24 +5353,33 @@ int wifi_set_rx_mgmt_indication(unsigned int bss_type, unsigned int mgmt_subtype
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[bss_type];
     CHECK_BSS_TYPE(bss_type, -WM_FAIL);
 
-    mlan_ds_rx_mgmt_indication rx_mgmt_indication;
+    if(mgmt_subtype_mask != pmpriv->mgmt_subtype_mask)
+    {
+        mlan_ds_rx_mgmt_indication rx_mgmt_indication;
 
-    memset(&rx_mgmt_indication, 0x00, sizeof(mlan_ds_rx_mgmt_indication));
+        memset(&rx_mgmt_indication, 0x00, sizeof(mlan_ds_rx_mgmt_indication));
 
-    rx_mgmt_indication.mgmt_subtype_mask = mgmt_subtype_mask;
+        rx_mgmt_indication.mgmt_subtype_mask = mgmt_subtype_mask;
 
-    wifi_get_command_lock();
-    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+        wifi_get_command_lock();
+        HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
-    cmd->command = HostCmd_CMD_RX_MGMT_IND;
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, bss_type);
-    cmd->result = 0x0;
+        cmd->command = HostCmd_CMD_RX_MGMT_IND;
+        cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, bss_type);
+        cmd->result = 0x0;
 
-    wlan_cmd_rx_mgmt_indication(pmpriv, cmd, HostCmd_ACT_GEN_SET, &rx_mgmt_indication);
+        wlan_cmd_rx_mgmt_indication(pmpriv, cmd, HostCmd_ACT_GEN_SET, &rx_mgmt_indication);
 
-    wifi_wait_for_cmdresp(NULL);
+        wifi_wait_for_cmdresp(NULL);
 
-    return wm_wifi.cmd_resp_status;
+        pmpriv->mgmt_subtype_mask = mgmt_subtype_mask;
+
+        return wm_wifi.cmd_resp_status;
+    }
+    else
+    {
+        return WM_SUCCESS;
+    }
 }
 
 int wifi_get_set_bandcfg(wifi_bandcfg_t *bandcfg, mlan_act_ioctl action)
@@ -6105,7 +6114,8 @@ int wifi_send_mgmt_auth_request(const unsigned int bss_type,
 
     if (pmpriv->auth_flag == 0)
     {
-        wifi_set_rx_mgmt_indication(bss_type, WIFI_MGMT_AUTH | WIFI_MGMT_DEAUTH | WIFI_MGMT_DIASSOC);
+        t_u32 mgmt_subtype_mask_auth = pmpriv->mgmt_subtype_mask | WIFI_MGMT_AUTH | WIFI_MGMT_DEAUTH | WIFI_MGMT_DIASSOC;
+        (void)wifi_set_rx_mgmt_indication(bss_type, mgmt_subtype_mask_auth);
 
         wifi_remain_on_channel(bss_type, true, channel, 6000);
     }
@@ -6119,7 +6129,8 @@ int wifi_send_mgmt_auth_request(const unsigned int bss_type,
 
     if (ret != WM_SUCCESS)
     {
-        wifi_set_rx_mgmt_indication(bss_type, 0);
+        t_u32 mgmt_subtype_mask = pmpriv->mgmt_subtype_mask & ~WIFI_MGMT_AUTH;
+        (void)wifi_set_rx_mgmt_indication(bss_type, mgmt_subtype_mask);
         wifi_remain_on_channel(bss_type, false, 0, 0);
 
         pmpriv->curr_bss_params.host_mlme = 0;
