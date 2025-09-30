@@ -17288,7 +17288,7 @@ int wlan_uap_disconnect_sta(uint8_t *sta_addr)
 
 int wlan_11n_allowed(struct wlan_network *network)
 {
-    mlan_private *pmpriv       = (mlan_private *)mlan_adap->priv[network->role];
+    mlan_private *pmpriv       = (mlan_private *)mlan_adap->priv[network->type];
     mlan_adapter *pmadapter    = pmpriv->adapter;
     BSSDescriptor_t *pbss_desc = NULL;
 
@@ -17315,7 +17315,7 @@ int wlan_11n_allowed(struct wlan_network *network)
 #if CONFIG_11AC
 int wlan_11ac_allowed(struct wlan_network *network)
 {
-    mlan_private *pmpriv       = (mlan_private *)mlan_adap->priv[network->role];
+    mlan_private *pmpriv       = (mlan_private *)mlan_adap->priv[network->type];
     mlan_adapter *pmadapter    = pmpriv->adapter;
     BSSDescriptor_t *pbss_desc = NULL;
 
@@ -17343,7 +17343,7 @@ int wlan_11ac_allowed(struct wlan_network *network)
 #if CONFIG_11AX
 int wlan_11ax_allowed(struct wlan_network *network)
 {
-    mlan_private *pmpriv       = (mlan_private *)mlan_adap->priv[network->role];
+    mlan_private *pmpriv       = (mlan_private *)mlan_adap->priv[network->type];
     mlan_adapter *pmadapter    = pmpriv->adapter;
     BSSDescriptor_t *pbss_desc = NULL;
 
