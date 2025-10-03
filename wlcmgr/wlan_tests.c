@@ -7957,17 +7957,28 @@ static void test_wlan_reg_access(int argc, char **argv)
 static void test_wlan_wmm_uapsd_qosinfo(int argc, char **argv)
 {
     unsigned int qos_info = 0xf;
+    int ret = -WM_FAIL;
+
     if (argc == 1)
     {
-        wlan_wmm_uapsd_qosinfo((t_u8 *)&qos_info, 0);
-        (void)PRINTF("qos_info = %d\r\n", qos_info);
+        ret = wlan_wmm_uapsd_qosinfo((t_u8 *)&qos_info, 0);
+        if (ret == WM_SUCCESS)
+            (void)PRINTF("qos_info = %d\r\n", qos_info);
+        else
+            (void)PRINTF("Failed to get uapsd qosinfo, error: %d\r\n", ret);
     }
     else if (argc == 2 && !get_uint(argv[1], &qos_info, strlen(argv[1])))
     {
         if (qos_info == 0)
             (void)PRINTF("qos_info can't be zero, input %s\r\n", argv[1]);
         else
-            wlan_wmm_uapsd_qosinfo((t_u8 *)&qos_info, 1);
+        {
+            ret = wlan_wmm_uapsd_qosinfo((t_u8 *)&qos_info, 1);
+            if (ret == WM_SUCCESS)
+                (void)PRINTF("Set uapsd qosinfo successfully\r\n");
+            else
+                (void)PRINTF("Failed to set uapsd qosinfo, error: %d\r\n", ret);
+        }
     }
     else
     {
@@ -7980,6 +7991,7 @@ static void test_wlan_wmm_uapsd_qosinfo(int argc, char **argv)
 static void test_wlan_set_wmm_uapsd(int argc, char **argv)
 {
     t_u8 enable;
+    int ret = -WM_FAIL;
 
     enable = atoi(argv[1]);
     if (argc != 2 || (enable != 0 && enable != 1))
@@ -7990,19 +8002,34 @@ static void test_wlan_set_wmm_uapsd(int argc, char **argv)
         return;
     }
 
-    (void)wlan_set_wmm_uapsd(enable);
+    ret = wlan_set_wmm_uapsd(enable);
+    if (ret == WM_SUCCESS)
+        (void)PRINTF("Set Uapsd enable %d successfully\r\n",enable);
+    else
+        (void)PRINTF("Failed to enable uapsd, error: %d\r\n", ret);
 }
 
 static void test_wlan_sleep_period(int argc, char **argv)
 {
     unsigned int period = 0;
+    int ret = -WM_FAIL;
+
     if (argc == 1)
     {
-        wlan_sleep_period(&period, 0);
-        (void)PRINTF("period = %d\r\n", period);
+        ret = wlan_sleep_period(&period, 0);
+        if (ret == WM_SUCCESS)
+            (void)PRINTF("period = %d\r\n", period);
+        else
+            (void)PRINTF("Failed to get uapsd sleep period, error: %d\r\n", ret);
     }
     else if (argc == 2 && !get_uint(argv[1], &period, strlen(argv[1])))
-        wlan_sleep_period(&period, 1);
+    {
+        ret = wlan_sleep_period(&period, 1);
+        if (ret == WM_SUCCESS)
+            (void)PRINTF("Set uapsd sleep period successfully\r\n");
+        else
+            (void)PRINTF("Failed to set uapsd sleep period, error: %d\r\n", ret);
+    }
     else
     {
         (void)PRINTF("Usage: %s <period(ms)>\r\n", argv[0]);
