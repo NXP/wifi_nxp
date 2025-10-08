@@ -695,6 +695,7 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
 #if CONFIG_SCAN_CHANNEL_GAP
     t_u16 scan_chan_gap = 0;
 #endif
+    uint8_t ssid_off = 0;
 
     if (!if_priv || !params)
     {
@@ -747,7 +748,6 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
     }
 #endif
 
-    uint8_t ssid_off = 0;
     for (i = 0; i < params->num_ssids; i++)
     {
         memcpy(ssid_v + ssid_off, (const char *)params->ssids[i].ssid, params->ssids[i].ssid_len);

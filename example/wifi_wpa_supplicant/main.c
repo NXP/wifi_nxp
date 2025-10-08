@@ -294,6 +294,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
 #if CONFIG_NXP_WIFI_SOFTAP_SUPPORT
         case WLAN_REASON_UAP_SUCCESS:
             PRINTF("app_cb: WLAN: UAP Started\r\n");
+            void *intrfc_handle;
             ret = wlan_get_current_uap_network_ssid(ssid);
 
             if (ret != WM_SUCCESS)
@@ -305,7 +306,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
             PRINTF("Soft AP \"%s\" started successfully\r\n", ssid);
             printSeparator();
-            void *intrfc_handle = net_get_uap_handle();
+            intrfc_handle = net_get_uap_handle();
 #if CONFIG_WPA_SUPP_P2P
             struct wlan_network *uap_network = NULL;
             uap_network = OSA_MemoryAllocate(sizeof(struct wlan_network));

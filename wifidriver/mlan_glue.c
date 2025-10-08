@@ -3708,7 +3708,9 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 break;
             case HostCmd_CMD_802_11_ASSOCIATE:
             {
-                rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
+                IEEEtypes_AssocRsp_t *passoc_rsp1;
+                IEEEtypes_AssocRsp_t *passoc_rsp;
+		rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
 #if !CONFIG_WPA_SUPP
                 if (rv != MLAN_STATUS_SUCCESS)
                 {
@@ -3721,7 +3723,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 nxp_wifi_assoc_event_mlme_t *assoc_resp = &wm_wifi.assoc_resp;
                 memset(assoc_resp, 0, sizeof(nxp_wifi_assoc_event_mlme_t));
 
-                IEEEtypes_AssocRsp_t *passoc_rsp1 = (IEEEtypes_AssocRsp_t *)(void *)&resp->params;
+                passoc_rsp1 = (IEEEtypes_AssocRsp_t *)(void *)&resp->params;
 
                 if (passoc_rsp1->status_code == WLAN_STATUS_UNSPECIFIED_FAILURE)
                 {
@@ -3729,7 +3731,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     goto assoc_resp_ret;
                 }
 
-                IEEEtypes_AssocRsp_t *passoc_rsp =
+                passoc_rsp =
                     (IEEEtypes_AssocRsp_t *)((t_u8 *)(&resp->params) + sizeof(IEEEtypes_MgmtHdr_t));
 
 #if CONFIG_11R
@@ -3764,7 +3766,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 			     wm_wifi.if_priv, assoc_resp, sizeof(nxp_wifi_assoc_event_mlme_t));
                 }
 #else
-                IEEEtypes_AssocRsp_t *passoc_rsp = (IEEEtypes_AssocRsp_t *)(void *)&resp->params;
+                passoc_rsp = (IEEEtypes_AssocRsp_t *)(void *)&resp->params;
 #endif
                 if (passoc_rsp->status_code == 0U)
                 {
