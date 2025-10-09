@@ -1639,7 +1639,7 @@ typedef wifi_host_tx_frame_params_t wlan_host_tx_frame_params_t;
 typedef wifi_indrst_cfg_t wlan_indrst_cfg_t;
 #endif
 
-#if CONFIG_11AX
+#if (CONFIG_11AX) || (CONFIG_11AC)
 /** Configuration for TX rate setting from
  * \ref txrate_setting
  */

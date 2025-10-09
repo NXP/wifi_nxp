@@ -739,7 +739,7 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
 {
     mlan_bss_type bss_type = (mlan_bss_type)0;
     wlan_ds_rate ds_rate;
-#if CONFIG_11AX
+#if (CONFIG_11AC) || (CONFIG_11AX)
     wlan_txrate_setting *rate_setting = NULL;
 #endif
     int rv = WM_SUCCESS;
@@ -981,6 +981,19 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
                         (void)PRINTF("Invalid MCS configuration if DCM is supported\r\n");
                         goto done;
                     }
+                }
+            }
+#endif
+#if CONFIG_11AC
+            rate_setting = (wlan_txrate_setting *)&ds_rate.param.rate_cfg.rate_setting;
+
+            if (ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_VHT
+                && ds_rate.param.rate_cfg.rate_index == MLAN_RATE_INDEX_MCS9)
+            {
+                if (rate_setting->bandwidth == 0)
+                {
+                    (void)PRINTF("Invalid rate and MCS or NSS configuration. \r\nVHT20, MCS9 is not valid\r\n");
+                    goto done;
                 }
             }
 #endif

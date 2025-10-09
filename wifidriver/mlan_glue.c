@@ -1809,6 +1809,16 @@ int wifi_set_txratecfg(wifi_ds_rate ds_rate, mlan_bss_type bss_type)
         else
             ds_rate_cfg.param.rate_cfg.rate_setting = ds_rate.param.rate_cfg.rate_setting;
     }
+#if CONFIG_11AC
+    if (ds_rate_cfg.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_VHT
+        && ds_rate_cfg.param.rate_cfg.rate == MLAN_RATE_INDEX_MCS9)
+    {
+        if (ds_rate_cfg.param.rate_cfg.rate_setting == 0x0000){
+            wifi_e("VHT20, MCS9 is not valid\n\r");
+            return -WM_FAIL;
+        }
+    }
+#endif
     return wifi_send_tx_rate_cfg_ioctl(MLAN_ACT_SET, &ds_rate_cfg, bss_type);
 }
 
