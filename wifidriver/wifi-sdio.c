@@ -714,9 +714,6 @@ static mlan_status wifi_send_fw_data_sg(t_u8 *data, t_u32 txlen)
 {
     t_u32 tx_blocks = 0, buflen = 0;
     bool ret;
-#if CONFIG_WIFI_FW_DEBUG
-    int ret_cb;
-#endif
 
 #if CONFIG_WIFI_IND_RESET
     /* IR is in progress so any data sent during progress should be ignored */
@@ -821,9 +818,6 @@ static mlan_status wifi_send_fw_data(t_u8 *data, t_u32 txlen)
     t_u32 tx_blocks = 0, buflen = 0;
     uint32_t resp;
     bool ret;
-#if CONFIG_WIFI_FW_DEBUG
-    int ret_cb;
-#endif
 
 #if CONFIG_WIFI_IND_RESET
     /* IR is in progress so any data sent during progress should be ignored */
