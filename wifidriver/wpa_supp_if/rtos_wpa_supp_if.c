@@ -2042,11 +2042,11 @@ int wifi_nxp_wpa_supp_probe_req_report(void *if_priv, int report)
             goto out;
         }
 
-        if (((bss_type == BSS_TYPE_STA)
+        if ((bss_type == BSS_TYPE_STA)
 #if CONFIG_WPA_SUPP_P2P
              || (bss_type == BSS_TYPE_WFD)
 #endif
-                 ))
+                 )
         {
             ret = wifi_set_rx_mgmt_indication(bss_type, WLAN_MGMT_PROBE_RQST | WLAN_MGMT_ACTION);
             if (ret == WM_SUCCESS)
@@ -2063,10 +2063,8 @@ int wifi_nxp_wpa_supp_probe_req_report(void *if_priv, int report)
     else
     {
         if ((bss_type == BSS_TYPE_UAP)
-#if CONFIG_WPA_SUPP_P2P
-            || ((bss_type == MLAN_BSS_TYPE_WIFIDIRECT) && (pmpriv->bss_role == MLAN_BSS_ROLE_UAP))
-#endif
-        )
+            || ((bss_type == MLAN_BSS_TYPE_WIFIDIRECT) && (pmpriv->bss_role == MLAN_BSS_ROLE_UAP)))
+        
         {
             supp_d("Skip disabling of Probe Request reporting in AP mode\r\n");
             ret = WM_SUCCESS;

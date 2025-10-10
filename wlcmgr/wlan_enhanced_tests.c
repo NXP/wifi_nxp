@@ -352,16 +352,17 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
             { /* Do Nothing */
             }
 #if CONFIG_11AC
-            if ((ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_VHT)
-#if CONFIG_11AX
-                || (ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_HE)
-#endif
-            )
+            if (ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_VHT)
             {
                 (void)PRINTF("    NSS:        %d\r\n", (int)ds_rate.param.rate_cfg.nss);
             }
 #endif
 #if CONFIG_11AX
+            if (ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_HE)
+            {
+                (void)PRINTF("    NSS:        %d\r\n", (int)ds_rate.param.rate_cfg.nss);
+	    }
+
             if (ds_rate.param.rate_cfg.rate_setting == 0xffff)
                 (void)PRINTF("    Rate setting: Preamble type/BW/GI/STBC/.. : auto \r\n");
             else
