@@ -823,7 +823,7 @@ static mlan_status wifi_send_fw_data(t_u8 *data, t_u32 txlen)
     /* IR is in progress so any data sent during progress should be ignored */
     if (wifi_ind_reset_in_progress() == true)
     {
-        return WM_SUCCESS;
+        return MLAN_STATUS_SUCCESS;
     }
 #endif
 

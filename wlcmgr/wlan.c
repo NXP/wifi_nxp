@@ -3525,7 +3525,7 @@ void wlan_set_ami_cfg(wlan_csi_proc_cfg *cfg)
 
 void wlan_start_stop_ami(uint8_t start)
 {
-    g_ami_cfg.start = start;
+    g_ami_cfg.start = (ami_start_status_t)start;
 
     if(!start)
     {

@@ -12838,7 +12838,7 @@ static void test_set_indrst_cfg(int argc, char **argv)
         }
 
         /* ir_mode */
-        if (indrst_cfg.ir_mode < 0 || indrst_cfg.ir_mode > 2)
+        if (indrst_cfg.ir_mode > 2)
         {
             (void)PRINTF("Invalid ir mode parameter (0/1/2)!\n\r");
             return;
@@ -12855,7 +12855,7 @@ static void test_set_indrst_cfg(int argc, char **argv)
                 (void)PRINTF("Error during strtoul errno:%d", errno);
             }
 
-            if ((indrst_cfg.gpio_pin != 0xFF) && (indrst_cfg.gpio_pin < 0))
+            if (indrst_cfg.gpio_pin != 0xFF)
             {
                 (void)PRINTF("Invalid gpio pin no !\n\r");
                 return;
@@ -12889,7 +12889,7 @@ static void test_get_indrst_cfg(int argc, char **argv)
     }
     else
     {
-        if ((indrst_cfg.ir_mode < 0) || (indrst_cfg.ir_mode > 2))
+        if (indrst_cfg.ir_mode > 2)
         {
             (void)PRINTF("FW error Mode must be 0, 1 or 2\n");
             return;

@@ -57,6 +57,9 @@ static struct wlan_network sta_network;
 static struct wlan_network uap_network;
 #endif
 
+/* To avoid DataQuickAccess unused warning */
+__attribute__((used)) AT_QUICKACCESS_SECTION_DATA(static const uint8_t test_mode) = 0x00;
+
 /* Callback Function passed to WLAN Connection Manager. The callback function
  * gets called when there are WLAN Events that need to be handled by the
  * application.
