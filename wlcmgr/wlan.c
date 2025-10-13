@@ -7044,6 +7044,7 @@ static void wlcm_process_get_hw_spec_event(void)
     /* Set Tx Power Limits in Wi-Fi firmware */
     (void)wlan_set_wwsm_txpwrlimit();
 
+    wlan_set_region_code(mlan_adap->priv[0]->adapter->region_code);
     if (wlan.ind_reset == 0)
     {
         CONNECTION_EVENT(WLAN_REASON_INITIALIZED, NULL);

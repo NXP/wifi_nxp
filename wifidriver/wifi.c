@@ -4506,6 +4506,9 @@ int wifi_set_country_code(const char *alpha2)
     if (wm_wifi.supp_if_callbk_fns->chan_list_changed_callbk_fn)
     {
         wm_wifi.supp_if_callbk_fns->chan_list_changed_callbk_fn(wm_wifi.if_priv, alpha2);
+#if CONFIG_WPA_SUPP_P2P
+        wm_wifi.supp_if_callbk_fns->chan_list_changed_callbk_fn(wm_wifi.if_priv_wfd, (char *)mlan_adap->priv[0]->adapter->country_code);
+#endif
 #if CONFIG_HOSTAPD
         wm_wifi.supp_if_callbk_fns->chan_list_changed_callbk_fn(wm_wifi.hapd_if_priv, alpha2);
 #endif
