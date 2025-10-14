@@ -3722,7 +3722,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 IEEEtypes_AssocRsp_t *passoc_rsp1;
 #endif
                 IEEEtypes_AssocRsp_t *passoc_rsp;
-		rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
+		        rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
 #if !CONFIG_WPA_SUPP
                 if (rv != MLAN_STATUS_SUCCESS)
                 {
@@ -3741,11 +3741,9 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 {
                     result = WIFI_EVENT_REASON_FAILURE;
                     goto assoc_resp_ret;
-                }
-
+                }				
                 passoc_rsp =
-                    (IEEEtypes_AssocRsp_t *)((t_u8 *)(&resp->params) + sizeof(IEEEtypes_MgmtHdr_t));
-
+                    (IEEEtypes_AssocRsp_t *)((t_u8 *)(&resp->params) + sizeof(IEEEtypes_MgmtHdr_t));	
 #if CONFIG_11R
                 pmpriv->ft_roam = MFALSE;
 #endif

@@ -2957,7 +2957,12 @@ static t_u8 rfc1042_eth_hdr[MLAN_MAC_ADDR_LENGTH] = {0xaa, 0xaa, 0x03, 0x00, 0x0
 static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, const uint16_t len)
 {
     int ret = WM_SUCCESS;
-
+#if CONFIG_WPA_SUPP
+    RxPD *prx_pd = NULL;
+    eth_hdr *ethh = MNULL;
+    t_u16 eth_proto = 0;
+    t_u8 offset = 0;
+#endif
 #if !UAP_SUPPORT
     if (interface > MLAN_BSS_ROLE_STA)
     {
@@ -2972,14 +2977,10 @@ static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, 
     }
 #if CONFIG_WPA_SUPP
 #if CONFIG_TX_RX_ZERO_COPY && !defined(RW610)
-    RxPD *prx_pd = (RxPD *)(void *)net_stack_buffer_skip((void *)buffer, INTF_HEADER_LEN);
+    prx_pd = (RxPD *)(void *)net_stack_buffer_skip((void *)buffer, INTF_HEADER_LEN);
 #else
-    RxPD *prx_pd  = (RxPD *)(void *)((t_u8 *)buffer + INTF_HEADER_LEN);
+    prx_pd  = (RxPD *)(void *)((t_u8 *)buffer + INTF_HEADER_LEN);
 #endif
-    eth_hdr *ethh = MNULL;
-    t_u16 eth_proto;
-    t_u8 offset = 0;
-
     if (prx_pd->rx_pkt_type == PKT_TYPE_MGMT_FRAME)
     {
         wifi_is_wpa_supplicant_input(interface, buffer, len);

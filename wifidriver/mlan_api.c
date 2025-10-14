@@ -6476,7 +6476,7 @@ static void proc_csi_event(void *p_data)
             }
             mlan_adap->ami_num++;
 			PRINTF("NUM %d CSI Processing Results: %s(%d), RX/TX %d/%d, %-8.2f TSF %llx, Ambient Motion Index %0.1f dB\r\n",
-				mlan_adap->ami_num, myStr, l_BW, nRx, nTx, toa_ns, TSF, ambientMotionVal_dB);
+				mlan_adap->ami_num, myStr, l_BW, nRx, nTx, (double)toa_ns, TSF, (double)ambientMotionVal_dB);
             
             if (g_ami_cfg.gcsi_filter_param.num_csi)
 			{

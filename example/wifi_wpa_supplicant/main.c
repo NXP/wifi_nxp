@@ -124,6 +124,10 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
     wlan_uap_client_disassoc_t *disassoc_resp = data;
 #endif
 
+#if CONFIG_WPA_SUPP_P2P
+    struct wlan_network *uap_network = NULL;
+#endif
+
     switch (reason)
     {
         case WLAN_REASON_INITIALIZED:
@@ -308,7 +312,6 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
             intrfc_handle = net_get_uap_handle();
 #if CONFIG_WPA_SUPP_P2P
-            struct wlan_network *uap_network = NULL;
             uap_network = OSA_MemoryAllocate(sizeof(struct wlan_network));
             if (uap_network == NULL )
             {
