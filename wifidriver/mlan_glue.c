@@ -1636,6 +1636,7 @@ int wifi_set_txratecfg(wifi_ds_rate ds_rate, mlan_bss_type bss_type)
         else
             ds_rate_cfg.param.rate_cfg.rate_setting = ds_rate.param.rate_cfg.rate_setting;
     }
+#if CONFIG_11AC
     if (ds_rate_cfg.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_VHT
         && ds_rate_cfg.param.rate_cfg.rate == MLAN_RATE_INDEX_MCS9)
     {
@@ -1644,6 +1645,7 @@ int wifi_set_txratecfg(wifi_ds_rate ds_rate, mlan_bss_type bss_type)
             return -WM_FAIL;
         }
     }
+#endif
     return wifi_send_tx_rate_cfg_ioctl(MLAN_ACT_SET, &ds_rate_cfg, bss_type);
 }
 
@@ -3716,7 +3718,9 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 break;
             case HostCmd_CMD_802_11_ASSOCIATE:
             {
+#if CONFIG_WPA_SUPP
                 IEEEtypes_AssocRsp_t *passoc_rsp1;
+#endif
                 IEEEtypes_AssocRsp_t *passoc_rsp;
 		rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
 #if !CONFIG_WPA_SUPP
