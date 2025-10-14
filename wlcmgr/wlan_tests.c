@@ -3240,6 +3240,36 @@ static void test_wlan_get_beacon_interval(int argc, char **argv)
     (void)PRINTF("Beacon interval: %d\r\n", beacon_interval);
 }
 
+#if UAP_SUPPORT
+static void test_wlan_uap_set_beacon_interval(int argc, char **argv)
+{
+    if (argc != 2)
+    {
+        (void)PRINTF("Usage:\r\n");
+        (void)PRINTF("wlan-uap-set-beacon-interval <ms>\r\n");
+        return;
+	}
+
+    uint16_t beacon_interval = atoi(argv[1]);
+
+    if (is_uap_started())
+    {
+        (void)PRINTF("Error: beacon_interval can not be changed after uAP start!\r\n");
+        return;
+    }
+
+    wlan_uap_set_beacon_period(beacon_interval);
+
+    (void)PRINTF("uAP Beacon interval set successfully.\r\n");
+}
+static void test_wlan_uap_get_beacon_interval(int argc, char **argv)
+{
+    int beacon_interval = wlan_uap_get_beacon_period();
+
+    (void)PRINTF("UAP Beacon interval: %d\r\n", beacon_interval);
+}
+#endif
+
 #if CONFIG_WIFI_TX_PER_TRACK
 static void dump_wlan_tx_pert_usage(void)
 {
@@ -14088,6 +14118,8 @@ static struct cli_command tests[] = {
     {"wlan-uap-disconnect-sta", "<mac address>", test_wlan_uap_disconnect_sta},
     {"wlan-get-uap-channel", NULL, test_wlan_get_uap_channel},
     {"wlan-get-uap-sta-list", NULL, test_wlan_get_uap_sta_list},
+    {"wlan-uap-set-beacon-interval", NULL, test_wlan_uap_set_beacon_interval},
+    {"wlan-uap-get-beacon-interval", NULL, test_wlan_uap_get_beacon_interval},
 #endif
     {"wlan-ieee-ps", "<0/1>", test_wlan_ieee_ps},
     {"wlan-set-ps-cfg", "<null_pkt_interval>", test_wlan_set_ps_cfg},

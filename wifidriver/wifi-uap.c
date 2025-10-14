@@ -849,6 +849,11 @@ void wifi_uap_set_beacon_period(const t_u16 beacon_period)
     wm_wifi.beacon_period = beacon_period;
 }
 
+int wifi_uap_get_beacon_period()
+{
+    return wm_wifi.beacon_period;
+}
+
 int wifi_uap_set_bandwidth(const t_u8 bandwidth)
 {
     if (bandwidth == BANDWIDTH_20MHZ || bandwidth == BANDWIDTH_40MHZ

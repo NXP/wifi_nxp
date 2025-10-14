@@ -95,6 +95,8 @@ void wifi_uap_set_htcapinfo(const t_u16 ht_cap_info);
 
 void wifi_uap_set_beacon_period(const t_u16 beacon_period);
 
+int wifi_uap_get_beacon_period();
+
 #else
 static inline mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
 {
