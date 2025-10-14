@@ -27,6 +27,10 @@
 
 static bool wm_mbedtls_lib_inited;
 
+#ifndef MBEDTLS_SSL_MAX_CONTENT_LEN
+#define MBEDTLS_SSL_MAX_CONTENT_LEN    (1024 * 8)
+#endif
+
 int wm_mbedtls_lib_init()
 {
     int ret = 0;
