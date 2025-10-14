@@ -3371,11 +3371,12 @@ void wlan_set_tx_pert(struct wlan_tx_pert_info *tx_pert, mlan_bss_type bss_type)
 /** Set TX RX histogram config.
  * This function can be called to set TX RX histogram config.
  *
+ * \param[in] bss_type: 0: STA, 1: uAP
  * \param[in] txrx_histogram: User configured parameters of TX RX histogram.
  *            including enable and action.
  * \param[out] data: TX RX histogram data from FW.
  */
-void wlan_set_txrx_histogram(struct wlan_txrx_histogram_info *txrx_histogram, t_u8 *data);
+void wlan_set_txrx_histogram(int bss_type, struct wlan_txrx_histogram_info *txrx_histogram, t_u8 *data);
 #endif
 
 #if CONFIG_ROAMING

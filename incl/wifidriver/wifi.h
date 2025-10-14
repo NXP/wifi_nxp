@@ -513,7 +513,7 @@ int wifi_set_tx_pert(void *cfg, mlan_bss_type bss_type);
 #endif
 
 #if CONFIG_TX_RX_HISTOGRAM
-int wifi_set_txrx_histogram(void *cfg, t_u8 *data);
+int wifi_set_txrx_histogram(int bss_type, void *cfg, t_u8 *data);
 #endif
 
 #if CONFIG_ROAMING

@@ -3301,7 +3301,8 @@ static void test_wlan_tx_pert(int argc, char **argv)
 static void dump_wlan_txrx_histogram_usage()
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("    wlan_txrx_histogram <action> <enable>\r\n");
+    (void)PRINTF("    wlan_txrx_histogram <sta/uap> <action> <enable>\r\n");
+    (void)PRINTF("        <sta/uap>: STA'  or 'UAP' \r\n");
     (void)PRINTF("        <enable> : 0 - disable TX/RX statistics\r\n");
     (void)PRINTF("                   1 - enable TX/RX statistics\r\n");
     (void)PRINTF("                   2 - get TX/RX statistics\r\n");
@@ -3327,13 +3328,25 @@ static void test_wlan_txrx_histogram(int argc, char **argv)
     rx_pkt_vht_rate_info *rx_vht_info;
     rx_pkt_he_rate_info *rx_he_info;
     rx_pkt_rate_info *rx_info;
+    int bss_type;
 
     t_u8 *pos             = NULL;
     t_u16 resp_value_size = 0;
     int i                 = 0;
     t_u16 buf_size        = 0;
 
-    if (argc < 2)
+    if (argc < 3)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_txrx_histogram_usage();
+        return;
+    }
+
+    if (string_equal("sta", argv[1]))
+        bss_type = WLAN_BSS_TYPE_STA;
+    else if (string_equal("uap", argv[1]))
+        bss_type = WLAN_BSS_TYPE_UAP;
+    else
     {
         (void)PRINTF("Error: invalid number of arguments\r\n");
         dump_wlan_txrx_histogram_usage();
@@ -3341,14 +3354,14 @@ static void test_wlan_txrx_histogram(int argc, char **argv)
     }
 
     (void)memset(&txrx_histogram, 0, sizeof(txrx_histogram));
-    txrx_histogram.enable = atoi(argv[1]);
-    if (argc == 2)
+    txrx_histogram.enable = atoi(argv[2]);
+    if (argc == 3)
     {
         txrx_histogram.action = 0;
     }
     else
     {
-        txrx_histogram.action = atoi(argv[2]);
+        txrx_histogram.action = atoi(argv[3]);
     }
 
     if ((txrx_histogram.enable > 2) || (txrx_histogram.action > 3))
@@ -3399,7 +3412,7 @@ static void test_wlan_txrx_histogram(int argc, char **argv)
         (void)memcpy(buf, &buf_size, sizeof(buf_size));
     }
 
-    wlan_set_txrx_histogram(&txrx_histogram, buf);
+    wlan_set_txrx_histogram(bss_type, &txrx_histogram, buf);
 
     if (buf == NULL)
     {
@@ -3526,7 +3539,6 @@ static void test_wlan_txrx_histogram(int argc, char **argv)
 #else
     OSA_MemoryPoolFree(buf_1024_MemoryPool, buf);
 #endif
-
 }
 #endif
 

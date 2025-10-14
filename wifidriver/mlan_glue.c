@@ -7737,7 +7737,7 @@ int wifi_set_tx_pert(void *cfg, mlan_bss_type bss_type)
 #endif
 
 #if CONFIG_TX_RX_HISTOGRAM
-int wifi_set_txrx_histogram(void *cfg, t_u8 *data)
+int wifi_set_txrx_histogram(int bss_type, void *cfg, t_u8 *data)
 {
     txrx_histogram_info *txrx_histogram    = (txrx_histogram_info *)cfg;
     txrx_histogram_info txrx_histogram_cmd = {0};
@@ -7758,7 +7758,7 @@ int wifi_set_txrx_histogram(void *cfg, t_u8 *data)
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
 
-    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TX_RX_PKT_STATS, HostCmd_ACT_GEN_GET, 0,
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[bss_type], HostCmd_CMD_TX_RX_PKT_STATS, HostCmd_ACT_GEN_GET, 0,
                              NULL, &txrx_histogram_cmd, cmd);
     wifi_wait_for_cmdresp(data);
     return wm_wifi.cmd_resp_status;
