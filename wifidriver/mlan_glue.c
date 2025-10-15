@@ -9012,11 +9012,11 @@ void wifi_ftm_process_event(void *p_data)
             break;
         case WLS_SUB_EVENT_DISTANCE:
             distance = ftm_event->e.ftm_distance.distance / 256.0f;
-            PRINTF("================================\r\n");
-            PRINTF("FTM distance report (MAC %02X:%02X:%02X:%02X:%02X:%02X)\r\n", MAC[0], MAC[1], MAC[2], MAC[3],
+            wifi_d("================================\r\n");
+            wifi_d("FTM distance report (MAC %02X:%02X:%02X:%02X:%02X:%02X)\r\n", MAC[0], MAC[1], MAC[2], MAC[3],
                    MAC[4], MAC[5]);
-            PRINTF("TSF: %x\r\n", ftm_event->e.ftm_distance.meas_start_tsf);
-            PRINTF("distance: %.2f meters\r\n", distance);
+            wifi_d("TSF: %x\r\n", ftm_event->e.ftm_distance.meas_start_tsf);
+            wifi_d("distance: %.2f meters\r\n", distance);
             break;
         default:
             wifi_d("[ERROR] Unknown sub event\n");
