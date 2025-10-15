@@ -1653,10 +1653,10 @@ static int wifi_core_init(void)
 #if UAP_SUPPORT
 #if defined(SD8801) || defined(RW610) || defined(IW610)
     wifi_uap_set_bandwidth(BANDWIDTH_20MHZ);
-    wifi_uap_set_beacon_period(UAP_DEFAULT_BEACON_PERIOD);
 #else
     wifi_uap_set_bandwidth(BANDWIDTH_40MHZ);
 #endif
+    wifi_uap_set_beacon_period(UAP_DEFAULT_BEACON_PERIOD);
 #endif
 
     return WM_SUCCESS;
