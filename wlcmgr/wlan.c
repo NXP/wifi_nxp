@@ -2401,11 +2401,14 @@ static int do_start(struct wlan_network *network)
             t_u8 bandwidth = wifi_uap_get_bandwidth();
             if (bandwidth == BANDWIDTH_80MHZ)
             {
-                if ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 0)
 #if CONFIG_WIFI_CAPA
-                        || ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 1) && (!(network->wlan_capa & (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC))))
+                if ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 0) || 
+                ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 1) && 
+                (!(network->wlan_capa & (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC)))))
+#else
+                if (wlan.networks[wlan.cur_uap_network_idx].acs_band == 0)
 #endif
-                   )
+                   
                 {
                     wlcm_e("uAP configured bandwidth not allowed");
                     CONNECTION_EVENT(WLAN_REASON_UAP_START_FAILED, NULL);
@@ -2452,11 +2455,14 @@ static int do_start(struct wlan_network *network)
             t_u8 bandwidth = wifi_uap_get_bandwidth();
             if (bandwidth == BANDWIDTH_80MHZ)
             {
-                if ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 0)
 #if CONFIG_WIFI_CAPA
-                        || ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 1) && (!(network->wlan_capa & (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC))))
+                if ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 0) ||
+                 ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 1) && 
+                 (!(network->wlan_capa & (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC)))))
+#else
+                if (wlan.networks[wlan.cur_uap_network_idx].acs_band == 0)                                 
 #endif
-                   )
+                   
                 {
                     wlcm_e("uAP configured bandwidth not allowed");
                     CONNECTION_EVENT(WLAN_REASON_UAP_START_FAILED, NULL);
