@@ -412,7 +412,7 @@ typedef struct
     uint32_t remain_period;
 } wifi_remain_on_channel_t;
 
-#if CONFIG_11AX
+#if CONFIG_11AX || (CONFIG_11AC)
 /** TX Rate Setting */
 typedef PACK_START struct _txrate_setting
 {
