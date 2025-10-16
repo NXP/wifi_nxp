@@ -17,7 +17,7 @@ NW61x WIRELESS FIRMWARE
 
 Here are the details about the NW61x firmware(signed):
 
-1. Firmware Name Signed:   SD-WLAN-UART-BT-NW61x-U16-MMC-W18.99.3.p27.1-18.99.3.p27.1-C4X16679_V2-GPL
+1. Firmware Name Signed:   SD-WLAN-UART-BT-NW61x-U16-MMC-W18.99.3.p27.2-18.99.3.p27.2-C4X16679_V2-GPL
 
 NW61x MANUFACTURING FIRMWARE
 ==============================
