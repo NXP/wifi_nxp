@@ -2473,7 +2473,7 @@ static mlan_status wifi_tx_data(t_u8 start_port, t_u8 ports, t_u8 pkt_cnt, t_u32
     /* IR is in progress so any data sent during progress should be ignored */
     if (wifi_ind_reset_in_progress() == true)
     {
-        return WM_SUCCESS;
+        return MLAN_STATUS_SUCCESS;
     }
 #endif
 
@@ -2528,7 +2528,7 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
 #endif /* CONFIG_WIFI_IO_DEBUG */
 
     ret = wlan_get_wr_port_data(&port);
-    if (ret != WM_SUCCESS)
+    if (ret != MLAN_STATUS_SUCCESS)
     {
         return MLAN_STATUS_FAILURE;
     }
@@ -2583,7 +2583,7 @@ mlan_status wlan_flush_wmm_pkt(t_u8 pkt_count)
     /* IR is in progress so any data sent during progress should be ignored */
     if (wifi_ind_reset_in_progress() == true)
     {
-        return WM_SUCCESS;
+        return MLAN_STATUS_SUCCESS;
     }
 #endif
 
