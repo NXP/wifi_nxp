@@ -31,6 +31,7 @@ doxy/refman/.
 * ------------ | -----------------------------------------------------------
 * ACS          | auto channel selection
 * AID          | association ID
+* AMI          | Ambient Motion Index
 * AMPDU        | aggregate medium access control protocol data unit
 * AP           | Access Point
 * ARP          | address resolution protocol
@@ -58,11 +59,13 @@ doxy/refman/.
 * MEF          | memory efficient filtering
 * MFPC         | Management Frame Protection Capable
 * MFPR         | Management frame protection required
+* NAN          | Neighbor Awareness Networking
 * NSS          | N*N MIMO spatial stream
 * OBSS         | overlapping basic service set
 * OCE          | Optimized connectivity experience
 * OMI          | operating mode indication
 * OWE          | opportunistic wireless encryption
+* P2P          | Peer to Peer 
 * PBC          | push button configuration
 * PEAP         | Protected Extensible Authentication Protocol
 * PKEX         | Public Key Exchange
