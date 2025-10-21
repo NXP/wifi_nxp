@@ -2114,9 +2114,12 @@ int wifi_nxp_wpa_supp_probe_req_report(void *if_priv, int report)
     }
     else
     {
+#if CONFIG_WPA_SUPP_P2P
         if ((bss_type == BSS_TYPE_UAP)
             || ((bss_type == MLAN_BSS_TYPE_WIFIDIRECT) && (pmpriv->bss_role == MLAN_BSS_ROLE_UAP)))
-
+#else
+        if (bss_type == BSS_TYPE_UAP)
+#endif
         {
             supp_d("Skip disabling of Probe Request reporting in AP mode\r\n");
             ret = WM_SUCCESS;
