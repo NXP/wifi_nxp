@@ -196,7 +196,8 @@ int wifi_set_ipv6_ra_offload(t_u8 enable)
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_IPV6_RA_OFFLOAD_CFG);
     ipv6_ra_cfg->action = wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);
     ipv6_ra_cfg->enable = wlan_cpu_to_le16(enable);
-    ipv6_ra_cfg->ipv6_addr_count = net_get_all_if_ipv6_addr_and_cnt((char *)(&ipv6_ra_cfg->ipv6_addr_param.ipv6_addrs));
+    ipv6_ra_cfg->ipv6_addr_count = net_get_all_if_ipv6_addr_and_cnt((char *)(&ipv6_ra_cfg->ipv6_addr_param.ipv6_addrs),
+                WIFI_FW_CMDBUF_SIZE - INTF_HEADER_LEN - ((char *)&ipv6_ra_cfg->ipv6_addr_param.ipv6_addrs - (char *)cmd));
     if (ipv6_ra_cfg->ipv6_addr_count == 0)
     {
         wifi_d("No IPv6 address configured");

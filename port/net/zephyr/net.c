@@ -1332,11 +1332,12 @@ int net_get_if_ipv6_addr(struct net_ip_config *addr, void *intrfc_handle)
     return WM_SUCCESS;
 }
 
-uint8_t net_get_all_if_ipv6_addr_and_cnt(char *buf)
+uint8_t net_get_all_if_ipv6_addr_and_cnt(char *buf, uint32_t buf_size)
 {
     struct net_if_ipv6 *ipv6 = NULL;
     struct net_if_addr *unicast;
     uint8_t count = 0, i;
+    uint32_t offset = 0;
 
     STRUCT_SECTION_FOREACH(net_if, iface)
     {
@@ -1349,8 +1350,13 @@ uint8_t net_get_all_if_ipv6_addr_and_cnt(char *buf)
                 continue;
             }
 
-            (void)memcpy(buf, &unicast->address.in6_addr, 16);
-            buf += 16;
+            if (offset + 16 > buf_size)
+            {
+                return count;
+            }
+
+            (void)memcpy(buf + offset, &unicast->address.in6_addr, 16);
+            offset +=16;
             count ++;
         }
     }
