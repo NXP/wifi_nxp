@@ -427,9 +427,7 @@ static void process_data_packet(const t_u8 *rcvdata,
     switch (header_type)
     {
         case ETHTYPE_IP:
-#if CONFIG_IPV6
         case ETHTYPE_IPV6:
-#endif
         /* Unicast ARP also need do rx reorder */
         case ETHTYPE_ARP:
 #if CONFIG_11N
