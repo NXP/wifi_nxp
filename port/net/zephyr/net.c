@@ -424,9 +424,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     switch (header_type)
     {
         case NET_ETH_PTYPE_IP:
-#if CONFIG_IPV6
         case NET_ETH_PTYPE_IPV6:
-#endif
         /* Unicast ARP also need do rx reorder */
         case NET_ETH_PTYPE_ARP:
             /* To avoid processing of unwanted udp broadcast packets, adding
