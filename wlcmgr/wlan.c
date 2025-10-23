@@ -1159,6 +1159,8 @@ static void temperature_mon_cb(osa_timer_arg_t arg)
     if (wifi_recovery_enable || wifi_fw_is_hang())
     {
         struct wlan_message msg;
+        (void)PRINTF("wifi_recovery_enable: %u, wifi_fw_is_hang: %u\r\n",
+                      wifi_recovery_enable, wifi_fw_is_hang());
         (void)memset(&msg, 0U, sizeof(struct wlan_message));
         msg.data = NULL;
         msg.id  = WIFI_RECOVERY_REQ;
@@ -11293,46 +11295,47 @@ static void wlcmgr_mon_task(void * data)
             {
                 OSA_TimeDelay(10);
             }
-#if CONFIG_HOST_SLEEP && CONFIG_POWER_MANAGER
             wlcm_d("got mon thread event: %d", msg.id);
-            if (msg.id == HOST_SLEEP_HANDSHAKE)
+            switch (msg.id)
             {
-                ret = wlan_send_host_sleep_int();
-                if (ret != WM_SUCCESS)
-                {
-                   is_hs_handshake_done = WLAN_HOSTSLEEP_FAIL;
-                }
-            }
-            else if (msg.id == HOST_SLEEP_EXIT)
-            {
+#if CONFIG_HOST_SLEEP && CONFIG_POWER_MANAGER
+                case HOST_SLEEP_HANDSHAKE:
+                    ret = wlan_send_host_sleep_int();
+                    if (ret != WM_SUCCESS)
+                    {
+                        is_hs_handshake_done = WLAN_HOSTSLEEP_FAIL;
+                    }
+                    break;
+                case HOST_SLEEP_EXIT:
 #if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE) && (!CONFIG_NCP_OT)
-                wlan_start_wake_timer();
+                    wlan_start_wake_timer();
 #endif
-                wlan_cancel_host_sleep();
-                /* Check fw status and write temperature to firmware after waking up */
-                start_temperature_mon_timer();
-            }
+                    wlan_cancel_host_sleep();
+                    /* Check fw status and write temperature to firmware after waking up */
+                    start_temperature_mon_timer();
+                    break;
 #if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP)
-            else if (msg.id == HOST_SLEEP_UART_NOTIFY)
-            {
-                host_sleep_cli_notify();
-            }
+                case HOST_SLEEP_UART_NOTIFY:
+                    host_sleep_cli_notify();
+                    break;
 #endif
 #if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE) && (!CONFIG_NCP_OT)
-            else if (msg.id == HOST_SLEEP_HS_SKIP)
-            {
-                wlan_start_wake_timer();
-            }
+                case HOST_SLEEP_HS_SKIP:
+                    wlan_start_wake_timer();
+                    break;
 #endif
 #endif
 #if CONFIG_WIFI_RECOVERY
-            else if (msg.id == WIFI_RECOVERY_REQ)
-            {
-                CONNECTION_EVENT(WLAN_REASON_FW_HANG, NULL);
-                wlan_reset(CLI_RESET_WIFI);
-                wifi_recovery_cnt ++;
-            }
+                case WIFI_RECOVERY_REQ:
+                    CONNECTION_EVENT(WLAN_REASON_FW_HANG, NULL);
+                    wlan_reset(CLI_RESET_WIFI);
+                    wifi_recovery_cnt ++;
+                    break;
 #endif
+                default:
+                    wlcm_d("Unknown mon thread event: %d", msg.id);
+                    break;
+            }
         }
         else
         {
