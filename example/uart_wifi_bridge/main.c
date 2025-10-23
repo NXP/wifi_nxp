@@ -303,6 +303,9 @@ lpspi_transfer_t handle_spi;
 uint8_t host_resp_buf[BUF_LEN];
 uint32_t resp_buf_len, reqd_resp_len;
 
+/* To avoid DataQuickAccess unused warning */
+__attribute__((used)) AT_QUICKACCESS_SECTION_DATA(static const uint8_t u_w_bridge) = 0x00;
+
 /*******************************************************************************
  * Code
  ******************************************************************************/

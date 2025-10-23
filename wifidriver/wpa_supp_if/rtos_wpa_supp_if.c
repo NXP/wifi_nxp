@@ -2094,11 +2094,11 @@ int wifi_nxp_wpa_supp_probe_req_report(void *if_priv, int report)
             goto out;
         }
 
-        if ((bss_type == BSS_TYPE_STA)
 #if CONFIG_WPA_SUPP_P2P
-             || (bss_type == BSS_TYPE_WFD)
+	if ((bss_type == BSS_TYPE_WFD) || (bss_type == BSS_TYPE_STA))
+#else
+        if (bss_type == BSS_TYPE_STA)
 #endif
-                 )
         {
             ret = wifi_set_rx_mgmt_indication(bss_type, WLAN_MGMT_PROBE_RQST | WLAN_MGMT_ACTION);
             if (ret == WM_SUCCESS)
