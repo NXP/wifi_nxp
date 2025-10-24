@@ -7841,6 +7841,14 @@ static void temperature_mon_cb(osa_timer_arg_t arg)
     if (wifi_recovery_enable || wifi_fw_is_hang())
     {
         struct wlan_message msg;
+        (void)PRINTF("recovery_enable: %u, wifi_fw_is_hang: %u, reset_in_progress:%u\r\n",
+                      wifi_recovery_enable, wifi_fw_is_hang(), wifi_reset_in_progress());
+        /* Avoid repeatedly triggering recovery */
+        if (wifi_reset_in_progress())
+        {
+            return;
+        }
+
         (void)memset(&msg, 0U, sizeof(struct wlan_message));
         msg.data = NULL;
         msg.id  = WIFI_RECOVERY_REQ;
@@ -8046,7 +8054,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     }
 #ifdef RW610
     cau_temperature_enable();
-    status = OSA_TimerCreate((osa_timer_handle_t)temperature_mon_timer, TEMPERATURE_MON_TIMEOUT,
+    status = OSA_TimerCreate((osa_timer_handle_t)temperature_mon_timer, MSEC_TO_TICK(TEMPERATURE_MON_TIMEOUT),
                              &temperature_mon_cb, NULL, KOSA_TimerPeriodic, OSA_TIMER_AUTO_ACTIVATE);
     if (status != KOSA_StatusSuccess)
     {
@@ -10652,59 +10660,63 @@ static void wlcmgr_mon_task(void * data)
             /*Elements of wlan is not avaliable during wlan reset, so wait ending of wlan reset*/
             while(wifi_reset_in_progress() == true)
                 OSA_TimeDelay(10);
+
+            wlcm_d("got mon thread event: %d", msg.id);
+
+            switch (msg.id)
+            {
 #if CONFIG_HOST_SLEEP
-             wlcm_d("got mon thread event: %d", msg.id);
-            if (msg.id == HOST_SLEEP_HANDSHAKE)
-            {
-                ret = wlan_send_host_sleep_int();
-                if (ret != WM_SUCCESS)
-                {
-                   is_hs_handshake_done = WLAN_HOSTSLEEP_FAIL;
-                }
-            }
-            else if (msg.id == HOST_SLEEP_EXIT)
-            {
+                case HOST_SLEEP_HANDSHAKE:
+                    ret = wlan_send_host_sleep_int();
+                    if (ret != WM_SUCCESS)
+                    {
+                       is_hs_handshake_done = WLAN_HOSTSLEEP_FAIL;
+                    }
+                    break;
+                case HOST_SLEEP_EXIT:
 #if CONFIG_POWER_MANAGER
 #ifndef CONFIG_BT
-                if(!wlan_is_manual && wlan_host_sleep_state == HOST_SLEEP_PERIODIC)
-                {
-                    wakelock_get();
-                    (void)OSA_TimerActivate((osa_timer_handle_t)wake_timer);
-                }
+                    if(!wlan_is_manual && wlan_host_sleep_state == HOST_SLEEP_PERIODIC)
+                    {
+                        wakelock_get();
+                        (void)OSA_TimerActivate((osa_timer_handle_t)wake_timer);
+                    }
 #endif
 #endif
 #ifndef RW610
-                uint16_t hs_wakeup_reason = 0;
-                (void)wifi_get_wakeup_reason(&hs_wakeup_reason);
-                (void)wifi_print_wakeup_reason(hs_wakeup_reason);
-                wifi_clear_wakeup_reason();
+                    uint16_t hs_wakeup_reason = 0;
+                    (void)wifi_get_wakeup_reason(&hs_wakeup_reason);
+                    (void)wifi_print_wakeup_reason(hs_wakeup_reason);
+                    wifi_clear_wakeup_reason();
 #endif
-                wlan_cancel_host_sleep();
+                    wlan_cancel_host_sleep();
 #ifdef RW610
-                /* Check fw status and write temperature to firmware after waking up */
-                temperature_mon_cb(NULL);
-                (void)OSA_TimerActivate((osa_timer_handle_t)temperature_mon_timer);
+                    /* Check fw status and write temperature to firmware after waking up */
+                    temperature_mon_cb(NULL);
+                    (void)OSA_TimerActivate((osa_timer_handle_t)temperature_mon_timer);
 #endif
-            }
+                    break;
 #ifndef CONFIG_BT
-            else if (msg.id == HOST_SLEEP_HANDSHAKE_SKIP)
-            {
-                if(wlan_host_sleep_state == HOST_SLEEP_PERIODIC)
-                {
-                    wakelock_get();
-                    (void)OSA_TimerActivate((osa_timer_handle_t)wake_timer);
-                }
-            }
+                case HOST_SLEEP_HANDSHAKE_SKIP:
+                    if(wlan_host_sleep_state == HOST_SLEEP_PERIODIC)
+                    {
+                        wakelock_get();
+                        (void)OSA_TimerActivate((osa_timer_handle_t)wake_timer);
+                    }
+                    break;
 #endif
 #endif
 #if CONFIG_WIFI_RECOVERY
-            else if (msg.id == WIFI_RECOVERY_REQ)
-            {
-                CONNECTION_EVENT(WLAN_REASON_FW_HANG, NULL);
-                wlan_reset(CLI_RESET_WIFI);
-                wifi_recovery_cnt ++;
-            }
+                case WIFI_RECOVERY_REQ:
+                    CONNECTION_EVENT(WLAN_REASON_FW_HANG, NULL);
+                    wlan_reset(CLI_RESET_WIFI);
+                    wifi_recovery_cnt ++;
+                    break;
 #endif
+                default:
+                    wlcm_d("Unknown mon thread event: %d", msg.id);
+                    break;
+            }
         }
         else
         {
