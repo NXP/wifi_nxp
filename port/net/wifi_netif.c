@@ -841,6 +841,18 @@ static err_t igmp_mac_filter(struct netif *netif, const ip4_addr_t *group, enum 
     uint8_t mcast_mac[6];
     err_t result;
     int error;
+    struct netif *tmp_netif;
+
+    NETIF_FOREACH(tmp_netif)
+    {
+        if (tmp_netif == netif)
+            break;
+    }
+    if (tmp_netif == NULL)
+    {
+        result = ERR_IF;
+        goto done;
+    }
 
     /* IPv4 to MAC conversion as per section 6.4 of rfc1112 */
     wifi_get_ipv4_multicast_mac(ntohl(group->addr), mcast_mac);
@@ -968,6 +980,18 @@ static err_t mld_mac_filter(struct netif *netif, const ip6_addr_t *group, enum n
     uint8_t mcast_mac[6];
     err_t result;
     int error;
+    struct netif *tmp_netif;
+
+    NETIF_FOREACH(tmp_netif)
+    {
+        if (tmp_netif == netif)
+            break;
+    }
+    if (tmp_netif == NULL)
+    {
+        result = ERR_IF;
+        goto done;
+    }
 
     /* IPv6 to MAC conversion as per section 7 of rfc2464 */
     wifi_get_ipv6_multicast_mac(ntohl(group->addr[3]), mcast_mac);
