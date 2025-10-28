@@ -1155,8 +1155,14 @@ static void temperature_mon_cb(osa_timer_arg_t arg)
     if (wifi_recovery_enable || wifi_fw_is_hang())
     {
         struct wlan_message msg;
-        (void)PRINTF("wifi_recovery_enable: %u, wifi_fw_is_hang: %u\r\n",
-                      wifi_recovery_enable, wifi_fw_is_hang());
+        (void)PRINTF("recovery_enable: %u, wifi_fw_is_hang: %u, reset_in_progress:%u\r\n",
+                      wifi_recovery_enable, wifi_fw_is_hang(), wifi_reset_in_progress());
+        /* Avoid repeatedly triggering recovery */
+        if (wifi_reset_in_progress())
+        {
+            return;
+        }
+
         (void)memset(&msg, 0U, sizeof(struct wlan_message));
         msg.data = NULL;
         msg.id  = WIFI_RECOVERY_REQ;
