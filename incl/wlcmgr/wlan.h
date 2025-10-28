@@ -2370,8 +2370,6 @@ int wlan_is_started(void);
 #if CONFIG_NCP
 /** uAP provisioning deinit callback function */
 void wlan_register_uap_prov_deinit_cb(int (*cb)(void));
-/** uAP provisioning cleanup callback function */
-void wlan_register_uap_prov_cleanup_cb(void (*cb)(void));
 /** Stop all Wi-Fi network.
  *
  *  \return WM_SUCCESS if successful.

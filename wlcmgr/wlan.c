@@ -219,7 +219,6 @@ extern void wpa2_shutdown();
 #if CONFIG_NCP
 /* uap provision callbacks */
 int (*uap_prov_deinit_cb)(void) = NULL;
-void (*uap_prov_cleanup_cb)(void) = NULL;
 #endif
 
 
@@ -11167,10 +11166,6 @@ void wlan_reset(cli_reset_option ResetOption)
 #endif
             /* Destroy all tasks before touch the global vars */
             wlan_destroy_all_tasks();
-#if CONFIG_NCP
-            if (uap_prov_cleanup_cb)
-                uap_prov_cleanup_cb();
-#endif
 #if CONFIG_WPS2
             wps_stop();
 #endif /* CONFIG_WPS2 */
@@ -11351,11 +11346,6 @@ int wlan_stop_all_networks(void)
 void wlan_register_uap_prov_deinit_cb(int (*cb)(void))
 {
     uap_prov_deinit_cb = cb;
-}
-
-void wlan_register_uap_prov_cleanup_cb(void (*cb)(void))
-{
-    uap_prov_cleanup_cb = cb;
 }
 #endif
 
