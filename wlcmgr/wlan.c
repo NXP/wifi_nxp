@@ -2404,13 +2404,13 @@ static int do_start(struct wlan_network *network)
             if (bandwidth == BANDWIDTH_80MHZ)
             {
 #if CONFIG_WIFI_CAPA
-                if ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 0) || 
-                ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 1) && 
+                if ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 0) ||
+                ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 1) &&
                 (!(network->wlan_capa & (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC)))))
 #else
                 if (wlan.networks[wlan.cur_uap_network_idx].acs_band == 0)
 #endif
-                   
+
                 {
                     wlcm_e("uAP configured bandwidth not allowed");
                     CONNECTION_EVENT(WLAN_REASON_UAP_START_FAILED, NULL);
@@ -2459,12 +2459,12 @@ static int do_start(struct wlan_network *network)
             {
 #if CONFIG_WIFI_CAPA
                 if ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 0) ||
-                 ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 1) && 
+                 ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 1) &&
                  (!(network->wlan_capa & (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC)))))
 #else
-                if (wlan.networks[wlan.cur_uap_network_idx].acs_band == 0)                                 
+                if (wlan.networks[wlan.cur_uap_network_idx].acs_band == 0)
 #endif
-                   
+
                 {
                     wlcm_e("uAP configured bandwidth not allowed");
                     CONNECTION_EVENT(WLAN_REASON_UAP_START_FAILED, NULL);
@@ -3809,18 +3809,40 @@ static void wlcm_process_channel_switch_supp(struct wifi_message *msg)
            }
 
 #if UAP_SUPPORT
-            if(is_uap_started())
-            {
-                wm_wifi.supp_if_callbk_fns->ecsa_complete_callbk_fn(wm_wifi.hapd_if_priv, &chandef);
-                (void)PRINTF("uap switch to channel %d success!\r\n", channel);
-            }
+           if (is_uap_started())
+           {
+#if CONFIG_WPA_SUPP_P2P
+               if (bss_type == WLAN_BSS_TYPE_WIFIDIRECT)
+               {
+                   wm_wifi.supp_if_callbk_fns->ecsa_complete_callbk_fn(wm_wifi.if_priv_wfd, &chandef);
+               }
+               else
+               {
+#endif
+                   wm_wifi.supp_if_callbk_fns->ecsa_complete_callbk_fn(wm_wifi.hapd_if_priv, &chandef);
+#if CONFIG_WPA_SUPP_P2P
+               }
+#endif
+               (void)PRINTF("uap switch to channel %d success!\r\n", channel);
+           }
 #endif
 
-            if (is_sta_connected())
-            {
-                wm_wifi.supp_if_callbk_fns->ecsa_complete_callbk_fn(wm_wifi.if_priv, &chandef);
-                (void)PRINTF("sta switch to channel %d success!\r\n", channel);
-            }
+           if (is_sta_connected())
+           {
+#if CONFIG_WPA_SUPP_P2P
+               if (bss_type == WLAN_BSS_TYPE_WIFIDIRECT)
+               {
+                   wm_wifi.supp_if_callbk_fns->ecsa_complete_callbk_fn(wm_wifi.if_priv_wfd, &chandef);
+               }
+               else
+               {
+#endif
+                   wm_wifi.supp_if_callbk_fns->ecsa_complete_callbk_fn(wm_wifi.if_priv, &chandef);
+#if CONFIG_WPA_SUPP_P2P
+               }
+#endif
+               (void)PRINTF("sta switch to channel %d success!\r\n", channel);
+           }
 #if !CONFIG_MEM_POOLS
             OSA_MemoryFree((void *)msg->data);
 #else
