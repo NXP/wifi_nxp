@@ -12825,6 +12825,9 @@ static void dump_wlan_set_ind_rst_cfg_usage(void)
     (void)PRINTF("         wlan-set-indrstcfg 1 255   : Set default pin as reset pin     \r\n");
     (void)PRINTF("         wlan-set-indrstcfg 0       : Disable the independent reset    \r\n");
     (void)PRINTF("         wlan-set-indrstcfg 2       : Enable in band reset mode        \r\n");
+    (void)PRINTF("Note: If gpio_pin value is less than 0 or greater than 255, then "
+                       "its value will get wrapped around.   \r\n");
+
 }
 
 static void test_set_indrst_cfg(int argc, char **argv)
@@ -12867,11 +12870,6 @@ static void test_set_indrst_cfg(int argc, char **argv)
                 (void)PRINTF("Error during strtoul errno:%d", errno);
             }
 
-            if (indrst_cfg.gpio_pin != 0xFF)
-            {
-                (void)PRINTF("Invalid gpio pin no !\n\r");
-                return;
-            }
         }
     }
 
