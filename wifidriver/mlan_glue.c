@@ -9758,8 +9758,10 @@ void wifi_dump_firmware_info()
     /* end dump fw memory */
 done:
     wifi_d("==== DEBUG MODE OUTPUT END ====\n");
+#if !CONFIG_WIFI_RECOVERY
     while (1)
         ;
+#endif
 }
 
 /**
@@ -10244,8 +10246,10 @@ void wifi_dump_firmware_info()
 
     PRINTF("==== FW DUMP END ====\r\n");
 done:
+#if !CONFIG_WIFI_RECOVERY
     while (1)
         ;
+#endif
 }
 #endif
 #endif
