@@ -9329,8 +9329,10 @@ void wifi_dump_firmware_info()
     /* end dump fw memory */
 done:
     wifi_d("==== DEBUG MODE OUTPUT END: %d ====\n", OSA_GetTimestamp());
+#if !CONFIG_WIFI_RECOVERY
     while (1)
         ;
+#endif
 }
 
 /**
@@ -9815,8 +9817,10 @@ void wifi_dump_firmware_info()
 
     PRINTF("==== FW DUMP END: Time %u us====\r\n", OSA_GetTimestamp());
 done:
+#if !CONFIG_WIFI_RECOVERY
     while (1)
         ;
+#endif
 }
 #endif
 #endif
