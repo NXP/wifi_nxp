@@ -2095,7 +2095,7 @@ int wifi_nxp_wpa_supp_probe_req_report(void *if_priv, int report)
         }
 
 #if CONFIG_WPA_SUPP_P2P
-	if ((bss_type == BSS_TYPE_WFD) || (bss_type == BSS_TYPE_STA))
+	if (bss_type == BSS_TYPE_WFD || bss_type == BSS_TYPE_STA)
 #else
         if (bss_type == BSS_TYPE_STA)
 #endif
