@@ -3312,13 +3312,15 @@ static void dump_wlan_txrx_histogram_usage()
     (void)PRINTF("Note:\r\n");
     (void)PRINTF("    When enable is 0 or 1, the action parameter should not be entered\r\n");
     (void)PRINTF("Example:\r\n");
-    (void)PRINTF("    wlan_txrx_histogram 2 3\r\n");
+    (void)PRINTF("    wlan_txrx_histogram sta 1\r\n");
+    (void)PRINTF("    wlan_txrx_histogram sta 2 3\r\n");
 }
 
 static void test_wlan_txrx_histogram(int argc, char **argv)
 {
     struct wlan_txrx_histogram_info txrx_histogram;
     t_u8 *buf = NULL;
+    int ret   = -WM_FAIL;
 
     tx_pkt_ht_rate_info *tx_ht_info;
     tx_pkt_vht_rate_info *tx_vht_info;
@@ -3412,9 +3414,9 @@ static void test_wlan_txrx_histogram(int argc, char **argv)
         (void)memcpy(buf, &buf_size, sizeof(buf_size));
     }
 
-    wlan_set_txrx_histogram(bss_type, &txrx_histogram, buf);
+    ret = wlan_set_txrx_histogram(bss_type, &txrx_histogram, buf);
 
-    if (buf == NULL)
+    if (buf == NULL || ret != WM_SUCCESS)
     {
         return;
     }
