@@ -805,36 +805,15 @@
 #endif
 #endif
 
-#if CONFIG_WPA_SUPP_DPP
-#if defined(SD8978) || defined(SD8987)
-#undef CONFIG_WPA_SUPP_DPP
-#define CONFIG_WPA_SUPP_DPP 0
-#endif
-#endif
-
 #if !defined CONFIG_WPA_SUPP_DPP2
 #if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD9177) || defined(IW610)
 #define CONFIG_WPA_SUPP_DPP2 0
 #endif
 #endif
 
-#if CONFIG_WPA_SUPP_DPP2
-#if defined(SD8978) || defined(SD8987)
-#undef CONFIG_WPA_SUPP_DPP2
-#define CONFIG_WPA_SUPP_DPP2 CONFIG_WPA_SUPP_DPP
-#endif
-#endif
-
 #if !defined CONFIG_WPA_SUPP_DPP3
 #if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD9177) || defined(IW610)
 #define CONFIG_WPA_SUPP_DPP3 0
-#endif
-#endif
-
-#if CONFIG_WPA_SUPP_DPP3
-#if defined(SD8978) || defined(SD8987)
-#undef CONFIG_WPA_SUPP_DPP3
-#define CONFIG_WPA_SUPP_DPP3 (CONFIG_WPA_SUPP_DPP && CONFIG_WPA_SUPP_DPP2)
 #endif
 #endif
 
