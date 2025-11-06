@@ -36,7 +36,7 @@ void OSA_DumpThreadInfo(char *name)
     (void)memset((void *)task_info_buf, 0, MAX_TASK_INFO_BUF);
 #ifndef __ZEPHYR__
 #if !CONFIG_MEM_POOLS
-    vTaskList(task_info_buf);
+    vTaskListTasks(task_info_buf, MAX_TASK_INFO_BUF);
 #else
     (void)PRINTF("thread info not applicable for wifi_cli_static example!\r\n");
 #endif

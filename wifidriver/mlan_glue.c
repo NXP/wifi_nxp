@@ -21,6 +21,7 @@
 #if defined(RW610)
 #include "wifi-imu.h"
 #include "fsl_ocotp.h"
+#include "fsl_adapter_imu.h"
 #else
 #include "sdio.h"
 #include "wifi-sdio.h"
@@ -86,7 +87,10 @@ extern uint8_t wls_data[WLS_CSI_DATA_LEN];
 #define CSI_PROC_DATA_SIZE 1000
 uint8_t csi_proc_data[CSI_PROC_DATA_SIZE] = {0};
 #endif
-
+#ifdef RW610
+static volatile uint32_t ImuTxFifoStatus = 0;
+static volatile uint32_t ImuRxFifoStatus = 0;
+#endif
 #if CONFIG_WPA2_ENTP
 bool scan_enable_wpa2_enterprise_ap_only;
 #endif
@@ -9023,6 +9027,41 @@ void wifi_ftm_process_event(void *p_data)
     }
 }
 #endif
+
+#define MAX_TASK_INFO_BUF_SIZE 1024
+void wifi_dump_driver_info()
+{
+    char *task_info_buf = NULL;
+#ifdef RW610
+    ImuTxFifoStatus = IMU_TX_FIFO_STATUS(kIMU_LinkCpu1Cpu3);
+    ImuRxFifoStatus = IMU_RX_FIFO_STATUS(kIMU_LinkCpu1Cpu3);
+    PRINTF("IMU TxFifoStatus: 0x%x, RxFifoStatus: 0x%x\r\n", ImuTxFifoStatus, ImuRxFifoStatus);
+#endif
+#if !CONFIG_MEM_POOLS
+    task_info_buf = (char *)OSA_MemoryAllocate(MAX_TASK_INFO_BUF_SIZE);
+#else
+    task_info_buf = (char *)OSA_MemoryPoolAllocate(buf_1024_MemoryPool);
+#endif
+    if (task_info_buf == NULL)
+    {
+        return;
+    }
+    (void)memset((void *)task_info_buf, 0, MAX_TASK_INFO_BUF_SIZE);
+#if !CONFIG_MEM_POOLS
+    vTaskListTasks(task_info_buf, MAX_TASK_INFO_BUF_SIZE);
+    (void)PRINTF("Name                  State   Priority Stack  Num\r\n");
+    (void)PRINTF("==================================================\r\n");
+    (void)PRINTF("%s\r\n", task_info_buf);
+#else
+    (void)PRINTF("thread info not applicable for static example!\r\n");
+#endif
+
+#if !CONFIG_MEM_POOLS
+    OSA_MemoryFree(task_info_buf);
+#else
+    OSA_MemoryPoolFree(buf_1024_MemoryPool, task_info_buf);
+#endif
+}
 
 #if CONFIG_WIFI_FW_DEBUG
 void wifi_register_fw_dump_cb(int (*wifi_usb_mount_cb)(),
