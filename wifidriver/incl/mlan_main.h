@@ -2702,7 +2702,8 @@ const chan_freq_power_t *wlan_find_cfp_by_band_and_channel(mlan_adapter *pmadapt
 const chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, t_u16 band, t_u32 freq);
 /** Get Tx power of channel from Channel-Frequency-Power */
 t_u8 wlan_get_txpwr_of_chan_from_cfp(mlan_private *pmpriv, t_u8 channel);
-
+/** Get frequence from channel */
+mlan_status wlan_get_freq_by_channel(mlan_adapter *pmadapter, t_u8 channel, t_u32 *freq);
 #endif /* STA_SUPPORT */
 
 /* Rate related functions */

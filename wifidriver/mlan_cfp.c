@@ -1418,6 +1418,60 @@ const chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter,
     LEAVE();
     return cfp;
 }
+
+/**
+ *  @brief Get frequency from channel.
+ *
+ *  @param pmadapter    A pointer to mlan_adapter structure
+ *  @param channel      The channel to search for
+ *  @param freq         A pointer to frequency
+ *
+ *  @return             MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+mlan_status wlan_get_freq_by_channel(mlan_adapter *pmadapter, t_u8 channel, t_u32 *freq)
+{
+    int i = 0;
+    const chan_freq_power_t * temp_cfp = MNULL;
+    t_u8 region_code = pmadapter->region_code;
+
+    for (i = 0; i < MLAN_CFP_TABLE_SIZE_BG; i++)
+    {
+        if (cfp_table_BG[i].code == region_code)
+        {
+            for (int j = 0; j < cfp_table_BG[i].cfp_no; j++)
+            {
+                temp_cfp = cfp_table_BG[i].cfp + j;
+                if (temp_cfp->channel == channel)
+                {
+                    *freq = temp_cfp->freq;
+                    return MLAN_STATUS_SUCCESS;
+                }
+            }
+        }
+    }
+
+#if CONFIG_5GHz_SUPPORT
+    for (i = 0; i < MLAN_CFP_TABLE_SIZE_A; i++)
+    {
+        if (cfp_table_A[i].code == region_code)
+        {
+            for (int j = 0; j < cfp_table_A[i].cfp_no; j++)
+            {
+                temp_cfp = cfp_table_A[i].cfp + j;
+                if (temp_cfp->channel == channel)
+                {
+                    *freq = temp_cfp->freq;
+                    return MLAN_STATUS_SUCCESS;
+                }
+            }
+        }
+    }
+#endif /* CONFIG_5GHz_SUPPORT */
+
+return MLAN_STATUS_FAILURE;
+
+}
+
 #endif /* STA_SUPPORT */
 
 /**

@@ -16722,6 +16722,68 @@ int wlan_p2p_group_add(char *cmd)
         return WLAN_ERROR_STATE;
     }
 
+#if CONFIG_ECSA
+    if(is_sta_connected())
+    {
+        wlcm_w("NOTE: Will automatically switch to the channel that station is on.");
+        /** Get channel of connected AP. */
+        uint8_t channel = (uint8_t)wlan.networks[wlan.cur_network_idx].channel & 0xFF;
+
+        t_u32 freq = 0;
+
+        if(wlan_get_freq_by_channel(mlan_adap, channel, &freq) != MLAN_STATUS_SUCCESS)
+        {
+            (void)PRINTF("Can't get corresponding frequence from channel %d\r\n", channel);
+            return -WM_FAIL;
+        }
+
+        /** Try to replace freq of cmd with freqence of connected AP.*/
+
+        char *freq_pos = strstr(cmd, "freq=");
+        if(freq_pos != NULL)
+        {
+            size_t freq_len = sizeof(freq);
+            char *freq_value_start = freq_pos + strlen("freq=");
+
+            /** Check if the length of frequency value is valid*/
+            bool valid_freq_len = true;
+            for (int i = 0; i < freq_len; i++)
+            {
+                if (!isdigit((unsigned char)freq_value_start[i]))
+                {
+                    valid_freq_len = false;
+                    break;
+                }
+            }
+
+            if (!(valid_freq_len &&
+                (freq_value_start[freq_len] == '\0' || isspace((unsigned char)freq_value_start[freq_len]))))
+            {
+                PRINTF("Invalid frequence.\r\n");
+                return  -WM_FAIL;
+            }
+
+            char freq_str[5] = {0};
+            (void)snprintf(freq_str, sizeof(freq_str), "%04u", freq);
+
+            (void)memcpy(freq_value_start, freq_str, freq_len);
+            wlcm_w("ECSA: Updated group add cmd: %s\r\n", cmd);
+        }
+        else
+        {
+            char freq_str[11] = {0};
+            char freq_string[] = " freq=";
+            (void)memcpy(freq_str, freq_string, strlen(freq_string));
+            (void)snprintf(freq_str + strlen(freq_string), sizeof(freq_str) - strlen(freq_string), "%04u", freq);
+
+            /** Append freq=xxx to cmd. */
+            (void)strcat(cmd, freq_str);
+            wlcm_w("ECSA: Updated group add cmd: %s\r\n", cmd);
+        }
+
+    }
+#endif
+
 #if CONFIG_WIFI_CAPA
     uint8_t capa = WIFI_SUPPORT_LEGACY | WIFI_SUPPORT_11N;
 
