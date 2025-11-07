@@ -315,7 +315,7 @@ AT_ALWAYS_ON_DATA_INIT(pm_notify_element_t wlan_notify) =
 };
 #endif
 bool wlan_hs_pre_cfg_done = false;
-#if !(CONFIG_WIFI_BLE_COEX_APP)
+#if !(CONFIG_WIFI_BLE_COEX_APP) && !(CONFIG_NCP)
 int wlan_host_sleep_state = HOST_SLEEP_DISABLE;
 #else
 int wlan_host_sleep_state = HOST_SLEEP_PERIODIC;
@@ -330,7 +330,7 @@ int wlan_host_sleep_state = HOST_SLEEP_PERIODIC;
  */
 bool usart_suspend_flag = false;
 #endif
-#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE) && (!CONFIG_NCP_OT)
+#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP)
 OSA_TIMER_HANDLE_DEFINE(wake_timer);
 #define WAKE_TIMEOUT (5 * 1000)
 #endif
@@ -1224,7 +1224,7 @@ status_t wlan_hs_send_event(int id, void *data)
 #endif
 
 #if CONFIG_POWER_MANAGER
-#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE) && (!CONFIG_NCP_OT)
+#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP)
 static void wake_timer_cb(osa_timer_arg_t arg)
 {
     if(wakelock_isheld())
@@ -1373,7 +1373,7 @@ enter:
         {
             if (wlan_is_stopped() != 0)
             {
-#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE) && (!CONFIG_NCP_OT)
+#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP)
                 ret = wlan_hs_send_event(HOST_SLEEP_HS_SKIP, NULL);
                 if (ret != 0)
                 {
@@ -1399,7 +1399,7 @@ enter:
                 }
                 else
                 {
-#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE) && (!CONFIG_NCP_OT)
+#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP)
                     if(!wlan_is_manual && wlan_host_sleep_state == HOST_SLEEP_PERIODIC)
                     {
                         ret = wlan_hs_send_event(HOST_SLEEP_HS_SKIP, NULL);
@@ -1571,7 +1571,7 @@ void wlan_config_host_sleep(bool is_manual, t_u8 is_periodic)
 #if CONFIG_POWER_MANAGER
         /* Reset flag and stop timer if manual mode is selected without cancel periodic sleep */
         wlan_host_sleep_state = HOST_SLEEP_DISABLE;
-#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE) && (!CONFIG_NCP_OT)
+#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP)
         wlan_stop_wake_timer();
 #endif
 #endif
@@ -1611,7 +1611,7 @@ void wlan_clear_host_sleep_config(void)
 #if CONFIG_UART_INTERRUPT
     usart_suspend_flag = MFALSE;
 #endif
-#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE) && (!CONFIG_NCP_OT)
+#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP)
     wlan_stop_wake_timer();
 #endif
     wlan_hs_hanshake_cfg(false);
@@ -11277,7 +11277,7 @@ static void wlcmgr_mon_task(void * data)
     struct wlan_message msg;
 
 #if CONFIG_HOST_SLEEP && CONFIG_POWER_MANAGER
-#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE) && (!CONFIG_NCP_OT)
+#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP)
     status = OSA_TimerCreate((osa_timer_handle_t)wake_timer, WAKE_TIMEOUT,
                           &wake_timer_cb, NULL, KOSA_TimerOnce, OSA_TIMER_NO_ACTIVATE);
     if (status != KOSA_StatusSuccess)
@@ -11317,7 +11317,7 @@ static void wlcmgr_mon_task(void * data)
                     }
                     break;
                 case HOST_SLEEP_EXIT:
-#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE) && (!CONFIG_NCP_OT)
+#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP)
                     wlan_start_wake_timer();
 #endif
                     wlan_cancel_host_sleep();
@@ -11329,11 +11329,11 @@ static void wlcmgr_mon_task(void * data)
                     host_sleep_cli_notify();
                     break;
 #endif
-#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP_BLE) && (!CONFIG_NCP_OT)
                 case HOST_SLEEP_HS_SKIP:
+#if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP)
                     wlan_start_wake_timer();
-                    break;
 #endif
+                    break;
 #endif
 #if CONFIG_WIFI_RECOVERY
                 case WIFI_RECOVERY_REQ:
