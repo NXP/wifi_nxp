@@ -387,6 +387,43 @@ int wifi_wait_for_vdllcmdresp(void *cmd_resp_priv)
 }
 #endif
 
+/* calling it only when FW is in presleep state but receives command that needs event */
+static void send_sleep_cfm_no_wait(void)
+{
+    OPT_Confirm_Sleep *ps_cfm_sleep;
+    HostCmd_DS_COMMAND *cmd = wifi_get_sleep_cfm_command_buffer();
+#ifndef RW610
+    t_u32 buf_len = MLAN_SDIO_BLOCK_SIZE;
+    t_u32 tx_blocks;
+#endif
+
+    ps_cfm_sleep = (OPT_Confirm_Sleep *)(void *)(cmd);
+
+    (void)memset(ps_cfm_sleep, 0x00, sizeof(OPT_Confirm_Sleep));
+    ps_cfm_sleep->command = HostCmd_CMD_802_11_PS_MODE_ENH;
+    ps_cfm_sleep->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO((t_u16)0 /* seq_num */, (t_u16)0 /* bss_num */, (t_u16)0);
+
+    ps_cfm_sleep->size                = (t_u16)sizeof(OPT_Confirm_Sleep);
+    ps_cfm_sleep->result              = 0;
+    ps_cfm_sleep->action              = (t_u16)SLEEP_CONFIRM;
+    ps_cfm_sleep->sleep_cfm.resp_ctrl = (t_u16)RESP_NEEDED;
+
+#ifndef RW610
+    /* First 4 bytes reserved for SDIO pkt header */
+    tx_blocks = ((t_u32)cmd->size + INTF_HEADER_LEN + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
+#endif
+
+#if defined(RW610)
+    (void)wifi_send_sleep_cfm_cmdbuffer();
+#else
+    (void)wifi_send_sleep_cfm_cmdbuffer(tx_blocks, buf_len);
+#endif
+    mlan_adap->ps_state = PS_STATE_SLEEP_CFM;
+#if CONFIG_WIFI_PS_DEBUG
+    wcmdr_d("++");
+#endif
+}
+
 #if (CONFIG_WIFI_IND_DNLD)
 t_u8 wifi_rx_block_cnt;
 t_u8 wifi_tx_block_cnt;
@@ -475,13 +512,14 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 {
     int ret;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[0];
+    mlan_adapter *pmadapter = pmpriv->adapter;
 #ifndef RW610
     t_u32 buf_len = MLAN_SDIO_BLOCK_SIZE;
     t_u32 tx_blocks;
 #endif
-    mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[0];
-    mlan_adapter *pmadapter = pmpriv->adapter;
 
+resend:
 #ifndef RW610
 #if (CONFIG_ENABLE_WARNING_LOGS) || (CONFIG_WIFI_CMD_RESP_DEBUG)
 
@@ -667,6 +705,14 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     }
 
     wm_wifi.cmd_resp_priv = NULL;
+
+    /* FW is in presleep state. So we send sleep confirm first and then resend this command */
+    if (pmadapter->cmd_reject_presleep)
+    {
+        pmadapter->cmd_reject_presleep = false;
+        goto resend;
+    }
+
     wifi_set_xfer_pending(false);
     (void)wifi_put_command_lock();
     return ret;
@@ -1094,6 +1140,7 @@ static void wifi_drv_task(void *argv)
 {
     osa_status_t status;
     struct bus_message msg;
+    int ret;
 
     (void)memset((void *)&msg, 0, sizeof(struct bus_message));
 
@@ -1119,7 +1166,15 @@ static void wifi_drv_task(void *argv)
             }
             else if (msg.event == MLAN_TYPE_CMD)
             {
-                (void)wifi_process_cmd_response((HostCmd_DS_COMMAND *)(void *)((uint8_t *)msg.data + INTF_HEADER_LEN));
+                ret = wifi_process_cmd_response((HostCmd_DS_COMMAND *)(void *)((uint8_t *)msg.data + INTF_HEADER_LEN));
+                if (ret == WIFI_EVENT_CMD_BLOCK_PRE_ASLEEP)
+                {
+                    mlan_adap->cmd_reject_presleep = true;
+                    send_sleep_cfm_no_wait();
+                    wifi_update_last_cmd_sent_ms();
+                    continue;
+                }
+
                 wifi_update_last_cmd_sent_ms();
                 (void)wifi_put_command_resp_sem();
             }

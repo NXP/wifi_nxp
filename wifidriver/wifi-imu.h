@@ -105,6 +105,14 @@ int wifi_send_cmdbuffer(void);
  *
  *
  */
+HostCmd_DS_COMMAND *wifi_get_sleep_cfm_command_buffer(void);
+int wifi_send_sleep_cfm_cmdbuffer(void);
+
+/*
+ * @internal
+ *
+ *
+ */
 HostCmd_DS_COMMAND *wifi_get_command_buffer(void);
 
 mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx_control);

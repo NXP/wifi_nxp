@@ -3401,7 +3401,10 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
         OSA_RWLockWriteUnlock(&sleep_rwlock);
         mlan_adap->ps_state = PS_STATE_AWAKE;
     }
-
+    if (resp->result == HostCmd_RESULT_PRE_ASLEEP)
+    {
+        return WIFI_EVENT_CMD_BLOCK_PRE_ASLEEP;
+    }
     /* Check if the command is a user issued host command */
     if (wm_wifi.hostcmd_cfg.is_hostcmd == true)
     {
