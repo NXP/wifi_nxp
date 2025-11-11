@@ -13925,7 +13925,11 @@ static wlan_twt_setup_config_t g_twt_setup_cfg_default[] = {{
 #define TWT_SLEEP_MIN               (756 + TWT_EARLY_WAKEUP_ADJUSTMENT) // us
 int wlan_set_twt_setup_cfg(const wlan_twt_setup_config_t *twt_setup)
 {
-    if (((twt_setup->twt_mantissa << twt_setup->twt_exponent) - (twt_setup->twt_wakeup_duration * 256)) < TWT_SLEEP_MIN)
+    uint32_t twt_interval = (uint32_t)twt_setup->twt_mantissa << (uint32_t)twt_setup->twt_exponent;
+    uint32_t wakeup_us = (uint32_t)twt_setup->twt_wakeup_duration * 256;
+    uint32_t sleep_time = twt_interval - wakeup_us;
+    
+    if (sleep_time < TWT_SLEEP_MIN)    
     {
         wlcm_e("TWT interval is : %u us", twt_setup->twt_mantissa << twt_setup->twt_exponent);
         wlcm_e("Wakeup duration (WD) value is : %u us", twt_setup->twt_wakeup_duration * 256);
