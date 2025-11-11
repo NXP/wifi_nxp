@@ -1333,6 +1333,16 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
         }
         else if (is_hs_handshake_done == WLAN_HOSTSLEEP_FAIL)
         {
+#if defined(RW610) || defined(IW610)
+            if (wlan.wakeup_conditions && (is_sta_connected()
+#if UAP_SUPPORT
+                || mlan_adap->priv[1]->media_connected
+#endif
+            ))
+            {
+                is_hs_handshake_done = 0;
+            }
+#endif
             return kStatus_PMNotifyEventError;
         }
         else if (skip_hs_handshake == true && is_hs_handshake_done == WLAN_HOSTSLEEP_SUCCESS)
