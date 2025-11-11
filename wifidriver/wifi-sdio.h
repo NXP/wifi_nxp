@@ -124,15 +124,13 @@ int wifi_send_cmdbuffer(t_u32 tx_blocks, t_u32 len);
  */
 HostCmd_DS_COMMAND *wifi_get_command_buffer(void);
 
-#ifdef SD9177
-HostCmd_DS_COMMAND *wifi_get_prev_command_buffer(void);
-#endif
-
 #if CONFIG_FW_VDLL
 int wifi_send_vdllcmdbuffer(t_u32 tx_blocks, t_u32 len);
 HostCmd_DS_COMMAND *wifi_get_vdllcommand_buffer(void);
 int wlan_send_sdio_vdllcmd(t_u8 *buf, t_u32 tx_blocks, t_u32 buflen);
 #endif
+HostCmd_DS_COMMAND *wifi_get_sleep_cfm_command_buffer(void);
+int wifi_send_sleep_cfm_cmdbuffer(t_u32 tx_blocks, t_u32 len);
 
 mlan_status wlan_process_int_status(mlan_adapter *pmadapter);
 mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx_control);

@@ -35,7 +35,7 @@
 #define CLOSEST_DTIM_TO_LISTEN_INTERVAL 65534
 /** To enable PreAsleep in firmware set CONFIG_ENABLE_PRESLEEP to '1' */
 /** **WAR** PreAsleep is disabled in driver due to issues seen on mcux toolchain. */
-#define CONFIG_ENABLE_PRESLEEP          0
+#define CONFIG_ENABLE_PRESLEEP          1
 
 static bool ieeeps_enabled;
 static bool deepsleepps_enabled;
@@ -448,26 +448,6 @@ void send_sleep_confirm_command(mlan_bss_type bss_type)
     }
 
 }
-
-#ifdef SD9177
-void prepare_error_sleep_confirm_command(mlan_bss_type bss_type)
-{
-    OPT_Confirm_Sleep *ps_cfm_sleep;
-    // Command lock not taken here since it was already taken for previous command and we are not out of loop yet
-    HostCmd_DS_COMMAND *command = wifi_get_command_buffer();
-
-    ps_cfm_sleep = (OPT_Confirm_Sleep *)(void *)(command);
-
-    (void)memset(ps_cfm_sleep, 0x00, sizeof(OPT_Confirm_Sleep));
-    ps_cfm_sleep->command = HostCmd_CMD_802_11_PS_MODE_ENH;
-    ps_cfm_sleep->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO((t_u16)0 /* seq_num */, (t_u16)0 /* bss_num */, (t_u16)(bss_type));
-
-    ps_cfm_sleep->size                = (t_u16)sizeof(OPT_Confirm_Sleep);
-    ps_cfm_sleep->result              = 0;
-    ps_cfm_sleep->action              = (t_u16)SLEEP_CONFIRM;
-    ps_cfm_sleep->sleep_cfm.resp_ctrl = (t_u16)RESP_NEEDED;
-}
-#endif
 
 #if CONFIG_HOST_SLEEP
 /* fixme: accept HostCmd_DS_COMMAND directly */

@@ -169,17 +169,6 @@ static void wifi_drv_task(osa_task_param_t arg);
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
 static OSA_TASK_DEFINE(wifi_drv_task, WLAN_TASK_PRI_HIGH, 1, CONFIG_WIFI_DRIVER_STACK_SIZE, 0);
 
-#ifdef SD9177
-#if !CONFIG_WIFI_PRE_ASLEEP_STACK_SIZE
-#define CONFIG_WIFI_PRE_ASLEEP_STACK_SIZE (2048)
-#endif
-
-static void wifi_pre_asleep_task(osa_task_param_t arg);
-
-/* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(wifi_pre_asleep_task, WLAN_TASK_PRI_HIGH, 1, CONFIG_WIFI_PRE_ASLEEP_STACK_SIZE, 0);
-#endif
-
 #if CONFIG_WMM
 
 #if !CONFIG_WIFI_DRV_TX_STACK_SIZE
@@ -207,10 +196,6 @@ static OSA_TASK_DEFINE(wifi_powersave_task, WLAN_TASK_PRI_LOW, 1, CONFIG_WIFI_PO
 
 int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr);
 int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
-
-#ifdef SD9177
-static int send_pre_asleep_request(int request, void* data);
-#endif
 
 #if CONFIG_HOST_SLEEP
 int wakelock_get(void)
@@ -324,11 +309,7 @@ int wifi_get_command_lock(void)
 #if CONFIG_HOST_SLEEP
     wakelock_get();
 #endif
-#ifdef SD9177
-    status = OSA_SemaphoreWait((osa_semaphore_handle_t)wm_wifi.command_lock, osaWaitForever_c);
-#else
     status = OSA_MutexLock((osa_mutex_handle_t)wm_wifi.command_lock, osaWaitForever_c);
-#endif
     if (status != KOSA_StatusSuccess)
     {
         return -WM_FAIL;
@@ -344,11 +325,7 @@ int wifi_put_command_lock(void)
 #if CONFIG_HOST_SLEEP
     wakelock_put();
 #endif
-#ifdef SD9177
-    status = OSA_SemaphorePost((osa_semaphore_handle_t)wm_wifi.command_lock);
-#else
     status = OSA_MutexUnlock((osa_mutex_handle_t)wm_wifi.command_lock);
-#endif
     if (status != KOSA_StatusSuccess)
     {
         return -WM_FAIL;
@@ -443,6 +420,43 @@ int wifi_wait_for_vdllcmdresp(void *cmd_resp_priv)
 }
 #endif
 
+/* calling it only when FW is in presleep state but receives command that needs event */
+static void send_sleep_cfm_no_wait(void)
+{
+    OPT_Confirm_Sleep *ps_cfm_sleep;
+    HostCmd_DS_COMMAND *cmd = wifi_get_sleep_cfm_command_buffer();
+#ifndef RW610
+    t_u32 buf_len = MLAN_SDIO_BLOCK_SIZE;
+    t_u32 tx_blocks;
+#endif
+
+    ps_cfm_sleep = (OPT_Confirm_Sleep *)(void *)(cmd);
+
+    (void)memset(ps_cfm_sleep, 0x00, sizeof(OPT_Confirm_Sleep));
+    ps_cfm_sleep->command = HostCmd_CMD_802_11_PS_MODE_ENH;
+    ps_cfm_sleep->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO((t_u16)0 /* seq_num */, (t_u16)0 /* bss_num */, (t_u16)0);
+
+    ps_cfm_sleep->size                = (t_u16)sizeof(OPT_Confirm_Sleep);
+    ps_cfm_sleep->result              = 0;
+    ps_cfm_sleep->action              = (t_u16)SLEEP_CONFIRM;
+    ps_cfm_sleep->sleep_cfm.resp_ctrl = (t_u16)RESP_NEEDED;
+
+#ifndef RW610
+    /* First 4 bytes reserved for SDIO pkt header */
+    tx_blocks = ((t_u32)cmd->size + INTF_HEADER_LEN + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
+#endif
+
+#if defined(RW610)
+    (void)wifi_send_sleep_cfm_cmdbuffer();
+#else
+    (void)wifi_send_sleep_cfm_cmdbuffer(tx_blocks, buf_len);
+#endif
+    mlan_adap->ps_state = PS_STATE_SLEEP_CFM;
+#if CONFIG_WIFI_PS_DEBUG
+    wcmdr_d("++");
+#endif
+}
+
 #if (CONFIG_WIFI_IND_DNLD)
 #if defined(SD8978)
 static int wifi_reinit(uint8_t fw_reload);
@@ -535,64 +549,18 @@ void wlan_process_hang(uint8_t fw_reload)
 }
 #endif
 
-#ifdef SD9177
-void wifi_handle_preasleep_response(void)
-{
-    int ret;
-
-    /* Set this state since fw is in preasleep
-     * as per the previous command response
-     */
-    mlan_adap->ps_state = PS_STATE_PRE_SLEEP;
-
-    ret = wifi_wait_for_cmdresp(NULL);
-    if (ret != WM_SUCCESS)
-    {
-        wifi_e("Failed to send command in pre asleep");
-    }
-}
-#endif
-
 int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 {
     int ret;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-
-#ifdef SD9177
-    bool cmd_pending = false;
-    bool is_sleep_confirmed = false;
-    HostCmd_DS_COMMAND *prev_cmd = wifi_get_prev_command_buffer();
-
-    /* Following implementation is tightly coupled with firmware's
-     * ask for sleep confirm after event 0xb or comamnd response as 0x7
-     */
-    if (cmd->command == HostCmd_CMD_802_11_PS_MODE_ENH)
-    {
-        /* Do nothing */
-    }
-    else if (mlan_adap->ps_state == PS_STATE_PRE_SLEEP)
-    {
-        memcpy(prev_cmd, cmd, WIFI_FW_CMDBUF_SIZE);
-        prepare_error_sleep_confirm_command((mlan_bss_type)WLAN_BSS_TYPE_STA);
-        cmd_pending = true;
-        OSA_TimeDelay(5);
-    }
-
-start:
-    if (is_sleep_confirmed == true)
-    {
-        memcpy(cmd, prev_cmd, WIFI_FW_CMDBUF_SIZE);
-        is_sleep_confirmed = false;
-    }
-#endif
-
+    mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[0];
+    mlan_adapter *pmadapter = pmpriv->adapter;
 #ifndef RW610
     t_u32 buf_len = MLAN_SDIO_BLOCK_SIZE;
     t_u32 tx_blocks;
 #endif
-    mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[0];
-    mlan_adapter *pmadapter = pmpriv->adapter;
 
+resend:
 #ifndef RW610
 #if (CONFIG_ENABLE_WARNING_LOGS) || (CONFIG_WIFI_CMD_RESP_DEBUG)
 
@@ -776,21 +744,16 @@ start:
     }
 
     wm_wifi.cmd_resp_priv = NULL;
-#ifndef SD9177
-    wifi_set_xfer_pending(false);
 
-    (void)wifi_put_command_lock();
-#else
-    if (cmd_pending == true)
+    /* FW is in presleep state. So we send sleep confirm first and then resend this command */
+    if (pmadapter->cmd_reject_presleep)
     {
-        cmd_pending = false;
-        is_sleep_confirmed = true;
-        goto start;
+        pmadapter->cmd_reject_presleep = false;
+        goto resend;
     }
-    if (wifi_get_xfer_pending() == false)
-        (void)wifi_put_command_lock();
+
     wifi_set_xfer_pending(false);
-#endif
+    (void)wifi_put_command_lock();
     return ret;
 }
 
@@ -1213,13 +1176,15 @@ static void wifi_drv_task(void *argv)
                 {
                     wifi_d("Command processing error");
                 }
-#ifdef SD9177
+
                 if (ret == WIFI_EVENT_CMD_BLOCK_PRE_ASLEEP)
                 {
-                    wifi_set_xfer_pending(true);
-                    send_pre_asleep_request(WIFI_EVENT_CMD_BLOCK_PRE_ASLEEP, NULL);
+                    mlan_adap->cmd_reject_presleep = true;
+                    send_sleep_cfm_no_wait();
+                    wifi_update_last_cmd_sent_ms();
+                    continue;
                 }
-#endif
+
                 wifi_update_last_cmd_sent_ms();
                 (void)wifi_put_command_resp_sem();
             }
@@ -1231,33 +1196,6 @@ static void wifi_drv_task(void *argv)
         }
     }
 }
-
-#ifdef SD9177
-static void wifi_pre_asleep_task(void *argv)
-{
-    osa_status_t status;
-    struct bus_message msg;
-
-    (void)memset((void *)&msg, 0, sizeof(struct bus_message));
-
-    /* Command response handling Loop */
-    while (true)
-    {
-        status = OSA_MsgQGet((osa_msgq_handle_t)wm_wifi.pre_asleep_events, &msg, osaWaitForever_c);
-        if (status == KOSA_StatusSuccess)
-        {
-            if (msg.event == (uint16_t)WIFI_EVENT_CMD_BLOCK_PRE_ASLEEP)
-            {
-                wlcm_d("Got pre asleep handling message %d", msg.event);
-                wifi_handle_preasleep_response();
-            }
-            else
-            { /* Do Nothing */
-            }
-        }
-    }
-}
-#endif
 
 #ifndef RW610
 #define WL_ID_WIFI_CORE_INPUT "wifi_core_task"
@@ -1440,24 +1378,6 @@ static t_void wlan_vdll_complete(osa_timer_arg_t tmr_handle)
 }
 #endif
 
-#ifdef SD9177
-static int send_pre_asleep_request(int request, void* data)
-{
-    struct wifi_message msg;
-
-    msg.event  = (uint16_t)request;
-    msg.reason = WIFI_EVENT_REASON_SUCCESS;
-    msg.data   = (void *)data;
-
-    if (OSA_MsgQPut((osa_msgq_handle_t)wm_wifi.pre_asleep_events, &msg) == KOSA_StatusSuccess)
-    {
-        return WM_SUCCESS;
-    }
-
-    return -WM_FAIL;
-}
-#endif
-
 static void wifi_core_deinit(void);
 static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, const uint16_t len);
 
@@ -1470,19 +1390,13 @@ static int wifi_core_init(void)
     {
         return WM_SUCCESS;
     }
-#ifdef SD9177
-    status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)wm_wifi.command_lock);
-#else
+
     status = OSA_MutexCreate((osa_mutex_handle_t)wm_wifi.command_lock);
-#endif
     if (status != KOSA_StatusSuccess)
     {
         wifi_e("Create command_lock failed");
         goto fail;
     }
-#ifdef SD9177
-    OSA_SemaphorePost((osa_semaphore_handle_t)wm_wifi.command_lock);
-#endif
 
     status = OSA_EventCreate((osa_event_handle_t)wm_wifi.wifi_event_Handle, 1);
     if (status != KOSA_StatusSuccess)
@@ -1531,21 +1445,6 @@ static int wifi_core_init(void)
         goto fail;
     }
 
-#ifdef SD9177
-    status = OSA_MsgQCreate((osa_msgq_handle_t)wm_wifi.pre_asleep_events, MAX_EVENTS, sizeof(struct bus_message));
-    if (status != KOSA_StatusSuccess)
-    {
-        wifi_e("Create pre asleep events queue failed");
-        goto fail;
-    }
-
-    status = OSA_TaskCreate((osa_task_handle_t)wm_wifi.wifi_pre_asleep_task_Handle, OSA_TASK(wifi_pre_asleep_task), NULL);
-    if (status != KOSA_StatusSuccess)
-    {
-        wifi_e("Create pre asleep thread failed");
-        goto fail;
-    }
-#endif
     ret = bus_register_data_input_function(&wifi_low_level_input);
     if (ret != WM_SUCCESS)
     {
@@ -1691,9 +1590,6 @@ static void wifi_core_deinit(void)
     bus_deregister_data_input_funtion();
 
     (void)OSA_MsgQDestroy((osa_msgq_handle_t)wm_wifi.io_events);
-#ifdef SD9177
-    (void)OSA_MsgQDestroy((osa_msgq_handle_t)wm_wifi.pre_asleep_events);
-#endif
     (void)OSA_MsgQDestroy((osa_msgq_handle_t)wm_wifi.powersave_queue);
 
 #if CONFIG_WMM
@@ -1713,11 +1609,7 @@ static void wifi_core_deinit(void)
 #if CONFIG_WMM
     (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)wm_wifi.tx_data_sem);
 #endif
-#ifdef SD9177
-    (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)wm_wifi.command_lock);
-#else
     (void)OSA_MutexDestroy((osa_mutex_handle_t)wm_wifi.command_lock);
-#endif
     (void)OSA_EventDestroy((osa_event_handle_t)wm_wifi.wifi_event_Handle);
 #if 0
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_drv_task_Handle);
@@ -2008,9 +1900,6 @@ void wifi_destroy_wifidriver_tasks(void)
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_drv_tx_task_Handle);
 #endif
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_drv_task_Handle);
-#ifdef SD9177
-    (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_pre_asleep_task_Handle);
-#endif
 #ifndef RW610
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_core_task_Handle);
 #endif

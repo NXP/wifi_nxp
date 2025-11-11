@@ -797,17 +797,6 @@ typedef struct _mlan_tx_param
     t_u32 next_pkt_len;
 } mlan_tx_param;
 
-#if 0
-/** PS_STATE */
-typedef enum _PS_STATE
-{
-    PS_STATE_AWAKE,
-    PS_STATE_PRE_SLEEP,
-    PS_STATE_SLEEP_CFM,
-    PS_STATE_SLEEP
-} PS_STATE;
-#endif
-
 /** Minimum flush timer for win size of 1 is 50 ms */
 #define MIN_FLUSH_TIMER_MS 50U
 /** Tx BA stream table */
@@ -2290,6 +2279,8 @@ struct _mlan_adapter
 #endif
     /** Power Save state */
     enum wlan_ps_state ps_state;
+    /** Command needs response as event is rejected as firmware is in presleep state */
+    bool cmd_reject_presleep;
     /** keep_wakeup */
     t_u8 keep_wakeup;
     /** Multiple DTIM */

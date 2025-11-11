@@ -38,9 +38,7 @@
 /* Buffer pointers to point to command and, command response buffer */
 static uint8_t ctrl_cmd_buf[WIFI_FW_CMDBUF_SIZE];
 
-#ifdef SD9177
-static uint8_t prev_cmd_buf[WIFI_FW_CMDBUF_SIZE] = {0};
-#endif
+static uint8_t sleep_cfm_cmd_buf[WIFI_FW_CMDBUF_SIZE] = {0};
 
 #if CONFIG_FW_VDLL
 static uint8_t vdll_cmd_buf[WIFI_FW_CMDBUF_SIZE] = {0};
@@ -2261,6 +2259,11 @@ int wifi_send_vdllcmdbuffer(t_u32 tx_blocks, t_u32 len)
 }
 #endif
 
+int wifi_send_sleep_cfm_cmdbuffer(t_u32 tx_blocks, t_u32 len)
+{
+    return wlan_send_sdio_cmd(sleep_cfm_cmd_buf, tx_blocks, len);
+}
+
 #if CONFIG_WMM
 
 #if CONFIG_SDIO_MULTI_PORT_TX_AGGR
@@ -3849,13 +3852,11 @@ HostCmd_DS_COMMAND *wifi_get_vdllcommand_buffer(void)
 }
 #endif
 
-#ifdef SD9177
-HostCmd_DS_COMMAND *wifi_get_prev_command_buffer(void)
+HostCmd_DS_COMMAND *wifi_get_sleep_cfm_command_buffer(void)
 {
     /* First 4 bytes reserved for SDIO pkt header */
-    return (HostCmd_DS_COMMAND *)(void *)(prev_cmd_buf + INTF_HEADER_LEN);
+    return (HostCmd_DS_COMMAND *)(void *)(sleep_cfm_cmd_buf + INTF_HEADER_LEN);
 }
-#endif
 
 HostCmd_DS_COMMAND *wifi_get_command_buffer(void)
 {
