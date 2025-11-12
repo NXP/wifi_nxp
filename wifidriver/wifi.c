@@ -1396,6 +1396,12 @@ static void wifi_scan_task(void *argv)
                 (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
             }
         }
+#if CONFIG_WPA_SUPP
+        else
+        {
+            wifi_nxp_reset_scan_flag();
+        }
+#endif
         scan_thread_in_process = false;
     } /* for ;; */
     while (true)
