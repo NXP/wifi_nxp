@@ -672,9 +672,6 @@ start:
         (void)wifi_put_command_lock();
 
 #if CONFIG_WIFI_FW_DEBUG
-#ifndef RW610
-        wifi_sdio_reg_dbg();
-#endif
         if (wm_wifi.wifi_usb_mount_cb != NULL)
         {
             ret = wm_wifi.wifi_usb_mount_cb();
@@ -744,9 +741,6 @@ start:
         wifi_dump_driver_info();
 #endif /* CONFIG_ENABLE_WARNING_LOGS */
 #if CONFIG_WIFI_FW_DEBUG
-#ifndef RW610
-        wifi_sdio_reg_dbg();
-#endif
         if (wm_wifi.wifi_usb_mount_cb != NULL)
         {
             ret = wm_wifi.wifi_usb_mount_cb();
@@ -3054,9 +3048,6 @@ void wifi_tx_card_awake_lock(void)
     {
         wifi_e("Failed to wakeup card for Tx");
 #if CONFIG_WIFI_FW_DEBUG
-#ifndef RW610
-        wifi_sdio_reg_dbg();
-#endif
         if (wm_wifi.wifi_usb_mount_cb != NULL)
         {
             ret = wm_wifi.wifi_usb_mount_cb();
