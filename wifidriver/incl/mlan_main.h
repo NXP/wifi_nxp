@@ -2115,6 +2115,8 @@ struct _mlan_adapter
     pmlan_private priv[MLAN_MAX_BSS_NUM];
     /** Total number of Priv number */
     t_u8 priv_num;
+    /** Command sequence number */
+    t_u16 seq_num;
     /** Firmware start addr */
     const t_u8 *fw_start_addr;
     mlan_callbacks callbacks;
@@ -3391,4 +3393,10 @@ t_bool wlan_is_etsi_country(pmlan_adapter pmadapter, t_u8 *country_code);
 #if CONFIG_WIFI_CHANNEL_LOAD
 mlan_status wlan_cmd_get_channel_load(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf);
 #endif
+
+static inline t_u16 wifi_get_cmd_seq_num(mlan_private *pmpriv)
+{
+    pmpriv->adapter->seq_num++;
+    return HostCmd_SET_SEQ_NO_BSS_INFO(pmpriv->adapter->seq_num, pmpriv->bss_num, pmpriv->bss_type);
+}
 #endif /* !_MLAN_MAIN_H_ */

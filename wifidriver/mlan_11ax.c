@@ -467,6 +467,7 @@ int wlan_cmd_11ax_cfg(mlan_private *pmpriv, t_u16 action, mlan_ds_11ax_he_cfg *h
     (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     cmd->command            = wlan_cpu_to_le16(HostCmd_CMD_11AX_CFG);
+    cmd->seq_num            = wifi_get_cmd_seq_num(pmpriv);
     cmd->size               = S_DS_GEN + sizeof(HostCmd_DS_11AX_CFG);
     axcfg                   = (HostCmd_DS_11AX_CFG *)((t_u32)cmd + S_DS_GEN);
     axcfg->action           = action;
@@ -482,7 +483,7 @@ int wlan_cmd_11ax_cfg(mlan_private *pmpriv, t_u16 action, mlan_ds_11ax_he_cfg *h
         cmd->size += (t_u16)(he_cfg->he_cap.len) + (t_u16)sizeof(MrvlIEtypesHeader_t);
         pos += he_cfg->he_cap.len + sizeof(MrvlIEtypesHeader_t);
     }
-    cmd->seq_num = (t_u16)HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, (t_u16)0U /* bss_num */, (t_u16)(pmpriv->bss_index));
+    cmd->seq_num = wifi_get_cmd_seq_num(pmpriv);
     cmd->result  = 0x00;
 
     (void)wifi_wait_for_cmdresp(he_cfg);
@@ -675,6 +676,7 @@ mlan_status wlan_cmd_11ax_cmd(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u
     ENTER();
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_11AX_CMD);
     cmd->size    = sizeof(HostCmd_DS_11AX_CMD_CFG) + S_DS_GEN;
+    cmd->seq_num = wifi_get_cmd_seq_num(pmpriv);
 
     axcmd->action = wlan_cpu_to_le16(cmd_action);
     axcmd->sub_id = wlan_cpu_to_le16((t_u16)(ds_11ax_cmd->sub_id & 0xFFFFU));

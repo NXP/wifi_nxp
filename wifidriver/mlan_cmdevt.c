@@ -966,6 +966,7 @@ mlan_status wlan_cmd_tx_pert(pmlan_private pmpriv,
         tx_pert->tx_stat_check_ratio  = cfg->tx_pert_check_ratio;
         tx_pert->tx_stat_check_num    = wlan_cpu_to_le16(cfg->tx_pert_check_num);
     }
+    cmd->seq_num = wifi_get_cmd_seq_num(pmpriv);
     cmd->size = wlan_cpu_to_le16(S_DS_GEN + sizeof(HostCmd_DS_TX_RX_PKT_STATS) + sizeof(MrvlTxPerTrackInfo_t));
 
     LEAVE();
@@ -993,7 +994,7 @@ mlan_status wlan_cmd_txrx_histogram(pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
     cmd->command      = wlan_cpu_to_le16(HostCmd_CMD_TX_RX_PKT_STATS);
     histogram->action = cfg->action;
     histogram->enable = cfg->enable;
-    cmd->seq_num      = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, pmpriv->bss_type);
+    cmd->seq_num      = wifi_get_cmd_seq_num(pmpriv);
     cmd->size         = wlan_cpu_to_le16(S_DS_GEN + sizeof(HostCmd_DS_TX_RX_HISTOGRAM));
 
     LEAVE();

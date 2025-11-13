@@ -777,6 +777,7 @@ static mlan_status wlan_cmd_mac_multicast_adr(IN pmlan_private pmpriv,
 
     ENTER();
     cmd->size    = wlan_cpu_to_le16(sizeof(HostCmd_DS_MAC_MULTICAST_ADR) + S_DS_GEN);
+    cmd->seq_num = wifi_get_cmd_seq_num(pmpriv);
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_MAC_MULTICAST_ADR);
 
     pmc_addr->action      = wlan_cpu_to_le16(cmd_action);
@@ -2074,6 +2075,7 @@ mlan_status wlan_cmd_get_channel_load(pmlan_private pmpriv, HostCmd_DS_COMMAND *
     ENTER();
 
     cmd->command    = wlan_cpu_to_le16(HostCmd_CMD_802_11_GET_CH_LOAD);
+    cmd->seq_num    = wifi_get_cmd_seq_num(pmpriv);
     cmd->size       = wlan_cpu_to_le16(sizeof(HostCmd_DS_802_11_GET_CH_LOAD) + S_DS_GEN);
     cfg_cmd->action = wlan_cpu_to_le16(cmd_action);
 

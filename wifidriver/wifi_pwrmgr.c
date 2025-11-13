@@ -137,7 +137,7 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type bss_type, t_u32 ipv4_addr, t_u16 action, 
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     (void)memset(&hs_cfg_obj, 0x00, sizeof(hs_config_param));
 
-    cmd->seq_num = (t_u16)(HostCmd_SET_SEQ_NO_BSS_INFO((t_u16)0 /* seq_num */, (t_u16)0 /* bss_num */, (t_u16)(bss_type)));
+    cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[bss_type]);
     if (action == (t_u16)HS_CONFIGURE)
     {
         hs_cfg_obj.conditions = conditions;
@@ -276,7 +276,7 @@ int wifi_cancel_host_sleep(mlan_bss_type bss_type)
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     (void)memset(&hs_cfg_obj, 0x00, sizeof(hs_config_param));
 
-    cmd->seq_num          = HostCmd_SET_SEQ_NO_BSS_INFO((t_u16)0 /* seq_num */, (t_u16)0 /* bss_num */, (t_u16)bss_type);
+    cmd->seq_num          = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[bss_type]);
     hs_cfg_obj.conditions = HOST_SLEEP_CFG_CANCEL;
     pdata_buf             = &hs_cfg_obj;
     mlan_status status    = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_HS_CFG_ENH,
@@ -308,7 +308,7 @@ static int wifi_send_power_save_command(ENH_PS_MODES action, t_u16 ps_bitmap, ml
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     (void)memset(ds_param, 0x00, sizeof(mlan_ds_auto_ds));
 
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO((t_u16)0 /* seq_num */, (t_u16)0 /* bss_num */, (t_u16)(bss_type));
+    cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[bss_type]);
     if (ps_bitmap == BITMAP_AUTO_DS && pdata_buf != NULL)
     {
         ds_param->idletime = (*(t_u16 *)pdata_buf);
@@ -415,7 +415,7 @@ void send_sleep_confirm_command(mlan_bss_type bss_type)
 
     (void)memset(ps_cfm_sleep, 0x00, sizeof(OPT_Confirm_Sleep));
     ps_cfm_sleep->command = HostCmd_CMD_802_11_PS_MODE_ENH;
-    ps_cfm_sleep->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO((t_u16)0 /* seq_num */, (t_u16)0 /* bss_num */, (t_u16)(bss_type));
+    ps_cfm_sleep->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[bss_type]);
 
     ps_cfm_sleep->size                = (t_u16)sizeof(OPT_Confirm_Sleep);
     ps_cfm_sleep->result              = 0;
@@ -702,7 +702,7 @@ int wifi_get_wakeup_reason(t_u16 *hs_wakeup_reason)
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO((t_u16)0 /* seq_num */, (t_u16)0 /* bss_num */, (t_u16)BSS_TYPE_STA);
+    cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]);
     cmd->result  = 0x0;
 
     (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_HS_WAKEUP_REASON, HostCmd_ACT_GEN_GET, 0,

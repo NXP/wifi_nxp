@@ -638,18 +638,13 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
     return MLAN_STATUS_SUCCESS;
 }
 
-static inline t_u32 wlan_get_next_seq_num()
-{
-    return 0;
-}
-
 void wifi_prepare_set_cal_data_cmd(void *cmd, int seq_number);
 static int _wlan_set_cal_data()
 {
     (void)memset(outbuf, 0, IMU_OUTBUF_LEN);
 
     /* imupkt = outbuf */
-    wifi_prepare_set_cal_data_cmd(&imupkt->hostcmd, wlan_get_next_seq_num());
+    wifi_prepare_set_cal_data_cmd(&imupkt->hostcmd, wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]));
 
     imupkt->pkttype = MLAN_TYPE_CMD;
     imupkt->size    = imupkt->hostcmd.size + INTF_HEADER_LEN;
@@ -670,7 +665,7 @@ static int wlan_get_channel_region_cfg()
 {
     (void)memset(outbuf, 0, IMU_INIT_FW_CMD_SIZE);
     /* imupkt = outbuf */
-    wifi_prepare_get_channel_region_cfg_cmd(&imupkt->hostcmd, wlan_get_next_seq_num());
+    wifi_prepare_get_channel_region_cfg_cmd(&imupkt->hostcmd, wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]));
 
     imupkt->pkttype = MLAN_TYPE_CMD;
     imupkt->size    = imupkt->hostcmd.size + INTF_HEADER_LEN;
@@ -686,7 +681,7 @@ static int wlan_get_hw_spec()
 {
     (void)memset(outbuf, 0, IMU_INIT_FW_CMD_SIZE);
     /* imupkt = outbuf */
-    wifi_prepare_get_hw_spec_cmd(&imupkt->hostcmd, wlan_get_next_seq_num());
+    wifi_prepare_get_hw_spec_cmd(&imupkt->hostcmd, wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]));
 
     imupkt->pkttype = MLAN_TYPE_CMD;
     imupkt->size    = imupkt->hostcmd.size + INTF_HEADER_LEN;
@@ -702,7 +697,7 @@ static int wlan_get_mac_addr_sta()
     (void)memset(outbuf, 0, IMU_INIT_FW_CMD_SIZE);
 
     /* imupkt = outbuf */
-    wifi_prepare_get_mac_addr_cmd(&imupkt->hostcmd, wlan_get_next_seq_num());
+    wifi_prepare_get_mac_addr_cmd(&imupkt->hostcmd, wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]));
 
     imupkt->pkttype = MLAN_TYPE_CMD;
     imupkt->size    = imupkt->hostcmd.size + INTF_HEADER_LEN;
@@ -719,7 +714,7 @@ static int wlan_get_mac_addr_uap()
 {
     int seq_number = 0;
 
-    seq_number = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, MLAN_BSS_TYPE_UAP);
+    seq_number = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_UAP]);
     (void)memset(outbuf, 0, IMU_INIT_FW_CMD_SIZE);
 
     /* imupkt = outbuf */
@@ -741,7 +736,7 @@ static int wlan_get_mac_addr_wfd()
 {
     int seq_number = 0;
 
-    seq_number = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, MLAN_BSS_TYPE_WIFIDIRECT);
+    seq_number = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_WIFIDIRECT]);
     (void)memset(outbuf, 0, IMU_INIT_FW_CMD_SIZE);
 
     /* imupkt = outbuf */
@@ -764,7 +759,7 @@ static int wlan_get_fw_ver_ext(int version_str_sel)
     (void)memset(outbuf, 0, IMU_INIT_FW_CMD_SIZE);
 
     /* imupkt = outbuf */
-    wifi_prepare_get_fw_ver_ext_cmd(&imupkt->hostcmd, wlan_get_next_seq_num(), version_str_sel);
+    wifi_prepare_get_fw_ver_ext_cmd(&imupkt->hostcmd, wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]), version_str_sel);
 
     imupkt->pkttype = MLAN_TYPE_CMD;
     imupkt->size    = imupkt->hostcmd.size + INTF_HEADER_LEN;
@@ -783,7 +778,7 @@ static int wlan_get_value1()
     (void)memset(outbuf, 0, IMU_INIT_FW_CMD_SIZE);
 
     /* imupkt = outbuf */
-    wifi_prepare_get_value1(&imupkt->hostcmd, wlan_get_next_seq_num());
+    wifi_prepare_get_value1(&imupkt->hostcmd, wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]));
 
     imupkt->pkttype = MLAN_TYPE_CMD;
     imupkt->size    = imupkt->hostcmd.size + INTF_HEADER_LEN;
@@ -799,7 +794,7 @@ static int _wlan_set_mac_addr()
     (void)memset(outbuf, 0, IMU_INIT_FW_CMD_SIZE);
 
     /* imupkt = outbuf */
-    wifi_prepare_set_mac_addr_cmd(&imupkt->hostcmd, wlan_get_next_seq_num());
+    wifi_prepare_set_mac_addr_cmd(&imupkt->hostcmd, wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]));
 
     imupkt->pkttype = MLAN_TYPE_CMD;
     imupkt->size    = imupkt->hostcmd.size + INTF_HEADER_LEN;
@@ -816,7 +811,7 @@ static int wlan_set_11n_cfg()
     (void)memset(outbuf, 0, IMU_INIT_FW_CMD_SIZE);
     wrapper_wlan_cmd_11n_cfg(&imupkt->hostcmd);
     /* imupkt = outbuf */
-    imupkt->hostcmd.seq_num = wlan_get_next_seq_num();
+    imupkt->hostcmd.seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]);
     imupkt->pkttype         = MLAN_TYPE_CMD;
     imupkt->size            = imupkt->hostcmd.size + INTF_HEADER_LEN;
     last_cmd_sent           = HostCmd_CMD_11N_CFG;
@@ -841,7 +836,7 @@ static int _wlan_recfg_tx_buf_size(uint16_t buf_size)
     (void)memset(outbuf, 0, IMU_INIT_FW_CMD_SIZE);
 
     /* imupkt = outbuf */
-    wifi_prepare_set_tx_buf_size(&imupkt->hostcmd, wlan_get_next_seq_num());
+    wifi_prepare_set_tx_buf_size(&imupkt->hostcmd, wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]));
 
     imupkt->pkttype = MLAN_TYPE_CMD;
     imupkt->size    = imupkt->hostcmd.size + INTF_HEADER_LEN;
@@ -861,7 +856,7 @@ static int wlan_enable_amsdu()
     (void)memset(outbuf, 0, IMU_INIT_FW_CMD_SIZE);
 
     /* imupkt = outbuf */
-    wifi_prepare_enable_amsdu_cmd(&imupkt->hostcmd, wlan_get_next_seq_num());
+    wifi_prepare_enable_amsdu_cmd(&imupkt->hostcmd, wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]));
 
     imupkt->pkttype = MLAN_TYPE_CMD;
     imupkt->size    = imupkt->hostcmd.size + INTF_HEADER_LEN;
@@ -883,7 +878,7 @@ static int wlan_cmd_shutdown()
     /* imupkt = outbuf */
     imupkt->hostcmd.command = HostCmd_CMD_FUNC_SHUTDOWN;
     imupkt->hostcmd.size    = S_DS_GEN;
-    imupkt->hostcmd.seq_num = wlan_get_next_seq_num();
+    imupkt->hostcmd.seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]);
     imupkt->hostcmd.result  = 0;
 
     imupkt->pkttype = MLAN_TYPE_CMD;
@@ -903,7 +898,7 @@ static int wlan_set_mac_ctrl()
     (void)memset(outbuf, 0, IMU_INIT_FW_CMD_SIZE);
 
     /* imupkt = outbuf */
-    wlan_prepare_mac_control_cmd(&imupkt->hostcmd, wlan_get_next_seq_num());
+    wlan_prepare_mac_control_cmd(&imupkt->hostcmd, wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]));
 
     imupkt->pkttype = MLAN_TYPE_CMD;
     imupkt->size    = imupkt->hostcmd.size + INTF_HEADER_LEN;
@@ -922,7 +917,7 @@ static int wlan_cmd_init()
     /* imupkt = outbuf */
     imupkt->hostcmd.command = HostCmd_CMD_FUNC_INIT;
     imupkt->hostcmd.size    = S_DS_GEN;
-    imupkt->hostcmd.seq_num = wlan_get_next_seq_num();
+    imupkt->hostcmd.seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]);
     imupkt->hostcmd.result  = 0;
 
     imupkt->pkttype = MLAN_TYPE_CMD;
@@ -943,7 +938,7 @@ static int wlan_set_low_power_mode()
 
     /* imupkt = outbuf */
 
-    wifi_prepare_low_power_mode_cmd(&imupkt->hostcmd, wlan_get_next_seq_num());
+    wifi_prepare_low_power_mode_cmd(&imupkt->hostcmd, wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]));
 
     imupkt->pkttype = MLAN_TYPE_CMD;
     imupkt->size    = imupkt->hostcmd.size + INTF_HEADER_LEN;

@@ -30,8 +30,25 @@ Change log:
 
 /** Guard mlan_private access when uAP disabled */
 #if UAP_SUPPORT
-#define CHECK_BSS_TYPE(id, rvl)
-#define CHECK_BSS_TYPE_RET_VOID(id)
+#define CHECK_BSS_TYPE(id, rvl)                                            \
+    do                                                                     \
+    {                                                                      \
+        if ((id) >= MLAN_MAX_BSS_NUM)                                      \
+        {                                                                  \
+            wifi_e("Invalid bss_type %d >= %d\n", (id), MLAN_MAX_BSS_NUM); \
+            return (rvl);                                                  \
+        }                                                                  \
+    } while (0)
+
+#define CHECK_BSS_TYPE_RET_VOID(id)                                        \
+    do                                                                     \
+    {                                                                      \
+        if ((id) >= MLAN_MAX_BSS_NUM)                                      \
+        {                                                                  \
+            wifi_e("Invalid bss_type %d >= %d\n", (id), MLAN_MAX_BSS_NUM); \
+            return;                                                        \
+        }                                                                  \
+    } while (0)
 #else
 #define CHECK_BSS_TYPE(id, rvl) \
     if ((int)(id) > MLAN_BSS_ROLE_STA) \

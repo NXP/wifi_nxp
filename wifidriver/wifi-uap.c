@@ -279,7 +279,7 @@ void wifi_uap_clear_domain_info(unsigned int bss_type)
     HostCmd_DS_802_11D_DOMAIN_INFO *domain_info = (HostCmd_DS_802_11D_DOMAIN_INFO *)((t_u8 *)cmd + S_DS_GEN);
 
     __memset(NULL, cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, bss_type);
+    cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[bss_type]);
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_802_11D_DOMAIN_INFO);
     cmd->size    = S_DS_GEN + sizeof(domain_info->action) + sizeof(MrvlIEtypesHeader_t);
 
@@ -301,7 +301,7 @@ int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
     (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, (uint16_t)bss_type);
+    cmd->seq_num = wifi_get_cmd_seq_num(pmpriv);
     cmd->result  = 0x0;
 
     mlan_status rv = wlan_ops_uap_prepare_cmd(pmpriv, cmd_no, cmd_action, cmd_oid, pioctl_buf, pdata_buf, cmd);
@@ -1248,7 +1248,8 @@ static int wifi_uap_acs_config_set()
     size += sizeof(tlv_chan_list->header) + tlv_chan_list->header.len;
 
     cmd->size    = (t_u16)size;
-    cmd->seq_num = (0x01) << 12;
+    cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_UAP]);
+
     cmd->result  = 0x00;
 
     (void)wifi_wait_for_cmdresp(NULL);
@@ -1281,7 +1282,7 @@ int wifi_uap_do_acs(const t_u16 acs_band)
     HostCmd_DS_SYS_CONFIG *sys_config = (HostCmd_DS_SYS_CONFIG *)&cmd->params.sys_config;
 
     cmd->command       = wlan_cpu_to_le16(HOST_CMD_APCMD_SYS_CONFIGURE);
-    cmd->seq_num       = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, MLAN_BSS_TYPE_UAP);
+    cmd->seq_num       = wifi_get_cmd_seq_num(pmpriv);
     cmd->result        = 0x00;
     sys_config->action = wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);
     cmd_size           = sizeof(HostCmd_DS_SYS_CONFIG) - 1 + S_DS_GEN;
@@ -1466,7 +1467,8 @@ void wifi_uap_enable_sticky_bit(const uint8_t *mac_addr)
     size += sizeof(MrvlIEtypesHeader_t) + tim_cfg->length;
 
     cmd->size    = size;
-    cmd->seq_num = (0x01) << 12;
+    cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_UAP]);
+
     cmd->result  = 0x00;
 
     wifi_wait_for_cmdresp(NULL);
@@ -1673,7 +1675,8 @@ int wifi_uap_rates_getset(uint8_t action, char *rates, uint8_t num_rates)
     tlv += sizeof(MrvlIEtypesHeader_t) + i;
 
     cmd->size    = (t_u16)size;
-    cmd->seq_num = (0x01) << 12;
+    cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_UAP]);
+
     cmd->result  = 0x00;
 
     (void)wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? rates : NULL);
@@ -1711,7 +1714,8 @@ int wifi_uap_mcbc_rate_getset(uint8_t action, uint16_t *mcbc_rate)
     tlv += sizeof(MrvlIEtypes_mcbc_rate_t);
 
     cmd->size    = (t_u16)size;
-    cmd->seq_num = (0x01) << 12;
+    cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_UAP]);
+
     cmd->result  = 0x00;
 
     (void)wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? mcbc_rate : NULL);
@@ -1748,7 +1752,8 @@ int wifi_uap_tx_power_getset(uint8_t action, uint8_t *tx_power_dbm)
     tlv += sizeof(MrvlIEtypes_tx_power_t);
 
     cmd->size    = (uint16_t)size;
-    cmd->seq_num = (0x01) << 12;
+    cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_UAP]);
+
     cmd->result  = 0x00;
 
     (void)wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? tx_power_dbm : NULL);
@@ -1785,7 +1790,8 @@ int wifi_uap_sta_ageout_timer_getset(uint8_t action, uint32_t *sta_ageout_timer)
     tlv += sizeof(MrvlIEtypes_sta_ageout_t);
 
     cmd->size    = (t_u16)size;
-    cmd->seq_num = (0x01) << 12;
+    cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_UAP]);
+
     cmd->result  = 0x00;
 
     (void)wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? sta_ageout_timer : NULL);
@@ -1822,7 +1828,8 @@ int wifi_uap_ps_sta_ageout_timer_getset(uint8_t action, uint32_t *ps_sta_ageout_
     tlv += sizeof(MrvlIEtypes_ps_sta_ageout_t);
 
     cmd->size    = (uint16_t)size;
-    cmd->seq_num = (0x01) << 12;
+    cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_UAP]);
+
     cmd->result  = 0x00;
 
     (void)wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? ps_sta_ageout_timer : NULL);
@@ -1859,7 +1866,8 @@ int wifi_uap_group_rekey_timer_getset(uint8_t action, uint32_t *group_rekey_time
     tlv += sizeof(MrvlIEtypes_group_rekey_time_t);
 
     cmd->size    = (t_u16)size;
-    cmd->seq_num = (0x01) << 12;
+    cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_UAP]);
+
     cmd->result  = 0x00;
 
     (void)wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? group_rekey_timer : NULL);
@@ -1967,7 +1975,8 @@ int wifi_uap_pmf_getset(uint8_t action, uint8_t *mfpc, uint8_t *mfpr)
     sys_pmf_params->params.mfpr = *mfpr;
 
     cmd->size    = (t_u16)size;
-    cmd->seq_num = (0x01) << 12;
+    cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_UAP]);
+
     cmd->result  = 0x00;
 
     (void)wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? &wifi_pmf_params : NULL);
@@ -2031,7 +2040,7 @@ int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_a
     /* Fill the command buffer */
     cmd_buf->command = HOST_CMD_APCMD_SYS_CONFIGURE;
     cmd_buf->size    = cmd_len;
-    cmd_buf->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, MLAN_BSS_TYPE_UAP);
+    cmd_buf->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_UAP]);
     cmd_buf->result  = 0;
 
     sys_config->action = HostCmd_ACT_GEN_SET;

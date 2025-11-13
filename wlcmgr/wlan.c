@@ -5367,6 +5367,7 @@ int wlan_rx_mgmt_indication(const enum wlan_bss_type bss_type,
                                                     const wlan_mgmt_frame_t *frame,
                                                     const size_t len))
 {
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
 #ifdef MGMT_RX
     if (mgmt_subtype_mask)
         rx_mgmt_register_callback(rx_mgmt_callback);
@@ -12501,11 +12502,13 @@ int wlan_set_uap_max_clients(unsigned int max_sta_num)
 
 int wlan_get_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int *buf_len)
 {
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     return wifi_get_mgmt_ie((mlan_bss_type)bss_type, index, buf, buf_len);
 }
 
 int wlan_set_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t id, void *buf, unsigned int buf_len)
 {
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     return wifi_set_mgmt_ie((mlan_bss_type)bss_type, id, buf, buf_len);
 }
 
@@ -12523,6 +12526,7 @@ int wlan_set_ext_coex_config(const wlan_ext_coex_config_t ext_coex_config)
 
 int wlan_clear_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index, int mgmt_bitmap_index)
 {
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     return wifi_clear_mgmt_ie((mlan_bss_type)bss_type, index, mgmt_bitmap_index);
 }
 
@@ -12543,6 +12547,7 @@ int wlan_set_httxcfg(unsigned short httxcfg)
 
 int wlan_set_txratecfg(wlan_ds_rate ds_rate, mlan_bss_type bss_type)
 {
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     return wifi_set_txratecfg(ds_rate, bss_type);
 }
 
@@ -12550,6 +12555,7 @@ int wlan_get_txratecfg(wlan_ds_rate *ds_rate, mlan_bss_type bss_type)
 {
     int ret;
 
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     ret = wifi_get_txratecfg(ds_rate, bss_type);
 
     if (ret != WM_SUCCESS)
@@ -12695,6 +12701,7 @@ int wlan_remain_on_channel(const enum wlan_bss_type bss_type,
                            const uint32_t duration)
 {
     wifi_remain_on_channel_t roc;
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
 
     (void)memset(&roc, 0x00, sizeof(wifi_remain_on_channel_t));
 
@@ -12746,11 +12753,13 @@ int wlan_get_stats(wlan_stats_t *stats, enum wlan_bss_type bss_type)
     if (!stats)
         return -WM_E_INVAL;
 
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     return wifi_get_stats(stats, (mlan_bss_type)bss_type);
 }
 
 int wlan_reset_stats(enum wlan_bss_type bss_type)
 {
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     return wifi_reset_stats((mlan_bss_type)bss_type);
 }
 #endif
@@ -13036,6 +13045,7 @@ uint8_t wlan_get_dtim_period(void)
 
 int wlan_get_data_rate(wlan_ds_rate *ds_rate, mlan_bss_type bss_type)
 {
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     return wifi_get_data_rate(ds_rate, bss_type);
 }
 
@@ -13127,7 +13137,7 @@ static t_bool is_wowlan_pattern_supported(wifi_wowlan_pattern_t *pat, t_u8 *byte
 
 int wlan_wowlan_cfg_ptn_match(enum wlan_bss_type bss_type, wlan_wowlan_ptn_cfg_t *ptn_cfg)
 {
-
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     wlan.hs_bss_type = bss_type;
 
     if (wlan.hs_bss_type == WLAN_BSS_TYPE_UAP)
@@ -13946,6 +13956,7 @@ void wlan_set_tx_pert(struct wlan_tx_pert_info *tx_pert, mlan_bss_type bss_type)
 {
     int ret = WM_SUCCESS;
 
+    CHECK_BSS_TYPE_RET_VOID(bss_type);
     ret = wifi_set_tx_pert((void *)tx_pert, bss_type);
     if (ret != WM_SUCCESS)
         (void)PRINTF("Failed to set tx per tracking.\r\n");
@@ -13958,6 +13969,7 @@ int wlan_set_txrx_histogram(int bss_type, struct wlan_txrx_histogram_info *txrx_
 {
     int ret = WM_SUCCESS;
 
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     ret = wifi_set_txrx_histogram(bss_type, (void *)txrx_histogram, data);
     if (ret != WM_SUCCESS)
         (void)PRINTF("Failed to set txrx histogram config.\r\n");
@@ -14231,6 +14243,7 @@ void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),
 #if CONFIG_WMM
 void wlan_wmm_tx_stats_dump(int bss_type)
 {
+    CHECK_BSS_TYPE_RET_VOID(bss_type);
     wifi_wmm_tx_stats_dump(bss_type);
 }
 #endif
@@ -14429,6 +14442,7 @@ wlan_11ax_config_t *wlan_get_11ax_cfg(void)
 }
 
 #if CONFIG_11AX_TWT
+#if UAP_SUPPORT
 int wlan_set_btwt_cfg(wlan_btwt_config_t *btwt_cfg)
 {
     return wifi_set_btwt_cfg(btwt_cfg);
@@ -14438,6 +14452,7 @@ int wlan_get_btwt_cfg(wlan_btwt_config_t *btwt_cfg)
 {
     return wifi_get_btwt_cfg(btwt_cfg);
 }
+#endif
 
 static wlan_twt_setup_config_t g_twt_setup_cfg_default[] = {{
     0x01,   // implicit
@@ -16501,6 +16516,8 @@ int wlan_get_region_code(unsigned int *region_code)
 
 int wlan_set_11d_state(int bss_type, int state)
 {
+
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     if (bss_type == WLAN_BSS_TYPE_UAP)
     {
 #if UAP_SUPPORT
@@ -17322,6 +17339,7 @@ int wlan_auto_null_tx(wlan_auto_null_tx_t *auto_null_tx, mlan_bss_type bss_type)
         return -WM_E_INVAL;
     }
 
+    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     return wifi_auto_null_tx(auto_null_tx, bss_type);
 }
 #endif
