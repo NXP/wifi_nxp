@@ -1193,18 +1193,15 @@ mlan_status wlan_xmit_bypass_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface)
 
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
 
-    wifi_imu_lock();
     /* send tx data via imu */
     ret = wifi_send_fw_data(buffer, txlen);
 
     if (ret != kStatus_HAL_ImumcSuccess)
     {
         wifi_io_e("Send tx data via imu failed (%d)", ret);
-        wifi_imu_unlock();
         return MLAN_STATUS_FAILURE;
     }
 
-    wifi_imu_unlock();
     return MLAN_STATUS_SUCCESS;
 }
 #endif
@@ -1219,7 +1216,6 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
 
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
 
-    wifi_imu_lock();
 #if CONFIG_WMM_UAPSD
     if (mlan_adap->priv[interface]->adapter->pps_uapsd_mode &&
         wifi_check_last_packet_indication(mlan_adap->priv[interface]))
@@ -1251,8 +1247,6 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
 #endif
         }
 #endif
-
-        wifi_imu_unlock();
         return MLAN_STATUS_FAILURE;
     }
 
@@ -1264,7 +1258,6 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
     }
 #endif
 
-    wifi_imu_unlock();
     return MLAN_STATUS_SUCCESS;
 }
 

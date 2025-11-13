@@ -6134,13 +6134,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
                 if (split_scan_in_progress == false)
                 {
-                    /* When received EVENT_PS_SLEEP, firstly send msg to wifi_powersave task
-                     * with lowest priority, then send msg to wlcmgr task. This will let all
-                     * TX data transmitted, then continue the 0xe4 cmd handshake */
-                    struct wifi_message ps_msg;
-                    ps_msg.reason = WIFI_EVENT_REASON_SUCCESS;
-                    ps_msg.event  = WIFI_EVENT_SLEEP;
-                    OSA_MsgQPut((osa_msgq_handle_t)wm_wifi.powersave_queue, &ps_msg);
+                    wifi_event_completion(WIFI_EVENT_SLEEP, WIFI_EVENT_REASON_SUCCESS, NULL);
                 }
                 else
                 {

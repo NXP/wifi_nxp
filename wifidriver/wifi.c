@@ -168,11 +168,6 @@ static void wifi_drv_tx_task(osa_task_param_t arg);
 static OSA_TASK_DEFINE(wifi_drv_tx_task, CONFIG_NXP_WIFI_TX_TASK_PRIO, 1, CONFIG_NXP_WIFI_TX_TASK_STACK_SIZE, 0);
 #endif
 
-static void wifi_powersave_task(osa_task_param_t arg);
-
-/* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(wifi_powersave_task, CONFIG_NXP_WIFI_POWERSAVE_TASK_PRIO, 1, CONFIG_NXP_WIFI_POWERSAVE_TASK_STACK_SIZE, 0);
-
 int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr);
 int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
 
@@ -1284,29 +1279,6 @@ static void wifi_scan_task(void *argv)
     }
 }
 
-static void wifi_powersave_task(void *data)
-{
-    osa_status_t status;
-    struct wifi_message msg;
-
-    while (1)
-    {
-        status = OSA_MsgQGet((osa_msgq_handle_t)wm_wifi.powersave_queue, &msg, osaWaitForever_c);
-        if (status == KOSA_StatusSuccess)
-        {
-            switch (msg.event)
-            {
-                case WIFI_EVENT_SLEEP:
-                    wifi_event_completion(WIFI_EVENT_SLEEP, WIFI_EVENT_REASON_SUCCESS, NULL);
-                    break;
-                default:
-                    wifi_w("got unknown message: %d", msg.event);
-                    break;
-            }
-        }
-    }
-}
-
 #if CONFIG_FW_VDLL
 /**
  *  @brief This function flushes all data
@@ -1457,20 +1429,6 @@ static int wifi_core_init(void)
     }
 #endif
 
-    status = OSA_MsgQCreate((osa_msgq_handle_t)wm_wifi.powersave_queue, MAX_EVENTS, sizeof(struct bus_message));
-    if (status != KOSA_StatusSuccess)
-    {
-        PRINTF("Create power save queue failed");
-        goto fail;
-    }
-
-    status = OSA_TaskCreate((osa_task_handle_t)wm_wifi.wifi_powersave_task_Handle, OSA_TASK(wifi_powersave_task), NULL);
-    if (status != KOSA_StatusSuccess)
-    {
-        PRINTF("Create power save thread failed");
-        goto fail;
-    }
-
 #if CONFIG_CSI
     /* Semaphore to protect data parameters */
     status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem);
@@ -1532,8 +1490,6 @@ static void wifi_core_deinit(void)
 
     (void)OSA_MsgQDestroy((osa_msgq_handle_t)wm_wifi.io_events);
 
-    (void)OSA_MsgQDestroy((osa_msgq_handle_t)wm_wifi.powersave_queue);
-
 #if CONFIG_WMM
     (void)OSA_MsgQDestroy((osa_msgq_handle_t)wm_wifi.tx_data);
     wifi_wmm_buf_pool_deinit();
@@ -1556,7 +1512,6 @@ static void wifi_core_deinit(void)
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_drv_task_Handle);
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_core_task_Handle);
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_scan_task_Handle);
-    (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_powersave_task_Handle);
 #if CONFIG_WMM
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_drv_tx_task_Handle);
 #endif
@@ -1835,7 +1790,7 @@ void wifi_destroy_wifidriver_tasks(void)
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_core_task_Handle);
 #endif
     (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_scan_task_Handle);
-    (void)OSA_TaskDestroy((osa_task_handle_t)wm_wifi.wifi_powersave_task_Handle);
+
 #ifdef RW610
     imu_uninstall_callback();
 #endif
@@ -3263,7 +3218,21 @@ t_void wlan_process_bypass_txq(t_u8 interface)
     wifi_tx_card_awake_lock();
 #ifndef RW610
     wifi_sdio_lock();
+#else
+    wifi_imu_lock();
 #endif
+
+    if (priv->adapter->ps_state == PS_STATE_SLEEP_CFM || priv->adapter->ps_state == PS_STATE_SLEEP)
+    {
+#ifndef RW610
+        wifi_sdio_unlock();
+#else
+        wifi_imu_unlock();
+#endif
+        wifi_tx_card_awake_unlock();
+        send_wifi_driver_bypass_data_event(interface);
+        return;
+    }
 
     while (!wlan_bypass_txq_empty(interface) && (wifi_txbuf_available() == MTRUE))
     {
@@ -3289,6 +3258,8 @@ t_void wlan_process_bypass_txq(t_u8 interface)
 
 #ifndef RW610
     wifi_sdio_unlock();
+#else
+    wifi_imu_unlock();
 #endif
     wifi_tx_card_awake_unlock();
 }
@@ -3448,10 +3419,26 @@ static void wifi_drv_tx_task(osa_task_param_t arg)
                     wifi_tx_card_awake_lock();
 #ifndef RW610
                     wifi_sdio_lock();
+#else
+                    wifi_imu_lock();
 #endif
+                    if (pmadapter->ps_state == PS_STATE_SLEEP_CFM || pmadapter->ps_state == PS_STATE_SLEEP)
+                    {
+#ifndef RW610
+                        wifi_sdio_unlock();
+#else
+                        wifi_imu_unlock();
+#endif
+                        wifi_tx_card_awake_unlock();
+                        send_wifi_driver_tx_data_event(i);
+                        break;
+                    }
+
                     wifi_xmit_wmm_ac_pkts_enh(pmpriv);
 #ifndef RW610
                     wifi_sdio_unlock();
+#else
+                    wifi_imu_unlock();
 #endif
                     wifi_tx_card_awake_unlock();
                 }
