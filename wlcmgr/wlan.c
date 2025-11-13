@@ -10216,9 +10216,10 @@ int wlan_add_network(struct wlan_network *network)
         { /* Do Nothing */
         }
     }
-#if CONFIG_WPA_SUPP
+
     if (pos < 0)
     {
+#if CONFIG_WPA_SUPP
         if (network->security.sae_groups)
         {
             OSA_MemoryFree(network->security.sae_groups);
@@ -10231,9 +10232,9 @@ int wlan_add_network(struct wlan_network *network)
             network->security.owe_groups = NULL;
         }
 #endif
+#endif
         return -WM_E_NOMEM;
     }
-#endif
 
     wlan.networks[pos].dtim_period = network->dtim_period;
     wlan.networks[pos].acs_band    = network->acs_band;
