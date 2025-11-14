@@ -15,6 +15,7 @@
 #include <wifi.h>
 #include <wlan_tests.h>
 #include <wlan_11d.h>
+#include <mlan_api.h>
 #if CONFIG_WPS2
 #include <wifi_nxp_wps.h>
 #endif
@@ -2148,6 +2149,8 @@ static int __scan_cb(unsigned int count)
     }
 
     (void)PRINTF("%d network%s found:\r\n", count, count == 1U ? "" : "s");
+
+    (void)wlan_sort_scan_results();
 
     for (i = 0; i < count; i++)
     {

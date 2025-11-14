@@ -3067,7 +3067,7 @@ static void adjust_pointers_to_internal_buffers(BSSDescriptor_t *pbss_entry, BSS
     }
 #endif
 #if CONFIG_WPA_SUPP
-    if (pbss_new_entry->ies != NULL)
+    if (pbss_new_entry != NULL && pbss_new_entry->ies != NULL)
     {
         pbss_entry->ies = pbss_new_entry->ies;
     }
@@ -5459,4 +5459,49 @@ static t_u32 wlan_find_worst_network_in_list(const BSSDescriptor_t *pbss_desc, t
 
     LEAVE();
     return worst_net;
+}
+
+/**
+ *  @brief This function sorts scan results in ascending order by RSSI
+ *
+ *  @param                      N/A
+ *
+ *  @return                     N/A
+ */
+t_void wlan_sort_scan_results(void)
+{
+    t_u8 i, j;
+    BSSDescriptor_t temp;
+
+    ENTER();
+
+    if (!mlan_adap || !mlan_adap->pscan_table) {
+        PRINTM(MERROR, "Invalid scan table\n");
+        LEAVE();
+        return;
+    }
+
+    PRINTM(MINFO, "FindBSSID: Num of BSSIDs = %d\n", mlan_adap->num_in_scan_table);
+
+    // Use insertion sort method
+    for (i = 1; i < mlan_adap->num_in_scan_table; i++)
+    {
+        BSSDescriptor_t key = mlan_adap->pscan_table[i];
+        t_s32 key_rssi = key.rssi;
+
+        for (j = i; j > 0 && mlan_adap->pscan_table[j-1].rssi > key_rssi; j--)
+        {
+            mlan_adap->pscan_table[j] = mlan_adap->pscan_table[j-1];
+        }
+
+        mlan_adap->pscan_table[j] = key;
+    }
+
+    for (i = 0; i < mlan_adap->num_in_scan_table; i++)
+    {
+        adjust_pointers_to_internal_buffers(&mlan_adap->pscan_table[i], NULL);
+    }
+
+    LEAVE();
+    return;
 }
