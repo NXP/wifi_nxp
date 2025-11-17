@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#if CONFIG_WIFI_USB_FILE_ACCESS
 #include "usb_host_config.h"
 #include "usb_host.h"
 #include "fsl_device_registers.h"
@@ -303,3 +304,5 @@ void usb_init(void)
         PRINTF("create mouse task error\r\n");
     }
 }
+
+#endif /* CONFIG_WIFI_USB_FILE_ACCESS */
