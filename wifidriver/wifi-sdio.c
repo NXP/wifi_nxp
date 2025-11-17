@@ -2651,6 +2651,27 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
 #endif /* CONFIG_WIFI_IO_DEBUG */
 
 retry_xmit:
+#if CONFIG_TX_RX_ZERO_COPY
+    ret = wlan_xmit_pkt_sg(tx_buf, txlen, interface, 0);
+    if (ret != MLAN_STATUS_SUCCESS)
+    {
+        if (!retry)
+        {
+            ret = MLAN_STATUS_FAILURE;
+            goto exit_fn;
+        }
+        else
+        {
+            retry--;
+            /* Allow the other thread to run and hence
+             * update the write bitmap so that pkt
+             * can be sent to FW */
+            OSA_TimeDelay(1);
+            goto retry_xmit;
+        }
+    }
+    wifi_wmm_buf_put((outbuf_t *)tx_buf);
+#else
     ret = get_free_port();
     if (ret == -WM_FAIL)
     {
@@ -2669,9 +2690,7 @@ retry_xmit:
             goto retry_xmit;
         }
     }
-#if CONFIG_TX_RX_ZERO_COPY
-    ret = wlan_xmit_pkt_sg(tx_buf, txlen, interface, 0);
-#else
+
 #if CONFIG_WMM_UAPSD
     if (mlan_adap->priv[interface]->adapter->pps_uapsd_mode &&
         wifi_check_last_packet_indication(mlan_adap->priv[interface]))
@@ -3109,13 +3128,14 @@ static mlan_status _handle_sdio_packet_read(mlan_adapter *pmadapter, t_u8 **pack
 /* returns port number from rd_bitmap. if ctrl port, then it clears
  * the bit and does nothing else
  * if data port then increments curr_port value also */
-static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport)
+static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32 *rxlen, t_u32 *rxblocks)
 {
 #if defined(SD8801)
     t_u16 rd_bitmap = pmadapter->mp_rd_bitmap;
 #elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || defined(IW610)
     t_u32 rd_bitmap = pmadapter->mp_rd_bitmap;
 #endif
+    t_u32 rx_len;
 
     wifi_io_d(
         "wlan_get_rd_port: mp_rd_bitmap=0x%x"
@@ -3143,6 +3163,23 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport)
         /* Data */
         if ((pmadapter->mp_rd_bitmap & (1 << pmadapter->curr_rd_port)) != 0U)
         {
+            t_u32 len_reg_l = RD_LEN_P0_L + (pmadapter->curr_rd_port << 1);
+            t_u32 len_reg_u = RD_LEN_P0_U + (pmadapter->curr_rd_port << 1);
+
+            rx_len = ((t_u16)pmadapter->mp_regs[len_reg_u]) << 8;
+            *rxlen = rx_len |= (t_u16)pmadapter->mp_regs[len_reg_l];
+
+            *rxblocks = (rx_len + MLAN_SDIO_BLOCK_SIZE - 1) / MLAN_SDIO_BLOCK_SIZE;
+            rx_len = (t_u16)((*rxblocks) * MLAN_SDIO_BLOCK_SIZE);
+
+#if CONFIG_TX_RX_ZERO_COPY
+            if (inbuf_2_sg_data(rx_len) != WM_SUCCESS)
+            {
+                return MLAN_STATUS_RESOURCE;
+            }
+#endif
+
+            /* mask rd_bitmap and step curr_port */
             pmadapter->mp_rd_bitmap &=
 #if defined(SD8801)
                 (t_u16)(~(1 << pmadapter->curr_rd_port));
@@ -3180,24 +3217,22 @@ static mlan_status _handle_sdio_packet_read(mlan_adapter *pmadapter, t_u8 **pack
     t_u32 port;
     t_u32 rx_len, rx_blocks;
 
-    mlan_status ret = wlan_get_rd_port(pmadapter, &port);
+    mlan_status ret = wlan_get_rd_port(pmadapter, &port, &rx_len, &rx_blocks);
 
     /* nothing to read */
     if (ret != MLAN_STATUS_SUCCESS)
         return ret;
 
-    t_u32 len_reg_l = RD_LEN_P0_L + (port << 1);
-    t_u32 len_reg_u = RD_LEN_P0_U + (port << 1);
-
-    rx_len = ((t_u16)pmadapter->mp_regs[len_reg_u]) << 8;
-    *datalen = rx_len |= (t_u16)pmadapter->mp_regs[len_reg_l];
-
-    rx_blocks = (rx_len + MLAN_SDIO_BLOCK_SIZE - 1) / MLAN_SDIO_BLOCK_SIZE;
+    *datalen = rx_len;
     rx_len = (t_u16)(rx_blocks * MLAN_SDIO_BLOCK_SIZE);
 
     port = mlan_adap->ioport + port;
 
+#if CONFIG_TX_RX_ZERO_COPY
+    *packet = wlan_read_rcv_packet(port, rx_len, rx_blocks, pkt_type, true);
+#else
     *packet = wlan_read_rcv_packet(port, rx_len, rx_blocks, pkt_type, false);
+#endif
 
     if (!*packet)
         return MLAN_STATUS_FAILURE;
