@@ -3208,8 +3208,9 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
     {
         return WIFI_EVENT_CMD_BLOCK_PRE_ASLEEP;
     }
-    /* Check if the command is a user issued host command */
-    if (wm_wifi.hostcmd_cfg.is_hostcmd == true)
+    /* Check if the command is a user issued host command,
+     * and not the 0xE4 command response */
+    if (wm_wifi.hostcmd_cfg.is_hostcmd == true && command != HostCmd_CMD_802_11_PS_MODE_ENH)
     {
         wifi_set_hostcmd_resp(resp);
         rv = MLAN_STATUS_SUCCESS;
