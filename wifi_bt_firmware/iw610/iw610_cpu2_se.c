@@ -15,7 +15,11 @@
 
 # if defined(CONFIG_BT_ONLY_DNLD)
 const uint8_t fw_cpu2[] = {
+#if CONFIG_COMPRESS_FIRMWARE
+#include <uart_iw610_bt_compressed.bin.se.inc>
+#else
 #include <uart_iw610_bt.bin.se.inc>
+#endif
 };
 #else
 const uint8_t fw_cpu2[] = {

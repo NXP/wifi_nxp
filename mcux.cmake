@@ -204,6 +204,12 @@ if (CONFIG_MCUX_COMPONENT_middleware.wifi.fwdnld)
                 # TODO please change to relative dir
                 wifi_bt_firmware/iw610/iw610_cpu1_se.c
                 # TODO please change to relative dir
+                wifi_bt_firmware/iw610/sd_iw610_compressed.bin.se.inc
+                wifi_bt_firmware/iw610/sduart_iw610_compressed.bin.se.inc
+                wifi_bt_firmware/iw610/sduartspi_iw610_compressed.bin.se.inc
+                wifi_bt_firmware/iw610/uart_iw610_bt_compressed.bin.se.inc
+                wifi_bt_firmware/iw610/uartspi_iw610_compressed.bin.se.inc
+                # TODO please change to relative dir
                 wifidriver/sdio.c
                 # TODO please change to relative dir
                 wifidriver/sdio.h
