@@ -9891,11 +9891,11 @@ void wifi_dump_firmware_info()
 
     PRINTF("==== FW DUMP END: Time %u us====\r\n", OSA_GetTimestamp());
 done:
+    wifi_dump_fw_in_progress = 0;
 #if !CONFIG_WIFI_RECOVERY
     while (1)
         ;
 #endif
-    wifi_dump_fw_in_progress = 0;
 }
 #endif
 #endif
