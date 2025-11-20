@@ -14500,6 +14500,9 @@ int wlan_get_mmsf(t_u8 *enable, t_u8 *Density, t_u8 *MMSF)
 #if CONFIG_WIFI_RECOVERY
 int wlan_recovery_test(void)
 {
+    /* Block TX data as FW will be in exception state */
+    wifi_set_tx_status(WIFI_DATA_BLOCK);
+
     return wifi_recovery_test();
 }
 #endif
