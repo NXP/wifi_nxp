@@ -13405,12 +13405,12 @@ void wlan_uap_set_beacon_period(const uint16_t beacon_period)
     wifi_uap_set_beacon_period(beacon_period);
 #endif
 }
+#if UAP_SUPPORT
 int wlan_uap_get_beacon_period()
 {
-#if UAP_SUPPORT
     return wifi_uap_get_beacon_period();
-#endif
 }
+#endif
 
 int wlan_uap_set_bandwidth(const uint8_t bandwidth)
 {

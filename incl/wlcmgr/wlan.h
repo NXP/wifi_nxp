@@ -4845,12 +4845,14 @@ void wlan_set_reassoc_control(bool reassoc_control);
  */
 void wlan_uap_set_beacon_period(const uint16_t beacon_period);
 
+#if UAP_SUPPORT
 /** API to get the beacon period of the uAP
  *
  *\return beacon_period: Beacon period in TU (1 TU = 1024 microseconds)
  *
  */
 int wlan_uap_get_beacon_period();
+#endif
 
 /** API to set the bandwidth of the uAP
  *
