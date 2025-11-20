@@ -5470,7 +5470,7 @@ static t_u32 wlan_find_worst_network_in_list(const BSSDescriptor_t *pbss_desc, t
  */
 t_void wlan_sort_scan_results(void)
 {
-    t_u8 i, j;
+    t_u32 i, j;
 
     ENTER();
 
