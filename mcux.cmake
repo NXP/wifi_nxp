@@ -475,8 +475,6 @@ if (CONFIG_MCUX_COMPONENT_middleware.wifi.wifidriver)
                 certs/server-key.h
                 # TODO please change to relative dir
                 certs/dh-param.h
-                # TODO please change to relative dir
-                certs/ncache_attr.h
     )
     mcux_add_include(
         INCLUDES incl
