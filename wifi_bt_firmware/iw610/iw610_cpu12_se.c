@@ -17,18 +17,18 @@
 
 #if defined(CONFIG_WIFI_BT_CMOBO_DNLD)
 const uint8_t fw_cpu12[] = {
-#if CONFIG_COMPRESS_FIRMWARE
-  #include <sduart_iw610_compressed.bin.se.inc>
-#else
+#if CONFIG_UNCOMPRESSED_FIRMWARE
   #include <sduart_iw610.bin.se.inc>
+#else
+  #include <sduart_iw610_compressed.bin.se.inc>
 #endif
 };
 #else
 const uint8_t fw_cpu12[] = {
-#if CONFIG_COMPRESS_FIRMWARE
-  #include <sduartspi_iw610_compressed.bin.se.inc>
-#else
+#if CONFIG_UNCOMPRESSED_FIRMWARE
   #include <sduartspi_iw610.bin.se.inc>
+#else
+  #include <sduartspi_iw610_compressed.bin.se.inc>
 #endif
 };
 #endif
