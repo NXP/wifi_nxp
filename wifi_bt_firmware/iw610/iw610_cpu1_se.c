@@ -14,10 +14,10 @@
 #if (CONFIG_WIFI_IND_DNLD)
 
 const uint8_t fw_cpu1[] = {
-#if CONFIG_COMPRESS_FIRMWARE
-#include <sd_iw610_compressed.bin.se.inc>
-#else
+#if CONFIG_UNCOMPRESSED_FIRMWARE
 #include <sd_iw610.bin.se.inc>
+#else
+#include <sd_iw610_compressed.bin.se.inc>
 #endif
 };
 
