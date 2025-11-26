@@ -72,7 +72,7 @@ static bool wlan_sdio_check_fw_status(t_u32 card_poll)
 }
 
 #if CONFIG_WIFI_IND_DNLD
-
+#if 0
 /**  @brief This function disables the host interrupts mask.
  *
  *  @param pmadapter    A pointer to mlan_adapter structure
@@ -93,6 +93,7 @@ static int32_t wlan_sdio_disable_host_int_mask()
 
     return FWDNLD_INTF_SUCCESS;
 }
+#endif
 
 /**
  *  @brief This function probes the driver
@@ -251,7 +252,7 @@ static fwdnld_intf_ret_t sdio_fwdnld_check_reload(fwdnld_intf_t *intf, uint8_t f
     }
     else if (fw_reload == FW_RELOAD_NO_EMULATION)
     {
-        ret = wlan_sdio_disable_host_int_mask();
+        ret = wlan_sdio_probe();
     }
 
     return FWDNLD_INTF_SUCCESS;

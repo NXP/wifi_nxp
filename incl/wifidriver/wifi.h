@@ -120,6 +120,8 @@ enum
     WIFI_ERROR_CARD_NOT_DETECTED,
     /** The Wi-Fi Firmware not found. */
     WIFI_ERROR_FW_NOT_DETECTED,
+    /** The Wi-Fi Firmware download skipped. */
+    WIFI_ERROR_FW_DNLD_SKIP,
 };
 
 /** Wi-Fi driver TX/RX data status */
