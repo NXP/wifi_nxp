@@ -83,7 +83,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
     struct wlan_ip_config addr;
     char ssid[IEEEtypes_SSID_SIZE + 1] = {0};
     char ip[16];
-    static int auth_fail                      = 0;
+    static int auth_fail = 0;
 #if CONFIG_NXP_WIFI_SOFTAP_SUPPORT
     wlan_uap_client_disassoc_t *disassoc_resp = data;
 #endif
@@ -249,12 +249,15 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
             (void)PRINTF("Soft AP \"%s\" started successfully\r\n", ssid);
             printSeparator();
-            if (dhcp_server_start(net_get_uap_handle()) != 0)
+            ret = dhcp_server_start(net_get_uap_handle());
+            if (ret != 0)
             {
-                (void)PRINTF("Error in starting dhcp server\r\n");
+                PRINTF("%s\r\n", dhcp_server_err_str(ret));
             }
-
-            (void)PRINTF("DHCP Server started successfully\r\n");
+            else
+            {
+                (void)PRINTF("DHCP Server started successfully\r\n");
+            }
             printSeparator();
             break;
         case WLAN_REASON_UAP_CLIENT_ASSOC:

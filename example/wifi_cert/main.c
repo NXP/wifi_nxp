@@ -225,10 +225,15 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
             PRINTF("Soft AP \"%s\" started successfully\r\n", uap_network.ssid);
             printSeparator();
-            if (dhcp_server_start(net_get_uap_handle()))
-                PRINTF("Error in starting dhcp server\r\n");
-
-            PRINTF("DHCP Server started successfully\r\n");
+            ret = dhcp_server_start(net_get_uap_handle());
+            if (ret)
+            {
+                PRINTF("%s\r\n", dhcp_server_err_str(ret));
+            }
+            else
+            {
+                PRINTF("DHCP Server started successfully\r\n");
+            }
             printSeparator();
             break;
         case WLAN_REASON_UAP_CLIENT_ASSOC:

@@ -18,6 +18,7 @@
 #include <wmerrno.h>
 
 /** DHCPD Error Codes
+ * edit wm_dhcpd_err_str also according to the define changes
  */
 
 enum wm_dhcpd_errno
@@ -165,4 +166,15 @@ int dhcp_get_ip_from_mac(uint8_t *client_mac, uint32_t *client_ip);
  * This API prints DHCP stats on the console
  */
 void dhcp_stat(void);
+
+/** Start DHCP server error
+ *
+ * This returns error string for DHCP error code
+ *
+ * \param[in] return value of DHCP APIs
+ *
+ * \return error string
+ */
+const char *dhcp_server_err_str(int ret);
+
 #endif

@@ -24,12 +24,48 @@
 
 static bool dhcpd_running;
 
+#define DHCPD_ERR_STR_MAX_NUM 19
+#define DHCPD_ERR_STR_MAX_LEN 256
+
+const char wm_dhcpd_err_str[DHCPD_ERR_STR_MAX_NUM][DHCPD_ERR_STR_MAX_LEN] = {"No Error",
+                                  "Dhcp server is already running",
+                                  "Failed to create dhcp thread",
+                                  "Failed to create dhcp mutex",
+                                  "Failed to register dhcp commands",
+                                  "Failed to send dhcp response",
+                                  "Ignore as msg is not a valid dns query",
+                                  "Buffer overflow occurred",
+                                  "The input message is NULL or has incorrect length",
+                                  "Invalid opcode in the dhcp message",
+                                  "Invalid header type or incorrect header length",
+                                  "Spoof length is either NULL or it exceeds max length",
+                                  "Failed to get broadcast address",
+                                  "Failed to look up requested IP address from the interface",
+                                  "Failed to look up requested netmask from the interface",
+                                  "Failed to create the socket",
+                                  "Failed to send Gratuitous ARP",
+                                  "Error in ioctl call",
+                                  "Failed to init dhcp server"};
+
 void dhcpd_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
 static OSA_TASK_DEFINE(dhcpd_task, WLAN_TASK_PRI_HIGH, 1, CONFIG_DHCP_SERVER_STACK_SIZE, 0);
 
 OSA_TASK_HANDLE_DEFINE(dhcpd_task_Handle);
+const char *dhcp_server_err_str(int err)
+{
+    int ret = abs(err), index = 0;
+    index = ret - WM_E_DHCPD_ERRNO_BASE;
+    if ((ret > WM_E_DHCPD_ERRNO_BASE) && (ret < WM_E_DHCPD_INIT) && (index < DHCPD_ERR_STR_MAX_NUM))
+    {
+        return wm_dhcpd_err_str[index];
+    }
+    else
+    {
+        return "Invalid return no.";
+    }
+}
 
 /*
  * API
