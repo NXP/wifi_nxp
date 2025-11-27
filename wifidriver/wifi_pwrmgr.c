@@ -460,7 +460,7 @@ void wifi_process_hs_cfg_resp(t_u8 *cmd_res_buffer)
         pwr_d("Host sleep activated");
         pmadapter->is_hs_configured = 0U;
         wlan_update_rxreorder_tbl(pmadapter, MTRUE);
-        (void)wifi_event_completion(WIFI_EVENT_HS_ACTIVATED, WIFI_EVENT_REASON_SUCCESS, NULL);
+        (void)wifi_event_completion(WLAN_BSS_TYPE_STA, WIFI_EVENT_HS_ACTIVATED, WIFI_EVENT_REASON_SUCCESS, NULL);
     }
     else
     {
@@ -684,7 +684,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
             pwr_d("Host sleep activated");
             pmadapter->is_hs_configured = 0U;
             wlan_update_rxreorder_tbl(pmadapter, MTRUE);
-            (void)wifi_event_completion(WIFI_EVENT_SLEEP_CONFIRM_DONE, result, NULL);
+            (void)wifi_event_completionWLAN_BSS_TYPE_STA, (WIFI_EVENT_SLEEP_CONFIRM_DONE, result, NULL);
         }
 #endif
     }

@@ -725,6 +725,12 @@ int net_wlan_deinit(void);
  *
  * \return A pointer to STA interface netif structure
  */
+enum wlan_bss_type net_get_interface_bss_type(struct netif *n);
+
+/** Get STA interface netif structure pointer
+ *
+ * \return A pointer to STA interface netif structure
+ */
 struct netif *net_get_sta_interface(void);
 
 #if UAP_SUPPORT

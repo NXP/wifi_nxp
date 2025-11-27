@@ -2248,7 +2248,7 @@ static void do_scan(struct wlan_network *network)
     }
     if (ret != 0)
     {
-        (void)wlan_wlcmgr_send_msg(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
+        (void)wlan_wlcmgr_send_msg(network->type, WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
         wlcm_e("error: scan failed");
     }
     else
@@ -2311,7 +2311,7 @@ static void do_hidden_scan(struct wlan_network *network, uint8_t num_channels, w
 #endif
     if (ret != 0)
     {
-        (void)wlan_wlcmgr_send_msg(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
+        (void)wlan_wlcmgr_send_msg(network->type, WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
         wlcm_e("error: scan failed");
     }
 }
@@ -5516,7 +5516,7 @@ static void wlcm_process_scan_failed()
 
 static void wlcm_process_disconnected()
 {
-    (void)wifi_event_completion(WIFI_EVENT_LINK_LOSS, WIFI_EVENT_REASON_FAILURE, (void *)IEEEtypes_REASON_DEAUTH_LEAVING);
+    (void)wifi_event_completion(WLAN_BSS_TYPE_STA, WIFI_EVENT_LINK_LOSS, WIFI_EVENT_REASON_FAILURE, (void *)IEEEtypes_REASON_DEAUTH_LEAVING);
 }
 
 #if CONFIG_11K
@@ -5674,7 +5674,7 @@ static int wlcm_process_add_unspecified_network(const char *name)
                wlan.uap_state = CM_UAP_CONFIGURED;
                if (priv_wfd->p2p_go_ssid_len)
                   memcpy(wlan.networks[wlan.cur_uap_network_idx].ssid, priv_wfd->p2p_go_ssid,MIN(priv_wfd->p2p_go_ssid_len,MLAN_MAX_SSID_LENGTH));
-               (void)wifi_event_completion(WIFI_EVENT_UAP_STARTED, WIFI_EVENT_REASON_SUCCESS, NULL);
+               (void)wifi_event_completion(network->type, WIFI_EVENT_UAP_STARTED, WIFI_EVENT_REASON_SUCCESS, NULL);
             }
             else
 #endif
@@ -6027,7 +6027,7 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
 #if CONFIG_WPA_SUPP_WPS
             wlan.wps_session_attempt = 0;
 #endif
-            wifi_event_completion(WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
+            wifi_event_completion(WLAN_BSS_TYPE_WIFIDIRECT, WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
         }
     }
     else if(strstr(buf, P2P_EVENT_GO_NEG_SUCCESS))
@@ -6079,7 +6079,7 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
         if (wlan.nbr_rpt.neighbor_cnt != 0U)
         {
             memset(&wlan.nbr_rpt, 0x00, sizeof(wlan_rrm_neighbor_report_t));
-            (void)wifi_event_completion(WIFI_EVENT_NLIST_REPORT, WIFI_EVENT_REASON_SUCCESS, NULL);
+            (void)wifi_event_completion(WLAN_BSS_TYPE_STA, WIFI_EVENT_NLIST_REPORT, WIFI_EVENT_REASON_SUCCESS, NULL);
         }
     }
     else if (strstr(buf, RRM_EVENT_NEIGHBOR_REP_FAILED))
@@ -7237,7 +7237,7 @@ static void wifi_process_bg_scan_stopped(struct wifi_message *msg)
     {
         wlan.bgscan_attempt++;
         wlan.roam_reassoc = false;
-        (void)wifi_event_completion(WIFI_EVENT_RSSI_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
+        (void)wifi_event_completion(msg->bss_type, WIFI_EVENT_RSSI_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
     }
     else
     {
@@ -12580,10 +12580,11 @@ int wlan_get_antcfg(uint32_t *ant, uint16_t *evaluate_time, uint8_t *evaluate_mo
 #endif /*RW610*/
 
 
-int wlan_wlcmgr_send_msg(enum wifi_event event, enum wifi_event_reason reason, void *data)
+int wlan_wlcmgr_send_msg(enum wlan_bss_type bss_type, enum wifi_event event, enum wifi_event_reason reason, void *data)
 {
     struct wifi_message msg;
 
+    msg.bss_type = bss_type;
     msg.event  = (uint16_t)event;
     msg.reason = reason;
     msg.data   = (void *)data;

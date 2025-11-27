@@ -4214,7 +4214,7 @@ int wlan_get_ps_mode_cfg(uint8_t *ps_mode_cfg);
  * \return WM_SUCCESS if successful.
  * \return -WM_FAIL if failed.
  */
-int wlan_wlcmgr_send_msg(enum wifi_event event, enum wifi_event_reason reason, void *data);
+int wlan_wlcmgr_send_msg(enum wlan_bss_type bss_type, enum wifi_event event, enum wifi_event_reason reason, void *data);
 
 /** Register WFA basic Wi-Fi CLI (command line input) commands
  *

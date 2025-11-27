@@ -568,7 +568,7 @@ void wifi_nxp_wpa_supp_event_proc_deauth(void *if_priv, nxp_wifi_event_mlme_t *d
         event.deauth_info.ie_len = (frame + frame_len - mgmt->u.deauth.variable);
     }
 
-    (void)wifi_event_completion(WIFI_EVENT_DEAUTHENTICATION, le_to_host16(mgmt->u.deauth.reason_code), NULL);
+    (void)wifi_event_completion(wifi_if_ctx_rtos->bss_type, WIFI_EVENT_DEAUTHENTICATION, le_to_host16(mgmt->u.deauth.reason_code), NULL);
 
     wifi_if_ctx_rtos->supp_callbk_fns.deauth(wifi_if_ctx_rtos->supp_drv_if_ctx, &event, mgmt);
 }
@@ -1329,7 +1329,7 @@ int wifi_nxp_wpa_supp_survey_results_get(void *if_priv)
 
     wifi_survey_params->hostapd = wifi_if_ctx_rtos->hostapd;
 
-    status = wifi_event_completion(WIFI_EVENT_SURVEY_RESULT_GET, WIFI_EVENT_REASON_SUCCESS, wifi_survey_params);
+    status = wifi_event_completion(wifi_if_ctx_rtos->bss_type, WIFI_EVENT_SURVEY_RESULT_GET, WIFI_EVENT_REASON_SUCCESS, wifi_survey_params);
     if (status != WM_SUCCESS)
     {
         supp_e("%s: wifi_supp_survey_res_get failed", __func__);
@@ -1760,7 +1760,7 @@ int wifi_nxp_wpa_set_supp_port(void *if_priv, int authorized, char *bssid)
 #if CONFIG_WPA_SUPP_P2P
                 if (wifi_if_ctx_rtos->bss_type != MLAN_BSS_TYPE_WIFIDIRECT)
 #endif
-                    (void)wifi_event_completion(WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
+                    (void)wifi_event_completion(wifi_if_ctx_rtos->bss_type, WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
             }
 #if CONFIG_WPA_SUPP_WPS
         }

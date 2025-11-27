@@ -494,7 +494,7 @@ int wlan_process_hang(uint8_t fw_reload)
     if (is_split_scan_complete() == false)
     {
         wifi_user_scan_config_cleanup();
-        (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
+        (void)wifi_event_completion(WLAN_BSS_TYPE_STA, WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
     }
 
     mlan_adap->in_reset = true;
@@ -535,7 +535,7 @@ int wlan_process_hang(uint8_t fw_reload)
         }
     }
 
-    (void)wifi_event_completion(WIFI_EVENT_FW_HANG, WIFI_EVENT_REASON_SUCCESS, NULL);
+    (void)wifi_event_completion(WLAN_BSS_TYPE_STA, WIFI_EVENT_FW_HANG, WIFI_EVENT_REASON_SUCCESS, NULL);
 
 #if defined(SD8978)
 	ret = wifi_reinit(fw_reload);
@@ -567,7 +567,8 @@ int wlan_process_hang(uint8_t fw_reload)
     /* Only send FW_RESET event if FW was actually reloaded */
     if (ret == WM_SUCCESS)
     {
-        (void)wifi_event_completion(WIFI_EVENT_FW_RESET, WIFI_EVENT_REASON_SUCCESS, NULL);
+        (void)wifi_event_completion(WLAN_BSS_TYPE_STA, WIFI_EVENT_FW_RESET, WIFI_EVENT_REASON_SUCCESS, NULL);
+
     }
 
     return ret;
@@ -823,7 +824,7 @@ int wifi_event_post(enum wlan_bss_type bss_type, enum wifi_event event, enum wif
     return WM_SUCCESS;
 }
 
-int wifi_event_completion(enum wifi_event event, enum wifi_event_reason result, void *data)
+int wifi_event_completion(enum wlan_bss_type bss_type, enum wifi_event event, enum wifi_event_reason result, void *data)
 {
     struct wifi_message msg;
 
@@ -833,6 +834,7 @@ int wifi_event_completion(enum wifi_event event, enum wifi_event_reason result, 
         return -WM_FAIL;
     }
 
+    msg.bss_type = bss_type;
     msg.data   = data;
     msg.reason = result;
     msg.event  = (uint16_t)event;
@@ -1377,7 +1379,7 @@ static void wifi_scan_task(void *argv)
         {
 	    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
 #if CONFIG_WPA_SUPP
-            (void)wifi_event_completion(WIFI_EVENT_SCAN_START, WIFI_EVENT_REASON_SUCCESS, NULL);
+            (void)wifi_event_completion(pmpriv->bss_type, WIFI_EVENT_SCAN_START, WIFI_EVENT_REASON_SUCCESS, NULL);
 #endif
 #if CONFIG_WPA_SUPP_P2P
             if (wm_wifi.wpa_supp_p2p_scan == true)
@@ -1389,7 +1391,7 @@ static void wifi_scan_task(void *argv)
             if (rv != MLAN_STATUS_SUCCESS)
             {
                 wifi_user_scan_config_cleanup();
-                (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
+                (void)wifi_event_completion(pmpriv->bss_type, WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
             }
         }
 #if CONFIG_WPA_SUPP

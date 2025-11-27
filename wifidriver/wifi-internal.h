@@ -289,7 +289,7 @@ int wifi_event_post(enum wlan_bss_type bss_type, enum wifi_event event, enum wif
  * This function is used to send events to the upper layer through the
  * message queue registered by the upper layer.
  */
-int wifi_event_completion(enum wifi_event event, enum wifi_event_reason result, void *data);
+int wifi_event_completion(enum wlan_bss_type bss_type, enum wifi_event event, enum wifi_event_reason result, void *data);
 
 /**
  * Use this function to know whether a split scan is in progress.

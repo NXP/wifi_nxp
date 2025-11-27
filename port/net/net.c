@@ -251,7 +251,7 @@ static void wm_netif_ipv6_status_callback(struct netif *n)
     /*	TODO: Implement appropriate functionality here*/
     net_d("Received callback on IPv6 address state change");
 
-    (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_IPV6_CONFIG, WIFI_EVENT_REASON_SUCCESS, (void *)n);
+    (void)wlan_wlcmgr_send_msg(net_get_interface_bss_type(n), WIFI_EVENT_NET_IPV6_CONFIG, WIFI_EVENT_REASON_SUCCESS, (void *)n);
 }
 #endif /* CONFIG_IPV6 */
 
@@ -360,9 +360,31 @@ int net_wlan_init(void)
         net_d("Initialized TCP/IP networking stack");
     }
 
-    (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_INTERFACE_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
+    (void)wlan_wlcmgr_send_msg(WLAN_BSS_TYPE_STA, WIFI_EVENT_NET_INTERFACE_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
 
     return WM_SUCCESS;
+}
+
+enum wlan_bss_type net_get_interface_bss_type(struct netif *n)
+{
+    char iface_name[NETIF_NAMESIZE];
+    net_get_if_name(iface_name, (struct netif *)n);
+
+    if (strstr(iface_name, "ml"))
+    {
+        return WLAN_BSS_TYPE_STA;
+    }
+    else if (strstr(iface_name, "ua"))
+    {
+        return WLAN_BSS_TYPE_UAP;
+    }
+#if CONFIG_WPA_SUPP_P2P
+    else if (strstr(iface_name, "wf"))
+    {
+        return WLAN_BSS_TYPE_WIFIDIRECT;
+    }
+#endif
+    return WLAN_BSS_TYPE_ANY;
 }
 
 struct netif *net_get_sta_interface(void)
@@ -559,7 +581,7 @@ static void wm_netif_status_callback(struct netif *n)
     }
     if (event_flag_dhcp_connection != DHCP_IGNORE)
     {
-        (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, event_reason, NULL);
+        (void)wlan_wlcmgr_send_msg(net_get_interface_bss_type(n), WIFI_EVENT_NET_DHCP_CONFIG, event_reason, NULL);
     }
 }
 
@@ -586,7 +608,7 @@ static void dhcp_timer_cb(osa_timer_arg_t arg)
 {
     (void)tcpip_try_callback(stop_cb, NULL);
     net_e("DHCP timeout, failed to get IPv4 address");
-    (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, WIFI_EVENT_REASON_FAILURE, NULL);
+    (void)wlan_wlcmgr_send_msg(WLAN_BSS_TYPE_STA, WIFI_EVENT_NET_DHCP_CONFIG, WIFI_EVENT_REASON_FAILURE, NULL);
 }
 
 static int check_iface_mask(void *handle, uint32_t ipaddr)
@@ -815,7 +837,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
 #endif
     )
     {
-        (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_STA_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
+        (void)wlan_wlcmgr_send_msg(WLAN_BSS_TYPE_STA, WIFI_EVENT_NET_STA_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
 
         /* XXX For DHCP, the above event will only indicate that the
          * DHCP address obtaining process has started. Once the DHCP
@@ -830,7 +852,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
 #endif
 	    )
     {
-        (void)wlan_wlcmgr_send_msg(WIFI_EVENT_UAP_NET_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
+        (void)wlan_wlcmgr_send_msg(WLAN_BSS_TYPE_UAP, WIFI_EVENT_UAP_NET_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
     }
 #endif
     else
