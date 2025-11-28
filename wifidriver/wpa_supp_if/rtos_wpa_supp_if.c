@@ -1928,7 +1928,7 @@ int wifi_nxp_wpa_send_mlme(void *if_priv,
     wifi_if_ctx_rtos->mgmt_tx_status = 0;
 
     bss_type = wifi_if_ctx_rtos->bss_type;
-    if (stype == WLAN_FC_STYPE_ACTION)
+    if (stype == WLAN_FC_STYPE_ACTION && bss_type != BSS_TYPE_UAP)
     {
         if (wifi_if_ctx_rtos->remain_on_channel == true)
         {
