@@ -10214,6 +10214,13 @@ int wlan_add_network(struct wlan_network *network)
         {
             if (strlen(wlan.networks[i].name) == len && !strncmp(wlan.networks[i].name, network->name, len))
             {
+#if CONFIG_WPA_SUPP_DPP
+                if (!strcmp(wlan.networks[i].name,"dpp_network"))
+                {
+                    wlan_remove_network(wlan.networks[i].name);
+                    continue;
+                }
+#endif
                 goto INVAL;
             }
         }
