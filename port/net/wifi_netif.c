@@ -57,7 +57,9 @@ void (*wps_rx_callback)(const t_u8 *buf, size_t len);
 #endif
 
 /*------------------------------------------------------*/
+#if LWIP_IGMP
 static err_t igmp_mac_filter(struct netif *netif, const ip4_addr_t *group, enum netif_mac_filter_action action);
+#endif
 #if CONFIG_IPV6
 static err_t mld_mac_filter(struct netif *netif, const ip6_addr_t *group, enum netif_mac_filter_action action);
 #endif
@@ -545,8 +547,10 @@ static void low_level_init(struct netif *netif)
     /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
     netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP;
 
+#if LWIP_IGMP
     netif_set_igmp_mac_filter(netif, igmp_mac_filter);
     netif->flags |= NETIF_FLAG_IGMP;
+#endif
 #if CONFIG_IPV6
     netif_set_mld_mac_filter(netif, mld_mac_filter);
     netif->flags |= NETIF_FLAG_MLD6;
@@ -825,6 +829,7 @@ int netif_get_bss_type()
 }
 #endif
 
+#if LWIP_IGMP
 /* Below struct is used for creating IGMP IPv4 multicast list */
 typedef struct group_ip4_addr
 {
@@ -962,6 +967,7 @@ static err_t igmp_mac_filter(struct netif *netif, const ip4_addr_t *group, enum 
 done:
     return result;
 }
+#endif /* LWIP_IGMP */
 
 #if CONFIG_IPV6
 /* Below struct is used for creating IGMP IPv6 multicast list */
