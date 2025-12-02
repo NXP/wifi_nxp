@@ -53,7 +53,7 @@ static void wlan_card_fw_status(t_u16 *dat)
     *dat |= (t_u16)((resp & 0xffU) << 8);
 }
 
-static bool wlan_sdio_check_fw_status(t_u32 card_poll)
+bool wlan_sdio_check_fw_status(t_u32 card_poll)
 {
     t_u16 dat = 0U;
     t_u32 i   = 0U;

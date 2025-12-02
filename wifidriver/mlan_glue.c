@@ -173,7 +173,7 @@ int wrapper_wlan_set_regiontable(t_u8 region, t_u16 band);
 int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payload);
 int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
 
-void wlan_process_hang(uint8_t fw_reload);
+int wlan_process_hang(uint8_t fw_reload);
 
 #if CONFIG_11N
 /*
@@ -10079,9 +10079,7 @@ int wifi_trigger_inband_indrst()
 
 int wifi_trigger_oob_indrst()
 {
-    wlan_process_hang(FW_RELOAD_NO_EMULATION);
-
-    return WM_SUCCESS;
+    return wlan_process_hang(FW_RELOAD_NO_EMULATION);
 }
 
 #endif
