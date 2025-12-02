@@ -16716,21 +16716,9 @@ int wlan_p2p_listen(const char *cmd)
     return wpa_supp_p2p_listen(netif, cmd);
 }
 
-int wlan_p2p_connect(char *cmd)
+static int wlan_p2p_set_go_freq(char *p2p_cmd)
 {
-    struct netif *netif = net_get_wfd_interface();
-
-    return wpa_supp_p2p_connect(netif, cmd);
-}
-
-int wlan_p2p_group_add(char *cmd)
-{
-    struct netif *netif = net_get_wfd_interface();
-
-    if (is_uap_started() != 0)
-    {
-        return WLAN_ERROR_STATE;
-    }
+    (void)p2p_cmd;
 
 #if CONFIG_ECSA
     if(is_sta_connected())
@@ -16747,9 +16735,9 @@ int wlan_p2p_group_add(char *cmd)
             return -WM_FAIL;
         }
 
-        /** Try to replace freq of cmd with freqence of connected AP.*/
+        /** Try to replace freq of p2p_cmd with freqence of connected AP.*/
 
-        char *freq_pos = strstr(cmd, "freq=");
+        char *freq_pos = strstr(p2p_cmd, "freq=");
         if(freq_pos != NULL)
         {
             size_t freq_len = sizeof(freq);
@@ -16777,7 +16765,7 @@ int wlan_p2p_group_add(char *cmd)
             (void)snprintf(freq_str, sizeof(freq_str), "%04u", freq);
 
             (void)memcpy(freq_value_start, freq_str, freq_len);
-            wlcm_w("ECSA: Updated group add cmd: %s\r\n", cmd);
+            wlcm_w("ECSA: Updated p2p cmd: %s\r\n", p2p_cmd);
         }
         else
         {
@@ -16786,13 +16774,42 @@ int wlan_p2p_group_add(char *cmd)
             (void)memcpy(freq_str, freq_string, strlen(freq_string));
             (void)snprintf(freq_str + strlen(freq_string), sizeof(freq_str) - strlen(freq_string), "%04u", freq);
 
-            /** Append freq=xxx to cmd. */
-            (void)strcat(cmd, freq_str);
-            wlcm_w("ECSA: Updated group add cmd: %s\r\n", cmd);
+            /** Append freq=xxx to p2p_cmd. */
+            (void)strcat(p2p_cmd, freq_str);
+            wlcm_w("ECSA: Updated p2p cmd: %s\r\n", p2p_cmd);
         }
 
     }
 #endif
+
+    return WM_SUCCESS;
+}
+
+int wlan_p2p_connect(char *cmd)
+{
+    struct netif *netif = net_get_wfd_interface();
+
+    if(wlan_p2p_set_go_freq(cmd) != WM_SUCCESS)
+    {
+        return -WM_FAIL;
+    }
+
+    return wpa_supp_p2p_connect(netif, cmd);
+}
+
+int wlan_p2p_group_add(char *cmd)
+{
+    struct netif *netif = net_get_wfd_interface();
+
+    if (is_uap_started() != 0)
+    {
+        return WLAN_ERROR_STATE;
+    }
+
+    if(wlan_p2p_set_go_freq(cmd) != WM_SUCCESS)
+    {
+        return -WM_FAIL;
+    }
 
 #if CONFIG_WIFI_CAPA
     uint8_t capa = WIFI_SUPPORT_LEGACY | WIFI_SUPPORT_11N;
