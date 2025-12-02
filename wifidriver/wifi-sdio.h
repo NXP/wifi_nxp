@@ -96,6 +96,13 @@ mlan_status sd_wifi_post_init(enum wlan_type type);
 
 void sd_wifi_reset_ports();
 
+/** Check if SDIO firmware is ready/running
+ *
+ * \param[in] card_poll Number of polling attempts
+ * \return true if firmware is ready, false otherwise
+ */
+bool wlan_sdio_check_fw_status(t_u32 card_poll);
+
 void sd_wifi_deinit(void);
 
 /*

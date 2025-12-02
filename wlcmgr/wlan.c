@@ -16005,8 +16005,22 @@ static int wlan_trigger_oob_ind_reset()
 
     GPIO_PinWrite(IR_OUTBAND_TRIGGER_GPIO, IR_OUTBAND_TRIGGER_GPIO_PIN, 1);
 #endif
+    if (wifi_trigger_oob_indrst() != WM_SUCCESS)
+    {
+        (void)wlan_ieeeps_on(1);
 
-    return wifi_trigger_oob_indrst();
+        OSA_TimeDelay(1000);
+
+        (void)wlan_deepsleepps_on();
+
+        OSA_TimeDelay(1000);
+
+        return -WM_FAIL;
+    }
+    else
+    {
+        return WM_SUCCESS;
+    }
 }
 
 int wlan_independent_reset()

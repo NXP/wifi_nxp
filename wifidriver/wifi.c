@@ -423,19 +423,29 @@ static void send_sleep_cfm_no_wait(void)
 t_u8 wifi_rx_block_cnt;
 t_u8 wifi_tx_block_cnt;
 
-void wlan_process_hang(uint8_t fw_reload)
+int wlan_process_hang(uint8_t fw_reload)
 {
-    int i, ret = WM_SUCCESS;
+    int i, ret = WM_SUCCESS, poll_num = 10;
 
     if (mlan_adap->in_reset == true)
     {
         wifi_d("Already in process hanging");
-        return;
+        return WM_SUCCESS;
     }
 
     wifi_d("Start to process hanging");
 
 #if CONFIG_WIFI_IND_RESET
+    if (fw_reload == FW_RELOAD_NO_EMULATION)
+    {
+        if(wlan_sdio_check_fw_status(poll_num) == true)
+        {
+            PRINTF("WLAN FW already running! Skip FW download\r\n");
+            PRINTF("FW download skipped because fly wire is not connected from MCU to Wi-Fi SoC\r\n");
+
+            return -WM_FAIL;
+        }
+    }
     wifi_ind_reset_start();
 #endif
 
@@ -500,6 +510,8 @@ void wlan_process_hang(uint8_t fw_reload)
     }
 
     (void)wifi_event_completion(WIFI_EVENT_FW_RESET, WIFI_EVENT_REASON_SUCCESS, NULL);
+
+    return WM_SUCCESS;
 }
 #endif
 
