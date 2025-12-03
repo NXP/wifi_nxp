@@ -2999,8 +2999,6 @@ mlan_status sd_wifi_reinit(enum wlan_type type, const uint8_t *fw_start_addr, co
         sdio_disable_interrupt();
 
         OSA_EXIT_CRITICAL();
-
-        sdio_ioport_init();
     }
 
     ret = (mlan_status)firmware_download(fw_start_addr, size, intf, fw_reload);

@@ -488,7 +488,7 @@ int wlan_process_hang(uint8_t fw_reload)
 
     ret = wifi_reinit(wm_wifi.fw_start_addr, wm_wifi.size, fw_reload);
 
-    if (ret != WM_SUCCESS)
+    if (ret != WM_SUCCESS && ret != -WIFI_ERROR_FW_DNLD_SKIP)
     {
         ASSERT(0);
     }
@@ -509,9 +509,13 @@ int wlan_process_hang(uint8_t fw_reload)
         mlan_adap->ps_state = PS_STATE_AWAKE;
     }
 
-    (void)wifi_event_completion(WIFI_EVENT_FW_RESET, WIFI_EVENT_REASON_SUCCESS, NULL);
+    /* Only send FW_RESET event if FW was actually reloaded */
+    if (ret == WM_SUCCESS)
+    {
+        (void)wifi_event_completion(WIFI_EVENT_FW_RESET, WIFI_EVENT_REASON_SUCCESS, NULL);
+    }
 
-    return WM_SUCCESS;
+    return ret;
 }
 #endif
 
@@ -1666,7 +1670,7 @@ int wifi_reinit(const uint8_t *fw_start_addr, const size_t size, uint8_t fw_relo
                 ret = -WIFI_ERROR_FW_NOT_READY;
                 break;
             case MLAN_STATUS_FW_DNLD_SKIP:
-                ret = WM_SUCCESS;
+                ret = -WIFI_ERROR_FW_DNLD_SKIP;
                 break;
             default:
                 PRINTM(MINFO, "Unexpected MLAN FW Status \n");

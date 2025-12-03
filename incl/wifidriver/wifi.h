@@ -111,6 +111,8 @@ enum
     /** The WiFi Firmware XZ decompression failed. */
     WIFI_ERROR_FW_XZ_FAILED,
 #endif
+    /** The Wi-Fi Firmware download skipped. */
+    WIFI_ERROR_FW_DNLD_SKIP,
 };
 
 /** WiFi driver TX/RX data status */
