@@ -4200,7 +4200,7 @@ int wifi_get_mgmt_ie_by_index(mlan_bss_type bss_type, void *buf, unsigned int *b
         }
         if (tlv->length < (sizeof(custom_ie) - MAX_IE_SIZE))
         {
-            wifi_e("%s: invalid tlv len=%u", __FUNCTION__, tlv->length);
+            wifi_d("%s: invalid tlv len=%u", __FUNCTION__, tlv->length);
             return -WM_FAIL;
         }
         *buf_len = sizeof(tlvbuf_custom_ie) + tlv->length;
