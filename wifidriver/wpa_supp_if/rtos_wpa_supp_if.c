@@ -646,11 +646,12 @@ void *wifi_nxp_wpa_supp_dev_init(void *supp_drv_if_ctx,
         return NULL;
     }
 
-    if ((wifi_if_ctx_rtos->bss_type == BSS_TYPE_STA)
 #if CONFIG_WPA_SUPP_P2P
-       || (wifi_if_ctx_rtos->bss_type == BSS_TYPE_WFD)
+    if ((wifi_if_ctx_rtos->bss_type == BSS_TYPE_STA)
+       || (wifi_if_ctx_rtos->bss_type == BSS_TYPE_WFD))
+#else
+    if (wifi_if_ctx_rtos->bss_type == BSS_TYPE_STA)
 #endif
-       )
     {
         t_u32 mgmt_subtype_mask = WLAN_MGMT_ACTION;
         (void)wifi_set_rx_mgmt_indication(wifi_if_ctx_rtos->bss_type, mgmt_subtype_mask);
