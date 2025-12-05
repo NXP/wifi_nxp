@@ -488,6 +488,7 @@ void wlan_process_hang(uint8_t fw_reload)
         if (mlan_adap->priv[i]->media_connected == MTRUE)
         {
             mlan_adap->priv[i]->media_connected = MFALSE;
+            mlan_adap->priv[i]->mgmt_subtype_mask = 0;
 
             if (mlan_adap->priv[i]->bss_type == MLAN_BSS_TYPE_STA)
             {
