@@ -2684,7 +2684,7 @@ static void update_network_params(struct wlan_network *network, const struct wif
             t = WLAN_SECURITY_WEP_OPEN;
         }
 #if CONFIG_DRIVER_OWE
-        else if (res->WPA_WPA2_WEP.wpa2 && res->WPA_WPA2_WEP.owe)
+        else if (res->WPA_WPA2_WEP.owe != 0U)
         {
             t = WLAN_SECURITY_OWE_ONLY;
             key_mgmt = WLAN_KEY_MGMT_OWE;
@@ -9508,8 +9508,9 @@ int wlan_add_network(struct wlan_network *network)
             ret = wifi_get_scan_result(i, &res);
             if (ret == WM_SUCCESS && (memcmp(network->ssid, (char *)res->ssid, strlen(network->ssid)) == 0) && (res->ssid_len == strlen(network->ssid)))
             {
-                if (res->WPA_WPA2_WEP.wepStatic || res->WPA_WPA2_WEP.wpa || res->WPA_WPA2_WEP.wpa2 || res->WPA_WPA2_WEP.wpa2_sha256 || res->WPA_WPA2_WEP.wpa3_sae)
-                break;
+                if (res->WPA_WPA2_WEP.wepStatic || res->WPA_WPA2_WEP.wpa || res->WPA_WPA2_WEP.wpa2 || res->WPA_WPA2_WEP.wpa2_sha256 || res->WPA_WPA2_WEP.wpa3_sae
+                    || res->WPA_WPA2_WEP.owe)
+                    break;
             }
         }
         if (i == count)
@@ -9526,15 +9527,16 @@ int wlan_add_network(struct wlan_network *network)
             t = WLAN_SECURITY_WPA2_WPA3_SAE_MIXED;
         else if (res->WPA_WPA2_WEP.wpa3_sae != 0U)
             t = WLAN_SECURITY_WPA3_SAE;
+        else if (res->WPA_WPA2_WEP.wpa2_sha256 != 0U)
+            t = WLAN_SECURITY_WPA2;
         else if (res->WPA_WPA2_WEP.wpa2 != 0U)
             t = WLAN_SECURITY_WPA2;
-
         else if (res->WPA_WPA2_WEP.wpa != 0U)
             t = WLAN_SECURITY_WPA_WPA2_MIXED;
         else if (res->WPA_WPA2_WEP.wepStatic != 0U)
             t = WLAN_SECURITY_WEP_OPEN;
 #if CONFIG_DRIVER_OWE
-        else if (res->WPA_WPA2_WEP.wpa2 && res->WPA_WPA2_WEP.owe)
+        else if (res->WPA_WPA2_WEP.owe != 0U)
             t = WLAN_SECURITY_OWE_ONLY;
 #endif
         else
