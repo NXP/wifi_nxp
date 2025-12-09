@@ -597,15 +597,10 @@ resend:
     ret = OSA_RWLockReadLock(&sleep_rwlock, MAX_WAIT_TIME);
     if (ret != WM_SUCCESS)
     {
-#if CONFIG_WIFI_PS_DEBUG
         wifi_e("Failed to wakeup card");
-#endif
         // wakelock_put(WL_ID_LL_OUTPUT);
         (void)wifi_put_command_lock();
 #if CONFIG_WIFI_FW_DEBUG
-#ifndef RW610
-        wifi_sdio_reg_dbg();
-#endif
         if (wm_wifi.wifi_usb_mount_cb != NULL)
         {
             ret = wm_wifi.wifi_usb_mount_cb();
@@ -672,11 +667,9 @@ resend:
             (HostCmd_DS_COMMAND *)((t_u8 *)wifi_get_outbuf((uint32_t *)(&outbuf_len)) + INTF_HEADER_LEN);
         wifi_w("Command response timed out. command 0x%x, len %d, seqno 0x%x", tmo_cmd->command, tmo_cmd->size,
                tmo_cmd->seq_num);
+        wifi_dump_driver_info();
 #endif /* CONFIG_ENABLE_WARNING_LOGS */
 #if CONFIG_WIFI_FW_DEBUG
-#ifndef RW610
-        wifi_sdio_reg_dbg();
-#endif
         if (wm_wifi.wifi_usb_mount_cb != NULL)
         {
             ret = wm_wifi.wifi_usb_mount_cb();
@@ -2867,13 +2860,8 @@ void wifi_tx_card_awake_lock(void)
     (void)OSA_MutexUnlock((osa_mutex_handle_t)sleep_rwlock.write_mutex);
     if (ret != WM_SUCCESS)
     {
-#if CONFIG_WIFI_PS_DEBUG
         wifi_e("Failed to wakeup card for Tx");
-#endif
 #if CONFIG_WIFI_FW_DEBUG
-#ifndef RW610
-        wifi_sdio_reg_dbg();
-#endif
         if (wm_wifi.wifi_usb_mount_cb != NULL)
         {
             ret = wm_wifi.wifi_usb_mount_cb();

@@ -21,6 +21,7 @@
 #if defined(RW610)
 #include "wifi-imu.h"
 #include "fsl_ocotp.h"
+#include "fsl_adapter_imu.h"
 #else
 #include "sdio.h"
 #include "wifi-sdio.h"
@@ -85,7 +86,10 @@ extern uint8_t wls_data[WLS_CSI_DATA_LEN];
 #define CSI_PROC_DATA_SIZE 1000
 uint8_t csi_proc_data[CSI_PROC_DATA_SIZE] = {0};
 #endif
-
+#ifdef RW610
+static volatile uint32_t ImuTxFifoStatus = 0;
+static volatile uint32_t ImuRxFifoStatus = 0;
+#endif
 #if CONFIG_WPA2_ENTP
 bool scan_enable_wpa2_enterprise_ap_only;
 #endif
@@ -9451,6 +9455,47 @@ void wifi_ftm_process_event(void *p_data)
 }
 #endif
 
+#define MAX_TASK_INFO_BUF_SIZE 1024
+void wifi_dump_driver_info()
+{
+#ifdef RW610
+    ImuTxFifoStatus = IMU_TX_FIFO_STATUS(kIMU_LinkCpu1Cpu3);
+    ImuRxFifoStatus = IMU_RX_FIFO_STATUS(kIMU_LinkCpu1Cpu3);
+    PRINTF("IMU TxFifoStatus: 0x%x, RxFifoStatus: 0x%x\r\n", ImuTxFifoStatus, ImuRxFifoStatus);
+#else
+    uint32_t resp = 0;
+    int ret;
+#if !CONFIG_MEM_POOLS
+    t_u8 *mp_regs_buf = (t_u8 *)OSA_MemoryAllocate(MAX_MP_REGS + DMA_ALIGNMENT);
+#else
+    t_u8 *mp_regs_buf = (t_u8 *)OSA_MemoryPoolAllocate(buf_256_MemoryPool);
+#endif
+    if (mp_regs_buf == NULL)
+    {
+        return;
+    }
+
+    (void)wifi_sdio_lock();
+    ret = sdio_drv_read(REG_PORT | MLAN_SDIO_BYTE_MODE_MASK, 1, 1, MAX_MP_REGS, mp_regs_buf, &resp);
+    if (ret)
+    {
+        PRINTF("SDIO multiple port group registers value:\r\n");
+        dump_hex(mp_regs_buf, MAX_MP_REGS);
+    }
+    else
+    {
+        wifi_e("Failed to read SDIO multiport registers");
+    }
+    (void)wifi_sdio_unlock();
+
+#if !CONFIG_MEM_POOLS
+    OSA_MemoryFree(mp_regs_buf);
+#else
+    OSA_MemoryPoolFree(buf_256_MemoryPool, mp_regs_buf);
+#endif
+#endif
+}
+
 #if CONFIG_WIFI_FW_DEBUG
 void wifi_register_fw_dump_cb(int (*wifi_usb_mount_cb)(),
                               int (*wifi_usb_file_open_cb)(char *test_file_name),
@@ -9856,6 +9901,9 @@ void wifi_sdio_reg_dbg()
 
 char fw_dump_file_name[] = _T("1:/fw_dump.bin");
 
+#define HOST_TO_CARD_EVENT   MBIT(3)
+#define HOST_RST_EVENT       MBIT(4)
+
 typedef enum
 {
     DUMP_TYPE_ITCM        = 0,
@@ -9943,10 +9991,11 @@ rdwr_status wifi_smu_rdwr_firmware(t_u8 doneflag)
  *  @brief This function read/write firmware via cmd52
  *
  *  @param doneflag  A flag
+ *  @param trigger   trigger FW dump flag
  *
  *  @return         MLAN_STATUS_SUCCESS
  */
-rdwr_status wifi_cmd52_rdwr_firmware(t_u8 doneflag)
+rdwr_status wifi_cmd52_rdwr_firmware(t_u8 doneflag, t_u8 trigger)
 {
     int ret                = 0;
     int tries              = 0;
@@ -9964,6 +10013,22 @@ rdwr_status wifi_cmd52_rdwr_firmware(t_u8 doneflag)
         wifi_e("SDIO Write ERR");
         return RDWR_STATUS_FAILURE;
     }
+
+    if (trigger)
+    {
+        PRINTF("Trigger FW dump...\r\n");
+#ifdef IW610
+        ret = sdio_drv_creg_write(HOST_TO_CARD_EVENT_REG, 1, HOST_RST_EVENT, &resp);
+#else
+        ret = sdio_drv_creg_write(HOST_TO_CARD_EVENT_REG, 1, HOST_TO_CARD_EVENT, &resp);
+#endif
+        if (!ret)
+        {
+            wifi_e("Fail to set HOST_TO_CARD_EVENT_REG");
+            return RDWR_STATUS_FAILURE;
+        }
+    }
+
     for (tries = 0; tries < MAX_POLL_TRIES; tries++)
     {
         ret = sdio_drv_creg_read(dbg_dump_ctrl_reg, 1, &resp);
@@ -9988,9 +10053,9 @@ rdwr_status wifi_cmd52_rdwr_firmware(t_u8 doneflag)
         }
         OSA_TimeDelay(1);
     }
-    if (ctrl_data == debug_host_ready)
+    if (ctrl_data == debug_host_ready || tries == MAX_POLL_TRIES)
     {
-        wifi_e("Fail to pull ctrl_data");
+        wifi_e("Fail to pull ctrl_data, current ctrl_data:%u", ctrl_data);
         return RDWR_STATUS_FAILURE;
     }
 
@@ -10069,7 +10134,7 @@ void wifi_sdio_reg_dbg()
             else
                 reg++;
         }
-        wifi_d("%s", buf);
+        wifi_io_dump_hex(buf, sizeof(buf));
     }
 }
 #endif
@@ -10079,6 +10144,7 @@ void wifi_sdio_reg_dbg()
  *
  *  @return         N/A
  */
+volatile int wifi_dump_fw_in_progress = 0;
 void wifi_dump_firmware_info()
 {
     int ret   = 0;
@@ -10101,16 +10167,36 @@ void wifi_dump_firmware_info()
     dbg_dump_end_reg   = DEBUG_DUMP_END_REG;
 #endif
 
+    if (wifi_dump_fw_in_progress)
+    {
+        PRINTF("previous dump in progress\r\n");
+        while(wifi_dump_fw_in_progress)
+        {
+            OSA_TimeDelay(50);
+        }
+        return;
+    }
+
+    wifi_dump_fw_in_progress = 1;
     PRINTF("==== FW DUMP START ====\r\n");
+#ifndef RW610
+    wifi_sdio_reg_dbg();
+#endif
     /* read the number of the memories which will dump */
 #ifdef RW610
     if (RDWR_STATUS_FAILURE == wifi_smu_rdwr_firmware(doneflag))
-#else
-    if (RDWR_STATUS_FAILURE == wifi_cmd52_rdwr_firmware(doneflag))
-#endif
     {
         goto done;
     }
+#else
+    if (RDWR_STATUS_FAILURE == wifi_cmd52_rdwr_firmware(doneflag, MFALSE))
+    {
+        if (RDWR_STATUS_FAILURE == wifi_cmd52_rdwr_firmware(doneflag, MTRUE))
+        {
+            goto done;
+        }
+    }
+#endif
 
     /** check the reg which indicate dump starting */
 #ifndef RW610
@@ -10184,7 +10270,7 @@ void wifi_dump_firmware_info()
 
         memcpy(data, (void *)DEBUG_DUMP_START_REG, DEBUG_DUMP_DATA_LENGTH);
 #else
-        stat = wifi_cmd52_rdwr_firmware(doneflag);
+        stat = wifi_cmd52_rdwr_firmware(doneflag, MFALSE);
         if (RDWR_STATUS_FAILURE == stat)
             goto done;
 
@@ -10248,6 +10334,7 @@ done:
     while (1)
         ;
 #endif
+    wifi_dump_fw_in_progress = 0;
 }
 #endif
 #endif

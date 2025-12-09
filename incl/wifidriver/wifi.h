@@ -1889,7 +1889,7 @@ int wifi_trigger_oob_indrst();
 #if CONFIG_WIFI_BOOT_SLEEP
 int wifi_boot_sleep(uint16_t action, uint16_t *enable);
 #endif
-
+void wifi_dump_driver_info();
 #if CONFIG_AUTO_NULL_TX
 int wifi_auto_null_tx(wifi_auto_null_tx_t *auto_null_tx, mlan_bss_type bss_type);
 #endif
