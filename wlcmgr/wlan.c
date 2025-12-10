@@ -9146,11 +9146,15 @@ int wlan_add_network(struct wlan_network *network)
     if (network->role == WLAN_BSS_ROLE_UAP)
     {
 #if CONFIG_WIFI_CAPA
+#if CONFIG_11AX
+        wlan_bandcfg_t bandcfg_get = {0};
+        int ret = WM_SUCCESS;
+#endif
         if (network->channel != 14)
         {
-        /* If no capability was configured, set capa up to 11ax by default */
-        if (!network->wlan_capa)
-            network->wlan_capa =
+            /* If no capability was configured, set capa up to 11ax by default */
+            if (!network->wlan_capa)
+                network->wlan_capa =
 #if CONFIG_11AX
                 WIFI_SUPPORT_11AX |
 #endif
@@ -9158,6 +9162,25 @@ int wlan_add_network(struct wlan_network *network)
                 WIFI_SUPPORT_11AC |
 #endif
                 WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY;
+#if CONFIG_11AX
+            ret = wlan_get_bandcfg(&bandcfg_get);
+            if (ret == WM_SUCCESS)
+            {
+                if ((bandcfg_get.config_bands & MBIT(8)) &&
+                    (bandcfg_get.config_bands & MBIT(9)))
+                {
+                    network->wlan_capa |= WIFI_SUPPORT_11AX;
+                }
+                else
+                {
+                    network->wlan_capa &= ~WIFI_SUPPORT_11AX;
+                }
+            }
+            else
+            {
+                wifi_e("Failed to get Wi-Fi bandcfg");
+            }
+#endif
         }
         else
         {
