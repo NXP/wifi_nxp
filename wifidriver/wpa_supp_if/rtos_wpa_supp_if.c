@@ -2555,7 +2555,7 @@ out:
     return ret;
 }
 
-int wifi_nxp_wpa_supp_remain_on_channel(void *if_priv, unsigned int freq, unsigned int duration)
+int wifi_nxp_wpa_supp_remain_on_channel(void *if_priv, unsigned int freq, unsigned int duration, u64 host_cookie)
 {
     int status                                 = -WM_FAIL;
     int ret                                    = -1;
@@ -2594,7 +2594,7 @@ out:
     return ret;
 }
 
-int wifi_nxp_wpa_supp_cancel_remain_on_channel(void *if_priv)
+int wifi_nxp_wpa_supp_cancel_remain_on_channel(void *if_priv, u64 rpu_cookie)
 {
     int status                                 = -WM_FAIL;
     int ret                                    = -1;
