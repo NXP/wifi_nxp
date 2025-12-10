@@ -229,10 +229,6 @@ static void lwiperf_report(void *arg,
         {
             OSA_TimerActivate(&ptimer);
         }
-        else
-        {
-            OSA_TimerActivate(&ptimer);
-        }
     }
 
     iperf_free_ctx_iperf_session(arg, report_type);
