@@ -13,6 +13,7 @@
 #include <wmerrno.h>
 #include <fsl_os_abstraction.h>
 #include <mlan_sdio_api.h>
+#include <mlan_sdio_defs.h>
 #include <mlan_main_defs.h>
 #include <board.h>
 #include <wifi_bt_config.h>
@@ -136,6 +137,8 @@ int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, ui
     osa_status_t status;
     uint32_t flags = 0;
     uint32_t param;
+    uint32_t sd_retry = 0;
+    uint32_t sd_status = 0;
 
     status = OSA_MutexLock((osa_mutex_handle_t)sdio_mutex, osaWaitForever_c);
     if (status != KOSA_StatusSuccess)
@@ -154,8 +157,20 @@ int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, ui
         param = bsize;
     }
 
+retry:
     if (SDIO_IO_Write_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != KOSA_StatusSuccess)
     {
+        /* issue abort cmd52 command through Fn0 */
+        (void)sdio_drv_creg_write(IO_ABORT, 0, 0x01, &sd_status);
+        /* issue terminate CMD53 */
+        (void)sdio_drv_creg_write(HOST_TO_CARD_EVENT_REG, 1, HOST_TERM_CMD53, &sd_status);
+
+        if (sd_retry < MAX_WRITE_IOMEM_RETRY)
+        {
+            sd_retry++;
+            goto retry;
+        }
+
         (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
         return false;
     }
@@ -205,6 +220,8 @@ int sdio_drv_write_sg(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize,
     osa_status_t status;
     uint32_t flags = 0;
     uint32_t param;
+    uint32_t sd_retry = 0;
+    uint32_t sd_status = 0;
 
     status = OSA_MutexLock((osa_mutex_handle_t)sdio_mutex, osaWaitForever_c);
     if (status != KOSA_StatusSuccess)
@@ -223,8 +240,20 @@ int sdio_drv_write_sg(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize,
         param = bsize;
     }
 
+retry:
     if (SDIO_IO_Write_Extended_Scatter_Gather(&wm_g_sd, (sdio_func_num_t)fn, addr, sg_list, param, flags) != KOSA_StatusSuccess)
     {
+        /* issue abort cmd52 command through Fn0 */
+        (void)sdio_drv_creg_write(IO_ABORT, 0, 0x01, &sd_status);
+        /* issue terminate CMD53 */
+        (void)sdio_drv_creg_write(HOST_TO_CARD_EVENT_REG, 1, HOST_TERM_CMD53, &sd_status);
+
+        if (sd_retry < MAX_WRITE_IOMEM_RETRY)
+        {
+            sd_retry++;
+            goto retry;
+        }
+
         (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
         return 0;
     }
