@@ -9034,6 +9034,37 @@ void wifi_dump_driver_info()
     ImuTxFifoStatus = IMU_TX_FIFO_STATUS(kIMU_LinkCpu1Cpu3);
     ImuRxFifoStatus = IMU_RX_FIFO_STATUS(kIMU_LinkCpu1Cpu3);
     PRINTF("IMU TxFifoStatus: 0x%x, RxFifoStatus: 0x%x\r\n", ImuTxFifoStatus, ImuRxFifoStatus);
+#else
+    uint32_t resp = 0;
+    int ret;
+#if !CONFIG_MEM_POOLS
+    t_u8 *mp_regs_buf = (t_u8 *)OSA_MemoryAllocate(MAX_MP_REGS + DMA_ALIGNMENT);
+#else
+    t_u8 *mp_regs_buf = (t_u8 *)OSA_MemoryPoolAllocate(buf_256_MemoryPool);
+#endif
+    if (mp_regs_buf == NULL)
+    {
+        return;
+    }
+
+    (void)wifi_sdio_lock();
+    ret = sdio_drv_read(REG_PORT | MLAN_SDIO_BYTE_MODE_MASK, 1, 1, MAX_MP_REGS, mp_regs_buf, &resp);
+    if (ret)
+    {
+        PRINTF("SDIO multiple port group registers value:\r\n");
+        dump_hex(mp_regs_buf, MAX_MP_REGS);
+    }
+    else
+    {
+        wifi_e("Failed to read SDIO multiport registers");
+    }
+    (void)wifi_sdio_unlock();
+
+#if !CONFIG_MEM_POOLS
+    OSA_MemoryFree(mp_regs_buf);
+#else
+    OSA_MemoryPoolFree(buf_256_MemoryPool, mp_regs_buf);
+#endif
 #endif
 #if !CONFIG_MEM_POOLS
     task_info_buf = (char *)OSA_MemoryAllocate(MAX_TASK_INFO_BUF_SIZE);
@@ -9699,7 +9730,7 @@ void wifi_sdio_reg_dbg()
             else
                 reg++;
         }
-        dump_hex(buf, sizeof(buf));
+        wifi_io_dump_hex(buf, sizeof(buf));
     }
 }
 #endif
