@@ -4569,6 +4569,7 @@ size_t wifi_remove_he_ies(const t_u8 *data, size_t data_len)
     t_u32 bytes_left = data_len;
     size_t remove_len = 0;
     t_u8 is_removed = 0;
+    IEEEtypes_Extension_t *pext_tlv;
 
     while (bytes_left >= 2U)
     {
@@ -4585,7 +4586,7 @@ size_t wifi_remove_he_ies(const t_u8 *data, size_t data_len)
         switch (element_id)
         {
             case EXTENSION:
-                IEEEtypes_Extension_t *pext_tlv = (IEEEtypes_Extension_t *)pcurrent_ptr;
+                pext_tlv = (IEEEtypes_Extension_t *)pcurrent_ptr;
                 switch (pext_tlv->ext_id)
                 {
                     case HE_CAPABILITY:
