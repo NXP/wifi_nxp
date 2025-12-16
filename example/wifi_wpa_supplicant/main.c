@@ -466,7 +466,7 @@ int wlan_hs_cli_deinit(void)
 }
 #endif
 #endif
-#if CONFIG_WIFI_USB_FILE_ACCESS
+#if CONFIG_WIFI_USB_FILE_ACCESS && (CONFIG_WPA2_ENTP || CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
 static void dump_read_usb_file_usage(void)
 {
     (void)PRINTF("Usage: wlan-read-usb-file <type:ca-cert/client-cert/client-key> <file name>\r\n");
@@ -646,7 +646,7 @@ static struct cli_command wlan_prov_commands[] = {
     {"wlan-set-rtc-time", "<year> <month> <day> <hour> <minute> <second>", test_wlan_set_rtc_time},
     {"wlan-get-rtc-time", NULL, test_wlan_get_rtc_time},
 #endif
-#if CONFIG_WIFI_USB_FILE_ACCESS
+#if CONFIG_WIFI_USB_FILE_ACCESS && (CONFIG_WPA2_ENTP || CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
     {"wlan-read-usb-file", "<type:ca-cert/client-cert/client-key> <file name>", test_wlan_read_usb_file},
     {"wlan-dump-usb-file", "<type:ca-cert/client-cert/client-key>", test_wlan_dump_usb_file},
 #endif
