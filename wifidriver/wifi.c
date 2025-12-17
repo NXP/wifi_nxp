@@ -457,7 +457,10 @@ t_u8 wifi_tx_block_cnt;
 
 int wlan_process_hang(uint8_t fw_reload)
 {
-    int i, ret = WM_SUCCESS, poll_num = 10;
+    int i, ret = WM_SUCCESS;
+#if CONFIG_WIFI_IND_RESET
+    int poll_num = 10;
+#endif
 
     if (mlan_adap->in_reset == true)
     {
