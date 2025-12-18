@@ -91,7 +91,7 @@ int32_t firmware_download(const uint8_t *fw_start_addr, const size_t size, void 
 
     conn_fw = fw_start_addr;
 
-    fwdnld_io_d("Start copying connectivity firmware from 0x%x", (t_u32)conn_fw);
+    PRINTF("[FW Download] Start to download firmware from 0x%x: %u\r\n", (t_u32)conn_fw, OSA_TimeGetMsec());
 
     firmwarelen = size;
     /*Making this section as #if 00 for now, as the decopress and
@@ -111,6 +111,10 @@ int32_t firmware_download(const uint8_t *fw_start_addr, const size_t size, void 
     if (iface->intf_s.fwdnld_intf_check_ready != NULL)
     {
         return (int32_t)iface->intf_s.fwdnld_intf_check_ready(iface, NULL);
+    }
+    else
+    {
+        PRINTF("[FW Download]BLE FW is downloaded: %u\r\n", OSA_TimeGetMsec());
     }
     return ret;
 }

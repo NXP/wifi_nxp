@@ -218,7 +218,7 @@ static fwdnld_intf_ret_t sdio_post_fwdnld_check_conn_ready(fwdnld_intf_t *intf, 
     }
     else
     {
-        sdio_io_d("WLAN FW download Successful");
+        PRINTF("[FW Download] WLAN FW is active: %u\r\n", OSA_TimeGetMsec());
         return FWDNLD_INTF_SUCCESS;
     }
 }
