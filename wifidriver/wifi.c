@@ -713,6 +713,11 @@ resend:
     /* FW is in presleep state. So we send sleep confirm first and then resend this command */
     if (pmadapter->cmd_reject_presleep)
     {
+        /* Driver just completed the PS sleep handshake with FW,
+         * add a short delay here to ensure the wakeup interrupt
+         * is re-enabled by FW before driver resends the command.
+         */
+        OSA_TimeDelay(1);
         pmadapter->cmd_reject_presleep = false;
         goto resend;
     }
