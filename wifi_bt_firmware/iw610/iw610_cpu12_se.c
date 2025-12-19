@@ -1,0 +1,46 @@
+/*
+ * Copyright 2024 NXP
+ * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
+ */
+
+#include <stdint.h>
+#include <osa.h>
+
+#if !CONFIG_UART_WIFI_BRIDGE
+
+#if defined(IW610)
+
+#if !(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
+
+#if defined(CONFIG_WIFI_BT_CMOBO_DNLD)
+const uint8_t fw_cpu12[] = {
+#if CONFIG_UNCOMPRESSED_FIRMWARE
+  #include <sduart_iw610.bin.se.inc>
+#else
+  #include <sduart_iw610_compressed.bin.se.inc>
+#endif
+};
+#else
+const uint8_t fw_cpu12[] = {
+#if CONFIG_UNCOMPRESSED_FIRMWARE
+  #include <sduartspi_iw610.bin.se.inc>
+#else
+  #include <sduartspi_iw610_compressed.bin.se.inc>
+#endif
+};
+#endif
+
+const unsigned char *wlan_fw_bin   = (const unsigned char *)(void *)&fw_cpu12[0];
+const unsigned int wlan_fw_bin_len = sizeof(fw_cpu12);
+
+const unsigned char bt_fw_bin[]  = {0x00};
+const unsigned int bt_fw_bin_len = 0;
+
+#endif
+
+#endif
+
+#endif
