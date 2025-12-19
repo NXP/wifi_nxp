@@ -8038,7 +8038,13 @@ static int wifi_wakeup_card_cb(osa_rw_lock_t *plock, unsigned int wait_time)
 
     if (status != KOSA_StatusSuccess)
     {
-        return -WM_FAIL;
+        wifi_w("Wake up card again");
+        wlan_wake_up_card();
+        status = OSA_SemaphoreWait((osa_semaphore_handle_t)plock->rw_lock, wait_time);
+        if (status != KOSA_StatusSuccess)
+        {
+            return -WM_FAIL;
+        }
     }
 
     return WM_SUCCESS;
