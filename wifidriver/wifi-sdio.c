@@ -2961,6 +2961,9 @@ static t_u32 bitcount(t_u32 num)
 static t_u8 start_check = 0;
 static t_u8 skip_int = 0;
 #endif
+#if CONFIG_TX_RX_ZERO_COPY
+static t_u16 sdrx_memerr_drop;
+#endif
 
 /* returns port number from rd_bitmap. if ctrl port, then it clears
  * the bit and does nothing else
@@ -3179,6 +3182,49 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
     return MLAN_STATUS_SUCCESS;
 }
 
+#if CONFIG_TX_RX_ZERO_COPY
+static mlan_status wlan_get_single_data_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32 *rxlen, t_u32 *rxblocks)
+{
+    t_u32 rx_len;
+
+    if ((pmadapter->mp_rd_bitmap & (1 << pmadapter->curr_rd_port)) != 0U)
+    {
+        t_u32 len_reg_l = RD_LEN_P0_L + (pmadapter->curr_rd_port << 1);
+        t_u32 len_reg_u = RD_LEN_P0_U + (pmadapter->curr_rd_port << 1);
+
+        rx_len = ((t_u16)pmadapter->mp_regs[len_reg_u]) << 8;
+        *rxlen = rx_len |= (t_u16)pmadapter->mp_regs[len_reg_l];
+
+        *rxblocks = (rx_len + MLAN_SDIO_BLOCK_SIZE - 1) / MLAN_SDIO_BLOCK_SIZE;
+        rx_len = (t_u16)((*rxblocks) * MLAN_SDIO_BLOCK_SIZE);
+
+        /* mask rd_bitmap and step curr_port */
+        pmadapter->mp_rd_bitmap &=
+#if defined(SD8801)
+            (t_u16)(~(1 << pmadapter->curr_rd_port));
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || defined(IW610)
+            (t_u32)(~(1 << pmadapter->curr_rd_port));
+#endif
+        *pport = pmadapter->ioport + pmadapter->curr_rd_port;
+
+        if (++pmadapter->curr_rd_port == MAX_PORT)
+#if defined(SD8801)
+            pmadapter->curr_rd_port = 1;
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || defined(IW610)
+            pmadapter->curr_rd_port = 0;
+#endif
+    }
+    else
+    {
+        wifi_io_e("wlan_get_single_data_rd_port empty port %d", pmadapter->curr_rd_port);
+        return MLAN_STATUS_FAILURE;
+    }
+
+    wifi_io_d("port=%d mp_rd_bitmap=0x%x -> 0x%x\n", *pport, rd_bitmap, pmadapter->mp_rd_bitmap);
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
+
 /*
  * Assumes that pmadapter->mp_rd_bitmap contains latest values
  */
@@ -3189,6 +3235,22 @@ static mlan_status _handle_sdio_packet_read(mlan_adapter *pmadapter, t_u8 **pack
     bool aggr = false;
 
     mlan_status ret = wlan_get_rd_port(pmadapter, &port, &rx_len, &rx_blocks, &aggr);
+
+#if CONFIG_TX_RX_ZERO_COPY
+    if (ret == MLAN_STATUS_RESOURCE)
+    {
+        /* here we have no net buffer to restore receive packet, so we have to drop it */
+        ret = wlan_get_single_data_rd_port(pmadapter, &port, &rx_len, &rx_blocks);
+        if (ret != MLAN_STATUS_SUCCESS)
+        {
+            return ret;
+        }
+        (void)sdio_drv_read(port, 1, rx_blocks, MLAN_SDIO_BLOCK_SIZE, inbuf, NULL);
+        sdrx_memerr_drop++;
+        wifi_io_d("drop data packet on net packet alloc fail cnt %hu", sdrx_memerr_drop);
+        return MLAN_STATUS_RESOURCE;
+    }
+#endif
 
     /* nothing to read */
     if (ret != MLAN_STATUS_SUCCESS)
