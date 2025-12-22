@@ -9,6 +9,7 @@
  */
 
 #include <mlan_sdio_api.h>
+#include <mlan_sdio_defs.h>
 #include <osa.h>
 #include <zephyr/sd/sdio.h>
 
@@ -64,9 +65,22 @@ int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uin
 int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp)
 {
     struct sdio_func *func = &g_sdio_funcs[fn];
+    uint32_t sd_retry = 0;
+    uint32_t sd_status = 0;
 
+retry:
     if (sdio_write_addr(func, addr, buf, bcnt * bsize) != 0)
     {
+        /* issue abort cmd52 command through Fn0 */
+        (void)sdio_drv_creg_write(IO_ABORT, 0, 0x01, &sd_status);
+        /* issue terminate CMD53 */
+        (void)sdio_drv_creg_write(HOST_TO_CARD_EVENT_REG, 1, HOST_TERM_CMD53, &sd_status);
+
+        if (sd_retry < MAX_WRITE_IOMEM_RETRY)
+        {
+            sd_retry++;
+            goto retry;
+        }
         return 0;
     }
 
@@ -89,9 +103,22 @@ int sdio_drv_read_sg(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, 
 int sdio_drv_write_sg(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, void *sg_list)
 {
     struct sdio_func *func = &g_sdio_funcs[fn];
+    uint32_t sd_retry = 0;
+    uint32_t sd_status = 0;
 
+retry:
     if (sdio_write_addr(func, addr, buf, bcnt * bsize) != 0)
     {
+        /* issue abort cmd52 command through Fn0 */
+        (void)sdio_drv_creg_write(IO_ABORT, 0, 0x01, &sd_status);
+        /* issue terminate CMD53 */
+        (void)sdio_drv_creg_write(HOST_TO_CARD_EVENT_REG, 1, HOST_TERM_CMD53, &sd_status);
+
+        if (sd_retry < MAX_WRITE_IOMEM_RETRY)
+        {
+            sd_retry++;
+            goto retry;
+        }
         return 0;
     }
 

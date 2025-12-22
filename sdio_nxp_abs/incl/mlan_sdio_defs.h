@@ -422,4 +422,6 @@ Change log:
 #define IO_PORT_2_REG 0x7A
 #endif
 
+#define MAX_WRITE_IOMEM_RETRY 10
+#define IO_ABORT 0x06
 #endif /* _MLAN_SDIO_DEFS_H */
