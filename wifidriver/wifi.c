@@ -458,9 +458,6 @@ t_u8 wifi_tx_block_cnt;
 int wlan_process_hang(uint8_t fw_reload)
 {
     int i, ret = WM_SUCCESS;
-#if CONFIG_WIFI_IND_RESET
-    int poll_num = 10;
-#endif
 
     if (mlan_adap->in_reset == true)
     {
@@ -473,6 +470,7 @@ int wlan_process_hang(uint8_t fw_reload)
 #if CONFIG_WIFI_IND_RESET
     if (fw_reload == FW_RELOAD_NO_EMULATION)
     {
+        int poll_num = 10;
         if(wlan_sdio_check_fw_status(poll_num) == true)
         {
             PRINTF("WLAN FW already running! Skip FW download\r\n");
