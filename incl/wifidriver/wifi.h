@@ -1785,7 +1785,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 #endif
                        const bool keep_previous_scan,
                        const bool active_scan_triggered);
-int wifi_deauthenticate(uint8_t *bssid);
+int wifi_deauthenticate(uint8_t *bssid, int bss_type);
 
 #if CONFIG_TURBO_MODE
 int wifi_get_turbo_mode(t_u8 *mode);

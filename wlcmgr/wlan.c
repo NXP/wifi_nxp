@@ -3487,7 +3487,7 @@ static void wlcm_process_channel_switch_ann(enum cm_sta_state *next, struct wlan
         {
             wlcm_d("Sending deauth because of channel switch");
             set_event_chanswann();
-            (void)wifi_deauthenticate((uint8_t *)network->bssid);
+            (void)wifi_deauthenticate((uint8_t *)network->bssid, network->type);
             /*
               This function call is already present in
               wlan_11h_handle_event_chanswann(). Remove it from here when
@@ -4385,7 +4385,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 #if !CONFIG_WPA_SUPP
         if (is_state(CM_STA_ASSOCIATED))
         {
-            (void)wifi_deauthenticate((uint8_t *)network->bssid);
+            (void)wifi_deauthenticate((uint8_t *)network->bssid, network->type);
         }
 #endif
         wlan.sta_return_to  = CM_STA_IDLE;
@@ -6856,7 +6856,7 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
         if (wlan.sta_return_to >= CM_STA_ASSOCIATING)
         {
 #if !CONFIG_WPA_SUPP
-            (void)wifi_deauthenticate((uint8_t *)curr_nw->bssid);
+            (void)wifi_deauthenticate((uint8_t *)curr_nw->bssid, curr_nw->type);
 #endif
             wlan.sta_return_to  = CM_STA_IDLE;
             *next               = CM_STA_IDLE;
@@ -6872,7 +6872,7 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
          * we'll need to actually
          * disconnect */
 #if !CONFIG_WPA_SUPP
-        (void)wifi_deauthenticate((uint8_t *)curr_nw->bssid);
+        (void)wifi_deauthenticate((uint8_t *)curr_nw->bssid, curr_nw->type);
 #endif
         if (wlan.is_scan_lock)
         {
@@ -6969,7 +6969,7 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
             wlcm_d(
                 "deauthenticating before"
                 " attempting new connection");
-            (void)wifi_deauthenticate((uint8_t *)network->bssid);
+            (void)wifi_deauthenticate((uint8_t *)network->bssid, network->type);
         }
     }
 

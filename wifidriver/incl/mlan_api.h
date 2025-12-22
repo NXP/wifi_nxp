@@ -301,7 +301,7 @@ int wifi_send_hostcmd(
     const void *cmd_buf, uint32_t cmd_buf_len, void *resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len);
 
 int wifi_send_get_wpa_pmk(int mode, char *ssid);
-int wifi_deauthenticate(uint8_t *bssid);
+int wifi_deauthenticate(uint8_t *bssid, int bss_type);
 #if CONFIG_WPA_SUPP
 int wifi_nxp_deauthenticate(unsigned int bss_type, const uint8_t *bssid, uint16_t reason_code);
 void wifi_get_scan_table(mlan_private *pmpriv, mlan_scan_resp *pscan_resp);

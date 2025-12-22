@@ -121,9 +121,9 @@ int wifi_send_shutdown_cmd()
     return WM_SUCCESS;
 }
 
-int wifi_deauthenticate(uint8_t *bssid)
+int wifi_deauthenticate(uint8_t *bssid, int bss_type)
 {
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[bss_type];
 
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
@@ -138,7 +138,7 @@ int wifi_deauthenticate(uint8_t *bssid)
     cmd->seq_num                      = wifi_get_cmd_seq_num(pmpriv);
     cmd->result = 0x0;
 
-    (void)wlan_cmd_802_11_deauthenticate((mlan_private *)mlan_adap->priv[0], cmd, bssid);
+    (void)wlan_cmd_802_11_deauthenticate((mlan_private *)mlan_adap->priv[bss_type], cmd, bssid);
     (void)wifi_wait_for_cmdresp(NULL);
 
     return WM_SUCCESS;
