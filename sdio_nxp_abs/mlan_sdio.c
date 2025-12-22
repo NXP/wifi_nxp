@@ -73,6 +73,32 @@ int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, ui
     return 1;
 }
 
+#if CONFIG_TX_RX_ZERO_COPY
+int sdio_drv_read_sg(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, void *sg_list)
+{
+    struct sdio_func *func = &g_sdio_funcs[fn];
+
+    if (sdio_read_addr(func, addr, buf, bcnt * bsize) != 0)
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+int sdio_drv_write_sg(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, void *sg_list)
+{
+    struct sdio_func *func = &g_sdio_funcs[fn];
+
+    if (sdio_write_addr(func, addr, buf, bcnt * bsize) != 0)
+    {
+        return 0;
+    }
+
+    return 1;
+}
+#endif
+
 extern void handle_cdint(int error);
 
 void sdio_irq_handler(const struct device *dev, int reason, const void *user_data)

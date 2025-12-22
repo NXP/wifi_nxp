@@ -110,6 +110,16 @@ int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uin
  */
 int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp);
 
+#if CONFIG_TX_RX_ZERO_COPY
+/** SDIO Scatter and Gather DMA transfer apis
+ *
+ * This is used to read or write scattered dest memory.
+ * For contiguous memory still can use legacy apis.
+ */
+int sdio_drv_read_sg(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, void *sg_list);
+int sdio_drv_write_sg(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, void *sg_list);
+#endif
+
 /** Initialize the SDIO Driver
  *
  * This should be called once before using the driver.
