@@ -7587,6 +7587,8 @@ typedef MLAN_PACK_START struct _Hostcmd_FTM_SESSION_CTRL
     t_u8 peer_mac[MLAN_MAC_ADDR_LENGTH];
     /** Channel on which FTM must be started */
     t_u8 chan;
+    /** Band on which FTM must be started */
+    t_u8 chanBand;
 } MLAN_PACK_END HostCmd_FTM_SESSION_CTRL;
 
 #if CONFIG_WLS_CSI_PROC

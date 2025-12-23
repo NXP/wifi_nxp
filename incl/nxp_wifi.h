@@ -122,6 +122,12 @@ extern "C" {
 #define CONFIG_CSI_AMI 1
 #endif
 
+#if CONFIG_NXP_WIFI_WLS
+#define CONFIG_11MC 1
+#define CONFIG_11AZ 1
+#define CONFIG_WLS_CSI_PROC 1
+#endif
+
 #if CONFIG_NXP_WIFI_RESET
 #define CONFIG_WIFI_RESET 1
 #endif

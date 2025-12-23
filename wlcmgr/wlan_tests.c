@@ -1444,10 +1444,10 @@ static void test_wlan_loc_cfg(int argc, char **argv)
 
 static void test_wlan_civ_cfg(int argc, char **argv)
 {
-    unsigned civ_req, loc_type, addr_type, addr_len, country_code;
+    unsigned civ_req, loc_type, addr_type, /*addr_len,*/ country_code;
     location_civic_rep_t lcr;
     int arg        = 1;
-    char *civ_addr = CIVIC_ADDRESS;
+    //char *civ_addr = CIVIC_ADDRESS;
     if (argc != 9)
     {
         (void)PRINTF("Error: invalid number of arguments\r\n");
@@ -1521,7 +1521,7 @@ static void test_wlan_11mc_nego_cfg(int argc, char **argv)
     unsigned burst_exp, burst_dur, min_delta, asap, ftm_per_burst, bw, burst_period;
     ftm_11mc_nego_cfg_t dot11mc_cfg;
     int arg        = 1;
-    char *civ_addr = CIVIC_ADDRESS;
+    //char *civ_addr = CIVIC_ADDRESS;
     if (argc != 13)
     {
         (void)PRINTF("Error: invalid number of arguments\r\n");

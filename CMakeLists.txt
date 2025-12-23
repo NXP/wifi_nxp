@@ -12,7 +12,7 @@ else()
     set(MCUX_SDK_DIR ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk-ng)
 endif()
 
-if(CONFIG_NXP_WIFI_CSI_AMI)
+if(CONFIG_NXP_WIFI_CSI_AMI OR CONFIG_NXP_WIFI_WLS)
 add_library(libcsi STATIC IMPORTED)
 if(CONFIG_NXP_LIBCSI_CM33)
     set_target_properties(libcsi PROPERTIES IMPORTED_LOCATION ${ZEPHYR_HAL_NXP_MODULE_DIR}/zephyr/blobs/libcsi/cm33/libcsi.a)
