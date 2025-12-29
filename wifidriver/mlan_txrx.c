@@ -96,7 +96,7 @@ mlan_status wlan_process_uap_rx_packet(mlan_private *priv, pmlan_buffer pmbuf)
     RxPacketHdr_t *prx_pkt = (RxPacketHdr_t *)pmbuf->pdesc;
     RxPD *prx_pd = (RxPD *)(void *)(pmbuf->pbuf + pmbuf->data_offset);
 
-    uint8_t interface = pmbuf->bss_index;
+    uint8_t interface = (pmbuf->bss_index & 0xff);
 
     /* Don't do packet forwarding in disconnected state */
     if (priv->media_connected == MFALSE)
