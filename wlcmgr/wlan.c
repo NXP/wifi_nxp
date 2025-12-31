@@ -3156,7 +3156,10 @@ static void wlcm_process_sta_addr_config_event(struct wifi_message *msg,
     } /* end of switch */
 #if CONFIG_IPV6
     /* Set the ipv6 state to obtaining address */
-    wlan.sta_ipv6_state = CM_STA_OBTAINING_ADDRESS;
+    if (wlan.sta_ipv6_state < CM_STA_OBTAINING_ADDRESS)
+    {
+        wlan.sta_ipv6_state = CM_STA_OBTAINING_ADDRESS;
+    }
 #endif
 }
 
