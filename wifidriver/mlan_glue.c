@@ -6746,6 +6746,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             Caching CSI event data and delaying AMI computation is not meaningful. */
             if(!mlan_adap->ami_ongoing)
             {
+                mlan_adap->ami_ongoing = 1;
                 (void)memcpy(csi_proc_data, (t_u8 *)msg->data, CSI_PROC_DATA_SIZE);
                 wifi_event_completion(WIFI_EVENT_CSI_PROC, WIFI_EVENT_REASON_SUCCESS, csi_proc_data);
             }
