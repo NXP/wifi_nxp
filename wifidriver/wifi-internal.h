@@ -461,12 +461,11 @@ int send_wifi_driver_tx_data_event(t_u8 interface);
 int send_wifi_driver_tx_null_data_event(t_u8 interface);
 #endif
 
-#if !defined(SD8978)
 /**
  * Use this function to check whether wifi reset is in progress.
  */
 bool wifi_reset_in_progress(void);
-
+#if !defined(SD8978)
 /**
  * Use this function to mark wifi reset start and stop.
  */

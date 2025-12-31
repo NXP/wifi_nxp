@@ -10414,11 +10414,7 @@ int wlan_remove_network(const char *name)
         if (wlan.networks[i].name[0] != '\0' && strlen(wlan.networks[i].name) == len &&
             !strncmp(wlan.networks[i].name, name, len))
         {
-#if defined(SD8978)
-            if (false == wlan_in_reset)
-#else
             if (false == wifi_reset_in_progress())
-#endif
             {
                 if (wlan.running && wlan.cur_network_idx == i)
                 {
@@ -11324,11 +11320,7 @@ static void wlcmgr_mon_task(void * data)
         if (status == KOSA_StatusSuccess)
         {
             /*Elements of wlan is not avaliable during wlan reset, so wait ending of wlan reset*/
-#if defined(SD8978)
-            while(wlan_in_reset)
-#else
             while(wifi_reset_in_progress() == true)
-#endif
             {
                 OSA_TimeDelay(10);
             }

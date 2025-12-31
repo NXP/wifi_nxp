@@ -115,7 +115,9 @@ int retry_attempts;
 wm_wifi_t wm_wifi;
 static bool xfer_pending;
 static bool scan_thread_in_process = false;
-#if !defined(SD8978)
+#if defined(SD8978)
+extern bool wlan_in_reset;
+#else
 static bool wifi_reset_in_process  = false;
 #endif
 
@@ -353,12 +355,16 @@ static int wifi_put_mcastf_lock(void)
     return WM_SUCCESS;
 }
 
-#if !defined(SD8978)
 bool wifi_reset_in_progress(void)
 {
+#if defined(SD8978)
+    return (wlan_in_reset == true);
+#else
     return (wifi_reset_in_process == true);
+#endif
 }
 
+#if !defined(SD8978)
 void wifi_reset_set_state(bool enable)
 {
     wifi_reset_in_process = enable;
