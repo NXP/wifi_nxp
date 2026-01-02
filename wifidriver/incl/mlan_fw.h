@@ -1734,6 +1734,7 @@ typedef enum _ENH_PS_MODES
 #if CONFIG_WIFI_FW_DEBUG
 /** Event definition : FW debug information */
 #define EVENT_FW_DEBUG_INFO 0x00000063
+#define EVENT_FW_DEBUG_DUMP 0x00000073
 #endif
 
 #if (CONFIG_11MC) || (CONFIG_11AZ)

@@ -2142,6 +2142,10 @@ struct _mlan_adapter
     t_u32 fw_cap_info;
     /** Extended firmware capability information */
     t_u32 fw_cap_ext;
+#if CONFIG_WIFI_FW_DEBUG
+    /** Event fw dump */
+    bool event_fw_dump;
+#endif
 #if CONFIG_FW_VDLL
     /** vdll ctrl */
     vdll_dnld_ctrl vdll_ctrl;

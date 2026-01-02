@@ -654,19 +654,26 @@ resend:
         (void)wifi_put_command_lock();
 
 #if CONFIG_WIFI_FW_DEBUG
-        if (wm_wifi.wifi_usb_mount_cb != NULL)
+        if (mlan_adap->event_fw_dump == MFALSE)
         {
-            ret = wm_wifi.wifi_usb_mount_cb();
-            if (ret == WM_SUCCESS)
-                wifi_dump_firmware_info();
+            if (wm_wifi.wifi_usb_mount_cb != NULL)
+            {
+                ret = wm_wifi.wifi_usb_mount_cb();
+                if (ret == WM_SUCCESS)
+                    wifi_dump_firmware_info();
+                else
+                {
+                    wifi_e("USB mounting failed");
+                }
+            }
             else
             {
-                wifi_e("USB mounting failed");
+                wifi_dump_firmware_info();
             }
         }
         else
         {
-            wifi_dump_firmware_info();
+            OSA_SemaphoreWait((osa_semaphore_handle_t)wm_wifi.fw_dump_event, osaWaitForever_c);
         }
 #endif
 #if CONFIG_WIFI_RECOVERY
@@ -723,19 +730,26 @@ resend:
         wifi_dump_driver_info();
 #endif /* CONFIG_ENABLE_WARNING_LOGS */
 #if CONFIG_WIFI_FW_DEBUG
-        if (wm_wifi.wifi_usb_mount_cb != NULL)
+        if (mlan_adap->event_fw_dump == MFALSE)
         {
-            ret = wm_wifi.wifi_usb_mount_cb();
-            if (ret == WM_SUCCESS)
-                wifi_dump_firmware_info();
+            if (wm_wifi.wifi_usb_mount_cb != NULL)
+            {
+                ret = wm_wifi.wifi_usb_mount_cb();
+                if (ret == WM_SUCCESS)
+                    wifi_dump_firmware_info();
+                else
+                {
+                    wifi_e("USB mounting failed");
+                }
+            }
             else
             {
-                wifi_e("USB mounting failed");
+                wifi_dump_firmware_info();
             }
         }
         else
         {
-            wifi_dump_firmware_info();
+            OSA_SemaphoreWait((osa_semaphore_handle_t)wm_wifi.fw_dump_event, osaWaitForever_c);
         }
 #endif
 #if CONFIG_WIFI_RECOVERY
@@ -1408,6 +1422,17 @@ static int wifi_core_init(void)
         goto fail;
     }
     OSA_SemaphorePost((osa_semaphore_handle_t)wm_wifi.command_resp_sem);
+
+#if CONFIG_WIFI_FW_DEBUG
+    status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)wm_wifi.fw_dump_event);
+    if (status != KOSA_StatusSuccess)
+    {
+        wifi_e("Create fw dump event sem failed");
+        goto fail;
+    }
+    OSA_SemaphorePost((osa_semaphore_handle_t)wm_wifi.fw_dump_event);
+#endif
+
     status = OSA_MutexCreate((osa_mutex_handle_t)wm_wifi.mcastf_mutex);
     if (status != KOSA_StatusSuccess)
     {
@@ -1587,6 +1612,9 @@ static void wifi_core_deinit(void)
 
     (void)OSA_MutexDestroy((osa_mutex_handle_t)wm_wifi.mcastf_mutex);
     (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)wm_wifi.command_resp_sem);
+#if CONFIG_WIFI_FW_DEBUG
+    (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)wm_wifi.fw_dump_event);
+#endif
 #if CONFIG_WMM
     (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)wm_wifi.tx_data_sem);
 #endif
@@ -2916,19 +2944,26 @@ void wifi_tx_card_awake_lock(void)
     {
         wifi_e("Failed to wakeup card for Tx");
 #if CONFIG_WIFI_FW_DEBUG
-        if (wm_wifi.wifi_usb_mount_cb != NULL)
+        if (mlan_adap->event_fw_dump == MFALSE)
         {
-            ret = wm_wifi.wifi_usb_mount_cb();
-            if (ret == WM_SUCCESS)
-                wifi_dump_firmware_info();
+            if (wm_wifi.wifi_usb_mount_cb != NULL)
+            {
+                ret = wm_wifi.wifi_usb_mount_cb();
+                if (ret == WM_SUCCESS)
+                    wifi_dump_firmware_info();
+                else
+                {
+                    wifi_e("USB mounting failed");
+                }
+            }
             else
             {
-                wifi_e("USB mounting failed");
+                wifi_dump_firmware_info();
             }
         }
         else
         {
-            wifi_dump_firmware_info();
+            OSA_SemaphoreWait((osa_semaphore_handle_t)wm_wifi.fw_dump_event, osaWaitForever_c);
         }
 #endif
 #if CONFIG_WIFI_RECOVERY

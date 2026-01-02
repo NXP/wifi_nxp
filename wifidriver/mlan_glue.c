@@ -5514,6 +5514,118 @@ void wifi_handle_event_data_pause(void *data)
 }
 #endif
 
+#if CONFIG_WIFI_FW_DEBUG
+volatile int wifi_dump_fw_in_progress = 0;
+bool fw_dump_sector_erased            = 0;
+uintptr_t fw_dump_current_addr        = CONFIG_FW_DUMP_FLASH_START_ADDR;
+#define DUMP_TYPE_ENDED 0x02
+
+int wifi_flash_dump_append_data(t_u8 *data, t_u32 length, t_u32 *write_addr, bool end);
+
+static void wifi_handle_event_fw_dump_info_event(Event_Ext_t *evt)
+{
+    int ret;
+    fw_dump_info_event *fw_dump = MNULL;
+    t_u8 pad_bytes[8]           = {0};
+
+    fw_dump = (fw_dump_info_event *)(void *)&evt->reason_code;
+
+    /* Calculate aligned size for this block
+     * Round up to 8-byte boundary */
+    t_u16 aligned_len = (fw_dump->len + 7) & ~7;
+    t_u16 padding     = aligned_len - fw_dump->len;
+
+    if (!wifi_dump_fw_in_progress)
+    {
+        wifi_dump_fw_in_progress = 1;
+        OSA_SemaphoreWait((osa_semaphore_handle_t)wm_wifi.fw_dump_event, osaWaitForever_c);
+        PRINTF("Start DUMP output, time %u us, please wait...\r\n", OSA_GetTimestamp());
+        if (!fw_dump_sector_erased)
+        {
+            (void)mflash_drv_init();
+            (void)PRINTF("Start erase flash\r\n");
+            t_u32 erase_start = CONFIG_FW_DUMP_FLASH_START_ADDR & ~(MFLASH_SECTOR_SIZE - 1);
+            t_u32 erase_end =
+                (CONFIG_FW_DUMP_FLASH_START_ADDR + CONFIG_FW_DUMP_FLASH_ERASE_LENGTH + MFLASH_SECTOR_SIZE - 1) &
+                ~(MFLASH_SECTOR_SIZE - 1);
+            for (t_u32 erase_addr = erase_start; erase_addr < erase_end; erase_addr += MFLASH_SECTOR_SIZE)
+            {
+                int status = mflash_drv_sector_erase(mflash_drv_log2phys((void *)erase_addr, MFLASH_SECTOR_SIZE));
+                if (status != kStatus_Success)
+                {
+                    wifi_e("Erase flash: %p failed:%u", erase_addr, status);
+                    return;
+                }
+            }
+            fw_dump_sector_erased = 1;
+            (void)PRINTF("Erase flash from 0x%X to 0x%X\r\n", erase_start, erase_end);
+        }
+    }
+
+    if (fw_dump->type == DUMP_TYPE_ENDED)
+    {
+        wifi_dump_fw_in_progress = 0;
+        OSA_SemaphorePost((osa_semaphore_handle_t)wm_wifi.fw_dump_event);
+
+        if (padding > 0)
+        {
+            ret = wifi_flash_dump_append_data((t_u8 *)fw_dump, sizeof(fw_dump_info_event) + fw_dump->len,
+                                              &fw_dump_current_addr, 0);
+            if (ret != WM_SUCCESS)
+            {
+                wifi_e("Flash writing failed");
+                return;
+            }
+            ret = wifi_flash_dump_append_data(pad_bytes, padding, &fw_dump_current_addr, 1);
+            if (ret != WM_SUCCESS)
+            {
+                wifi_e("Flash writing padding failed");
+                return;
+            }
+        }
+        else
+        {
+            ret = wifi_flash_dump_append_data((t_u8 *)fw_dump, sizeof(fw_dump_info_event) + fw_dump->len,
+                                              &fw_dump_current_addr, 1);
+            if (ret != WM_SUCCESS)
+            {
+                wifi_e("Flash writing failed");
+                return;
+            }
+        }
+
+        (void)PRINTF("==== FW DUMP END: Start Address 0x%X , Length 0x%lx bytes====\r\n",
+                     CONFIG_FW_DUMP_FLASH_START_ADDR, fw_dump_current_addr - CONFIG_FW_DUMP_FLASH_START_ADDR);
+        PRINTF("==== FW DUMP END: Time %u us====\r\n", OSA_GetTimestamp());
+        fw_dump_current_addr = CONFIG_FW_DUMP_FLASH_START_ADDR;
+#if !CONFIG_WIFI_RECOVERY
+        while (1)
+            ;
+#else
+        return;
+#endif
+    }
+
+    ret = wifi_flash_dump_append_data((t_u8 *)fw_dump, sizeof(fw_dump_info_event) + fw_dump->len, &fw_dump_current_addr,
+                                      0);
+    if (ret != WM_SUCCESS)
+    {
+        wifi_e("Flash writing failed");
+        return;
+    }
+
+    if (padding > 0)
+    {
+        ret = wifi_flash_dump_append_data(pad_bytes, padding, &fw_dump_current_addr, 0);
+        if (ret != WM_SUCCESS)
+        {
+            wifi_e("Flash writing padding failed");
+            return;
+        }
+    }
+}
+#endif
+
 static void wifi_handle_event_tx_status_report(Event_Ext_t *evt)
 {
 #if CONFIG_WPA_SUPP
@@ -6306,6 +6418,12 @@ int wifi_handle_fw_event(struct bus_message *msg)
         case EVENT_PER_STATUS_REPORT:
             PRINTM(MEVENT, "EVENT: PER_STATUS_REPORT\n");
             wifi_tx_pert_report((void *)evt);
+            break;
+#endif
+#if CONFIG_WIFI_FW_DEBUG
+        case EVENT_FW_DEBUG_DUMP:
+            if (mlan_adap->event_fw_dump)
+                wifi_handle_event_fw_dump_info_event(evt);
             break;
 #endif
         case EVENT_TX_STATUS_REPORT:
@@ -9105,11 +9223,9 @@ void wifi_register_fw_dump_cb(int (*wifi_usb_mount_cb)(),
     wm_wifi.wifi_usb_file_close_cb = wifi_usb_file_close_cb;
 }
 
-bool fw_dump_sector_erased = 0;
 t_u8 fw_dump_page_buffer[MFLASH_PAGE_SIZE];
 t_u8 fw_dump_page_buf_cached[MFLASH_PAGE_SIZE];
 t_u32 fw_dump_page_buf_cached_len = 0;
-uintptr_t fw_dump_current_addr = CONFIG_FW_DUMP_FLASH_START_ADDR;
 
 /**
  *  @brief This function write data to flash or cached buffer
@@ -9741,7 +9857,6 @@ void wifi_sdio_reg_dbg()
  *
  *  @return         N/A
  */
-volatile int wifi_dump_fw_in_progress = 0;
 void wifi_dump_firmware_info()
 {
     int ret   = 0;
