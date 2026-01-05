@@ -27,6 +27,9 @@
 #include "sdio.h"
 #include "firmware_dnld.h"
 #include "fwdnld_sdio.h"
+#if CONFIG_TX_RX_ZERO_COPY
+#include "wm_net.h"
+#endif
 
 #define SDIO_COMMAND_RESPONSE_WAIT_MS 20000
 
@@ -102,14 +105,14 @@ extern void wlan_hs_hanshake_cfg(bool skip);
 
 #if CONFIG_TX_RX_ZERO_COPY
 typedef struct _sg_data_list_t {
-    sdmmchost_scatter_gather_data_list_t sg_data;
+    sg_dma_list_t sg_data;
     t_u32 is_hdr;
     void* pkt_addr;
     struct _sg_data_list_t *free_next;
     t_u32 used;
 } sg_data_list_t;
 
-#define SG_DATA_DMA_DESC_POOL_NUM (BOARD_SDMMC_HOST_DMA_DESCRIPTOR_BUFFER_SIZE / 2)
+#define SG_DATA_DMA_DESC_POOL_NUM (16U)
 #define SG_DATA_TX_ALIGN_SIZE (4U)
 #define SG_DATA_RX_ALIGN_SIZE (32U)
 #define SG_DATA_ALIGN(val, align) (((t_u32)(val) + align - 1U) & ~(align - 1U))
