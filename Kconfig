@@ -156,24 +156,6 @@ config MCUX_COMPONENT_middleware.wifi.ncp_supp_wmcrypto
 config MCUX_COMPONENT_middleware.wifi.libcsi.incl
     bool "Component middleware.wifi.libcsi.incl"
 
-config MCUX_COMPONENT_middleware.wifi.libcsi_cm33
-    bool "Component middleware.wifi.libcsi_cm33"
-    select MCUX_COMPONENT_middleware.wifi
-    select MCUX_COMPONENT_middleware.wifi.wifidriver
-    select MCUX_COMPONENT_middleware.wifi.libcsi.incl
-
-config MCUX_COMPONENT_middleware.wifi.libcsi_cm7.cm7f
-    bool "Component middleware.wifi.libcsi_cm7.cm7f"
-    select MCUX_COMPONENT_middleware.wifi
-    select MCUX_COMPONENT_middleware.wifi.wifidriver
-    select MCUX_COMPONENT_middleware.wifi.libcsi.incl
-
-config MCUX_COMPONENT_middleware.wifi.libcsi_cm7.cm7f_sta_20_only
-    bool "Component middleware.wifi.libcsi_cm7.cm7f_sta_20_only"
-    select MCUX_COMPONENT_middleware.wifi
-    select MCUX_COMPONENT_middleware.wifi.wifidriver
-    select MCUX_COMPONENT_middleware.wifi.libcsi.incl
-
 config MCUX_COMPONENT_middleware.wifi.slim_debug
     bool "Component middleware.wifi.slim_debug"
     select MCUX_COMPONENT_middleware.wifi
