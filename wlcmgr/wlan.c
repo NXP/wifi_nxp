@@ -7692,22 +7692,45 @@ static void copy_network(struct wlan_network *dst, struct wlan_network *src)
 
 static int wifi_wakeup_card_cb(osa_rw_lock_t *plock, unsigned int wait_time)
 {
+    int pm_wakeup_retry     = 0;
+    mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[0];
+    mlan_adapter *pmadapter = pmpriv->adapter;
+
     osa_status_t status = OSA_SemaphoreWait((osa_semaphore_handle_t)plock->rw_lock, 0);
-    if (status != KOSA_StatusSuccess)
+
+    do
     {
-        wlan_wake_up_card();
-        status = OSA_SemaphoreWait((osa_semaphore_handle_t)plock->rw_lock, wait_time);
-    }
+        if (status != KOSA_StatusSuccess)
+        {
+            if (pmadapter->ps_state == PS_STATE_SLEEP)
+            {
+#if CONFIG_WIFI_PS_DEBUG
+                wifi_w("Wake up card attempt: %d, ps_state=%d", pm_wakeup_retry + 1, pmadapter->ps_state);
+#endif
+                wlan_wake_up_card();
+                status = OSA_SemaphoreWait((osa_semaphore_handle_t)plock->rw_lock, wait_time);
+                pm_wakeup_retry++;
+            }
+            else
+            {
+#if CONFIG_WIFI_PS_DEBUG
+                wifi_w("Firmware woke up via another path (e.g., interrupt)");
+#endif
+                status = KOSA_StatusSuccess;
+                break;
+            }
+        }
+        else
+        {
+            break;
+        }
+
+    } while (pm_wakeup_retry < 3);
 
     if (status != KOSA_StatusSuccess)
     {
-        wifi_w("Wake up card again");
-        wlan_wake_up_card();
-        status = OSA_SemaphoreWait((osa_semaphore_handle_t)plock->rw_lock, wait_time);
-        if (status != KOSA_StatusSuccess)
-        {
-            return -WM_FAIL;
-        }
+        wifi_e("Failed to wakeup card after %d attempts, ps_state=%d", pm_wakeup_retry, pmadapter->ps_state);
+        return -WM_FAIL;
     }
 
     return WM_SUCCESS;
