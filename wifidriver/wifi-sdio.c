@@ -619,7 +619,10 @@ static sg_data_list_t *sg_data_tx_prepare(t_u8 *out_buf)
     }
 
     /* 12. add sdio block size padding */
-    SG_DATA_SIZE(tail) += MLAN_SDIO_BLOCK_SIZE - (pkt_len & (MLAN_SDIO_BLOCK_SIZE - 1));
+    if ((pkt_len & (MLAN_SDIO_BLOCK_SIZE - 1)) != 0)
+    {
+        SG_DATA_SIZE(tail) += MLAN_SDIO_BLOCK_SIZE - (pkt_len & (MLAN_SDIO_BLOCK_SIZE - 1));
+    }
     return head;
 
 clone:
@@ -694,7 +697,10 @@ skip_alloc:
     }
 
     /* 17. add sdio block size padding */
-    SG_DATA_SIZE(tail) += MLAN_SDIO_BLOCK_SIZE - (pkt_len & (MLAN_SDIO_BLOCK_SIZE - 1));
+    if ((pkt_len & (MLAN_SDIO_BLOCK_SIZE - 1)) != 0)
+    {
+        SG_DATA_SIZE(tail) += MLAN_SDIO_BLOCK_SIZE - (pkt_len & (MLAN_SDIO_BLOCK_SIZE - 1));
+    }
     return head;
 
 fail:
