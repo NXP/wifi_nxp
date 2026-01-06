@@ -111,6 +111,10 @@ typedef struct
 
     OSA_SEMAPHORE_HANDLE_DEFINE(command_resp_sem);
 
+#if CONFIG_WIFI_FW_DEBUG
+    OSA_SEMAPHORE_HANDLE_DEFINE(fw_dump_event);
+#endif
+
     OSA_MUTEX_HANDLE_DEFINE(mcastf_mutex);
 
 #if CONFIG_WMM
