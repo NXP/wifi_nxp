@@ -10012,9 +10012,10 @@ void wifi_sdio_reg_dbg()
 #elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
     defined(SD9177) || defined(IW610) || defined(RW610)
 
-#define DEBUG_HOST_READY     0xCC
-#define DEBUG_FW_DONE        0xFF
-#define DEBUG_MEMDUMP_FINISH 0xFE
+#define DEBUG_HOST_EVENT_READY 0xAA
+#define DEBUG_HOST_READY       0xCC
+#define DEBUG_FW_DONE          0xFF
+#define DEBUG_MEMDUMP_FINISH   0xFE
 
 #ifndef RW610
 #define DEBUG_DUMP_CTRL_REG    0xF9
@@ -10130,7 +10131,11 @@ rdwr_status wifi_cmd52_rdwr_firmware(t_u8 doneflag, t_u8 trigger)
     uint32_t resp;
 
     dbg_dump_ctrl_reg = DEBUG_DUMP_CTRL_REG;
-    debug_host_ready  = DEBUG_HOST_READY;
+
+    if (mlan_adap->event_fw_dump == MTRUE)
+        debug_host_ready = DEBUG_HOST_EVENT_READY;
+    else
+        debug_host_ready = DEBUG_HOST_READY;
 
     ret = sdio_drv_creg_write(dbg_dump_ctrl_reg, 1, debug_host_ready, &resp);
     if (!ret)
@@ -10153,6 +10158,9 @@ rdwr_status wifi_cmd52_rdwr_firmware(t_u8 doneflag, t_u8 trigger)
             return RDWR_STATUS_FAILURE;
         }
     }
+
+    if (mlan_adap->event_fw_dump == MTRUE)
+        return RDWR_STATUS_SUCCESS;
 
     for (tries = 0; tries < MAX_POLL_TRIES; tries++)
     {
@@ -10459,6 +10467,26 @@ done:
         ;
 #endif
     wifi_dump_fw_in_progress = 0;
+}
+
+void wifi_dump_firmware_info_via_event()
+{
+#ifndef RW610
+    if (!wifi_dump_fw_in_progress)
+    {
+        rdwr_status stat = wifi_cmd52_rdwr_firmware(0, MTRUE);
+        if (stat != RDWR_STATUS_SUCCESS)
+        {
+            wifi_e("Fail to trigger FW dump");
+        }
+        else
+        {
+            /** Delay to process FW dump event */
+            OSA_TimeDelay(10000);
+        }
+    }
+#endif
+    OSA_SemaphoreWait((osa_semaphore_handle_t)wm_wifi.fw_dump_event, osaWaitForever_c);
 }
 #endif
 #endif

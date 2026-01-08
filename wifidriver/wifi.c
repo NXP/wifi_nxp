@@ -624,7 +624,7 @@ resend:
         }
         else
         {
-            OSA_SemaphoreWait((osa_semaphore_handle_t)wm_wifi.fw_dump_event, osaWaitForever_c);
+            wifi_dump_firmware_info_via_event();
         }
 #endif
 #if CONFIG_WIFI_RECOVERY
@@ -700,7 +700,7 @@ resend:
         }
         else
         {
-            OSA_SemaphoreWait((osa_semaphore_handle_t)wm_wifi.fw_dump_event, osaWaitForever_c);
+            wifi_dump_firmware_info_via_event();
         }
 #endif
 #if CONFIG_WIFI_RECOVERY
@@ -2918,7 +2918,7 @@ void wifi_tx_card_awake_lock(void)
         }
         else
         {
-            OSA_SemaphoreWait((osa_semaphore_handle_t)wm_wifi.fw_dump_event, osaWaitForever_c);
+            wifi_dump_firmware_info_via_event();
         }
 #endif
 #if CONFIG_WIFI_RECOVERY
