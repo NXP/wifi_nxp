@@ -1765,6 +1765,15 @@ struct wlan_ip_config
     struct ipv4_config ipv4;
 };
 
+#if CONFIG_WPA_SUPP
+/** WLAN selection policy configuration */
+enum wlan_select_policy
+{
+    WLAN_SELECT_POLICY_MANUAL = 0,
+    WLAN_SELECT_POLICY_AUTO = 1,
+};
+#endif
+
 /** Wi-Fi network profile
  *
  *  This data structure represents a Wi-Fi network profile. It consists of an
@@ -1836,6 +1845,10 @@ struct wlan_network
     short rssi_threshold;
 #endif
 #if CONFIG_WPA_SUPP
+    /** Network selection policy */
+    enum wlan_select_policy select_policy;
+    /** Priority group */
+    int priority;
     /** HT capabilities info field within HT capabilities information element */
     unsigned short ht_capab;
 #if CONFIG_11AC
@@ -1921,6 +1934,17 @@ struct wlan_network
     /** This indicates this network is used as an internal network for
      * WPS */
     unsigned wps_specific : 1;
+#endif
+#if CONFIG_WPA_SUPP
+    /** If set to 1, the priority field contains the specific priority for this
+     * network. This field can be used to change the order in which wpa_supplicant
+     * goes through the networks when selecting a BSS. If set to 0, all networks will
+     * get same priority group (0).
+     *
+     * This field is set to 1 if the network is added with the priority
+     * specified (not set to 0), otherwise it is set to 0.
+     */
+    unsigned priority_specific : 1;
 #endif
 
     /** The network supports 802.11N. */

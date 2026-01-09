@@ -3807,7 +3807,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #if CONFIG_WPA_SUPP
             assoc_resp_ret:
 #endif
-                (void)wifi_event_completion(WIFI_EVENT_ASSOCIATION, result, NULL);
+                (void)wifi_event_completion(WIFI_EVENT_ASSOCIATION, result, &pmpriv->curr_bss_params.bss_descriptor);
             }
             break;
             case HostCmd_CMD_802_11_MAC_ADDRESS:

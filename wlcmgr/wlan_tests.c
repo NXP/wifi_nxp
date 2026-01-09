@@ -554,6 +554,7 @@ static void print_network(struct wlan_network *network)
     if (network->role == WLAN_BSS_ROLE_STA)
     {
         (void)PRINTF("\tProactive Key Caching: %s\r\n", network->security.pkc == 1 ? "Enabled" : "Disabled");
+        (void)PRINTF("\tPriority: %d\r\n", network->priority_specific ? network->priority : 0);
     }
 #endif
     print_address(&network->ip, network->role);
@@ -811,6 +812,12 @@ static void dump_wlan_add_usage(void)
         "    wlan-add <profile_name> ssid <ssid> [wpa2 psk psk-sha256 <secret> wpa3 sae <secret>] [mfpc <1> mfpr <0>] "
         "\r\n");
     (void)PRINTF("      If using WPA2/WPA3 Mixed security, set the PMF configuration as mentioned above.\r\n");
+#if CONFIG_WPA_SUPP
+    (void)PRINTF("    wlan-add <profile_name> ssid <ssid> [prio <priority>] \r\n");
+    (void)PRINTF(
+        "      If using priority group, set the <priority>. Networks with higher priority will be preferred "
+        "during selection.\r\n");
+#endif
     (void)PRINTF("  For static IP address assignment:\r\n");
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid>\r\n"
@@ -843,6 +850,9 @@ static void dump_wlan_add_usage(void)
 #endif
         " <secret>]"
         " [mfpc <0/1> mfpr <0/1>]"
+#if CONFIG_WPA_SUPP
+        " [prio <priority>]"
+#endif
         "\r\n");
 
     (void)PRINTF("For Micro-AP interface\r\n");
@@ -976,6 +986,7 @@ static void test_wlan_add(int argc, char **argv)
         unsigned gcipher : 1;
         unsigned pcipher : 1;
         unsigned gmcipher : 1;
+        unsigned priority : 1;
 #endif
 #if CONFIG_WIFI_DTIM_PERIOD
         unsigned dtim : 1;
@@ -1996,6 +2007,20 @@ static void test_wlan_add(int argc, char **argv)
             arg += 2;
             info.gmcipher = 1;
         }
+        else if (!info.priority&& string_equal("prio", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], (unsigned int *)&network->priority, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF(
+                    "Error: invalid priority"
+                    " argument\n");
+                return;
+            }
+
+            network->priority_specific = 1;
+            arg += 2;
+            info.priority = 1;
+        }
 #endif
 #if CONFIG_WIFI_DTIM_PERIOD
         else if (!info.dtim && string_equal("dtim", argv[arg]))
@@ -2077,6 +2102,15 @@ static void test_wlan_add(int argc, char **argv)
             network->security.type = WLAN_SECURITY_WPA2_WPA3_SAE_MIXED;
         }
     }
+
+#if CONFIG_WPA_SUPP
+    if (info.role == WLAN_BSS_ROLE_UAP && info.priority == 1U)
+    {
+        dump_wlan_add_usage();
+        (void)PRINTF("Error: unable to set priority group in AP mode\r\n");
+        return;
+    }
+#endif
 
     if (info.role == WLAN_BSS_ROLE_UAP && network->ip.ipv4.address == 0)
     {

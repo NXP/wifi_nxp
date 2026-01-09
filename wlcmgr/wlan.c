@@ -4040,6 +4040,48 @@ static void wlcm_process_ba_stream_timeout_request(struct wifi_message *msg)
 }
 #endif
 
+#if CONFIG_WPA_SUPP
+static void wlan_update_cur_network_idx(struct wifi_message *msg)
+{
+    BSSDescriptor_t *pbss_desc = NULL;
+    int i = 0;
+
+    if (msg->reason == WIFI_EVENT_REASON_SUCCESS && msg->data != NULL)
+    {
+        pbss_desc = msg->data;
+        for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
+        {
+            if (wlan.networks[i].name[0] != '\0' &&
+                wlan.networks[i].role == WLAN_BSS_ROLE_STA)
+            {
+                if (wlan.networks[i].ssid_specific && wlan.networks[i].ssid[0] != 0U)
+                {
+                    if (strncmp(wlan.networks[i].ssid, (const char *)pbss_desc->ssid.ssid, pbss_desc->ssid.ssid_len) != 0 ||
+                        wlan.networks[i].ssid[pbss_desc->ssid.ssid_len] != '\0')
+                    {
+                        continue;
+                    }
+                }
+
+                if (wlan.networks[i].bssid_specific && !is_bssid_any(wlan.networks[i].bssid))
+                {
+                    if (memcmp(wlan.networks[i].bssid, pbss_desc->mac_address, MLAN_MAC_ADDR_LENGTH) != 0)
+                    {
+                        continue;
+                    }
+                }
+
+                /** The match is based on both SSID (if ssid is specified) and BSSID (if bssid is specified).
+                 *  Found matching network: update current network index.
+                 */
+                wlan.cur_network_idx = i;
+                break;
+            }
+        }
+    }
+}
+#endif
+
 static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta_state *next)
 {
 #if CONFIG_WPA2_ENTP
@@ -7405,6 +7447,13 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_d("got event: association result: %s",
                     msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
 
+#if CONFIG_WPA_SUPP
+            /** If a network priority group is set, supplicant will automatically
+             * select a network based on the priority group, so synchronize and
+             * correct the current network index here.
+             * */
+            wlan_update_cur_network_idx(msg);
+#endif
             wlcm_process_association_event(msg, &next);
             break;
 
@@ -10304,6 +10353,11 @@ int wlan_add_network(struct wlan_network *network)
         wlan.networks[pos].security_specific = 1;
     }
 
+#if CONFIG_WPA_SUPP
+    wlan.networks[pos].priority = network->priority;
+    wlan.networks[pos].priority_specific = network->priority_specific;
+#endif
+
 #if !CONFIG_WPA_SUPP
     if ((network->role == WLAN_BSS_ROLE_STA) &&
         (network->security.type != WLAN_SECURITY_NONE && network->security.type != WLAN_SECURITY_WEP_OPEN))
@@ -10858,13 +10912,17 @@ int wlan_connect(char *name)
 {
     unsigned int len = name != NULL ? strlen(name) : 0U;
     int i            = 0, ret;
+    int selected_idx = -1;
+#if CONFIG_WPA_SUPP
+    int max_prio     = -1;
+#endif
 
     if (!wlan.running)
     {
         return WLAN_ERROR_STATE;
     }
 
-    if (wlan.num_networks == 0U || len == 0U)
+    if (wlan.num_networks == 0U)
     {
         return -WM_E_INVAL;
     }
@@ -10881,50 +10939,85 @@ int wlan_connect(char *name)
 
     wlan.roam_reassoc = false;
 
-    /* connect to a specific network */
-    for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
+#if CONFIG_WPA_SUPP
+    /** If the network profile is not specified, networks will be selected based on priority */
+    if (name == NULL)
     {
-        if (wlan.networks[i].name[0] != '\0' && strlen(wlan.networks[i].name) == len &&
-            !strncmp(wlan.networks[i].name, name, len))
+        /* Connect to the network with highest priority */
+        for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
         {
-            switch (wlan.networks[i].role)
+            if (wlan.networks[i].name[0] != '\0' && wlan.networks[i].role == WLAN_BSS_ROLE_STA)
             {
-                case MLAN_BSS_ROLE_UAP:
-                    wlcm_e("Invalid bss role. Bss role is uap.");
-                    ret = WLAN_ERROR_PARAM;
-                    break;
-                case MLAN_BSS_ROLE_ANY:
-                    wlcm_e("Invalid bss role. Bss role is any.");
-                    ret = WLAN_ERROR_PARAM;
-                    break;
-                default:
-                    ret = WLAN_ERROR_NONE;
-                    break;
+                if (wlan.networks[i].priority > max_prio)
+                {
+                    max_prio     = wlan.networks[i].priority;
+                    selected_idx = i;
+                }
             }
+        }
 
-            if(ret != WLAN_ERROR_NONE)
-                return ret;
+        if (selected_idx < 0)
+        {
+            /* No suitable network found */
+            return -WM_E_INVAL;
+        }
 
-            wlcm_d("taking the scan lock (connect scan)");
-            dbg_lock_info();
-            ret = OSA_SemaphoreWait((osa_semaphore_handle_t)wlan.scan_lock, osaWaitForever_c);
-            if (ret != WM_SUCCESS)
+        wlan.networks[selected_idx].select_policy = WLAN_SELECT_POLICY_AUTO;
+    }
+    else
+#endif
+    {
+        /* connect to a specific network */
+        for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
+        {
+            if (wlan.networks[i].name[0] != '\0' && strlen(wlan.networks[i].name) == len &&
+                !strncmp(wlan.networks[i].name, name, len))
             {
-                wlcm_e("failed to get scan lock: 0x%X", ret);
-                return WLAN_ERROR_ACTION;
-            }
-            wlcm_d("got the scan lock (connect scan)");
-            wlan.is_scan_lock = 1;
-            /* Reset reassoc count as this is set to WLAN_RECONNECT_LIMIT
-             * during disconnect */
-            wlan.reassoc_count = 0;
+                switch (wlan.networks[i].role)
+                {
+                    case MLAN_BSS_ROLE_UAP:
+                        wlcm_e("Invalid bss role. Bss role is uap.");
+                        ret = WLAN_ERROR_PARAM;
+                        break;
+                    case MLAN_BSS_ROLE_ANY:
+                        wlcm_e("Invalid bss role. Bss role is any.");
+                        ret = WLAN_ERROR_PARAM;
+                        break;
+                    default:
+                        ret = WLAN_ERROR_NONE;
+                        break;
+                }
 
-            return send_user_request(CM_STA_USER_REQUEST_CONNECT, i);
+                if(ret != WLAN_ERROR_NONE)
+                    return ret;
+
+                selected_idx = i;
+                break;
+            }
+        }
+
+        if (selected_idx < 0)
+        {
+            /* No suitable network found */
+            return -WM_E_INVAL;
         }
     }
 
-    /* specified network was not found */
-    return -WM_E_INVAL;
+    wlcm_d("taking the scan lock (connect scan)");
+    dbg_lock_info();
+    ret = OSA_SemaphoreWait((osa_semaphore_handle_t)wlan.scan_lock, osaWaitForever_c);
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("failed to get scan lock: 0x%X", ret);
+        return WLAN_ERROR_ACTION;
+    }
+    wlcm_d("got the scan lock (connect scan)");
+    wlan.is_scan_lock = 1;
+    /* Reset reassoc count as this is set to WLAN_RECONNECT_LIMIT
+    * during disconnect */
+    wlan.reassoc_count = 0;
+
+    return send_user_request(CM_STA_USER_REQUEST_CONNECT, selected_idx);
 }
 
 int wlan_connect_opt(char *name, bool skip_dfs)
