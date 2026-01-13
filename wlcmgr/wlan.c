@@ -6608,7 +6608,7 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
                 /* BIT 14 indicate deauth is initiated by FW */
                 if(!(disassoc_resp->reason_code & MBIT(14)))
                 {
-                    wifi_nxp_sta_remove(network->type, disassoc_resp->sta_addr);
+                    wifi_nxp_sta_remove(msg->bss_type, disassoc_resp->sta_addr);
                 }
             }
 #else

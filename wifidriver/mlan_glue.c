@@ -6365,7 +6365,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             }
 #endif
 
-            if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_DEAUTH, WIFI_EVENT_REASON_SUCCESS, disassoc_resp) !=
+            if (wifi_event_post((enum wlan_bss_type)evt->bss_type, WIFI_EVENT_UAP_CLIENT_DEAUTH, WIFI_EVENT_REASON_SUCCESS, disassoc_resp) !=
                 WM_SUCCESS)
             {
                 /* If fail to send message on queue, free allocated memory ! */

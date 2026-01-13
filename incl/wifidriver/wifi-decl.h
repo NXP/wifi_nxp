@@ -184,6 +184,7 @@ enum wifi_bss_features
 
 struct wifi_message
 {
+    enum wlan_bss_type bss_type;
     uint16_t event;
     enum wifi_event_reason reason;
     void *data;

@@ -790,6 +790,27 @@ resend:
     return ret;
 }
 
+int wifi_event_post(enum wlan_bss_type bss_type, enum wifi_event event, enum wifi_event_reason result, void *data)
+{
+    struct wifi_message msg;
+
+    if (wm_wifi.wlc_mgr_event_queue == MNULL)
+    {
+        wifi_e("wlc_mgr_event_queue has not been created, event %d", event);
+        return -WM_FAIL;
+    }
+
+    msg.data     = data;
+    msg.reason   = result;
+    msg.event    = (uint16_t)event;
+    msg.bss_type = bss_type;
+    if (OSA_MsgQPut((osa_msgq_handle_t)wm_wifi.wlc_mgr_event_queue, &msg) != KOSA_StatusSuccess)
+    {
+        wifi_e("Failed to send response on Queue, event %d", event);
+        return -WM_FAIL;
+    }
+    return WM_SUCCESS;
+}
 
 int wifi_event_completion(enum wifi_event event, enum wifi_event_reason result, void *data)
 {

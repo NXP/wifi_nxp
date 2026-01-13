@@ -278,6 +278,14 @@ typedef MLAN_PACK_START struct _nxp_wifi_acl_info
 int wifi_handle_fw_event(struct bus_message *msg);
 
 /**
+ * This function is used to send events with BSS type specification to the upper layer
+ * through the message queue registered by the upper layer.
+ */
+int wifi_event_post(enum wlan_bss_type bss_type, enum wifi_event event, enum wifi_event_reason result, void *data);
+
+/**
+ * @deprecated Use wifi_event_post() instead
+ *
  * This function is used to send events to the upper layer through the
  * message queue registered by the upper layer.
  */
