@@ -846,6 +846,9 @@ mlan_status wlan_xmit_pkt_sg(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx
 static mlan_status wifi_send_fw_data(t_u8 *data, t_u32 txlen)
 {
     t_u32 tx_blocks = 0, buflen = 0;
+#if defined(SD9177)
+    t_u8 retry_count = 20;
+#endif
     uint32_t resp;
     bool ret;
 
@@ -897,7 +900,19 @@ static mlan_status wifi_send_fw_data(t_u8 *data, t_u32 txlen)
 
     /* send CMD53 */
     ret = sdio_drv_write(mlan_adap->ioport + txportno, 1, tx_blocks, buflen, data, &resp);
-
+#if  defined(SD9177)
+    /* This is a WAR, TODO: RCA for sdio failure is needed */
+    if (ret == false)
+    {
+        for (int i = 0; i < retry_count; i++)
+        {
+            ret = sdio_drv_write(mlan_adap->ioport + txportno, 1, tx_blocks, buflen, data, &resp);
+            if (ret != false)
+                break;
+            OSA_TimeDelay(1);
+        }
+    }
+#endif
     txportno++;
     if (txportno == mlan_adap->mp_end_port)
     {
