@@ -4985,31 +4985,15 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 {
                     *cancel_channel              = remain_channel->action == HostCmd_ACT_GEN_REMOVE ? MTRUE : MFALSE;
                     mlan_adap->remain_on_channel = remain_channel->action == HostCmd_ACT_GEN_REMOVE ? MFALSE : MTRUE;
-                    if (*cancel_channel)
+                    if (wifi_event_completion(WIFI_EVENT_REMAIN_ON_CHANNEL, WIFI_EVENT_REASON_SUCCESS,
+                                              (void *)cancel_channel) != WM_SUCCESS)
                     {
-                        if (wifi_event_completion(WIFI_EVENT_REMAIN_ON_CHANNEL, WIFI_EVENT_REASON_SUCCESS,
-                                                  (void *)cancel_channel) != WM_SUCCESS)
-                        {
 #if !CONFIG_MEM_POOLS
-                            OSA_MemoryFree(cancel_channel);
+                        OSA_MemoryFree(cancel_channel);
 #else
-                            OSA_MemoryPoolFree(buf_32_MemoryPool, cancel_channel);
+                        OSA_MemoryPoolFree(buf_32_MemoryPool, cancel_channel);
 #endif
-                            cancel_channel = NULL;
-                        }
-                    }
-                    else
-                    {
-                        if (wifi_event_completion(WIFI_EVENT_REMAIN_ON_CHANNEL, WIFI_EVENT_REASON_SUCCESS,
-                                                  (void *)cancel_channel) != WM_SUCCESS)
-                        {
-#if !CONFIG_MEM_POOLS
-                            OSA_MemoryFree(cancel_channel);
-#else
-                            OSA_MemoryPoolFree(buf_32_MemoryPool, cancel_channel);
-#endif
-                            cancel_channel = NULL;
-                        }
+                        cancel_channel = NULL;
                     }
                 }
             }
@@ -6988,7 +6972,30 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
 #if CONFIG_WMM
         case EVENT_REMAIN_ON_CHANNEL_EXPIRED:
-            mlan_adap->remain_on_channel = MFALSE;
+            if (wifi_is_remain_on_channel() == MTRUE)
+            {
+                mlan_adap->remain_on_channel = MFALSE;
+#if !CONFIG_MEM_POOLS
+                t_u8 *cancel_channel = (t_u8 *)OSA_MemoryAllocate(sizeof(t_u8));
+#else
+                t_u8 *cancel_channel = (t_u8 *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+#endif
+                if (cancel_channel != NULL)
+                {
+                    *cancel_channel = MTRUE;
+                    if (wifi_event_completion(WIFI_EVENT_REMAIN_ON_CHANNEL, WIFI_EVENT_REASON_SUCCESS,
+                        (void *)cancel_channel) != WM_SUCCESS)
+                    {
+#if !CONFIG_MEM_POOLS
+                        OSA_MemoryFree(cancel_channel);
+#else
+                        OSA_MemoryPoolFree(buf_32_MemoryPool, cancel_channel);
+#endif
+                        cancel_channel = NULL;
+                    }
+                }
+            }
+
             /* Restore tx after remain on channel expired */
             wifi_set_tx_status(WIFI_DATA_RUNNING);
 

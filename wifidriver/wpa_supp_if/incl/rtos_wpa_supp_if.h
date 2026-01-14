@@ -138,6 +138,7 @@ void wifi_nxp_wpa_supp_event_proc_unprot_mgmt(void *if_priv,
                                               nxp_wifi_event_mlme_t *unprot_mgmt_event,
                                               unsigned int event_len);
 void wifi_nxp_wpa_supp_event_proc_remain_on_channel(void *if_priv, int cancel_channel);
+void wifi_nxp_wpa_supp_event_proc_cookie_rsp(void *if_priv);
 void wifi_nxp_wpa_supp_event_proc_mgmt_rx(void *if_priv, nxp_wifi_event_mlme_t *mgmt_rx,
                                           unsigned int event_len, int rssi);
 void wifi_nxp_wpa_supp_event_get_wiphy(void *if_priv,
