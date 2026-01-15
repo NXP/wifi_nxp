@@ -3682,6 +3682,52 @@ int wifi_add_to_bypassq(const t_u8 interface, void *pkt, t_u32 len)
 }
 #endif
 
+#if CONFIG_11AX
+#if CONFIG_TCP_ACK_ENH
+static bool wifi_is_uap_11ac_enabled(mlan_private *pmpriv)
+{
+    bool enabled = MFALSE;
+
+    if (pmpriv->uap_channel > MAX_CHANNELS_BG)
+    {
+        if (pmpriv->config_bands & BAND_AAC)
+        {
+            enabled = MTRUE;
+        }
+    }
+    else
+    {
+        if (pmpriv->config_bands & BAND_GAC)
+        {
+            enabled = MTRUE;
+        }
+    }
+    return enabled;
+}
+
+static bool wifi_is_uap_11ax_enabled(mlan_private *pmpriv)
+{
+    bool enabled = MFALSE;
+
+    if (pmpriv->uap_channel > MAX_CHANNELS_BG)
+    {
+        if (pmpriv->config_bands & BAND_AAX)
+        {
+            enabled = MTRUE;
+        }
+    }
+    else
+    {
+        if (pmpriv->config_bands & BAND_GAX)
+        {
+            enabled = MTRUE;
+        }
+    }
+    return enabled;
+}
+#endif /** CONFIG_TCP_ACK_ENH */
+#endif /** CONFIG_11AX */
+
 int wifi_low_level_output(const t_u8 interface,
                           const t_u8 *sd_buffer,
                           const t_u16 len
@@ -3794,33 +3840,33 @@ int wifi_low_level_output(const t_u8 interface,
         {
             if (wm_wifi.bandwidth == BANDWIDTH_80MHZ)
             {
-                if (mlan_adap->usr_dot_11ax_enable == MTRUE)
+                if (wifi_is_uap_11ax_enabled(pmpriv) == MTRUE)
                 {
                     tx_control = (RATEID_HE_MCS9_1SS_BW80 << 16) | TXPD_TXRATE_ENABLE;
                 }
-                else if (mlan_adap->usr_dot_11ac_enable == MTRUE)
+                else if (wifi_is_uap_11ac_enabled(pmpriv) == MTRUE)
                 {
                     tx_control = (RATEID_VHT_MCS9_1SS_BW80 << 16) | TXPD_TXRATE_ENABLE;
                 }
             }
             else if (wm_wifi.bandwidth == BANDWIDTH_40MHZ)
             {
-                if (mlan_adap->usr_dot_11ax_enable == MTRUE)
+                if (wifi_is_uap_11ax_enabled(pmpriv) == MTRUE)
                 {
                     tx_control = (RATEID_HE_MCS8_1SS_BW40 << 16) | TXPD_TXRATE_ENABLE;
                 }
-                else if (mlan_adap->usr_dot_11ac_enable == MTRUE)
+                else if (wifi_is_uap_11ac_enabled(pmpriv) == MTRUE)
                 {
                     tx_control = (RATEID_VHT_MCS8_1SS_BW40 << 16) | TXPD_TXRATE_ENABLE;
                 }
             }
             else if (wm_wifi.bandwidth == BANDWIDTH_20MHZ)
             {
-                if (mlan_adap->usr_dot_11ax_enable == MTRUE)
+                if (wifi_is_uap_11ax_enabled(pmpriv) == MTRUE)
                 {
                     tx_control = (RATEID_HE_MCS7_1SS_BW20 << 16) | TXPD_TXRATE_ENABLE;
                 }
-                else if (mlan_adap->usr_dot_11ac_enable == MTRUE)
+                else if (wifi_is_uap_11ac_enabled(pmpriv) == MTRUE)
                 {
                     tx_control = (RATEID_VHT_MCS7_1SS_BW20 << 16) | TXPD_TXRATE_ENABLE;
                 }

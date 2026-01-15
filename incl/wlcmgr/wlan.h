@@ -2006,10 +2006,6 @@ struct wlan_network
     uint16_t beacon_period;
     /** DTIM period of associated BSS */
     uint8_t dtim_period;
-#if CONFIG_WIFI_CAPA
-    /** Wi-Fi capabilities of the uAP network 802.11n, 802.11ac or/and 802.11ax */
-    uint8_t wlan_capa;
-#endif
 #if CONFIG_11V
     /** BTM mode */
     uint8_t btm_mode;
@@ -6980,32 +6976,6 @@ void wlan_deregister_net_monitor_user_callback(void);
  * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
  */
 int wlan_mgmtframe_tx_cfg(wlan_host_tx_frame_params_t *mgmtframe);
-#endif
-
-#if CONFIG_WIFI_CAPA
-/** Check if Wi-Fi hardware support 802.11n for on 2.4G or 5G bands.
- *
- * \param[in] channel: Channel number.
- *
- * \return true if 802.11n is supported or false if not.
- */
-uint8_t wlan_check_11n_capa(unsigned int channel);
-
-/** Check if Wi-Fi hardware support 802.11ac for on 2.4G or 5G bands.
- *
- * \param[in] channel: Channel number.
- *
- * \return true if 802.11ac is supported or false if not.
- */
-uint8_t wlan_check_11ac_capa(unsigned int channel);
-
-/** Check if Wi-Fi hardware support 802.11ax for on 2.4G or 5G bands.
- *
- * \param[in] channel: Channel number.
- *
- * \return true if 802.11ax is supported or false if not.
- */
-uint8_t wlan_check_11ax_capa(unsigned int channel);
 #endif
 
 #if (CONFIG_IPS)
