@@ -2814,7 +2814,7 @@ static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, 
     prx_pd = (RxPD *)(void *)((t_u8 *)buffer + INTF_HEADER_LEN);
 #endif
 
-    if (*((t_u16 *)buffer + RX_PKT_TYPE_OFFSET) == PKT_TYPE_MGMT_FRAME)
+    if (prx_pd->rx_pkt_type == PKT_TYPE_MGMT_FRAME)
     {
         wifi_is_wpa_supplicant_input(interface, buffer, len);
         goto consumed;

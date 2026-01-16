@@ -1855,18 +1855,29 @@ void *net_stack_buffer_clone_tx_frag(void *pkt, void *p, int offset)
 int net_stack_buffer_push(void *p, int len)
 {
     struct net_pkt *pkt = (struct net_pkt *)p;
-    struct net_buf *buf = pkt->cursor.buf;
-    uint16_t data_2_pos_offset;
+    struct net_buf *buf;
+    uint8_t *new_pos;
 
-    if (pkt->cursor.pos - buf->__buf < len)
+    if (!p || len < 0 || pkt->cursor.pos - pkt->cursor.buf->__buf < len)
     {
         return -1;
     }
-    data_2_pos_offset = pkt->cursor.pos - buf->data;
-    pkt->cursor.pos -= len;
-    buf->data = pkt->cursor.pos;
-    buf->len += len;
-    buf->size += data_2_pos_offset;
+
+    buf = pkt->cursor.buf;
+    new_pos = pkt->cursor.pos - len;
+
+    if (new_pos < buf->data)
+    {
+        /* exceed old headroom, add new headroom and move cursor */
+        buf->len += (uintptr_t)(void *)buf->data - (uintptr_t)(void *)new_pos;
+        buf->data = new_pos;
+        pkt->cursor.pos = new_pos;
+    }
+    else
+    {
+        /* not exceed old headroom, only move cursor */
+        pkt->cursor.pos = new_pos;
+    }
 
     return 0;
 }
