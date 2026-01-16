@@ -4738,10 +4738,11 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
     }
     else
     {
+#if defined(CONFIG_NET_DHCPV4)
         /* Stop the dhcp timer first after link lost occurs, as the dhcp timer
          * callback may lead to that the connection state is out-of-sync with FW */
         net_stop_dhcp_timer();
-
+#endif
         /* we were attempting a connection and lost the link,
          * so treat this as a connection attempt failure
          */
@@ -4900,7 +4901,7 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
 #endif
 #endif
 }
-
+#if defined(CONFIG_NET_DHCPV4)
 static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
                                          enum cm_sta_state *next,
                                          struct wlan_network *network)
@@ -5065,7 +5066,7 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
         wlan.sta_ipv4_state = CM_STA_CONNECTED;
     }
 }
-
+#endif
 #if CONFIG_IPV6
 static void wlcm_process_net_ipv6_config(struct wifi_message *msg,
                                          enum cm_sta_state *next,
@@ -6431,7 +6432,9 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
         wlcm_w("No interface is up\r\n");
         return;
     }
+#if defined(CONFIG_NET_DHCPV4)
     net_stop_dhcp_timer();
+#endif
     /* Forcefully stop dhcp on given interface.
      * net_interface_dhcp_stop internally does nothing
      * if dhcp client is not started.
@@ -7238,13 +7241,14 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_d("got event: Interfaces configured");
             wlcm_process_net_if_config_event(msg, &next);
             break;
-
+#if defined(CONFIG_NET_DHCPV4)
         case WIFI_EVENT_NET_DHCP_CONFIG:
             if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
                 break;
 
             wlcm_process_net_dhcp_config(msg, &next, network);
             break;
+#endif
 #if CONFIG_IPV6
         case WIFI_EVENT_NET_IPV6_CONFIG:
             wlcm_d("got event: net ipv6 config");
@@ -8552,8 +8556,10 @@ void wlan_initialize_sta_network(struct wlan_network *net)
     net->type = WLAN_BSS_TYPE_STA;
     /* Set network role to sta */
     net->role = WLAN_BSS_ROLE_STA;
+#if defined(CONFIG_NET_DHCPV4)
     /* Specify address type as dynamic assignment */
     net->ip.ipv4.addr_type = ADDR_TYPE_DHCP;
+#endif
 }
 
 static bool isHexNumber(const char *str, const uint8_t len)

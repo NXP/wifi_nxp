@@ -190,7 +190,7 @@ struct net_ip_config
      * associated with this interface. */
     struct net_ipv4_config ipv4;
 };
-
+#if defined(CONFIG_NET_DHCPV4)
 /** Set hostname for network interface
  *
  * \param[in] hostname Hostname to be set.
@@ -213,6 +213,7 @@ void net_stop_dhcp_timer(void);
  *
  * \return WM_SUCESS otherwise standard LWIP error codes.
  */
+#endif
 static inline int net_socket_blocking(int sock, int state)
 {
     /* TODO: implement */
