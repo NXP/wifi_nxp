@@ -4200,9 +4200,24 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 wm_wifi.cmd_resp_status = WM_SUCCESS;
             }
             break;
+#if CONFIG_NET_MONITOR
             case HostCmd_CMD_802_11_NET_MONITOR:
-                wm_wifi.cmd_resp_status = WM_SUCCESS;
-                break;
+            {
+                HostCmd_DS_802_11_NET_MONITOR *cmd_net_mon;
+                cmd_net_mon = (HostCmd_DS_802_11_NET_MONITOR *)&resp->params.net_mon;
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    pmpriv->adapter->enable_net_mon =
+                        wlan_le16_to_cpu(cmd_net_mon->monitor_activity);
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                {
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                }
+            }
+            break;
+#endif
 #if UAP_SUPPORT
             case HOST_CMD_APCMD_SYS_CONFIGURE:
                 wifi_uap_handle_cmd_resp(resp);

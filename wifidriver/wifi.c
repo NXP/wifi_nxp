@@ -2425,7 +2425,14 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
                     memcmp(zero_mac, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
                            MLAN_MAC_ADDR_LENGTH)) ||
                     memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.attemp_bssid,
-                           MLAN_MAC_ADDR_LENGTH))
+                           MLAN_MAC_ADDR_LENGTH)
+#if CONFIG_NET_MONITOR
+                    || (priv->adapter->enable_net_mon && unicast &&
+                        !memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
+                                MLAN_MAC_ADDR_LENGTH) &&
+                        memcmp(pieee_pkt_hdr->addr1, (t_u8 *)priv->curr_addr, MLAN_MAC_ADDR_LENGTH))
+#endif
+                   )
                 {
                     wifi_d("Dropping Deauth frame from other bssid: type=%d " MACSTR "\r\n", sub_type,
                            MAC2STR(pieee_pkt_hdr->addr3));
