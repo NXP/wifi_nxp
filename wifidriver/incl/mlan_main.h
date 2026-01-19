@@ -2443,6 +2443,10 @@ struct _mlan_adapter
     /** Number of processed CSI event data. */
     t_u32 ami_num;
 #endif
+#if CONFIG_NET_MONITOR
+    /** NetMon enabled */
+    t_u16 enable_net_mon;
+#endif
 };
 
 /** Ethernet packet type for EAPOL */
