@@ -326,6 +326,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
                     (void)PRINTF("DHCP Server started successfully\r\n");
                 }
             }
+#if CONFIG_WPA_SUPP_P2P
             else
             {
                 PRINTF("app_cb: WLAN: P2P GO Started\r\n");
@@ -353,6 +354,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
                     (void)PRINTF("DHCP Server started successfully\r\n");
                 }
             }
+#endif
             printSeparator();
             break;
         case WLAN_REASON_UAP_CLIENT_ASSOC:

@@ -251,7 +251,8 @@ static void wm_netif_ipv6_status_callback(struct netif *n)
     /*	TODO: Implement appropriate functionality here*/
     net_d("Received callback on IPv6 address state change");
 
-    (void)wlan_wlcmgr_send_msg(net_get_interface_bss_type(n), WIFI_EVENT_NET_IPV6_CONFIG, WIFI_EVENT_REASON_SUCCESS, (void *)n);
+    (void)wlan_wlcmgr_send_msg(net_get_interface_bss_type(n), WIFI_EVENT_NET_IPV6_CONFIG, WIFI_EVENT_REASON_SUCCESS,
+                               (void *)n);
 }
 #endif /* CONFIG_IPV6 */
 
@@ -367,19 +368,16 @@ int net_wlan_init(void)
 
 enum wlan_bss_type net_get_interface_bss_type(struct netif *n)
 {
-    char iface_name[NETIF_NAMESIZE];
-    net_get_if_name(iface_name, (struct netif *)n);
-
-    if (strstr(iface_name, "ml"))
+    if (n->name[0] == 'm' && n->name[1] == 'l')
     {
         return WLAN_BSS_TYPE_STA;
     }
-    else if (strstr(iface_name, "ua"))
+    else if (n->name[0] == 'u' && n->name[1] == 'a')
     {
         return WLAN_BSS_TYPE_UAP;
     }
 #if CONFIG_WPA_SUPP_P2P
-    else if (strstr(iface_name, "wf"))
+    else if (n->name[0] == 'w' && n->name[1] == 'f')
     {
         return WLAN_BSS_TYPE_WIFIDIRECT;
     }
@@ -831,11 +829,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
             break;
     }
     /* Finally this should send the following event. */
-    if (if_handle == &g_mlan
-#if CONFIG_WPA_SUPP_P2P
-        || ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_STA))
-#endif
-    )
+    if (if_handle == &g_mlan)
     {
         (void)wlan_wlcmgr_send_msg(WLAN_BSS_TYPE_STA, WIFI_EVENT_NET_STA_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
 
@@ -846,13 +840,24 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
          */
     }
 #if UAP_SUPPORT
-    else if (if_handle == &g_uap
-#if CONFIG_WPA_SUPP_P2P
-             || ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_UAP))
-#endif
-	    )
+    else if (if_handle == &g_uap)
     {
         (void)wlan_wlcmgr_send_msg(WLAN_BSS_TYPE_UAP, WIFI_EVENT_UAP_NET_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
+    }
+#endif
+#if CONFIG_WPA_SUPP_P2P
+    else if (if_handle == &g_wfd)
+    {
+        if (netif_get_bss_type() == BSS_TYPE_UAP)
+        {
+            (void)wlan_wlcmgr_send_msg(WLAN_BSS_TYPE_WIFIDIRECT, WIFI_EVENT_UAP_NET_ADDR_CONFIG,
+                                       WIFI_EVENT_REASON_SUCCESS, NULL);
+        }
+        else
+        {
+            (void)wlan_wlcmgr_send_msg(WLAN_BSS_TYPE_WIFIDIRECT, WIFI_EVENT_NET_STA_ADDR_CONFIG,
+                                       WIFI_EVENT_REASON_SUCCESS, NULL);
+        }
     }
 #endif
     else

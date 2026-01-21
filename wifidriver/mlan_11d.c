@@ -1656,7 +1656,7 @@ mlan_status wlan_11d_handle_uap_domain_info(mlan_private *pmpriv, t_u16 band, t_
        function here manually */
     /* ret = wlan_11d_send_domain_info(pmpriv, pioctl_buf); */
     int rv = wifi_uap_prepare_and_send_cmd(pmpriv, HostCmd_CMD_802_11D_DOMAIN_INFO, HostCmd_ACT_GEN_SET, 0,
-                                           (t_void *)pioctl_buf, MNULL, MLAN_BSS_TYPE_UAP, NULL);
+                                           (t_void *)pioctl_buf, MNULL, pmpriv->bss_type, NULL);
     if (rv != 0)
     {
         wuap_w("Unable to send uap domain info");

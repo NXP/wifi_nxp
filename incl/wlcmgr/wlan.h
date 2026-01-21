@@ -2946,6 +2946,22 @@ int wlan_get_current_network_bssid(char *bssid);
  */
 int wlan_get_current_uap_network(struct wlan_network *network);
 
+#if CONFIG_WPA_SUPP_P2P
+/** Retrieve the current network configuration of the WFD interface.
+ *
+ *  This function retrieves the current network configuration of the WFD
+ *  interface when the WFD interface is in the \ref WLAN_UAP_STARTED state.
+ *
+ *  \param[out] network: A pointer to the \ref wlan_network.
+ *
+ *  \return WM_SUCCESS if successful.
+ *  \return -WM_E_INVAL if \a network is NULL.
+ *  \return WLAN_ERROR_STATE if the Wi-Fi connection manager was
+ *           not running or not in the \ref WLAN_UAP_STARTED state.
+ */
+int wlan_get_current_wfd_network(struct wlan_network *network);
+#endif
+
 /** Retrieve the current network ssid of the uAP interface.
  *
  *  This function retrieves the current network ssid of the uAP
@@ -2960,6 +2976,23 @@ int wlan_get_current_uap_network(struct wlan_network *network);
  *           not running or not in the \ref WLAN_UAP_STARTED state.
  */
 int wlan_get_current_uap_network_ssid(char *ssid);
+
+#if CONFIG_WPA_SUPP_P2P
+/** Retrieve the current network ssid of the WFD interface.
+ *
+ *  This function retrieves the current network ssid of the WFD
+ *  interface when the WFD interface is in the \ref WLAN_UAP_STARTED state.
+ *
+ *  \param[out] ssid: A pointer to the ssid char string with NULL termination.
+ *                   Maximum length is 32 (not include NULL termination).
+ *
+ *  \return WM_SUCCESS if successful.
+ *  \return -WM_E_INVAL if \a ssid is NULL.
+ *  \return WLAN_ERROR_STATE if the Wi-Fi connection manager was
+ *           not running or not in the \ref WLAN_UAP_STARTED state.
+ */
+int wlan_get_current_wfd_network_ssid(char *ssid);
+#endif
 
 #if CONFIG_SCAN_WITH_RSSIFILTER
 int wlan_set_rssi_threshold(int rssithr);

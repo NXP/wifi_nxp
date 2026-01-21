@@ -1983,9 +1983,14 @@ static void test_wlan_add(int argc, char **argv)
         network->ip.ipv4.addr_type = ADDR_TYPE_BRIDGE_MODE;
     }
 
+    if (network->role == WLAN_BSS_ROLE_UAP)
+        network->type = WLAN_BSS_TYPE_UAP;
+    else
+        network->type = WLAN_BSS_TYPE_STA;
+
     network->ip.ipv4.addr_type         = (enum address_types)(info.address);
     network->ssid[IEEEtypes_SSID_SIZE] = '\0';
-    ret                               = wlan_add_network(network);
+    ret                                = wlan_add_network(network);
     switch (ret)
     {
         case WM_SUCCESS:
