@@ -34,6 +34,7 @@ struct client_mac_cache
 
 struct dhcp_server_data
 {
+    int instance_id;
     int sock;
     int count_clients;        /* to keep count of cached devices */
     char msg[SERVER_BUFFER_SIZE];
@@ -47,10 +48,10 @@ struct dhcp_server_data
     uint32_t current_ip;      /* keep track of assigned IP addresses */
 };
 
-int dhcp_server_init(void *intrfc_handle);
+int dhcp_server_init(void *intrfc_handle, int instance_id);
 void dhcpd_task(osa_task_param_t arg);
-int dhcp_send_halt(void);
-int dhcp_free_allocations(void);
+int dhcp_send_halt(int instance_id);
+int dhcp_free_allocations(int instance_id);
 int dhcp_create_and_bind_udp_socket(struct sockaddr_in *address, void *intrfc_handle);
 int dhcp_send_response(int sock, struct sockaddr *addr, char *msg, int len);
 #endif

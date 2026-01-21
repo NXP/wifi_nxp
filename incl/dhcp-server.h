@@ -99,7 +99,7 @@ int dhcpd_cli_deinit(void);
  *
  * \return WM_SUCCESS on success or error code
  */
-int dhcp_server_start(void *intrfc_handle);
+int dhcp_server_start(void *intrfc_handle, int instance_id);
 
 /** Start DNS server
  *
@@ -129,11 +129,11 @@ int dhcp_server_start(void *intrfc_handle);
  * \param[in] domain_names Pointer to the list of domain names or NULL.
  *
  */
-void dhcp_enable_dns_server(char **domain_names);
+void dhcp_enable_dns_server(char **domain_names, int dhcp_enable_dns_server, int instance_id);
 
 /** Stop DHCP server
  */
-void dhcp_server_stop(void);
+void dhcp_server_stop(int instance_id);
 
 /** Configure the DHCP dynamic IP lease time
  *
@@ -159,7 +159,7 @@ int dhcp_server_lease_timeout(uint32_t val);
  *
  * \return WM_SUCCESS on success or -WM_FAIL.
  */
-int dhcp_get_ip_from_mac(uint8_t *client_mac, uint32_t *client_ip);
+int dhcp_get_ip_from_mac(uint8_t *client_mac, uint32_t *client_ip, int instance_id);
 
 /** Print DHCP stats on the console
  *
@@ -177,4 +177,12 @@ void dhcp_stat(void);
  */
 const char *dhcp_server_err_str(int ret);
 
+/* Wrapper to pass instance ID to task */
+struct dhcp_task_args {
+    int instance_id;
+};
+
+#define DHCP_INSTANCE_UAP    0
+#define DHCP_INSTANCE_WFD_GO 1
+#define MAX_DHCP_INSTANCES   2
 #endif

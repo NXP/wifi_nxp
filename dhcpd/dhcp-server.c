@@ -25,10 +25,10 @@
 #define CLIENT_IP_NOT_FOUND          0x00000000U
 
 uint32_t dhcp_address_timeout = DEFAULT_DHCP_ADDRESS_TIMEOUT;
-OSA_MUTEX_HANDLE_DEFINE(dhcpd_mutex_Handle);
+OSA_MUTEX_HANDLE_DEFINE(dhcpd_mutex_Handle[MAX_DHCP_INSTANCES]);
 
 #ifndef __ZEPHYR__
-static int ctrl = -1;
+static int ctrl[MAX_DHCP_INSTANCES] = {-1, -1};
 #else
 static int ctrl_sockpair[2];
 #endif
@@ -36,84 +36,85 @@ static int ctrl_sockpair[2];
 #define CTRL_PORT 12679
 static char ctrl_msg[16];
 
-struct dhcp_server_data dhcps;
+struct dhcp_server_data dhcps[MAX_DHCP_INSTANCES];
 static void get_broadcast_addr(struct sockaddr_in *addr);
 static int get_ip_addr_from_interface(uint32_t *ip, void *interface_handle);
 static int get_netmask_from_interface(uint32_t *nm, void *interface_handle);
-static int send_gratuitous_arp(uint32_t ip);
-static int ac_add(uint8_t *chaddr, uint32_t client_ip);
-static uint32_t ac_lookup_mac(uint8_t *chaddr);
-static uint8_t *ac_lookup_ip(uint32_t client_ip);
-static bool ac_not_full(void);
+static int send_gratuitous_arp(uint32_t ip, int instance_id);
+static int ac_add(uint8_t *chaddr, uint32_t client_ip, int instance_id);
+static uint32_t ac_lookup_mac(uint8_t *chaddr, int instance_id);
+static uint8_t *ac_lookup_ip(uint32_t client_ip, int instance_i);
+static bool ac_not_full(int instance_id);
 
-static int ac_add(uint8_t *chaddr, uint32_t client_ip)
+static int ac_add(uint8_t *chaddr, uint32_t client_ip, int instance_id)
 {
     /* adds ip-mac mapping in cache */
-    if (ac_not_full())
+    if (ac_not_full(instance_id))
     {
-        dhcps.ip_mac_mapping[dhcps.count_clients].client_mac[0] = chaddr[0];
-        dhcps.ip_mac_mapping[dhcps.count_clients].client_mac[1] = chaddr[1];
-        dhcps.ip_mac_mapping[dhcps.count_clients].client_mac[2] = chaddr[2];
-        dhcps.ip_mac_mapping[dhcps.count_clients].client_mac[3] = chaddr[3];
-        dhcps.ip_mac_mapping[dhcps.count_clients].client_mac[4] = chaddr[4];
-        dhcps.ip_mac_mapping[dhcps.count_clients].client_mac[5] = chaddr[5];
-        dhcps.ip_mac_mapping[dhcps.count_clients].client_ip     = client_ip;
-        dhcps.count_clients++;
+        dhcps[instance_id].ip_mac_mapping[dhcps[instance_id].count_clients].client_mac[0] = chaddr[0];
+        dhcps[instance_id].ip_mac_mapping[dhcps[instance_id].count_clients].client_mac[1] = chaddr[1];
+        dhcps[instance_id].ip_mac_mapping[dhcps[instance_id].count_clients].client_mac[2] = chaddr[2];
+        dhcps[instance_id].ip_mac_mapping[dhcps[instance_id].count_clients].client_mac[3] = chaddr[3];
+        dhcps[instance_id].ip_mac_mapping[dhcps[instance_id].count_clients].client_mac[4] = chaddr[4];
+        dhcps[instance_id].ip_mac_mapping[dhcps[instance_id].count_clients].client_mac[5] = chaddr[5];
+        dhcps[instance_id].ip_mac_mapping[dhcps[instance_id].count_clients].client_ip     = client_ip;
+        dhcps[instance_id].count_clients++;
         return WM_SUCCESS;
     }
     return -WM_FAIL;
 }
 
-static uint32_t ac_lookup_mac(uint8_t *chaddr)
+static uint32_t ac_lookup_mac(uint8_t *chaddr, int instance_id)
 {
     /* returns ip address, if mac address is present in cache */
     int i;
-    for (i = 0; i < dhcps.count_clients && i < MAC_IP_CACHE_SIZE; i++)
+    for (i = 0; i < dhcps[instance_id].count_clients && i < MAC_IP_CACHE_SIZE; i++)
     {
-        if ((dhcps.ip_mac_mapping[i].client_mac[0] == chaddr[0]) &&
-            (dhcps.ip_mac_mapping[i].client_mac[1] == chaddr[1]) &&
-            (dhcps.ip_mac_mapping[i].client_mac[2] == chaddr[2]) &&
-            (dhcps.ip_mac_mapping[i].client_mac[3] == chaddr[3]) &&
-            (dhcps.ip_mac_mapping[i].client_mac[4] == chaddr[4]) &&
-            (dhcps.ip_mac_mapping[i].client_mac[5] == chaddr[5]))
+        if ((dhcps[instance_id].ip_mac_mapping[i].client_mac[0] == chaddr[0]) &&
+            (dhcps[instance_id].ip_mac_mapping[i].client_mac[1] == chaddr[1]) &&
+            (dhcps[instance_id].ip_mac_mapping[i].client_mac[2] == chaddr[2]) &&
+            (dhcps[instance_id].ip_mac_mapping[i].client_mac[3] == chaddr[3]) &&
+            (dhcps[instance_id].ip_mac_mapping[i].client_mac[4] == chaddr[4]) &&
+            (dhcps[instance_id].ip_mac_mapping[i].client_mac[5] == chaddr[5]))
         {
-            return dhcps.ip_mac_mapping[i].client_ip;
+            return dhcps[instance_id].ip_mac_mapping[i].client_ip;
         }
     }
     return CLIENT_IP_NOT_FOUND;
 }
 
-static uint8_t *ac_lookup_ip(uint32_t client_ip)
+static uint8_t *ac_lookup_ip(uint32_t client_ip, int instance_id)
 {
     /* returns mac address, if ip address is present in cache */
     int i;
-    for (i = 0; i < dhcps.count_clients && i < MAC_IP_CACHE_SIZE; i++)
+    for (i = 0; i < dhcps[instance_id].count_clients && i < MAC_IP_CACHE_SIZE; i++)
     {
-        if ((dhcps.ip_mac_mapping[i].client_ip) == client_ip)
+        if ((dhcps[instance_id].ip_mac_mapping[i].client_ip) == client_ip)
         {
-            return dhcps.ip_mac_mapping[i].client_mac;
+            return dhcps[instance_id].ip_mac_mapping[i].client_mac;
         }
     }
     return NULL;
 }
 
-static bool ac_not_full(void)
+static bool ac_not_full(int instance_id)
 {
     /* returns true if cache is not full */
-    return (dhcps.count_clients < MAC_IP_CACHE_SIZE);
+    return (dhcps[instance_id].count_clients < MAC_IP_CACHE_SIZE);
 }
 
-static bool ac_valid_ip(uint32_t requested_ip)
+static bool ac_valid_ip(uint32_t requested_ip, int instance_id)
 {
     /* skip over our own address, the network address or the
      * broadcast address
      */
-    if (requested_ip == ntohl(dhcps.my_ip) || (requested_ip == ntohl(dhcps.my_ip & dhcps.netmask)) ||
-        (requested_ip == ntohl((dhcps.my_ip | (0xffffffff & ~dhcps.netmask)))))
+    if (requested_ip == ntohl(dhcps[instance_id].my_ip) ||
+        (requested_ip == ntohl(dhcps[instance_id].my_ip & dhcps[instance_id].netmask)) ||
+        (requested_ip == ntohl((dhcps[instance_id].my_ip | (0xffffffff & ~dhcps[instance_id].netmask)))))
     {
         return false;
     }
-    if (ac_lookup_ip(htonl(requested_ip)) != NULL)
+    if (ac_lookup_ip(htonl(requested_ip), instance_id) != NULL)
     {
         return false;
     }
@@ -146,30 +147,32 @@ int dhcp_server_lease_timeout(uint32_t val)
  *
  * DHCP clients will be assigned addresses in sequence in the subnet's address space.
  */
-static unsigned int next_yiaddr(void)
+static unsigned int next_yiaddr(int instance_id)
 {
 #if CONFIG_DHCP_SERVER_DEBUG
     struct in_addr ip;
 #endif
     uint32_t new_ip;
-    struct bootp_header *hdr = (struct bootp_header *)(void *)dhcps.msg;
+    struct bootp_header *hdr = (struct bootp_header *)(void *)dhcps[instance_id].msg;
 
     /* if device requesting for ip address is already registered,
      * if yes, assign previous ip address to it
      */
-    new_ip = ac_lookup_mac(hdr->chaddr);
+    new_ip = ac_lookup_mac(hdr->chaddr, instance_id);
     if (new_ip == (CLIENT_IP_NOT_FOUND))
     {
         /* next IP address in the subnet */
-        dhcps.current_ip = ntohl(dhcps.my_ip & dhcps.netmask) | ((dhcps.current_ip + 1U) & ntohl(~dhcps.netmask));
-        while (!ac_valid_ip(dhcps.current_ip))
+        dhcps[instance_id].current_ip = ntohl(dhcps[instance_id].my_ip & dhcps[instance_id].netmask) |
+                                        ((dhcps[instance_id].current_ip + 1U) & ntohl(~dhcps[instance_id].netmask));
+        while (!ac_valid_ip(dhcps[instance_id].current_ip, instance_id))
         {
-            dhcps.current_ip = ntohl(dhcps.my_ip & dhcps.netmask) | ((dhcps.current_ip + 1) & ntohl(~dhcps.netmask));
+            dhcps[instance_id].current_ip = ntohl(dhcps[instance_id].my_ip & dhcps[instance_id].netmask) |
+                                            ((dhcps[instance_id].current_ip + 1) & ntohl(~dhcps[instance_id].netmask));
         }
 
-        new_ip = htonl(dhcps.current_ip);
+        new_ip = htonl(dhcps[instance_id].current_ip);
 
-        if (ac_add(hdr->chaddr, new_ip) != WM_SUCCESS)
+        if (ac_add(hdr->chaddr, new_ip, instance_id) != WM_SUCCESS)
         {
             dhcp_w("No space to store new mapping..");
         }
@@ -178,13 +181,13 @@ static unsigned int next_yiaddr(void)
 #if CONFIG_DHCP_SERVER_DEBUG
     ip.s_addr = new_ip;
     dhcp_d("New client IP will be %s", inet_ntoa(ip));
-    ip.s_addr = dhcps.my_ip & dhcps.netmask;
+    ip.s_addr = dhcps[instance_id].my_ip & dhcps[instance_id].netmask;
 #endif
 
     return new_ip;
 }
 
-static unsigned int make_response(char *msg, enum dhcp_message_type type)
+static unsigned int make_response(char *msg, enum dhcp_message_type type, int instance_id)
 {
     struct bootp_header *hdr;
     struct bootp_option *opt;
@@ -196,8 +199,8 @@ static unsigned int make_response(char *msg, enum dhcp_message_type type)
     hdr->hlen   = 6;
     hdr->hops   = 0;
     hdr->ciaddr = 0;
-    hdr->yiaddr = (type == DHCP_MESSAGE_ACK) ? dhcps.client_ip : 0U;
-    hdr->yiaddr = (type == DHCP_MESSAGE_OFFER) ? next_yiaddr() : hdr->yiaddr;
+    hdr->yiaddr = (type == DHCP_MESSAGE_ACK) ? dhcps[instance_id].client_ip : 0U;
+    hdr->yiaddr = (type == DHCP_MESSAGE_OFFER) ? next_yiaddr(instance_id) : hdr->yiaddr;
     hdr->siaddr = 0;
     hdr->riaddr = 0;
     offset += sizeof(struct bootp_header);
@@ -215,7 +218,7 @@ static unsigned int make_response(char *msg, enum dhcp_message_type type)
 
     opt       = (struct bootp_option *)(void *)offset;
     opt->type = BOOTP_OPTION_SUBNET_MASK;
-    write_u32(opt->value, dhcps.netmask);
+    write_u32(opt->value, dhcps[instance_id].netmask);
     opt->length = 4;
     offset += sizeof(struct bootp_option) + opt->length;
 
@@ -227,19 +230,19 @@ static unsigned int make_response(char *msg, enum dhcp_message_type type)
 
     opt       = (struct bootp_option *)(void *)offset;
     opt->type = BOOTP_OPTION_DHCP_SERVER_ID;
-    write_u32(opt->value, dhcps.my_ip);
+    write_u32(opt->value, dhcps[instance_id].my_ip);
     opt->length = 4;
     offset += sizeof(struct bootp_option) + opt->length;
 
     opt       = (struct bootp_option *)(void *)offset;
     opt->type = BOOTP_OPTION_ROUTER;
-    write_u32(opt->value, dhcps.my_ip);
+    write_u32(opt->value, dhcps[instance_id].my_ip);
     opt->length = 4;
     offset += sizeof(struct bootp_option) + opt->length;
 
     opt       = (struct bootp_option *)(void *)offset;
     opt->type = BOOTP_OPTION_NAMESERVER;
-    write_u32(opt->value, dns_get_nameserver());
+    write_u32(opt->value, dns_get_nameserver(instance_id));
     opt->length = 4;
     offset += sizeof(struct bootp_option) + opt->length;
 
@@ -250,9 +253,9 @@ static unsigned int make_response(char *msg, enum dhcp_message_type type)
     return (unsigned int)(offset - msg);
 }
 
-int dhcp_get_ip_from_mac(uint8_t *client_mac, uint32_t *client_ip)
+int dhcp_get_ip_from_mac(uint8_t *client_mac, uint32_t *client_ip, int instance_id)
 {
-    *client_ip = ac_lookup_mac(client_mac);
+    *client_ip = ac_lookup_mac(client_mac, instance_id);
     if (*client_ip == CLIENT_IP_NOT_FOUND)
     {
         return -WM_FAIL;
@@ -263,7 +266,21 @@ int dhcp_get_ip_from_mac(uint8_t *client_mac, uint32_t *client_ip)
 int dhcp_send_response(int sock, struct sockaddr *addr, char *msg, int len)
 {
     int nb;
-    unsigned int sent = 0;
+    unsigned int sent       = 0;
+
+#if CONFIG_DHCP_SERVER_DEBUG
+    struct sockaddr_in *sin = (struct sockaddr_in *)addr;
+    struct in_addr tmp_addr;
+    tmp_addr.s_addr = sin->sin_addr.s_addr;
+
+    dhcp_d("Sending DHCP response:");
+    dhcp_d("  Socket: %d", sock);
+    dhcp_d("  Length: %d bytes", len);
+    dhcp_d("  sin_family: %d (should be %d)", sin->sin_family, AF_INET);
+    dhcp_d("  sin_port: %d", ntohs(sin->sin_port));
+    dhcp_d("  sin_addr: %s (0x%08x)", inet_ntoa(tmp_addr), ntohl(sin->sin_addr.s_addr));
+#endif
+
     while (sent < len)
     {
         nb = sendto(sock, msg + sent, len - sent, 0, addr, sizeof(struct sockaddr_in));
@@ -279,7 +296,7 @@ int dhcp_send_response(int sock, struct sockaddr *addr, char *msg, int len)
     return WM_SUCCESS;
 }
 
-static int process_dhcp_message(char *msg, int len)
+static int process_dhcp_message(char *msg, int len, int instance_id)
 {
     struct bootp_header *hdr;
     struct bootp_option *opt;
@@ -341,7 +358,7 @@ static int process_dhcp_message(char *msg, int len)
                     need_ip = 1;
                     if (hdr->ciaddr != 0x0000000U)
                     {
-                        dhcps.client_ip = hdr->ciaddr;
+                        dhcps[instance_id].client_ip = hdr->ciaddr;
                         got_client_ip   = 1;
                     }
                     break;
@@ -355,14 +372,15 @@ static int process_dhcp_message(char *msg, int len)
         {
             dhcp_d("found REQUESTED IP option %hhu.%hhu.%hhu.%hhu", opt->value[0], opt->value[1], opt->value[2],
                    opt->value[3]);
-            (void)memcpy((uint8_t *)&dhcps.client_ip, (uint8_t *)opt->value, 4);
+            (void)memcpy((uint8_t *)&dhcps[instance_id].client_ip, (uint8_t *)opt->value, 4);
             got_client_ip = 1;
         }
 
         if (got_client_ip)
         {
             /* requested address outside of subnet */
-            if ((dhcps.client_ip & dhcps.netmask) == (dhcps.my_ip & dhcps.netmask))
+            if ((dhcps[instance_id].client_ip & dhcps[instance_id].netmask) ==
+                (dhcps[instance_id].my_ip & dhcps[instance_id].netmask))
             {
                 /* When client requests an IP address,
                  * DHCP-server checks if the valid
@@ -374,11 +392,11 @@ static int process_dhcp_message(char *msg, int len)
                  * continue with the requested IP
                  * address.
                  */
-                new_ip = ac_lookup_mac(hdr->chaddr);
+                new_ip = ac_lookup_mac(hdr->chaddr, instance_id);
                 if (new_ip != (CLIENT_IP_NOT_FOUND))
                 {
                     /* if new_ip is equal to requested ip */
-                    if (new_ip == dhcps.client_ip)
+                    if (new_ip == dhcps[instance_id].client_ip)
                     {
                         got_ip = 1;
                     }
@@ -387,7 +405,7 @@ static int process_dhcp_message(char *msg, int len)
                         got_ip = 0;
                     }
                 }
-                else if (ac_valid_ip(ntohl(dhcps.client_ip)))
+                else if (ac_valid_ip(ntohl(dhcps[instance_id].client_ip), instance_id))
                 {
                     /* When client requests with an IP
                      * address that is within subnet range
@@ -397,9 +415,9 @@ static int process_dhcp_message(char *msg, int len)
                      * And if IP-MAC cache is not full then
                      * adds this entry in cache.
                      */
-                    if (ac_not_full())
+                    if (ac_not_full(instance_id))
                     {
-                        (void)ac_add(hdr->chaddr, dhcps.client_ip);
+                        (void)ac_add(hdr->chaddr, dhcps[instance_id].client_ip, instance_id);
                     }
                     else
                     {
@@ -427,11 +445,11 @@ static int process_dhcp_message(char *msg, int len)
 
     if (response_type != DHCP_NO_RESPONSE)
     {
-        ret = make_response(msg, (enum dhcp_message_type)response_type);
-        ret = SEND_RESPONSE(dhcps.sock, (struct sockaddr *)(void *)&dhcps.baddr, msg, ret);
+        ret = make_response(msg, (enum dhcp_message_type)response_type, instance_id);
+        ret = SEND_RESPONSE(dhcps[instance_id].sock, (struct sockaddr *)(void *)&dhcps[instance_id].baddr, msg, ret);
         if (response_type == DHCP_MESSAGE_ACK)
         {
-            (void)send_gratuitous_arp(dhcps.my_ip);
+            (void)send_gratuitous_arp(dhcps[instance_id].my_ip, instance_id);
         }
         return WM_SUCCESS;
     }
@@ -440,31 +458,31 @@ static int process_dhcp_message(char *msg, int len)
     return WM_SUCCESS;
 }
 
-static void dhcp_clean_sockets(void)
+static void dhcp_clean_sockets(int instance_id)
 {
     int ret;
 
 #ifndef __ZEPHYR__
 
-    if (ctrl != -1)
+    if (ctrl[instance_id] != -1)
     {
-        ret = net_close(ctrl);
+        ret = net_close(ctrl[instance_id]);
         if (ret != 0)
         {
-            dhcp_w("Failed to close control socket: %d", net_get_sock_error(ctrl));
+            dhcp_w("Failed to close control socket: %d", net_get_sock_error(ctrl[instance_id]));
         }
-        ctrl = -1;
+        ctrl[instance_id] = -1;
     }
 #endif
 
-    if (dhcps.sock != -1)
+    if (dhcps[instance_id].sock != -1)
     {
-        ret = net_close(dhcps.sock);
+        ret = net_close(dhcps[instance_id].sock);
         if (ret != 0)
         {
-            dhcp_w("Failed to close dhcp socket: %d", net_get_sock_error(dhcps.sock));
+            dhcp_w("Failed to close dhcp socket: %d", net_get_sock_error(dhcps[instance_id].sock));
         }
-        dhcps.sock = -1;
+        dhcps[instance_id].sock = -1;
     }
 }
 
@@ -487,6 +505,8 @@ static int register_ctrl_sock(void)
 
 void dhcpd_task(void *arg)
 {
+    struct dhcp_task_args *task_args = (struct dhcp_task_args *)arg;
+    int instance_id                  = task_args->instance_id;
     int ret;
     struct sockaddr_in caddr;
 #ifndef __ZEPHYR__
@@ -499,15 +519,18 @@ void dhcpd_task(void *arg)
     socklen_t flen = sizeof(caddr);
     fd_set rfds;
 
+    /* Different control port for each instance */
+    int ctrl_port = CTRL_PORT + instance_id; /* 12679 for UAP, 12680 for WFD_GO */
+
 #ifndef __ZEPHYR__
 
     (void)memset(&ctrl_listen, 0, sizeof(struct sockaddr_in));
 
     /* create listening control socket */
-    ctrl = net_socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (ctrl < 0)
+    ctrl[instance_id] = net_socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (ctrl[instance_id] < 0)
     {
-        ret = net_get_sock_error(ctrl);
+        ret = net_get_sock_error(ctrl[instance_id]);
         if (ret != 0)
         {
             dhcp_e("Failed to create control socket: %d.", ret);
@@ -515,20 +538,20 @@ void dhcpd_task(void *arg)
 
         goto done;
     }
-    if (setsockopt(ctrl, SOL_SOCKET, SO_REUSEADDR, (char *)&one, sizeof(one)) == -1)
+    if (setsockopt(ctrl[instance_id], SOL_SOCKET, SO_REUSEADDR, (char *)&one, sizeof(one)) == -1)
     {
         dhcp_e("failed to set SO_REUSEADDR");
-        (void)net_close(ctrl);
+        (void)net_close(ctrl[instance_id]);
         goto done;
     }
     ctrl_listen.sin_family      = PF_INET;
-    ctrl_listen.sin_port        = htons(CTRL_PORT);
+    ctrl_listen.sin_port        = htons(ctrl_port);
     ctrl_listen.sin_addr.s_addr = net_inet_aton("127.0.0.1");
     addr_len                    = (int)sizeof(struct sockaddr_in);
-    ret                         = net_bind(ctrl, (struct sockaddr *)(void *)&ctrl_listen, addr_len);
+    ret                         = net_bind(ctrl[instance_id], (struct sockaddr *)(void *)&ctrl_listen, addr_len);
     if (ret < 0)
     {
-        dhcp_e("Failed to bind control socket: %d ret %d", ctrl, ret);
+        dhcp_e("Failed to bind control socket: %d ret %d", ctrl[instance_id], ret);
         goto done;
     }
 #else
@@ -540,21 +563,21 @@ void dhcpd_task(void *arg)
     }
 #endif
 
-    OSA_MutexLock((osa_mutex_handle_t)dhcpd_mutex_Handle, osaWaitForever_c);
+    OSA_MutexLock((osa_mutex_handle_t)dhcpd_mutex_Handle[instance_id], osaWaitForever_c);
 
     while (true)
     {
         FD_ZERO(&rfds);
-        FD_SET(dhcps.sock, &rfds);
+        FD_SET(dhcps[instance_id].sock, &rfds);
 #ifndef __ZEPHYR__
-        FD_SET(ctrl, &rfds);
+        FD_SET(ctrl[instance_id], &rfds);
 #else
         FD_SET(ctrl_sockpair[0], &rfds);
 #endif
-        max_sock = dns_get_maxsock(&rfds);
+        max_sock = dns_get_maxsock(&rfds, instance_id);
 
 #ifndef __ZEPHYR__
-        max_sock = (max_sock > ctrl) ? max_sock : ctrl;
+        max_sock = (max_sock > ctrl[instance_id]) ? max_sock : ctrl[instance_id];
 #endif
 
         ret = net_select(max_sock + 1, &rfds, NULL, NULL, NULL);
@@ -568,9 +591,9 @@ void dhcpd_task(void *arg)
 
         /* check the control socket */
 #ifndef __ZEPHYR__
-        if (FD_ISSET(ctrl, &rfds) != 0)
+        if (FD_ISSET(ctrl[instance_id], &rfds) != 0)
         {
-            ret = recvfrom(ctrl, ctrl_msg, sizeof(ctrl_msg), 0, (struct sockaddr *)0, (socklen_t *)0);
+            ret = recvfrom(ctrl[instance_id], ctrl_msg, sizeof(ctrl_msg), 0, (struct sockaddr *)0, (socklen_t *)0);
 #else
         if (FD_ISSET(ctrl_sockpair[0], &rfds) != 0)
         {
@@ -582,7 +605,7 @@ void dhcpd_task(void *arg)
                     "Failed to get control"
                     " message: %d\r\n",
 #ifndef __ZEPHYR__
-                    ctrl
+                    ctrl[instance_id]
 #else
                     ctrl_sockpair[0]
 #endif
@@ -597,22 +620,23 @@ void dhcpd_task(void *arg)
             }
         }
 
-        if (FD_ISSET(dhcps.sock, &rfds) != 0)
+        if (FD_ISSET(dhcps[instance_id].sock, &rfds) != 0)
         {
-            len = recvfrom(dhcps.sock, dhcps.msg, sizeof(dhcps.msg), 0, (struct sockaddr *)(void *)&caddr, &flen);
+            len = recvfrom(dhcps[instance_id].sock, dhcps[instance_id].msg, sizeof(dhcps[instance_id].msg), 0,
+                           (struct sockaddr *)(void *)&caddr, &flen);
             if (len > 0)
             {
-                dhcp_d("recved msg on dhcp sock len: %d", len);
-                (void)process_dhcp_message(dhcps.msg, len);
+                dhcp_d("recved msg on dhcp[%d] sock len: %d", instance_id, len);
+                (void)process_dhcp_message(dhcps[instance_id].msg, len, instance_id);
             }
         }
 
-        dns_process_packet();
+        dns_process_packet(instance_id);
     }
 
 done:
-    dhcp_clean_sockets();
-    dns_free_allocations();
+    dhcp_clean_sockets(instance_id);
+    dns_free_allocations(instance_id);
 #ifndef __ZEPHYR__
 #if CONFIG_WPA_SUPP
     netconn_thread_cleanup();
@@ -621,7 +645,7 @@ done:
     close(ctrl_sockpair[0]);
     close(ctrl_sockpair[1]);
 #endif
-    (void)OSA_MutexUnlock((osa_mutex_handle_t)dhcpd_mutex_Handle);
+    (void)OSA_MutexUnlock((osa_mutex_handle_t)dhcpd_mutex_Handle[instance_id]);
     while (true)
     {
         OSA_TimeDelay(60000);
@@ -681,48 +705,71 @@ int dhcp_create_and_bind_udp_socket(struct sockaddr_in *address, void *intrfc_ha
     return sock;
 }
 
-int dhcp_server_init(void *intrfc_handle)
+int dhcp_server_init(void *intrfc_handle, int instance_id)
 {
     int ret = WM_SUCCESS;
     osa_status_t status;
 
-    (void)memset(&dhcps, 0, sizeof(dhcps));
+#if CONFIG_DHCP_SERVER_DEBUG
+    struct in_addr ip_addr;
+#endif
 
-    status = OSA_MutexCreate((osa_mutex_handle_t)dhcpd_mutex_Handle);
+    (void)memset(&dhcps[instance_id], 0, sizeof(dhcps[instance_id]));
+
+    status = OSA_MutexCreate((osa_mutex_handle_t)dhcpd_mutex_Handle[instance_id]);
     if (status != KOSA_StatusSuccess)
     {
         return -WM_E_DHCPD_MUTEX_CREATE;
     }
 
-    get_broadcast_addr(&dhcps.baddr);
-    dhcps.baddr.sin_port = htons(DHCP_CLIENT_PORT);
-
-    if (get_ip_addr_from_interface(&dhcps.my_ip, intrfc_handle) < 0)
+    if (get_ip_addr_from_interface(&dhcps[instance_id].my_ip, intrfc_handle) < 0)
     {
         dhcp_e("failed to look up our IP address from interface");
         ret = -WM_E_DHCPD_IP_ADDR;
         goto out;
     }
 
-    if (get_netmask_from_interface(&dhcps.netmask, intrfc_handle) < 0)
+#if CONFIG_DHCP_SERVER_DEBUG
+    ip_addr.s_addr = dhcps[instance_id].my_ip;
+    dhcp_d("Instance %d: Retrieved IP address: %s", instance_id, inet_ntoa(ip_addr));
+#endif
+
+    if (get_netmask_from_interface(&dhcps[instance_id].netmask, intrfc_handle) < 0)
     {
         dhcp_e("failed to look up our netmask from interface");
         ret = -WM_E_DHCPD_NETMASK;
         goto out;
     }
 
-    dhcps.saddr.sin_family      = AF_INET;
-    dhcps.saddr.sin_addr.s_addr = INADDR_ANY;
-    dhcps.saddr.sin_port        = htons(DHCP_SERVER_PORT);
-    dhcps.sock                  = dhcp_create_and_bind_udp_socket(&dhcps.saddr, intrfc_handle);
+#if CONFIG_DHCP_SERVER_DEBUG
+    ip_addr.s_addr = dhcps[instance_id].netmask;
+    dhcp_d("Instance %d: Retrieved netmask: %s", instance_id, inet_ntoa(ip_addr));
+#endif
 
-    if (dhcps.sock < 0)
+    get_broadcast_addr(&dhcps[instance_id].baddr);
+    dhcps[instance_id].baddr.sin_port = htons(DHCP_CLIENT_PORT);
+
+#if CONFIG_DHCP_SERVER_DEBUG
+    struct in_addr tmp_addr;
+    tmp_addr.s_addr = dhcps[instance_id].baddr.sin_addr.s_addr;
+    dhcp_d("Instance %d: Broadcast address: %s:%d",
+           instance_id,
+           inet_ntoa(tmp_addr),
+           ntohs(dhcps[instance_id].baddr.sin_port));
+#endif
+
+    dhcps[instance_id].saddr.sin_family      = AF_INET;
+    dhcps[instance_id].saddr.sin_addr.s_addr = INADDR_ANY;
+    dhcps[instance_id].saddr.sin_port        = htons(DHCP_SERVER_PORT);
+    dhcps[instance_id].sock                  = dhcp_create_and_bind_udp_socket(&dhcps[instance_id].saddr, intrfc_handle);
+
+    if (dhcps[instance_id].sock < 0)
     {
         ret = -WM_E_DHCPD_SOCKET;
         goto out;
     }
 
-    ret = dns_server_init(intrfc_handle);
+    ret = dns_server_init(intrfc_handle, instance_id);
     if (ret != WM_SUCCESS)
     {
         dhcp_e("Failed to start dhcp server. Err: %d", ret);
@@ -732,13 +779,15 @@ int dhcp_server_init(void *intrfc_handle)
     return WM_SUCCESS;
 
 out:
-    (void)OSA_MutexDestroy((osa_mutex_handle_t)dhcpd_mutex_Handle);
+    (void)OSA_MutexDestroy((osa_mutex_handle_t)dhcpd_mutex_Handle[instance_id]);
     return ret;
 }
 
-static int send_ctrl_msg(const char *msg)
+static int send_ctrl_msg(const char *msg, int instance_id)
 {
     int ret;
+    int ctrl_port = CTRL_PORT + instance_id;
+
 #ifndef __ZEPHYR__
     int ctrl_tmp;
     struct sockaddr_in to_addr;
@@ -762,7 +811,7 @@ static int send_ctrl_msg(const char *msg)
 
     (void)memset((char *)&to_addr, 0, sizeof(to_addr));
     to_addr.sin_family      = PF_INET;
-    to_addr.sin_port        = htons(CTRL_PORT);
+    to_addr.sin_port        = htons(ctrl_port);
     to_addr.sin_addr.s_addr = net_inet_aton("127.0.0.1");
 
     ret = sendto(ctrl_tmp, msg, strlen(msg) + 1U, 0, (struct sockaddr *)(void *)&to_addr, sizeof(to_addr));
@@ -817,45 +866,45 @@ retry_send:
     return ret;
 }
 
-int dhcp_send_halt(void)
+int dhcp_send_halt(int instance_id)
 {
     int ret = WM_SUCCESS;
 
-    ret = send_ctrl_msg("HALT");
+    ret = send_ctrl_msg("HALT", instance_id);
     if (ret != 0)
     {
         dhcp_w("Failed to send HALT: %d.", ret);
         return -WM_FAIL;
     }
 
-    ret = dhcp_free_allocations();
+    ret = dhcp_free_allocations(instance_id);
     return ret;
 }
 
-int dhcp_free_allocations(void)
+int dhcp_free_allocations(int instance_id)
 {
     osa_status_t status;
 
     /* Wait for 10 seconds */
-    status = OSA_MutexLock((osa_mutex_handle_t)dhcpd_mutex_Handle, 10000);
+    status = OSA_MutexLock((osa_mutex_handle_t)dhcpd_mutex_Handle[instance_id], 10000);
     if (status != KOSA_StatusSuccess)
     {
         return -WM_FAIL;
     }
 
-    dhcp_clean_sockets();
-    dns_free_allocations();
+    dhcp_clean_sockets(instance_id);
+    dns_free_allocations(instance_id);
 
-    status = OSA_MutexUnlock((osa_mutex_handle_t)dhcpd_mutex_Handle);
+    status = OSA_MutexUnlock((osa_mutex_handle_t)dhcpd_mutex_Handle[instance_id]);
     if (status != KOSA_StatusSuccess)
     {
         return -WM_FAIL;
     }
 
-    return OSA_MutexDestroy((osa_mutex_handle_t)dhcpd_mutex_Handle);
+    return OSA_MutexDestroy((osa_mutex_handle_t)dhcpd_mutex_Handle[instance_id]);
 }
 
-static int send_gratuitous_arp(uint32_t ip)
+static int send_gratuitous_arp(uint32_t ip, int instance_id)
 {
     int sock;
     struct arp_packet pkt;
@@ -874,7 +923,14 @@ static int send_gratuitous_arp(uint32_t ip)
 
     (void)memset(pkt.targ_hw_addr, 0xff, ETH_HW_ADDR_LEN);
     (void)memset(pkt.rcpt_hw_addr, 0xff, ETH_HW_ADDR_LEN);
-    (void)wlan_get_mac_address_uap(pkt.sndr_hw_addr);
+
+    if (instance_id == DHCP_INSTANCE_UAP)
+        (void)wlan_get_mac_address_uap(pkt.sndr_hw_addr);
+#if CONFIG_WPA_SUPP_P2P
+    else
+        (void)wlan_get_wfd_mac_address(pkt.sndr_hw_addr);
+#endif
+
     (void)memcpy(pkt.src_hw_addr, pkt.sndr_hw_addr, ETH_HW_ADDR_LEN);
     sock = net_socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0)
@@ -920,21 +976,28 @@ void dhcp_stat(void)
 {
     int i = 0;
     struct ip4_addr saddr;
+    int instance_id;
     (void)PRINTF("DHCP Server Lease Duration : %d seconds\r\n", (int)dhcp_address_timeout);
-    if (dhcps.count_clients == 0)
+    if (dhcps[0].count_clients == 0 || dhcps[1].count_clients == 0)
     {
         (void)PRINTF("No IP-MAC mapping stored\r\n");
     }
     else
     {
         (void)PRINTF("Client IP\tClient MAC\r\n");
-        for (i = 0; i < dhcps.count_clients && i < MAC_IP_CACHE_SIZE; i++)
+        for (instance_id = 0; instance_id < MAX_DHCP_INSTANCES; instance_id++)
         {
-            saddr.addr = dhcps.ip_mac_mapping[i].client_ip;
-            (void)PRINTF("%s\t%02X:%02X:%02X:%02X:%02X:%02X\r\n", inet_ntoa(saddr),
-                         dhcps.ip_mac_mapping[i].client_mac[0], dhcps.ip_mac_mapping[i].client_mac[1],
-                         dhcps.ip_mac_mapping[i].client_mac[2], dhcps.ip_mac_mapping[i].client_mac[3],
-                         dhcps.ip_mac_mapping[i].client_mac[4], dhcps.ip_mac_mapping[i].client_mac[5]);
+            for (i = 0; i < dhcps[instance_id].count_clients && i < MAC_IP_CACHE_SIZE; i++)
+            {
+                saddr.addr = dhcps[instance_id].ip_mac_mapping[i].client_ip;
+                (void)PRINTF("%s\t%02X:%02X:%02X:%02X:%02X:%02X\r\n", inet_ntoa(saddr),
+                             dhcps[instance_id].ip_mac_mapping[i].client_mac[0],
+                             dhcps[instance_id].ip_mac_mapping[i].client_mac[1],
+                             dhcps[instance_id].ip_mac_mapping[i].client_mac[2],
+                             dhcps[instance_id].ip_mac_mapping[i].client_mac[3],
+                             dhcps[instance_id].ip_mac_mapping[i].client_mac[4],
+                             dhcps[instance_id].ip_mac_mapping[i].client_mac[5]);
+            }
         }
     }
 }

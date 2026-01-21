@@ -70,9 +70,9 @@ struct dns_server_data
     struct dns_qname *list_qnames;
 };
 
-int dns_server_init(void *intrfc_handle);
-void dns_process_packet(void);
-uint32_t dns_get_nameserver(void);
-int dns_get_maxsock(fd_set *rfds);
-void dns_free_allocations(void);
+int dns_server_init(void *intrfc_handle, int instance_id);
+void dns_process_packet(int instance_id);
+uint32_t dns_get_nameserver(int instance_id);
+int dns_get_maxsock(fd_set *rfds, int instance_id);
+void dns_free_allocations(int instance_id);
 #endif /* __DNS_H__ */

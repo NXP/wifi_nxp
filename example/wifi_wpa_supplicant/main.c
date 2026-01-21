@@ -127,6 +127,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
 #if CONFIG_WPA_SUPP_P2P
     struct wlan_network *uap_network = NULL;
 #endif
+    enum wlan_bss_type bss_type;
 
     switch (reason)
     {
@@ -297,49 +298,60 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             break;
 #if CONFIG_NXP_WIFI_SOFTAP_SUPPORT
         case WLAN_REASON_UAP_SUCCESS:
-            PRINTF("app_cb: WLAN: UAP Started\r\n");
-            void *intrfc_handle;
-            ret = wlan_get_current_uap_network_ssid(ssid);
+            bss_type = (enum wlan_bss_type)data;
+            if (bss_type == WLAN_BSS_TYPE_UAP)
+            {
+                PRINTF("app_cb: WLAN: UAP Started\r\n");
+                void *intrfc_handle;
+                ret = wlan_get_current_uap_network_ssid(ssid);
 
-            if (ret != WM_SUCCESS)
-            {
-                PRINTF("Failed to get Soft AP network\r\n");
-                return 0;
-            }
+                if (ret != WM_SUCCESS)
+                {
+                    PRINTF("Failed to get Soft AP network\r\n");
+                    return 0;
+                }
 
-            printSeparator();
-            PRINTF("Soft AP \"%s\" started successfully\r\n", ssid);
-            printSeparator();
-            intrfc_handle = net_get_uap_handle();
-#if CONFIG_WPA_SUPP_P2P
-            uap_network = OSA_MemoryAllocate(sizeof(struct wlan_network));
-            if (uap_network == NULL)
-            {
-                PRINTF("Failed to allocate memory for uap_network!\r\n");
-                return 0;
-            }
-            (void)memset(uap_network, 0, sizeof(struct wlan_network));
-            ret = wlan_get_current_uap_network(uap_network);
-            if (ret != WM_SUCCESS)
-            {
-                PRINTF("Failed to get Soft AP network\r\n");
-                OSA_MemoryFree(uap_network);
-                return 0;
-            }
-            if (uap_network->type == WLAN_BSS_TYPE_WIFIDIRECT)
-            {
-                intrfc_handle = net_get_wfd_handle();
-            }
-            OSA_MemoryFree(uap_network);
-#endif
-            ret = dhcp_server_start(intrfc_handle);
-            if (ret != 0)
-            {
-                PRINTF("%s\r\n", dhcp_server_err_str(ret));
+                printSeparator();
+                PRINTF("Soft AP \"%s\" started successfully\r\n", ssid);
+                printSeparator();
+                intrfc_handle = net_get_uap_handle();
+
+                ret = dhcp_server_start(intrfc_handle, DHCP_INSTANCE_UAP);
+                if (ret != 0)
+                {
+                    PRINTF("%s\r\n", dhcp_server_err_str(ret));
+                }
+                else
+                {
+                    (void)PRINTF("DHCP Server started successfully\r\n");
+                }
             }
             else
             {
-                (void)PRINTF("DHCP Server started successfully\r\n");
+                PRINTF("app_cb: WLAN: P2P GO Started\r\n");
+                void *intrfc_handle;
+                ret = wlan_get_current_wfd_network_ssid(ssid);
+
+                if (ret != WM_SUCCESS)
+                {
+                    PRINTF("Failed to get P2P GO network\r\n");
+                    return 0;
+                }
+
+                printSeparator();
+                PRINTF("P2P GO \"%s\" started successfully\r\n", ssid);
+                printSeparator();
+                intrfc_handle = net_get_wfd_handle();
+
+                ret = dhcp_server_start(intrfc_handle, DHCP_INSTANCE_WFD_GO);
+                if (ret != 0)
+                {
+                    PRINTF("%s\r\n", dhcp_server_err_str(ret));
+                }
+                else
+                {
+                    (void)PRINTF("DHCP Server started successfully\r\n");
+                }
             }
             printSeparator();
             break;
@@ -369,15 +381,31 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
             break;
         case WLAN_REASON_UAP_STOPPED:
-            PRINTF("app_cb: WLAN: UAP Stopped\r\n");
-            printSeparator();
-            PRINTF("Soft AP stopped successfully\r\n");
-            printSeparator();
+            bss_type = (enum wlan_bss_type)data;
+            if (bss_type == WLAN_BSS_TYPE_UAP)
+            {
+                PRINTF("app_cb: WLAN: UAP Stopped\r\n");
+                printSeparator();
+                PRINTF("Soft AP stopped successfully\r\n");
+                printSeparator();
 
-            dhcp_server_stop();
+                dhcp_server_stop(DHCP_INSTANCE_UAP);
 
-            PRINTF("DHCP Server stopped successfully\r\n");
-            printSeparator();
+                PRINTF("DHCP Server stopped successfully\r\n");
+                printSeparator();
+            }
+            else
+            {
+                PRINTF("app_cb: WLAN: P2P GO Stopped\r\n");
+                printSeparator();
+                PRINTF("P2P GO stopped successfully\r\n");
+                printSeparator();
+
+                dhcp_server_stop(DHCP_INSTANCE_WFD_GO);
+
+                PRINTF("DHCP Server stopped successfully\r\n");
+                printSeparator();
+            }
             break;
 #endif /* CONFIG_NXP_WIFI_SOFTAP_SUPPORT */
         case WLAN_REASON_PS_ENTER:

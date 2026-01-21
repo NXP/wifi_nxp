@@ -21,9 +21,9 @@
 #include "dns.h"
 #include "dhcp-priv.h"
 
-static struct dns_server_data dnss;
-static int (*dhcp_dns_server_handler)(char *msg, int len, struct sockaddr_in *fromaddr);
-extern struct dhcp_server_data dhcps;
+static struct dns_server_data dnss[MAX_DHCP_INSTANCES];
+static int (*dhcp_dns_server_handler)(char *msg, int len, struct sockaddr_in *fromaddr, int instance_id);
+extern struct dhcp_server_data dhcps[MAX_DHCP_INSTANCES];
 
 /* take a domain name and convert it into a DNS QNAME format, i.e.
  * foo.rats.com. -> 03 66 6f 6f 04 72 61 74 73 03 63 6f 6d 00
@@ -58,7 +58,7 @@ static void format_qname(char *domain_name, char *dns_qname)
     dns_qname[0] = (char)i;
 }
 
-static unsigned int make_answer_rr(char *base, char *query, char *dst)
+static unsigned int make_answer_rr(char *base, char *query, char *dst, int instance_id)
 {
     struct dns_question *q;
     struct dns_rr *rr = (struct dns_rr *)(void *)dst;
@@ -83,12 +83,12 @@ static unsigned int make_answer_rr(char *base, char *query, char *dst)
     rr->class    = q->class;
     rr->ttl      = htonl(60U * 60U * 1U); /* 1 hour */
     rr->rdlength = htons(4);
-    rr->rd       = dhcps.my_ip;
+    rr->rd       = dhcps[instance_id].my_ip;
 
     return (unsigned int)(query - query_start);
 }
 
-static char *parse_questions(unsigned int num_questions, uint8_t *pos, int *found)
+static char *parse_questions(unsigned int num_questions, uint8_t *pos, int *found, int instance_id)
 {
     uint8_t *base = pos;
     int i;
@@ -99,10 +99,10 @@ static char *parse_questions(unsigned int num_questions, uint8_t *pos, int *foun
     {
         if (!*found)
         {
-            for (i = 0; i < dnss.count_qnames; i++)
+            for (i = 0; i < dnss[instance_id].count_qnames; i++)
             {
-                *found =
-                    (int)(!strncmp(dnss.list_qnames[i].qname, (char *)pos, (size_t)(base + SERVER_BUFFER_SIZE - pos)));
+                *found = (int)(!strncmp(dnss[instance_id].list_qnames[i].qname, (char *)pos,
+                                        (size_t)(base + SERVER_BUFFER_SIZE - pos)));
                 if (*found != 0)
                 {
                     break;
@@ -126,7 +126,7 @@ static char *parse_questions(unsigned int num_questions, uint8_t *pos, int *foun
 }
 
 #define ERROR_REFUSED 5
-static int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr)
+static int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr, int instance_id)
 {
     struct dns_header *hdr;
     char *pos;
@@ -158,7 +158,7 @@ static int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr)
         return -WM_E_DHCPD_DNS_IGNORE;
     }
 
-    outp = parse_questions((unsigned int)nq, (uint8_t *)msg, &found);
+    outp = parse_questions((unsigned int)nq, (uint8_t *)msg, &found, instance_id);
     if (found && outp != NULL)
     {
         pos = msg + sizeof(struct dns_header);
@@ -169,7 +169,7 @@ static int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr)
                 dhcp_d("no room for more answers, refusing");
                 break;
             }
-            pos += make_answer_rr(msg, pos, outp);
+            pos += make_answer_rr(msg, pos, outp, instance_id);
             outp += sizeof(struct dns_rr);
         }
         hdr->flags.fields.qr    = 1;
@@ -182,7 +182,7 @@ static int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr)
          * - num_questions x query fields from the message we're parsing
          * - num_answers x answer fields that we've appended
          */
-        return SEND_RESPONSE(dnss.dnssock, (struct sockaddr *)(void *)fromaddr, msg, outp - msg);
+        return SEND_RESPONSE(dnss[instance_id].dnssock, (struct sockaddr *)(void *)fromaddr, msg, outp - msg);
     }
 
     /* make the header represent a response */
@@ -201,14 +201,14 @@ static int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr)
     hdr->answer_rrs     = 0; /* number of resource records in answer section */
     hdr->authority_rrs  = 0;
     hdr->additional_rrs = 0;
-    (void)SEND_RESPONSE(dnss.dnssock, (struct sockaddr *)(void *)fromaddr, msg, outp - msg);
+    (void)SEND_RESPONSE(dnss[instance_id].dnssock, (struct sockaddr *)(void *)fromaddr, msg, outp - msg);
 
     return -WM_E_DHCPD_DNS_IGNORE;
 }
 
-void dhcp_enable_dns_server(char **domain_names)
+void dhcp_enable_dns_server(char **domain_names, int dhcp_enable_dns_server, int instance_id)
 {
-    if (dhcp_dns_server_handler != NULL || dnss.list_qnames != NULL)
+    if (dhcp_dns_server_handler != NULL || dnss[instance_id].list_qnames != NULL)
     {
         return;
     }
@@ -218,39 +218,39 @@ void dhcp_enable_dns_server(char **domain_names)
     dhcp_dns_server_handler = process_dns_message;
     if (domain_names != NULL)
     {
-        while (domain_names[dnss.count_qnames] != NULL)
+        while (domain_names[dnss[instance_id].count_qnames] != NULL)
         {
-            dnss.count_qnames++;
+            dnss[instance_id].count_qnames++;
         }
 #if !CONFIG_MEM_POOLS
-        dnss.list_qnames = OSA_MemoryAllocate(dnss.count_qnames * sizeof(struct dns_qname));
+        dnss[instance_id].list_qnames = OSA_MemoryAllocate(dnss[instance_id].count_qnames * sizeof(struct dns_qname));
 #else
         /*TODO:This function is not called from anywhere .
          * Please make sure to assign correct memory pool
          * whenever this function will be used. */
 
-        dnss.list_qnames = OSA_MemoryPoolAllocate(buf_1280_MemoryPool);
+        dnss[instance_id].list_qnames = OSA_MemoryPoolAllocate(buf_1280_MemoryPool);
 #endif
-        for (i = 0; i < dnss.count_qnames; i++)
+        for (i = 0; i < dnss[instance_id].count_qnames; i++)
         {
-            (void)memset(dnss.list_qnames[i].qname, 0, sizeof(struct dns_qname));
-            format_qname(domain_names[i], dnss.list_qnames[i].qname);
+            (void)memset(dnss[instance_id].list_qnames[i].qname, 0, sizeof(struct dns_qname));
+            format_qname(domain_names[i], dnss[instance_id].list_qnames[i].qname);
         }
     }
 }
 
-int dns_server_init(void *intrfc_handle)
+int dns_server_init(void *intrfc_handle, int instance_id)
 {
     if (dhcp_dns_server_handler == NULL)
     {
         return WM_SUCCESS;
     }
 
-    dnss.dnsaddr.sin_family      = AF_INET;
-    dnss.dnsaddr.sin_addr.s_addr = INADDR_ANY;
-    dnss.dnsaddr.sin_port        = htons(NAMESERVER_PORT);
-    dnss.dnssock                 = dhcp_create_and_bind_udp_socket(&dnss.dnsaddr, intrfc_handle);
-    if (dnss.dnssock < 0)
+    dnss[instance_id].dnsaddr.sin_family      = AF_INET;
+    dnss[instance_id].dnsaddr.sin_addr.s_addr = INADDR_ANY;
+    dnss[instance_id].dnsaddr.sin_port        = htons(NAMESERVER_PORT);
+    dnss[instance_id].dnssock = dhcp_create_and_bind_udp_socket(&dnss[instance_id].dnsaddr, intrfc_handle);
+    if (dnss[instance_id].dnssock < 0)
     {
         return -WM_E_DHCPD_SOCKET;
     }
@@ -258,7 +258,7 @@ int dns_server_init(void *intrfc_handle)
     return WM_SUCCESS;
 }
 
-void dns_process_packet(void)
+void dns_process_packet(int instance_id)
 {
     if (dhcp_dns_server_handler == NULL)
     {
@@ -268,60 +268,62 @@ void dns_process_packet(void)
     struct sockaddr_in caddr;
     socklen_t flen = sizeof(caddr);
     int len;
-    len = recvfrom(dnss.dnssock, dhcps.msg, sizeof(dhcps.msg), 0, (struct sockaddr *)(void *)&caddr, &flen);
+    len = recvfrom(dnss[instance_id].dnssock, dhcps[instance_id].msg, sizeof(dhcps[instance_id].msg), 0,
+                   (struct sockaddr *)(void *)&caddr, &flen);
     if (len > 0 && len < SERVER_BUFFER_SIZE)
     {
         dhcp_d("recved msg on dns sock len: %d", len);
-        (void)dhcp_dns_server_handler(dhcps.msg, len, &caddr);
+        (void)dhcp_dns_server_handler(dhcps[instance_id].msg, len, &caddr, instance_id);
     }
 }
 
-uint32_t dns_get_nameserver(void)
+uint32_t dns_get_nameserver(int instance_id)
 {
     if (dhcp_dns_server_handler != NULL)
     {
-        return dhcps.my_ip;
+        return dhcps[instance_id].my_ip;
     }
     return 0;
 }
 
-int dns_get_maxsock(fd_set *rfds)
+int dns_get_maxsock(fd_set *rfds, int instance_id)
 {
     if (dhcp_dns_server_handler == NULL)
     {
-        return dhcps.sock;
+        return dhcps[instance_id].sock;
     }
 
     int max_sock;
-    FD_SET(dnss.dnssock, rfds);
-    max_sock = (dhcps.sock > dnss.dnssock ? dhcps.sock : dnss.dnssock);
+    FD_SET(dnss[instance_id].dnssock, rfds);
+    max_sock =
+        (dhcps[instance_id].sock > dnss[instance_id].dnssock ? dhcps[instance_id].sock : dnss[instance_id].dnssock);
     return max_sock;
 }
 
-void dns_free_allocations(void)
+void dns_free_allocations(int instance_id)
 {
     if (dhcp_dns_server_handler == NULL)
     {
         return;
     }
 
-    if (dnss.list_qnames != NULL)
+    if (dnss[instance_id].list_qnames != NULL)
     {
-        dnss.count_qnames = 0;
+        dnss[instance_id].count_qnames = 0;
 #if !CONFIG_MEM_POOLS
-        OSA_MemoryFree(dnss.list_qnames);
+        OSA_MemoryFree(dnss[instance_id].list_qnames);
 #else
-        OSA_MemoryPoolFree(buf_1280_MemoryPool, dnss.list_qnames);
+        OSA_MemoryPoolFree(buf_1280_MemoryPool, dnss[instance_id].list_qnames);
 #endif
-        dnss.list_qnames = NULL;
+        dnss[instance_id].list_qnames = NULL;
     }
-    if (dnss.dnssock != -1)
+    if (dnss[instance_id].dnssock != -1)
     {
-        if (net_close(dnss.dnssock) != 0)
+        if (net_close(dnss[instance_id].dnssock) != 0)
         {
-            dhcp_w("Failed to close dns socket: %d", net_get_sock_error(dnss.dnssock));
+            dhcp_w("Failed to close dns socket: %d", net_get_sock_error(dnss[instance_id].dnssock));
         }
-        dnss.dnssock = -1;
+        dnss[instance_id].dnssock = -1;
     }
     dhcp_dns_server_handler = NULL;
 }
