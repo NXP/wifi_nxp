@@ -847,7 +847,7 @@ static err_t igmp_mac_filter(struct netif *netif, const ip4_addr_t *group, enum 
     err_t result;
     int error;
 
-    if (wifi_reset_in_progress() == true)
+    if (wm_wifi.wifi_init_done == 0U)
     {
         result = ERR_IF;
         goto done;
@@ -981,7 +981,7 @@ static err_t mld_mac_filter(struct netif *netif, const ip6_addr_t *group, enum n
     err_t result;
     int error;
 
-    if (wifi_reset_in_progress() == true)
+    if (wm_wifi.wifi_init_done == 0U)
     {
         result = ERR_IF;
         goto done;
