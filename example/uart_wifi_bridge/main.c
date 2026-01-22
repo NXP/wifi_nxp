@@ -51,8 +51,13 @@
 #if defined(MIMXRT1176_cm7_SERIES)
 #include "fsl_lpspi.h"
 #endif
+#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+#include "fsl_clock.h"
+#include "fsl_lpspi.h"
+#include "fsl_lpi2c.h"
+#include "fsl_adapter_spi.h"
 #endif
-
+#endif
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -85,6 +90,35 @@
 
 #define LPSPI_DEALY_COUNT 0xFFFFFU
 #define TRANSFER_BAUDRATE 500000U /*! Transfer baudrate - 500k */
+#endif
+
+#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+#ifndef max
+#define max(a, b)            (((a) > (b)) ? (a) : (b))
+#endif
+#define UART_HDLC_HEADER_SIZE (1U)
+/* SPI related */
+HAL_SPI_MASTER_HANDLE_DEFINE(otSpiMasterHandle);
+#define LPSPI_MASTER_CLK_FREQ (CLOCK_GetClockRootFreq(kCLOCK_LpspiClkRoot))
+#define TRANSFER_BAUDRATE             (2000000U) /*! Transfer baudrate - 2M */
+#define SPI_DEFAULT_SMALL_PACKET_SIZE (48U)
+#define SPI_DEFAULT_RX_DATA_SIZE      (1024U)
+#define SPI_DEFAULT_ALIGN_ALLOWANCE   (16U)
+#define SPI_DEFAULT_RX_BUFF_LENGTH    (1024U)
+#define SPI_DEFAULT_TX_BUFF_LENGTH    (1024U)
+/* I2C related */
+#define I2C_MASTER_BASE (LPI2C_Type *)LPI2C1_BASE
+/* Select USB1 PLL (480 MHz) as master lpi2c clock source */
+#define LPI2C_CLOCK_SOURCE_SELECT  (0U)
+/* Clock divider for master lpi2c clock source */
+#define LPI2C_CLOCK_SOURCE_DIVIDER (5U)
+#define LPI2C_BAUDRATE (100000U)
+/* Get frequency of lpi2c clock */
+#define LPI2C_CLOCK_FREQUENCY ((CLOCK_GetFreq(kCLOCK_Usb1PllClk) / 8) / (LPI2C_CLOCK_SOURCE_DIVIDER + 1U))
+#define PLATFORM_IOEXP_I2C_ADDR_7BIT            0x20U
+#define PLATFORM_IOEXP_CONFIGURATION_REG        0x03U
+#define PLATFORM_IOEXP_CONFIGURATION_SPI_ENABLE 0xFEU
+#define PLATFORM_CONFIG_DEFAULT_RESET_DELAY_MS (200U)
 #endif
 
 /** Command type: WLAN */
@@ -226,6 +260,40 @@ lpuart_rtos_config_t lpuart_config_bt = {
 };
 #endif
 
+#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+/* Spinel SPI frame header */
+typedef struct __attribute__((__packed__)) spi_frame_hdr {
+    /* must be 0 */
+    unsigned char  bit0 : 1;
+    /* must be 1 */
+    unsigned char  bit1 : 1;
+    unsigned char  reserve : 3;
+    /* CRC Check Failure - indicates CRC error in received data */
+    unsigned char  ccf : 1;
+    /* CRC Enable - enables CRC calculation for the frame */
+    unsigned char  crc : 1;
+    /* Reset Flag - indicates reset request or reset state */
+    unsigned char  rst : 1;
+    unsigned short recv_len;
+    unsigned short data_len;
+} spi_frame_hdr;
+
+static uint8_t spi_buff_rx[SPI_DEFAULT_RX_BUFF_LENGTH];
+static uint8_t spi_buff_tx[SPI_DEFAULT_TX_BUFF_LENGTH];
+
+typedef struct __attribute__((__packed__)) zigBee_spinel_cmd_hdr
+{
+    /* Transaction ID - identifies the transaction */
+    uint8_t     TID:4;
+    /* Interface ID - identifies the network interface */
+    uint8_t     IID:2;
+    /* Flags - control flags for the command */
+    uint8_t     FLG:2;
+    uint16_t    SPINEL_CMD_NUM;
+    uint8_t     MFG_CMD_Payload_Length;
+} zigBee_spinel_cmd_hdr;
+#endif
+
 typedef struct _uart_cb
 { /* uart control block */
     int uart_fd;
@@ -330,6 +398,27 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
 }
 #endif
 
+#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+int zigbee_reset_flag = 1;
+int set_spi_frame_hdr(spi_frame_hdr *pspihdr, 
+                        unsigned char rst_flag, unsigned char crc_flag, unsigned char ccf_flag,
+                        unsigned short recv_len, unsigned short data_len)
+{
+    if(!pspihdr)
+        return -1;
+    memset(pspihdr, 0, sizeof(spi_frame_hdr));
+    pspihdr->rst = rst_flag | zigbee_reset_flag;
+    pspihdr->crc = crc_flag;
+    pspihdr->ccf = ccf_flag;
+    pspihdr->bit1 = 1;
+    pspihdr->bit0 = 0;
+    pspihdr->recv_len = max(recv_len, SPI_DEFAULT_SMALL_PACKET_SIZE);
+    pspihdr->data_len = data_len;
+    zigbee_reset_flag = 0;
+
+    return 0;
+}
+#endif
 static void uart_init_crc32(uart_cb *uartcb)
 {
     int i, j;
@@ -562,6 +651,43 @@ int zigbee_raw_packet_send(uint8_t *buf, int m_len)
     return RET_TYPE_ZIGBEE;
 }
 #endif
+
+#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+int zigbee_raw_packet_send(uint8_t *buf, int m_len)
+{
+    uint32_t payloadlen;
+    hal_spi_transfer_t spiTransfer;
+    spi_frame_hdr *pspihdr;
+    zigBee_spinel_cmd_hdr *pspinelhdr;
+
+    memset(spi_buff_tx, 0, SPI_DEFAULT_TX_BUFF_LENGTH);
+    memset(spi_buff_rx, 0, SPI_DEFAULT_RX_BUFF_LENGTH);
+
+    pspihdr = (spi_frame_hdr *)spi_buff_tx;
+    memset(&spiTransfer, 0, sizeof(hal_spi_transfer_t));
+
+    cmd_header *cmd_hd = (cmd_header *)(buf + sizeof(uart_header));
+    pspinelhdr = (zigBee_spinel_cmd_hdr *)(buf + sizeof(uart_header) + sizeof(cmd_header));
+    payloadlen = sizeof(zigBee_spinel_cmd_hdr) + pspinelhdr->MFG_CMD_Payload_Length;
+
+    set_spi_frame_hdr(pspihdr, 0, 0, 0, payloadlen, payloadlen);
+
+    memcpy(spi_buff_tx + sizeof(spi_frame_hdr), buf + sizeof(uart_header) + sizeof(cmd_header), payloadlen);
+    memcpy(&last_cmd_hdr, cmd_hd, sizeof(cmd_header));
+
+    spiTransfer.txData   = spi_buff_tx;
+    spiTransfer.rxData   = spi_buff_rx;
+    spiTransfer.dataSize = SPI_DEFAULT_SMALL_PACKET_SIZE + sizeof(spi_frame_hdr) + SPI_DEFAULT_ALIGN_ALLOWANCE;
+    spiTransfer.flags    = kLPSPI_MasterPcs0 | kLPSPI_MasterPcsContinuous | kLPSPI_MasterByteSwap;
+
+    HAL_SpiMasterTransferBlocking((hal_spi_master_handle_t)otSpiMasterHandle, &spiTransfer);
+
+    memset(spi_buff_tx, 0, SPI_DEFAULT_TX_BUFF_LENGTH);
+    memset(spi_buff_rx, 0, SPI_DEFAULT_RX_BUFF_LENGTH);
+
+    return RET_TYPE_ZIGBEE;
+}
+#endif
 #endif
 
 /*
@@ -637,7 +763,7 @@ int process_input_cmd(uint8_t *buf, int m_len)
     {
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
         ret = imumc_raw_packet_send(buf, m_len, RET_TYPE_ZIGBEE);
-#elif defined(MIMXRT1176_cm7_SERIES)
+#elif defined(MIMXRT1176_cm7_SERIES) || (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
         ret = zigbee_raw_packet_send(buf, m_len);
 #endif
     }
@@ -767,6 +893,42 @@ void send_zigbee_response_to_uart(uint8_t *rxData, uint32_t payloadlen)
     memset(rx_buf, 0, BUF_LEN);
 }
 #endif
+#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+void send_zigbee_response_to_uart(uint8_t *rxData, uint32_t payloadlen)
+{
+    uint32_t bridge_chksum = 0;
+    int index;
+    uart_header *uart_hdr;
+    uart_cb *uart = &uartcb;
+
+    memset(rx_buf, 0, BUF_LEN);
+    memcpy(rx_buf + sizeof(uart_header) + sizeof(cmd_header), rxData, payloadlen);
+
+    /* Added to send correct cmd header len */
+    cmd_header *cmd_hdr;
+    cmd_hdr         = &last_cmd_hdr;
+    cmd_hdr->length = payloadlen + sizeof(cmd_header);
+
+    memcpy(rx_buf + sizeof(uart_header), (uint8_t *)&last_cmd_hdr, sizeof(cmd_header));
+
+    uart_hdr          = (uart_header *)rx_buf;
+    uart_hdr->length  = payloadlen + sizeof(cmd_header);
+    uart_hdr->pattern = 0x5555;
+
+    /* calculate CRC. The uart_header is excluded */
+    bridge_chksum = uart_get_crc32(uart, uart_hdr->length, rx_buf + sizeof(uart_header));
+    index         = sizeof(uart_header) + uart_hdr->length;
+
+    rx_buf[index]     = bridge_chksum & 0xff;
+    rx_buf[index + 1] = (bridge_chksum & 0xff00) >> 8;
+    rx_buf[index + 2] = (bridge_chksum & 0xff0000) >> 16;
+    rx_buf[index + 3] = (bridge_chksum & 0xff000000) >> 24;
+
+    /* write response to uart */
+    (void)LPUART_RTOS_Send(&handle, rx_buf, payloadlen + sizeof(cmd_header) + sizeof(uart_header) + CHECKSUM_LEN);
+    memset(rx_buf, 0, BUF_LEN);
+}
+#endif
 #endif
 
 /*
@@ -875,6 +1037,47 @@ void read_zigbee_resp(void)
     memset(local_outbuf, 0, BUF_LEN);
 }
 #endif
+
+#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+void read_zigbee_resp(void)
+{
+    hal_spi_transfer_t spiTransfer;
+    spi_frame_hdr *pspihdr;
+
+    memset(spi_buff_rx, 0, SPI_DEFAULT_RX_BUFF_LENGTH);
+    memset(spi_buff_tx, 0, SPI_DEFAULT_TX_BUFF_LENGTH);
+
+    uint8_t *start = spi_buff_rx;
+    const uint8_t *end = spi_buff_rx + SPI_DEFAULT_ALIGN_ALLOWANCE;
+    unsigned short payload_length = 0;
+
+    pspihdr = (spi_frame_hdr *)spi_buff_tx;
+
+    set_spi_frame_hdr(pspihdr, 0, 0, 0, 0, 0);
+
+    memset(&spiTransfer, 0, sizeof(hal_spi_transfer_t));
+    spiTransfer.txData   = spi_buff_tx;
+    spiTransfer.rxData   = spi_buff_rx;
+    spiTransfer.dataSize = SPI_DEFAULT_RX_DATA_SIZE;
+    spiTransfer.flags    = kLPSPI_MasterPcs0 | kLPSPI_MasterPcsContinuous | kLPSPI_MasterByteSwap;
+
+    HAL_SpiMasterTransferBlocking((hal_spi_master_handle_t)otSpiMasterHandle, &spiTransfer);
+
+    /* Skip SPI_DEFAULT_ALIGN_ALLOWANCE bytes from received data to find valid frame header */
+    while (start != end && (start[0] == 0xFF || start[0] == 0x00)) {
+        start++;
+    }
+
+    payload_length = ((spi_frame_hdr *)start)->data_len;
+
+    start += sizeof(spi_frame_hdr);
+
+    send_zigbee_response_to_uart(start, payload_length);
+
+    memset(spi_buff_rx, 0, SPI_DEFAULT_RX_BUFF_LENGTH);
+    memset(spi_buff_tx, 0, SPI_DEFAULT_TX_BUFF_LENGTH);
+}
+#endif
 #endif
 
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
@@ -944,6 +1147,90 @@ static void wifi_cau_temperature_timer_cb(TimerHandle_t timer)
 }
 #endif
 
+#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+static int PLATFORM_I2CSend(uint8_t address, uint8_t byte1, uint8_t byte2)
+{
+    size_t   txCount = 0xFFU;
+    status_t reVal   = kStatus_Success;
+    /* Send master blocking data to slave */
+    if (kStatus_Success == LPI2C_MasterStart(I2C_MASTER_BASE, address, kLPI2C_Write))
+    {
+        /* Check master tx FIFO empty or not */
+        LPI2C_MasterGetFifoCounts(I2C_MASTER_BASE, NULL, &txCount);
+        while (txCount)
+        {
+            LPI2C_MasterGetFifoCounts(I2C_MASTER_BASE, NULL, &txCount);
+        }
+        /* Check communicate with slave successful or not */
+        if (LPI2C_MasterGetStatusFlags(I2C_MASTER_BASE) & kLPI2C_MasterNackDetectFlag)
+        {
+            return kStatus_LPI2C_Nak;
+        }
+
+        reVal = LPI2C_MasterSend(I2C_MASTER_BASE, &byte1, 1);
+        if (reVal != kStatus_Success)
+        {
+            if (reVal == kStatus_LPI2C_Nak)
+            {
+                LPI2C_MasterStop(I2C_MASTER_BASE);
+            }
+            return reVal;
+        }
+
+        /* Check master tx FIFO empty or not */
+        LPI2C_MasterGetFifoCounts(I2C_MASTER_BASE, NULL, &txCount);
+        while (txCount)
+        {
+            LPI2C_MasterGetFifoCounts(I2C_MASTER_BASE, NULL, &txCount);
+        }
+        /* Check communicate with slave successful or not */
+        if (LPI2C_MasterGetStatusFlags(I2C_MASTER_BASE) & kLPI2C_MasterNackDetectFlag)
+        {
+            return kStatus_LPI2C_Nak;
+        }
+
+        reVal = LPI2C_MasterSend(I2C_MASTER_BASE, &byte2, 1);
+        if (reVal != kStatus_Success)
+        {
+            if (reVal == kStatus_LPI2C_Nak)
+            {
+                LPI2C_MasterStop(I2C_MASTER_BASE);
+            }
+            return reVal;
+        }
+
+        LPI2C_MasterStop(I2C_MASTER_BASE);
+    }
+    return reVal;
+}
+
+static void PLATFORM_I2CInit(void)
+{
+    lpi2c_master_config_t masterConfig;
+
+    /*Clock setting for LPI2C*/
+    CLOCK_SetMux(kCLOCK_Lpi2cMux, LPI2C_CLOCK_SOURCE_SELECT);
+    CLOCK_SetDiv(kCLOCK_Lpi2cDiv, LPI2C_CLOCK_SOURCE_DIVIDER);
+
+    /*
+     * masterConfig.debugEnable = false;
+     * masterConfig.ignoreAck = false;
+     * masterConfig.pinConfig = kLPI2C_2PinOpenDrain;
+     * masterConfig.baudRate_Hz = 100000U;
+     * masterConfig.busIdleTimeout_ns = 0;
+     * masterConfig.pinLowTimeout_ns = 0;
+     * masterConfig.sdaGlitchFilterWidth_ns = 0;
+     * masterConfig.sclGlitchFilterWidth_ns = 0;
+     */
+    LPI2C_MasterGetDefaultConfig(&masterConfig);
+
+    /* Change the default baudrate configuration */
+    masterConfig.baudRate_Hz = LPI2C_BAUDRATE;
+
+    /* Initialize the LPI2C master peripheral */
+    LPI2C_MasterInit(I2C_MASTER_BASE, &masterConfig, LPI2C_CLOCK_FREQUENCY);
+}
+#endif
 /*
  task_main() runs in a loop. It polls the uart ring buffer
  checks it for a complete command and sends the command to the
@@ -993,7 +1280,14 @@ static void main_task(osa_task_param_t arg)
     assert(WM_SUCCESS == result);
 #endif /* CONFIG_BT_IND_DNLD */
 #endif
-
+#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+    /* Waiting for the RCP chip starts up */
+    OSA_TimeDelay(PLATFORM_CONFIG_DEFAULT_RESET_DELAY_MS);
+    /* Initialize the LPI2C peripheral */
+    PLATFORM_I2CInit();
+    /* Set Configuration Register of IO_Expander */
+    PLATFORM_I2CSend(PLATFORM_IOEXP_I2C_ADDR_7BIT, PLATFORM_IOEXP_CONFIGURATION_REG, PLATFORM_IOEXP_CONFIGURATION_SPI_ENABLE);
+#endif
 #if defined(MIMXRT1176_cm7_SERIES)
     LPSPI_MasterGetDefaultConfig(&spiConfig);
     spiConfig.baudRate = TRANSFER_BAUDRATE;
@@ -1001,6 +1295,20 @@ static void main_task(osa_task_param_t arg)
 
     srcClock_Hz = LPSPI_MASTER_CLK_FREQ;
     LPSPI_MasterInit(LPSPI_MASTER_BASEADDR, &spiConfig, srcClock_Hz);
+#endif
+
+#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+    hal_spi_master_config_t spiConfig = {
+        .srcClock_Hz  = LPSPI_MASTER_CLK_FREQ,
+        .baudRate_Bps = TRANSFER_BAUDRATE,
+        .polarity     = kHAL_SpiClockPolarityActiveHigh,
+        .phase        = kHAL_SpiClockPhaseFirstEdge,
+        .direction    = kHAL_SpiMsbFirst,
+        .instance     = 4,
+        .enableMaster = true,
+    };
+
+    HAL_SpiMasterInit((hal_spi_master_handle_t)otSpiMasterHandle, &spiConfig);
 #endif
 
     uart_cb *uart = &uartcb;
@@ -1160,9 +1468,10 @@ static void main_task(osa_task_param_t arg)
             {
                 read_bt_resp();
             }
-#if defined(MIMXRT1176_cm7_SERIES)
+#if defined(MIMXRT1176_cm7_SERIES) || (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
             else if (ret == RET_TYPE_ZIGBEE)
             {
+                (void)vTaskDelay(pdMS_TO_TICKS(60));
                 read_zigbee_resp();
             }
 #endif       
@@ -1200,6 +1509,12 @@ int main(void)
 #else
     extern void BOARD_InitHardware(void);
     BOARD_InitHardware();
+#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+    BOARD_InitUSDHCPins();
+    BOARD_InitPinsM2();
+    BOARD_InitM2SPIPins();
+    BOARD_InitM2I2CPins();
+#endif
 #endif
 
     status = OSA_TaskCreate((osa_task_handle_t)main_task_Handle, OSA_TASK(main_task), NULL);
