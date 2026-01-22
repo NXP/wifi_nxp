@@ -241,12 +241,28 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->wps.wps_mgmt_bitmap_index = -1;
 #endif
 #if CONFIG_HOSTAPD
+    /* Calculate base index for this interface (4 indexes per interface)
+     * Interface 0 (STA):    indexes 0-3
+     * Interface 1 (uAP):    indexes 4-7
+     * Interface 2 (P2P GO): indexes 8-11
+     */
+    int base_index = priv->bss_index * 4;
+
+    /* Initialize dynamic IE indexes to -1 (not allocated) */
     priv->beacon_vendor_index = -1;
     priv->proberesp_p2p_index = -1;
-    priv->beacon_index        = 0;
-    priv->proberesp_index     = 1;
-    priv->assocresp_index     = 2;
-    priv->beacon_wps_index    = 3;
+
+    /* Initialize fixed IE indexes based on bss_index */
+    priv->beacon_index     = base_index + 0;
+    priv->proberesp_index  = base_index + 1;
+    priv->assocresp_index  = base_index + 2;
+    priv->beacon_wps_index = base_index + 3;
+
+    /* Mark these indexes as used in the global bitmap */
+    set_ie_index(priv->beacon_index);
+    set_ie_index(priv->proberesp_index);
+    set_ie_index(priv->assocresp_index);
+    set_ie_index(priv->beacon_wps_index);
 #endif
 #endif
 #if CONFIG_TCP_ACK_ENH

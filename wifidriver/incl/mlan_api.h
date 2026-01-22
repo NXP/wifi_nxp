@@ -601,6 +601,10 @@ int wifi_clear_mgmt_ie2(mlan_bss_type bss_type, int mgmt_bitmap_index);
 
 int wifi_get_mgmt_ie_by_index(mlan_bss_type bss_type, void *buffer, unsigned int *ie_len, int index);
 
+void set_ie_index(unsigned int index);
+
+void reset_ie_index_for_interface(void *priv);
+
 #if CONFIG_BG_SCAN
 int wifi_request_bgscan(mlan_private *pmpriv);
 #endif

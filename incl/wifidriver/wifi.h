@@ -1982,9 +1982,9 @@ int wrapper_wlan_uap_ampdu_enable(const t_u8 interface,
 
 int wifi_uap_stop();
 #if CONFIG_HOSTAPD
-int wifi_uap_do_acs(const int *freq_list);
+int wifi_uap_do_acs(enum wlan_bss_type bss_type, const int *freq_list);
 #else
-int wifi_uap_do_acs(const t_u16 acs_band);
+int wifi_uap_do_acs(enum wlan_bss_type bss_type, const t_u16 acs_band);
 #endif
 
 void wifi_get_fw_info(mlan_bss_type type, t_u16 *fw_bands);

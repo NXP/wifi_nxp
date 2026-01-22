@@ -4049,7 +4049,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #endif
 #if UAP_SUPPORT
             case HOST_CMD_APCMD_SYS_CONFIGURE:
-                wifi_uap_handle_cmd_resp(resp);
+                wifi_uap_handle_cmd_resp(pmpriv, resp);
                 break;
 #endif
             case HostCmd_CMD_TXPWR_CFG:

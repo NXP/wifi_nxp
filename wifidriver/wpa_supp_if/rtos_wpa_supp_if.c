@@ -2664,6 +2664,7 @@ out:
 int wifi_nxp_hostapd_do_acs(void *if_priv, struct drv_acs_params *params)
 {
     int status = -WM_FAIL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     if ((!if_priv) || (!params))
     {
@@ -2671,7 +2672,7 @@ int wifi_nxp_hostapd_do_acs(void *if_priv, struct drv_acs_params *params)
         goto out;
     }
 
-    status = wifi_uap_do_acs(params->freq_list);
+    status = wifi_uap_do_acs(wifi_if_ctx_rtos->bss_type, params->freq_list);
     if (status != WM_SUCCESS)
     {
         supp_e("%s: wifi uap do acs failed", __func__);

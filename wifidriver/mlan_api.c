@@ -3849,7 +3849,7 @@ static int get_free_mgmt_ie_index(unsigned int *mgmt_ie_index)
     return -WM_FAIL;
 }
 
-static void set_ie_index(unsigned int index)
+void set_ie_index(unsigned int index)
 {
     mgmt_ie_index_bitmap |= (MBIT(index));
 }
@@ -3913,9 +3913,28 @@ static bool ie_index_is_set(unsigned int index)
     return (mgmt_ie_index_bitmap & (MBIT(index))) ? MTRUE : MFALSE;
 }
 
+void reset_ie_index_for_interface(void *priv)
+{
+    mlan_private *pmpriv = (mlan_private *)priv;
+    int base_index;
+
+    if (!pmpriv)
+        return;
+
+    /* Calculate base index for this interface (4 indexes per interface) */
+    base_index = pmpriv->bss_index * 4;
+
+    /* Clear the 4 fixed indexes for this interface */
+    clear_ie_index(base_index + 0);
+    clear_ie_index(base_index + 1);
+    clear_ie_index(base_index + 2);
+    clear_ie_index(base_index + 3);
+}
+
 void reset_ie_index()
 {
-    mgmt_ie_index_bitmap = 0x0000000F;
+    /* Initialize bitmap - indexes 0-15 can be used */
+    mgmt_ie_index_bitmap = 0x00000000;
 }
 
 static int wifi_config_mgmt_ie(mlan_bss_type bss_type,

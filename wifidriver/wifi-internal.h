@@ -390,9 +390,9 @@ void *wifi_malloc_eventbuf(size_t size);
 void wifi_free_eventbuf(void *buffer);
 
 #if UAP_SUPPORT
-void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp);
+void wifi_uap_handle_cmd_resp(mlan_private *pmpriv, HostCmd_DS_COMMAND *resp);
 #else
-static inline void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp)
+static inline void wifi_uap_handle_cmd_resp(mlan_private *pmpriv, HostCmd_DS_COMMAND *resp)
 {
     (void)PRINTF("wifi_uap_handle_cmd_resp UAP not supported %s:%d\r\n", __func__, __LINE__);
 }

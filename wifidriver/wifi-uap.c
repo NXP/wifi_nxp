@@ -459,7 +459,7 @@ static int wifi_cmd_uap_config(char *ssid,
     int password_len   = (int)strlen(password);
 #endif
 
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[bss_type];
     wifi_uap_set_beacon_period(beacon_period);
 
     /* fixme: check if this needs to go on heap */
@@ -1088,7 +1088,7 @@ int wifi_uap_start(mlan_bss_type type,
         (void)wifi_uap_pmf_getset(HostCmd_ACT_GEN_SET, (uint8_t *)&mfpc, (uint8_t *)&mfpr);
     }
 
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[type];
     mlan_private *remain_priv = pmpriv->adapter->priv[pmpriv->adapter->remain_bss_index];
     if (wifi_is_remain_on_channel() && remain_priv)
     {
@@ -1225,13 +1225,13 @@ static int wifi_uap_acs_config_set()
 #endif
 
 #if CONFIG_HOSTAPD
-int wifi_uap_do_acs(const int *freq_list)
+int wifi_uap_do_acs(enum wlan_bss_type bss_type, const int *freq_list)
 #else
-int wifi_uap_do_acs(const t_u16 acs_band)
+int wifi_uap_do_acs(enum wlan_bss_type bss_type, const t_u16 acs_band)
 #endif
 {
 #ifndef SD8801
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[bss_type];
 #endif
     MrvlIEtypes_channel_band_t *tlv_chan_band     = MNULL;
     MrvlIEtypes_ChanListParamSet_t *tlv_chan_list = MNULL;
@@ -1444,9 +1444,8 @@ void wifi_uap_enable_sticky_bit(const uint8_t *mac_addr)
 /*
  * Note: This function handles only one (first) TLV from the response.
  */
-void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp)
+void wifi_uap_handle_cmd_resp(mlan_private *pmpriv, HostCmd_DS_COMMAND *resp)
 {
-    mlan_private *pmpriv              = (mlan_private *)mlan_adap->priv[1];
     HostCmd_DS_SYS_CONFIG *sys_config = (HostCmd_DS_SYS_CONFIG *)&resp->params.sys_config;
     uint8_t *tlv                      = sys_config->tlv_buffer;
     MrvlIEtypesHeader_t *header       = (MrvlIEtypesHeader_t *)(void *)tlv;
@@ -4900,6 +4899,18 @@ int wifi_nxp_stop_ap(unsigned int bss_type)
         priv->beacon_vendor_index = -1;
     }
 
+    if (priv->proberesp_p2p_index != -1)
+    {
+        ret = wifi_clear_mgmt_ie2(bss_type, priv->proberesp_p2p_index);
+        if (ret != WM_SUCCESS)
+        {
+            wuap_e("Clear P2P IE failed");
+            ret = -WM_FAIL;
+            goto done;
+        }
+        priv->proberesp_p2p_index = -1;
+    }
+
     ret = wifi_nxp_set_mgmt_ies(priv, NULL, 0, NULL, 0, NULL, 0, NULL, 0);
     if (ret != WM_SUCCESS)
     {
@@ -4907,6 +4918,9 @@ int wifi_nxp_stop_ap(unsigned int bss_type)
         ret = -WM_FAIL;
         goto done;
     }
+
+    /* Clear the IE index bitmap for this interface */
+    reset_ie_index_for_interface(priv);
 
     wuap_d("Stopping BSS"); /* Stop BSS */
     if (MLAN_STATUS_SUCCESS != wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_BSS_STOP, HostCmd_ACT_GEN_SET, 0,

@@ -2418,7 +2418,7 @@ static int do_start(struct wlan_network *network)
                 }
 
 #if !CONFIG_WPA_SUPP
-                wifi_uap_do_acs(wlan.networks[wlan.cur_uap_network_idx].acs_band);
+                wifi_uap_do_acs(wlan.networks[wlan.cur_uap_network_idx].type, wlan.networks[wlan.cur_uap_network_idx].acs_band);
 
                 if (wm_wifi.acs_chan != 0)
                 {
