@@ -3136,16 +3136,19 @@ int wifi_nxp_get_wiphy(const unsigned int bss_type)
 #endif
 
 #if CONFIG_11AX
-    status = wifi_setup_he_cap((nxp_wifi_he_capabilities *)&wiphy.sband[0].he_cap, 0);
-    if (status != WM_SUCCESS)
+    if (IS_FW_SUPPORT_11AX(mlan_adap))
     {
-        wifi_e("%s: wifi nxp set 2G infra he cap failed", __func__);
-        return -WM_FAIL;
-    }
+        status = wifi_setup_he_cap((nxp_wifi_he_capabilities *)&wiphy.sband[0].he_cap, 0);
+        if (status != WM_SUCCESS)
+        {
+            wifi_e("%s: wifi nxp set 2G infra he cap failed", __func__);
+            return -WM_FAIL;
+        }
 
-    if (bandwidth == BANDWIDTH_20MHZ)
-    {
-        wiphy.sband[0].he_cap.phy_cap[HE_PHYCAP_CHANNEL_WIDTH_SET_IDX] = 0;
+        if (bandwidth == BANDWIDTH_20MHZ)
+        {
+            wiphy.sband[0].he_cap.phy_cap[HE_PHYCAP_CHANNEL_WIDTH_SET_IDX] = 0;
+        }
     }
 #endif
 
@@ -3193,16 +3196,19 @@ int wifi_nxp_get_wiphy(const unsigned int bss_type)
 #endif
 
 #if CONFIG_11AX
-        status = wifi_setup_he_cap((nxp_wifi_he_capabilities *)&wiphy.sband[1].he_cap, 1);
-        if (status != WM_SUCCESS)
+        if (IS_FW_SUPPORT_11AX(mlan_adap))
         {
-            wifi_e("%s: wifi nxp set 2G infra he cap failed", __func__);
-            return -WM_FAIL;
-        }
+            status = wifi_setup_he_cap((nxp_wifi_he_capabilities *)&wiphy.sband[1].he_cap, 1);
+            if (status != WM_SUCCESS)
+            {
+                wifi_e("%s: wifi nxp set 2G infra he cap failed", __func__);
+                return -WM_FAIL;
+            }
 
-        if (bandwidth == BANDWIDTH_20MHZ)
-        {
-            wiphy.sband[1].he_cap.phy_cap[HE_PHYCAP_CHANNEL_WIDTH_SET_IDX] = 0;
+            if (bandwidth == BANDWIDTH_20MHZ)
+            {
+                wiphy.sband[1].he_cap.phy_cap[HE_PHYCAP_CHANNEL_WIDTH_SET_IDX] = 0;
+            }
         }
 #endif
 

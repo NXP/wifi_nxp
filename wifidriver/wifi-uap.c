@@ -2672,6 +2672,12 @@ static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
                 ext_id = *(pos + 2);
 #if UAP_SUPPORT
 #if CONFIG_11AX
+                if ((ext_id == HE_CAPABILITY || ext_id == HE_OPERATION) && !IS_FW_SUPPORT_11AX(mlan_adap))
+                {
+                    /* Ignore HE-cap and HE-op if FW doesn't support HE */
+                    break;
+                }
+
                 if (ext_id == HE_CAPABILITY)
                 {
                     mlan_ds_11ax_he_cfg he_cfg;

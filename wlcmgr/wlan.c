@@ -2379,7 +2379,7 @@ static void update_network_params(struct wlan_network *network, const struct wif
     network->dot11ac = res->pvhtcap_ie_present;
 #endif
 #if CONFIG_11AX
-    network->dot11ax = res->phecap_ie_present;
+    network->dot11ax = res->phecap_ie_present && IS_FW_SUPPORT_11AX(mlan_adap);
 #ifdef CONFIG_11AX_TWT
     network->twt_capab = res->twt_capab;
 #endif
