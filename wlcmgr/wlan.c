@@ -7653,6 +7653,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
                 wlcm_d("got event: csi data process");
                 wlcm_process_csi_data(msg->data);
             }
+            mlan_adap->ami_ongoing = 0;
             break;
 #endif
 #endif
