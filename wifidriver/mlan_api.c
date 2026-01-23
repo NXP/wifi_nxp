@@ -6656,7 +6656,6 @@ static void proc_csi_event(void *p_data)
 void wifi_process_csi_data(void *p_data)
 {
     proc_csi_event(((t_u8 *)p_data + AMI_CSI_RAW_DATA_OFFSET));
-    mlan_adap->ami_ongoing = 0;
     return;
 }
 
