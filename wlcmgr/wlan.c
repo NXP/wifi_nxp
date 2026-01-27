@@ -6100,6 +6100,7 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
             wlan.wfd_go_state           = CM_UAP_INITIALIZING;
             wlan.cur_wfd_network_idx = -1;
             wlan_remove_network("wps_network");
+            dhcp_server_stop(DHCP_INSTANCE_WFD_GO);
         }
         else if (strstr(buf, " client "))
         {
@@ -6656,6 +6657,12 @@ static void wlcm_process_fw_hang_event(struct wifi_message *msg, enum cm_sta_sta
     {
         (void)do_stop(&wlan.networks[wlan.cur_uap_network_idx]);
     }
+#if CONFIG_WPA_SUPP_P2P
+    if (wlan.wfd_go_state > CM_UAP_INITIALIZING)
+    {
+        (void)wlan_p2p_group_remove("*");
+    }
+#endif
 #endif
 }
 
@@ -11559,6 +11566,17 @@ void wlan_reset(cli_reset_option ResetOption)
                     OSA_TimeDelay(1000);
                 }
             }
+#if CONFIG_WPA_SUPP_P2P
+            /* Remove P2P GO if GO is started.*/
+            if (wlan.wfd_go_state > CM_UAP_CONFIGURED)
+            {
+                (void)wlan_p2p_group_remove("*");
+                while (wlan.wfd_go_state != CM_UAP_INITIALIZING)
+                {
+                    OSA_TimeDelay(1000);
+                }
+            }
+#endif
 #endif
 #if CONFIG_CPU_LOADING
             if(cpu_loading.status != CPU_LOADING_STATUS_DEAD)
