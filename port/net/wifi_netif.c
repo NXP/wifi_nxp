@@ -361,7 +361,7 @@ static void process_data_packet(const t_u8 *rcvdata,
 #if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_1AS)
         if (sub_type == (t_u16)SUBTYPE_ACTION && recv_interface == MLAN_BSS_TYPE_STA)
         {
-            if (wifi_event_completion(recv_interface, WIFI_EVENT_MGMT_FRAME, WIFI_EVENT_REASON_SUCCESS, p) != WM_SUCCESS)
+            if (wifi_event_completion((enum wlan_bss_type)recv_interface, WIFI_EVENT_MGMT_FRAME, WIFI_EVENT_REASON_SUCCESS, p) != WM_SUCCESS)
             {
                 pbuf_free(p);
                 p = NULL;

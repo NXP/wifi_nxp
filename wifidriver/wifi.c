@@ -1379,7 +1379,7 @@ static void wifi_scan_task(void *argv)
         {
 	    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
 #if CONFIG_WPA_SUPP
-            (void)wifi_event_completion(pmpriv->bss_type, WIFI_EVENT_SCAN_START, WIFI_EVENT_REASON_SUCCESS, NULL);
+            (void)wifi_event_completion((enum wlan_bss_type)pmpriv->bss_type, WIFI_EVENT_SCAN_START, WIFI_EVENT_REASON_SUCCESS, NULL);
 #endif
 #if CONFIG_WPA_SUPP_P2P
             if (wm_wifi.wpa_supp_p2p_scan == true)
@@ -1391,7 +1391,7 @@ static void wifi_scan_task(void *argv)
             if (rv != MLAN_STATUS_SUCCESS)
             {
                 wifi_user_scan_config_cleanup();
-                (void)wifi_event_completion(pmpriv->bss_type, WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
+                (void)wifi_event_completion((enum wlan_bss_type)pmpriv->bss_type, WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
             }
         }
 #if CONFIG_WPA_SUPP

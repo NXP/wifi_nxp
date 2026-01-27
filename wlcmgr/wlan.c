@@ -7551,7 +7551,7 @@ static int wlan_cpu_loading_stop()
 
     cpu_loading.index = 0;
 
-    (void)send_user_request(CM_STA_USER_REQUEST_CPU_LOADING, 0); // Notify wlcmgr task to destory cpu_loading_thread task.
+    (void)send_user_request(WLAN_BSS_TYPE_STA, CM_STA_USER_REQUEST_CPU_LOADING, 0); // Notify wlcmgr task to destory cpu_loading_thread task.
 
     return WM_SUCCESS;
 }
@@ -11789,7 +11789,7 @@ int wlan_stop_all_networks(void)
 
 #if UAP_SUPPORT
     net_interface_down(net_get_uap_handle());
-    send_user_request(CM_UAP_USER_REQUEST_STOP, 0);
+    send_user_request(WLAN_BSS_TYPE_UAP, CM_UAP_USER_REQUEST_STOP, 0);
 #endif
 
     return WM_SUCCESS;

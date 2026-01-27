@@ -298,7 +298,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             break;
 #if CONFIG_NXP_WIFI_SOFTAP_SUPPORT
         case WLAN_REASON_UAP_SUCCESS:
-            bss_type = (enum wlan_bss_type)data;
+            bss_type = (enum wlan_bss_type)(uintptr_t)data;
             if (bss_type == WLAN_BSS_TYPE_UAP)
             {
                 PRINTF("app_cb: WLAN: UAP Started\r\n");
@@ -383,7 +383,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
             break;
         case WLAN_REASON_UAP_STOPPED:
-            bss_type = (enum wlan_bss_type)data;
+            bss_type = (enum wlan_bss_type)(uintptr_t)data;
             if (bss_type == WLAN_BSS_TYPE_UAP)
             {
                 PRINTF("app_cb: WLAN: UAP Stopped\r\n");

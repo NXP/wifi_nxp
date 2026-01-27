@@ -309,7 +309,7 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
             (void)memcpy((void *)pnlist_rep_param->dst_addr, (const void *)dest_addr, (size_t)MLAN_MAC_ADDR_LENGTH);
         }
 
-        if (wifi_event_completion(MLAN_BSS_TYPE_STA, WIFI_EVENT_NLIST_REPORT, WIFI_EVENT_REASON_SUCCESS, (void *)pnlist_rep_param) !=
+        if (wifi_event_completion(WLAN_BSS_TYPE_STA, WIFI_EVENT_NLIST_REPORT, WIFI_EVENT_REASON_SUCCESS, (void *)pnlist_rep_param) !=
             WM_SUCCESS)
         {
             /* If fail to send message on queue, free allocated memory ! */
