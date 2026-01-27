@@ -6483,6 +6483,7 @@ static void test_wlan_get_bandcfg(int argc, char **argv)
     wlan_bandcfg_t bandcfg;
     int ret = WM_SUCCESS;
     uint32_t val = 0;
+    uint32_t hw_val = 0;
 
     (void)memset(&bandcfg, 0, sizeof(bandcfg));
 
@@ -6497,10 +6498,18 @@ static void test_wlan_get_bandcfg(int argc, char **argv)
     {
         val |= WLAN_BANDCFG_11N;
     }
+    if (bandcfg.fw_bands & (BAND_AN | BAND_GN))
+    {
+        hw_val |= WLAN_BANDCFG_11N;
+    }
 #if CONFIG_11AC
     if (bandcfg.config_bands & (BAND_AAC | BAND_GAC))
     {
         val |= WLAN_BANDCFG_11AC;
+    }
+    if (bandcfg.fw_bands & (BAND_AAC | BAND_GAC))
+    {
+        hw_val |= WLAN_BANDCFG_11AC;
     }
 #endif
 #if CONFIG_11AX
@@ -6508,9 +6517,14 @@ static void test_wlan_get_bandcfg(int argc, char **argv)
     {
         val |= WLAN_BANDCFG_11AX;
     }
+    if (bandcfg.fw_bands & (BAND_AAX | BAND_GAX))
+    {
+        hw_val |= WLAN_BANDCFG_11AX;
+    }
 #endif
 
     (void)PRINTF("\tconfig band: 0x%x\r\n", val);
+    (void)PRINTF("\tfw band: 0x%x\r\n", hw_val);
     dump_wlan_bandcfg_bit_usage();
 }
 

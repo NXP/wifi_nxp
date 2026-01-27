@@ -7016,6 +7016,11 @@ int wlan_set_bandcfg(wlan_bandcfg_t *bandcfg);
  */
 int wlan_get_bandcfg(wlan_bandcfg_t *bandcfg);
 
+/**
+ * Re-configure the bandcfg for uAP
+ */
+void wlan_uap_bandcfg_recfg(void);
+
 #if (CONFIG_COMPRESS_TX_PWTBL)
 /**
  * Set TX power table according to region code

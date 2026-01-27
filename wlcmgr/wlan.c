@@ -10761,6 +10761,7 @@ void wlan_reset(cli_reset_option ResetOption)
     }
 
     wifi_reset_set_state(false);
+    wlan_uap_bandcfg_recfg();
     OSA_MutexUnlock((osa_mutex_handle_t)reset_lock);
 
     PRINTF("--- Done ---\r\n");
@@ -15817,6 +15818,42 @@ int wlan_get_signal_info(wlan_rssi_info_t *signal)
 }
 #endif
 
+#ifdef CONFIG_WIFI_NM_HOSTAPD_AP
+static void wlan_uap_update_hostapd_bss(wlan_bandcfg_t *bandcfg)
+{
+    struct netif *netif = net_get_uap_interface();
+
+    if (bandcfg->config_bands & (BAND_AN | BAND_GN))
+    {
+        hostapd_11n_cfg(net_if_get_device((void *)netif), 1);
+    }
+    else
+    {
+        hostapd_11n_cfg(net_if_get_device((void *)netif), 0);
+    }
+#if CONFIG_11AC
+    if (bandcfg->config_bands & (BAND_AAC | BAND_GAC))
+    {
+        hostapd_11ac_cfg(net_if_get_device((void *)netif), 1);
+    }
+    else
+    {
+        hostapd_11ac_cfg(net_if_get_device((void *)netif), 0);
+    }
+#endif
+#if CONFIG_11AX
+    if (bandcfg->config_bands & (BAND_AAX | BAND_GAX))
+    {
+        hostapd_11ax_cfg(net_if_get_device((void *)netif), 1);
+    }
+    else
+    {
+        hostapd_11ax_cfg(net_if_get_device((void *)netif), 0);
+    }
+#endif
+}
+#endif
+
 int wlan_set_bandcfg(wlan_bandcfg_t *bandcfg)
 {
     int ret = 0;
@@ -15824,36 +15861,8 @@ int wlan_set_bandcfg(wlan_bandcfg_t *bandcfg)
 #ifdef CONFIG_WIFI_NM_HOSTAPD_AP
     if (ret == WM_SUCCESS)
     {
-        struct netif *netif = net_get_uap_interface();
-        if (bandcfg->config_bands & (BAND_AN | BAND_GN))
-        {
-            hostapd_11n_cfg(net_if_get_device((void *)netif), 1);
-        }
-        else
-        {
-            hostapd_11n_cfg(net_if_get_device((void *)netif), 0);
-        }
-#if CONFIG_11AC
-        if (bandcfg->config_bands & (BAND_AAC | BAND_GAC))
-        {
-            hostapd_11ac_cfg(net_if_get_device((void *)netif), 1);
-        }
-        else
-        {
-            hostapd_11ac_cfg(net_if_get_device((void *)netif), 0);
-        }
-#endif
-#if CONFIG_11AX
-        if (bandcfg->config_bands & (BAND_AAX | BAND_GAX))
-        {
-            hostapd_11ax_cfg(net_if_get_device((void *)netif), 1);
-        }
-        else
-        {
-            hostapd_11ax_cfg(net_if_get_device((void *)netif), 0);
-        }
+        wlan_uap_update_hostapd_bss(bandcfg);
     }
-#endif
 #endif
 
     return ret;
@@ -15862,6 +15871,16 @@ int wlan_set_bandcfg(wlan_bandcfg_t *bandcfg)
 int wlan_get_bandcfg(wlan_bandcfg_t *bandcfg)
 {
     return wifi_get_set_bandcfg(bandcfg, MLAN_ACT_GET);
+}
+
+void wlan_uap_bandcfg_recfg(void)
+{
+#ifdef CONFIG_WIFI_NM_HOSTAPD_AP
+    wlan_bandcfg_t bandcfg = {0};
+
+    bandcfg.config_bands = mlan_adap->priv[1]->config_bands;
+    wlan_uap_update_hostapd_bss(&bandcfg);
+#endif
 }
 
 #if CONFIG_TURBO_MODE
