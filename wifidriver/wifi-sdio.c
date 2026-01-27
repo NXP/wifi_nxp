@@ -447,6 +447,7 @@ static sg_data_list_t *sg_data_tx_prepare(t_u8 *out_buf)
     /* 4 bytes align */
     const t_u32 hdr_size = SG_DATA_ALIGN(INTF_HEADER_LEN + sizeof(TxPD) + ETH_HDR_LEN, SG_DATA_TX_ALIGN_SIZE);
     void *payload;
+    SDIOPkt *intf_hdr;
 
     p = NAL_PKT_2_BUF(pkt);
     payload = NAL_PKT_HEAD_ADDR(pkt);
@@ -476,7 +477,7 @@ static sg_data_list_t *sg_data_tx_prepare(t_u8 *out_buf)
                  * 4a. add header for address alignment. Payload address remains the same.
                  * So the payload offset needs to increase by added size
                  */
-                buf->tx_pd.tx_pkt_offset += trim;
+                buf->padding_size += trim;
             }
             else
             {
@@ -515,6 +516,16 @@ static sg_data_list_t *sg_data_tx_prepare(t_u8 *out_buf)
             net_stack_buffer_push(pkt, hdr_size);
             p = NAL_PKT_2_BUF(pkt);
         }
+    }
+
+    if (buf->padding_size)
+    {
+        buf->tx_pd.tx_pkt_offset += buf->padding_size;
+        intf_hdr = (SDIOPkt *)(void *)&buf->intf_header[0];
+        intf_hdr->size += buf->padding_size;
+#if CONFIG_WMM
+        buf->padding_size = 0;
+#endif
     }
 
     payload = NAL_PKT_HEAD_ADDR(pkt);
@@ -571,7 +582,12 @@ static sg_data_list_t *sg_data_tx_prepare(t_u8 *out_buf)
     }
     else
     {
-        /* 8b. if header not in payload, the header sg_desc includes only header */
+        /*
+         * 8b. if net_buf does not have enough headroom for hdr_size,
+         * but payload address and payload size is SG_DATA_SIZE aligned,
+         * so need extra SG DESC to transfer hdr_size sperately.
+         * The header sg_desc includes only header.
+         */
         SG_DATA_ADDR(head) = (uint32_t *)(void *)&buf->intf_header[0];
         SG_DATA_SIZE(head) = SG_DATA_ALIGN(hdr_size, SG_DATA_TX_ALIGN_SIZE);
     }
@@ -667,6 +683,10 @@ clone:
     }
     else
     {
+        /*
+         * clone_pkt is transparent for network stack,
+         * it will be freed by driver after SG DMA done.
+         */
         buf->cache_buffer = clone_pkt;
     }
 

@@ -695,6 +695,7 @@ uint8_t *wifi_wmm_get_outbuf_enh(
     *outbuf_len = 0;
     return MNULL;
 SUCC:
+    memset(buf, 0x0, sizeof(outbuf_t));
     *outbuf_len = OUTBUF_WMM_LEN;
     return (uint8_t *)buf;
 }

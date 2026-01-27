@@ -232,6 +232,8 @@ typedef struct
     int is_hdr_in_payload;
     /* Aligned buffer for DMA */
     void *cache_buffer;
+    /* Padding size after txpd */
+    int padding_size;
 #else
     t_u8 data[WMM_DATA_LEN];
 #endif
