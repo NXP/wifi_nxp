@@ -27,7 +27,7 @@
 #endif
 #endif
 
-#define WLAN_DRV_VERSION "v1.3.r48.p55"
+#define WLAN_DRV_VERSION "v1.3.r48.p56"
 
 #if CONFIG_WPA2_ENTP
 #include <wm_mbedtls_helper_api.h>
