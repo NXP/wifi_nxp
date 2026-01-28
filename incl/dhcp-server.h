@@ -99,7 +99,19 @@ int dhcpd_cli_deinit(void);
  *
  * \return WM_SUCCESS on success or error code
  */
-int dhcp_server_start(void *intrfc_handle, int instance_id);
+int dhcp_server_start(void *intrfc_handle);
+
+/** Start DHCP server on specific instance
+ *
+ * Extended version that allows specifying which DHCP server instance to start.
+ * Use this for P2P GO or when you need explicit instance control.
+ *
+ * \param[in] intrfc_handle The interface handle on which DHCP server will start
+ * \param[in] instance_id Instance identifier (DHCP_INSTANCE_UAP or DHCP_INSTANCE_WFD_GO)
+ *
+ * \return WM_SUCCESS on success or error code
+ */
+int dhcp_server_start_ex(void *intrfc_handle, int instance_id);
 
 /** Start DNS server
  *
@@ -127,13 +139,23 @@ int dhcp_server_start(void *intrfc_handle, int instance_id);
  * asking for.
  *
  * \param[in] domain_names Pointer to the list of domain names or NULL.
+ * \param[in] instance_id Instance identifier (DHCP_INSTANCE_UAP or DHCP_INSTANCE_WFD_GO)
  *
  */
-void dhcp_enable_dns_server(char **domain_names, int dhcp_enable_dns_server, int instance_id);
+void dhcp_enable_dns_server(char **domain_names, int instance_id);
 
 /** Stop DHCP server
  */
-void dhcp_server_stop(int instance_id);
+void dhcp_server_stop(void);
+
+/** Stop DHCP server on specific instance
+ *
+ * Extended version that allows specifying which DHCP server instance to stop.
+ * Use this for P2P GO or when you need explicit instance control.
+ *
+ * \param[in] instance_id Instance identifier (DHCP_INSTANCE_UAP or DHCP_INSTANCE_WFD_GO)
+ */
+void dhcp_server_stop_ex(int instance_id);
 
 /** Configure the DHCP dynamic IP lease time
  *
@@ -156,6 +178,7 @@ int dhcp_server_lease_timeout(uint32_t val);
  * \param[in] client_mac Pointer to a six byte array containing the MAC address
  * of the client
  * \param[out] client_ip Pointer to IP address of the client
+ * \param[in] instance_id Instance identifier (DHCP_INSTANCE_UAP or DHCP_INSTANCE_WFD_GO)
  *
  * \return WM_SUCCESS on success or -WM_FAIL.
  */

@@ -316,7 +316,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
                 printSeparator();
                 intrfc_handle = net_get_uap_handle();
 
-                ret = dhcp_server_start(intrfc_handle, DHCP_INSTANCE_UAP);
+                ret = dhcp_server_start_ex(intrfc_handle, DHCP_INSTANCE_UAP);
                 if (ret != 0)
                 {
                     PRINTF("%s\r\n", dhcp_server_err_str(ret));
@@ -344,7 +344,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
                 printSeparator();
                 intrfc_handle = net_get_wfd_handle();
 
-                ret = dhcp_server_start(intrfc_handle, DHCP_INSTANCE_WFD_GO);
+                ret = dhcp_server_start_ex(intrfc_handle, DHCP_INSTANCE_WFD_GO);
                 if (ret != 0)
                 {
                     PRINTF("%s\r\n", dhcp_server_err_str(ret));
@@ -391,7 +391,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
                 PRINTF("Soft AP stopped successfully\r\n");
                 printSeparator();
 
-                dhcp_server_stop(DHCP_INSTANCE_UAP);
+                dhcp_server_stop_ex(DHCP_INSTANCE_UAP);
 
                 PRINTF("DHCP Server stopped successfully\r\n");
                 printSeparator();
@@ -403,7 +403,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
                 PRINTF("P2P GO stopped successfully\r\n");
                 printSeparator();
 
-                dhcp_server_stop(DHCP_INSTANCE_WFD_GO);
+                dhcp_server_stop_ex(DHCP_INSTANCE_WFD_GO);
 
                 PRINTF("DHCP Server stopped successfully\r\n");
                 printSeparator();

@@ -6100,7 +6100,7 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
             wlan.wfd_go_state           = CM_UAP_INITIALIZING;
             wlan.cur_wfd_network_idx = -1;
             wlan_remove_network("wps_network");
-            dhcp_server_stop(DHCP_INSTANCE_WFD_GO);
+            dhcp_server_stop_ex(DHCP_INSTANCE_WFD_GO);
         }
         else if (strstr(buf, " client "))
         {
@@ -9238,13 +9238,13 @@ int wlan_stop(void)
 #if !CONFIG_WIFI_RECOVERY
     if (wlan.uap_state == CM_UAP_IP_UP)
 #endif
-        dhcp_server_stop(DHCP_INSTANCE_UAP);
+        dhcp_server_stop_ex(DHCP_INSTANCE_UAP);
 
 #if CONFIG_WPA_SUPP_P2P
 #if !CONFIG_WIFI_RECOVERY
     if (wlan.wfd_go_state == CM_UAP_IP_UP)
 #endif
-        dhcp_server_stop(DHCP_INSTANCE_WFD_GO);
+        dhcp_server_stop_ex(DHCP_INSTANCE_WFD_GO);
 #endif
 #endif
 

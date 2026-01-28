@@ -249,7 +249,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
             (void)PRINTF("Soft AP \"%s\" started successfully\r\n", ssid);
             printSeparator();
-            ret = dhcp_server_start(net_get_uap_handle(), DHCP_INSTANCE_UAP);
+            ret = dhcp_server_start(net_get_uap_handle());
             if (ret != 0)
             {
                 PRINTF("%s\r\n", dhcp_server_err_str(ret));
@@ -291,7 +291,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             (void)PRINTF("Soft AP stopped successfully\r\n");
             printSeparator();
 
-            dhcp_server_stop(DHCP_INSTANCE_UAP);
+            dhcp_server_stop();
 
             (void)PRINTF("DHCP Server stopped successfully\r\n");
             printSeparator();

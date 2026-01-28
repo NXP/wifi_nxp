@@ -75,8 +75,12 @@ const char *dhcp_server_err_str(int err)
 /*
  * API
  */
+int dhcp_server_start(void *intrfc_handle)
+{
+	return dhcp_server_start_ex(intrfc_handle, DHCP_INSTANCE_UAP);
+}
 
-int dhcp_server_start(void *intrfc_handle, int instance_id)
+int dhcp_server_start_ex(void *intrfc_handle, int instance_id)
 {
     int ret;
     osa_status_t status;
@@ -124,7 +128,12 @@ int dhcp_server_start(void *intrfc_handle, int instance_id)
     return WM_SUCCESS;
 }
 
-void dhcp_server_stop(int instance_id)
+void dhcp_server_stop()
+{
+	dhcp_server_stop_ex(DHCP_INSTANCE_UAP);
+}
+
+void dhcp_server_stop_ex(int instance_id)
 {
 
     if (instance_id >= MAX_DHCP_INSTANCES)

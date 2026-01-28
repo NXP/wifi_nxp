@@ -206,7 +206,7 @@ static int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr,
     return -WM_E_DHCPD_DNS_IGNORE;
 }
 
-void dhcp_enable_dns_server(char **domain_names, int dhcp_enable_dns_server, int instance_id)
+void dhcp_enable_dns_server(char **domain_names, int instance_id)
 {
     if (dhcp_dns_server_handler != NULL || dnss[instance_id].list_qnames != NULL)
     {
