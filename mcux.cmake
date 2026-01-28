@@ -130,60 +130,6 @@ if (CONFIG_MCUX_COMPONENT_middleware.wifi.fwdnld)
                 # TODO please change to relative dir
                 wifidriver/incl/mlan_main_defs.h
                 # TODO please change to relative dir
-                wifi_bt_firmware/IW416/sduartIW416_wlan_bt.bin.inc
-                # TODO please change to relative dir
-                wifi_bt_firmware/IW416/sdIW416_wlan.bin.inc
-                # TODO please change to relative dir
-                wifi_bt_firmware/IW416/uartIW416_bt.bin.inc
-                # TODO please change to relative dir
-                wifi_bt_firmware/IW416/sduartIW416_wlan_bt.h
-                # TODO please change to relative dir
-                wifi_bt_firmware/IW416/sdIW416_wlan.h
-                # TODO please change to relative dir
-                wifi_bt_firmware/IW416/uartIW416_bt.h
-                # TODO please change to relative dir
-                wifi_bt_firmware/IW416/IW416_cpu12.c
-                # TODO please change to relative dir
-                wifi_bt_firmware/IW416/IW416_cpu1.c
-                # TODO please change to relative dir
-                wifi_bt_firmware/IW416/IW416_cpu2.c
-                # TODO please change to relative dir
-                wifi_bt_firmware/8987/sduart8987_wlan_bt.bin.inc
-                # TODO please change to relative dir
-                wifi_bt_firmware/8987/sd8987_wlan.bin.inc
-                # TODO please change to relative dir
-                wifi_bt_firmware/8987/uart8987_bt.bin.inc
-                # TODO please change to relative dir
-                wifi_bt_firmware/8987/sduart8987_wlan_bt.h
-                # TODO please change to relative dir
-                wifi_bt_firmware/8987/sd8987_wlan.h
-                # TODO please change to relative dir
-                wifi_bt_firmware/8987/uart8987_bt.h
-                # TODO please change to relative dir
-                wifi_bt_firmware/8987/8987_cpu12.c
-                # TODO please change to relative dir
-                wifi_bt_firmware/8987/8987_cpu1.c
-                # TODO please change to relative dir
-                wifi_bt_firmware/8987/8987_cpu2.c
-                # TODO please change to relative dir
-                wifi_bt_firmware/nw61x/sduart_nw61x.bin.se.inc
-                # TODO please change to relative dir
-                wifi_bt_firmware/nw61x/sd_nw61x.bin.se.inc
-                # TODO please change to relative dir
-                wifi_bt_firmware/nw61x/uart_nw61x.bin.se.inc
-                # TODO please change to relative dir
-                wifi_bt_firmware/nw61x/sduart_nw61x_se.h
-                # TODO please change to relative dir
-                wifi_bt_firmware/nw61x/sd_nw61x_se.h
-                # TODO please change to relative dir
-                wifi_bt_firmware/nw61x/uart_nw61x_se.h
-                # TODO please change to relative dir
-                wifi_bt_firmware/nw61x/nw61x_cpu12_se.c
-                # TODO please change to relative dir
-                wifi_bt_firmware/nw61x/nw61x_cpu1_se.c
-                # TODO please change to relative dir
-                wifi_bt_firmware/nw61x/nw61x_cpu2_se.c
-                # TODO please change to relative dir
                 wifidriver/sdio.c
                 # TODO please change to relative dir
                 wifidriver/sdio.h
@@ -195,10 +141,6 @@ if (CONFIG_MCUX_COMPONENT_middleware.wifi.fwdnld)
     mcux_add_include(
         INCLUDES incl
                  wifi_bt_firmware
-                 wifi_bt_firmware/IW416
-                 wifi_bt_firmware/8987
-                 wifi_bt_firmware/nw61x
-                 wifi_bt_firmware/iw610
                  wifidriver
                  wifidriver/incl
                  firmware_dnld
