@@ -974,6 +974,19 @@ void net_configure_dns(struct net_ip_config *ip, unsigned int role)
         tmp.addr = ip->ipv4.dns2;
         dns_setserver(1, (ip_addr_t *)(void *)&tmp);
     }
+    else
+    {
+        if (0 != ip->ipv4.dns1)
+        {		
+            tmp.addr = ip->ipv4.dns1;
+            dns_setserver(0, (ip_addr_t *)&tmp);
+        }
+        if (0 != ip->ipv4.dns2)
+        {		
+            tmp.addr = ip->ipv4.dns2;
+            dns_setserver(1, (ip_addr_t *)&tmp);
+        }
+    }
 
     /* DNS MAX Retries should be configured in lwip/dns.c to 3/4 */
     /* DNS Cache size of about 4 is sufficient */
