@@ -4045,10 +4045,28 @@ static void wlan_update_cur_network_idx(struct wifi_message *msg)
 {
     BSSDescriptor_t *pbss_desc = NULL;
     int i = 0;
-
+    struct wifi_scan_result2 *res;
+    mlan_private *priv = (mlan_private *)mlan_adap->priv[0];
+    int idx = -1;
+    int ret;
+    uint8_t num_channels         = 0;
+    wlan_scan_channel_list_t chan_list[40];
+	
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS && msg->data != NULL)
     {
         pbss_desc = msg->data;
+        idx = wlan_find_bssid_in_list(priv, (const unsigned char *)pbss_desc->mac_address, MLAN_BSS_MODE_NEGATIVE);
+        if (idx < 0)
+        {   
+            wlcm_d("%s: Find bssid in list fail", __func__);
+            return;
+        }
+        ret = wifi_get_scan_result(idx, &res);
+        if (ret != WM_SUCCESS)
+        {
+            wlcm_d("%s: Wi-Fi get scan result fail", __func__);
+            return;
+        }
         for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
         {
             if (wlan.networks[i].name[0] != '\0' &&
@@ -4069,6 +4087,12 @@ static void wlan_update_cur_network_idx(struct wifi_message *msg)
                     {
                         continue;
                     }
+                }
+				
+                ret = network_matches_scan_result(&wlan.networks[i], res, &num_channels, chan_list);
+                if (ret != WM_SUCCESS)
+                {
+                    continue;
                 }
 
                 /** The match is based on both SSID (if ssid is specified) and BSSID (if bssid is specified).
