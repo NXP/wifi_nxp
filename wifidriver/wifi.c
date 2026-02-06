@@ -500,6 +500,19 @@ int wlan_process_hang(uint8_t fw_reload)
     }
 
     mlan_adap->in_reset = true;
+
+#if CONFIG_WIFI_IND_RESET && (CONFIG_WIFI_IND_DNLD)
+    if (is_sta_connected())
+    {
+        wlan_set_sta_reconnect_in_hang(MTRUE);
+    }
+
+    if (is_uap_started())
+    {
+        wlan_set_uap_restart_in_hang(MTRUE);
+    }
+#endif
+
     for (i = 0; i < (int)(MIN(MLAN_MAX_BSS_NUM, mlan_adap->priv_num)); i++)
     {
         if (mlan_adap->priv[i]->media_connected == MTRUE)

@@ -7815,6 +7815,22 @@ int wlan_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg);
  */
 int wlan_independent_reset(void);
 
+/** Set flag for reconnection in hang
+ *
+ * This function sets the flag to reconnect to the same network before hang
+ *
+ * \param[in] flag: set/reset flag
+ */
+void wlan_set_sta_reconnect_in_hang(bool flag);
+
+/** Set flag to restart uap in hang
+ *
+ * This function sets the flag to start the uap network with same settings
+ * before hang
+ *
+ * \param[in] flag: set/reset flag
+ */
+void wlan_set_uap_restart_in_hang(bool flag);
 #endif
 
 int wlan_set_network_ip_byname(char *name, struct wlan_ip_config *ip);

@@ -706,6 +706,8 @@ static struct
 #endif
 #if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
     uint8_t ir_mode;
+    uint8_t sta_connect_in_hang;
+    uint8_t uap_start_in_hang;
 #endif
     bool internal : 1;
 } wlan;
@@ -2580,7 +2582,15 @@ static int do_stop(struct wlan_network *network)
         wlan_uap_set_bandwidth(UAP_DEFAULT_BANDWIDTH);
         wlan_uap_set_beacon_period(UAP_DEFAULT_BEACON_PERIOD);
         wlan_uap_set_hidden_ssid(UAP_DEFAULT_HIDDEN_SSID);
-        wlan.cur_uap_network_idx = -1;
+
+#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+        if(wlan.uap_start_in_hang == 0)
+        {
+#endif
+            wlan.cur_uap_network_idx = -1;
+#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+        }
+#endif
     }
     return WM_SUCCESS;
 }
@@ -6305,10 +6315,35 @@ static void wlcm_process_init_params()
 #if CONFIG_BG_SCAN
     wlan.bgscan_attempt = 0;
 #endif
-
-    wlan.cur_network_idx     = -1;
-    wlan.cur_uap_network_idx = -1;
+#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+    if(wlan.sta_connect_in_hang == 0)
+    {
+#endif
+        wlan.cur_network_idx     = -1;
+#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+    }
+#endif
+#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+    if(wlan.uap_start_in_hang == 0)
+    {
+#endif
+        wlan.cur_uap_network_idx = -1;
+#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+    }
+#endif
 }
+
+#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+void wlan_set_sta_reconnect_in_hang(bool flag)
+{
+     wlan.sta_connect_in_hang = flag;
+}
+
+void wlan_set_uap_restart_in_hang(bool flag)
+{
+     wlan.uap_start_in_hang = flag;
+}
+#endif
 
 static void wlcm_process_init(enum cm_sta_state *next)
 {
@@ -6967,8 +7002,15 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
     else
     { /* Do Nothing */
     }
-    wlan.cur_network_idx =-1;
 
+#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+    if(wlan.sta_connect_in_hang == 0)
+    {
+#endif
+        wlan.cur_network_idx =-1;
+#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+    }
+#endif
 #if CONFIG_WPS2
     if (wlan_get_prov_session() == PROV_WPS_SESSION_ATTEMPT)
     {
@@ -7459,6 +7501,22 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case WIFI_EVENT_FW_RESET:
             wlcm_d("got event: fw reset");
             wlcm_process_fw_reset_event(msg, &next);
+
+            if(wlan.uap_start_in_hang == 1)
+            {
+                PRINTF("Restarting previous uAP network\r\n");
+                wlan_start_network(wlan.networks[wlan.cur_uap_network_idx].name);
+                /* Following delay is added for safe starting of uAP */
+                OSA_TimeDelay(5000);
+                wlan_set_uap_restart_in_hang(false);
+            }
+
+            if(wlan.sta_connect_in_hang == 1)
+            {
+                PRINTF("Reconnecting to previous network\r\n");
+                wlan_connect(wlan.networks[wlan.cur_network_idx].name);
+                wlan_set_sta_reconnect_in_hang(false);
+            }
             break;
 #endif
 
