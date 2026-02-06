@@ -15,6 +15,11 @@
 #ifndef WMCRYPTO_H
 #define WMCRYPTO_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 #include <wmlog.h>
@@ -301,5 +306,10 @@ void nxp_hmac_md5(
     const uint8_t *key, size_t key_len, const uint8_t *data, size_t data_len, uint8_t *mac, size_t maclen);
 
 int nxp_generate_psk(const char *ssid, int ssid_len, const char *passphrase, char *output);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

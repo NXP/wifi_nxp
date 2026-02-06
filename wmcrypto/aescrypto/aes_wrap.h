@@ -18,6 +18,11 @@
 #ifndef AES_WRAP_H
 #define AES_WRAP_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int __must_check aes_wrap(const u8 *kek, size_t kek_len, int n, const u8 *plain, u8 *cipher);
 int __must_check aes_unwrap(const u8 *kek, size_t kek_len, int n, const u8 *cipher, u8 *plain);
 int __must_check
@@ -88,5 +93,10 @@ int __must_check aes_ccm_ad(const u8 *key,
                             size_t aad_len,
                             const u8 *auth,
                             u8 *plain);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* AES_WRAP_H */

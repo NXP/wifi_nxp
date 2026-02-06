@@ -11,6 +11,11 @@
 #ifndef __WIFI_NXP_H__
 #define __WIFI_NXP_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <wm_net.h>
 #if CONFIG_WPA_SUPP
@@ -82,5 +87,10 @@ void wifi_scan_result_get(struct wifi_message *msg);
 void wifi_survey_result_get(struct wifi_message *msg);
 
 #endif /* CONFIG_WPA_SUPP */
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WIFI_NXP_H__ */

@@ -8,6 +8,11 @@
 #ifndef __CLI_UTILS_H__
 #define __CLI_UTILS_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -29,4 +34,9 @@ unsigned int a2hex_or_atoi(char *value);
 unsigned int a2hex(const char *s);
 unsigned char hexc2bin(char chr);
 char *string_dup(const char *s);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

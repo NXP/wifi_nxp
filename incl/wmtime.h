@@ -20,6 +20,11 @@
 #ifndef _WMTIME_H_
 #define _WMTIME_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wmtypes.h>
 #include <time.h>
 #include <wm_net.h>
@@ -137,4 +142,9 @@ extern int wmtime_init(void);
 bool is_wmtime_init_done();
 
 int gettimeofday(struct timeval *tv, void *tz);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

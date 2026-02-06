@@ -19,6 +19,11 @@
 
 #ifndef __WIFI_SHELL_H__
 #define __WIFI_SHELL_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wmtypes.h>
 
 #define MAX_COMMANDS  200U
@@ -82,5 +87,10 @@ int cli_unregister_commands(const struct cli_command *commands, int num_commands
 void help_command(int argc, char **argv);
 
 int nxp_wifi_request(size_t argc, char **argv);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WIFI_SHELL_H__ */

@@ -17,6 +17,11 @@ Change log:
 #ifndef _MLAN_IEEE_H_
 #define _MLAN_IEEE_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** FIX IES size in beacon buffer */
 #define WLAN_802_11_FIXED_IE_SIZE 12
 /** WLAN supported rates */
@@ -2423,5 +2428,10 @@ typedef struct _BSSDescriptor_t
     bool mbo_assoc_disallowed;
 #endif
 } BSSDescriptor_t, *pBSSDescriptor_t;
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !_MLAN_IEEE_H_ */

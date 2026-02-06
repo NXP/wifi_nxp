@@ -8,6 +8,18 @@
  *
  */
 
+
+ #ifndef _WMCRYPTO_MEM_h
+ #define _WMCRYPTO_MEM_H
+
+
+
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wmtypes.h>
 
 /** Malloc memory
@@ -21,3 +33,10 @@ void crypto_mem_free(void *ptr);
 /** Calloc memory
  */
 void *crypto_mem_calloc(size_t nmemb, size_t size);
+
+
+#ifdef __cplusplus
+}
+#endif
+
+ #endif /* _WMCRYPTO_MEM_h*/

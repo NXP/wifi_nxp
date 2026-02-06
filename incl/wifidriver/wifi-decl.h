@@ -10,6 +10,11 @@
 #ifndef __WIFI_DECL_H__
 #define __WIFI_DECL_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <wm_utils.h>
@@ -1961,6 +1966,11 @@ typedef PACK_START struct _wlan_ant_detect_data_t
     cfg_scan_channel_list_t *channel_list;
     wlan_ant_scan_info_t scan_info[MAX_ANTENNA_PORT_NUM];
 } PACK_END wlan_ant_detect_data_t;
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __WIFI_DECL_H__ */

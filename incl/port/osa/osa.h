@@ -12,6 +12,11 @@
 #ifndef _OSA_H_
 #define _OSA_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wifi_config_default.h>
 
 #include "fsl_os_abstraction.h"
@@ -382,5 +387,10 @@ void OSA_ThreadSelfComplete(osa_task_handle_t taskHandle);
  * @returns Number of items in the queue
  */
 uint32_t OSA_MsgQWaiting(osa_msgq_handle_t msgqHandle);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ! _OSA_H_ */

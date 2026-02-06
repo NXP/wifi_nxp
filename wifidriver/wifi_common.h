@@ -9,6 +9,11 @@
  */
 #ifndef _WIFI_COMMON_H
 #define _WIFI_COMMON_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wifi.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -194,5 +199,10 @@ static int parse_line(char *line, char *args[])
     }
     return arg_num;
 }
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _WIFI_COMMON_H */

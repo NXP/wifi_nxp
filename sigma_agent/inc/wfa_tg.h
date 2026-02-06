@@ -23,6 +23,11 @@
 #ifndef _WFA_TG_H
 #define _WFA_TG_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <pthread.h>
 
 #include <sys/time.h>
@@ -247,5 +252,10 @@ extern int wfaSendBitrateData(int mySockfd, int streamId, BYTE *pRespBuf, int *a
 tgStream_t *findStreamProfile(int streamId);
 tgProfile_t *findTGProfile(int streamId);
 int convertDscpToTos(int dscp); // return >=0 as TOS, otherwise error.
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

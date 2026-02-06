@@ -11,6 +11,11 @@
 #ifndef __DHCP_PRIV_H__
 #define __DHCP_PRIV_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wmlog.h>
 
 #define dhcp_e(...) wmlog_e("dhcp", ##__VA_ARGS__)
@@ -54,4 +59,9 @@ int dhcp_send_halt(int instance_id);
 int dhcp_free_allocations(int instance_id);
 int dhcp_create_and_bind_udp_socket(struct sockaddr_in *address, void *intrfc_handle);
 int dhcp_send_response(int sock, struct sockaddr *addr, char *msg, int len);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

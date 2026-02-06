@@ -16,6 +16,11 @@ Change log:
 #ifndef _MLAN_DECL_H_
 #define _MLAN_DECL_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "type_decls.h"
 #include <osa.h>
 #if CONFIG_WPA_SUPP
@@ -1051,5 +1056,10 @@ MLAN_API mlan_status mlan_unregister(IN t_void *pmlan_adapter);
 /** Firmware Initialization */
 MLAN_API mlan_status mlan_init_fw(IN t_void *pmlan_adapter);
 
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !_MLAN_DECL_H_ */

@@ -11,6 +11,11 @@
 #ifndef __WIFI_H__
 #define __WIFI_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wifi_config_default.h>
 
 #ifdef __ZEPHYR__
@@ -2025,4 +2030,9 @@ int wifi_set_wps_probe_req_indication(mlan_bss_type bss_type, t_u8 enable);
 #endif
 
 #endif /* UAP_SUPPORT */
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __WIFI_H__ */

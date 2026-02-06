@@ -19,6 +19,11 @@ USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef _WFA_CMDS_H
 #define _WFA_CMDS_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct _tg_ping_start
 {
     char dipaddr[WFA_IP_V6_ADDR_STR_LEN]; /* destination/remote ip address ,maybe ipv4 or ipv6*/
@@ -2035,5 +2040,10 @@ typedef struct ca_ap_deauth_sta
 #endif
 
 extern int buildCommandProcessTable(void);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

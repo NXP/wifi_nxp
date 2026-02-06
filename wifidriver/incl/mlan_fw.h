@@ -18,6 +18,11 @@ Change log:
 #ifndef _MLAN_FW_H_
 #define _MLAN_FW_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Interface header length */
 #define INTF_HEADER_LEN                4U
 #define WIFI_HOST_CMD_FIXED_HEADER_LEN 8U
@@ -8169,6 +8174,11 @@ typedef MLAN_PACK_START struct _mlan_event_vdll_indication
 
 #ifdef PRAGMA_PACK
 #pragma pack(pop)
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* !_MLAN_FW_H_ */

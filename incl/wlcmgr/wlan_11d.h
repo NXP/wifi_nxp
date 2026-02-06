@@ -12,6 +12,11 @@
 #ifndef __WLAN_11D_H__
 #define __WLAN_11D_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wifi.h>
 
 /** Enable 11D support in WLAN Driver.
@@ -61,4 +66,9 @@ static inline int wlan_enable_uap_11d(int state)
     }
 }
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __WLAN_11D_H__ */

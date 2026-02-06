@@ -12,6 +12,11 @@
 #ifndef _WIFI_PING_H_
 #define _WIFI_PING_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wmlog.h>
 
 #define ping_e(...) wmlog_e("ping", ##__VA_ARGS__)
@@ -56,4 +61,9 @@ void ping_stats(int *total, int *recvd);
  */
 
 int ping_cli_deinit(void);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /*_WIFI_PING_H_ */

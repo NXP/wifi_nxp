@@ -9,6 +9,18 @@
  * \brief This file provides MCU memory read/write initlization interfaces.
  */
 
+
+
+#ifndef _WLAN_MCU_MEM_ACCESS_CLI_H
+#define _WLAN_MCU_MEM_ACCESS_CLI_H
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#endif
+
 #if CONFIG_MCU_MEM_ACCESS
 
 /** Register MCU mem read/write CLI commands
@@ -22,5 +34,10 @@
  *   registered).
  */
 int mcu_mem_access_init(void);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*CONFIG_MCU_MEM_ACCESS */

@@ -11,6 +11,11 @@
 #ifndef __WLAN_TESTS_H__
 #define __WLAN_TESTS_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if CONFIG_11AX
 /* index enum of cfgs */
 enum
@@ -69,4 +74,9 @@ void test_wlan_cfg_process(uint32_t index, int argc, char **argv);
  *
  */
 void print_txpwrlimit(wlan_txpwrlimit_t *txpwrlimit);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* WLAN_TESTS_H */

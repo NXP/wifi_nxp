@@ -14,6 +14,11 @@ Change log:
 #ifndef _MLAN_SDIO_DEFS_H
 #define _MLAN_SDIO_DEFS_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wifi_config_default.h>
 
 /** Block mode */
@@ -424,4 +429,9 @@ Change log:
 
 #define MAX_WRITE_IOMEM_RETRY 10
 #define IO_ABORT 0x06
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _MLAN_SDIO_DEFS_H */

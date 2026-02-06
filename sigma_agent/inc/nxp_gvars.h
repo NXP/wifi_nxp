@@ -8,6 +8,17 @@
  *
  */
 
+
+
+#ifndef _NXP_GVARS_H
+#define _NXP_GVARS_H
+
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* New Variables */
 extern int HOSTAPD;
 extern int MWIFIEX;
@@ -164,3 +175,10 @@ extern int ap_use_hostapd;
 
 extern int flag;
 extern int return_flag;
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /*_NXP_GVARS_H */

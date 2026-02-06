@@ -8,7 +8,7 @@
  *\brief This file provides default macros for Wi-Fi.
  */
 
-#if !defined WIFI_HDR_CONFIG_H
+#ifndef WIFI_HDR_CONFIG_H
 #define WIFI_HDR_CONFIG_H
 
 /*
@@ -196,6 +196,11 @@
 /* TX/RX aggregation SLIM*/
 #ifndef CONFIG_WIFI_SLIM_TX_RX_AGGR
 #define CONFIG_WIFI_SLIM_TX_RX_AGGR 0
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #endif
 
 #if CONFIG_WIFI_SLIM_TX_RX_AGGR
@@ -1528,6 +1533,11 @@
 
 #else
 #error "Please define supported Wi-Fi module"
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* WIFI_HDR_CONFIG_H */

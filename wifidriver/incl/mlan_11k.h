@@ -19,6 +19,11 @@ Change log:
 #ifndef _MLAN_11K_H_
 #define _MLAN_11K_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if CONFIG_11K
 /* Link Measurement Request frame */
 typedef MLAN_PACK_START struct _mgmt_rrm_link_meas_request
@@ -190,5 +195,10 @@ void wlan_dot11k_formatRrmCapabilities(IEEEtypes_RrmEnabledCapabilities_t *pRrmC
 /* send mgmt neighbor report request frame */
 int wlan_send_mgmt_rm_neighbor_request(mlan_private *pmpriv, t_u8 *ssid, t_u8 ssid_len);
 #endif /* CONFIG_11K */
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !_MLAN_11K_H_ */

@@ -24,6 +24,11 @@
 #ifndef _WFA_TLV_H
 #define _WFA_TLV_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "wfa_types.h"
 
 #define INTEGER_1    0x0001 /* byte */
@@ -309,5 +314,10 @@ extern BOOL wfaDecodeTLV(BYTE *tlv_data, int tlv_len, WORD *ptlv_tag, int *ptlv_
 extern BOOL wfaEncodeTLV(WORD the_tag, WORD the_len, BYTE *the_value, BYTE *tlv_data);
 
 extern WORD wfaGetValueType(BYTE the_tag, BYTE *tlv_data);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

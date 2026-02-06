@@ -7,6 +7,11 @@
 #ifndef INCLUDES_H
 #define INCLUDES_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -37,6 +42,11 @@
 #define ENTER()
 /** LEAVE */
 #define LEAVE()
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* INCLUDES_H */

@@ -15,6 +15,11 @@ USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef _WFA_CA_H_
 #define _WFA_CA_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define ENCRYPT_NONE    0
 #define ENCRYPT_WEP     1
 #define ENCRYPT_TKIP    2
@@ -139,5 +144,10 @@ extern int wfaStaExecAction(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf
 extern int wfaStaDevConfigureIe(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf);
 extern int wfaAPSet11h(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf);
 extern int wfaDevExecAction(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

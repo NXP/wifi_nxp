@@ -14,6 +14,11 @@ Change log:
 #ifndef _MLAN_SDIO_H
 #define _MLAN_SDIO_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mlan_sdio_defs.h"
 
 /** Event header Len*/
@@ -88,4 +93,9 @@ mlan_status wlan_reset_fw(pmlan_adapter pmadapter);
 #endif
 
 /** Transfer data to card */
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _MLAN_SDIO_H */

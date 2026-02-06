@@ -10,6 +10,11 @@
 
 #ifndef _LWIP_DEFAULT_HOOKS_H_
 #define _LWIP_DEFAULT_HOOKS_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <osa.h>
 #if defined(SDK_OS_FREE_RTOS)
 
@@ -29,6 +34,11 @@ u32_t *lwip_hook_tcp_out_add_tcpopts(struct pbuf *p, struct tcp_hdr *hdr, const 
 
 #elif __ZEPHYR__
 
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

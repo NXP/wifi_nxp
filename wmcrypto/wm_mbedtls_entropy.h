@@ -11,10 +11,20 @@
 #ifndef WM_MBEDTLS_ENTROPY_H
 #define WM_MBEDTLS_ENTROPY_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <mbedtls/ctr_drbg.h>
 
 int wm_mbedtls_entropy_ctr_drbg_setup();
 
 mbedtls_ctr_drbg_context *wm_mbedtls_get_ctr_drbg_ctx();
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* WM_MBEDTLS_ENTROPY_H */

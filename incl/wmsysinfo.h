@@ -59,6 +59,11 @@
 #ifndef _WMSYSINFO_H_
 #define _WMSYSINFO_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <string.h>
 
 /** Initialize System Information Utility
@@ -74,5 +79,10 @@ int sysinfo_init(void);
 void vConfigureTimerForRunTimeStats(void);
 
 unsigned long ulGetRunTimeCounterValue(void);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

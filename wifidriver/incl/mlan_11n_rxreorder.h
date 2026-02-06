@@ -17,6 +17,11 @@ Change log:
 #ifndef _MLAN_11N_RXREORDER_H_
 #define _MLAN_11N_RXREORDER_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Max value a TID can take = 2^12 = 4096 */
 #define MAX_TID_VALUE 4096U
 /** 2^11 = 2048 */
@@ -88,4 +93,9 @@ void wlan_update_rxreorder_tbl(pmlan_adapter pmadapter, bool flag);
 
 /** clean up reorder_tbl */
 void wlan_cleanup_reorder_tbl(mlan_private *priv, t_u8 *ta);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _MLAN_11N_RXREORDER_H_ */

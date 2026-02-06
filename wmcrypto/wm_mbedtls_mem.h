@@ -11,6 +11,16 @@
 #ifndef _MEMORY_ALT_H
 #define _MEMORY_ALT_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int wm_mbedtls_set_mem_alloc();
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _MEMORY_ALT_H */

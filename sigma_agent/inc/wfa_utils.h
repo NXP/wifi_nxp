@@ -19,6 +19,16 @@
 #ifndef _WFA_UTILS_H
 #define _WFA_UTILS_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define WFA_RET_ENV "WFA_UTIL_RET"
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

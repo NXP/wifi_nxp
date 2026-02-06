@@ -11,6 +11,11 @@
 #ifndef __DHCP_BOOTP_H_
 #define __DHCP_BOOTP_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define DHCP_SERVER_PORT 67
 #define DHCP_CLIENT_PORT 68
 
@@ -92,5 +97,10 @@ struct arp_packet
     char rcpt_ip_addr[IP_ADDR_LEN];
     uint8_t padding[18];
 };
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

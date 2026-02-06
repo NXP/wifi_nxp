@@ -10,6 +10,11 @@
 #ifndef _MEM_POOL_CONFIG_H_
 #define _MEM_POOL_CONFIG_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <mem_pool.h>
 
 #include <wmlog.h>
@@ -44,5 +49,10 @@ extern MemoryPool_t buf_3072_MemoryPool;
 extern MemoryPool_t buf_4096_MemoryPool;
 
 int mem_pool_init();
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _MEM_POOL_CONFIG_H_

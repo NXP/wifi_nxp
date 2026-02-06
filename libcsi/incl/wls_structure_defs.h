@@ -16,6 +16,11 @@
 #ifndef WLS_STRUCTURE_DEFS_H
 #define WLS_STRUCTURE_DEFS_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "wls_param_defines.h"
 #include "mlan_decl.h"
 
@@ -549,5 +554,10 @@ typedef MLAN_PACK_START struct reg_buf_ptr {
     UINT16 rd_ptr:13;
     UINT16 rsvd0:3;
 } MLAN_PACK_END reg_buf_ptr_t;
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

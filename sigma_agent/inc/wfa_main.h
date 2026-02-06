@@ -19,6 +19,11 @@
 #ifndef _WFA_MAIN_H
 #define _WFA_MAIN_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef WFA_PC_CONSOLE
 #define WFA_MAX_TRAFFIC_STREAMS 32
 
@@ -81,4 +86,9 @@ enum tg_port
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

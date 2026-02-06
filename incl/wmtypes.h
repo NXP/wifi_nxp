@@ -12,6 +12,11 @@
 #ifndef _WMTYPES_H_
 #define _WMTYPES_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -19,6 +24,11 @@
 
 #ifdef __ZEPHYR__
 #include "nxp_wifi.h"
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* ! _WMTYPES_H_ */

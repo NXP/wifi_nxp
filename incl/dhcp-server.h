@@ -15,6 +15,11 @@
 #ifndef __DHCP_SERVER_H__
 #define __DHCP_SERVER_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wmerrno.h>
 
 /** DHCPD Error Codes
@@ -208,4 +213,9 @@ struct dhcp_task_args {
 #define DHCP_INSTANCE_UAP    0
 #define DHCP_INSTANCE_WFD_GO 1
 #define MAX_DHCP_INSTANCES   2
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

@@ -7,6 +7,11 @@
 #ifndef _TYPE_DEF_H
 #define _TYPE_DEF_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 /** Unsigned char */
@@ -34,5 +39,10 @@
 #define UCHAR unsigned char
 /** Unsigned integer */
 #define UINT unsigned int
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _TYPE_DEF_H */

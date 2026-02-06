@@ -12,6 +12,11 @@
 #ifndef _WIFI_CAL_DATA_H_
 #define _WIFI_CAL_DATA_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(SD8978)
 /* Following cal data is specific to IW416 QFN A1 chips */
 #if CONFIG_WLAN_CALDATA_1ANT
@@ -191,4 +196,9 @@ const uint8_t int_cal_data[] = {
 #endif
 #endif
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

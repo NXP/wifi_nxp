@@ -17,6 +17,11 @@ Change log:
 #ifndef _MLAN_INIT_H_
 #define _MLAN_INIT_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Tx buffer size for firmware download*/
 #define FW_DNLD_TX_BUF_SIZE 620
 /** Rx buffer size for firmware download*/
@@ -65,5 +70,10 @@ typedef struct _FWSyncHeader
 
 /** Convert sequence number and command fields of fwheader to correct endian format */
 #define endian_convert_syncfwheader(x)
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _MLAN_INIT_H_ */

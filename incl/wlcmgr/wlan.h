@@ -12,6 +12,11 @@
 #ifndef __WLAN_H__
 #define __WLAN_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef __ZEPHYR__
 #include <nxp_wifi.h>
 #endif
@@ -8060,5 +8065,9 @@ int wlan_select_cur_network_by_scan_res(unsigned int scan_index);
  * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
  */
 int wlan_set_network_chanlist(char *name, const uint8_t *chan_list, uint8_t num_chans, enum wlan_frequency_bands freq_band);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WLAN_H__ */

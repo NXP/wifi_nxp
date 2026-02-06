@@ -19,6 +19,11 @@ Change log:
 #ifndef _MLAN_11N_H_
 #define _MLAN_11N_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mlan_11n_aggr.h"
 #include "mlan_11n_rxreorder.h"
 #include "mlan_wmm.h"
@@ -363,4 +368,9 @@ static bool wlan_is_amsdu_allowed(mlan_private *priv, t_u8 interface, t_u8 pkt_c
     }
 }
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* !_MLAN_11N_H_ */

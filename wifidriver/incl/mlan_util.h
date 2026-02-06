@@ -17,6 +17,11 @@ Change log:
 #ifndef _MLAN_UTIL_H_
 #define _MLAN_UTIL_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef MNULL
 #define MNULL ((void *)0)
 #endif
@@ -538,5 +543,10 @@ static INLINE t_u8 util_scalar_conditional_write(t_void *pmoal_handle,
     }
     return (update == (t_u8)MTRUE) ? ((t_u8)MTRUE) : ((t_u8)MFALSE);
 }
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !_MLAN_UTIL_H_ */

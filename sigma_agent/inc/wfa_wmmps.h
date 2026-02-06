@@ -19,6 +19,19 @@
 /*
  * * APTS messages/tests
  * */
+
+
+
+
+#ifndef _WFA_WMMPS_H
+ #define _WFA_WMMPS_H
+
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define B_D 1
 #define B_H 2
 #define B_B 3
@@ -204,3 +217,11 @@ int WfaRcvVI(unsigned int *, int, int *);
 int WfaRcvBE(unsigned int *, int, int *);
 int WfaRcvBK(unsigned int *, int, int *);
 int WfaRcvNotCare(unsigned int *, int, int *);
+
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /*_WFA_WMMPS_H */

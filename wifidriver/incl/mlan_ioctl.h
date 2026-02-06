@@ -16,6 +16,11 @@ Change log:
 #ifndef _MLAN_IOCTL_H_
 #define _MLAN_IOCTL_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Enumeration for IOCTL request ID */
 typedef enum _mlan_ioctl_req_id
 {
@@ -4190,5 +4195,10 @@ typedef struct _mlan_ds_misc_cfg
 
 /** mlan ioctl */
 MLAN_API mlan_status mlan_ioctl(IN t_void *pmlan_adapter, IN pmlan_ioctl_req pioctl_req);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !_MLAN_IOCTL_H_ */

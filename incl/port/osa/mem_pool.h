@@ -11,6 +11,11 @@
 #ifndef MEM_POOL_H_
 #define MEM_POOL_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <osa.h>
 
 /**
@@ -93,5 +98,10 @@ void *OSA_MemoryPoolAllocate(MemoryPool_t pool);
  *\param[in] memory memory obtained from OSA_MemoryPoolAllocate().
  */
 void OSA_MemoryPoolFree(MemoryPool_t pool, void *memory);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

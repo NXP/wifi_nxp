@@ -16,6 +16,18 @@
  *
  *****************************************************************************/
 
+ #ifndef _WFA_STDINCS_H
+ #define _WFA_STDINCS_H
+
+
+
+
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <pthread.h>
@@ -43,3 +55,10 @@
 #include <sched.h>
 #include <math.h>
 #include <errno.h>
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _WFA_STDINCS_H*/

@@ -11,6 +11,11 @@
 #ifndef __WIFI_NXP_INTERNAL_H__
 #define __WIFI_NXP_INTERNAL_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 
 #include <wifi_config_default.h>
@@ -468,4 +473,9 @@ typedef struct _chan_to_freq_t
 
 int channel_to_frequency(t_u16 channel, t_u8 band);
 t_u16 freq_to_chan(unsigned int freq);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __WIFI_NXP_INTERNAL_H__ */

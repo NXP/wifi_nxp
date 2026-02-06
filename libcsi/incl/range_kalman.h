@@ -12,6 +12,11 @@
 #ifndef RANGE_KALMAN
 #define RANGE_KALMAN
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define RANGE_RUN_FLT
 #ifdef RANGE_RUN_FLT
 // range is in meters, range_rate in meters/second
@@ -51,5 +56,10 @@ typedef struct {
 #endif
 
 int range_kalman(range_kalman_state* in);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

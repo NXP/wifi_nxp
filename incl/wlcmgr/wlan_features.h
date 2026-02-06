@@ -7,6 +7,18 @@
  *\brief This file contains interface declaration for Wi-Fi feature init and deinit functions
 */
 
+
+#ifndef _WLAN_FEATURES_H
+#define _WLAN_FEATURES_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#endif
+
+
+
 #if CONFIG_WIFI_FEATURES
 /** Register WLAN Features CLI commands.
  *
@@ -32,4 +44,9 @@ int wlan_features_cli_init(void);
  *  \return -WM_FAIL if they were not unregistered
  */
 int wlan_features_cli_deinit(void);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

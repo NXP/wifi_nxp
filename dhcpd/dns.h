@@ -11,6 +11,11 @@
 #ifndef __DNS_H__
 #define __DNS_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 PACK_START struct dns_header
 {
     uint16_t id;
@@ -75,4 +80,9 @@ void dns_process_packet(int instance_id);
 uint32_t dns_get_nameserver(int instance_id);
 int dns_get_maxsock(fd_set *rfds, int instance_id);
 void dns_free_allocations(int instance_id);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __DNS_H__ */

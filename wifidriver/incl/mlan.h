@@ -18,6 +18,11 @@ Change log:
 #ifndef _MLAN_H_
 #define _MLAN_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wifi_config_default.h>
 
 #ifdef __ZEPHYR__
@@ -53,5 +58,10 @@ Change log:
 #include "mlan_decl.h"
 #include "mlan_ioctl.h"
 #include "mlan_ieee.h"
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !_MLAN_H_ */

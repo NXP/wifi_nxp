@@ -12,6 +12,11 @@
 #ifndef __WIFI_EVENTS_H__
 #define __WIFI_EVENTS_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <osa.h>
 
 /** Wi-Fi events */
@@ -251,5 +256,10 @@ enum wifi_wakeup_event_t
     /** Wakeup on receiving a management frame  */
     WIFI_WAKE_ON_MGMT_FRAME = 1 << 6,
 };
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*__WIFI_EVENTS_H__*/

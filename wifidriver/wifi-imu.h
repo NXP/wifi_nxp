@@ -11,6 +11,11 @@
 #ifndef __WIFI_IMU_H__
 #define __WIFI_IMU_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wifi.h>
 #include "fsl_power.h"
 
@@ -145,4 +150,9 @@ int imu_create_task_lock(void);
 void imu_delete_task_lock(void);
 int imu_get_task_lock(void);
 int imu_put_task_lock(void);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __WIFI_SDIO_H__ */

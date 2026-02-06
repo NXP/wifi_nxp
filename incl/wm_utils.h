@@ -14,6 +14,11 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wifi_config_default.h>
 #include <wmtypes.h>
 #include <stddef.h>
@@ -423,4 +428,9 @@ void fill_sequential_pattern(void *buffer, int size, uint8_t first_byte);
  * @return 'false' If verification fails.
  */
 bool verify_sequential_pattern(const void *buffer, int size, uint8_t first_byte);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

@@ -15,7 +15,20 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *****************************************************************************/
-
+#ifndef WFA_DUT_AGENT
 #define WFA_DUT_AGENT
 
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int wfa_dut_cli_init(void);
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* WFA_DUT_AGENT*/

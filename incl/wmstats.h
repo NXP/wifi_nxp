@@ -12,6 +12,11 @@
 #ifndef _WMSTATS_H_
 #define _WMSTATS_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum
 {
     CONN_STATS,
@@ -101,5 +106,10 @@ extern struct wm_stats g_wm_stats;
 /** Note: This should be in sync with definition in firmware file
  * tcpip_custom.h.
  * */
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ! _WMSTATS_H_ */

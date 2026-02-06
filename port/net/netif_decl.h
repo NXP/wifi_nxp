@@ -7,6 +7,11 @@
 #ifndef _NETIF_DECL_H_
 #define _NETIF_DECL_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <mlan_api.h>
 #include <wm_net.h>
 #include <wmlog.h>
@@ -136,6 +141,11 @@ struct ethernetif
     /* Add whatever per-interface state that is needed here. */
 };
 
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* _NETIF_DECL_H_ */

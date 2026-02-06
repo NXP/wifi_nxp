@@ -17,6 +17,11 @@ Change log:
 #ifndef _MLAN_UAP_H_
 #define _MLAN_UAP_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Convert TxPD to little endian format from CPU format */
 #define uap_endian_convert_TxPD(x) \
     do                             \
@@ -121,5 +126,10 @@ static inline mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pi
     return MLAN_STATUS_FAILURE;
 }
 #endif /* UAP_SUPPORT */
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _MLAN_UAP_H_ */

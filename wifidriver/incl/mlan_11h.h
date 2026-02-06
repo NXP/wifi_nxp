@@ -17,6 +17,11 @@ Change Log:
 #ifndef _MLAN_11H_
 #define _MLAN_11H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** 11H OID bitmasks */
 #define ENABLE_11H_MASK       MBIT(0)
 #define MASTER_RADAR_DET_MASK MBIT(1)
@@ -45,6 +50,11 @@ extern t_bool wlan_11h_radar_detect_required(mlan_private *priv, t_u8 channel);
 #if CONFIG_ECSA
 /** Get non-DFS channel */
 extern mlan_status wlan_get_non_dfs_chan(mlan_private *priv, t_u8 *chan);
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /*_MLAN_11H_ */

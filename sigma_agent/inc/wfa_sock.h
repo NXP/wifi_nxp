@@ -19,6 +19,11 @@
 #ifndef _WFA_SOCK_H
 #define _WFA_SOCK_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h> /* for printf() and fprintf() */
 
 #ifdef _WINDOWS
@@ -66,5 +71,10 @@ extern struct timeval *wfaSetTimer(int, int, struct timeval *);
 extern int wfaSetSockMcastRecvOpt(int, char *);
 extern int wfaSetSockMcastSendOpt(int);
 extern int wfaSetProcPriority(int);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _WFA_SOCK_H */

@@ -10,6 +10,11 @@
 
 #ifndef _FWDNLD_SDIO_H_
 #define _FWDNLD_SDIO_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include "fwdnld_intf_abs.h"
 
@@ -28,5 +33,10 @@ typedef struct
 #define FIRMWARE_READY 0xfedcU
 
 extern fwdnld_intf_t *sdio_init_interface(void *settings);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*_FWDNLD_SDIO_H_*/

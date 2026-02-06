@@ -19,6 +19,11 @@
 #ifndef WFA_AGTCTRL_H
 #define WFA_AGTCTRL_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef int (*commandStrProcFuncPtr)(char *, BYTE *, int *);
 
 typedef struct type_name_str_table
@@ -31,5 +36,10 @@ typedef struct type_name_str_table
 extern int buildCommandProcessTable(void);
 
 typedef int (*dutCommandRespFuncPtr)(BYTE *cmdBuf);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

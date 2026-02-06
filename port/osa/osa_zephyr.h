@@ -8,6 +8,11 @@
 #ifndef _OSA_ZEPHYR_H_
 #define _OSA_ZEPHYR_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <zephyr/kernel.h>
 
 //#define CONFIG_MEM_POOLS 1
@@ -69,5 +74,10 @@ static inline bool OSA_IsISR()
  */
 
 #define OSA_GetTaskList(__buff__)
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ! _OSA_ZEPHYR_H_ */

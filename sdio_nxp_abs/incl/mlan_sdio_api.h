@@ -35,6 +35,11 @@
 #ifndef _MLAN_SDIO_API_H_
 #define _MLAN_SDIO_API_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wmlog.h>
 
 #define sdio_e(...) wmlog_e("sdio", ##__VA_ARGS__)
@@ -151,5 +156,10 @@ void sdio_drv_deinit(void);
  *  \return SDIO enume status, return true if SDIO enumeration completed, false otherwise
  */
 bool sdio_get_enume_status(void);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !_MDEV_SDIO_API_H_ */

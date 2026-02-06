@@ -8,6 +8,11 @@
 #ifndef __WLAN_BT_FW_H__
 #define __WLAN_BT_FW_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <osa.h>
 
 #if defined(SD8978)
@@ -43,6 +48,11 @@ extern const unsigned char *wlan_fw_bin;
 extern const unsigned int wlan_fw_bin_len;
 #else
 #error "Please define Wi-Fi Module"
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __WLAN_BT_FW_H__ */

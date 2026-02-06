@@ -17,6 +17,11 @@ Change log:
 #define _TYPE_DECL_H_
 
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Re-define generic data types for firmware downloader */
 /** Signed char (1-byte) */
 typedef char t_s8;
@@ -57,5 +62,10 @@ typedef t_s32 t_sval;
 #define MTRUE (1)
 /** MLAN FALSE */
 #define MFALSE (0)
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !_TYPE_DECL_H_ */

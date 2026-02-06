@@ -19,6 +19,11 @@
 #ifndef WFA_DEBUG_H
 #define WFA_DEBUG_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef __ZEPHYR__
 #include "fsl_debug_console.h"
 #endif
@@ -89,5 +94,10 @@ static inline void print_callback(int level, const char *fmt, ...)
 #define DPRINT_WARNING     \
     if (WFA_DEBUG_WARNING) \
     PRINTM
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

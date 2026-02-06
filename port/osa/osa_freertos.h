@@ -8,6 +8,11 @@
 #ifndef _OSA_FREERTOS_H_
 #define _OSA_FREERTOS_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
@@ -168,5 +173,10 @@ typedef struct osa_queue_pool
  * using the function os_queue_create().
  */
 #define OSA_QueuePoolDefine(poolname, poolsize) osa_queue_pool_t poolname = {poolsize};
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ! _OSA_FREERTOS_H_ */

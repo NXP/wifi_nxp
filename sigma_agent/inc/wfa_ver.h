@@ -19,6 +19,11 @@
 #ifndef WFA_VER_H
 #define WFA_VER_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define WFA_VERNAM_LEN 128
 #define WFA_SYSTEM_VER "NXP_WTS_AGENT_R-2.0-RTOS"
 
@@ -27,5 +32,10 @@
  * B: build time and date
  */
 #define M_VERSION "NXP_WTS_AGENT_R-2.0-RTOS(" __TIME__ " " __DATE__ ")"
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

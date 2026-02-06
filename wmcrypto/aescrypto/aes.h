@@ -9,6 +9,11 @@
 #ifndef AES_H
 #define AES_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <type_def.h>
 #ifndef AES_MACROS_DEFINED
 enum
@@ -25,5 +30,10 @@ enum
 #define os_memset   (void)memset
 #define os_memcmp   memcmp
 #define TEST_FAIL() 0
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* AES_H */

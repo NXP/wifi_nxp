@@ -11,6 +11,11 @@
 #ifndef WM_MBEDTLS_NET_H
 #define WM_MBEDTLS_NET_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MBEDTLS_ERR_NET_SOCKET_FAILED    -0x0042
 #define MBEDTLS_ERR_NET_CONNECT_FAILED   -0x0044
 #define MBEDTLS_ERR_NET_BIND_FAILED      -0x0046
@@ -34,5 +39,10 @@
  * \param sock_fd	socket file descriptor
  */
 void wm_mbedtls_set_fd(mbedtls_ssl_context *ssl, int sock_fd);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* WM_MBEDTLS_NET_H */

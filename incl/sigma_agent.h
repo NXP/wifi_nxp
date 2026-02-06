@@ -11,6 +11,11 @@
 #ifndef _SIGMA_AGENT_H_
 #define _SIGMA_AGENT_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wmlog.h>
 
 #define sigma_e(...) wmlog_e("iperf", ##__VA_ARGS__)
@@ -33,5 +38,10 @@ int sigma_agent_init(void);
  *  \return -WM_FAIL otherwise
  */
 int sigma_agent_deinit(void);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*_SIGMA_AGENT_H_ */

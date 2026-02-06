@@ -12,6 +12,11 @@
 #ifndef _LIB_CSI_EVENT_H_
 #define _LIB_CSI_EVENT_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include    <ctype.h>
 #include    <stdlib.h>
 #include    "wls_structure_defs.h"
@@ -54,5 +59,10 @@ typedef struct wls_csi_cfg
 	 /**CSI filter parameters*/
 	 csi_filter_param_t gcsi_filter_param;
  } wls_csi_cfg_t, ami_cfg_t;
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _LIB_CSI_EVENT_H */

@@ -13,6 +13,11 @@
 #ifndef _MLAN_11AX_H_
 #define _MLAN_11AX_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if CONFIG_11AX
 /** device support 2.4G 40MHZ */
 #define AX_2G_40MHZ_SUPPORT MBIT(1)
@@ -51,4 +56,9 @@ mlan_status wlan_ret_11ax_cmd(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, ml
 mlan_status wlan_cmd_twt_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf);
 #endif /* CONFIG_11AX_TWT */
 #endif /* CONFIG_11AX */
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _MLAN_11AX_H_ */

@@ -10,6 +10,11 @@
 #ifndef _FIMRWARE_DNLD_H_
 #define _FIMRWARE_DNLD_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <osa.h>
 
 #define fwdnld_io_e(...) wmlog_e("wifi_io", ##__VA_ARGS__)
@@ -22,5 +27,10 @@
 #endif /* ! CONFIG_DWDNLD_IO_DEBUG */
 
 int32_t firmware_download(const uint8_t *fw_start_addr, const size_t size, void *intf, uint8_t fw_reload);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //_FIMRWARE_DNLD_H_

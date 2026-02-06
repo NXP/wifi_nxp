@@ -16,6 +16,11 @@
 #ifndef WLS_PARAM_DEFINES_H
 #define WLS_PARAM_DEFINES_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _BIN 0
 #define _TXT 1
 #define _TTL 2
@@ -182,5 +187,10 @@
 #define SC5_HE40_PILOTS  8
 #define SC5_HE20_PILOTS  4
 #define SC5_HT20_PILOTS  27
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

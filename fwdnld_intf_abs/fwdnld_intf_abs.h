@@ -11,6 +11,11 @@
 #ifndef _FWDNLD_INTF_ABS_H_
 #define _FWDNLD_INTF_ABS_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wifi_config_default.h>
 
 #include <stddef.h>
@@ -97,5 +102,10 @@ typedef struct fwdnldintf
  * \return In case init fails, NULL is returned.
  */
 fwdnld_intf_t *fwdnld_intf_init(fwdnld_intf_type_t intf_type, void *intf_specific);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*_FWDNLD_INTF_ABS_H_*/

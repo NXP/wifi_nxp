@@ -18,6 +18,11 @@
 #ifndef _WM_NET_H_
 #define _WM_NET_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <string.h>
 
 #include <osa.h>
@@ -1042,6 +1047,11 @@ int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt);
 void nxp_wifi_internal_register_rx_cb(int (*rx_cb_fn)(struct net_if *iface, struct net_pkt *pkt));
 const struct netif *net_if_get_binding(const char *ifname);
 const struct freertos_wpa_supp_dev_ops *net_if_get_dev_config(struct netif *iface);
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* _WM_NET_H_ */

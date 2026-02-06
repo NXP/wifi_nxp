@@ -17,6 +17,11 @@ Change log:
 #ifndef _MLAN_WMM_H_
 #define _MLAN_WMM_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  *  @brief This function gets the TID
  *
@@ -286,6 +291,11 @@ void wlan_put_bypass_lock(uint8_t interface);
 void wlan_add_buf_bypass_txq(const uint8_t *buffer, const uint8_t interface);
 t_u8 wlan_bypass_txq_empty(uint8_t interface);
 void wlan_cleanup_bypass_txq(uint8_t interface);
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* !_MLAN_WMM_H_ */

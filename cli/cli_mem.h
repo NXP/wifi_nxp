@@ -10,6 +10,11 @@
 
 #ifndef _CLI_MEM_H_
 #define _CLI_MEM_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** The original INBUF_SIZE is 256.
  *  When verifing maximum password length for WPA3,
  *  it will cause an "input buffer overflow" error, so it is expanded to 512.
@@ -42,4 +47,9 @@ int cli_mem_init(void);
  * itself. Applications need not call this function.
  */
 int cli_mem_cleanup(void);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _CLI_MEM_H_ */

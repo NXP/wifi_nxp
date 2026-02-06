@@ -20,6 +20,14 @@
  * which used mem* operations. ENSURE that this is the last file included
  * in the include header list.
  */
+#ifndef _MLAN_REMAP_MEM_OPEARTIONS_H
+#define _MLAN_REMAP_MEM_OPEARTIONS_H
+
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifdef __memset
 #undef __memset
@@ -44,3 +52,11 @@
 #endif
 /** Memcmp routine */
 #define __memcmp(adapter, s1, s2, len) memcmp((const void *)(s1), (const void *)(s2), (size_t)(len))
+
+
+
+#ifdef __cplusplus
+}
+#endif
+
+ #endif /*_MLAN_REMAP-MEM_OPEARTIONS_H */

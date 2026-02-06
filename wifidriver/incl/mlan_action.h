@@ -19,9 +19,19 @@ Change log:
 #ifndef _MLAN_ACTION_H_
 #define _MLAN_ACTION_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mlan_fw.h"
 
 /** process rx action frame */
 mlan_status wlan_process_mgmt_action(t_u8 *payload, t_u32 payload_len, RxPD *rxpd);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !_MLAN_ACTION_H_ */

@@ -11,6 +11,11 @@
 #ifndef __WMLOG_H__
 #define __WMLOG_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <osa.h>
 
 #ifdef __ZEPHYR__
@@ -46,5 +51,10 @@ ne */
 
 /* function exit */
 #define wmlog_exit(_fmt_, ...) (void)PRINTF("< %s" _fmt_ "\n\r", __func__, ##__VA_ARGS__)
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WMLOG_H__ */

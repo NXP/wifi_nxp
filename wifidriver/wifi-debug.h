@@ -11,6 +11,11 @@
 #ifndef __WIFI_DEBUG_H__
 #define __WIFI_DEBUG_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <mlan_api.h>
 #include <wmlog.h>
 
@@ -102,5 +107,10 @@ void dump_mac_addr(const char *msg, unsigned char *addr);
 #endif /* DUMP_PACKET_MAC */
 
 
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WIFI_DEBUG_H__ */

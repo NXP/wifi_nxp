@@ -24,6 +24,11 @@
 #ifndef _WFA_TYPES_H
 #define _WFA_TYPES_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define WFA_IF_NAME_LEN      16
 #define WFA_VERSION_LEN      32
 #define WFA_SSID_NAME_LEN    33
@@ -107,5 +112,10 @@ enum wfa_state
     WFA_F_DISABLED   = 4, /* forced disabled */
     WFA_INVALID_BOOL = 0xFF
 };
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

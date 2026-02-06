@@ -11,6 +11,11 @@
 #ifndef __WIFI_SDIO_H__
 #define __WIFI_SDIO_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wifi.h>
 #include "firmware_dnld.h"
 
@@ -169,5 +174,10 @@ extern void wifi_dump_firmware_info();
 extern void wifi_dump_firmware_info_via_event();
 extern void wifi_sdio_reg_dbg();
 #endif /* CONFIG_WIFI_FW_DEBUG */
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WIFI_SDIO_H__ */

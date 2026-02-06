@@ -11,6 +11,11 @@
 #ifndef WM_ERRNO_H
 #define WM_ERRNO_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wifi_config_default.h>
 
 #if defined(FSL_RTOS_THREADX)
@@ -139,5 +144,10 @@
     40 /* A finer version for WM_E_INVAL, where it clearly specifies that input is much smaller than minimum \
           requirement */
 #define WM_E_OUTBIG 41 /* Data output exceeds the size provided */
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif                 /* ! WM_ERRNO_H */

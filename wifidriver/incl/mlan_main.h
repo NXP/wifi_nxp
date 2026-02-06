@@ -17,6 +17,11 @@ Change log:
 
 #ifndef _MLAN_MAIN_H_
 #define _MLAN_MAIN_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef RW610
 #include "mlan_main_defs.h"
 #endif
@@ -3398,4 +3403,9 @@ static inline t_u16 wifi_get_cmd_seq_num(mlan_private *pmpriv)
     pmpriv->adapter->seq_num++;
     return HostCmd_SET_SEQ_NO_BSS_INFO(pmpriv->adapter->seq_num, pmpriv->bss_num, pmpriv->bss_type);
 }
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* !_MLAN_MAIN_H_ */

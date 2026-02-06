@@ -11,6 +11,11 @@
 #ifndef _IPERF_H_
 #define _IPERF_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wmlog.h>
 
 #define iperf_e(...) wmlog_e("iperf", ##__VA_ARGS__)
@@ -35,4 +40,9 @@ int iperf_cli_init();
  */
 
 int iperf_cli_deinit();
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /*_IPERF_H_ */

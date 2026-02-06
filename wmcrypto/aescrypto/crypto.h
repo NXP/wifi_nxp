@@ -28,6 +28,11 @@
 #ifndef CRYPTO_H
 #define CRYPTO_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wmlog.h>
 
 #define cypto_e(...) wmlog_e("cypto", ##__VA_ARGS__)
@@ -418,5 +423,10 @@ int crypto_mod_exp(const u8 *base,
                    size_t modulus_len,
                    u8 *result,
                    size_t *result_len);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CRYPTO_H */

@@ -9,6 +9,11 @@
 #ifndef AES_SIV_H
 #define AES_SIV_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int aes_siv_encrypt(const u8 *key,
                     size_t key_len,
                     const u8 *pw,
@@ -25,5 +30,10 @@ int aes_siv_decrypt(const u8 *key,
                     const u8 *addr[],
                     const size_t *len,
                     u8 *out);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* AES_SIV_H */

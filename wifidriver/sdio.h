@@ -10,6 +10,11 @@
 #ifndef _SDIO_H_
 #define _SDIO_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wmerrno.h>
 #include "type_decls.h"
 #include <osa.h>
@@ -67,5 +72,10 @@ bool wlan_card_status(t_u8 bits);
 t_u16 wlan_card_read_f1_base_regs(void);
 uint8_t *wifi_get_sdio_outbuf(uint32_t *outbuf_len);
 unsigned int wifi_get_sdio_ioport();
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //_SDIO_H_

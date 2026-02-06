@@ -15,6 +15,11 @@
 #ifndef WLS_API_H
 #define WLS_API_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "wls_structure_defs.h"
 #include "event.h"
 #ifdef DFW_CSI_PROC
@@ -27,4 +32,9 @@ int wls_calculate_toa(unsigned int *pktInfoPtr, int bufferSpacing, unsigned int 
 
 void wls_intialize_reference(unsigned int *headerBuffer, unsigned int *pktInfoPtr, csi_filter_param_t *csi_filter_param_ptr, int bufferSpacing, unsigned int *fftInBuffer, float *fftRefBuffer);
 float wls_update_cross_corr_ami_calc(unsigned int *headerBuffer, unsigned int *pktInfoPtr, csi_filter_param_t *csi_filter_param_ptr, int bufferSpacing, unsigned int *fftInBuffer, float *fftRefBuffer, unsigned int *tempBuffer);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

@@ -19,6 +19,16 @@
 #ifndef WFA_AGT_H
 #define WFA_AGT_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef int (*xcCommandFuncPtr)(int len, BYTE *parms, int *respLen, BYTE *respBuf);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -13,6 +13,11 @@
 #ifndef WM_MBEDTLS_HELPER_H
 #define WM_MBEDTLS_HELPER_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <mbedtls/ssl.h>
 #include <mbedtls/pk.h>
 #include <wm_mbedtls_debug.h>
@@ -365,5 +370,10 @@ int wm_mbedtls_ssl_write(mbedtls_ssl_context *ssl, const unsigned char *buf, siz
  * @return Non-zero	Failure
  */
 int wm_mbedtls_ssl_connect(mbedtls_ssl_context *ssl);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* WM_MBEDTLS_HELPER_H */

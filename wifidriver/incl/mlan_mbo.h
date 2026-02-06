@@ -18,6 +18,11 @@ Change log:
 #ifndef _MLAN_MBO_H
 #define _MLAN_MBO_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if CONFIG_DRIVER_MBO
 /** MBO attributes ID */
 enum MBO_ATTRIB_ID
@@ -42,4 +47,9 @@ t_u8 *wlan_add_mbo_prefer_ch(t_u8 *attrib, t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8
 void wlan_send_mgmt_wnm_notification(
     t_u8 *src_addr, t_u8 *dst_addr, t_u8 *target_bssid, t_u8 *tag_nr, t_u8 tag_len, bool protect);
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

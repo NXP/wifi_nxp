@@ -19,6 +19,11 @@ Change log:
 #ifndef _MLAN_11V_H_
 #define _MLAN_11V_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if CONFIG_11V
 
 #define WLAN_WNM_MAX_NEIGHBOR_REPORT               6
@@ -65,5 +70,10 @@ void wlan_send_mgmt_wnm_btm_resp(t_u8 dialog_token,
                                  t_u8 tag_len,
                                  bool protect);
 #endif /* CONFIG_11V */
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !_MLAN_11V_H_ */

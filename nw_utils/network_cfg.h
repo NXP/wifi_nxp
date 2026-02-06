@@ -8,6 +8,11 @@
 #ifndef _NETWORK_CFG_H_
 #define _NETWORK_CFG_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -33,6 +38,11 @@
 #define GW_ADDR "192.168.250.10"
 #endif
 
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* _NETWORK_CFG_H_ */

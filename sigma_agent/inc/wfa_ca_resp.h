@@ -15,6 +15,11 @@
 #ifndef WFA_CA_RESP_H
 #define WFA_CA_RESP_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef int (*dutCommandRespFuncPtr)(BYTE *cmdBuf);
 
 int caCmdNotDefinedYet(BYTE *cmdBuf);
@@ -107,5 +112,10 @@ int wfaStaHS2AssocResp(BYTE *cmdBuf);
 int wfaStaPolicyUpdateResp(BYTE *cmdBuf);
 int wfaStaExecActionResp(BYTE *cmdBuf);
 int wfaStaScanResp(BYTE *cmdBuf);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

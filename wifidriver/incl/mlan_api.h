@@ -10,6 +10,11 @@
 
 #ifndef __MLAN_API_H__
 #define __MLAN_API_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <string.h>
 #include <wmtypes.h>
 #include <wlan.h>
@@ -697,5 +702,10 @@ void check_for_wps_ie(const uint8_t *poui,
                       void *element_data,
                       unsigned element_len);
 #endif /* CONFIG_WPA_SUPP_WPS */
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MLAN_API_H__ */

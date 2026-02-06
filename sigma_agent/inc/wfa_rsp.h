@@ -19,6 +19,11 @@
 #ifndef WFA_RSP_H
 #define WFA_RSP_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "wfa_ver.h"
 
 #ifdef WFA_WMM_VOICE
@@ -420,6 +425,11 @@ typedef struct dut_cmd_response
        int connected;
    } cmdru;
 }dutCmdResponse_t;
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

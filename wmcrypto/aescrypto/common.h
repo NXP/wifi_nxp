@@ -9,6 +9,11 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // #include "os.h"
 
 #if defined(__linux__) || defined(__GLIBC__)
@@ -575,5 +580,10 @@ void *__hide_aliasing_typecast(void *foo);
     {                             \
     } while (0)
 #endif /* CONFIG_VALGRIND */
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* COMMON_H */

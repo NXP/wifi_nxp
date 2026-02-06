@@ -22,6 +22,11 @@ Change Log:
 #ifndef _MLAN_MEAS_H_
 #define _MLAN_MEAS_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mlan_fw.h"
 
 /* Send a given measurement request to the firmware, report back the result */
@@ -36,5 +41,10 @@ extern int wlan_meas_cmd_process(mlan_private *pmpriv, HostCmd_DS_COMMAND *pcmd_
 
 /* Handle a given measurement command response from the firmware */
 extern int wlan_meas_cmdresp_process(mlan_private *pmpriv, const HostCmd_DS_COMMAND *resp);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _MLAN_MEAS_H_ */

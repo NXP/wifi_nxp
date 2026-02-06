@@ -14,6 +14,11 @@ Change log:
 #ifndef _MLAN_MAIN_DEFS_H_
 #define _MLAN_MAIN_DEFS_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(SD8801)
 /** Maximum numbfer of registers to read for multiple port */
 #define MAX_MP_REGS 64
@@ -36,6 +41,11 @@ Change log:
 #endif
 /** Multi port aggregation max packet limit */
 #define SDIO_MP_AGGR_DEF_PKT_LIMIT_MAX (16U)
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif //_MLAN_MAIN_DEFS_H_

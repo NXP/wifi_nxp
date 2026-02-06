@@ -8,6 +8,11 @@
 #ifndef _OSA_THREADX_H_
 #define _OSA_THREADX_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "tx_port.h"
 #include "tx_user.h"
 #include "tx_api.h"
@@ -70,5 +75,10 @@ typedef enum osa_timer_activation
  */
 
 #define OSA_GetTaskList(__buff__)
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ! _OSA_THREADX_H_ */

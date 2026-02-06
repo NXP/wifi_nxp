@@ -40,6 +40,11 @@
 #ifndef SLIST_H_
 #define SLIST_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  *  The singly linked list structure.
  *
@@ -170,5 +175,10 @@ void SlRemoveNode(SlNode_t *Head, SlNode_t *Node);
  *                  this macro.
  */
 #define SlForEachNode(_head, _node) for ((_node) = (_head)->Next; (_node) != NULL; (_node) = (_node)->Next)
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

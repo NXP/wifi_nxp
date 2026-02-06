@@ -19,6 +19,11 @@
 #ifndef __WFA_PORTALL_H__
 #define __WFA_PORTALL_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef __ZEPHYR__
 #include <fsl_debug_console.h>
 #endif
@@ -173,5 +178,10 @@ typedef struct _memblock
     int size; /* number of blocks 512 byte/block */
     void *mem;
 } wfaMemBlk_t;
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WFA_PORTALL_H__ */

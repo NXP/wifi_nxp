@@ -14,6 +14,11 @@
 
 #ifndef __CLI_H__
 #define __CLI_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wmtypes.h>
 
 #ifdef RW610
@@ -170,4 +175,9 @@ int cli_uart_deinit();
 void cli_uart_notify();
 #endif
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __CLI_H__ */

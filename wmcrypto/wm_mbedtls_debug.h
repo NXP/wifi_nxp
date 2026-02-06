@@ -11,6 +11,11 @@
 #ifndef WM_MBEDTLS_DEBUG_H
 #define WM_MBEDTLS_DEBUG_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <wmlog.h>
 
 #define wm_mbedtls_e(...) wmlog_e("wm_mbedtls", ##__VA_ARGS__)
@@ -21,5 +26,10 @@
 #else
 #define wm_mbedtls_d(...)
 #endif /* !CONFIG_WM_MBEDTLS_DEBUG */
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* WM_MBEDTLS_DEBUG_H */

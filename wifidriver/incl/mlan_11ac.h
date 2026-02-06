@@ -13,6 +13,11 @@
 #ifndef _MLAN_11AC_H_
 #define _MLAN_11AC_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mlan_11n_aggr.h"
 #include "mlan_11n_rxreorder.h"
 #include "mlan_wmm.h"
@@ -45,5 +50,10 @@ mlan_status wlan_cmd_11ac_cfg(IN pmlan_private pmpriv,
 mlan_status wlan_ret_11ac_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *resp, IN mlan_ioctl_req *pioctl_buf);
 #endif
 mlan_status wlan_11ac_ioctl_vhtcfg(IN mlan_private *pmpriv, IN t_u8 action, IN mlan_ds_11ac_vht_cfg *vht_cfg);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _MLAN_11AC_H_ */

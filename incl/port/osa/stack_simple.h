@@ -44,6 +44,11 @@
 #ifndef STACK_H_
 #define STACK_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "slist.h"
 
 /**
@@ -96,5 +101,10 @@ SlNode_t *PopOffStack(Stack_t *Stack);
  *  @return True if the stack is empty, false otherwise.
  */
 #define IsStackEmpty(_stack) ((_stack)->Count == 0)
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

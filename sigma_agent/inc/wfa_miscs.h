@@ -19,6 +19,11 @@
 #ifndef _WFA_MISCS_H_
 #define _WFA_MISCS_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int isString(char *);
 extern int isNumber(char *);
 extern int isIpV4Addr(char *);
@@ -28,5 +33,10 @@ extern int isIpV4Addr(char *);
 extern int wfa_itime_diff(struct timeval *t1, struct timeval *t2);
 // extern inline void int2BuffBigEndian(int val, char *buf);
 // extern inline int bigEndianBuff2Int(char *buff);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

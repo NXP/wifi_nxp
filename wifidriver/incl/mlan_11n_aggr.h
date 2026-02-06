@@ -17,6 +17,11 @@ Change log:
 #ifndef _MLAN_11N_AGGR_H_
 #define _MLAN_11N_AGGR_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Aggregate 11N packets */
 mlan_status wlan_11n_deaggregate_pkt(mlan_private *priv, pmlan_buffer pmbuf);
 /** Deaggregate 11N packets */
@@ -25,4 +30,9 @@ int wlan_11n_aggregate_pkt(mlan_private *priv, raListTbl *ptr, int headroom, int
 /** Form A-MSDU packets */
 int wlan_11n_form_amsdu_pkt(t_u8 *amsdu_buf, t_u8 *data, int pkt_len, int *pad);
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* !_MLAN_11N_AGGR_H_ */

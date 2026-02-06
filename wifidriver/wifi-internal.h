@@ -11,6 +11,11 @@
 #ifndef __WIFI_INTERNAL_H__
 #define __WIFI_INTERNAL_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <limits.h>
 
 #if CONFIG_WPA_SUPP
@@ -482,4 +487,9 @@ bool wifi_reset_in_progress(void);
  */
 void wifi_reset_set_state(bool enable);
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __WIFI_INTERNAL_H__ */
