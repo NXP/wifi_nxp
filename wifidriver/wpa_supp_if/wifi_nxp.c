@@ -154,6 +154,8 @@ static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
     .dfs_cac_started_callbk_fn     = wifi_nxp_wpa_supp_event_proc_dfs_cac_started,
     .dfs_cac_finished_callbk_fn    = wifi_nxp_wpa_supp_event_proc_dfs_cac_finished,
     .is_supp_scan_in_progress_callbk_fn = wifi_nxp_wpa_is_supp_scan_in_progress,
+    .sched_scan_done_callbk_fn          = wifi_nxp_wpa_supp_event_bg_scan_report,
+    .sched_scan_stopped_callbk_fn       = wifi_nxp_wpa_supp_event_bg_scan_stopped,
 };
 
 #ifndef __ZEPHYR__
