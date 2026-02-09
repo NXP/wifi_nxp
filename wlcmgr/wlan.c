@@ -5324,6 +5324,7 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
             /*Do nothing*/
         }
 #endif
+        net_configure_dns((struct net_ip_config *)&network->ip, network->role);
         (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
         CONNECTION_EVENT(WLAN_REASON_ADDRESS_SUCCESS, NULL);
         wlan.sta_state      = CM_STA_CONNECTED;

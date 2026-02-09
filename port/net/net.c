@@ -977,12 +977,12 @@ void net_configure_dns(struct net_ip_config *ip, unsigned int role)
     else
     {
         if (0 != ip->ipv4.dns1)
-        {		
+        {
             tmp.addr = ip->ipv4.dns1;
             dns_setserver(0, (ip_addr_t *)&tmp);
         }
         if (0 != ip->ipv4.dns2)
-        {		
+        {
             tmp.addr = ip->ipv4.dns2;
             dns_setserver(1, (ip_addr_t *)&tmp);
         }
