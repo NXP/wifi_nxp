@@ -1325,6 +1325,7 @@ int wifi_nxp_wpa_supp_authenticate(void *if_priv, struct wpa_driver_auth_params 
         supp_d("%s:Authentication request sent successfully", __func__);
         ret = 0;
     }
+    wifi_if_ctx_rtos->remain_on_channel = mlan_adap->remain_on_channel;
 out:
     return ret;
 }
