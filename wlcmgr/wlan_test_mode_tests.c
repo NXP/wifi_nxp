@@ -669,7 +669,7 @@ static void dump_wlan_set_tx_power_usage(void)
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-set-rf-tx-power <tx_power> <modulation> <path_id> \r\n");
 #ifdef RW610
-    (void)PRINTF("Power       (0 to 20 dBm)\r\n");
+    (void)PRINTF("Power       (-10 to 22 dBm)\r\n");
 #else
     (void)PRINTF("Power       (0 to 24 dBm)\r\n");
 #endif
@@ -707,7 +707,11 @@ static void PowerLevelToDUT11Bits(int Pwr, uint32_t *PowerLevel)
 static void wlan_rf_tx_power_set(int argc, char *argv[])
 {
     int ret;
+#ifdef RW610
+    int power;
+#else
     uint32_t power;
+#endif
     uint8_t mod;
     uint8_t path_id;
 #if !defined(SD8978) && !defined(SD8987) && !defined(SD9177) && !defined(SD8801) && !defined(IW610)
@@ -731,7 +735,8 @@ static void wlan_rf_tx_power_set(int argc, char *argv[])
     path_id = strtol(argv[3], NULL, 10);
 
 #ifdef RW610
-    if (power > 20U)
+    /* For RW610, transmit output power level control range is -10 to 22dBm as per the datasheet. */
+    if (power > 22 || power < -10)
 #else
     if (power > 24U)
 #endif
