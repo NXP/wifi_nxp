@@ -1658,3 +1658,50 @@ void wlan_11n_delete_bastream(mlan_private *priv, t_u8 *del_ba)
     LEAVE();
 }
 
+/**
+ *  @brief This function check if 11N is allowed in bandcfg
+ *
+ *  @param pmpriv	A pointer to mlan_private structure
+ *  @param bss_band 	bss band
+ *
+ *  @return 0--not allowed, other value allowed
+ */
+t_u8 wlan_11n_bandconfig_allowed(mlan_private *pmpriv, t_u16 bss_band)
+{
+    if (pmpriv->bss_mode == MLAN_BSS_MODE_IBSS)
+    {
+        if (bss_band & BAND_G)
+        {
+            return (pmpriv->adapter->adhoc_start_band & BAND_GN);
+        }
+#if CONFIG_5GHz_SUPPORT
+        else if (bss_band & BAND_A)
+        {
+            return (pmpriv->adapter->adhoc_start_band & BAND_AN);
+        }
+#endif
+        else
+        {
+            ; //nothing to do.
+        }
+    }
+    else
+    {
+        if ((bss_band & BAND_G) != 0U)
+        {
+            return (pmpriv->config_bands & BAND_GN);
+        }
+#if CONFIG_5GHz_SUPPORT
+        else if ((bss_band & BAND_A) != 0U)
+        {
+            return (pmpriv->config_bands & BAND_AN);
+        }
+#endif
+        else
+        {
+            //nothing to do.
+        }
+    }
+    return 0;
+}
+

@@ -2414,14 +2414,13 @@ static int do_start(struct wlan_network *network)
             t_u8 bandwidth = wifi_uap_get_bandwidth();
             if (bandwidth == BANDWIDTH_80MHZ)
             {
-#if CONFIG_WIFI_CAPA
-                if ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 0) ||
-                ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 1) &&
-                (!(network->wlan_capa & (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC)))))
-#else
-                if (wlan.networks[wlan.cur_uap_network_idx].acs_band == 0)
+              if ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 0) ||
+                     ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 1) &&
+                       (!(mlan_adap->priv[1]->config_bands & (BAND_AAC
+#if CONFIG_11AX
+                       | BAND_AAX
 #endif
-
+                       )))))
                 {
                     wlcm_e("uAP configured bandwidth not allowed");
                     CONNECTION_EVENT(WLAN_REASON_UAP_START_FAILED, NULL);
@@ -2468,13 +2467,13 @@ static int do_start(struct wlan_network *network)
             t_u8 bandwidth = wifi_uap_get_bandwidth();
             if (bandwidth == BANDWIDTH_80MHZ)
             {
-#if CONFIG_WIFI_CAPA
                 if ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 0) ||
-                 ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 1) &&
-                 (!(network->wlan_capa & (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC)))))
-#else
-                if (wlan.networks[wlan.cur_uap_network_idx].acs_band == 0)
+                     ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 1) &&
+                       (!(mlan_adap->priv[1]->config_bands & (BAND_AAC
+#if CONFIG_11AX
+                       | BAND_AAX
 #endif
+                       )))))
 
                 {
                     wlcm_e("uAP configured bandwidth not allowed");
@@ -2488,16 +2487,53 @@ static int do_start(struct wlan_network *network)
 
         wlcm_d("starting our own network");
 
-#if CONFIG_WIFI_CAPA
+        /* Only legacy mode is allowed for channel 14 */
         if (network->channel == 14)
         {
-            wifi_uap_config_wifi_capa(WIFI_SUPPORT_LEGACY);
-        }
-        else
-        {
-            wifi_uap_config_wifi_capa(network->wlan_capa);
-        }
+            wlan_bandcfg_t bandcfg = {0};
+            bandcfg.config_bands &=
+                ~(BAND_AN | BAND_GN
+#if CONFIG_11AC
+                | BAND_AAC | BAND_GAC
 #endif
+#if CONFIG_11AX
+                | BAND_AAX | BAND_GAX
+#endif
+                );
+            ret = wlan_set_bandcfg(&bandcfg);
+            if (ret != WM_SUCCESS)
+            {
+                wlcm_e("Unable to set bandcfg");
+                return -WM_FAIL;
+            }
+            network->dot11n = 0;
+#if CONFIG_11AC
+            network->dot11ac = 0;
+#endif
+#if CONFIG_11AX
+            network->dot11ax = 0;
+#endif
+        }
+        else if (network->channel > MAX_CHANNELS_BG)
+        {
+            network->dot11n = (mlan_adap->priv[1]->config_bands & BAND_AN) ? 1 : 0;
+#if CONFIG_11AC
+            network->dot11ac = (mlan_adap->priv[1]->config_bands & BAND_AAC) ? 1 : 0;
+#endif
+#if CONFIG_11AX
+            network->dot11ax = (mlan_adap->priv[1]->config_bands & BAND_AAX) ? 1 : 0;
+#endif
+        }
+        else if (network->channel < MAX_CHANNELS_BG)
+        {
+            network->dot11n = (mlan_adap->priv[1]->config_bands & BAND_GN) ? 1 : 0;
+#if CONFIG_11AC
+            network->dot11ac = (mlan_adap->priv[1]->config_bands & BAND_GAC) ? 1 : 0;
+#endif
+#if CONFIG_11AX
+            network->dot11ax = (mlan_adap->priv[1]->config_bands & BAND_GAX) ? 1 : 0;
+#endif
+        }
 
 #if CONFIG_WPA_SUPP
         if (network->bssid_specific == 0U)
@@ -2590,6 +2626,24 @@ static int do_stop(struct wlan_network *network)
 #if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
         }
 #endif
+        /* Reset bandcfg to default value */
+        if (network->channel == 14)
+        {
+            wlan_bandcfg_t bandcfg = {0};
+            ret = wlan_get_bandcfg(&bandcfg);
+            if (ret != WM_SUCCESS)
+            {
+                (void)PRINTF("Unable to get bandcfg\r\n");
+                return -WM_FAIL;
+            }
+            bandcfg.config_bands = bandcfg.fw_bands;
+            ret = wlan_set_bandcfg(&bandcfg);
+            if (ret != WM_SUCCESS)
+            {
+                (void)PRINTF("Unable to set bandcfg\r\n");
+                return -WM_FAIL;
+            }
+        }
     }
     return WM_SUCCESS;
 }
@@ -2654,6 +2708,8 @@ static void report_scan_results(void)
 
 static void update_network_params(struct wlan_network *network, const struct wifi_scan_result2 *res)
 {
+    t_u16 config_bands = mlan_adap->priv[0]->config_bands;
+
     if (!network->security_specific)
     {
         /* Wildcard: If wildcard security is specified, copy the highest
@@ -2715,13 +2771,34 @@ static void update_network_params(struct wlan_network *network, const struct wif
         }
     }
 
-    network->dot11n = res->phtcap_ie_present;
+    if (res->phtcap_ie_present == true && ISSUPP_11NENABLED(mlan_adap->fw_cap_info))
+    {
+        if (((network->channel > MAX_CHANNELS_BG) && (config_bands & BAND_AN)) ||
+             ((network->channel < MAX_CHANNELS_BG) && (config_bands & BAND_GN)))
+        {
+            network->dot11n = 1;
+        }
+    }
 
 #if CONFIG_11AC
-    network->dot11ac = res->pvhtcap_ie_present;
+    if (res->pvhtcap_ie_present == true && ISSUPP_11ACENABLED(mlan_adap->fw_cap_info))
+    {
+        if (((network->channel > MAX_CHANNELS_BG) && (config_bands & BAND_AAC)) ||
+             ((network->channel < MAX_CHANNELS_BG) && (config_bands & BAND_GAC)))
+        {
+            network->dot11ac = 1;
+        }
+    }
 #endif
 #if CONFIG_11AX
-    network->dot11ax = res->phecap_ie_present;
+    if (res->phecap_ie_present == true && IS_FW_SUPPORT_11AX(mlan_adap))
+    {
+        if (((network->channel > MAX_CHANNELS_BG) && (config_bands & BAND_AAX)) ||
+             ((network->channel < MAX_CHANNELS_BG) && (config_bands & BAND_GAX)))
+        {
+            network->dot11ax = 1;
+        }
+    }
 #ifdef CONFIG_11AX_TWT
     network->twt_capab = res->twt_capab;
 #endif
@@ -9585,6 +9662,7 @@ int wlan_add_network(struct wlan_network *network)
     int i;
     unsigned int len;
     int ret;
+    t_u16 config_bands = mlan_adap->priv[network->type]->config_bands;
 
     if (!wlan.running)
     {
@@ -9890,6 +9968,37 @@ int wlan_add_network(struct wlan_network *network)
         return -WM_E_INVAL;
     }
 
+    if (network->channel > MAX_CHANNELS_BG)
+    {
+        network->dot11n = (config_bands & BAND_AN) ? 1 : 0;
+#if CONFIG_11AC
+        network->dot11ac = (config_bands & BAND_AAC) ? 1 : 0;
+#endif
+#if CONFIG_11AX
+        network->dot11ax = (config_bands & BAND_AAX) ? 1 : 0;
+#endif
+    }
+    else if (network->channel == 14)
+    {
+        network->dot11n = 0;
+#if CONFIG_11AC
+        network->dot11ac = 0;
+#endif
+#if CONFIG_11AX
+        network->dot11ax = 0;
+#endif
+    }
+    else
+    {
+        network->dot11n = (config_bands & BAND_GN) ? 1 : 0;
+#if CONFIG_11AC
+        network->dot11ac = (config_bands & BAND_GAC) ? 1 : 0;
+#endif
+#if CONFIG_11AX
+        network->dot11ax = (config_bands & BAND_GAX) ? 1 : 0;
+#endif
+    }
+
     /* Make sure network type is set correctly if not
      * set correct values as per role*/
     if ((network->type == WLAN_BSS_TYPE_STA) || (network->type == WLAN_BSS_TYPE_ANY))
@@ -9920,48 +10029,6 @@ int wlan_add_network(struct wlan_network *network)
         netif = net_get_wfd_interface();
     }
 #endif
-
-    if (network->role == WLAN_BSS_ROLE_UAP)
-    {
-#if CONFIG_WIFI_CAPA
-        if (network->channel != 14)
-        {
-        /* If no capability was configured, set capa up to 11ax by default */
-        if (!network->wlan_capa)
-            network->wlan_capa =
-#if CONFIG_11AX
-                WIFI_SUPPORT_11AX |
-#endif
-#if CONFIG_11AC
-                WIFI_SUPPORT_11AC |
-#endif
-                WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY;
-        }
-        else
-        {
-            network->wlan_capa = WIFI_SUPPORT_LEGACY;
-        }
-
-#if CONFIG_11AX
-        network->dot11ax = wlan_11ax_allowed(network);
-#endif
-#if CONFIG_11AC
-        network->dot11ac = wlan_11ac_allowed(network);
-#endif
-        network->dot11n = wlan_11n_allowed(network);
-#else
-        if (network->channel != 14)
-        {
-#if CONFIG_11AX
-        network->dot11ax = 1;
-#endif
-#if CONFIG_11AC
-        network->dot11ac = 1;
-#endif
-        network->dot11n = 1;
-        }
-#endif
-    }
 
 #if CONFIG_WPA_SUPP_P2P
     if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
@@ -10483,66 +10550,6 @@ INVAL:
 #endif
     return -WM_E_INVAL;
 }
-
-#if CONFIG_WIFI_CAPA
-uint8_t wlan_check_11n_capa(unsigned int channel)
-{
-    uint8_t enable_11n = false;
-    uint16_t fw_bands  = 0U;
-
-    wifi_get_fw_info(MLAN_BSS_TYPE_UAP, &fw_bands);
-
-    if (channel > 14 && (fw_bands & BAND_AN))
-    {
-        enable_11n = true;
-    }
-    else if (channel <= 14 && (fw_bands & BAND_GN))
-    {
-        enable_11n = true;
-    }
-    return enable_11n;
-}
-
-uint8_t wlan_check_11ac_capa(unsigned int channel)
-{
-    uint8_t enable_11ac = false;
-    uint16_t fw_bands   = 0U;
-
-    wifi_get_fw_info(MLAN_BSS_TYPE_UAP, &fw_bands);
-
-#if CONFIG_11AC
-    if (channel > 14 && (fw_bands & BAND_AAC))
-    {
-        enable_11ac = true;
-    }
-    else if (channel <= 14 && (fw_bands & BAND_GAC))
-    {
-        enable_11ac = true;
-    }
-#endif
-    return enable_11ac;
-}
-
-uint8_t wlan_check_11ax_capa(unsigned int channel)
-{
-    uint8_t enable_11ax = false;
-    uint16_t fw_bands   = 0U;
-
-    wifi_get_fw_info(MLAN_BSS_TYPE_UAP, &fw_bands);
-
-#if CONFIG_11AX
-    if (channel > 14 && (fw_bands & BAND_AAX))
-    {
-        enable_11ax = true;
-    }
-    else if (channel <= 14 && (fw_bands & BAND_GAX))
-    {
-        enable_11ax = true;
-    }
-#endif
-    return enable_11ax;
-}
-#endif
 
 int wlan_remove_network(const char *name)
 {
@@ -17057,22 +17064,6 @@ int wlan_p2p_group_add(char *cmd)
         return -WM_FAIL;
     }
 
-#if CONFIG_WIFI_CAPA
-    uint8_t capa = WIFI_SUPPORT_LEGACY | WIFI_SUPPORT_11N;
-
-    if (strstr(cmd, "vht"))
-    {
-        capa |= WIFI_SUPPORT_11AC;
-    }
-
-    if (strstr(cmd, "he"))
-    {
-        capa |= WIFI_SUPPORT_11AX;
-    }
-
-    wifi_uap_config_wifi_capa(capa);
-#endif
-
     return wpa_supp_p2p_group_add(netif, cmd);
 }
 
@@ -17672,20 +17663,15 @@ int wlan_11n_allowed(struct wlan_network *network)
     BSSDescriptor_t *pbss_desc = NULL;
 
     if (ISSUPP_11NENABLED(pmadapter->fw_cap_info) &&
-        (pmpriv->config_bands & BAND_GN || pmpriv->config_bands & BAND_AN))
+        ((network->channel < MAX_CHANNELS_BG && pmpriv->config_bands & BAND_GN) ||
+         (network->channel > MAX_CHANNELS_BG && pmpriv->config_bands & BAND_AN)))
     {
         if (network->role == WLAN_BSS_ROLE_STA)
         {
             pbss_desc = &pmpriv->curr_bss_params.bss_descriptor;
             return ((!pbss_desc->disable_11n) && (pbss_desc->pht_cap != NULL));
         }
-#if CONFIG_WIFI_CAPA
-        else if (network->role == WLAN_BSS_ROLE_UAP)
-        {
-            if (network->wlan_capa & WIFI_SUPPORT_11N)
-                return 1;
-        }
-#endif
+        return 1;
     }
 
     return 0;
@@ -17698,7 +17684,9 @@ int wlan_11ac_allowed(struct wlan_network *network)
     mlan_adapter *pmadapter    = pmpriv->adapter;
     BSSDescriptor_t *pbss_desc = NULL;
 
-    if (ISSUPP_11ACENABLED(pmadapter->fw_cap_info))
+    if (ISSUPP_11ACENABLED(pmadapter->fw_cap_info) &&
+        ((network->channel < MAX_CHANNELS_BG && pmpriv->config_bands & BAND_GAC) ||
+         (network->channel > MAX_CHANNELS_BG && pmpriv->config_bands & BAND_AAC)))
     {
         if (network->role == WLAN_BSS_ROLE_STA)
         {
@@ -17706,13 +17694,7 @@ int wlan_11ac_allowed(struct wlan_network *network)
             if (wlan_11ac_bandconfig_allowed(pmpriv, pbss_desc->bss_band))
                 return ((!pbss_desc->disable_11n) && (pbss_desc->pvht_cap != NULL));
         }
-#if CONFIG_WIFI_CAPA
-        else if (network->role == WLAN_BSS_ROLE_UAP)
-        {
-            if ((pmpriv->config_bands & BAND_GAC || pmpriv->config_bands & BAND_AAC) && (network->wlan_capa & WIFI_SUPPORT_11AC))
-                return 1;
-        }
-#endif
+        return 1;
     }
 
     return 0;
@@ -17726,7 +17708,9 @@ int wlan_11ax_allowed(struct wlan_network *network)
     mlan_adapter *pmadapter    = pmpriv->adapter;
     BSSDescriptor_t *pbss_desc = NULL;
 
-    if (IS_FW_SUPPORT_11AX(pmadapter))
+    if (IS_FW_SUPPORT_11AX(pmadapter) &&
+        ((network->channel < MAX_CHANNELS_BG && pmpriv->config_bands & BAND_GAX) ||
+         (network->channel > MAX_CHANNELS_BG && pmpriv->config_bands & BAND_AAX)))
     {
         if (network->role == WLAN_BSS_ROLE_STA)
         {
@@ -17734,13 +17718,7 @@ int wlan_11ax_allowed(struct wlan_network *network)
             if (wlan_11ax_bandconfig_allowed(pmpriv, pbss_desc->bss_band))
                 return ((!pbss_desc->disable_11n) && (pbss_desc->phe_cap != NULL));
         }
-#if CONFIG_WIFI_CAPA
-        else if (network->role == WLAN_BSS_ROLE_UAP)
-        {
-            if ((pmpriv->config_bands & BAND_GAX || pmpriv->config_bands & BAND_AAX) && (network->wlan_capa & WIFI_SUPPORT_11AX))
-                return 1;
-        }
-#endif
+        return 1;
     }
 
     return 0;

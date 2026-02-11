@@ -573,14 +573,6 @@
 #define CONFIG_MAX_IPV6_ADDRESSES 0
 #endif
 
-#if !defined CONFIG_WIFI_CAPA
-#if defined(RW610)
-#define CONFIG_WIFI_CAPA 1
-#elif defined(SD8978) || defined(SD8987) || defined(SD9177) || defined(IW610)
-#define CONFIG_WIFI_CAPA 0
-#endif
-#endif
-
 #if !defined CONFIG_ROAMING
 #if defined(RW610)
 #define CONFIG_ROAMING 1
@@ -1354,11 +1346,6 @@
 #if !CONFIG_WIFI_SLIM_UAP
 #undef CONFIG_WIFI_SLIM_UAP
 #define CONFIG_WIFI_SLIM_UAP 1
-#endif
-
-#if CONFIG_WIFI_CAPA
-#undef CONFIG_WIFI_CAPA
-#define CONFIG_WIFI_CAPA 0
 #endif
 
 #if CONFIG_ECSA

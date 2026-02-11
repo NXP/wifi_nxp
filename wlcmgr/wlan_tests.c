@@ -229,41 +229,6 @@ inline static const char *sec_tag(struct wlan_network *network)
         return "\tsecurity";
     }
 }
-#if CONFIG_WIFI_CAPA
-static int get_capa(char *arg, uint8_t *wlan_capa)
-{
-    if (!arg)
-        return 1;
-#if CONFIG_11AX
-    if (string_equal(arg, "11ax") != 0)
-    {
-        *wlan_capa = (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC | WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY);
-        return 0;
-    }
-    else
-#endif
-#if CONFIG_11AC
-        if (string_equal(arg, "11ac") != 0)
-    {
-        *wlan_capa = (WIFI_SUPPORT_11AC | WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY);
-        return 0;
-    }
-    else
-#endif
-        if (string_equal(arg, "11n") != 0)
-    {
-        *wlan_capa = (WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY);
-        return 0;
-    }
-    else if (string_equal(arg, "legacy") != 0)
-    {
-        *wlan_capa = WIFI_SUPPORT_LEGACY;
-        return 0;
-    }
-    else
-        return 1;
-}
-#endif
 
 static void print_network(struct wlan_network *network)
 {
@@ -474,85 +439,6 @@ static void print_network(struct wlan_network *network)
             (void)PRINTF("\r\nUnexpected WLAN SECURITY\r\n");
             break;
     }
-#if CONFIG_WIFI_CAPA
-    if (network->role == WLAN_BSS_ROLE_UAP)
-    {
-#if CONFIG_11AX
-        uint8_t enable_11ax = false;
-#endif
-#if CONFIG_11AC
-        uint8_t enable_11ac = false;
-#endif
-        uint8_t enable_11n = false;
-
-#if CONFIG_11AX
-        enable_11ax = wlan_check_11ax_capa(network->channel);
-#endif
-#if CONFIG_11AC
-        enable_11ac = wlan_check_11ac_capa(network->channel);
-#endif
-        enable_11n = wlan_check_11n_capa(network->channel);
-#if CONFIG_11AX
-        if (network->wlan_capa & WIFI_SUPPORT_11AX)
-        {
-            if (!enable_11ax)
-            {
-#if CONFIG_11AC
-                if (enable_11ac)
-                {
-                    (void)PRINTF("\twifi capability: 11ac\r\n");
-                }
-                else
-#endif
-                {
-                    (void)PRINTF("\twifi capability: 11n\r\n");
-                }
-            }
-            else
-            {
-                (void)PRINTF("\twifi capability: 11ax\r\n");
-            }
-
-            (void)PRINTF("\tuser configure: 11ax\r\n");
-        }
-        else
-#endif
-#if CONFIG_11AC
-            if (network->wlan_capa & WIFI_SUPPORT_11AC)
-        {
-            if (!enable_11ac)
-            {
-                (void)PRINTF("\twifi capability: 11n\r\n");
-            }
-            else
-            {
-                (void)PRINTF("\twifi capability: 11ac\r\n");
-            }
-
-            (void)PRINTF("\tuser configure: 11ac\r\n");
-        }
-        else
-#endif
-            if (network->wlan_capa & WIFI_SUPPORT_11N)
-        {
-            if (!enable_11n)
-            {
-                (void)PRINTF("\twifi capability: legacy\r\n");
-            }
-            else
-            {
-                (void)PRINTF("\twifi capability: 11n\r\n");
-            }
-
-            (void)PRINTF("\tuser configure: 11n\r\n");
-        }
-        else
-        {
-            (void)PRINTF("\twifi capability: legacy\r\n");
-            (void)PRINTF("\tuser configure: legacy\r\n");
-        }
-    }
-#endif
 #if CONFIG_WPA_SUPP
     if (network->role == WLAN_BSS_ROLE_STA)
     {
@@ -953,16 +839,6 @@ static void dump_wlan_add_usage(void)
         "Note: Setting the channel value greater than or equal to 36 is mandatory,\r\n"
         "      if UAP bandwidth is set to 80MHz.\r\n");
 #endif
-#if CONFIG_WIFI_CAPA
-    (void)PRINTF("\r\n");
-#if CONFIG_11AX
-    (void)PRINTF("    [capa <11ax/11ac/11n/legacy>]\r\n");
-#elif CONFIG_11AC
-    (void)PRINTF("    [capa <11ac/11n/legacy>]\r\n");
-#else
-    (void)PRINTF("    [capa <11n/legacy>]\r\n");
-#endif
-#endif
     (void)PRINTF("If Set channel to 0, set acs_band to 0 1.\r\n");
     (void)PRINTF("0: 2.4GHz channel   1: 5GHz channel  Not support to select dual band automatically.\r\n");
 }
@@ -993,9 +869,6 @@ static void test_wlan_add(int argc, char **argv)
 #endif
 #if CONFIG_WIFI_DTIM_PERIOD
         unsigned dtim : 1;
-#endif
-#if CONFIG_WIFI_CAPA
-        unsigned wlan_capa : 1;
 #endif
 #if CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
         unsigned wpa3_sb : 1;
@@ -2041,20 +1914,6 @@ static void test_wlan_add(int argc, char **argv)
             network->dtim_period = (uint8_t)(dtim_period & 0XFF);
             arg += 2;
             info.dtim = 1;
-        }
-#endif
-#if CONFIG_WIFI_CAPA
-        else if (!info.wlan_capa && network->role == WLAN_BSS_ROLE_UAP && string_equal("capa", argv[arg]))
-        {
-            if (arg + 1 >= argc || get_capa(argv[arg + 1], &network->wlan_capa))
-            {
-                (void)PRINTF(
-                    "Error: invalid wireless"
-                    " capability\r\n");
-                goto out;
-            }
-            arg += 2;
-            info.wlan_capa++;
         }
 #endif
         else if (!info.acs_band && string_equal("acs_band", argv[arg]))
@@ -9849,28 +9708,32 @@ static void test_wlan_get_signal(int argc, char **argv)
 }
 #endif
 
+#define WLAN_BANDCFG_11N MBIT(0)
+#if CONFIG_11AC
+#define WLAN_BANDCFG_11AC MBIT(1)
+#endif
+#if CONFIG_11AX
+#define WLAN_BANDCFG_11AX MBIT(2)
+#endif
+
 static void dump_wlan_bandcfg_bit_usage(void)
 {
     (void)PRINTF("        Bits in Band:\r\n");
-    (void)PRINTF("        bit 0: B (Not support set)\r\n");
-    (void)PRINTF("        bit 1: G (Not support set)\r\n");
-    (void)PRINTF("        bit 2: A (Not support set)\r\n");
-    (void)PRINTF("        bit 3: GN (Not support set)\r\n");
-    (void)PRINTF("        bit 4: AN (Not support set)\r\n");
+    (void)PRINTF("        bit 0: 11N\r\n");
 #if CONFIG_11AC
-    (void)PRINTF("        bit 5: AC 2.4G (Not support set)\r\n");
-    (void)PRINTF("        bit 6: AC 5G (Not support set)\r\n");
+    (void)PRINTF("        bit 1: 11AC\r\n");
 #endif
 #if CONFIG_11AX
-    (void)PRINTF("        bit 8: AX 2.4G\r\n");
-    (void)PRINTF("        bit 9: AX 5G\r\n");
+    (void)PRINTF("        bit 2: 11AX\r\n");
 #endif
 }
 
 static void test_wlan_get_bandcfg(int argc, char **argv)
 {
     wlan_bandcfg_t bandcfg;
-    int ret = WM_SUCCESS;
+    int ret      = WM_SUCCESS;
+    uint32_t val = 0;
+    uint32_t hw_val = 0;
 
     (void)memset(&bandcfg, 0, sizeof(bandcfg));
 
@@ -9880,34 +9743,58 @@ static void test_wlan_get_bandcfg(int argc, char **argv)
         (void)PRINTF("Unable to get bandcfg\r\n");
         return;
     }
-    (void)PRINTF("\tconfig band: 0x%x\r\n", bandcfg.config_bands);
-    (void)PRINTF("\tfw band: 0x%x\r\n", bandcfg.fw_bands);
+    if (bandcfg.config_bands & (BAND_AN | BAND_GN))
+    {
+        val |= WLAN_BANDCFG_11N;
+    }
+    if (bandcfg.fw_bands & (BAND_AN | BAND_GN))
+    {
+        hw_val |= WLAN_BANDCFG_11N;
+    }
+#if CONFIG_11AC
+    if (bandcfg.config_bands & (BAND_AAC | BAND_GAC))
+    {
+        val |= WLAN_BANDCFG_11AC;
+    }
+    if (bandcfg.fw_bands & (BAND_AAC | BAND_GAC))
+    {
+        hw_val |= WLAN_BANDCFG_11AC;
+    }
+#endif
+#if CONFIG_11AX
+    if (bandcfg.config_bands & (BAND_AAX | BAND_GAX))
+    {
+        val |= WLAN_BANDCFG_11AX;
+    }
+    if (bandcfg.fw_bands & (BAND_AAX | BAND_GAX))
+    {
+        hw_val |= WLAN_BANDCFG_11AX;
+    }
+#endif
+
+    (void)PRINTF("\tconfig band: 0x%x\r\n", val);
+    (void)PRINTF("\tfw band: 0x%x\r\n", hw_val);
     dump_wlan_bandcfg_bit_usage();
 }
 
-#if CONFIG_11AX
 static void dump_wlan_set_bandcfg(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("    wlan-set-bandcfg <value>\r\n");
     dump_wlan_bandcfg_bit_usage();
 }
-#endif
 
 static void test_wlan_set_bandcfg(int argc, char **argv)
 {
-#if CONFIG_11AX
     wlan_bandcfg_t bandcfg;
-    uint32_t bandcfg_11ax_2G = 0;
-    uint32_t bandcfg_11ax_5G = 0;
-    uint32_t val             = 0;
-    int ret                  = WM_SUCCESS;
-#endif
+    uint32_t val = 0;
+    int ret      = WM_SUCCESS;
 
-#if !CONFIG_11AX
-    (void)PRINTF("Block set bandcfg when 11AX is not supported.\r\n");
-    return;
-#else
+    if (is_sta_connected() || is_uap_started())
+    {
+        (void)PRINTF("Error: set-bandcfg command is not allowed when STA has connection or uAP is started\r\n");
+        return;
+    }
 
     if (argc != 2)
     {
@@ -9917,17 +9804,6 @@ static void test_wlan_set_bandcfg(int argc, char **argv)
     }
 
     val = a2hex_or_atoi(argv[1]);
-
-    bandcfg_11ax_2G = (val & MBIT(8));
-    bandcfg_11ax_5G = (val & MBIT(9));
-
-    if ((bandcfg_11ax_2G && !bandcfg_11ax_5G) || (!bandcfg_11ax_2G && bandcfg_11ax_5G))
-    {
-        (void)PRINTF("Please set 11ax 2G/5G bit both 0 or both 1.\r\n");
-        dump_wlan_set_bandcfg();
-        return;
-    }
-
     (void)memset(&bandcfg, 0, sizeof(bandcfg));
     ret = wlan_get_bandcfg(&bandcfg);
     if (ret != WM_SUCCESS)
@@ -9936,23 +9812,34 @@ static void test_wlan_set_bandcfg(int argc, char **argv)
         return;
     }
 
-    if (bandcfg_11ax_2G)
+    if (!(val & WLAN_BANDCFG_11N))
     {
-        bandcfg.config_bands |= (MBIT(8));
+        bandcfg.config_bands &= ~(BAND_AN | BAND_GN);
     }
     else
     {
-        bandcfg.config_bands &= ~(MBIT(8));
+        bandcfg.config_bands |= (BAND_AN | BAND_GN);
     }
-
-    if (bandcfg_11ax_5G)
+#if CONFIG_11AC
+    if (!(val & WLAN_BANDCFG_11AC))
     {
-        bandcfg.config_bands |= (MBIT(9));
+        bandcfg.config_bands &= ~(BAND_AAC | BAND_GAC);
     }
     else
     {
-        bandcfg.config_bands &= ~(MBIT(9));
+        bandcfg.config_bands |= (BAND_AAC | BAND_GAC);
     }
+#endif
+#if CONFIG_11AX
+    if (!(val & WLAN_BANDCFG_11AX))
+    {
+        bandcfg.config_bands &= ~(BAND_AAX | BAND_GAX);
+    }
+    else
+    {
+        bandcfg.config_bands |= (BAND_AAX | BAND_GAX);
+    }
+#endif
 
     ret = wlan_set_bandcfg(&bandcfg);
     if (ret != WM_SUCCESS)
@@ -9960,7 +9847,6 @@ static void test_wlan_set_bandcfg(int argc, char **argv)
         (void)PRINTF("Unable to set bandcfg\r\n");
         return;
     }
-#endif
 }
 
 static void dump_wlan_set_multiple_dtim_usage(void)

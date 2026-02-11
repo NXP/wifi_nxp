@@ -37,12 +37,6 @@
 #endif
 #if defined(SD9177) || defined(IW610)
 #define CONFIG_FW_VDLL     1
-#if UAP_SUPPORT
-#if !CONFIG_WIFI_CAPA
-#undef CONFIG_WIFI_CAPA
-#define CONFIG_WIFI_CAPA 1
-#endif
-#endif
 #endif
 
 #include <wifi-decl.h>
@@ -1993,22 +1987,7 @@ int wifi_uap_do_acs(const int *freq_list);
 int wifi_uap_do_acs(const t_u16 acs_band);
 #endif
 
-#if CONFIG_WIFI_CAPA
-/**
- * Set uAP capability
- *
- * User can set uAP capability of 11ax/11ac/11n/legacy. Default is 11ax.
- *
- * @param[in] wlan_capa uAP capability bitmap.
- *                      1111 - 11AX
- *                      0111 - 11AC
- *                      0011 - 11N
- *                      0001 - legacy
- *
- */
-void wifi_uap_config_wifi_capa(uint8_t wlan_capa);
 void wifi_get_fw_info(mlan_bss_type type, t_u16 *fw_bands);
-#endif
 
 int wifi_uap_set_bandwidth(const t_u8 bandwidth);
 
