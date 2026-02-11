@@ -16008,7 +16008,6 @@ int wlan_wps_ap_cancel(void)
 #endif
 
 #if (CONFIG_WPA2_ENTP) || (CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
-#if CONFIG_WIFI_USB_FILE_ACCESS
 static void wlan_entp_cert_cleanup()
 {
     if (wlan.ca_cert_data != NULL)
@@ -16220,7 +16219,6 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
 
     return WM_SUCCESS;
 }
-#endif
 
 t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
 {
