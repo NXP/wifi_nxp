@@ -5503,7 +5503,7 @@ int wlan_get_rf_rx_antenna(uint8_t *antenna);
  * \note  call \ref wlan_set_rf_test_mode API before using this API.
  *
  * \param[in] power: The RF RX power to be set in Wi-Fi firmware.
- *                  For RW610, 20M bandwidth max linear output power is 20db per data sheet.
+ *                  For RW610, transmit output power level control range is -10 to 22dBm as per the datasheet.
  * \param[in] mod: The modulation to be set in Wi-Fi firmware.
  * \param[in] path_id: The Path ID to be set in Wi-Fi firmware.
  *
