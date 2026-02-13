@@ -5186,6 +5186,13 @@ static inline void print_mac(const char *mac)
 int wlan_set_rf_test_mode(void);
 
 /**
+ * Disable the RF 11AX in Wi-Fi firmware.
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_rf_disable_11ax(void);
+
+/**
  * Unset the RF test mode in Wi-Fi firmware.
  *
  * \return WM_SUCCESS if successful.

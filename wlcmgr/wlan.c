@@ -14256,6 +14256,11 @@ int wlan_set_rf_test_mode(void)
     return wifi_set_rf_test_mode();
 }
 
+int wlan_rf_disable_11ax(void)
+{
+    return wifi_rf_disable_11ax();
+}
+
 int wlan_unset_rf_test_mode(void)
 {
     (void)wifi_unset_rf_test_mode();

@@ -60,6 +60,36 @@ static void wlan_rf_test_mode_set(int argc, char *argv[])
     }
 }
 
+static void dump_rf_disable_11ax_set_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-set-rf-disable-11ax \r\n");
+    (void)PRINTF("\r\n");
+}
+
+static void wlan_rf_disable_11ax_set(int argc, char *argv[])
+{
+    int ret;
+
+    if (argc != 1)
+    {
+        dump_rf_disable_11ax_set_usage();
+        return;
+    }
+
+    ret = wlan_rf_disable_11ax();
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("RF Disable 11AX configuration successful\r\n");
+    }
+    else
+    {
+        (void)PRINTF("RF Disable 11AX configuration failed\r\n");
+        dump_rf_disable_11ax_set_usage();
+    }
+
+}
+
 static void dump_wlan_unset_rf_test_mode_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -1383,6 +1413,7 @@ static void wlan_rf_otp_cal_data_get(int argc, char *argv[])
 
 static struct cli_command wlan_test_mode_commands[] = {
     {"wlan-set-rf-test-mode", NULL, wlan_rf_test_mode_set},
+    {"wlan-set-rf-disable-11ax", NULL, wlan_rf_disable_11ax_set},
     {"wlan-unset-rf-test-mode", NULL, wlan_rf_test_mode_unset},
     {"wlan-set-rf-tx-antenna", "<antenna>", wlan_rf_tx_antenna_set},
     {"wlan-get-rf-tx-antenna", NULL, wlan_rf_tx_antenna_get},

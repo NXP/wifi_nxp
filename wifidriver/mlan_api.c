@@ -1413,6 +1413,30 @@ int wifi_set_rf_test_mode(void)
     return -WM_FAIL;
 }
 
+int wifi_rf_disable_11ax(void)
+{
+    int ret;
+    wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
+
+    (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
+
+    wifi_mfg_cmd_generic_cfg.mfg_cmd = MFG_CMD_WRITE_PATCH_BLOCK_OTP;
+    wifi_mfg_cmd_generic_cfg.action  = HostCmd_ACT_GEN_SET;
+    wifi_mfg_cmd_generic_cfg.device_id = 0;
+    wifi_mfg_cmd_generic_cfg.data1  = 8;
+    wifi_mfg_cmd_generic_cfg.data2  = 0x0002014f;
+    wifi_mfg_cmd_generic_cfg.data3  = 0;
+
+    ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_generic_cfg);
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
+    {
+        return WM_SUCCESS;
+    }
+
+    wifi_e("wifi set 11AX fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
+}
+
 int wifi_unset_rf_test_mode(void)
 {
     wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
