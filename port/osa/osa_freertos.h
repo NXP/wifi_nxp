@@ -20,8 +20,17 @@
 #elif configMAX_PRIORITIES < 5
 #error configMAX_PRIORITIES must be defined to be greater than or equal to 5
 #endif
+
+#if !defined(CONFIG_WIFI_TASK_PRIORITY_OFFSET)
+#error CONFIG_WIFI_TASK_PRIORITY_OFFSET must be defined in wifi_config_default.h
+#elif (CONFIG_WIFI_TASK_PRIORITY_OFFSET < 0)
+#error CONFIG_WIFI_TASK_PRIORITY_OFFSET cannot be negative
+#elif ((CONFIG_WIFI_TASK_PRIORITY_OFFSET + 5) > configMAX_PRIORITIES)
+#error CONFIG_WIFI_TASK_PRIORITY_OFFSET too large: need (OFFSET + 5) <= configMAX_PRIORITIES for 5 WiFi task levels
+#endif
+
 /*** Priority setting ***/
-#define OSA_PRIORITY(x) (PRIORITY_RTOS_TO_OSA((configMAX_PRIORITIES - x)))
+#define OSA_PRIORITY(x)       (PRIORITY_RTOS_TO_OSA(((configMAX_PRIORITIES - CONFIG_WIFI_TASK_PRIORITY_OFFSET) - x)))
 #define WLAN_TASK_PRI_HIGHEST (OSA_PRIORITY(1))
 #define WLAN_TASK_PRI_HIGH    (OSA_PRIORITY(2))
 #define WLAN_TASK_PRI_NORMAL  (OSA_PRIORITY(3))

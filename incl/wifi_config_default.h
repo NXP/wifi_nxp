@@ -69,6 +69,10 @@
 #define CONFIG_WIFI_MAX_PRIO (configMAX_PRIORITIES - 1)
 #endif
 
+#if !defined CONFIG_WIFI_TASK_PRIORITY_OFFSET
+#define CONFIG_WIFI_TASK_PRIORITY_OFFSET 0
+#endif
+
 #if !defined CONFIG_MAX_AP_ENTRIES
 #if defined(SD8978) || defined(SD8987) || defined(SD9177) || defined(IW610)
 #define CONFIG_MAX_AP_ENTRIES 10
