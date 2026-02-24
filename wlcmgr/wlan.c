@@ -5809,6 +5809,12 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
     {
         wlcm_d("PBC mode was activated");
         wlan.wps_session_attempt = 1;
+#if CONFIG_HOSTAPD
+        if (strstr(hostapd_msg_ifname_cb(ctx), "ua"))
+        {
+            wifi_set_wps_probe_req_indication(MLAN_BSS_TYPE_UAP, MTRUE);
+        }
+#endif
     }
     else if (strstr(buf, WPS_EVENT_PIN_ACTIVE))
     {
@@ -5819,6 +5825,12 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
     {
         wlcm_d("WPS enrollment attempt timed out and was terminated");
         wlan.wps_session_attempt = 0;
+#if CONFIG_HOSTAPD
+        if (strstr(hostapd_msg_ifname_cb(ctx), "ua"))
+        {
+            wifi_set_wps_probe_req_indication(MLAN_BSS_TYPE_UAP, MFALSE);
+        }
+#endif
     }
     else if (strstr(buf, WPS_EVENT_FAIL))
     {
@@ -5829,6 +5841,12 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
     {
         wlcm_d("WPS mode was canceled");
         wlan.wps_session_attempt = 0;
+#if CONFIG_HOSTAPD
+        if (strstr(hostapd_msg_ifname_cb(ctx), "ua"))
+        {
+            wifi_set_wps_probe_req_indication(MLAN_BSS_TYPE_UAP, MFALSE);
+        }
+#endif
     }
     else if (strstr(buf, WPS_EVENT_SUCCESS))
     {
@@ -5836,7 +5854,7 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
         if (wlan.wps_session_attempt)
         {
 #if CONFIG_WPA_SUPP_P2P
-            if (strstr(wpa_s->ifname, "wf") == NULL)
+            if (strstr(hostapd_msg_ifname_cb(ctx), "wf") == NULL)
             {
 #endif
                 if (wlcm_process_add_unspecified_network("wps_network") == WM_SUCCESS)
@@ -5847,6 +5865,12 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
             }
 #endif
         }
+#if CONFIG_HOSTAPD
+        if (strstr(hostapd_msg_ifname_cb(ctx), "ua"))
+        {
+            wifi_set_wps_probe_req_indication(MLAN_BSS_TYPE_UAP, MFALSE);
+        }
+#endif
     }
     else
 #endif
