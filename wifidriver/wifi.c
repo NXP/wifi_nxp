@@ -42,13 +42,11 @@ wifi_os_mem_info wifi_os_mem_stat[OS_MEM_STAT_TABLE_SIZE];
 #endif
 
 #if CONFIG_CSI
-#define MAX_CSI_LOCAL_BUF        80
-#define CSI_LOCAL_BUF_ENTRY_SIZE 768
 t_u8 csi_local_buff[MAX_CSI_LOCAL_BUF][CSI_LOCAL_BUF_ENTRY_SIZE] = {
     0,
 };
 
-csi_local_buff_statu csi_buff_stat = {0, 0, 0};
+csi_local_buff_statu csi_buff_stat = {0, 0, 0, 0, 0};
 
 int csi_event_cnt        = 0;
 t_u64 csi_event_data_len = 0;
@@ -4942,7 +4940,11 @@ void process_csi_info_callback(void *data, size_t len)
 {
     if (csi_data_recv != NULL)
     {
-        csi_data_recv(data, len);
+        if(csi_data_recv(data, len) != WM_SUCCESS)
+        {
+            csi_buff_stat.callback_failed_count++;
+        }
+
     }
 }
 
@@ -4951,9 +4953,11 @@ void csi_local_buff_init()
     csi_event_cnt      = 0;
     csi_event_data_len = 0;
 
-    csi_buff_stat.write_index    = 0;
-    csi_buff_stat.read_index     = 0;
-    csi_buff_stat.valid_data_cnt = 0;
+    csi_buff_stat.write_index           = 0;
+    csi_buff_stat.read_index            = 0;
+    csi_buff_stat.valid_data_cnt        = 0;
+    csi_buff_stat.write_wrap_count      = 0;
+    csi_buff_stat.callback_failed_count = 0;
 
     memset(csi_local_buff, 0x00, sizeof(csi_local_buff));
 }
@@ -4962,6 +4966,8 @@ void csi_save_data_to_local_buff(void *data)
 {
     OSA_SemaphoreWait((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem, osaWaitForever_c);
 
+    t_u8 old_write_index;
+
     if (csi_buff_stat.valid_data_cnt >= MAX_CSI_LOCAL_BUF)
     {
         OSA_SemaphorePost((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem);
@@ -4969,11 +4975,18 @@ void csi_save_data_to_local_buff(void *data)
         return;
     }
 
+    old_write_index = csi_buff_stat.write_index;
+
     memcpy(&csi_local_buff[csi_buff_stat.write_index][0], (t_u8 *)data, CSI_LOCAL_BUF_ENTRY_SIZE);
 
     csi_buff_stat.valid_data_cnt++;
 
     csi_buff_stat.write_index = (csi_buff_stat.write_index + 1) % MAX_CSI_LOCAL_BUF;
+
+    if (csi_buff_stat.write_index < old_write_index)
+    {
+        csi_buff_stat.write_wrap_count++;
+    }
 
     OSA_SemaphorePost((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem);
 }
@@ -5000,4 +5013,26 @@ void csi_deliver_data_to_user()
 
     OSA_SemaphorePost((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem);
 }
+
+/** Get current buffer status (for wraparound detection) */
+/** Read-only API, does not modify driver state */
+void wifi_get_csi_buff_status(t_u8 *write_idx, t_u8 *read_idx, 
+                              t_u8 *valid_cnt, uint32_t *wrap_cnt, uint32_t *failed_cnt)
+{
+    OSA_SemaphoreWait((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem, osaWaitForever_c);
+    
+    if (write_idx)
+        *write_idx = csi_buff_stat.write_index;
+    if (read_idx)
+        *read_idx = csi_buff_stat.read_index;
+    if (valid_cnt)
+        *valid_cnt = csi_buff_stat.valid_data_cnt;
+    if (wrap_cnt)
+        *wrap_cnt = csi_buff_stat.write_wrap_count;
+    if(failed_cnt)
+        *failed_cnt = csi_buff_stat.callback_failed_count;
+    
+    OSA_SemaphorePost((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem);
+}
+
 #endif

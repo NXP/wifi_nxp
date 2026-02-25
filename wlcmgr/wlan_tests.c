@@ -33,6 +33,9 @@
 #else
 #include <cli.h>
 #endif
+#if CONFIG_CSI
+#include "wlan_test_csi.h"
+#endif
 
 /*
  * NXP Test Framework (MTF) functions
@@ -8324,13 +8327,6 @@ void set_csi_filter(t_u8 pkt_type, t_u8 subtype, t_u8 flags, int op_index, t_u8 
     }
 }
 
-int csi_data_recv_user(void *buffer, size_t data_len)
-{
-    PRINTF("CSI user callback: Event CSI data\r\n");
-    dump_hex(buffer, data_len);
-    return WM_SUCCESS;
-}
-
 static void test_wlan_set_csi_param_header(int argc, char **argv)
 {
     t_u8 bss_type           = 0;
@@ -8410,7 +8406,25 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
         {
             PRINTF("Error during register csi user callback\r\n");
         }
+        ret = csi_create_process_task();
+        if (ret != WM_SUCCESS)
+        {
+            PRINTF("Failed to create csi process task\r\n");
+        }
     }
+    else if(csi_enable == 2)
+    {
+        ret = wlan_unregister_csi_user_callback();
+        if (ret != WM_SUCCESS)
+        {
+            PRINTF("Error during unregister csi user callback\r\n");
+        }
+        ret = csi_destroy_process_task();
+        if (ret != WM_SUCCESS)
+        {
+            PRINTF("Failed to destroy csi process task\r\n");
+        }
+     }
 
     memcpy((void *)&g_csi_params, (void *)wlan_get_csi_cfg_param_default(), sizeof(wlan_csi_config_params_t));
     set_csi_param_header(bss_type, csi_enable, head_id, tail_id, chip_id, band_config, channel, csi_monitor_enable,

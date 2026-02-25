@@ -454,6 +454,8 @@ if (CONFIG_MCUX_COMPONENT_middleware.wifi)
                 ChangeLogKSDK.txt
                 # TODO please change to relative dir
                 CMakeLists.txt
+                wlcmgr/wlan_test_csi.c
+                incl/wlcmgr/wlan_test_csi.h
     )
     mcux_add_include(
         INCLUDES incl
