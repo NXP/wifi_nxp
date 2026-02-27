@@ -48,8 +48,11 @@
 #include "wifi_ping.h"
 #endif
 
-#if (CONFIG_CSI) && (CONFIG_CSI_AMI)
+#if (CONFIG_CSI)
+#include "wlan_test_csi.h"
+#if CONFIG_CSI_AMI
 #include "event.h"
+#endif
 #endif
 
 #if CONFIG_HOST_SLEEP
@@ -11328,6 +11331,7 @@ void wlan_reset(cli_reset_option ResetOption)
             }
 #if CONFIG_CSI
             wlan_reset_csi_filter_data();
+            csi_destroy_process_task();
 #endif
 
 #if UAP_SUPPORT

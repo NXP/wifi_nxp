@@ -43,8 +43,7 @@ static OSA_TASK_DEFINE(csi_process_task, CONFIG_CSI_PROCESS_PRI, 1, CONFIG_WIFI_
 
 static OSA_MSGQ_HANDLE_DEFINE(csi_msg_queue, CSI_MSG_QUEUE_SIZE, sizeof(csi_msg_t));
 
-/* Task lifecycle control flag */
-static volatile bool csi_task_running = false;
+static volatile csi_task_state_t csi_task_state = CSI_TASK_STATE_IDLE;
 
 static uint32_t last_failed_count = 0;
 
@@ -55,18 +54,16 @@ static csi_user_stats wlan_csi_stat;
 /**
  * @brief Enqueue CSI data for asynchronous processing
  *
- * This function is called from the WiFi driver task context (via callback)
- * when CSI data is received from firmware. It quickly enqueues the data
- * pointer to the message queue and returns, allowing the driver task to
- * continue without blocking.
+ * This function is called from the WiFi driver task context (via callback).
+ * It quickly enqueues the data pointer to the message queue and returns,
+ * allowing the driver task to continue without blocking.
  *
  * The actual CSI data processing is performed by the dedicated csi_process_task()
  * in a separate task context, preventing blocking of time-sensitive operations
  * (IMU, SDIO) in the WiFi driver task.
  *
  * @param[in] buffer Pointer to CSI data buffer in driver's local buffer
- *                   This pointer must remain valid until processed by csi_process_task()
- * @param[in] data_len Length of CSI data in bytes (typically CSI_LOCAL_BUF_ENTRY_SIZE)
+ * @param[in] data_len Length of CSI data in bytes
  *
  * @return WM_SUCCESS if data successfully enqueued
  * @return -WM_FAIL if message queue is full (data will be dropped)
@@ -105,7 +102,7 @@ int csi_data_recv_user(void *buffer, size_t data_len)
 /**
  * @brief Rapidly drain messages from queue to free queue buffer space
  *
- * This internal function is called when buffer wraparound is detected,
+ * This internal function is called when message queue overflow is detected,
  * indicating that the driver buffer is filling faster than the processing
  * task can consume. It quickly drains a specified number of messages from
  * the queue without full processing.
@@ -197,11 +194,7 @@ static void csi_user_process(void *buffer, size_t data_len)
  * @brief Main CSI data processing task
  *
  * This task runs in a separate context from the WiFi driver task,
- * continuously processing CSI data messages from the queue. It implements:
- * - Message queue polling with blocking wait
- * - Wraparound detection and recovery
- * - Host state synchronization
- * - Statistics tracking
+ * continuously processing CSI data messages from the queue.
  *
  * @param[in] arg Unused (reserved for future use)
  *
@@ -210,13 +203,13 @@ static void csi_process_task(void *arg)
 {
     csi_msg_t msg;
 
-    w_csi_d(" Processing task started\r\n");
+    csi_task_state = CSI_TASK_STATE_RUNNING;
     
-    while (csi_task_running)
+    while (csi_task_state == CSI_TASK_STATE_RUNNING)
     {
         /** Get CSI data from message queue (blocking wait forever) */
         OSA_MsgQGet((osa_msgq_handle_t)csi_msg_queue, &msg, osaWaitForever_c);
-        /** Check for exit signal */
+
         if (msg.data_ptr == NULL)
         {
             continue;
@@ -273,23 +266,30 @@ static void csi_process_task(void *arg)
 /**
  * @brief Create and start CSI processing task
  *
- * Initializes the complete CSI asynchronous processing subsystem:
- * 1. Creates message queue for callback-to-task communication
- * 2. Initializes host state tracking variables
- * 3. Resets statistics (if CONFIG_CSI_DEBUG enabled)
- * 4. Creates and starts the processing task
- *
- * This function should be called once during CSI feature initialization,
- * before registering the CSI callback with the driver.
- *
  * @return WM_SUCCESS if all initialization successful
  * @return -WM_FAIL if message queue or task creation fails
  *
  */
 int csi_create_process_task(void)
 {
-    int ret;
-    
+    int ret = WM_SUCCESS;
+
+    if (csi_task_state != CSI_TASK_STATE_IDLE)
+    {
+        const char *state_str[] = {
+            [CSI_TASK_STATE_IDLE]       = "IDLE",
+            [CSI_TASK_STATE_CREATING]   = "CREATING",
+            [CSI_TASK_STATE_RUNNING]    = "RUNNING",
+            [CSI_TASK_STATE_DESTROYING] = "DESTROYING"
+        };
+        
+        w_csi_w(" Task already exists (state: %s), skipping create\r\n",
+                state_str[csi_task_state]);
+        return WM_SUCCESS;  /* Not an error - task already ready */
+    }
+
+    csi_task_state = CSI_TASK_STATE_CREATING;
+
     /** Create message queue */
     ret = OSA_MsgQCreate((osa_msgq_handle_t)csi_msg_queue, 
                         CSI_MSG_QUEUE_SIZE, 
@@ -297,10 +297,9 @@ int csi_create_process_task(void)
     if (ret != WM_SUCCESS)
     {
         w_csi_e(" Failed to create message queue\r\n");
+        csi_task_state = CSI_TASK_STATE_IDLE;
         return -WM_FAIL;
     }
-
-    csi_task_running = true;
     
 #if CONFIG_CSI_DEBUG
     memset(&wlan_csi_stat, 0, sizeof(wlan_csi_stat));
@@ -314,9 +313,10 @@ int csi_create_process_task(void)
     {
         w_csi_e(" Failed to create processing task\r\n");
         OSA_MsgQDestroy((osa_msgq_handle_t)csi_msg_queue);
+        csi_task_state = CSI_TASK_STATE_IDLE;
         return -WM_FAIL;
     }
-    
+
     w_csi_d(" Processing task created successfully (queue size: %d)\r\n", CSI_MSG_QUEUE_SIZE);
     return WM_SUCCESS;
 }
@@ -324,21 +324,37 @@ int csi_create_process_task(void)
 /**
  * @brief Stop and destroy CSI processing task
  *
- * Gracefully shuts down the CSI asynchronous processing subsystem:
- * 1. Sets stop flag (csi_task_running = false)
- * 2. Sends NULL message to wake up and signal task exit
- * 3. Waits for task to complete and self-destruct
- * 4. Destroys message queue
- *
- * This function should be called during CSI feature cleanup, typically
- * before disabling CSI in firmware or before system shutdown.
- *
  * @return WM_SUCCESS on successful cleanup
  *
  */
 int csi_destroy_process_task(void)
 {
-    csi_task_running = false;
+    /**
+     * State validation: Prevent duplicate/invalid destruction
+     *
+     * Only allow destroy when task is RUNNING.
+     * Reject if:
+     * - IDLE: No task to destroy
+     * - CREATING: Task not fully created yet
+     * - DESTROYING: Already destroying
+     */
+    if (csi_task_state != CSI_TASK_STATE_RUNNING)
+    {
+#if CONFIG_CSI_DEBUG
+        const char *state_str[] = {
+            [CSI_TASK_STATE_IDLE]       = "IDLE (no task exists)",
+            [CSI_TASK_STATE_CREATING]   = "CREATING (wait for creation to complete)",
+            [CSI_TASK_STATE_RUNNING]    = "RUNNING",
+            [CSI_TASK_STATE_DESTROYING] = "DESTROYING (already in progress)"
+        };
+        
+        w_csi_d(" Cannot destroy task (state: %s), skipping\r\n",
+                state_str[csi_task_state]);
+#endif
+        return WM_SUCCESS;
+    }
+
+    csi_task_state = CSI_TASK_STATE_DESTROYING;
     
     /** Send dummy message to wake up task (ensure it can exit) */
     csi_msg_t dummy_msg = {NULL, 0};
@@ -348,8 +364,9 @@ int csi_destroy_process_task(void)
     
     OSA_MsgQDestroy((osa_msgq_handle_t)csi_msg_queue);
     
+    csi_task_state = CSI_TASK_STATE_IDLE;
+
     w_csi_d(" Processing task destroyed\r\n");
-    
     return WM_SUCCESS;
 }
 

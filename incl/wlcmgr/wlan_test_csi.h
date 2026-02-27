@@ -51,13 +51,31 @@ typedef struct {
  * and performance analysis. Only available when CONFIG_CSI_DEBUG is enabled.
  */
 typedef struct {
-    uint32_t processed_packets;        /** Total CSI packets processed */
-    uint32_t fast_consume_count;      /** Packets dropped due to queue full or fast consume */
-    uint32_t enqueue_drop_count;    /** Packets dropped due to enqueue failuer */
-    uint32_t processing_errors;    /** Processing error count */
-    uint32_t max_queue_usage;      /** Peak queue occupancy (max messages) */
+    uint32_t processed_packets;       /** Total CSI packets processed */
+    uint32_t fast_consume_count;      /** Fast consume */
+    uint32_t enqueue_drop_count;      /** Packets dropped due to enqueue failuer */
+    uint32_t processing_errors;       /** Processing error count */
+    uint32_t max_queue_usage;         /** Peak queue occupancy (max messages) */
 } csi_user_stats;
 #endif
+
+/**
+ * @brief CSI processing task lifecycle states
+ *
+ * State machine for managing task creation/destruction:
+ * IDLE -> CREATING -> RUNNING -> DESTROYING -> IDLE
+ *
+ * This prevents:
+ * - Duplicate task creation (CREATING/RUNNING states block new create)
+ * - Duplicate task destruction (DESTROYING state blocks new destroy)
+ * - Destroy before create completes (CREATING state blocks destroy)
+ */
+typedef enum {
+    CSI_TASK_STATE_IDLE,        /** No task exists - safe to create */
+    CSI_TASK_STATE_CREATING,    /** Task creation in progress */
+    CSI_TASK_STATE_RUNNING,     /** Task is running normally */
+    CSI_TASK_STATE_DESTROYING   /** Task destruction in progress */
+} csi_task_state_t;
 
 int csi_data_recv_user(void *buffer, size_t data_len);
 

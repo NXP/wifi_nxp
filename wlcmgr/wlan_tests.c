@@ -8401,15 +8401,15 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
 
     if (csi_enable == 1)
     {
-        ret = wlan_register_csi_user_callback(csi_data_recv_user);
-        if (ret != WM_SUCCESS)
-        {
-            PRINTF("Error during register csi user callback\r\n");
-        }
         ret = csi_create_process_task();
         if (ret != WM_SUCCESS)
         {
             PRINTF("Failed to create csi process task\r\n");
+        }
+        ret = wlan_register_csi_user_callback(csi_data_recv_user);
+        if (ret != WM_SUCCESS)
+        {
+            PRINTF("Error during register csi user callback\r\n");
         }
     }
     else if(csi_enable == 2)
@@ -8733,7 +8733,16 @@ static void test_wlan_start_stop_ami(int argc, char **argv)
 
     if(start)
     {
-        wlan_unregister_csi_user_callback();
+        int ret = wlan_unregister_csi_user_callback();
+        if (ret != WM_SUCCESS)
+        {
+            PRINTF("Error during unregister csi user callback\r\n");
+        }
+        ret = csi_destroy_process_task();
+        if (ret != WM_SUCCESS)
+        {
+            PRINTF("Failed to destroy csi process task\r\n");
+        }
     }
 
     wlan_start_stop_ami(start);
