@@ -183,7 +183,6 @@ bool get_mac(const char *arg, char *dest, char sep)
     return false;
 }
 
-#if defined(RW610) && (CONFIG_ANT_DETECT)
 bool get_channel_list(const char *arg, uint8_t *num_channels, uint8_t *chan_number, char sep)
 {
     unsigned int len = 0;
@@ -225,7 +224,6 @@ bool get_channel_list(const char *arg, uint8_t *num_channels, uint8_t *chan_numb
     *num_channels = count + 1;
     return false;
 }
-#endif
 
 /* Non-reentrant getopt implementation */
 int cli_optind   = 0;

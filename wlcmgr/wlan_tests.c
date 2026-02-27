@@ -1074,6 +1074,8 @@ static void test_wlan_add(int argc, char **argv)
                     " argument\n");
                 goto out;
             }
+            network->chan_list[0] = network->channel;
+            network->chan_list_len = 1;
             arg += 2;
             info.channel = 1;
         }
@@ -14125,6 +14127,110 @@ static void test_wlan_get_ps_cfg(int argc, char **argv)
 #endif
 }
 
+static void test_wlan_set_network_chanlist(int argc, char **argv)
+{
+    int ret = -WM_FAIL;
+    enum wlan_frequency_bands freq_band = WLAN_FREQ_BAND_UNKNOWN;
+    uint8_t chan_list[WLAN_NETWORK_CHAN_LIST_MAX];
+    uint8_t num_chans = 0;
+    int arg = 2;
+
+    struct
+    {
+        unsigned freq_band : 1;
+        unsigned channel : 1;
+    } info;
+
+    (void)memset(&info, 0, sizeof(info));
+    if (argc < 4)
+    {
+        (void)PRINTF("Usage: wlan-set-network-chanlist <profile_name> [freq_band <band>] [channel <chan_list>]\r\n");
+        (void)PRINTF("\t<profile_name>     : network profile name\r\n");
+        (void)PRINTF("\tfreq_band <band>   : 0 for all bands, 2 for 2.4GHz"
+#if CONFIG_5GHz_SUPPORT
+                     ", 5 for 5GHz"
+#endif
+                    "\r\n");
+        (void)PRINTF("\tchannel <chan_list>: channel number list, separate with ',' if more than one channel\r\n");
+        (void)PRINTF("Examples:\r\n");
+        (void)PRINTF("    wlan-set-network-chanlist network1 freq_band 2\r\n");
+        (void)PRINTF("    wlan-set-network-chanlist network1 channel 1,6,11\r\n");
+        (void)PRINTF("    wlan-set-network-chanlist network1 freq_band 2 channel 1,6,11\r\n");
+        return;
+    }
+
+    do
+    {
+        if (!info.freq_band && string_equal("freq_band", argv[arg]))
+        {
+            if (arg + 1 >= argc)
+            {
+                (void)PRINTF("Error: missing freq_band value\r\n");
+                return;
+            }
+            switch (a2hex_or_atoi(argv[arg + 1]))
+            {
+                case 2:
+                    freq_band = WLAN_FREQ_BAND_2_4_GHZ;
+                    break;
+#if CONFIG_5GHz_SUPPORT
+                case 5:
+                    freq_band = WLAN_FREQ_BAND_5_GHZ;
+                    break;
+#endif
+                case 0:
+                    freq_band = WLAN_FREQ_BAND_BOTH;
+                    break;
+                default:
+                    (void)PRINTF("Invalid frequency band: %d\r\n", a2hex_or_atoi(argv[arg + 1]));
+                    return;
+            }
+            info.freq_band = 1;
+            arg += 2;
+        }
+        else if (!info.channel && string_equal("channel", argv[arg]))
+        {
+            if (arg + 1 >= argc)
+            {
+                (void)PRINTF("Error: missing channel list value\r\n");
+                return;
+            }
+
+            if (get_channel_list(argv[arg + 1], &num_chans, chan_list, ',') != false)
+            {
+                (void)PRINTF("Error: invalid channel argument\r\n");
+                return;
+            }
+            info.channel = 1;
+            arg += 2;
+        }
+        else
+        {
+            (void)PRINTF("Error: invalid argument '%s'\r\n", argv[arg]);
+            return;
+        }
+    } while (arg < argc);
+
+    if (!info.freq_band && !info.channel)
+    {
+        (void)PRINTF("Error: please specify at least freq_band or channel\r\n");
+        return;
+    }
+
+    ret = wlan_set_network_chanlist(argv[1],
+                                    num_chans > 0 ? chan_list : NULL,
+                                    num_chans,
+                                    freq_band);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to set network channel list\r\n");
+    }
+    else
+    {
+        (void)PRINTF("Set network channel list successfully\r\n");
+    }
+}
+
 static struct cli_command tests[] = {
     {"wlan-thread-info", NULL, test_wlan_thread_info},
 #if CONFIG_SCHED_SWITCH_TRACE
@@ -14529,6 +14635,7 @@ static struct cli_command tests[] = {
 #if CONFIG_WIFI_CHANNEL_LOAD
     {"wlan-get-channel-load", "<set/get> <duration>", test_wlan_get_channel_load},
 #endif
+    {"wlan-set-network-chanlist", "<profile_name> [freq_band <band>] [channel <chan_list>]", test_wlan_set_network_chanlist},
 };
 
 /* Register our commands with the MTF. */

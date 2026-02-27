@@ -713,23 +713,6 @@ void wifi_nxp_wpa_supp_dev_deinit(void *if_priv)
     }
 }
 
-static void wifi_nxp_sort_channels(t_u8 channels[], unsigned char num_chans)
-{
-    t_u8 i, j;
-
-    /* Bubble sort */
-    for (i = 0; i < num_chans; i++)
-    {
-        for (j = 1; j < num_chans - i; j++)
-        {
-            if ((t_u8)channels[j - 1] > (t_u8)channels[j])
-            {
-                SWAP_U8(channels[j - 1], channels[j]);
-            }
-        }
-    }
-}
-
 int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params)
 {
     int status                                 = -WM_FAIL;
@@ -859,7 +842,7 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
 
         if (chan_list != NULL)
         {
-            wifi_nxp_sort_channels(channels, num_chans);
+            wlan_sort_scan_channels(channels, num_chans);
             for (i = 0; i < num_chans; i++)
             {
                 chan_list[i].chan_number = channels[i];

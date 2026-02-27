@@ -1922,44 +1922,34 @@ t_bool wlan_is_channel_valid(t_u8 chan_num)
 t_bool wlan_check_channel_by_region_table(mlan_private *pmpriv, t_u8 chan_num)
 {
     t_bool valid = MFALSE;
-    t_u8 i        = 0;
+    int i        = 0;
     mlan_adapter *pmadapter = pmpriv->adapter;
-    const chan_freq_power_t *cfp = pmadapter->region_channel[0].pcfp;
-    t_u8 cfp_no  = pmadapter->region_channel[0].num_cfp;
+    const chan_freq_power_t *cfp = NULL;
+    t_u8 cfp_no = 0;
+    t_u8 region_idx = 0;
 
     ENTER();
-
-    if(NULL == cfp)
-    {
-        return MFALSE;
-    }
 
     /* Channel 0 is invalid */
     if (chan_num == 0U)
     {
         PRINTM(MERROR, "Invalid channel. Channel number can't be %d\r\n", chan_num);
         valid = MFALSE;
-        return valid;
+        goto out;
     }
 
-    for (i = 0; i < cfp_no; i++)
+    for (region_idx = 0; region_idx < NELEMENTS(pmadapter->region_channel); region_idx++)
     {
-        if (chan_num == cfp[i].channel)
+        if (!pmadapter->region_channel[region_idx].valid)
         {
-            valid = MTRUE;
-            break;
+            continue;
         }
-    }
 
-#if CONFIG_5GHz_SUPPORT
-    if (!valid)
-    {
-        cfp = pmadapter->region_channel[1].pcfp;
-        cfp_no   = pmadapter->region_channel[1].num_cfp;
-
+        cfp    = pmadapter->region_channel[region_idx].pcfp;
+        cfp_no = pmadapter->region_channel[region_idx].num_cfp;
         if(NULL == cfp)
         {
-            return MFALSE;
+            continue;
         }
 
         for (i = 0; i < cfp_no; i++)
@@ -1967,12 +1957,12 @@ t_bool wlan_check_channel_by_region_table(mlan_private *pmpriv, t_u8 chan_num)
             if (chan_num == cfp[i].channel)
             {
                 valid = MTRUE;
-                break;
+                goto out;
             }
         }
     }
-#endif
 
+out:
     LEAVE();
     return valid;
 }

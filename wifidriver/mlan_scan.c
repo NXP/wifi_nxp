@@ -5510,3 +5510,28 @@ t_void wlan_sort_scan_results(void)
     LEAVE();
     return;
 }
+
+/**
+ *  @brief This function sorts scan channels in ascending order
+ *
+ *  @param channels   Array of channel numbers to be sorted.
+ *  @param num_chans  Number of valid channel entries in channels.
+ *
+ *  @return           N/A
+ */
+t_void wlan_sort_scan_channels(t_u8 channels[], unsigned char num_chans)
+{
+    t_u8 i, j;
+
+    /* Bubble sort */
+    for (i = 0; i < num_chans; i++)
+    {
+        for (j = 1; j < num_chans - i; j++)
+        {
+            if ((t_u8)channels[j - 1] > (t_u8)channels[j])
+            {
+                SWAP_U8(channels[j - 1], channels[j]);
+            }
+        }
+    }
+}
