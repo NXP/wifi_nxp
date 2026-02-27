@@ -440,11 +440,11 @@
 #endif
 
 #if CONFIG_CSI
-#if !defined MAX_CSI_LOCAL_BUF
-#define MAX_CSI_LOCAL_BUF 20
+#if !defined CONFIG_MAX_CSI_LOCAL_BUF
+#define CONFIG_MAX_CSI_LOCAL_BUF 20
 #endif
-#if !defined CSI_LOCAL_BUF_ENTRY_SIZE
-#define CSI_LOCAL_BUF_ENTRY_SIZE 768
+#if !defined CONFIG_CSI_LOCAL_BUF_ENTRY_SIZE
+#define CONFIG_CSI_LOCAL_BUF_ENTRY_SIZE 768
 #endif
 #endif
 

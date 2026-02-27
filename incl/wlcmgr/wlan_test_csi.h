@@ -19,9 +19,17 @@
 
 #if CONFIG_CSI
 
+#ifndef CONFIG_CSI_PROCESS_PRI
+#define CONFIG_CSI_PROCESS_PRI WLAN_TASK_PRI_LOW
+#endif
+
+#ifndef CONFIG_WIFI_CSI_PROCESS_STACK_SIZE
+#define CONFIG_WIFI_CSI_PROCESS_STACK_SIZE (2048)
+#endif
+
 /* Debug configuration - enables statistics tracking and verbose logging */
 #ifndef CONFIG_CSI_DEBUG
-#define CONFIG_CSI_DEBUG 1
+#define CONFIG_CSI_DEBUG 0
 #endif
 
 /** 
@@ -43,11 +51,9 @@ typedef struct {
  * and performance analysis. Only available when CONFIG_CSI_DEBUG is enabled.
  */
 typedef struct {
-    uint32_t total_packets;        /** Total CSI packets processed */
-    uint32_t user_drop_count;      /** Packets dropped due to queue full or fast consume */
+    uint32_t processed_packets;        /** Total CSI packets processed */
+    uint32_t fast_consume_count;      /** Packets dropped due to queue full or fast consume */
     uint32_t enqueue_drop_count;    /** Packets dropped due to enqueue failuer */
-    uint32_t wraparound_detected;  /** Number of buffer wraparound events detected */
-    uint32_t fast_consume_events;  /** Number of fast consume recovery events */
     uint32_t processing_errors;    /** Processing error count */
     uint32_t max_queue_usage;      /** Peak queue occupancy (max messages) */
 } csi_user_stats;

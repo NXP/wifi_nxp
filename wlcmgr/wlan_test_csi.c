@@ -20,13 +20,10 @@
 #include "osa.h"
 #include "wlan.h"
 #include "wifi.h"
-#include "wlan_tests.h"
 #include "wlan_test_csi.h"
 #include "wmlog.h"
 
 #if CONFIG_CSI
-
-#define CONFIG_CSI_DEBUG_SUMMARY 20
 
 #define w_csi_e(...) wmlog_e("wifi_csi", ##__VA_ARGS__)
 #define w_csi_w(...) wmlog_w("wifi_csi", ##__VA_ARGS__)
@@ -38,24 +35,18 @@
 #endif
 
 /* Message queue size matches driver buffer size for 1:1 mapping */
-#define CSI_MSG_QUEUE_SIZE MAX_CSI_LOCAL_BUF
-
-/** Task definitions */
-#define CONFIG_WIFI_CSI_PROCESS_STACK_SIZE (2048)
-#define WLAN_CSI_PROCESS_PRI WLAN_TASK_PRI_LOW
+#define CSI_MSG_QUEUE_SIZE CONFIG_MAX_CSI_LOCAL_BUF
 
 static void csi_process_task(void *arg);
 static OSA_TASK_HANDLE_DEFINE(csi_process_task_handle);
-static OSA_TASK_DEFINE(csi_process_task, WLAN_CSI_PROCESS_PRI, 1, CONFIG_WIFI_CSI_PROCESS_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(csi_process_task, CONFIG_CSI_PROCESS_PRI, 1, CONFIG_WIFI_CSI_PROCESS_STACK_SIZE, 0);
 
 static OSA_MSGQ_HANDLE_DEFINE(csi_msg_queue, CSI_MSG_QUEUE_SIZE, sizeof(csi_msg_t));
 
 /* Task lifecycle control flag */
 static volatile bool csi_task_running = false;
 
-/* Host-side state tracking for wraparound detection */
-static uint32_t host_read_wrap_count = 0;  /** Number of times host read index wrapped */
-static t_u8 host_last_read_idx = 0;        /** Last processed buffer index */
+static uint32_t last_failed_count = 0;
 
 #if CONFIG_CSI_DEBUG
 static csi_user_stats wlan_csi_stat;
@@ -117,7 +108,7 @@ int csi_data_recv_user(void *buffer, size_t data_len)
  * This internal function is called when buffer wraparound is detected,
  * indicating that the driver buffer is filling faster than the processing
  * task can consume. It quickly drains a specified number of messages from
- * the queue WITHOUT full processing.
+ * the queue without full processing.
  *
  * @param[in] target_count Number of messages to consume from queue
  *
@@ -134,145 +125,38 @@ static int fast_consume_queue(int target_count)
     /** Rapidly consume messages without full processing */
     while (consumed < target_count)
     {
-        if (OSA_MsgQGet((osa_msgq_handle_t)csi_msg_queue, &msg, 0) != WM_SUCCESS)
+        if (OSA_MsgQGet((osa_msgq_handle_t)csi_msg_queue, &msg, 0) != KOSA_StatusSuccess)
         {
             break;
         }
-        
 #if CONFIG_CSI_DEBUG
-        wlan_csi_stat.user_drop_count++;
+        wlan_csi_stat.fast_consume_count++;
 #endif
         /** Skip processing, just consume to make room */
         consumed++;
     }
     
-#if CONFIG_CSI_DEBUG
-    wlan_csi_stat.fast_consume_events++;
-    w_csi_d(" Fast consumed %d messages\r\n", consumed);
-#endif
-    
     return consumed;
 }
 
 /**
- * @brief Calculate how far ahead the driver buffer is compared to host processing
+ * @brief Detect queue overflow
  *
- * This function calculates the gap between the driver's current read position
- * and the host's last processed position, accounting for buffer wraparound.
- * This metric indicates how much backlog exists in the system.
+ * This function monitors driver callback failures as a signal that the message
+ * queue has overflowed (become full).
  *
- * The calculation handles three cases:
- * 1. Same wrap cycle: Simple subtraction of indices
- * 2. Driver wrapped once ahead: Account for one full buffer cycle
- * 3. Driver wrapped multiple times: Account for multiple buffer cycles
- *
- * @param[in] driver_read_idx Driver's current read index (0 to MAX_CSI_LOCAL_BUF-1)
- * @param[in] host_last_idx   Host's last processed index
- * @param[in] driver_wrap     Driver's wraparound count
- * @param[in] host_wrap       Host's wraparound count
- *
- * @return Number of buffer positions the driver is ahead of host
- *         Value indicates system backlog (higher = more backlog)
- *         Returns 0 if negative wrap difference (should not happen)
+ * @return cnt The count of queue overflow.
  *
  */
-static int calculate_driver_ahead(t_u8 driver_read_idx, t_u8 host_last_idx,
-                                  uint32_t driver_wrap, uint32_t host_wrap)
+static int check_queue_overflow(void)
 {
-    int ahead_count = 0;
-    int wrap_diff = (int)(driver_wrap - host_wrap);
-    
-    if (wrap_diff == 0)
-    {
-        /** Same wrap cycle - simple subtraction */
-        ahead_count = (driver_read_idx >= host_last_idx) ? 
-                      (driver_read_idx - host_last_idx) : 0;
-    }
-    else if (wrap_diff >= 1)
-    {
-        /** Driver wrapped multiple times ahead of host */
-        ahead_count = (wrap_diff - 1) * MAX_CSI_LOCAL_BUF +
-                      (MAX_CSI_LOCAL_BUF - host_last_idx) + driver_read_idx;
-    }
-    else
-    {
-        /** Negative wrap_diff - should not happen */
-        ahead_count = 0;
-    }
+    t_u32 callback_failed_cnt = 0;
+    wifi_get_csi_buff_status(NULL, NULL, NULL, &callback_failed_cnt);
 
-    if (ahead_count > CSI_MSG_QUEUE_SIZE)
-    {
-        w_csi_d(" Driver ahead: driver_idx=%u, host_idx=%u, "
-               "driver_wrap=%u, host_wrap=%u => ahead=%d (capacity=%d)\r\n",
-               driver_read_idx, host_last_idx, driver_wrap, host_wrap, 
-               ahead_count, CSI_MSG_QUEUE_SIZE);
-    }
-    
-    return ahead_count;
-}
+    int cnt = callback_failed_cnt - last_failed_count;
+    last_failed_count = callback_failed_cnt;
 
-/**
- * @brief Detect driver buffer wraparound and trigger recovery if needed
- *
- * This function implements wraparound detection and automatic recovery.
- * It monitors the driver buffer state and takes action when the driver
- * has wrapped around ahead of host processing.
- *
- * Detection:
- * - Calculates driver backlog (how far ahead driver is)
- * - Checks if backlog exceeds available queue space
- *
- * Recovery (if wraparound detected):
- * - Fast consumes excess messages from queue
- * - Frees up space for driver callback to return
- * - Allows driver buffer to advance and accept new data
- *
- * @param[in] driver_wrap_count  Driver's current wraparound count
- * @param[in] driver_read_idx    Driver's current read index
- *
- * @return true  Wraparound detected and recovery performed
- * @return false Normal operation, no wraparound detected
- *
- */
-static bool detect_and_recover_wraparound(uint32_t driver_wrap_count, 
-                                   t_u8 driver_read_idx)
-{
-    int driver_ahead = calculate_driver_ahead(driver_read_idx, 
-                                              host_last_read_idx,  // Global
-                                              driver_wrap_count, 
-                                              host_read_wrap_count); // Global
-    
-    /** Get current queue size */
-    t_u32 current_queue_size = OSA_MsgQAvailableMsgs((osa_msgq_handle_t)csi_msg_queue);
-    
-    /** Calculate available space */
-    int queue_available = CSI_MSG_QUEUE_SIZE - current_queue_size;
-    
-    /** Check if we have enough space */
-    if (driver_ahead > queue_available)
-    {
-        /** Not enough space - make room */
-        int excess = driver_ahead - queue_available;
-
-        w_csi_d(" Queue space shortage: driver ahead %d, available %d, "
-               "excess %d, current queue size %u\r\n",
-               driver_ahead, queue_available, excess, current_queue_size);
-
-        int consume_count = excess;
-        if (consume_count > (int)current_queue_size)
-        {
-            consume_count = current_queue_size;
-        }
-        
-        if (consume_count > 0)
-        {
-            fast_consume_queue(consume_count);
-        }
-        
-        return true;
-    }
-    
-    return false;
+    return cnt;
 }
 
 /**
@@ -304,6 +188,9 @@ static void csi_user_process(void *buffer, size_t data_len)
 {
     PRINTF("CSI user callback: Event CSI data\r\n");
     dump_hex(buffer, data_len);
+#if CONFIG_CSI_DEBUG
+        wlan_csi_stat.processed_packets++;
+#endif
 }
 
 /**
@@ -322,73 +209,61 @@ static void csi_user_process(void *buffer, size_t data_len)
 static void csi_process_task(void *arg)
 {
     csi_msg_t msg;
-    int ret;
-    
-    /** Variables for driver state monitoring */
-    t_u8 driver_write_idx, driver_read_idx, driver_valid_cnt;
-    uint32_t driver_wrap_count;
 
     w_csi_d(" Processing task started\r\n");
     
     while (csi_task_running)
     {
         /** Get CSI data from message queue (blocking wait forever) */
-        ret = OSA_MsgQGet((osa_msgq_handle_t)csi_msg_queue, &msg, osaWaitForever_c);
-        
-        if (ret != WM_SUCCESS)
-        {
-            /** Should not happen with wait forever, but handle gracefully */
-            continue;
-        }
-        
+        OSA_MsgQGet((osa_msgq_handle_t)csi_msg_queue, &msg, osaWaitForever_c);
         /** Check for exit signal */
         if (msg.data_ptr == NULL)
         {
-            break;
+            continue;
         }
-        
-        /** Get current driver state (read-only) */
-        wifi_get_csi_buff_status(&driver_write_idx, &driver_read_idx, 
-                                 &driver_valid_cnt, &driver_wrap_count, NULL);
-
-        /** Check for wraparound condition */
-        if (detect_and_recover_wraparound(driver_wrap_count, driver_read_idx))
+        /**
+         * Queue overflow detection and recovery loop
+         *
+         * Purpose:
+         * Detect when message queue has overflowed
+         * and drain queue to restore normal operation.
+         *
+         * Why while loop:
+         * During fast_consume, driver may continue enqueuing new CSI data.
+         * Loop ensures consume all messages including concurrent ones,
+         * not just the snapshot count.
+         */
+        while (check_queue_overflow() > 0)
         {
-            host_last_read_idx = driver_read_idx;
-            host_read_wrap_count = driver_wrap_count;
-            /** Space shortage handled, skip current message */
+            t_u32 queue_size = OSA_MsgQAvailableMsgs((osa_msgq_handle_t)csi_msg_queue);
+            if (queue_size > 0)
+            {
+                w_csi_d("Consume all %u msgs\r\n", queue_size);
+                fast_consume_queue(queue_size);
+            }
             continue;
         }
 
         csi_user_process(msg.data_ptr, msg.data_len);
-
-        t_u8 old_host_idx = host_last_read_idx;
-        
-        /** Host processed one message, advance index */
-        host_last_read_idx = (host_last_read_idx + 1) % CSI_MSG_QUEUE_SIZE;
-        
-        /** Check if host index wrapped */
-        if (host_last_read_idx < old_host_idx)
-        {
-            /** Host read index wrapped - increment wrap count */
-            host_read_wrap_count++;
-            w_csi_d(" Host read wrap, count now=%u\r\n", 
-                   host_read_wrap_count);
-        }
+    }
 
 #if CONFIG_CSI_DEBUG
-        wlan_csi_stat.total_packets++;
-#endif
-    }
+    double csi_total_packets = wlan_csi_stat.processed_packets +
+        wlan_csi_stat.fast_consume_count + wlan_csi_stat.enqueue_drop_count;
     
-    w_csi_d("\r\n === Final Statistics ===\r\n");
-    w_csi_d("  Porcessed packets: %u\r\n", wlan_csi_stat.total_packets);
-    w_csi_d("  User drops: %u\r\n", wlan_csi_stat.user_drop_count);
-    w_csi_d("  Enqueue drops: %u\r\n", wlan_csi_stat.enqueue_drop_count);
-    w_csi_d("  Wraparounds detected: %u\r\n", wlan_csi_stat.wraparound_detected);
-    w_csi_d("  Fast consume events: %u\r\n", wlan_csi_stat.fast_consume_events);
+    double processed_rate = (double)wlan_csi_stat.processed_packets / csi_total_packets;
+    double fast_consume_rate = (double)wlan_csi_stat.fast_consume_count / csi_total_packets;
+    double enqueue_drop_rate = (double)wlan_csi_stat.enqueue_drop_count / csi_total_packets;
+    w_csi_d("  === Final Statistics ===\r\n");
+    w_csi_d("  Porcessed packets: %u, rate(%.2f%%)\r\n", wlan_csi_stat.processed_packets,
+        processed_rate * 100);
+    w_csi_d("  Fast consume: %u, rate(%.2f%%)\r\n", wlan_csi_stat.fast_consume_count,
+        fast_consume_rate * 100);
+    w_csi_d("  Enqueue drops: %u, rate(%.2f%%)\r\n", wlan_csi_stat.enqueue_drop_count,
+        enqueue_drop_rate * 100);
     w_csi_d("  Max queue usage: %u/%u\r\n", wlan_csi_stat.max_queue_usage, CSI_MSG_QUEUE_SIZE);
     w_csi_d("===========================\r\n\r\n");
+#endif
     
     w_csi_d(" Processing task exiting\r\n");
     OSA_TaskDestroy((osa_task_handle_t)csi_process_task_handle);
@@ -424,10 +299,7 @@ int csi_create_process_task(void)
         w_csi_e(" Failed to create message queue\r\n");
         return -WM_FAIL;
     }
-    
-    /** Initialize state variables */
-    host_read_wrap_count = 0;
-    host_last_read_idx = 0;
+
     csi_task_running = true;
     
 #if CONFIG_CSI_DEBUG
