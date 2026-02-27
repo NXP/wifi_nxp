@@ -7292,7 +7292,7 @@ static void wlan_cpu_loading_info_display(void)
     uint64_t total_runtime = 0;
     uint64_t task_runtime[CPU_LOADING_TASK_NUM] = {0};
     float task_runtime_percentage[CPU_LOADING_TASK_NUM] = {0};
-    uint8_t task_index = 0, i = 0;
+    uint8_t i = 0;
     uint32_t collect_time = 0;
     char cpu_loading_task_name[] = "cpu_loading_task";
 
@@ -17457,7 +17457,6 @@ static void cpu_loading_cb(osa_timer_arg_t arg)
 
 static int wlan_cpu_loading_start(uint32_t number, uint8_t period)
 {
-    int ret;
     osa_status_t status;
 
     if(cpu_loading.status == CPU_LOADING_STATUS_DEAD)
@@ -17521,7 +17520,6 @@ static int wlan_cpu_loading_start(uint32_t number, uint8_t period)
 
 int wlan_cpu_loading(uint8_t start, uint32_t number, uint8_t period)
 {
-    int ret;
     if(start == CPU_LOADING_ACTION_STOP)
     {
         if(cpu_loading.status == CPU_LOADING_STATUS_DEAD)
