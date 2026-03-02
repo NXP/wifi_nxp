@@ -13721,6 +13721,14 @@ int wlan_get_rf_otp_cal_data(uint8_t *cal_data)
 
     return -WM_FAIL;
 }
+
+int wlan_set_rf_rx_mac_filter(uint8_t *addr)
+{
+    if (addr != NULL)
+        return wifi_set_rf_rx_mac_filter(addr);
+
+    return -WM_FAIL;
+}
 #endif
 #if CONFIG_WIFI_FW_DEBUG
 void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),
