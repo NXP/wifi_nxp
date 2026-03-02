@@ -5578,6 +5578,18 @@ int wlan_set_rf_otp_cal_data(const uint8_t *cal_data, uint32_t cal_data_len);
  *
  */
 int wlan_get_rf_otp_cal_data(uint8_t *cal_data);
+
+/**
+ * Add RX peer mac filter.
+ *
+ * \note  call \ref wlan_set_rf_test_mode API before using this API.
+ *
+ * \param[int] addr: only receive packets from this mac address.
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ *
+ */
+int wlan_set_rf_rx_mac_filter(uint8_t *addr);
 #endif
 #if CONFIG_WIFI_FW_DEBUG
 /** This function registers callbacks which are used to generate firmware dump on USB

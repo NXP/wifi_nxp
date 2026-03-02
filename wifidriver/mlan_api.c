@@ -2215,6 +2215,63 @@ int wifi_get_rf_otp_cal_data(uint8_t *cal_data)
 
     return ret;
 }
+
+int wifi_set_rf_rx_mac_filter(uint8_t *addr)
+{
+    int ret;
+    mlan_ds_misc_cfg *misc = NULL;
+    HostCmd_DS_COMMAND *cmd;
+    HostCmd_DS_MFG_CMD_RX_MAC_FILTER_T *filter;
+
+#if !CONFIG_MEM_POOLS
+    misc = OSA_MemoryAllocate(sizeof(mlan_ds_misc_cfg));
+#else
+    misc = OSA_MemoryPoolAllocate(buf_3072_MemoryPool);
+#endif
+    if (misc == NULL)
+    {
+        return -WM_FAIL;
+    }
+
+    wifi_get_command_lock();
+    cmd = wifi_get_command_buffer();
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_MFG_COMMAND);
+    cmd->size    = wlan_cpu_to_le16(sizeof(HostCmd_DS_MFG_CMD_RX_MAC_FILTER_T) + S_DS_GEN);
+    cmd->seq_num   = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]);
+    cmd->result    = 0x0;
+
+    filter = &cmd->params.mfg_rx_mac_filter;
+    memset(filter, 0x00, sizeof(HostCmd_DS_MFG_CMD_RX_MAC_FILTER_T));
+    filter->mfg_cmd = MFG_CMD_RX_MAC_FILTER;
+    filter->action  = HostCmd_ACT_GEN_SET;
+    filter->mode = 1;
+    memcpy(filter->bssid, addr, MLAN_MAC_ADDR_LENGTH);
+
+    ret = wifi_wait_for_cmdresp(misc);
+    if (ret == WM_SUCCESS && misc->param.mfg_generic_cfg.error == 0)
+    {
+        goto out;
+    }
+
+    ret = misc->param.mfg_generic_cfg.error;
+out:
+    wifi_put_command_lock();
+
+    if(misc != NULL)
+    {
+#if !CONFIG_MEM_POOLS
+        OSA_MemoryFree(misc);
+#else
+        OSA_MemoryPoolFree(buf_3072_MemoryPool, misc);
+#endif
+    }
+
+    if (ret != 0)
+    {
+        wifi_e("wifi set rx mac filter fails, error code: 0x%x\r\n", ret);
+    }
+    return ret;
+}
 #endif
 
 /*
