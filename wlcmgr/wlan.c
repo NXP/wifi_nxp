@@ -1779,7 +1779,8 @@ static int security_profile_matches(const struct wlan_network *network, const st
     {
         uint8_t mfpc, mfpr;
 
-        (void)wlan_get_pmfcfg(&mfpc, &mfpr);
+        mfpc = (uint8_t)config->mfpc;
+        mfpr = (uint8_t)config->mfpr;
 
         if (!mfpc && !mfpr)
         {
@@ -4051,68 +4052,38 @@ static void wlcm_process_ba_stream_timeout_request(struct wifi_message *msg)
 #endif
 
 #if CONFIG_WPA_SUPP
-static void wlan_update_cur_network_idx(struct wifi_message *msg)
+int wlan_select_cur_network_by_scan_res(unsigned int scan_index)
 {
-    BSSDescriptor_t *pbss_desc = NULL;
-    int i = 0;
-    struct wifi_scan_result2 *res;
-    mlan_private *priv = (mlan_private *)mlan_adap->priv[0];
-    int idx = -1;
     int ret;
-    uint8_t num_channels         = 0;
+    uint8_t num_chans = 0;
+    struct wifi_scan_result2 *res = NULL;
     wlan_scan_channel_list_t chan_list[40];
-	
-    if (msg->reason == WIFI_EVENT_REASON_SUCCESS && msg->data != NULL)
+
+    ret = wifi_get_scan_result(scan_index, &res);
+    if (ret != WM_SUCCESS || res == NULL)
     {
-        pbss_desc = msg->data;
-        idx = wlan_find_bssid_in_list(priv, (const unsigned char *)pbss_desc->mac_address, MLAN_BSS_MODE_NEGATIVE);
-        if (idx < 0)
-        {   
-            wlcm_d("%s: Find bssid in list fail", __func__);
-            return;
-        }
-        ret = wifi_get_scan_result(idx, &res);
-        if (ret != WM_SUCCESS)
+        wlcm_d("%s: Wi-Fi get scan result fail", __func__);
+        return -WM_FAIL;
+    }
+
+    for (int i = 0; i < ARRAY_SIZE(wlan.networks); i++)
+    {
+        if (wlan.networks[i].name[0] != '\0' &&
+            wlan.networks[i].role == WLAN_BSS_ROLE_STA)
         {
-            wlcm_d("%s: Wi-Fi get scan result fail", __func__);
-            return;
-        }
-        for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
-        {
-            if (wlan.networks[i].name[0] != '\0' &&
-                wlan.networks[i].role == WLAN_BSS_ROLE_STA)
+            ret = network_matches_scan_result(&wlan.networks[i], res, &num_chans, chan_list);
+            if (ret == WM_SUCCESS)
             {
-                if (wlan.networks[i].ssid_specific && wlan.networks[i].ssid[0] != 0U)
-                {
-                    if (strncmp(wlan.networks[i].ssid, (const char *)pbss_desc->ssid.ssid, pbss_desc->ssid.ssid_len) != 0 ||
-                        wlan.networks[i].ssid[pbss_desc->ssid.ssid_len] != '\0')
-                    {
-                        continue;
-                    }
-                }
-
-                if (wlan.networks[i].bssid_specific && !is_bssid_any(wlan.networks[i].bssid))
-                {
-                    if (memcmp(wlan.networks[i].bssid, pbss_desc->mac_address, MLAN_MAC_ADDR_LENGTH) != 0)
-                    {
-                        continue;
-                    }
-                }
-				
-                ret = network_matches_scan_result(&wlan.networks[i], res, &num_channels, chan_list);
-                if (ret != WM_SUCCESS)
-                {
-                    continue;
-                }
-
-                /** The match is based on both SSID (if ssid is specified) and BSSID (if bssid is specified).
-                 *  Found matching network: update current network index.
-                 */
                 wlan.cur_network_idx = i;
-                break;
+                (void)wlan_set_pmfcfg((t_u8)wlan.networks[wlan.cur_network_idx].security.mfpc,
+                                      (t_u8)wlan.networks[wlan.cur_network_idx].security.mfpr);
+                return WM_SUCCESS;
             }
         }
     }
+
+    wlcm_d("%s: no network profile matches scan results", __func__);
+    return -WM_FAIL;
 }
 #endif
 
@@ -7536,13 +7507,6 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_d("got event: association result: %s",
                     msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
 
-#if CONFIG_WPA_SUPP
-            /** If a network priority group is set, supplicant will automatically
-             * select a network based on the priority group, so synchronize and
-             * correct the current network index here.
-             * */
-            wlan_update_cur_network_idx(msg);
-#endif
             wlcm_process_association_event(msg, &next);
             break;
 

@@ -2872,6 +2872,12 @@ int wifi_nxp_send_assoc(unsigned int bss_type, nxp_wifi_assoc_info_t *assoc_info
 
     BSSDescriptor_t *d = &mlan_adap->pscan_table[idx];
 
+    /** If a network priority group is set, supplicant will automatically
+     * select a network based on the priority group, so synchronize and
+     * correct the current network index here.
+     */
+    (void)wlan_select_cur_network_by_scan_res(idx);
+
 #if CONFIG_HOST_MLME
     priv->curr_bss_params.host_mlme = 1;
 #endif
@@ -3807,7 +3813,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #if CONFIG_WPA_SUPP
             assoc_resp_ret:
 #endif
-                (void)wifi_event_completion(WIFI_EVENT_ASSOCIATION, result, &pmpriv->curr_bss_params.bss_descriptor);
+                (void)wifi_event_completion(WIFI_EVENT_ASSOCIATION, result, NULL);
             }
             break;
             case HostCmd_CMD_802_11_MAC_ADDRESS:

@@ -7960,4 +7960,18 @@ int wlan_11ac_allowed(struct wlan_network *network);
  */
 int wlan_11ax_allowed(struct wlan_network *network);
 #endif
+
+#if CONFIG_WPA_SUPP
+/**
+ * Select (synchronize) current network index according to a scan table entry.
+ *
+ * This API searches configured wlan.networks[] for an entry that matches the
+ * given scan table index, and sets wlan.cur_network_idx accordingly.
+ *
+ * \param[in] scan_index: Index into the driver's scan table.
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ */
+int wlan_select_cur_network_by_scan_res(unsigned int scan_index);
+#endif
 #endif /* __WLAN_H__ */
