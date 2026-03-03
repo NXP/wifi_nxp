@@ -13581,6 +13581,19 @@ int wlan_get_rf_band(uint8_t *band)
     return -WM_FAIL;
 }
 
+int wlan_set_rf_xtal(const uint8_t xtal_cal)
+{
+    return wifi_set_rf_xtal(xtal_cal);
+}
+
+int wlan_get_rf_xtal(uint8_t *extension, uint8_t *xtal_cal)
+{
+    if (extension == NULL || xtal_cal == NULL)
+        return -WM_FAIL;
+
+    return wifi_get_rf_xtal(extension, xtal_cal);
+}
+
 int wlan_get_rf_bandwidth(uint8_t *bandwidth)
 {
     if (bandwidth != NULL)
