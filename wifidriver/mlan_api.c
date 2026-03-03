@@ -1624,6 +1624,53 @@ int wifi_get_rf_band(uint8_t *band)
     return -WM_FAIL;
 }
 
+int wifi_set_rf_xtal(const uint8_t xtal_cal)
+{
+    int ret;
+
+    wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
+
+    (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
+
+    wifi_mfg_cmd_generic_cfg.mfg_cmd = MFG_CMD_RFXTAL_CTRL;
+    wifi_mfg_cmd_generic_cfg.action  = HostCmd_ACT_GEN_SET;
+
+    wifi_mfg_cmd_generic_cfg.data1 &= ~((uint32_t)0xFF << 8);
+    wifi_mfg_cmd_generic_cfg.data1 |= ((uint32_t)xtal_cal << 8);
+
+    ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_generic_cfg);
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
+    {
+        return WM_SUCCESS;
+    }
+
+    wifi_e("Wifi set rf xtal fails, error code: 0x%x", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
+}
+
+int wifi_get_rf_xtal(uint8_t *extension, uint8_t *xtal_cal)
+{
+    int ret;
+
+    wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
+
+    (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
+
+    wifi_mfg_cmd_generic_cfg.mfg_cmd = MFG_CMD_RFXTAL_CTRL;
+    wifi_mfg_cmd_generic_cfg.action  = HostCmd_ACT_GEN_GET;
+
+    ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_GET, &wifi_mfg_cmd_generic_cfg);
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
+    {
+        *extension = wifi_mfg_cmd_generic_cfg.data1 & 0xFF;
+        *xtal_cal = (wifi_mfg_cmd_generic_cfg.data1 >> 8) & 0xFF;
+        return WM_SUCCESS;
+    }
+
+    wifi_e("Wifi get rf xtal fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
+}
+
 int wifi_set_rf_bandwidth(const uint8_t bandwidth)
 {
     int ret;

@@ -5215,6 +5215,8 @@ int wlan_set_rf_test_mode(void);
 /**
  * Disable the RF 11AX in Wi-Fi firmware.
  *
+ * \note  call \ref wlan_set_rf_test_mode API before using this API.
+ *
  * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
  */
 int wlan_rf_disable_11ax(void);
@@ -5297,6 +5299,31 @@ int wlan_set_rf_band(const uint8_t band);
  *
  */
 int wlan_get_rf_band(uint8_t *band);
+
+/**
+ * Set the RF crystal calibration in Wi-Fi firmware.
+ *
+ * \note  call \ref wlan_set_rf_test_mode API before using this API.
+ *
+ * \param[in] xtal_cal: The crystal calibration offset to be set in Wi-Fi firmware.
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ *
+ */
+int wlan_set_rf_xtal(const uint8_t xtal_cal);
+
+/**
+ * Get the RF crystal calibration from Wi-Fi firmware.
+ *
+ * \note  call \ref wlan_set_rf_test_mode API before using this API.
+ *
+ * \param[out] extension: A Pointer to a variable indicate RF xtal from internal or external crystal.
+ * \param[out] xtal_cal: A Pointer to a variable where RF crystal calibration is to be stored.
+ *
+ * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
+ *
+ */
+int wlan_get_rf_xtal(uint8_t *extension, uint8_t *xtal_cal);
 
 /**
  * Set the RF bandwidth in Wi-Fi firmware.

@@ -71,6 +71,12 @@ static void wlan_rf_disable_11ax_set(int argc, char *argv[])
 {
     int ret;
 
+    if (!rf_test_mode)
+    {
+        dump_wlan_set_rf_test_mode();
+        return;
+    }
+
     if (argc != 1)
     {
         dump_rf_disable_11ax_set_usage();
@@ -323,6 +329,80 @@ static void wlan_rf_band_get(int argc, char *argv[])
     {
         (void)PRINTF("RF Band configuration read failed\r\n");
         dump_wlan_get_rf_band_usage();
+    }
+}
+
+static void dump_wlan_set_rf_xtal_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-set-rf-xtal <xtal_cal> \r\n");
+    (void)PRINTF("\r\n");
+}
+
+static void wlan_rf_xtal_set(int argc, char *argv[])
+{
+    int ret;
+    uint8_t xtal_cal;
+
+    if (!rf_test_mode)
+    {
+        dump_wlan_set_rf_test_mode();
+        return;
+    }
+
+    if (argc != 2)
+    {
+        dump_wlan_set_rf_xtal_usage();
+        return;
+    }
+
+    xtal_cal = strtol(argv[1], NULL, 10);
+
+    ret = wlan_set_rf_xtal(xtal_cal);
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("RF xtal configuration successful\r\n");
+    }
+    else
+    {
+        (void)PRINTF("RF xtal configuration failed\r\n");
+        dump_wlan_set_rf_xtal_usage();
+    }
+}
+
+static void dump_wlan_get_rf_xtal_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-get-rf-xtal \r\n");
+}
+
+static void wlan_rf_xtal_get(int argc, char *argv[])
+{
+    int ret;
+    uint8_t extension;
+    uint8_t xtal_cal;
+
+    if (!rf_test_mode)
+    {
+        dump_wlan_set_rf_test_mode();
+        return;
+    }
+
+    if (argc != 1)
+    {
+        dump_wlan_get_rf_xtal_usage();
+        return;
+    }
+
+    ret = wlan_get_rf_xtal(&extension, &xtal_cal);
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Configured RF xtal_cal is: %d from %s crystal\r\n", xtal_cal, extension ? "external" : "internal");
+    }
+    else
+    {
+        (void)PRINTF("RF xtal configuration read failed\r\n");
+        dump_wlan_get_rf_xtal_usage();
     }
 }
 
@@ -1457,6 +1537,8 @@ static struct cli_command wlan_test_mode_commands[] = {
     {"wlan-get-rf-rx-antenna", NULL, wlan_rf_rx_antenna_get},
     {"wlan-set-rf-band", "<band>", wlan_rf_band_set},
     {"wlan-get-rf-band", NULL, wlan_rf_band_get},
+    {"wlan-set-rf-xtal", "<xtal_cal>", wlan_rf_xtal_set},
+    {"wlan-get-rf-xtal", NULL, wlan_rf_xtal_get},
     {"wlan-set-rf-bandwidth", "<bandwidth>", wlan_rf_bandwidth_set},
     {"wlan-get-rf-bandwidth", NULL, wlan_rf_bandwidth_get},
     {"wlan-set-rf-channel", "<channel>", wlan_rf_channel_set},

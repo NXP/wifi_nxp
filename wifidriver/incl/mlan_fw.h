@@ -6518,6 +6518,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_action_chan_switch_t
 #define MFG_CMD_OTP_CAL_DATA         0x121A
 #define MFG_CMD_WRITE_PATCH_BLOCK_OTP    0x1093
 #define MFG_CMD_RX_MAC_FILTER        0x102F
+#define MFG_CMD_RFXTAL_CTRL          0x1037
 
 typedef MLAN_PACK_START struct _HostCmd_DS_MFG_CMD_GENERIC_CFG
 {

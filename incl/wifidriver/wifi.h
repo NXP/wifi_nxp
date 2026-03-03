@@ -1355,6 +1355,10 @@ int wifi_set_rf_band(const uint8_t band);
 
 int wifi_get_rf_band(uint8_t *band);
 
+int wifi_set_rf_xtal(const uint8_t xtal_cal);
+
+int wifi_get_rf_xtal(uint8_t *extension, uint8_t *xtal_cal);
+
 int wifi_set_rf_bandwidth(const uint8_t bandwidth);
 
 int wifi_get_rf_bandwidth(uint8_t *bandwidth);
