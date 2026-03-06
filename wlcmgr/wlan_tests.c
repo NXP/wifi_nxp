@@ -10338,7 +10338,7 @@ static void dump_wlan_set_turbo_mode_usage()
 {
     (void)PRINTF("Usage: wlan-set-turbo-mode <STA/UAP> <mode>\r\n");
     (void)PRINTF("          <STA/UAP>  'STA'  or 'UAP' \r\n");
-    (void)PRINTF("          <mode> can be 0,1,2,3\r\n");
+    (void)PRINTF("          <mode> can be 0,1,2,3,4\r\n");
 }
 
 static void test_wlan_set_turbo_mode(int argc, char **argv)
