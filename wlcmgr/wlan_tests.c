@@ -8414,6 +8414,12 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
     }
     else if(csi_enable == 2)
     {
+        /* Graceful CSI shutdown sequence:
+         * 1. Unregister callback first (stop new events)
+         * 2. Destroy task second (cleanup resources)
+         *
+         * Prevents race conditions during shutdown.
+         */
         ret = wlan_unregister_csi_user_callback();
         if (ret != WM_SUCCESS)
         {

@@ -11331,6 +11331,8 @@ void wlan_reset(cli_reset_option ResetOption)
             }
 #if CONFIG_CSI
             wlan_reset_csi_filter_data();
+            /* CSI shutdown: unregister callback before destroying task to prevent race condition */
+            wlan_unregister_csi_user_callback();
             csi_destroy_process_task();
 #endif
 

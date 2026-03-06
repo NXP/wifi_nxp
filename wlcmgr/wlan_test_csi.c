@@ -25,6 +25,17 @@
 
 #if CONFIG_CSI
 
+/* HALT signal for graceful task shutdown
+ * 
+ * Design rationale:
+ * - Cannot use NULL (driver might legitimately pass NULL data_ptr)
+ * - Use address of a static variable as unique sentinel value
+ * - This is guaranteed to be a valid address but never a CSI data buffer
+ * - More portable than hardcoded magic number (works on any architecture)
+ */
+static const char csi_halt_sentinel = 0;
+#define CSI_HALT_SIGNAL ((void *)&csi_halt_sentinel)
+
 #define w_csi_e(...) wmlog_e("wifi_csi", ##__VA_ARGS__)
 #define w_csi_w(...) wmlog_w("wifi_csi", ##__VA_ARGS__)
 
@@ -107,6 +118,9 @@ int csi_data_recv_user(void *buffer, size_t data_len)
  * task can consume. It quickly drains a specified number of messages from
  * the queue without full processing.
  *
+ * NOTE: This is a demo implementation for fast processing CSI data.
+ *       Users can define their own implementation based on specific requirements.
+ *
  * @param[in] target_count Number of messages to consume from queue
  *
  * @return Number of messages actually consumed (may be less if queue empties)
@@ -141,6 +155,11 @@ static int fast_consume_queue(int target_count)
  *
  * This function monitors driver callback failures as a signal that the message
  * queue has overflowed (become full).
+ *
+ * NOTE: If overflow occurs frequently, users should consider:
+ *       1. Optimize CSI data processing to reduce processing time
+ *       2. Increase CSI buffer count (CONFIG_MAX_CSI_LOCAL_BUF) to handle bursts
+ *          (Note: This will increase memory footprint)
  *
  * @return cnt The count of queue overflow.
  *
@@ -185,8 +204,9 @@ static void csi_user_process(void *buffer, size_t data_len)
 {
     PRINTF("CSI user callback: Event CSI data\r\n");
     dump_hex(buffer, data_len);
+
 #if CONFIG_CSI_DEBUG
-        wlan_csi_stat.processed_packets++;
+    wlan_csi_stat.processed_packets++;
 #endif
 }
 
@@ -203,38 +223,49 @@ static void csi_process_task(void *arg)
 {
     csi_msg_t msg;
 
+    w_csi_d("CSI task started (pri=%d, stack=%d)\r\n",
+            CONFIG_CSI_PROCESS_PRI, CONFIG_WIFI_CSI_PROCESS_STACK_SIZE);
+
     csi_task_state = CSI_TASK_STATE_RUNNING;
-    
+
     while (csi_task_state == CSI_TASK_STATE_RUNNING)
     {
-        /** Get CSI data from message queue (blocking wait forever) */
         OSA_MsgQGet((osa_msgq_handle_t)csi_msg_queue, &msg, osaWaitForever_c);
 
+        /* Check for HALT signal */
+        if (msg.data_ptr == CSI_HALT_SIGNAL)
+        {
+            w_csi_d("Received HALT signal\r\n");
+            break;
+        }
+
+        /* Skip NULL data pointers (safety check) */
         if (msg.data_ptr == NULL)
         {
+            w_csi_w("Warning: received NULL data_ptr, skipping\r\n");
             continue;
         }
+
         /**
-         * Queue overflow detection and recovery loop
+         * Queue overflow detection and recovery
          *
-         * Purpose:
-         * Detect when message queue has overflowed
-         * and drain queue to restore normal operation.
+         * Overflow occurs when: CSI data arrives faster than processing speed
+         * Common causes: Slow csi_user_process(), low task priority, high CSI rate
          *
-         * Why while loop:
-         * During fast_consume, driver may continue enqueuing new CSI data.
-         * Loop ensures consume all messages including concurrent ones,
-         * not just the snapshot count.
+         * If overflow occurs frequently, apply optimizations:
+         * 1. Optimize csi_user_process() (remove prints, simplify logic)
+         * 2. Increase task priority (CONFIG_CSI_PROCESS_PRI)
+         * 3. Increase buffer size (CONFIG_MAX_CSI_LOCAL_BUF)
+         * 4. Set appropriate CSI filter conditions
          */
         while (check_queue_overflow() > 0)
         {
             t_u32 queue_size = OSA_MsgQAvailableMsgs((osa_msgq_handle_t)csi_msg_queue);
             if (queue_size > 0)
             {
-                w_csi_d("Consume all %u msgs\r\n", queue_size);
+                w_csi_d("Overflow: consuming %u msgs\r\n", queue_size);
                 fast_consume_queue(queue_size);
             }
-            continue;
         }
 
         csi_user_process(msg.data_ptr, msg.data_len);
@@ -317,27 +348,23 @@ int csi_create_process_task(void)
         return -WM_FAIL;
     }
 
-    w_csi_d(" Processing task created successfully (queue size: %d)\r\n", CSI_MSG_QUEUE_SIZE);
     return WM_SUCCESS;
 }
 
 /**
  * @brief Stop and destroy CSI processing task
  *
+ * CRITICAL: Caller MUST unregister CSI callback BEFORE calling this
+ *
+ * Correct sequence:
+ * 1. wlan_unregister_csi_user_callback() <- First
+ * 2. csi_destroy_process_task()          <- Second
+ *
  * @return WM_SUCCESS on successful cleanup
  *
  */
 int csi_destroy_process_task(void)
 {
-    /**
-     * State validation: Prevent duplicate/invalid destruction
-     *
-     * Only allow destroy when task is RUNNING.
-     * Reject if:
-     * - IDLE: No task to destroy
-     * - CREATING: Task not fully created yet
-     * - DESTROYING: Already destroying
-     */
     if (csi_task_state != CSI_TASK_STATE_RUNNING)
     {
 #if CONFIG_CSI_DEBUG
@@ -356,17 +383,32 @@ int csi_destroy_process_task(void)
 
     csi_task_state = CSI_TASK_STATE_DESTROYING;
     
-    /** Send dummy message to wake up task (ensure it can exit) */
-    csi_msg_t dummy_msg = {NULL, 0};
-    OSA_MsgQPut((osa_msgq_handle_t)csi_msg_queue, &dummy_msg);
-    
+    /* Send HALT message and wait for task to self-destruct */
+    csi_msg_t halt_msg = {CSI_HALT_SIGNAL, 0};
+    OSA_MsgQPut((osa_msgq_handle_t)csi_msg_queue, &halt_msg);
     OSA_TimeDelay(100);
     
-    OSA_MsgQDestroy((osa_msgq_handle_t)csi_msg_queue);
+    /* Drain remaining messages if any (prevents queue access race) */
+    t_u32 remaining_msgs = OSA_MsgQAvailableMsgs((osa_msgq_handle_t)csi_msg_queue);
+    if (remaining_msgs > 0)
+    {
+        w_csi_w(" Warning: %u messages still in queue, draining...\r\n", remaining_msgs);
+        
+        csi_msg_t msg;
+        t_u32 drained = 0;
+        while (OSA_MsgQGet((osa_msgq_handle_t)csi_msg_queue, &msg, 0) == KOSA_StatusSuccess)
+        {
+            drained++;
+        }
+        
+        w_csi_w(" Drained %u messages\r\n", drained);
+    }
     
+    /* Destroy queue after task is fully destroyed */
+    OSA_MsgQDestroy((osa_msgq_handle_t)csi_msg_queue);
     csi_task_state = CSI_TASK_STATE_IDLE;
 
-    w_csi_d(" Processing task destroyed\r\n");
+    w_csi_d(" Processing task and queue destroyed\r\n");
     return WM_SUCCESS;
 }
 

@@ -24,7 +24,7 @@
 #endif
 
 #ifndef CONFIG_WIFI_CSI_PROCESS_STACK_SIZE
-#define CONFIG_WIFI_CSI_PROCESS_STACK_SIZE (2048)
+#define CONFIG_WIFI_CSI_PROCESS_STACK_SIZE (1024)
 #endif
 
 /* Debug configuration - enables statistics tracking and verbose logging */
@@ -32,24 +32,14 @@
 #define CONFIG_CSI_DEBUG 0
 #endif
 
-/** 
- * @brief CSI message structure for queue communication
- *
- * This structure is used to pass CSI data references from the callback
- * (Wi-Fi driver task) to the processing task via message queue.
- */
+/** CSI message structure for queue communication */
 typedef struct {
     void *data_ptr;      /** Pointer to CSI data buffer */
     t_u16 data_len;      /** Length of CSI data in bytes */
 } csi_msg_t;
 
 #if CONFIG_CSI_DEBUG
-/** 
- * @brief CSI processing statistics (debug mode only)
- *
- * Tracks CSI data flow and system health metrics for debugging
- * and performance analysis. Only available when CONFIG_CSI_DEBUG is enabled.
- */
+/** CSI processing statistics (debug mode only) */
 typedef struct {
     uint32_t processed_packets;       /** Total CSI packets processed */
     uint32_t fast_consume_count;      /** Fast consume */
