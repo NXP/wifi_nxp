@@ -2951,6 +2951,7 @@
  */
 #define MBEDTLS_POLY1305_C
 
+#ifndef CONFIG_BUILD_WITH_TFM
 /**
  * \def MBEDTLS_PSA_CRYPTO_C
  *
@@ -2966,6 +2967,7 @@
  *
  */
 #define MBEDTLS_PSA_CRYPTO_C
+#endif
 
 /**
  * \def MBEDTLS_PSA_CRYPTO_SE_C
