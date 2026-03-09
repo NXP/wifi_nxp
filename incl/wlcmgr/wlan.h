@@ -8066,6 +8066,8 @@ int wlan_select_cur_network_by_scan_res(unsigned int scan_index);
  */
 int wlan_set_network_chanlist(char *name, const uint8_t *chan_list, uint8_t num_chans, enum wlan_frequency_bands freq_band);
 
+extern int wlan_event_callback(enum wlan_event_reason reason, void *data);
+
 #ifdef __cplusplus
 }
 #endif
