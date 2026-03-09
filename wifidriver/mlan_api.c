@@ -2064,9 +2064,15 @@ int wifi_rf_trigger_frame_cfg(uint32_t Enable_tx,
                               uint8_t AC_PL,
                               uint8_t Pref_AC)
 {
+#if CONFIG_11AX
     wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr_t wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr;
     wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
     int ret;
+
+    if (!IS_FW_SUPPORT_11AX(mlan_adap))
+    {
+        return -WM_FAIL;
+    }
 
     (void)memset(&wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr, 0x00, sizeof(wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr_t));
     (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
@@ -2118,15 +2124,22 @@ int wifi_rf_trigger_frame_cfg(uint32_t Enable_tx,
     }
 
     wifi_e("wifi set rf tx frame fail, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+#endif
     return -WM_FAIL;
 }
 
 int wifi_cfg_rf_he_tb_tx(uint16_t enable, uint16_t qnum, uint16_t aid, uint16_t axq_mu_timer, int16_t tx_power)
 {
+#if CONFIG_11AX
     wifi_mfg_cmd_he_tb_tx_t wifi_mfg_cmd_he_tb_tx;
 
     wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
     int ret;
+
+    if (!IS_FW_SUPPORT_11AX(mlan_adap))
+    {
+        return -WM_FAIL;
+    }
 
     (void)memset(&wifi_mfg_cmd_he_tb_tx, 0x00, sizeof(wifi_mfg_cmd_he_tb_tx_t));
     (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
@@ -2146,6 +2159,7 @@ int wifi_cfg_rf_he_tb_tx(uint16_t enable, uint16_t qnum, uint16_t aid, uint16_t 
     }
 
     wifi_e("wifi set rf tx frame fail, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+#endif
     return -WM_FAIL;
 }
 
