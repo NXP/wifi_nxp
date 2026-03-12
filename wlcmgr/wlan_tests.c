@@ -2892,6 +2892,19 @@ static void test_wlan_info(int argc, char **argv)
 
         print_network(network);
     }
+#if CONFIG_WPA_SUPP_P2P
+    if (wlan_get_current_wfd_network(network) != 0)
+        (void)PRINTF("P2P GO not started\r\n");
+    else
+    {
+        if (network->role == WLAN_BSS_ROLE_UAP)
+        {
+            (void)PRINTF("P2P GO started as:\r\n");
+        }
+        print_network(network);
+    }
+#endif
+
     if (network)
     {
 #if !CONFIG_MEM_POOLS

@@ -5921,7 +5921,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
             if (evt->reason_code == 0U)
             {
-                (void)wifi_event_completion((enum wlan_bss_type)evt->bss_index, WIFI_EVENT_LINK_LOSS, WIFI_EVENT_REASON_FAILURE,
+                (void)wifi_event_completion((enum wlan_bss_type)evt->bss_type, WIFI_EVENT_LINK_LOSS, WIFI_EVENT_REASON_FAILURE,
                                             (void *)IEEEtypes_REASON_DEAUTH_LEAVING);
             }
             else
