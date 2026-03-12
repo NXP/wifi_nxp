@@ -2677,6 +2677,16 @@ int wifi_send_sched_scan_cmd(nxp_wifi_trigger_sched_scan_t *params)
     pmpriv->scan_cfg.scan_interval    = params->scan_interval;
     pmpriv->scan_cfg.chan_per_scan    = params->chan_per_scan;
     pmpriv->scan_cfg.num_probes       = 2;
+#if CONFIG_SCAN_CHANNEL_GAP
+    if (is_uap_started() || is_sta_connected())
+    {
+        pmpriv->scan_cfg.scan_chan_gap = SCAN_CHANNEL_GAP_VALUE;
+    }
+    else
+    {
+        pmpriv->scan_cfg.scan_chan_gap = 0;
+    }
+#endif
 
     pmpriv->scan_cfg.bss_type = MLAN_BSS_MODE_INFRA;
     pmpriv->scan_cfg.action   = BG_SCAN_ACT_SET;
