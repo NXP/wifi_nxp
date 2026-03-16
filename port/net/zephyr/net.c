@@ -175,6 +175,20 @@ void deliver_packet_above(struct net_pkt *p, int recv_interface)
     }
 }
 
+static inline net_sa_family_t get_packet_family(void)
+{
+#if defined(CONFIG_NET_IPV4_FRAGMENT)
+    /* Fragmentation enabled: AF_INET ensures correct buffer sizing for large packets */
+    return AF_INET;
+#elif defined(CONFIG_NET_IPV6_FRAGMENT)
+    /* Fragmentation enabled: AF_INET6 ensures correct buffer sizing for large packets */
+    return AF_INET6;
+#else
+    /* Fragmentation disabled: AF_UNSPEC avoids buffer calculation bug for 1488-1500 byte packets */
+    return AF_UNSPEC;
+#endif
+}
+
 #define MAX_RETRY_GEN_PKT 3
 static struct net_pkt *gen_pkt_from_data(t_u8 interface, t_u8 *payload, t_u16 datalen)
 {
@@ -185,10 +199,10 @@ retry:
     /* We allocate a network buffer */
 #if CONFIG_WIFI_SOFTAP_SUPPORT
     if (interface == WLAN_BSS_TYPE_UAP)
-        pkt = net_pkt_rx_alloc_with_buffer(g_uap.netif, datalen, AF_INET, 0, K_NO_WAIT);
+        pkt = net_pkt_rx_alloc_with_buffer(g_uap.netif, datalen, get_packet_family(), 0, K_NO_WAIT);
     else
 #endif
-        pkt = net_pkt_rx_alloc_with_buffer(g_mlan.netif, datalen, AF_INET, 0, K_NO_WAIT);
+        pkt = net_pkt_rx_alloc_with_buffer(g_mlan.netif, datalen, get_packet_family(), 0, K_NO_WAIT);
 
     if (pkt == NULL)
     {
@@ -220,10 +234,10 @@ retry:
     /* We allocate a network buffer */
 #if CONFIG_WIFI_SOFTAP_SUPPORT
     if (interface == WLAN_BSS_TYPE_UAP)
-        pkt = net_pkt_alloc_with_buffer(g_uap.netif, datalen, AF_INET, 0, K_NO_WAIT);
+        pkt = net_pkt_alloc_with_buffer(g_uap.netif, datalen, get_packet_family(), 0, K_NO_WAIT);
     else
 #endif
-        pkt = net_pkt_alloc_with_buffer(g_mlan.netif, datalen, AF_INET, 0, K_NO_WAIT);
+        pkt = net_pkt_alloc_with_buffer(g_mlan.netif, datalen, get_packet_family(), 0, K_NO_WAIT);
 
     if (pkt == NULL)
     {
@@ -256,10 +270,10 @@ retry:
     /* We allocate a network buffer */
 #if CONFIG_WIFI_SOFTAP_SUPPORT
     if (interface == WLAN_BSS_TYPE_UAP)
-        pkt = net_pkt_rx_alloc_with_buffer(g_uap.netif, datalen, AF_INET, 0, K_NO_WAIT);
+        pkt = net_pkt_rx_alloc_with_buffer(g_uap.netif, datalen, get_packet_family(), 0, K_NO_WAIT);
     else
 #endif
-        pkt = net_pkt_rx_alloc_with_buffer(g_mlan.netif, datalen, AF_INET, 0, K_NO_WAIT);
+        pkt = net_pkt_rx_alloc_with_buffer(g_mlan.netif, datalen, get_packet_family(), 0, K_NO_WAIT);
 
     if (pkt == NULL)
     {
@@ -1783,7 +1797,7 @@ void *net_stack_buffer_alloc_rx(int offset, int len)
     alloc_len = len + offset;
 
     /* set STA iface for now and change it later */
-    pkt = net_pkt_rx_alloc_with_buffer(g_mlan.netif, alloc_len, AF_INET, 0, K_NO_WAIT);
+    pkt = net_pkt_rx_alloc_with_buffer(g_mlan.netif, alloc_len, get_packet_family(), 0, K_NO_WAIT);
     if (pkt == NULL)
     {
         return NULL;
@@ -1819,7 +1833,7 @@ void *net_stack_buffer_clone_tx_frag(void *pkt, void *p, int offset)
     void *payload;
 
     clone_pkt = net_pkt_alloc_with_buffer(net_pkt_iface(pkt),
-        tot_len, AF_INET, 0, K_NO_WAIT);
+        tot_len, get_packet_family(), 0, K_NO_WAIT);
     if (clone_pkt == NULL)
     {
         return NULL;
