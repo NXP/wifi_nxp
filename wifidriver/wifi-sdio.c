@@ -456,7 +456,7 @@ static sg_data_list_t *sg_data_tx_prepare(t_u8 *out_buf)
      * 1. skip adding header when it is already in payload, in case this packet is prepared before,
      * but put back to wmm queue, due to interface queue full.
      */
-    if (buf->is_hdr_in_payload == 0)
+    if (buf->is_hdr_in_payload == 0 && payload)
     {
         /* 2. add header for interface header, TxPD and ETH header, to save one SG DMA desc */
         if (net_stack_buffer_push(pkt, hdr_size) == 0)
@@ -600,7 +600,7 @@ static sg_data_list_t *sg_data_tx_prepare(t_u8 *out_buf)
     tail = head;
 
     /* 10. iterate remaining chained buffers to check if they are aligned by address and length */
-    while (p != NULL)
+    while (p != NULL && payload)
     {
         /*
          * 11. if address is not aligned, clone packet.
