@@ -409,6 +409,7 @@ endif()
 if (CONFIG_MCUX_COMPONENT_middleware.wifi.wifidriver.softap)
     mcux_add_configuration(
         CC  "-DCONFIG_NXP_WIFI_SOFTAP_SUPPORT=1"
+        CX  "-DCONFIG_NXP_WIFI_SOFTAP_SUPPORT=1"
     )
 
     mcux_add_source(SOURCES
