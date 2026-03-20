@@ -594,7 +594,8 @@ resend:
     }
 
 #ifndef RW610
-    tx_blocks = ((t_u32)cmd->size + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
+    /* First 4 bytes reserved for SDIO pkt header */
+    tx_blocks = ((t_u32)cmd->size + INTF_HEADER_LEN + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
 #endif
 
 #if !CONFIG_UART_WIFI_BRIDGE
