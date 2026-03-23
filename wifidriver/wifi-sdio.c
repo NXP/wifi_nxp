@@ -3120,6 +3120,9 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
 static mlan_status wlan_get_single_data_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32 *rxlen, t_u32 *rxblocks)
 {
     t_u32 rx_len;
+#if CONFIG_WIFI_IO_DEBUG
+    t_u32 rd_bitmap = pmadapter->mp_rd_bitmap;
+#endif
 
     if ((pmadapter->mp_rd_bitmap & (1 << pmadapter->curr_rd_port)) != 0U)
     {
@@ -3383,14 +3386,6 @@ static void handle_sdio_packet_read(mlan_adapter *pmadapter)
         t_u32 total_size = 0;
         t_u32 size       = 0;
         t_u8 *packet     = NULL;
-
-#if CONFIG_TX_RX_ZERO_COPY
-        if (wifi_rx_status == WIFI_DATA_BLOCK)
-        {
-            wifi_rx_block_cnt++;
-            return;
-        }
-#endif
 
         ret = _handle_sdio_packet_read(pmadapter, &packet, &datalen, &pkt_type);
         if (ret == MLAN_STATUS_FAILURE)
