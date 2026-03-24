@@ -5715,39 +5715,46 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
     unsigned char is_11n_enabled;
     int ret;
     struct wpa_supplicant *wpa_s = ctx;
-    enum wlan_bss_type bss_type;
+    enum wlan_bss_type bss_type  = WLAN_BSS_TYPE_ANY;
 #if CONFIG_HOSTAPD
     struct netif *netif = net_get_uap_interface();
 #endif
-    struct netif *sta_netif = net_get_sta_interface();
-    struct wlan_network *network;
+    struct netif *sta_netif      = net_get_sta_interface();
+    struct wlan_network *network = NULL;
 #if CONFIG_WPA_SUPP_P2P
     mlan_private *priv_wfd = (mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_WIFIDIRECT];
 #endif
 
+#if CONFIG_HOSTAPD
+    const char *ifname = hostapd_msg_ifname_cb(ctx);
+#else
+    const char *ifname = wpa_s->ifname;
+#endif
+
     wlcm_d("%s: %s", __func__, buf);
 
-    if (strstr(wpa_s->ifname, "ml") == NULL)
+    if (strstr(ifname, "ml") != NULL)
     {
         bss_type = WLAN_BSS_TYPE_STA;
         network  = &wlan.networks[wlan.cur_network_idx];
     }
-    else if (strstr(wpa_s->ifname, "ua") == NULL)
+#if CONFIG_HOSTAPD
+    else if (strstr(ifname, "ua") != NULL)
     {
         bss_type = WLAN_BSS_TYPE_UAP;
         network  = &wlan.networks[wlan.cur_uap_network_idx];
     }
 #if CONFIG_WPA_SUPP_P2P
-    else if (strstr(wpa_s->ifname, "wf") == NULL)
+    else if (strstr(ifname, "wf") != NULL)
     {
         bss_type = WLAN_BSS_TYPE_WIFIDIRECT;
         network  = &wlan.networks[wlan.cur_wfd_network_idx];
     }
 #endif
+#endif
     else
     {
-        PRINTF("Unknown Interface:%s\r\n", wpa_s->ifname);
-        return;
+        wlcm_d("Unknown Interface:%s\r\n", ifname);
     }
 
 #if CONFIG_WPA_SUPP_P2P
@@ -5851,7 +5858,7 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
     {
         wlcm_d("AP: Station connected");
         t_u8 addr[MLAN_MAC_ADDR_LENGTH];
-        t_u8 bss_type = MLAN_BSS_TYPE_UAP;
+        wifi_uap_client_event_t client_event;
 
         s = strchr(buf, ' ');
         if (s == NULL)
@@ -5861,10 +5868,9 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
             return;
 
 #if CONFIG_WPA_SUPP_P2P
-        if (priv_wfd->p2p_go_network || strstr(buf, " p2p_dev_addr="))
+        if (bss_type == WLAN_BSS_TYPE_WIFIDIRECT)
         {
             netif = net_get_wfd_interface();
-            bss_type = MLAN_BSS_TYPE_WIFIDIRECT;
         }
 #endif
 
@@ -5873,15 +5879,16 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
             return;
 
         wifi_uap_client_assoc(bss_type, addr, is_11n_enabled);
+        client_event.bss_type = bss_type;
+        memcpy(client_event.mac, addr, MLAN_MAC_ADDR_LENGTH);
 
-        CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_CONN, addr);
+        CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_CONN, (void *)&client_event);
     }
     else if (strstr(buf, AP_STA_DISCONNECTED))
     {
         wlcm_d("AP: Station dis-connected");
 
         wifi_uap_client_disassoc_t disassoc_resp;
-        t_u8 bss_type = MLAN_BSS_TYPE_UAP;
 
         disassoc_resp.reason_code = 0;
 
@@ -5892,16 +5899,11 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
         if (hwaddr_aton(s + 1, disassoc_resp.sta_addr))
             return;
 
-#if CONFIG_WPA_SUPP_P2P
-        if (priv_wfd->p2p_go_network || strstr(buf, " p2p_dev_addr="))
-        {
-            bss_type = MLAN_BSS_TYPE_WIFIDIRECT;
-        }
-#endif
-
         wifi_uap_client_deauth(bss_type, disassoc_resp.sta_addr);
 
-        CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_DISSOC, disassoc_resp.sta_addr);
+        disassoc_resp.bss_type = bss_type;
+
+        CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_DISSOC, (void *)&disassoc_resp);
     }
 #endif /* CONFIG_HOSTAPD */
 #if CONFIG_WPA_SUPP_WPS

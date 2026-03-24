@@ -122,6 +122,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
     static int auth_fail = 0;
 #if CONFIG_NXP_WIFI_SOFTAP_SUPPORT
     wlan_uap_client_disassoc_t *disassoc_resp = data;
+    wlan_uap_client_event_t *client_event;
 #endif
 
 #if CONFIG_WPA_SUPP_P2P
@@ -366,21 +367,57 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
             break;
         case WLAN_REASON_UAP_CLIENT_CONN:
-            PRINTF("app_cb: WLAN: UAP a Client Connected\r\n");
-            printSeparator();
-            PRINTF("Client => ");
-            print_mac((const char *)data);
-            PRINTF("Connected with Soft AP\r\n");
-            printSeparator();
+            client_event = (wlan_uap_client_event_t *)data;
+#if CONFIG_WPA_SUPP_P2P
+            if (client_event->bss_type == WLAN_BSS_TYPE_WIFIDIRECT)
+            {
+                PRINTF("app_cb: WLAN: P2P GO a Client Connected\r\n");
+                printSeparator();
+                PRINTF("Client => ");
+                print_mac((const char *)client_event->mac);
+                PRINTF("Connected with P2P GO\r\n");
+                printSeparator();
+            }
+
+            else
+            {
+#endif
+                PRINTF("app_cb: WLAN: UAP a Client Connected\r\n");
+                printSeparator();
+                PRINTF("Client => ");
+                print_mac((const char *)client_event->mac);
+                PRINTF("Connected with Soft AP\r\n");
+                printSeparator();
+#if CONFIG_WPA_SUPP_P2P
+            }
+#endif
             break;
         case WLAN_REASON_UAP_CLIENT_DISSOC:
-            printSeparator();
-            PRINTF("app_cb: WLAN: UAP a Client Dissociated:");
-            PRINTF(" Client MAC => ");
-            print_mac((const char *)(disassoc_resp->sta_addr));
-            PRINTF(" Reason code => ");
-            PRINTF("%d\r\n", disassoc_resp->reason_code);
-            printSeparator();
+#if CONFIG_WPA_SUPP_P2P
+            if (disassoc_resp->bss_type == WLAN_BSS_TYPE_WIFIDIRECT)
+            {
+                printSeparator();
+                PRINTF("app_cb: WLAN: P2P GO a Client Dissociated:");
+                PRINTF(" Client MAC => ");
+                print_mac((const char *)(disassoc_resp->sta_addr));
+                PRINTF(" Reason code => ");
+                PRINTF("%d\r\n", disassoc_resp->reason_code);
+                printSeparator();
+            }
+
+            else
+            {
+#endif
+                printSeparator();
+                PRINTF("app_cb: WLAN: UAP a Client Dissociated:");
+                PRINTF(" Client MAC => ");
+                print_mac((const char *)(disassoc_resp->sta_addr));
+                PRINTF(" Reason code => ");
+                PRINTF("%d\r\n", disassoc_resp->reason_code);
+                printSeparator();
+#if CONFIG_WPA_SUPP_P2P
+            }
+#endif
             break;
         case WLAN_REASON_UAP_STOPPED:
             bss_type = (enum wlan_bss_type)(uintptr_t)data;
@@ -396,6 +433,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
                 PRINTF("DHCP Server stopped successfully\r\n");
                 printSeparator();
             }
+#if CONFIG_WPA_SUPP_P2P
             else
             {
                 PRINTF("app_cb: WLAN: P2P GO Stopped\r\n");
@@ -408,6 +446,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
                 PRINTF("DHCP Server stopped successfully\r\n");
                 printSeparator();
             }
+#endif
             break;
 #endif /* CONFIG_NXP_WIFI_SOFTAP_SUPPORT */
         case WLAN_REASON_PS_ENTER:

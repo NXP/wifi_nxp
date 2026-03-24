@@ -2255,6 +2255,8 @@ typedef struct _tx_ampdu_prot_mode_para
 
 typedef wifi_uap_client_disassoc_t wlan_uap_client_disassoc_t;
 
+typedef wifi_uap_client_event_t wlan_uap_client_event_t;
+
 #if CONFIG_INACTIVITY_TIMEOUT_EXT
 typedef wifi_inactivity_to_t wlan_inactivity_to_t;
 #endif
