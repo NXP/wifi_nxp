@@ -2049,6 +2049,7 @@ int wifi_nxp_wpa_send_mlme(void *if_priv,
     const struct ieee80211_hdr *hdr;
     u16 fc, stype;
     unsigned int bss_type = 0;
+    mlan_private *pmpriv;
 
     hdr   = (const struct ieee80211_hdr *)data;
     fc    = le_to_host16(hdr->frame_control);
@@ -2071,6 +2072,18 @@ int wifi_nxp_wpa_send_mlme(void *if_priv,
     wifi_if_ctx_rtos->mgmt_tx_status = 0;
 
     bss_type = wifi_if_ctx_rtos->bss_type;
+
+    pmpriv = (mlan_private *)mlan_adap->priv[bss_type];
+
+    if (stype == WLAN_FC_STYPE_PROBE_RESP && GET_BSS_ROLE(pmpriv) == MLAN_BSS_ROLE_UAP)
+    {
+        /* Since we support offload probe resp, we need to skip probe
+         * resp in uAP or GO mode */
+        supp_d("%s: Skip send probe_resp in GO/UAP mode", __func__);
+        status = WM_SUCCESS;
+        goto out;
+    }
+
     if (stype == WLAN_FC_STYPE_ACTION && bss_type != BSS_TYPE_UAP)
     {
         if (wifi_if_ctx_rtos->remain_on_channel == true)

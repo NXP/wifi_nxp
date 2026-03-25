@@ -3906,13 +3906,10 @@ int wifi_nxp_beacon_config(unsigned int bss_type, nxp_wifi_ap_info_t *params)
         {
             t_u32 mgmt_subtype_mask = WIFI_MGMT_AUTH | MGMT_MASK_ASSOC_REQ | MGMT_MASK_REASSOC_REQ | WIFI_MGMT_DEAUTH |
                                       WIFI_MGMT_ACTION | WIFI_MGMT_DIASSOC;
-#if CONFIG_WPA_SUPP_P2P
-            if (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
-            {
-                mgmt_subtype_mask |= MGMT_MASK_PROBE_REQ;
-                priv->probe_req_report_on = true;
-            }
-#endif
+
+            mgmt_subtype_mask |= MGMT_MASK_PROBE_REQ;
+            priv->probe_req_report_on = true;
+
             wuap_d("Starting BSS");
             /* Start BSS */
             if (MLAN_STATUS_SUCCESS != wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_BSS_START,
@@ -5050,58 +5047,5 @@ done:
     return ret;
 }
 
-#if CONFIG_WPA_SUPP_WPS
-/**
- * Set WPS probe request indication for uAP
- *
- * This function enables or disables probe request forwarding to hostapd
- * during WPS sessions for PBC overlap detection.
- *
- * @param bss_type BSS type (MLAN_BSS_TYPE_UAP)
- * @param enable MTRUE to enable, MFALSE to disable
- *
- * @return WM_SUCCESS on success, error code otherwise
- */
-int wifi_set_wps_probe_req_indication(mlan_bss_type bss_type, t_u8 enable)
-{
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[bss_type];
-    t_u32 mgmt_subtype_mask;
-
-    if (pmpriv == NULL)
-    {
-        wuap_e("Invalid BSS type %d", bss_type);
-        return -WM_FAIL;
-    }
-
-    if (enable)
-    {
-        /* Enable probe request forwarding for WPS overlap detection */
-        /* Get current mask and add MGMT_MASK_PROBE_REQ */
-        mgmt_subtype_mask = pmpriv->mgmt_frame_passthru_mask | MGMT_MASK_PROBE_REQ;
-
-        wuap_d("WPS: Enabling probe req indication for BSS %d (mask: 0x%x -> 0x%x)",
-               bss_type, pmpriv->mgmt_frame_passthru_mask, mgmt_subtype_mask);
-    }
-    else
-    {
-        /* Disable probe request forwarding when WPS session ends */
-        /* Get current mask and remove MGMT_MASK_PROBE_REQ */
-        mgmt_subtype_mask = pmpriv->mgmt_frame_passthru_mask & ~MGMT_MASK_PROBE_REQ;
-
-        wuap_d("WPS: Disabling probe req indication for BSS %d (mask: 0x%x -> 0x%x)",
-               bss_type, pmpriv->mgmt_frame_passthru_mask, mgmt_subtype_mask);
-    }
-
-    /* Set the management frame indication */
-    /* This will update pmpriv->mgmt_frame_passthru_mask via wlan_cmd_rx_mgmt_indication() */
-    if (wifi_set_rx_mgmt_indication(bss_type, mgmt_subtype_mask) != WM_SUCCESS)
-    {
-        wuap_e("Failed to set mgmt frame indication");
-        return -WM_FAIL;
-    }
-
-    return WM_SUCCESS;
-}
-#endif /* CONFIG_WPA_SUPP_WPS */
 #endif /* CONFIG_HOSTAPD */
 #endif /* CONFIG_NXP_WIFI_SOFTAP_SUPPORT */

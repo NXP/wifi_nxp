@@ -2021,22 +2021,6 @@ t_u32 wifi_get_default_vht_capab();
 void wifi_uap_client_assoc(t_u8 bss_type, t_u8 *sta_addr, unsigned char is_11n_enabled);
 void wifi_uap_client_deauth(t_u8 bss_type, t_u8 *sta_addr);
 #endif
-
-#if CONFIG_WPA_SUPP_WPS
-/**
- * Set WPS probe request indication for uAP
- *
- * Enable or disable probe request forwarding to hostapd during WPS sessions.
- * This is used for WPS PBC overlap detection.
- *
- * @param[in] bss_type BSS type (MLAN_BSS_TYPE_UAP)
- * @param[in] enable MTRUE to enable, MFALSE to disable
- *
- * @return WM_SUCCESS on success, error code otherwise
- */
-int wifi_set_wps_probe_req_indication(mlan_bss_type bss_type, t_u8 enable);
-#endif
-
 #endif /* UAP_SUPPORT */
 
 #ifdef __cplusplus
