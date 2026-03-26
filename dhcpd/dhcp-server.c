@@ -927,9 +927,14 @@ static int send_gratuitous_arp(uint32_t ip, int instance_id)
     if (instance_id == DHCP_INSTANCE_UAP)
         (void)wlan_get_mac_address_uap(pkt.sndr_hw_addr);
 #if CONFIG_WPA_SUPP_P2P
-    else
+    else if (instance_id == DHCP_INSTANCE_WFD_GO)
         (void)wlan_get_wfd_mac_address(pkt.sndr_hw_addr);
 #endif
+    else
+    {
+        dhcp_e("Invalid instance_id: %d", instance_id);
+        return -WM_E_DHCPD_INVALID_INPUT;
+    }
 
     (void)memcpy(pkt.src_hw_addr, pkt.sndr_hw_addr, ETH_HW_ADDR_LEN);
     sock = net_socket(AF_INET, SOCK_DGRAM, 0);
