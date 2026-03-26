@@ -978,7 +978,7 @@ void dhcp_stat(void)
     struct ip4_addr saddr;
     int instance_id;
     (void)PRINTF("DHCP Server Lease Duration : %d seconds\r\n", (int)dhcp_address_timeout);
-    if (dhcps[0].count_clients == 0 || dhcps[1].count_clients == 0)
+    if (dhcps[0].count_clients == 0 && dhcps[1].count_clients == 0)
     {
         (void)PRINTF("No IP-MAC mapping stored\r\n");
     }
