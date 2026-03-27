@@ -723,7 +723,10 @@ void net_interface_dhcp_stop(void *intrfc_handle)
 void net_interface_dhcp_cleanup(void *intrfc_handle)
 {
     interface_t *if_handle = (interface_t *)intrfc_handle;
+
+    LOCK_TCPIP_CORE();
     (void)dhcp_cleanup(&if_handle->netif);
+    UNLOCK_TCPIP_CORE();
 }
 
 int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
