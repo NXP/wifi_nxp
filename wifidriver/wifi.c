@@ -4716,6 +4716,11 @@ int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_tim
 
     if ((bss_type == BSS_TYPE_STA) && (pmpriv->media_connected == MFALSE))
     {
+        if (wifi_is_remain_on_channel())
+        {
+            wifi_remain_on_channel(false, 0, 0);
+        }
+
         if (wait_time == 0)
         {
             wait_time = 1000;
