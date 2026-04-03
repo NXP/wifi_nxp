@@ -1842,7 +1842,7 @@ int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size)
     if (ret != 0)
     {
         wifi_e("sd_wifi_init failed. status code %d", ret);
-        switch (ret)
+        switch ((__mlan_status)ret)
         {
             case MLAN_CARD_CMD_TIMEOUT:
             case MLAN_CARD_NOT_DETECTED:

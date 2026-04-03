@@ -247,7 +247,7 @@ float wm_strtof(const char *str, char **endptr)
         char *temp;
         temp         = start_ptr;
         uint32_t len = 0;
-        while (isdigit((unsigned char)temp[len]))
+        while ((temp[len] >= '0') && (temp[len] <= '9'))
         {
             len++;
             (*endptr)++;
