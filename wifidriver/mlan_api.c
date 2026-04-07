@@ -1972,7 +1972,15 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
                          const uint32_t tx_bf,
                          const uint32_t gf_mode,
                          const uint32_t stbc,
-                         const uint8_t *bssid)
+                         const uint8_t *bssid,
+                         const uint32_t signal_bw,
+                         const uint32_t NumPkt,
+                         const uint32_t MaxPE,
+                         const uint32_t BeamChange,
+                         const uint32_t Dcm,
+                         const uint32_t Doppler,
+                         const uint32_t MidP,
+                         const uint32_t QNum)
 {
     wifi_mfg_cmd_tx_frame_t wifi_mfg_cmd_tx_frame;
     wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
@@ -1982,6 +1990,25 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
         act_sub_ch == 2U || act_sub_ch > 3U || short_gi > 1U || adv_coding > 1U || tx_bf > 1U || gf_mode > 1U ||
         stbc > 1U)
         return -WM_FAIL;
+
+    if (signal_bw != (uint32_t)-1 &&
+        signal_bw != 0U &&
+        signal_bw != 1U &&
+        signal_bw != 4U)
+    {
+        return -WM_FAIL;
+    }
+
+    /* 11ax parameter validation */
+    if ((Dcm != (uint32_t)-1 && Dcm != 0U && Dcm != 1U) ||
+        (Doppler != (uint32_t)-1 && Doppler != 0U && Doppler != 1U) ||
+        (MidP != (uint32_t)-1 && MidP != 10U && MidP != 20U) ||
+        (MaxPE != (uint32_t)-1 && MaxPE != 0U && MaxPE != 8U && MaxPE != 16U) ||
+        (BeamChange != (uint32_t)-1 && BeamChange != 0U && BeamChange != 1U) ||
+        (QNum != (uint32_t)-1 && ((QNum > 12U && QNum < 17U) || QNum > 20U)))
+    {
+        return -WM_FAIL;
+    }
 
     (void)memset(&wifi_mfg_cmd_tx_frame, 0x00, sizeof(wifi_mfg_cmd_tx_frame_t));
     (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
@@ -2011,14 +2038,15 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
     wifi_mfg_cmd_tx_frame.tx_bf             = tx_bf;
     wifi_mfg_cmd_tx_frame.gf_mode           = gf_mode;
     wifi_mfg_cmd_tx_frame.stbc              = stbc;
-    wifi_mfg_cmd_tx_frame.signal_bw         = -1;
-    wifi_mfg_cmd_tx_frame.NumPkt            = -1;
-    wifi_mfg_cmd_tx_frame.MaxPE             = -1;
-    wifi_mfg_cmd_tx_frame.BeamChange        = -1;
-    wifi_mfg_cmd_tx_frame.Dcm               = -1;
-    wifi_mfg_cmd_tx_frame.Doppler           = -1;
-    wifi_mfg_cmd_tx_frame.MidP              = -1;
-    wifi_mfg_cmd_tx_frame.QNum              = -1;
+    wifi_mfg_cmd_tx_frame.signal_bw         = signal_bw;
+    /* Set 11ax parameters */
+    wifi_mfg_cmd_tx_frame.NumPkt            = NumPkt;
+    wifi_mfg_cmd_tx_frame.MaxPE             = MaxPE;
+    wifi_mfg_cmd_tx_frame.BeamChange        = BeamChange;
+    wifi_mfg_cmd_tx_frame.Dcm               = Dcm;
+    wifi_mfg_cmd_tx_frame.Doppler           = Doppler;
+    wifi_mfg_cmd_tx_frame.MidP              = MidP;
+    wifi_mfg_cmd_tx_frame.QNum              = QNum;
 
     ret = wifi_get_set_rf_test_tx_frame(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_tx_frame, &wifi_mfg_cmd_generic_cfg);
     if (WM_SUCCESS == ret && wifi_mfg_cmd_generic_cfg.error == 0)
