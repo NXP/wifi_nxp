@@ -3396,10 +3396,6 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
     wcmdr_d("CMD_RESP - : 0x%x, result %d, len %d, seqno 0x%x", resp->command, resp->result, resp->size, resp->seq_num);
 #endif
 
-#if CONFIG_FW_VDLL
-    mlan_adap->vdll_in_progress = MFALSE;
-#endif
-
     mlan_bss_type bss_type = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
 
     if (bss_type == MLAN_BSS_TYPE_UAP)

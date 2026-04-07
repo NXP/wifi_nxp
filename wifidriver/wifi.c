@@ -553,13 +553,6 @@ resend:
     }
 #endif
 
-#if CONFIG_FW_VDLL
-    while (pmadapter->vdll_in_progress == MTRUE)
-    {
-        OSA_TimeDelay(50);
-    }
-#endif
-
     if (cmd->size > WIFI_FW_CMDBUF_SIZE)
     {
         /*
@@ -664,8 +657,6 @@ resend:
      */
     (void)OSA_RWLockReadUnlock(&sleep_rwlock);
 #endif
-
-    pmadapter->cmd_sent = MTRUE;
 
     /* Wait max 20 sec for the command response */
     ret = wifi_get_command_resp_sem(WIFI_COMMAND_RESPONSE_WAIT_MS);
@@ -1239,7 +1230,15 @@ static void wifi_core_task(void *argv)
         (void)wifi_sdio_lock();
 
         (void)wlan_process_int_status(mlan_adap);
-
+#if CONFIG_FW_VDLL
+        if (!mlan_adap->cmd_sent && mlan_adap->vdll_ctrl.pending_block)
+        {
+            wlan_download_vdll_block(
+                mlan_adap, mlan_adap->vdll_ctrl.pending_block,
+                mlan_adap->vdll_ctrl.pending_block_len);
+            mlan_adap->vdll_ctrl.pending_block = MNULL;
+        }
+#endif
         wifi_sdio_unlock();
         // wakelock_put(WL_ID_WIFI_CORE_INPUT);
     } /* for ;; */
@@ -1312,20 +1311,6 @@ static void wifi_scan_task(void *argv)
         OSA_TimeDelay(60000);
     }
 }
-
-#if CONFIG_FW_VDLL
-/**
- *  @brief This function flushes all data
- *
- *  @param context      Reorder context pointer
- *
- *  @return 	   	    N/A
- */
-static t_void wlan_vdll_complete(osa_timer_arg_t tmr_handle)
-{
-    mlan_adap->vdll_in_progress = MFALSE;
-}
-#endif
 
 static void wifi_core_deinit(void);
 static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, const uint16_t len);
@@ -1485,11 +1470,6 @@ static int wifi_core_init(void)
     OSA_SemaphorePost((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem);
 #endif
 
-#if CONFIG_FW_VDLL
-    (void)mlan_adap->callbacks.moal_init_timer(mlan_adap->pmoal_handle, &mlan_adap->vdll_timer, wlan_vdll_complete,
-                                               NULL);
-#endif
-
     wm_wifi.wifi_core_init_done = 1;
 
 #if UAP_SUPPORT
@@ -1571,11 +1551,6 @@ static void wifi_core_deinit(void)
 
 #if CONFIG_CSI
     (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)csi_buff_stat.csi_data_sem);
-#endif
-
-#if CONFIG_FW_VDLL
-    (void)mlan_adap->callbacks.moal_stop_timer(mlan_adap->pmoal_handle, mlan_adap->vdll_timer);
-    (void)mlan_adap->callbacks.moal_free_timer(mlan_adap->pmoal_handle, &mlan_adap->vdll_timer);
 #endif
 }
 
