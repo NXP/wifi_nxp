@@ -471,14 +471,7 @@ static void process_data_packet(const t_u8 *rcvdata,
             /*If rx_pkt_type is 802.11, and in monitor mode, deliver data to user*/
             if ((rxpd->rx_pkt_type == PKT_TYPE_802DOT11) && (true == get_monitor_flag()))
             {
-                wifi_frame_t *frame = (wifi_frame_t *)(uint8_t *)p->payload;
-
-                if (frame->frame_type == BEACON_FRAME || frame->frame_type == DATA_FRAME ||
-                    frame->frame_type == AUTH_FRAME || frame->frame_type == PROBE_REQ_FRAME ||
-                    frame->frame_type == QOS_DATA_FRAME)
-                {
-                    user_recv_monitor_data((void *)p, rxpd, datalen);
-                }
+                user_recv_monitor_data((void *)p, rxpd, datalen);
             }
 #endif
             /* fixme: avoid pbuf allocation in this case */
