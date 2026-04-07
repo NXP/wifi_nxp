@@ -5592,6 +5592,14 @@ int wlan_set_rf_tx_power(const uint32_t power, const uint8_t mod, const uint8_t 
  * \param[in] gf_mode: Enable/Disable green field mode
  * \param[in] stbc: Enable/Disable STBC
  * \param[in] bssid: BSSID
+ * \param[in] signal_bw: Signal BW
+ * \param[in] NumPkt: Number of packets
+ * \param[in] MaxPE: Max pkt extension
+ * \param[in] BeamChange: Beam change
+ * \param[in] Dcm: DCM enable
+ * \param[in] Doppler: Doppler enable
+ * \param[in] MidP: Midamble periodicity
+ * \param[in] QNum: Tx queue num that holds the trigger-based response pkts
  *
  * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
  *
@@ -5609,7 +5617,16 @@ int wlan_set_rf_tx_frame(const uint32_t enable,
                          const uint32_t tx_bf,
                          const uint32_t gf_mode,
                          const uint32_t stbc,
-                         const uint8_t *bssid);
+                         const uint8_t *bssid,
+                         /* 11ax parameters */
+                         const uint32_t signal_bw,
+                         const uint32_t NumPkt,
+                         const uint32_t MaxPE,
+                         const uint32_t BeamChange,
+                         const uint32_t Dcm,
+                         const uint32_t Doppler,
+                         const uint32_t MidP,
+                         const uint32_t QNum);
 
 /**
  * Set the RF OTP (one-time password) MAC address in Wi-Fi firmware.
