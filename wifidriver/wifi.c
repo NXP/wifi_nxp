@@ -655,6 +655,7 @@ resend:
     if (ret != WM_SUCCESS)
     {
         wifi_e("Failed to wakeup card");
+        wifi_dump_driver_info();
         // wakelock_put(WL_ID_LL_OUTPUT);
         (void)wifi_put_command_lock();
 

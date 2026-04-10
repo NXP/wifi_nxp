@@ -9167,9 +9167,11 @@ void wifi_dump_driver_info()
 {
     char *task_info_buf = NULL;
 #ifdef RW610
+    volatile uint32_t *sleep_flag = (volatile uint32_t *)0x4138248C;
     ImuTxFifoStatus = IMU_TX_FIFO_STATUS(kIMU_LinkCpu1Cpu3);
     ImuRxFifoStatus = IMU_RX_FIFO_STATUS(kIMU_LinkCpu1Cpu3);
     PRINTF("IMU TxFifoStatus: 0x%x, RxFifoStatus: 0x%x\r\n", ImuTxFifoStatus, ImuRxFifoStatus);
+    PRINTF("IMU sleep grant flag: 0x%x\r\n", *sleep_flag);
 #else
     uint32_t resp = 0;
     int ret;
