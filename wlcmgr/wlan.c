@@ -224,7 +224,6 @@ extern void wpa2_shutdown();
 int (*uap_prov_deinit_cb)(void) = NULL;
 #endif
 
-
 osa_rw_lock_t sleep_rwlock;
 
 #if CONFIG_WMM_UAPSD
@@ -5688,7 +5687,11 @@ static int wlcm_process_add_unspecified_network(const char *name)
     for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
     {
         if (wlan.networks[i].name[0] != '\0' && strlen(wlan.networks[i].name) == len &&
-                !strncmp(wlan.networks[i].name, name, len))
+                !strncmp(wlan.networks[i].name, name, len)
+#if CONFIG_WPA_SUPP_DPP
+                && !strcmp(wlan.networks[i].ssid, "w")
+#endif
+            )
         {
 #if CONFIG_WPA_SUPP_P2P
             if (priv_wfd->p2p_go_network)
