@@ -1012,7 +1012,9 @@ int iperf_cli_init(void)
 
     if (ctx.iperf_session != NULL)
     {
+        LOCK_TCPIP_CORE();
         lwiperf_abort(ctx.iperf_session);
+        UNLOCK_TCPIP_CORE();
     }
 
     (void)memset(&ctx, 0, sizeof(struct iperf_test_context));
