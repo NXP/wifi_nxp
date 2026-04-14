@@ -9811,7 +9811,7 @@ int wlan_add_network(struct wlan_network *network)
     int i;
     unsigned int len;
     int ret;
-    t_u16 config_bands = mlan_adap->priv[network->type]->config_bands;
+    t_u16 config_bands;
 
     if (!wlan.running)
     {
@@ -10117,6 +10117,7 @@ int wlan_add_network(struct wlan_network *network)
         return -WM_E_INVAL;
     }
 
+    config_bands = mlan_adap->priv[network->type]->config_bands;
     if (network->channel > MAX_CHANNELS_BG)
     {
         network->dot11n = (config_bands & BAND_AN) ? 1 : 0;
