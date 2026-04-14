@@ -19,7 +19,7 @@
 #include <wifi_events.h>
 #include <wifi.h>
 
-#define WLAN_DRV_VERSION "v1.3.r53.z_up.p6"
+#define WLAN_DRV_VERSION "v1.3.r53.z_up.p7"
 
 #if CONFIG_WPA2_ENTP
 #include <wm_mbedtls_helper_api.h>
