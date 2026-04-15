@@ -15857,7 +15857,7 @@ static void wlan_uap_update_hostapd_bss(wlan_bandcfg_t *bandcfg)
 {
     struct netif *netif = net_get_uap_interface();
 
-    if (bandcfg->config_bands & (BAND_AN | BAND_GN))
+    if (bandcfg->band_cfg & WLAN_BANDCFG_11N)
     {
         hostapd_11n_cfg(net_if_get_device((void *)netif), 1);
     }
@@ -15866,7 +15866,7 @@ static void wlan_uap_update_hostapd_bss(wlan_bandcfg_t *bandcfg)
         hostapd_11n_cfg(net_if_get_device((void *)netif), 0);
     }
 #if CONFIG_11AC
-    if (bandcfg->config_bands & (BAND_AAC | BAND_GAC))
+    if (bandcfg->band_cfg & WLAN_BANDCFG_11AC)
     {
         hostapd_11ac_cfg(net_if_get_device((void *)netif), 1);
     }
@@ -15876,7 +15876,7 @@ static void wlan_uap_update_hostapd_bss(wlan_bandcfg_t *bandcfg)
     }
 #endif
 #if CONFIG_11AX
-    if (bandcfg->config_bands & (BAND_AAX | BAND_GAX))
+    if (bandcfg->band_cfg & WLAN_BANDCFG_11AX)
     {
         hostapd_11ax_cfg(net_if_get_device((void *)netif), 1);
     }
@@ -16024,8 +16024,15 @@ void wlan_uap_bandcfg_recfg(void)
 {
 #ifdef CONFIG_WIFI_NM_HOSTAPD_AP
     wlan_bandcfg_t bandcfg = {0};
+    int ret = 0;
 
-    bandcfg.config_bands = mlan_adap->priv[1]->config_bands;
+    ret = wlan_get_bandcfg(&bandcfg);
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("Unable to get bandcfg");
+        return;
+    }
+
     wlan_uap_update_hostapd_bss(&bandcfg);
 #endif
 }

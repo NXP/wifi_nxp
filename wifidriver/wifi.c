@@ -4717,50 +4717,6 @@ int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_tim
 
     data_len = pmgmt_pkt_hdr->frm_len + 2U;
 
-#if CONFIG_11AX
-    if (bss_type == BSS_TYPE_UAP)
-    {
-        t_u16 fc	  = le_to_host16(pieee_pkt_hdr->frm_ctl);
-        t_u16 stype = WLAN_FC_GET_STYPE(fc);
-
-        if ((stype == WLAN_FC_STYPE_ASSOC_RESP) ||
-            (stype == WLAN_FC_STYPE_REASSOC_RESP))
-        {
-            wlan_bandcfg_t bandcfg_get = {0};
-            int ret = WM_SUCCESS;
-            t_u8 config_11ax = 1;
-            t_u8 *tlv = MNULL;
-
-            ret = wlan_get_bandcfg(&bandcfg_get);
-            if (ret == WM_SUCCESS)
-            {
-                if ((bandcfg_get.config_bands & MBIT(8)) &&
-                    (bandcfg_get.config_bands & MBIT(9)))
-                {
-                    config_11ax = 1;
-                }
-                else
-                {
-                    config_11ax = 0;
-                }
-            }
-            else
-            {
-                wifi_e("Failed to get Wi-Fi bandcfg");
-            }
-
-            if (config_11ax == 0)
-            {
-                size_t remove_len = 0;
-                tlv = (t_u8 *)pieee_pkt_hdr + sizeof(wlan_802_11_header) + 6;
-                remove_len = wifi_remove_he_ies(tlv, data_len - sizeof(wlan_mgmt_pkt) - 6);
-                data_len -= remove_len;
-                pmgmt_pkt_hdr->frm_len -= remove_len;
-            }
-        }
-    }
-#endif
-
     return wifi_inject_frame((enum wlan_bss_type)bss_type, buf, data_len);
 }
 #else
