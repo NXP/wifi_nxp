@@ -7749,7 +7749,9 @@ static int wifi_wakeup_card_cb(osa_rw_lock_t *plock, unsigned int wait_time)
     int pm_wakeup_retry     = 0;
     mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[0];
     mlan_adapter *pmadapter = pmpriv->adapter;
-
+#ifdef RW610
+    uint32_t pmu_wlan_ctrl_reg = 0;
+#endif
     osa_status_t status = OSA_SemaphoreWait((osa_semaphore_handle_t)plock->rw_lock, 0);
 
     do
@@ -7758,9 +7760,14 @@ static int wifi_wakeup_card_cb(osa_rw_lock_t *plock, unsigned int wait_time)
         {
             if (pmadapter->ps_state == PS_STATE_SLEEP)
             {
-#if CONFIG_WIFI_PS_DEBUG
-                wifi_w("Wake up card attempt: %d, ps_state=%d", pm_wakeup_retry + 1, pmadapter->ps_state);
+                if (pm_wakeup_retry)
+                {
+                    wifi_w("Wake up card attempt: %d, ps_state=%d", pm_wakeup_retry, pmadapter->ps_state);
+#ifdef RW610
+                    pmu_wlan_ctrl_reg = PMU->WLAN_CTRL;
+                    wifi_w("Wake up card register: 0x%x", pmu_wlan_ctrl_reg);
 #endif
+                }
                 wlan_wake_up_card();
                 status = OSA_SemaphoreWait((osa_semaphore_handle_t)plock->rw_lock, wait_time);
                 pm_wakeup_retry++;
