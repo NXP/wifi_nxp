@@ -1,7 +1,7 @@
 Name: NXP Wi-Fi driver
 Outgoing License: BSD 3-Clause "New" or "Revised" License
 License File: LICENSE
-Version: v1.3.r49.p3
+Version: v1.3.r49.p5
 Outgoing License: BSD 3-Clause "New" or "Revised" License
 License File: LICENSE
 Format: source code, header files
