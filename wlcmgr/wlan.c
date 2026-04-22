@@ -4933,7 +4933,7 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
         wlan_pmksa_flush();
     }
 
-#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+#if CONFIG_ECSA
 #if UAP_SUPPORT
     if(is_uap_started())
     {
@@ -7168,7 +7168,9 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case WIFI_EVENT_RSSI_LOW:
             wlcm_d("got event: rssi low");
 #if CONFIG_WIFI_NM_WPA_SUPPLICANT
+#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_ROAMING)
             wlcm_process_rssi_low_event(msg);
+#endif
 #else
             if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
                 break;
@@ -15808,11 +15810,13 @@ int wlan_mgmtframe_tx_cfg(wlan_host_tx_frame_params_t *tx_frame)
         return -WM_FAIL;
     }
 
+#if CONFIG_NET_MONITOR
     if(get_monitor_flag() != true)
     {
         wlcm_e("enable monitor mode first");
         return -WM_FAIL;
     }
+#endif
 
     //Todo: add this condition if (mlan_adap->cmd_tx_data == 1U)
     ret = wifi_mgmtframe_tx_cfg(tx_frame);
