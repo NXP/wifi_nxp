@@ -9215,10 +9215,14 @@ void wifi_dump_driver_info()
     }
     (void)memset((void *)task_info_buf, 0, MAX_TASK_INFO_BUF_SIZE);
 #if !CONFIG_MEM_POOLS
+#ifndef __ZEPHYR__
+#if ( ( configUSE_TRACE_FACILITY == 1 ) && ( configUSE_STATS_FORMATTING_FUNCTIONS > 0 ) )
     vTaskListTasks(task_info_buf, MAX_TASK_INFO_BUF_SIZE);
     (void)PRINTF("Name                  State   Priority Stack  Num\r\n");
     (void)PRINTF("==================================================\r\n");
     (void)PRINTF("%s\r\n", task_info_buf);
+#endif
+#endif
 #else
     (void)PRINTF("thread info not applicable for static example!\r\n");
 #endif
