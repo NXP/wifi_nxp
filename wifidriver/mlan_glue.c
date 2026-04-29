@@ -10229,20 +10229,12 @@ int wifi_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type)
     return ret;
 }
 
-#if defined(SD8978)
-int wifi_test_independent_reset()
-{
-    wlan_process_hang(FW_RELOAD_SDIO_INBAND_RESET);
-    return WM_SUCCESS;
-}
-#else
 int wifi_trigger_inband_indrst()
 {
     wlan_process_hang(FW_RELOAD_SDIO_INBAND_RESET);
 
     return WM_SUCCESS;
 }
-#endif
 
 int wifi_trigger_oob_indrst()
 {

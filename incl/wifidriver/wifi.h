@@ -178,7 +178,6 @@ typedef struct wifi_uap_client_event
  */
 int wifi_init(const uint8_t *fw_start_addr, const size_t size);
 
-#if !defined(SD8978)
 #if (CONFIG_WIFI_IND_DNLD)
 /**
  * Re-initialize Wi-Fi driver module.
@@ -196,7 +195,6 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size);
  *
  */
 int wifi_reinit(const uint8_t *fw_start_addr, const size_t size, uint8_t fw_reload);
-#endif
 #endif
 
 /**
@@ -1835,11 +1833,7 @@ int wifi_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 w
 #if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
 int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type);
 int wifi_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type);
-#if defined(SD8978)
-int wifi_test_independent_reset();
-#else
 int wifi_trigger_inband_indrst();
-#endif
 int wifi_trigger_oob_indrst();
 #endif
 
