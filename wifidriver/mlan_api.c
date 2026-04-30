@@ -713,7 +713,7 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
             entry_hdr->len = (t_u32)filter_buf - (t_u32)entry_hdr - sizeof(mef_entry_header);
     }
 
-    cmd->size = wlan_cpu_to_le16(buf_len);
+    cmd->size = wlan_cpu_to_le16((t_u16)buf_len);
 done:
     (void)wifi_wait_for_cmdresp(NULL);
 
@@ -2383,7 +2383,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
                        const bool keep_previous_scan,
                        const bool active_scan_triggered)
 {
-    int ssid_len         = 0;
+    size_t ssid_len         = 0;
     char const *tmp_ssid = ssid;
     t_u8 i;
 #if CONFIG_COMBO_SCAN
@@ -3167,14 +3167,14 @@ int wifi_send_add_wpa_pmk(int mode, char *ssid, char *bssid, char *pmk, unsigned
     sec.sub_command = MLAN_OID_SEC_CFG_PASSPHRASE;
 
     /* SSID */
-    int ssid_len = strlen(ssid);
+    size_t ssid_len = strlen(ssid);
     if (ssid_len > MLAN_MAX_SSID_LENGTH)
     {
         return -WM_E_INVAL;
     }
 
     mlan_ds_passphrase *pp = &sec.param.passphrase;
-    pp->ssid.ssid_len      = ssid_len;
+    pp->ssid.ssid_len      = (t_u32)ssid_len;
     (void)memcpy((void *)pp->ssid.ssid, (const void *)ssid, ssid_len);
 
     /* MAC */
@@ -3205,14 +3205,14 @@ int wifi_send_get_wpa_pmk(int mode, char *ssid)
     sec.sub_command = MLAN_OID_SEC_CFG_PASSPHRASE;
 
     /* SSID */
-    int ssid_len = strlen(ssid);
+    size_t ssid_len = strlen(ssid);
     if (ssid_len > MLAN_MAX_SSID_LENGTH)
     {
         return -WM_E_INVAL;
     }
 
     mlan_ds_passphrase *pp = &sec.param.passphrase;
-    pp->ssid.ssid_len      = ssid_len;
+    pp->ssid.ssid_len      = (t_u32)ssid_len;
     (void)memcpy((void *)pp->ssid.ssid, (const void *)ssid, ssid_len);
 
     /* Zero MAC */
@@ -3240,14 +3240,14 @@ int wifi_send_add_wpa_psk(int mode, char *ssid, char *passphrase, unsigned int l
     sec.sub_command = MLAN_OID_SEC_CFG_PASSPHRASE;
 
     /* SSID */
-    int ssid_len = strlen(ssid);
+    size_t ssid_len = strlen(ssid);
     if (ssid_len > MLAN_MAX_SSID_LENGTH)
     {
         return -WM_E_INVAL;
     }
 
     mlan_ds_passphrase *pp = &sec.param.passphrase;
-    pp->ssid.ssid_len      = ssid_len;
+    pp->ssid.ssid_len      = (t_u32)ssid_len;
     (void)memcpy((void *)pp->ssid.ssid, (const void *)ssid, ssid_len);
 
     /* Zero MAC */
@@ -3277,14 +3277,14 @@ int wifi_send_add_wpa3_password(int mode, char *ssid, char *password, unsigned i
     sec.sub_command = MLAN_OID_SEC_CFG_PASSWORD;
 
     /* SSID */
-    int ssid_len = strlen(ssid);
+    size_t ssid_len = strlen(ssid);
     if (ssid_len > MLAN_MAX_SSID_LENGTH)
     {
         return -WM_E_INVAL;
     }
 
     mlan_ds_passphrase *pp = &sec.param.passphrase;
-    pp->ssid.ssid_len      = ssid_len;
+    pp->ssid.ssid_len      = (t_u32)ssid_len;
     (void)memcpy((void *)pp->ssid.ssid, (const void *)ssid, ssid_len);
 
     /* Zero MAC */
@@ -3310,13 +3310,13 @@ int wifi_send_clear_wpa_psk(int mode, const char *ssid)
     sec.sub_command = MLAN_OID_SEC_CFG_PASSPHRASE;
 
     /* SSID */
-    int ssid_len = strlen(ssid);
+    size_t ssid_len = strlen(ssid);
     if (ssid_len > MLAN_MAX_SSID_LENGTH)
     {
         return -WM_E_INVAL;
     }
 
-    sec.param.passphrase.ssid.ssid_len = ssid_len;
+    sec.param.passphrase.ssid.ssid_len = (t_u32)ssid_len;
     (void)strcpy((char *)sec.param.passphrase.ssid.ssid, ssid);
 
     /* Zero MAC */
@@ -3338,13 +3338,13 @@ int wifi_send_enable_supplicant(int mode, const char *ssid)
     sec.sub_command = MLAN_OID_SEC_CFG_PASSPHRASE;
 
     /* SSID */
-    int ssid_len = strlen(ssid);
+    size_t ssid_len = strlen(ssid);
     if (ssid_len > MLAN_MAX_SSID_LENGTH)
     {
         return -WM_E_INVAL;
     }
 
-    sec.param.passphrase.ssid.ssid_len = ssid_len;
+    sec.param.passphrase.ssid.ssid_len = (t_u32)ssid_len;
     (void)strcpy((char *)sec.param.passphrase.ssid.ssid, ssid);
 
     /* Zero MAC */
@@ -4047,7 +4047,7 @@ static int wifi_config_mgmt_ie(mlan_bss_type bss_type,
             pos         = ie_ptr->ie_buffer;
             ptlv_header = (IEEEtypes_Header_t *)(void *)pos;
             pos += sizeof(IEEEtypes_Header_t);
-
+            /* coverity[cert_int31_c_violation] index values are validated by caller */
             ptlv_header->element_id = (IEEEtypes_ElementId_e)index;
             ptlv_header->len        = *ie_len;
             if (bss_type == MLAN_BSS_TYPE_UAP)
@@ -5261,7 +5261,8 @@ int wifi_set_smart_mode_cfg(char *ssid,
                             int custom_ie_len,
                             uint8_t *custom_ie)
 {
-    unsigned int ssid_len                              = 0, i;
+    unsigned int i;
+    size_t ssid_len                                    = 0;
     uint32_t size                                      = S_DS_GEN + sizeof(HostCmd_DS_SYS_CONFIG) - 1U;
     MrvlIEtypes_SsIdParamSet_t *tlv_ssid               = NULL;
     MrvlIEtypes_beacon_period_t *tlv_beacon_period     = NULL;
@@ -5287,7 +5288,7 @@ int wifi_set_smart_mode_cfg(char *ssid,
 
     tlv_ssid              = (MrvlIEtypes_SsIdParamSet_t *)(void *)sys_config_cmd->tlv_buffer;
     tlv_ssid->header.type = MRVL_SSID_TLV_ID;
-    tlv_ssid->header.len  = strlen(ssid);
+    tlv_ssid->header.len  = (t_u16)ssid_len;
     (void)memcpy((void *)tlv_ssid->ssid, (const void *)ssid, strlen(ssid));
     size += sizeof(tlv_ssid->header) + tlv_ssid->header.len;
     tlv += sizeof(tlv_ssid->header) + tlv_ssid->header.len;
