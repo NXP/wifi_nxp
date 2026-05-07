@@ -273,7 +273,6 @@ typedef enum
 #define WLAN_CIPHER_BIP_GMAC_256 MBIT(12)
 #define WLAN_CIPHER_BIP_CMAC_256 MBIT(13)
 #define WLAN_CIPHER_GTK_NOT_USED MBIT(14)
-
 #endif
 
 /** Enum for Wi-Fi errors */
@@ -1823,6 +1822,8 @@ struct wlan_network
     int id;
     /** WPS network flag. */
     int wps_network;
+    /** Unspecified network flag. */
+    int unspecified_network;
 #endif
     /** The name of this network profile. Each network profile that is
      *  added to the Wi-Fi connection manager should have a unique name. */
@@ -6886,6 +6887,8 @@ void wlan_start_stop_ami(uint8_t start);
 #endif
 
 #if CONFIG_WPA_SUPP
+/** When the temporary network is of type WPS, bit 0 is 1. */
+#define UNSPEC_WPS_NETWORK MBIT(0)
 #if CONFIG_WPA_SUPP_WPS
 /**
  *  This function generate pin for WPS pin session.

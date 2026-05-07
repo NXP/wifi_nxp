@@ -1930,6 +1930,13 @@ static int network_matches_scan_result(const struct wlan_network *network,
             }
         }
     }
+#if CONFIG_WPA_SUPP
+	if ((network->unspecified_network & UNSPEC_WPS_NETWORK) != res->wps_IE_exist)
+	{
+        wlcm_d("%s: WPS flag mismatch.\n", network->ssid);
+        return -WM_FAIL;
+    }
+#endif
     return WM_SUCCESS;
 }
 
@@ -5646,7 +5653,10 @@ static int wlcm_process_add_unspecified_network(const char *name)
     network->name[len] = '\0';
     (void)memcpy(network->ssid, ssid, strlen(ssid));
     network->ssid[IEEEtypes_SSID_SIZE] = '\0';
-
+    if (strcmp(name, "wps_network") == 0)
+    {
+        network->unspecified_network |= UNSPEC_WPS_NETWORK;
+    }
     network->ip.ipv4.addr_type = ADDR_TYPE_DHCP;
 
 #if CONFIG_WPA_SUPP_P2P
@@ -16124,7 +16134,22 @@ static int wlan_remove_wps_network(void)
     for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
     {
         if (wlan.networks[i].wps_network)
+        {
             ret = wpa_supp_remove_network(netif, &wlan.networks[i]);
+            if (ret != WM_SUCCESS)
+            {
+                wlcm_e("Failed to remove WPS network from supplicant");
+                return ret;
+            }
+
+            ret = wlan_remove_network(wlan.networks[i].name);
+            if (ret != WM_SUCCESS)
+            {
+                wlcm_e("Failed to remove WPS network from wlan network");
+                return ret;
+            }
+        }
+
     }
     return ret;
 }
