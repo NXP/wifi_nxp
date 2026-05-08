@@ -44,7 +44,7 @@ static uint8_t sleep_cfm_cmd_buf[WIFI_FW_CMDBUF_SIZE] = {0};
 SDK_ALIGN(static uint8_t vdll_cmd_buf[WIFI_FW_CMDBUF_SIZE], 32);
 #endif
 // static int pm_handle;
-#ifdef IW610
+#if defined(SD9177) || defined(IW610)
 bool cal_data_valid_fw;
 #endif
 /*
@@ -1250,7 +1250,7 @@ static mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
 #endif
         case HostCmd_CMD_GET_HW_SPEC:
             (void)wlan_ret_get_hw_spec((mlan_private *)mlan_adap->priv[0], (HostCmd_DS_COMMAND *)(void *)cmdresp, NULL);
-#ifdef IW610
+#if defined(SD9177) || defined(IW610)
 #if !defined(OVERRIDE_CALIBRATION_DATA)
             t_u32 fw_cap_ext;
             fw_cap_ext = mlan_adap->priv[0]->adapter->fw_cap_ext;
@@ -2062,7 +2062,7 @@ static void wlan_fw_init_cfg(void)
     wlan_get_hw_spec();
 
     if (cal_data_valid
-#ifdef IW610
+#if defined(SD9177) || defined(IW610)
         && !cal_data_valid_fw
 #endif
     )
