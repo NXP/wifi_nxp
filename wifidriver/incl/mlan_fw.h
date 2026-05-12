@@ -3371,8 +3371,14 @@ typedef MLAN_PACK_START struct _HostCmd_DS_GET_HW_SPEC
 #else
      t_u32 reserved_2;
 #endif
+    /** Count of small size mgmt IE buffers available in FW */
+    t_u8 mgmt_buf_cnt_sm;
+    /** Count of medium size mgmt IE buffers available in FW */
+    t_u8 mgmt_buf_cnt_md;
+    /** Count of large size mgmt IE buffers available in FW */
+    t_u8 mgmt_buf_cnt_lg;
     /** Reserved field */
-    t_u32 reserved_3;
+    t_u8 reserved_3;
     /** FW/HW Capability */
     t_u32 fw_cap_info;
     /** 802.11n Device Capabilities */

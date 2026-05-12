@@ -263,11 +263,6 @@ void wifi_set_tx_status(t_u8 status);
 void wifi_set_rx_status(t_u8 status);
 
 /**
- * This API can be used to reset mgmt_ie_index_bitmap.
- */
-void reset_ie_index();
-
-/**
  * Register Data callback function with Wi-Fi Driver to receive
  * DATA from SDIO.
  *
@@ -1244,8 +1239,6 @@ typedef struct _wlan_nlist_report_param
 #endif
 } wlan_nlist_report_param;
 #endif
-
-int wifi_clear_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index, int mgmt_bitmap_index);
 
 #if CONFIG_UAP_STA_MAC_ADDR_FILTER
 int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);

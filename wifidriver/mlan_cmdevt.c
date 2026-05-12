@@ -1210,6 +1210,29 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
     }
 #endif
 
+    pmadapter->max_mgmt_ie_index = wlan_le16_to_cpu(hw_spec->mgmt_buf_count);
+    PRINTM(MCMND, "GET_HW_SPEC: mgmt IE count=%d\n", pmadapter->max_mgmt_ie_index);
+    if (!pmadapter->max_mgmt_ie_index || pmadapter->max_mgmt_ie_index > MAX_MGMT_IE_FW_INDEX)
+    {
+        pmadapter->max_mgmt_ie_index = MAX_MGMT_IE_FW_INDEX;
+    }
+
+#if 0
+    pmadapter->mgmt_ie_cnt_sm = wlan_le16_to_cpu(hw_spec->mgmt_buf_cnt_sm);
+    pmadapter->mgmt_ie_cnt_md = wlan_le16_to_cpu(hw_spec->mgmt_buf_cnt_md);
+    pmadapter->mgmt_ie_cnt_lg = wlan_le16_to_cpu(hw_spec->mgmt_buf_cnt_lg);
+    if (pmadapter->mgmt_ie_cnt_sm +
+        pmadapter->mgmt_ie_cnt_md +
+        pmadapter->mgmt_ie_cnt_lg != pmadapter->max_mgmt_ie_index)
+    {
+        PRINTM(MWARN, "GET_HW_SPEC: mgmt IE count mismatch (sm %d + md %d + lg %d != total %d)\n",
+               pmadapter->mgmt_ie_cnt_sm, pmadapter->mgmt_ie_cnt_md, pmadapter->mgmt_ie_cnt_lg,
+               pmadapter->max_mgmt_ie_index);
+        pmadapter->mgmt_ie_cnt_sm = MLAN_MGMT_BUF_SM_CNT;
+        pmadapter->mgmt_ie_cnt_md = MLAN_MGMT_BUF_MD_CNT;
+        pmadapter->mgmt_ie_cnt_lg = MLAN_MGMT_BUF_LG_CNT;
+    }
+#endif
 
 #ifdef OTP_CHANINFO
     if ((pmadapter->otp_region != MNULL) && (pmadapter->otp_region->force_reg == 0U))

@@ -6407,6 +6407,13 @@ static void wlcm_process_init(enum cm_sta_state *next)
 
     (void)wrapper_wlan_cmd_get_hw_spec();
 
+    ret = wifi_mgmt_ie_init();
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("wifi_mgmt_ie_init failed");
+        return;
+    }
+
     wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl = WLAN_ED_MAC_CTRL;
     (void)wlan_set_ed_mac_mode(wlan_ed_mac_ctrl);
 #if UAP_SUPPORT
@@ -12713,18 +12720,6 @@ int wlan_set_uap_max_clients(unsigned int max_sta_num)
 #endif
 }
 
-int wlan_get_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int *buf_len)
-{
-    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
-    return wifi_get_mgmt_ie((mlan_bss_type)bss_type, index, buf, buf_len);
-}
-
-int wlan_set_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t id, void *buf, unsigned int buf_len)
-{
-    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
-    return wifi_set_mgmt_ie((mlan_bss_type)bss_type, id, buf, buf_len);
-}
-
 #ifdef SD8801
 int wlan_get_ext_coex_stats(wlan_ext_coex_stats_t *ext_coex_stats)
 {
@@ -12736,12 +12731,6 @@ int wlan_set_ext_coex_config(const wlan_ext_coex_config_t ext_coex_config)
     return wifi_set_ext_coex_config(&ext_coex_config);
 }
 #endif
-
-int wlan_clear_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index, int mgmt_bitmap_index)
-{
-    CHECK_BSS_TYPE(bss_type, -WM_FAIL);
-    return wifi_clear_mgmt_ie((mlan_bss_type)bss_type, index, mgmt_bitmap_index);
-}
 
 int wlan_set_txbfcap(unsigned int tx_bf_cap)
 {

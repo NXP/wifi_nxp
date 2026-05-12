@@ -1751,7 +1751,7 @@ int wlan_set_uap_coutry_regd_by_conn_bss(pmlan_private priv, BSSDescriptor_t *d)
     t_u32 country_ie_len = 0;
     int ret = WM_SUCCESS;
 
-	wifi_d("%s: Enter", __FUNCTION__);
+    wifi_d("%s: Enter", __FUNCTION__);
 
     if (mlan_adap->priv[1]->uap_bss_started != MTRUE)
     {
@@ -1773,156 +1773,16 @@ int wlan_set_uap_coutry_regd_by_conn_bss(pmlan_private priv, BSSDescriptor_t *d)
         wifi_io_dump_hex(&(d->country_info), country_ie_len + 2U);
     }
 
-    if (country_ie_len > 0)
+    if (country_ie_len == 0)
     {
-        uint8_t *buf = NULL;
-        uint8_t *buf_ptr = NULL;
-        unsigned int buf_len = MAX_CUSTOM_IE_LEN;
-        int buf_len_left = 0;
-        uint8_t *buf_new = NULL;
-        uint8_t *buf_new_ptr = NULL;
-        unsigned int buf_new_len = MAX_CUSTOM_IE_LEN;
-        unsigned short mask = MGMT_MASK_BEACON | MGMT_MASK_PROBE_RESP | MGMT_MASK_ASSOC_RESP;
-        unsigned int ie_index_bitmap = 0;
-        t_u32 bit = 0;
-        t_u8 updated_cur_rnd = 0;
-        t_u8 updated_all = 0;
+        wifi_d("%s: no country ie in bss or country ie ignored.", __FUNCTION__);
+        return WM_SUCCESS;
+    }
 
-#if !CONFIG_MEM_POOLS
-        buf = (uint8_t *)OSA_MemoryAllocate(buf_len);
-#else
-        buf = OSA_MemoryPoolAllocate(buf_512_MemoryPool);
-#endif
-        if (buf == NULL)
-        {
-            wifi_e("%s: alloc %u size buf fail.", __FUNCTION__, buf_len);
-            return -WM_FAIL;
-        }
-#if !CONFIG_MEM_POOLS
-        buf_new = (uint8_t *)OSA_MemoryAllocate(buf_new_len);
-#else
-        buf_new = OSA_MemoryPoolAllocate(buf_512_MemoryPool);
-#endif
-        if (buf_new == NULL)
-        {
-#if !CONFIG_MEM_POOLS
-            OSA_MemoryFree(buf);
-#else
-            OSA_MemoryPoolFree(buf_512_MemoryPool, buf);
-#endif
-            wifi_e("%s: alloc %u size buf_new fail.", __FUNCTION__, buf_new_len);
-            return -WM_FAIL;
-        }
-
-        ie_index_bitmap = get_ie_index();
-        while (ie_index_bitmap != 0)
-        {
-            wifi_d("%s: ie_index_bitmap=0x%x bit=%u", __FUNCTION__, ie_index_bitmap, bit);
-            if ((ie_index_bitmap & MBIT(bit)) != 0)
-            {
-                __memset(priv->adapter, buf, 0x00, MAX_CUSTOM_IE_LEN);
-                buf_len = MAX_CUSTOM_IE_LEN;
-                ret = wifi_get_mgmt_ie_by_index(MLAN_BSS_TYPE_UAP, buf, &buf_len, bit);
-                if (ret == WM_SUCCESS)
-                {
-                    wifi_d("%s: get_mgmt_ie index=%u len=%u", __FUNCTION__, bit, buf_len);
-                    if (buf_len < (sizeof(tlvbuf_custom_ie) + sizeof(custom_ie) - MAX_IE_SIZE))
-                    {
-                        wifi_d("%s: get_mgmt_ie index=%u invalid len=%u", __FUNCTION__, bit, buf_len);
-                    }
-                    else if (buf_len > MAX_CUSTOM_IE_LEN)
-                    {
-                        wifi_e("%s: get_mgmt_ie index=%u invalid len=%u>%u", __FUNCTION__, bit, buf_len, MAX_CUSTOM_IE_LEN);
-                    }
-                    else
-                    {
-                        custom_ie *cu_ie = (custom_ie *)(buf + sizeof(tlvbuf_custom_ie));
-                        t_u8 element_len = 0;
-
-						wifi_d("%s: get_mgmt_ie index=%u SUCCESS: len=%u", __FUNCTION__, bit, buf_len);
-                        wifi_io_dump_hex(buf, buf_len);
-                        buf_ptr = (t_u8 *)cu_ie + (sizeof(custom_ie) - MAX_IE_SIZE);
-                        buf_len_left = cu_ie->ie_length;
-
-                        __memset(priv->adapter, buf_new, 0x00, MAX_CUSTOM_IE_LEN);
-                        buf_new_ptr = buf_new;
-                        buf_new_len = 0;
-
-                        updated_cur_rnd = 0;
-                        while (buf_len_left >= 2U)
-                        {
-                            IEEEtypes_ElementId_e element_id	= (IEEEtypes_ElementId_e)(*((t_u8 *)buf_ptr));
-                            element_len = *((t_u8 *)buf_ptr + 1);
-                            if (buf_len_left < (element_len + 2U))
-                            {
-                                wifi_e("%s: Error in processing IE bytes_left 0x%x < cur_ie_len 0x%x",
-                                    __FUNCTION__, buf_len_left, (element_len + 2U));
-                                break;
-                            }
-                            if ((element_id == COUNTRY_INFO) && (country_ie_len > 0))
-                            {
-                                wifi_d("%s: Find COUNTRY IE: id=%u\n", __FUNCTION__, element_id);
-                                __memcpy(priv->adapter, buf_new_ptr, &(d->country_info), country_ie_len + 2U);
-                                buf_new_ptr += (country_ie_len + 2U);
-                                buf_new_len += (country_ie_len + 2U);
-                                updated_cur_rnd = 1;
-                            }
-                            else
-                            {
-                                __memcpy(priv->adapter, buf_new_ptr, buf_ptr, (element_len + 2U));
-                                buf_new_ptr += (element_len + 2U);
-                                buf_new_len += (element_len + 2U);
-                            }
-                            buf_ptr += (element_len + 2U);
-                            buf_len_left -= (element_len + 2U);
-                        }
-
-                        if (updated_cur_rnd != 0)
-                        {
-                            wifi_d("%s: updated_cur_rnd=%u: dump buf_new %u", __FUNCTION__, updated_cur_rnd, buf_new_len);
-                            wifi_io_dump_hex(buf_new, buf_new_len);
-                            wifi_clear_mgmt_ie2(MLAN_BSS_TYPE_UAP, bit);
-                            ret = wifi_set_mgmt_ie2(MLAN_BSS_TYPE_UAP, cu_ie->mgmt_subtype_mask, buf_new, buf_new_len);
-                            if (ret < 0)
-                            {
-                                wifi_e("%s: updated_cur_rnd=%u: wifi_set_mgmt_ie2 fail ret=%d.", __FUNCTION__, updated_cur_rnd, ret);
-                            }
-                            updated_all = 1;
-                        }
-                    }
-                }
-            }
-            ie_index_bitmap &= ~(MBIT(bit));
-            bit++;
-        }
-        if (updated_all == 0)
-        {
-            __memset(priv->adapter, buf_new, 0x00, MAX_CUSTOM_IE_LEN);
-            buf_new_ptr = buf_new;
-            buf_new_len = 0;
-            if (country_ie_len > 0)
-            {
-                __memcpy(priv->adapter, (void *)buf_new_ptr, (const void *)&(d->country_info), (country_ie_len + 2U));
-                buf_new_ptr += (country_ie_len + 2U);
-                buf_new_len += (country_ie_len + 2U);
-            }
-            wifi_d("%s: updated_all=%u: dump buf_new %u", __FUNCTION__, updated_all, buf_new_len);
-            ret = wifi_set_mgmt_ie2(MLAN_BSS_TYPE_UAP, mask, buf_new, buf_new_len);
-            if (ret < 0)
-            {
-                wifi_e("%s: updated_all=%u: wifi_set_mgmt_ie2 fail ret=%d.", __FUNCTION__, updated_all, ret);
-            }
-        }
-#if !CONFIG_MEM_POOLS
-        OSA_MemoryFree(buf);
-#else
-        OSA_MemoryPoolFree(buf_512_MemoryPool, buf);
-#endif
-#if !CONFIG_MEM_POOLS
-        OSA_MemoryFree(buf_new);
-#else
-        OSA_MemoryPoolFree(buf_512_MemoryPool, buf_new);
-#endif
+    ret = wifi_mgmt_ie_replace_IE(mlan_adap->priv[1], (t_u8 *)&(d->country_info), country_ie_len + 2U, COUNTRY_INFO, NULL);
+    if (ret != WM_SUCCESS)
+    {
+        wifi_e("%s: failed to update country ie.", __FUNCTION__);
     }
 
     return ret;
@@ -2775,23 +2635,14 @@ static int wifi_assocreq_wps_ie_cfg(mlan_private *priv)
 {
     int ret       = WM_SUCCESS;
     int wpsie_len = 0;
-    u8 *wps_buf   = NULL;
-    wpsie_len     = sizeof(IEEEtypes_Header_t) + priv->wps.wps_ie.vend_hdr.len;
-    wps_buf       = (t_u8 *)OSA_MemoryAllocate(wpsie_len);
 
-    if (wps_buf == NULL) {
-        return -WM_FAIL;
+    wpsie_len = sizeof(IEEEtypes_Header_t) + priv->wps.wps_ie.vend_hdr.len;
+    ret = wifi_mgmt_ie_set(priv, MGMT_MASK_ASSOC_REQ | MGMT_MASK_REASSOC_REQ, (t_u8 *)&priv->wps.wps_ie, wpsie_len, &priv->wps.wps_mgmt_bitmap_index);
+    if (ret != WM_SUCCESS)
+    {
+        ret = -WM_FAIL;
     }
 
-    (void)memset(wps_buf, 0, wpsie_len);
-    (void)__memcpy(priv->adapter, wps_buf, (t_u8 *)&priv->wps.wps_ie, wpsie_len);
-    priv->wps.wps_mgmt_bitmap_index =
-        wifi_set_mgmt_ie2(priv->bss_type, MGMT_MASK_ASSOC_REQ | MGMT_MASK_REASSOC_REQ, (void *)wps_buf, wpsie_len);
-    if (-WM_FAIL != priv->wps.wps_mgmt_bitmap_index)
-        ret = WM_SUCCESS;
-    else
-        ret = -WM_FAIL;
-    OSA_MemoryFree(wps_buf);
     return ret;
 }
 #endif
@@ -2800,7 +2651,7 @@ static int wifi_assocreq_wps_ie_cfg(mlan_private *priv)
 #if CONFIG_WPA_SUPP_P2P
 int wifi_assocreq_p2p_ie_cfg(mlan_private *priv)
 {
-    int ret = -WM_FAIL;
+    int ret = WM_SUCCESS;
     t_u8 *buf, *pos;
     int p2pie_len = 0;
     int wpsie_len = 0;
@@ -2819,7 +2670,7 @@ int wifi_assocreq_p2p_ie_cfg(mlan_private *priv)
     }
     (void)memset(buf, 0, total_len);
 
-    pos = (t_u8 *)buf;
+    pos = buf;
     if (priv->wps.session_enable)
     {
         (void)__memcpy(priv->adapter, pos, (t_u8 *)&priv->wps.wps_ie, wpsie_len);
@@ -2833,13 +2684,13 @@ int wifi_assocreq_p2p_ie_cfg(mlan_private *priv)
     dump_hex(buf, total_len);
 #endif
 
-    priv->p2p_mgmt_bitmap_index =
-        wifi_set_mgmt_ie2(priv->bss_type, MGMT_MASK_ASSOC_REQ | MGMT_MASK_REASSOC_REQ, (void *)buf, total_len);
+    ret = wifi_mgmt_ie_set(priv, MGMT_MASK_ASSOC_REQ | MGMT_MASK_REASSOC_REQ, buf, total_len, &priv->p2p_mgmt_bitmap_index);
+    if (ret != WM_SUCCESS)
+    {
+        ret = -WM_FAIL;
+    }
 
     OSA_MemoryFree(buf);
-
-    if (priv->p2p_mgmt_bitmap_index != -1)
-        ret = (int)WM_SUCCESS;
 
     return ret;
 }
@@ -2948,27 +2799,23 @@ int wifi_nxp_send_assoc(unsigned int bss_type, nxp_wifi_assoc_info_t *assoc_info
     }
 
 #if CONFIG_WPA_SUPP_P2P
-    if (priv->p2p_mgmt_bitmap_index != -1)
+    if (priv->p2p_mgmt_bitmap_index != MLAN_MGMT_IE_INVALID_IDX)
     {
-        ret = wifi_clear_mgmt_ie2(priv->bss_type, priv->p2p_mgmt_bitmap_index);
-
+        ret = wifi_mgmt_ie_clear(priv, &priv->p2p_mgmt_bitmap_index);
         if (ret != WM_SUCCESS)
         {
-            wifi_e("Clear Assoc req IE failed");
+            wifi_e("Clear assocreq P2P IE failed");
             return -WM_FAIL;
         }
-        priv->p2p_mgmt_bitmap_index = -1;
     }
 
     if (priv->p2p.session_enable)
     {
-        PRINTM(MINFO, "add P2P_IE to assocreq.\n");
-
+        PRINTM(MINFO, "add P2P IE to assocreq.\n");
         ret = wifi_assocreq_p2p_ie_cfg(priv);
-
         if (ret != WM_SUCCESS)
         {
-            wifi_w("add P2P_IE to assocreq fail");
+            wifi_w("add P2P IE to assocreq fail");
             return -WM_FAIL;
         }
     }
@@ -2983,22 +2830,21 @@ int wifi_nxp_send_assoc(unsigned int bss_type, nxp_wifi_assoc_info_t *assoc_info
 
 #if CONFIG_WPA_SUPP
 #if CONFIG_WPA_SUPP_WPS
-    if (priv->wps.wps_mgmt_bitmap_index != -1)
+    if (priv->wps.wps_mgmt_bitmap_index != MLAN_MGMT_IE_INVALID_IDX)
     {
-        ret = wifi_clear_mgmt_ie2(priv->bss_type, priv->wps.wps_mgmt_bitmap_index);
+        ret = wifi_mgmt_ie_clear(priv, &priv->wps.wps_mgmt_bitmap_index);
         if (ret != WM_SUCCESS)
         {
-            wifi_e("Clear Assoc req IE failed");
+            wifi_e("Clear assocreq WPS IE failed");
             return -WM_FAIL;
         }
-        priv->wps.wps_mgmt_bitmap_index = -1;
     }
-    else if (priv->wps.session_enable == MTRUE)
+    else if (priv->wps.session_enable)
     {
         ret = wifi_assocreq_wps_ie_cfg(priv);
         if (ret != WM_SUCCESS)
         {
-            wifi_w("add WPS_IE to assocreq fail");
+            wifi_w("add WPS IE to assocreq fail");
             return -WM_FAIL;
         }
     }

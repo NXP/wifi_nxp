@@ -4651,35 +4651,6 @@ int wlan_set_wwsm_txpwrlimit(void);
 const char *wlan_get_wlan_region_code(void);
 #endif
 
-/**
- * Get Management IE for given BSS type (interface) and index.
- *
- * \param[in] bss_type: 0: STA, 1: uAP
- * \param[in] index: IE index.
- *
- * \param[out] buf: Buffer to store requested IE data.
- * \param[out] buf_len: Length of IE data.
- *
- * \return WM_SUCCESS if successful.
- * \return -WM_FAIL if unsuccessful.
- *
- */
-int wlan_get_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int *buf_len);
-
-/**
- * Set management IE for given BSS type (interface) and index.
- *
- * \param[in] bss_type: 0: STA, 1: uAP
- * \param[in] id: Type/ID of Management IE.
- * \param[in] buf: Buffer containing IE data.
- * \param[in] buf_len: Length of IE data.
- *
- * \return Management IE index if successful.
- * \return -WM_FAIL if unsuccessful.
- *
- */
-int wlan_set_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t id, void *buf, unsigned int buf_len);
-
 #ifdef SD8801
 /**
  * Get external radio coex statistics.
@@ -4703,19 +4674,6 @@ int wlan_get_ext_coex_stats(wlan_ext_coex_stats_t *ext_coex_stats);
  */
 int wlan_set_ext_coex_config(const wlan_ext_coex_config_t ext_coex_config);
 #endif
-
-/**
- * Clear management IE for given BSS type (interface) and index.
- *
- * \param[in] bss_type: 0: STA, 1: uAP
- * \param[in] index: IE index.
- * \param[in] mgmt_bitmap_index: management bitmap index.
- *
- * \return WM_SUCCESS if successful.
- * \return -WM_FAIL if unsuccessful.
- *
- */
-int wlan_clear_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index, int mgmt_bitmap_index);
 
 /**
  * Get current status of 802.11d support.

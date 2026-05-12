@@ -1132,7 +1132,7 @@ typedef struct
 {
     /** WPS IE */
     IEEEtypes_VendorSpecific_t wps_ie;
-    int wps_mgmt_bitmap_index;
+    t_u16 wps_mgmt_bitmap_index;
     /** Session enable flag */
     t_u8 session_enable;
 } wps_t;
@@ -1525,7 +1525,7 @@ struct _mlan_private
     bool probe_req_report_on;
 #if CONFIG_WPA_SUPP_P2P
     p2p_t p2p;
-    int p2p_mgmt_bitmap_index;
+    t_u16 p2p_mgmt_bitmap_index;
     int p2p_gc_network;
     int p2p_go_network;
     t_u8 p2p_go_ssid[MLAN_MAX_SSID_LENGTH];
@@ -1551,7 +1551,7 @@ struct _mlan_private
 
 #if CONFIG_11K
     t_u8 enable_host_11k;
-    int rrm_mgmt_bitmap_index;
+    t_u16 rrm_mgmt_bitmap_index;
     t_u8 neighbor_rep_token;
 #endif
 #if CONFIG_11V
@@ -1603,19 +1603,25 @@ struct _mlan_private
 #endif
 #if CONFIG_DRIVER_MBO
     t_u8 enable_mbo;
-    int mbo_mgmt_bitmap_index;
+    t_u16 mbo_index;
 #endif
     /** tx_seq_num */
     t_u32 tx_seq_num;
 #if CONFIG_WPA_SUPP
-    int probe_req_index;
+    t_u16 probe_req_index;
 #if CONFIG_HOSTAPD
-    int beacon_vendor_index;
-    int beacon_index;
-    int proberesp_index;
-    int proberesp_p2p_index;
-    int assocresp_index;
-    int beacon_wps_index;
+    /** beacon ie index */
+    t_u16 beacon_index;
+    /** proberesp ie index */
+    t_u16 proberesp_index;
+    /** proberesp_p2p_index */
+    t_u16 proberesp_p2p_index;
+    /** assocresp ie index */
+    t_u16 assocresp_index;
+    /** beacon wps index for mgmt ie */
+    t_u16 beacon_wps_index;
+    /** beacon/proberesp vendor ie index */
+    t_u16 beacon_vendor_index;
 #endif
 #endif
     /** uAP started or not */
@@ -2374,6 +2380,16 @@ struct _mlan_adapter
 #endif
     /** max mgmt IE index in device */
     t_u16 max_mgmt_ie_index;
+    /** Mgmt IE table maintained by driver */
+    custom_ie_entry mgmt_ie[MAX_MGMT_IE_DRV_INDEX];
+    /** Count of small size mgmt IE buffers available in FW */
+    t_u8 mgmt_ie_cnt_sm;
+    /** Count of medium size mgmt IE buffers available in FW */
+    t_u8 mgmt_ie_cnt_md;
+    /** Count of large size mgmt IE buffers available in FW */
+    t_u8 mgmt_ie_cnt_lg;
+    /** Mgmt IE buffer mapped to FW IE slots */
+    custom_ie_hdr mgmt_buffer[MAX_MGMT_IE_FW_INDEX];
 #ifdef OTP_CHANINFO
     otp_region_info_t *otp_region;
     chan_freq_power_t *cfp_otp_bg;

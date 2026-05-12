@@ -62,6 +62,8 @@ extern "C" {
 #if CONFIG_11K
 #include "mlan_11k.h"
 #endif
+
+#include "mlan_mgmt_ie.h"
 /* #define CONFIG_WIFI_DEBUG */
 
 static inline void panic(const char *msg)
@@ -312,9 +314,7 @@ int wifi_nxp_deauthenticate(unsigned int bss_type, const uint8_t *bssid, uint16_
 void wifi_get_scan_table(mlan_private *pmpriv, mlan_scan_resp *pscan_resp);
 #endif
 int wifi_get_eeprom_data(uint32_t offset, uint32_t byte_count, uint8_t *buf);
-int wifi_get_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int *buf_len);
 int wifi_send_remain_on_channel_cmd(unsigned int bss_type, wifi_remain_on_channel_t *remain_on_channel);
-int wifi_set_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t id, void *buf, unsigned int buf_len);
 #ifdef SD8801
 int wifi_get_ext_coex_stats(wifi_ext_coex_stats_t *ext_coex_stats);
 int wifi_set_ext_coex_config(const wifi_ext_coex_config_t *ext_coex_config);
@@ -516,16 +516,6 @@ extern t_u8 g_csi_event_for_wls;
 void wifi_process_csi_data(void *p_data);
 #endif
 
-#if UAP_SUPPORT
-int wifi_set_custom_ie(unsigned int bss_type,
-		       custom_ie *beacon_ies_data,
-                       custom_ie *beacon_wps_ies_data,
-                       custom_ie *proberesp_ies_data,
-                       custom_ie *assocresp_ies_data);
-#endif
-
-unsigned int get_ie_index();
-
 #if CONFIG_11K
 /**
  * rrm scan callback function to process scan results
@@ -600,15 +590,7 @@ int wrapper_bssdesc_second_set(int bss_index,
 #endif
 );
 
-int wifi_get_mgmt_ie2(mlan_bss_type bss_type, void *buf, unsigned int *buf_len);
-int wifi_set_mgmt_ie2(mlan_bss_type bss_type, unsigned short mask, void *buf, unsigned int buf_len);
-int wifi_clear_mgmt_ie2(mlan_bss_type bss_type, int mgmt_bitmap_index);
-
 int wifi_get_mgmt_ie_by_index(mlan_bss_type bss_type, void *buffer, unsigned int *ie_len, int index);
-
-void set_ie_index(unsigned int index);
-
-void reset_ie_index_for_interface(void *priv);
 
 #if CONFIG_BG_SCAN
 int wifi_request_bgscan(mlan_private *pmpriv);

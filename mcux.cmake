@@ -292,6 +292,8 @@ if (CONFIG_MCUX_COMPONENT_middleware.wifi.wifidriver)
                 # TODO please change to relative dir
                 wifidriver/incl/mlan_util.h
                 # TODO please change to relative dir
+                wifidriver/incl/mlan_mgmt_ie.h
+                # TODO please change to relative dir
                 wifidriver/incl/mlan_wmm.h
                 # TODO please change to relative dir
                 wifidriver/mlan_11ac.c
@@ -345,6 +347,8 @@ if (CONFIG_MCUX_COMPONENT_middleware.wifi.wifidriver)
                 wifidriver/mlan_sta_rx.c
                 # TODO please change to relative dir
                 wifidriver/mlan_txrx.c
+                # TODO please change to relative dir
+                wifidriver/mlan_mgmt_ie.c
                 # TODO please change to relative dir
                 wifidriver/mlan_wmm.c
                 # TODO please change to relative dir

@@ -1475,6 +1475,8 @@ static void wifi_core_deinit(void)
     wifi_wmm_buf_pool_deinit();
     wifi_bypass_txq_deinit();
 
+    wifi_mgmt_ie_deinit();
+
     (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)txbuf_sem);
 #endif
 
