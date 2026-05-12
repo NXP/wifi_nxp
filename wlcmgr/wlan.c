@@ -6247,13 +6247,13 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
         }
         if (network_idx < WLAN_MAX_KNOWN_NETWORKS)
         {
-            char psk[WLAN_PSK_MAX_LENGTH];
+            char psk[WLAN_PSK_MAX_LENGTH + 1];
             unsigned int hex_len = 0;
             struct wlan_network_security *security = &(wlan.networks[network_idx].security);
             const char *pos = buf + sizeof(DPP_EVENT_CONFOBJ_PASS) - 1;
 
             hex_len = strlen(pos);
-            if (hex_len <= (WLAN_PSK_MAX_LENGTH * 2))
+            if (hex_len <= ((WLAN_PSK_MAX_LENGTH + 1) * 2))
             {
                 memset(psk, 0, sizeof(psk));
                 hexstr2bin(pos, (unsigned char *)psk, hex_len/2);
@@ -9424,19 +9424,6 @@ void wlan_initialize_sta_network(struct wlan_network *net)
     net->ip.ipv4.addr_type = ADDR_TYPE_DHCP;
 }
 
-static bool isHexNumber(const char *str, const uint8_t len)
-{
-    for (int i = 0; i < len; ++i)
-    {
-        if (('0' > str[i] || '9' < str[i]) && ('A' > str[i] || 'F' < str[i]) && ('a' > str[i] || 'f' < str[i]))
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 static bool wlan_is_key_valid(struct wlan_network *network)
 {
     enum wlan_security_type type = network->security.type;
@@ -9459,14 +9446,6 @@ static bool wlan_is_key_valid(struct wlan_network *network)
                     network->security.psk_len);
                 return false;
             }
-            if ((network->security.psk_len == WLAN_PSK_MAX_LENGTH - 1) &&
-                (isHexNumber(network->security.psk, network->security.psk_len) == false))
-            {
-                wlcm_e(
-                    "Invalid hexadecimal digits psk"
-                    "(expected Hexadecimal digits: 64)");
-                return false;
-            }
             break;
         case WLAN_SECURITY_WPA2_WPA3_SAE_MIXED:
             /* check the length of PSK phrase */
@@ -9478,14 +9457,7 @@ static bool wlan_is_key_valid(struct wlan_network *network)
                     network->security.psk_len);
                 return false;
             }
-            if ((network->security.psk_len == WLAN_PSK_MAX_LENGTH - 1) &&
-                (isHexNumber(network->security.psk, network->security.psk_len) == false))
-            {
-                wlcm_e(
-                    "Invalid hexadecimal digits psk"
-                    "(expected Hexadecimal digits: 64)");
-                return false;
-            }
+            break;
         case WLAN_SECURITY_WPA3_SAE:
 #if CONFIG_WPA_SUPP
 #if CONFIG_11R

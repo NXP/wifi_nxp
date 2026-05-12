@@ -125,8 +125,8 @@ typedef enum
 #endif
 /** Minimum WPA2 passphrase can be up to 8 ASCII chars */
 #define WLAN_PSK_MIN_LENGTH 8U
-/** Maximum WPA2 passphrase can be up to 63 ASCII chars or 64 hexadecimal digits + 1 '\0' char */
-#define WLAN_PSK_MAX_LENGTH 65U
+/** Maximum WPA2 passphrase can be up to 63 ASCII chars + 1 '\0' char */
+#define WLAN_PSK_MAX_LENGTH 64U
 /** Minimum WPA3 password can be up to 8 ASCII chars */
 #define WLAN_PASSWORD_MIN_LENGTH 8U
 /** Maximum WPA3 password can be up to 255 ASCII chars */
