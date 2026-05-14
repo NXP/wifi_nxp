@@ -2386,7 +2386,7 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_cck_desense_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
 #endif
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+#if CONFIG_WIFI_IND_RESET
         case HostCmd_CMD_INDEPENDENT_RESET_CFG:
             ret = wlan_cmd_ind_rst_cfg(cmd_ptr, cmd_action, pdata_buf);
             break;

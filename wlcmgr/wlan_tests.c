@@ -7530,11 +7530,13 @@ static void dump_wlan_reset_usage(void)
     (void)PRINTF("1 to Enable WiFi\r\n");
     (void)PRINTF("2 to Reset WiFi\r\n");
 }
+#endif
 
 static void test_wlan_reset(int argc, char **argv)
 {
     int option;
 
+#ifdef RW610
     if (argc != 2)
     {
         (void)PRINTF("Error: invalid number of arguments\r\n");
@@ -7549,6 +7551,9 @@ static void test_wlan_reset(int argc, char **argv)
         dump_wlan_reset_usage();
         return;
     }
+#else
+    option = 2;
+#endif
 
 #if CONFIG_CSI
     if (option == 2)
@@ -7565,24 +7570,6 @@ static void test_wlan_reset(int argc, char **argv)
 
     wlan_reset((cli_reset_option)option);
 }
-#else
-static void test_wlan_reset(int argc, char **argv)
-{
-    if (argc > 1)
-    {
-        (void)PRINTF("Usage: %s\r\n", argv[0]);
-        return;
-    }
-#if CONFIG_CSI
-    (void)memset((void *)&g_csi_params, 0, sizeof(g_csi_params));
-#endif
-#if CONFIG_NET_MONITOR
-    (void)memset((void *)&g_net_monitor_param, 0, sizeof(g_net_monitor_param));
-#endif
-
-    wlan_reset((cli_reset_option)CLI_RESET_WIFI);
-}
-#endif
 #endif
 
 #if UAP_SUPPORT && CONFIG_ECSA
@@ -13218,7 +13205,7 @@ done:
 }
 #endif
 
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+#if CONFIG_WIFI_IND_RESET
 static void dump_wlan_set_ind_rst_cfg_usage(void)
 {
     (void)PRINTF("Usage :                                                                \r\n");
@@ -13315,34 +13302,6 @@ static void test_get_indrst_cfg(int argc, char **argv)
                (indrst_cfg.ir_mode == 0) ? "disabled" : ((indrst_cfg.ir_mode == 1) ? "Out Band" : "In Band"));
         if (indrst_cfg.ir_mode == 1)
             (void)PRINTF("GPIO Pin = %d\n\n", indrst_cfg.gpio_pin);
-    }
-}
-
-static void dump_wlan_independent_reset_usage(void)
-{
-    (void)PRINTF("Usage :                                     \r\n");
-    (void)PRINTF("         wlan-independent-reset             \r\n");
-}
-
-static void test_wlan_independent_reset(int argc, char **argv)
-{
-    int ret = -WM_FAIL;
-
-    if (argc != 1)
-    {
-        dump_wlan_independent_reset_usage();
-        return;
-    }
-
-    ret = wlan_independent_reset();
-
-    if (ret == WM_SUCCESS)
-    {
-        (void)PRINTF("Independent reset success\r\n");
-    }
-    else
-    {
-        (void)PRINTF("Independent reset failed\r\n");
     }
 }
 #endif
@@ -15061,10 +15020,9 @@ static struct cli_command tests[] = {
 #if CONFIG_AUTO_RECONNECT
     {"wlan-auto-reconnect", "<0/1/2> [<reconnect counter> <reconnect interval> <flags>]", test_wlan_auto_reconnect},
 #endif
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+#if CONFIG_WIFI_IND_RESET
     {"wlan-set-indrstcfg", "<mode> <gpio_pin>", test_set_indrst_cfg},
     {"wlan-get-indrstcfg", NULL, test_get_indrst_cfg},
-    {"wlan-independent-reset", "<mode>", test_wlan_independent_reset},
 #endif
 #if CONFIG_INACTIVITY_TIMEOUT_EXT
     {"wlan-sta-inactivityto", "<n> <m> <l> [k] [j]", test_wlan_sta_inactivityto},

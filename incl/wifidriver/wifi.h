@@ -178,7 +178,7 @@ typedef struct wifi_uap_client_event
  */
 int wifi_init(const uint8_t *fw_start_addr, const size_t size);
 
-#if (CONFIG_WIFI_IND_DNLD)
+#if CONFIG_WIFI_IND_RESET
 /**
  * Re-initialize Wi-Fi driver module.
  *
@@ -189,12 +189,14 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size);
  *
  * \param[in] fw_start_addr address of stored Wi-Fi Firmware.
  * \param[in] size Size of Wi-Fi Firmware.
- * \param[in] fw_reload Type of Firmware reset.
  *
  * \return WM_SUCCESS on success or -WM_FAIL on error.
  *
  */
-int wifi_reinit(const uint8_t *fw_start_addr, const size_t size, uint8_t fw_reload);
+int wifi_reinit(const uint8_t *fw_start_addr, const size_t size);
+
+void wifi_reset_mode_set(uint8_t mode);
+uint8_t wifi_reset_mode_get(void);
 #endif
 
 /**
@@ -1838,11 +1840,9 @@ int wifi_single_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime);
 int wifi_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 wlanBlockTime);
 #endif
 
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+#if CONFIG_WIFI_IND_RESET
 int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type);
 int wifi_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type);
-int wifi_trigger_inband_indrst();
-int wifi_trigger_oob_indrst();
 #endif
 
 #if CONFIG_WIFI_BOOT_SLEEP
@@ -2024,6 +2024,10 @@ void wifi_uap_client_assoc(t_u8 bss_type, t_u8 *sta_addr, unsigned char is_11n_e
 void wifi_uap_client_deauth(t_u8 bss_type, t_u8 *sta_addr);
 #endif
 #endif /* UAP_SUPPORT */
+
+#if !defined(RW610) && CONFIG_WIFI_RECOVERY
+void wlan_reset_async(void);
+#endif
 
 #ifdef __cplusplus
 }

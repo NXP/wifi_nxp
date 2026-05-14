@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides Core WLAN definition
  *
- *  Copyright 2008-2025 NXP
+ *  Copyright 2008-2026 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -108,46 +108,6 @@
 #if CONFIG_NCP
 #include "app_notify.h"
 #include "ncp_pm.h"
-#endif
-
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
-#include "board.h"
-
-#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
-#if defined(SD8978) || defined(SD8987)
-/* IR-OOB TRIGGER Connect Fly-Wire between J16.1 and J108.4 for 1XK-M2, 1ZM-M2*/
-#define IR_OUTBAND_TRIGGER_GPIO			GPIO1
-#define IR_OUTBAND_TRIGGER_GPIO_PIN		(23U)
-#define IR_OUTBAND_TRIGGER_GPIO_NAME   "GPIO1"
-//#define IOMUXC_GPIO_IR_OUTBAND_TRIGGER IOMUXC_GPIO_AD_B1_07_GPIO1_IO23
-#elif defined(SD9177) || defined(IW610)
-/* IR-OOB TRIGGER for 2EL-M2, Internal Routing to M2 Slot*/
-#define IR_OUTBAND_TRIGGER_GPIO			GPIO1
-#define IR_OUTBAND_TRIGGER_GPIO_PIN		(24U)
-#define IR_OUTBAND_TRIGGER_GPIO_NAME   "GPIO1"
-//#define IOMUXC_GPIO_IR_OUTBAND_TRIGGER IOMUXC_GPIO_AD_B1_08_GPIO1_IO24
-#endif
-
-#elif (defined(MIMXRT1176_cm7_SERIES) || defined(MIMXRT1175_cm7_SERIES) || defined(MIMXRT1173_cm7_SERIES) || defined(MIMXRT1172_SERIES) || defined(MIMXRT1171_SERIES)) // For RT1170
-#if defined(IW610)
-#define IR_OUTBAND_TRIGGER_GPIO   	   	GPIO9
-#define IR_OUTBAND_TRIGGER_GPIO_PIN   	(15U)
-#define IR_OUTBAND_TRIGGER_GPIO_NAME   "GPIO9"
-#else
-/* IR OUT-BAND TRIGGER GPIO*/
-/*Output GPIO J9 PIN2 (IOMUXC_GPIO_DISP_B2_11) for RT1170-EVKA/B*/
-#define IR_OUTBAND_TRIGGER_GPIO   		GPIO5
-#define IR_OUTBAND_TRIGGER_GPIO_PIN   	(12U)
-#define IR_OUTBAND_TRIGGER_GPIO_NAME  	"GPIO5"
-#endif
-#elif defined(CPU_MCXN947VDF_cm33_core0) || defined(CPU_MCXN947VPB_cm33_core0) // For FRDM-MCXN947
-#if defined(IW610)
-/* IR OUT-BAND TRIGGER GPIO */
-#define IR_OUTBAND_TRIGGER_GPIO          GPIO1
-#define IR_OUTBAND_TRIGGER_GPIO_PIN      (22U)
-#define IR_OUTBAND_TRIGGER_GPIO_NAME     "GPIO1"
-#endif
-#endif /* (defined(CPU_MIMXRT1062DVMAA) || (CPU_MIMXRT1062DVL6A)) */
 #endif
 
 #define DELAYED_SLP_CFM_DUR 10U
@@ -301,10 +261,9 @@ extern WPS_DATA wps_global;
     }
 
 OSA_MUTEX_HANDLE_DEFINE(reset_lock);
-#ifdef RW610
+
 /* Mon thread */
 static bool mon_thread_init = 0;
-#endif
 
 #if CONFIG_HOST_SLEEP
 #if CONFIG_POWER_MANAGER
@@ -508,7 +467,6 @@ static struct wps_config wps_conf = {
     .prov_session            = PROV_NON_SESSION_ATTEMPT,
 };
 #endif /* CONFIG_WPS2 */
-#ifdef RW610
 
 #define CONFIG_WLCMGR_MON_STACK_SIZE (2048)
 
@@ -523,7 +481,6 @@ static OSA_TASK_DEFINE(wlcmgr_mon_task, WLAN_TASK_PRI_LOW , 1, CONFIG_WLCMGR_MON
  */
 OSA_MSGQ_HANDLE_DEFINE(mon_thread_events, MAX_EVENTS, sizeof(struct wlan_message));
 
-#endif
 typedef enum
 {
     WLCMGR_INACTIVE,
@@ -710,14 +667,8 @@ static struct
 #if CONFIG_ROAMING
     uint8_t rssi_low_threshold;
 #endif
-    uint8_t ind_reset;
 #if CONFIG_HOST_SLEEP
     uint8_t hs_bss_type;
-#endif
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
-    uint8_t ir_mode;
-    uint8_t sta_connect_in_hang;
-    uint8_t uap_start_in_hang;
 #endif
     bool internal : 1;
 } wlan;
@@ -2644,15 +2595,8 @@ static int do_stop(struct wlan_network *network)
         wlan_uap_set_bandwidth(UAP_DEFAULT_BANDWIDTH);
         wlan_uap_set_beacon_period(UAP_DEFAULT_BEACON_PERIOD);
         wlan_uap_set_hidden_ssid(UAP_DEFAULT_HIDDEN_SSID);
+        wlan.cur_uap_network_idx = -1;
 
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
-        if(wlan.uap_start_in_hang == 0)
-        {
-#endif
-            wlan.cur_uap_network_idx = -1;
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
-        }
-#endif
         /* Reset bandcfg to default value */
         if (network->channel == 14)
         {
@@ -6424,40 +6368,14 @@ static void wlcm_process_init_params()
 #if CONFIG_BG_SCAN
     wlan.bgscan_attempt = 0;
 #endif
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
-    if(wlan.sta_connect_in_hang == 0)
-    {
-#endif
-        wlan.cur_network_idx     = -1;
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
-    }
-#endif
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
-    if(wlan.uap_start_in_hang == 0)
-    {
-#endif
-        wlan.cur_uap_network_idx = -1;
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
-    }
-#endif
+    wlan.cur_network_idx     = -1;
+    wlan.cur_uap_network_idx = -1;
     wlan.uap_state           = CM_UAP_INITIALIZING;
 #if CONFIG_WPA_SUPP_P2P
     wlan.cur_wfd_network_idx = -1;
     wlan.wfd_go_state        = CM_UAP_INITIALIZING;
 #endif
 }
-
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
-void wlan_set_sta_reconnect_in_hang(bool flag)
-{
-     wlan.sta_connect_in_hang = flag;
-}
-
-void wlan_set_uap_restart_in_hang(bool flag)
-{
-     wlan.uap_start_in_hang = flag;
-}
-#endif
 
 static void wlcm_process_init(enum cm_sta_state *next)
 {
@@ -6619,55 +6537,6 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
 
     wlcm_process_init(next);
 }
-
-static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network *curr_nw);
-
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
-static void wlcm_process_fw_hang_event(struct wifi_message *msg, enum cm_sta_state *next)
-{
-#if CONFIG_WPA_SUPP
-    struct netif *netif = net_get_sta_interface();
-#endif
-
-    (void)msg;
-
-    CONNECTION_EVENT(WLAN_REASON_FW_HANG, NULL);
-
-    if (wlan.sta_state > CM_STA_IDLE)
-    {
-#if CONFIG_WPA_SUPP
-        wpa_supp_disconnect(netif);
-#endif
-        wlcm_request_disconnect(next, &wlan.networks[wlan.cur_network_idx]);
-        wlan_dhcp_cleanup();
-    }
-
-#if UAP_SUPPORT
-    if (wlan.uap_state > CM_UAP_INITIALIZING)
-    {
-        (void)do_stop(&wlan.networks[wlan.cur_uap_network_idx]);
-    }
-#if CONFIG_WPA_SUPP_P2P
-    if (wlan.wfd_go_state > CM_UAP_INITIALIZING)
-    {
-        (void)wlan_p2p_group_remove("*");
-    }
-#endif
-#endif
-}
-
-static void wlcm_process_fw_reset_event(struct wifi_message *msg, enum cm_sta_state *next)
-{
-    (void)msg;
-    (void)next;
-
-    wlan.ind_reset = 1;
-
-    wlcm_process_init(next);
-
-    CONNECTION_EVENT(WLAN_REASON_FW_RESET, NULL);
-}
-#endif
 
 #if UAP_SUPPORT
 static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
@@ -7180,14 +7049,7 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
     { /* Do Nothing */
     }
 
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
-    if(wlan.sta_connect_in_hang == 0)
-    {
-#endif
-        wlan.cur_network_idx =-1;
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
-    }
-#endif
+    wlan.cur_network_idx =-1;
 #if CONFIG_WPS2
     if (wlan_get_prov_session() == PROV_WPS_SESSION_ATTEMPT)
     {
@@ -7387,13 +7249,7 @@ static void wlcm_process_get_hw_spec_event(void)
     (void)wlan_set_wwsm_txpwrlimit();
 
     wlan_set_region_code(mlan_adap->priv[0]->adapter->region_code);
-    if (wlan.ind_reset == 0)
-    {
-        CONNECTION_EVENT(WLAN_REASON_INITIALIZED, NULL);
-    }
-#if CONFIG_WIFI_IND_RESET
-    wlan.ind_reset = 0;
-#endif
+    CONNECTION_EVENT(WLAN_REASON_INITIALIZED, NULL);
 }
 
 #if defined(SDK_OS_FREE_RTOS)
@@ -7675,39 +7531,6 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_d("got event: scan result");
             wlcm_process_scan_result_event(msg, &next);
             break;
-
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
-        case WIFI_EVENT_FW_HANG:
-            wlcm_d("got event: fw hang");
-            wlcm_process_fw_hang_event(msg, &next);
-            break;
-        case WIFI_EVENT_FW_RESET:
-            wlcm_d("got event: fw reset");
-            wlcm_process_fw_reset_event(msg, &next);
-
-            if(wlan.uap_start_in_hang == 1)
-            {
-                if (wlan.cur_uap_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
-                    break;
-
-                PRINTF("Restarting previous uAP network\r\n");
-                wlan_start_network(wlan.networks[wlan.cur_uap_network_idx].name);
-                /* Following delay is added for safe starting of uAP */
-                OSA_TimeDelay(5000);
-                wlan_set_uap_restart_in_hang(false);
-            }
-
-            if(wlan.sta_connect_in_hang == 1)
-            {
-                if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
-                    break;
-
-                PRINTF("Reconnecting to previous network\r\n");
-                wlan_connect(wlan.networks[wlan.cur_network_idx].name);
-                wlan_set_sta_reconnect_in_hang(false);
-            }
-            break;
-#endif
 
 #if CONFIG_WPA_SUPP
         case WIFI_EVENT_SURVEY_RESULT_GET:
@@ -8484,10 +8307,10 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
     }
 #endif
 
-#if (CONFIG_WIFI_IND_DNLD) && (CONFIG_WIFI_IND_RESET)
+#if CONFIG_WIFI_IND_RESET
     if (wifi_reset_in_progress() == true)
     {
-        ret = wifi_reinit(fw_start_addr, size, FW_RELOAD_SDIO_INBAND_RESET);
+        ret = wifi_reinit(fw_start_addr, size);
     }
     else
 #endif
@@ -8992,7 +8815,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         }
         reset_mutex_init = 1;
     }
-#ifdef RW610
+
     if (!mon_thread_init)
     {
 
@@ -9031,6 +8854,8 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         }
         mon_thread_init = 1;
     }
+
+#ifdef RW610
     cau_temperature_enable();
     status = OSA_TimerCreate((osa_timer_handle_t)temperature_mon_timer, TEMPERATURE_MON_TIMEOUT,
                              &temperature_mon_cb, NULL, KOSA_TimerPeriodic, OSA_TIMER_AUTO_ACTIVATE);
@@ -9121,22 +8946,6 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         return -WM_FAIL;
     }
 #endif
-#endif
-
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
-#ifdef IR_OUTBAND_TRIGGER_GPIO
-#if defined(CPU_MCXN947VDF_cm33_core0) || defined(CPU_MCXN947VPB_cm33_core0)
-    gpio_pin_config_t out_config = {kGPIO_DigitalOutput, 1};
-#else
-    gpio_pin_config_t out_config = {kGPIO_DigitalOutput, 1, kGPIO_NoIntmode};
-#endif
-#if defined(IOMUXC_GPIO_IR_OUTBAND_TRIGGER)
-    IOMUXC_SetPinMux(IOMUXC_GPIO_IR_OUTBAND_TRIGGER, /* GPIO_AD_B0_10 is configured as GPIO1_IO10 */
-                     0U);
-#endif
-    GPIO_PinInit(IR_OUTBAND_TRIGGER_GPIO, IR_OUTBAND_TRIGGER_GPIO_PIN, &out_config);
-#endif
-
 #endif
 
     wlan_wait_wlmgr_ready();
@@ -11495,6 +11304,28 @@ int wlan_imu_put_task_lock(void)
 }
 #endif
 
+#if !defined(RW610) && CONFIG_WIFI_RECOVERY
+void wlan_reset_async(void)
+{
+    struct wlan_message msg = {0};
+
+    (void)PRINTF("recovery_enable: wifi_fw_is_hang: %u, reset_in_progress:%u\r\n",
+                 wifi_fw_is_hang(), wifi_reset_in_progress());
+    /* Avoid repeatedly triggering recovery */
+    if (wifi_reset_in_progress())
+    {
+        return;
+    }
+
+    msg.data = NULL;
+    msg.id  = WIFI_RECOVERY_REQ;
+    if (OSA_MsgQPut((osa_msgq_handle_t)mon_thread_events, &msg) != KOSA_StatusSuccess)
+    {
+        (void)PRINTF("Failed to send wifi recovery msg to queue\r\n");
+    }
+}
+#endif
+
 void wlan_reset(cli_reset_option ResetOption)
 {
     if (OSA_MutexLock((osa_mutex_handle_t)reset_lock, 0) != WM_SUCCESS)
@@ -11658,11 +11489,13 @@ void wlan_reset(cli_reset_option ResetOption)
     }
 
     wifi_reset_set_state(false);
+#if CONFIG_WIFI_IND_RESET
+    wifi_reset_mode_set(0);
+#endif
     OSA_MutexUnlock((osa_mutex_handle_t)reset_lock);
     PRINTF("--- Done ---\r\n");
 }
 
-#if defined(RW610)
 static void wlcmgr_mon_task(void * data)
 {
 #if CONFIG_HOST_SLEEP && CONFIG_POWER_MANAGER
@@ -11744,7 +11577,6 @@ static void wlcmgr_mon_task(void * data)
         }
     }
 }
-#endif // RW610
 
 #if CONFIG_NCP
 int wlan_stop_all_networks(void)
@@ -17574,74 +17406,15 @@ int wlan_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *
 #endif
 #endif
 
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+#if CONFIG_WIFI_IND_RESET
 int wlan_set_indrst_cfg(const wlan_indrst_cfg_t *indrst_cfg)
 {
-    wlan.ir_mode = indrst_cfg->ir_mode;
-
     return wifi_set_indrst_cfg(indrst_cfg, (mlan_bss_type)WLAN_BSS_TYPE_STA);
 }
 
 int wlan_get_indrst_cfg(wlan_indrst_cfg_t *indrst_cfg)
 {
     return wifi_get_indrst_cfg(indrst_cfg, (mlan_bss_type)WLAN_BSS_TYPE_STA);
-}
-
-static int wlan_trigger_inband_ind_reset()
-{
-    return wifi_trigger_inband_indrst();
-}
-
-static int wlan_trigger_oob_ind_reset()
-{
-    (void)wlan_ieeeps_off();
-
-    OSA_TimeDelay(1000);
-
-    (void)wlan_deepsleepps_off();
-
-    OSA_TimeDelay(1000);
-
-#ifdef IR_OUTBAND_TRIGGER_GPIO
-    GPIO_PinWrite(IR_OUTBAND_TRIGGER_GPIO, IR_OUTBAND_TRIGGER_GPIO_PIN, 0);
-
-    OSA_TimeDelay(10);
-
-    GPIO_PinWrite(IR_OUTBAND_TRIGGER_GPIO, IR_OUTBAND_TRIGGER_GPIO_PIN, 1);
-#endif
-    if (wifi_trigger_oob_indrst() != WM_SUCCESS)
-    {
-        (void)wlan_ieeeps_on(1);
-
-        OSA_TimeDelay(1000);
-
-        (void)wlan_deepsleepps_on();
-
-        OSA_TimeDelay(1000);
-
-        return -WM_FAIL;
-    }
-    else
-    {
-        return WM_SUCCESS;
-    }
-}
-
-int wlan_independent_reset(void)
-{
-    if (wlan.ir_mode == 1)
-    {
-        wlan.ir_mode = 0;
-        return wlan_trigger_oob_ind_reset();
-    }
-    else if (wlan.ir_mode == 2)
-    {
-        wlan.ir_mode = 0;
-        return wlan_trigger_inband_ind_reset();
-    }
-
-    PRINTF("No IR mode is set. Configure correct IR mode. \r\n");
-    return -WM_FAIL;
 }
 #endif
 

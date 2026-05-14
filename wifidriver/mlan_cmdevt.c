@@ -2255,7 +2255,7 @@ mlan_status wlan_process_vdll_event(pmlan_private pmpriv, t_u8 *pevent)
 }
 #endif /* CONFIG_FW_VDLL */
 
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+#if CONFIG_WIFI_IND_RESET
 /**
  *  @brief This function prepares command of independent reset.
  *

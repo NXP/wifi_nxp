@@ -173,8 +173,6 @@ int wrapper_wlan_set_regiontable(t_u8 region, t_u16 band);
 int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payload);
 int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
 
-int wlan_process_hang(uint8_t fw_reload);
-
 #if CONFIG_11N
 /*
  * The command event received from the firmware (e.g. EVENT_ADDBA) cannot
@@ -5020,7 +5018,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     wm_wifi.cmd_resp_status = -WM_FAIL;
                 break;
 #endif
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+#if CONFIG_WIFI_IND_RESET
             case HostCmd_CMD_INDEPENDENT_RESET_CFG:
             {
                 if (resp->result == HostCmd_RESULT_OK)
@@ -10311,7 +10309,7 @@ uint32_t wifi_get_board_type()
 }
 #endif
 
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+#if CONFIG_WIFI_IND_RESET
 int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type)
 {
     int ret;
@@ -10331,6 +10329,7 @@ int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_t
 
     misc->param.ind_rst_cfg.ir_mode  = indrst_cfg->ir_mode;
     misc->param.ind_rst_cfg.gpio_pin = indrst_cfg->gpio_pin;
+    wifi_reset_mode_set(indrst_cfg->ir_mode);
 
     misc->sub_command       = (t_u32)MLAN_OID_MISC_IND_RST_CFG;
     wm_wifi.cmd_resp_ioctl = &req;
@@ -10409,17 +10408,4 @@ int wifi_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type)
 
     return ret;
 }
-
-int wifi_trigger_inband_indrst()
-{
-    wlan_process_hang(FW_RELOAD_SDIO_INBAND_RESET);
-
-    return WM_SUCCESS;
-}
-
-int wifi_trigger_oob_indrst()
-{
-    return wlan_process_hang(FW_RELOAD_NO_EMULATION);
-}
-
 #endif

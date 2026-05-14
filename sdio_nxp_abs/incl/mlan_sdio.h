@@ -88,8 +88,10 @@ t_void wlan_interrupt(mlan_adapter *pmadapter);
 /* wmsdk */
 /* mlan_status wlan_process_int_status(mlan_adapter * pmadapter); */
 
-#if CONFIG_WIFI_IND_DNLD
+#if CONFIG_WIFI_IND_RESET
 mlan_status wlan_reset_fw(pmlan_adapter pmadapter);
+void sdio_oob_reset(void);
+void sdio_oob_init(void);
 #endif
 
 /** Transfer data to card */

@@ -1597,7 +1597,7 @@ typedef wifi_net_monitor_t wlan_net_monitor_t;
 typedef wifi_host_tx_frame_params_t wlan_host_tx_frame_params_t;
 #endif
 
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+#if CONFIG_WIFI_IND_RESET
 /** Configuration for GPIO independent reset
  * \ref wifi_indrst_cfg_t
  */
@@ -7915,7 +7915,7 @@ int wlan_imd3_cfg(t_u8 imd3_value);
 int wlan_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);
 #endif
 
-#if (CONFIG_WIFI_IND_RESET) && (CONFIG_WIFI_IND_DNLD)
+#if CONFIG_WIFI_IND_RESET
 /**
  * Set GPIO independent reset configuration
  *
@@ -7932,33 +7932,6 @@ int wlan_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg);
  * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
  */
 int wlan_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg);
-
-/** Test independent firmware reset
- *
- * This function can either send command that can cause timeout in firmware or
- * send GPIO pulse that can cause out of band reset in firmware as per configuration
- * int earlier \ref wlan_set_indrst_cfg API.
- *
- * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
- */
-int wlan_independent_reset(void);
-
-/** Set flag for reconnection in hang
- *
- * This function sets the flag to reconnect to the same network before hang
- *
- * \param[in] flag: set/reset flag
- */
-void wlan_set_sta_reconnect_in_hang(bool flag);
-
-/** Set flag to restart uap in hang
- *
- * This function sets the flag to start the uap network with same settings
- * before hang
- *
- * \param[in] flag: set/reset flag
- */
-void wlan_set_uap_restart_in_hang(bool flag);
 #endif
 
 int wlan_set_network_ip_byname(char *name, struct wlan_ip_config *ip);

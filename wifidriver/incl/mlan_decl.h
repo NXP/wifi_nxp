@@ -330,7 +330,7 @@ typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 /** Default memory allocation flag */
 #define MLAN_MEM_DEF 0U
 
-#if CONFIG_WIFI_IND_DNLD
+#if CONFIG_WIFI_IND_RESET
 /** driver initial the fw reset */
 #define FW_RELOAD_SDIO_INBAND_RESET 1
 /** out band reset trigger reset, no interface re-emulation */
@@ -511,7 +511,7 @@ typedef struct _mlan_fw_image
     t_u8 *pfw_buf;
     /** Firmware image length */
     t_u32 fw_len;
-#if CONFIG_WIFI_IND_DNLD
+#if CONFIG_WIFI_IND_RESET
     /** Firmware reload flag */
     t_u8 fw_reload;
 #endif
