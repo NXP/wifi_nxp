@@ -599,6 +599,8 @@ static struct
 
     unsigned running : 1;
     unsigned stop_request : 1;
+    unsigned reserved6 : 6;
+
     wlcmgr_status_t status;
 
     /*

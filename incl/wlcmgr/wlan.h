@@ -720,6 +720,7 @@ struct wlan_scan_result
     /** The Wi-Fi network mode. */
     enum wlan_bss_role role;
 
+    unsigned : 0;
     /* network features */
     /** The network supports 802.11N.  This is set to 0 if the network does not
      *  support 802.11N or if the system does not have 802.11N support enabled. */
@@ -742,8 +743,6 @@ struct wlan_scan_result
     /** The network supports WPS.  This is set to 0 if the network does not
      *  support WPS or if the system does not have WPS support enabled. */
     unsigned wps : 1;
-    /** WPS Type \ref WPS_SESSION_PBC/ \ref WPS_SESSION_PIN */
-    unsigned int wps_session;
 #endif
     /** The network uses WEP security. */
     unsigned wep : 1;
@@ -776,6 +775,12 @@ struct wlan_scan_result
     unsigned ft_psk : 1;
     /** The network uses FT SAE security */
     unsigned ft_sae : 1;
+#endif
+    unsigned : 0;
+
+#if (CONFIG_WPA_SUPP_WPS) || (CONFIG_WPS2)
+    /** WPS Type \ref WPS_SESSION_PBC/ \ref WPS_SESSION_PIN */
+    unsigned int wps_session;
 #endif
     /** The signal strength of the beacon */
     unsigned char rssi;
@@ -1987,16 +1992,19 @@ struct wlan_network
     /** The network supports 802.11AX. */
     unsigned dot11ax : 1;
 #endif
+    unsigned : 0;
 
 #if CONFIG_11R
-    /** Mobility Domain ID */
-    uint16_t mdid;
     /** The network uses FT 802.1x security */
     unsigned ft_1x : 1;
     /** The network uses FT PSK security */
     unsigned ft_psk : 1;
     /** The network uses FT SAE security */
     unsigned ft_sae : 1;
+    /** Reserved */
+    unsigned reserved5 : 5;
+    /** Mobility Domain ID */
+    uint16_t mdid;
 #endif
 #if CONFIG_DRIVER_OWE
     /** OWE (opportunistic wireless encryption) Transition mode */
