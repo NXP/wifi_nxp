@@ -5902,8 +5902,6 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
 
         wifi_uap_client_disassoc_t disassoc_resp;
 
-        disassoc_resp.reason_code = 0;
-
         s = strchr(buf, ' ');
         if (s == NULL)
             return;
