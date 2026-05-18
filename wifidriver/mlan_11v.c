@@ -39,6 +39,7 @@ static void wlan_wnm_parse_neighbor_report(t_u8 *pos, t_u8 len, struct wnm_neigh
     if (len < (t_u8)13U)
     {
         wifi_d("WNM: This neighbor report is too short");
+        return;
     }
 
     (void)memcpy(rep->bssid, pos, MLAN_MAC_ADDR_LENGTH);
@@ -140,6 +141,11 @@ void wlan_send_mgmt_wnm_btm_resp(t_u8 dialog_token,
         pos += tag_len;
     }
     pkt_len                = (t_u16)(pos - (t_u8 *)pmgmt_pkt_hdr);
+    if (pkt_len < (t_u16)sizeof(t_u16))
+    {
+        wifi_e("Invalid packet length");
+        return;
+    }
     pmgmt_pkt_hdr->frm_len = (t_u16)((t_u16)pkt_len - sizeof(t_u16));
     (void)wifi_inject_frame(WLAN_BSS_TYPE_STA, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
 #if !CONFIG_MEM_POOLS
@@ -261,7 +267,15 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
                 if (rep->prefer_select != (t_u8)0U && (rep->prefer > prefer_old))
                 {
                     ptagnr         = pos - 2;
-                    tagnr_len      = len + (t_u8)2U;
+                    if (len <= (0xFFU - 2U))
+                    {
+                        tagnr_len = (t_u8)(len + 2U);
+                    }
+                    else
+                    {
+                        wifi_e("WNM: Incorrect length");
+                        return;
+                    }
                     prefer_old     = (t_u8)rep->prefer;
                     prefer_select  = 1;
                     neighbor_index = wnm_num_neighbor_report;
@@ -305,7 +319,7 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
             pnlist_rep_param->num_channels = entry_num;
             pnlist_rep_param->btm_mode     = btm_mode;
             pnlist_rep_param->dialog_token = dialog_token;
-            pnlist_rep_param->protect      = protect;
+            pnlist_rep_param->protect      = (protect == MTRUE) ? 1U : 0U;
             (void)memcpy((void *)pnlist_rep_param->dst_addr, (const void *)dest_addr, (size_t)MLAN_MAC_ADDR_LENGTH);
         }
 
@@ -387,6 +401,11 @@ int wlan_send_mgmt_bss_trans_query(mlan_private *pmpriv, t_u8 query_reason)
 
     meas_pkt_len           = pos - (t_u8 *)pmgmt_pkt_hdr;
     pkt_len                = (t_u16)meas_pkt_len;
+    if (pkt_len < (t_u16)sizeof(pmgmt_pkt_hdr->frm_len))
+    {
+        wifi_e("Invalid packet length");
+        return (int)MLAN_STATUS_FAILURE;
+    }
     pmgmt_pkt_hdr->frm_len = pkt_len - (t_u16)sizeof(pmgmt_pkt_hdr->frm_len);
 
     (void)wifi_inject_frame(WLAN_BSS_TYPE_STA, (t_u8 *)pmgmt_pkt_hdr, pkt_len);

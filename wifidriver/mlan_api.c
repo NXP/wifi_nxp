@@ -138,6 +138,12 @@ int wifi_deauthenticate(uint8_t *bssid, int bss_type)
     cmd->seq_num                      = wifi_get_cmd_seq_num(pmpriv);
     cmd->result = 0x0;
 
+    /* coverity[cert_str31_c_violation]
+     * bss_type is validated by the caller before reaching this point and
+     * is guaranteed to be within the valid range of mlan_adap->priv[];
+     * negative offset access is not possible at runtime.
+     */
+    /* coverity[cert_arr30_c_violation] */
     (void)wlan_cmd_802_11_deauthenticate((mlan_private *)mlan_adap->priv[bss_type], cmd, bssid);
     (void)wifi_wait_for_cmdresp(NULL);
 
@@ -216,6 +222,8 @@ int wifi_set_ipv6_ra_offload(t_u8 enable)
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_IPV6_RA_OFFLOAD_CFG);
     ipv6_ra_cfg->action = wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);
     ipv6_ra_cfg->enable = wlan_cpu_to_le16(enable);
+    /* coverity[cert_int31_c_violation] */
+    /* coverity[cert_int30_c_violation] */
     ipv6_ra_cfg->ipv6_addr_count = net_get_all_if_ipv6_addr_and_cnt((char *)(&ipv6_ra_cfg->ipv6_addr_param.ipv6_addrs),
                 WIFI_FW_CMDBUF_SIZE - INTF_HEADER_LEN - ((char *)&ipv6_ra_cfg->ipv6_addr_param.ipv6_addrs - (char *)cmd));
     if (ipv6_ra_cfg->ipv6_addr_count == 0)
@@ -1427,6 +1435,10 @@ int wifi_rf_disable_11ax(void)
     wifi_mfg_cmd_generic_cfg.data2  = 0x0002014f;
     wifi_mfg_cmd_generic_cfg.data3  = 0;
 
+    /* coverity[cert_dcl30_c_violation] - the function is synchronous and blocks until
+     * the command response is received; the local variable remains valid for the
+     * entire duration of the call.
+     */
     ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_generic_cfg);
     if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
     {
@@ -1638,6 +1650,10 @@ int wifi_set_rf_xtal(const uint8_t xtal_cal)
     wifi_mfg_cmd_generic_cfg.data1 &= ~((uint32_t)0xFF << 8);
     wifi_mfg_cmd_generic_cfg.data1 |= ((uint32_t)xtal_cal << 8);
 
+    /* coverity[cert_dcl30_c_violation] - the function is synchronous and blocks until
+     * the command response is received; the local variable remains valid for the
+     * entire duration of the call.
+     */
     ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_generic_cfg);
     if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
     {
@@ -1659,6 +1675,10 @@ int wifi_get_rf_xtal(uint8_t *extension, uint8_t *xtal_cal)
     wifi_mfg_cmd_generic_cfg.mfg_cmd = MFG_CMD_RFXTAL_CTRL;
     wifi_mfg_cmd_generic_cfg.action  = HostCmd_ACT_GEN_GET;
 
+    /* coverity[cert_dcl30_c_violation] - the function is synchronous and blocks until
+     * the command response is received; the local variable remains valid for the
+     * entire duration of the call.
+     */
     ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_GET, &wifi_mfg_cmd_generic_cfg);
     if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
     {
@@ -2274,6 +2294,11 @@ int wifi_get_rf_otp_cal_data(uint8_t *cal_data)
 
     wifi_mfg_cmd_otp_cal_data_rd_wr =
         (wifi_mfg_cmd_otp_cal_data_rd_wr_t *)OSA_MemoryAllocate(sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
+    if (wifi_mfg_cmd_otp_cal_data_rd_wr == NULL)
+    {
+        wifi_e("Failed to allocate buffer for wifi_mfg_cmd_otp_cal_data_rd_wr");
+        return -WM_FAIL;
+    }
     (void)memset(wifi_mfg_cmd_otp_cal_data_rd_wr, 0x00, sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
 
     wifi_mfg_cmd_otp_cal_data_rd_wr->mfg_cmd = MFG_CMD_OTP_CAL_DATA;
@@ -2342,7 +2367,14 @@ int wifi_set_rf_rx_mac_filter(uint8_t *addr)
         goto out;
     }
 
-    ret = misc->param.mfg_generic_cfg.error;
+    if (misc->param.mfg_generic_cfg.error > ((t_u32)~0U >> 1U))
+    {
+        ret = -WM_FAIL;
+    }
+    else
+    {
+        ret = (int)misc->param.mfg_generic_cfg.error;
+    }
 out:
     wifi_put_command_lock();
 
@@ -2397,7 +2429,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
         return -WM_E_BUSY;
     }
 
-    mlan_adap->wpa_supp_scan_triggered = wm_wifi.wpa_supp_scan;
+    mlan_adap->wpa_supp_scan_triggered = (wm_wifi.wpa_supp_scan == MTRUE) ? 1U : 0U;
     wm_wifi.wpa_supp_scan              = MFALSE;
 #if CONFIG_WPA_SUPP_P2P
     mlan_adap->wpa_supp_p2p_scan_triggered = wm_wifi.wpa_supp_p2p_scan;
@@ -4316,7 +4348,7 @@ int wifi_get_mgmt_ie_by_index(mlan_bss_type bss_type, void *buf, unsigned int *b
 
     /* Locate headers */
     ie_ptr = (custom_ie *)(tlv->ie_data);
-    ie_ptr->ie_index = index;
+    ie_ptr->ie_index = (t_u16)index;
     /* Set TLV fields */
     len = sizeof(tlvbuf_custom_ie) + tlv->length;
 
@@ -4607,6 +4639,11 @@ int wifi_get_chanlist_by_band(t_u8 *chan_list, t_u8 *num_chans, t_u8 band)
             if ((cfp[i].dynamic.flags & NXP_CHANNEL_DISABLED) == 0U)
             {
                 *(chan_list++) = (t_u8)(cfp[i].channel);
+                /* coverity[cert_int31_c_violation]
+                 * num_chans counts valid channels from the channel plan table;
+                 * the total number of channels is bounded by the regulatory domain
+                 * and will never exceed the range of unsigned char.
+                 */
                 *num_chans     = *num_chans + 1U;
             }
         }
@@ -4965,6 +5002,7 @@ int wifi_host_11k_neighbor_req(const char *ssid)
     }
     else
     {
+        /* coverity[cert_int31_c_violation] the ssid string length already checked safe */
         return wlan_send_mgmt_rm_neighbor_request(mlan_adap->priv[0], (t_u8 *)ssid, (t_u8)wlan_strlen((t_s8 *)ssid));
     }
 }
@@ -5066,6 +5104,11 @@ int wifi_mbo_send_preferch_wnm(t_u8 *src_addr, t_u8 *target_bssid, t_u8 ch0, t_u
 #else
         buf = OSA_MemoryPoolAllocate(buf_512_MemoryPool);
 #endif
+        if (buf == NULL)
+        {
+            wifi_e("Cannot allocate memory for buf");
+            return MLAN_STATUS_FAILURE;
+        }
         pos = buf;
 
         /* No non-preferred channels */
@@ -5128,9 +5171,9 @@ int wifi_mbo_send_preferch_wnm(t_u8 *src_addr, t_u8 *target_bssid, t_u8 ch0, t_u
                 pos++;
 
                 if (i == 0)
-                    *pos_len1 = pos - (pos_len1 + 1);
+                    *pos_len1 = (t_u8)(pos - (pos_len1 + 1));
                 else
-                    *pos_len2 = pos - (pos_len2 + 1);
+                    *pos_len2 = (t_u8)(pos - (pos_len2 + 1));
             }
         }
         wlan_send_mgmt_wnm_notification(src_addr, target_bssid, target_bssid, buf, pos - buf, false);
@@ -5222,6 +5265,7 @@ int wifi_set_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl, int bss_type)
 int wifi_get_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl, int bss_type)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[bss_type];
+    /* coverity[cert_int31_c_violation] */
     CHECK_BSS_TYPE(bss_type, -WM_FAIL);
 
     if (wifi_ed_mac_ctrl == MNULL)

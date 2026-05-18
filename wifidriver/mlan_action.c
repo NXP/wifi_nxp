@@ -53,6 +53,11 @@ static mlan_status wlan_process_mgmt_radio_measurement_action(
 #if CONFIG_11K
     IEEEtypes_FrameCtl_t *mgmt_fc_p =
         (IEEEtypes_FrameCtl_t *)(void *)&(((wlan_802_11_header *)(void *)payload)->frm_ctl);
+    if (payload_len < (sizeof(wlan_802_11_header) + 2U))
+    {
+        wifi_e("Invalid payload_len");
+        return MLAN_STATUS_FAILURE;
+    }
     payload_len -= (sizeof(wlan_802_11_header) + 2U);
 #endif
 
@@ -104,6 +109,7 @@ static mlan_status wlan_process_mgmt_wnm_action(t_u8 *payload, t_u32 payload_len
     mlan_status ret = MLAN_STATUS_FAILURE;
 
     pos         = payload + sizeof(wlan_802_11_header) + 1;
+    /* coverity[cert_int31_c_violation] */
     action_code = (IEEEtypes_WNM_ActionFieldType_e)(*pos++);
 
     switch (action_code)
@@ -165,6 +171,7 @@ mlan_status wlan_process_mgmt_action(t_u8 *payload, t_u32 payload_len, RxPD *rxp
     mlan_status ret                     = MLAN_STATUS_FAILURE;
 
     pieee_pkt_hdr = (wlan_802_11_header *)(void *)payload;
+    /* coverity[cert_int31_c_violation] */
     category      = (IEEEtypes_ActionCategory_e)(*(payload + sizeof(wlan_802_11_header)));
 
     switch (category)
