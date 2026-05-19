@@ -290,6 +290,10 @@ static void csi_process_task(void *arg)
 #endif
 
     w_csi_d(" Processing task exiting\r\n");
+    for (;;)
+    {
+        OSA_TimeDelay(100000);
+    }
 }
 
 
