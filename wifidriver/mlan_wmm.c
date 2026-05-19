@@ -881,6 +881,7 @@ void wlan_ralist_pkts_free_enh(mlan_private *priv, raListTbl *ra_list, t_u8 ac)
         util_unlink_list(priv->adapter->pmoal_handle, &ra_list->buf_head, &buff->entry, MNULL, MNULL);
         wifi_wmm_buf_put(buff);
 
+        ASSERT(priv->wmm.pkts_queued[ac] > 0);
         priv->wmm.pkts_queued[ac]--;
         wifi_wmm_drop_no_media(priv->bss_index);
         ra_list->drop_count++;

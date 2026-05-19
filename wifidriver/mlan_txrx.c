@@ -69,6 +69,12 @@ mlan_status wlan_handle_rx_packet(pmlan_adapter pmadapter, pmlan_buffer pmbuf)
     {
         priv = wlan_get_priv(pmadapter, MLAN_BSS_ROLE_ANY);
     }
+    if (priv == MNULL)
+    {
+        PRINTM(MERROR, "wlan_handle_rx_packet: priv is NULL\n");
+        LEAVE();
+        return MLAN_STATUS_FAILURE;
+    }
     pmbuf->bss_index = priv->bss_index;
     PRINTM_GET_SYS_TIME(MDATA, &sec, &usec);
     PRINTM_NETINTF(MDATA, priv);

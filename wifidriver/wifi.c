@@ -2864,7 +2864,7 @@ static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, 
     eth_proto = mlan_ntohs(ethh->h_proto);
 
     if (memcmp((t_u8 *)prx_pd + prx_pd->rx_pkt_offset + WIFI_SIZEOF_ETH_HDR, rfc1042_eth_hdr,
-               sizeof(rfc1042_eth_hdr)) == 0U)
+               sizeof(rfc1042_eth_hdr)) == 0)
     {
         ethernet_llc_header *ethllchdr = (ethernet_llc_header *)(void *)((t_u8 *)prx_pd + prx_pd->rx_pkt_offset + WIFI_SIZEOF_ETH_HDR);
         eth_proto              = mlan_ntohs(ethllchdr->type);
@@ -3100,6 +3100,7 @@ static mlan_status wifi_xmit_amsdu_pkts(mlan_private *priv, t_u8 ac, raListTbl *
         if (amsdu_buf_available_size >= 0)
         {
             util_unlink_list(mlan_adap->pmoal_handle, &ralist->buf_head, &buf->entry, MNULL, MNULL);
+            ASSERT(ralist->total_pkts > 0);
             ralist->total_pkts--;
             mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
 
@@ -3111,6 +3112,7 @@ static mlan_status wifi_xmit_amsdu_pkts(mlan_private *priv, t_u8 ac, raListTbl *
             wifi_stat_tx_dequeue_end(buf_end);
 #endif
             wifi_wmm_buf_put(buf);
+            ASSERT(priv->wmm.pkts_queued[ac] > 0);
             priv->wmm.pkts_queued[ac]--;
         }
         else
@@ -3168,6 +3170,7 @@ static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist
 
     mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
     buf = (outbuf_t *)util_dequeue_list(mlan_adap->pmoal_handle, &ralist->buf_head, MNULL, MNULL);
+    ASSERT(ralist->total_pkts > 0);
     ralist->total_pkts--;
     mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
     ASSERT(buf != MNULL);
@@ -3202,6 +3205,7 @@ static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist
 #if !(!defined(RW610) && CONFIG_TX_RX_ZERO_COPY)
     wifi_wmm_buf_put(buf);
 #endif
+    ASSERT(priv->wmm.pkts_queued[ac] > 0);
     priv->wmm.pkts_queued[ac]--;
 
     return ret;
@@ -4550,7 +4554,7 @@ int wifi_nxp_scan_res_get2(unsigned int bss_type, t_u32 table_idx, nxp_wifi_even
 
     if ((pmpriv->media_connected == MTRUE) &&
         (memcmp(bss_new_entry->mac_address, (t_u8 *)&pmpriv->curr_bss_params.bss_descriptor.mac_address,
-                MLAN_MAC_ADDR_LENGTH) == 0U))
+                MLAN_MAC_ADDR_LENGTH) == 0))
 
     {
         scan_res->status = 1;
@@ -4800,8 +4804,6 @@ int wifi_nxp_get_signal(unsigned int bss_type, nxp_wifi_signal_info_t *signal_pa
 int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_time,
                        const t_u8 *data, size_t data_len, u16 stype)
 {
-    int status               = -WM_FAIL;
-    mlan_private *pmpriv     = (mlan_private *)mlan_adap->priv[bss_type];
     wlan_mgmt_pkt *pmgmt_pkt_hdr               = MNULL;
     wlan_802_11_header *pieee_pkt_hdr          = MNULL;
     t_u8 buf[1580];

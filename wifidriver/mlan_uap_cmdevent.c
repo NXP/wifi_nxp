@@ -476,9 +476,15 @@ static mlan_status wlan_uap_cmd_sys_configure(pmlan_private pmpriv,
         }
         else
         {
+            /* coverity[cert_msc12_c_violation] empty else branch intentional, pioctl_buf->req_id handling follows below */
         }
     }
 
+    if (pioctl_buf == MNULL)
+    {
+        ret = MLAN_STATUS_FAILURE;
+        goto done;
+    }
     if (pioctl_buf->req_id == (t_u32)MLAN_IOCTL_BSS)
     {
         bss = (mlan_ds_bss *)(void *)pioctl_buf->pbuf;

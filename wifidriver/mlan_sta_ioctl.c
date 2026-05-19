@@ -265,7 +265,7 @@ static mlan_status wlan_bss_ioctl_start(IN pmlan_adapter pmadapter, IN pmlan_ioc
             /* Search for the requested SSID in the scan table */
             if (bss->param.ssid_bssid.ssid.ssid_len != 0U)
             {
-                if (__memcmp(pmadapter, &bss->param.ssid_bssid.bssid, zero_mac, sizeof(zero_mac)) != 0U)
+                if (__memcmp(pmadapter, &bss->param.ssid_bssid.bssid, zero_mac, sizeof(zero_mac)) != 0)
                 {
                     i = wlan_find_ssid_in_list(pmpriv, &bss->param.ssid_bssid.ssid,
                                                (t_u8 *)&bss->param.ssid_bssid.bssid, MLAN_BSS_MODE_INFRA);
