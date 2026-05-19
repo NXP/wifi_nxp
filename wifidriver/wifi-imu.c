@@ -291,7 +291,7 @@ int raw_process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
     /* set tx_token_id to 1 to get tx_status_event from FW */
     ptxpd->tx_token_id = 1;
 
-    imuhdr->size = payloadlen + ptxpd->tx_pkt_offset + INTF_HEADER_LEN;
+    imuhdr->size = (t_u16)(payloadlen + ptxpd->tx_pkt_offset + INTF_HEADER_LEN);
 
     return ptxpd->tx_pkt_offset + INTF_HEADER_LEN;
 }
@@ -312,18 +312,18 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid, t_
     ptxpd->bss_type      = interface;
     ptxpd->bss_num       = GET_BSS_NUM(pmpriv);
     ptxpd->tx_pkt_offset = 0x16; /* we'll just make this constant */
-    ptxpd->tx_pkt_length = payloadlen - ptxpd->tx_pkt_offset - INTF_HEADER_LEN;
+    ptxpd->tx_pkt_length = (t_u16)(payloadlen - ptxpd->tx_pkt_offset - INTF_HEADER_LEN);
     if (ptxpd->tx_pkt_type == 0xe5)
     {
         ptxpd->tx_pkt_offset = 0x14; /* Override for special frame */
-        ptxpd->tx_pkt_length = payloadlen - ptxpd->tx_pkt_offset - INTF_HEADER_LEN;
+        ptxpd->tx_pkt_length = (t_u16)(payloadlen - ptxpd->tx_pkt_offset - INTF_HEADER_LEN);
     }
     ptxpd->tx_control    = tx_control;
     ptxpd->priority      = tid;
     ptxpd->flags         = 0;
     ptxpd->pkt_delay_2ms = 0;
 
-    imuhdr->size = payloadlen;
+    imuhdr->size = (t_u16)payloadlen;
 }
 
 #if CONFIG_AMSDU_IN_AMPDU
@@ -436,6 +436,14 @@ mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
     cmdresp = (HostCmd_DS_GEN *)(pmbuf + INTF_HEADER_LEN); /* size + pkttype=4 */
     cmdtype = cmdresp->command & HostCmd_CMD_ID_MASK;
     cmdsize = cmdresp->size;
+
+    /* Validate cmdsize to prevent buffer overflow in inbuf */
+    if (cmdsize == 0U || cmdsize > WIFI_FW_CMDBUF_SIZE)
+    {
+        wifi_io_e("Invalid cmdresp size: %d", cmdsize);
+        return MLAN_STATUS_FAILURE;
+    }
+
 #if CONFIG_IMU_GDMA
     HAL_ImuGdmaCopyData(inbuf, cmdresp, cmdsize);
 #else
@@ -647,7 +655,7 @@ static int _wlan_set_cal_data()
     wifi_prepare_set_cal_data_cmd(&imupkt->hostcmd, wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]));
 
     imupkt->pkttype = MLAN_TYPE_CMD;
-    imupkt->size    = imupkt->hostcmd.size + INTF_HEADER_LEN;
+    imupkt->size    = (t_u16)(imupkt->hostcmd.size + INTF_HEADER_LEN);
 
     last_cmd_sent = HostCmd_CMD_CFG_DATA;
 
@@ -1168,7 +1176,7 @@ int wlan_send_imu_cmd(t_u8 *buf)
 
     (void)memcpy(outbuf, buf, MIN(WIFI_FW_CMDBUF_SIZE, IMU_OUTBUF_LEN));
     imu_cmd->pkttype = MLAN_TYPE_CMD;
-    imu_cmd->size    = imu_cmd->hostcmd.size + INTF_HEADER_LEN;
+    imu_cmd->size    = (t_u16)(imu_cmd->hostcmd.size + INTF_HEADER_LEN);
     wifi_send_fw_cmd(imu_cmd->hostcmd.command, (uint8_t *)outbuf, imu_cmd->size);
 
     last_cmd_sent = imu_cmd->hostcmd.command;

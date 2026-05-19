@@ -1097,6 +1097,7 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid, t_
     if (ptxpd->tx_pkt_type == 0xe5U)
     {
         ptxpd->tx_pkt_offset = 0x14; /* Override for special frame */
+        ptxpd->tx_pkt_length = (t_u16)(payloadlen - ptxpd->tx_pkt_offset - INTF_HEADER_LEN);
     }
 
     ptxpd->pkt_delay_2ms = 0;
@@ -1521,7 +1522,7 @@ static void _wlan_set_cal_data(void)
     wifi_prepare_set_cal_data_cmd(&sdiopkt->hostcmd, wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]));
 
     sdiopkt->pkttype = MLAN_TYPE_CMD;
-    sdiopkt->size    = sdiopkt->hostcmd.size + INTF_HEADER_LEN;
+    sdiopkt->size    = (t_u16)(sdiopkt->hostcmd.size + INTF_HEADER_LEN);
 
     last_cmd_sent = HostCmd_CMD_CFG_DATA;
 
@@ -2134,7 +2135,7 @@ int wlan_send_sdio_vdllcmd(t_u8 *buf, t_u32 tx_blocks, t_u32 buflen)
     mlan_adap->cmd_sent = MTRUE;
 
     sdio->pkttype = MLAN_TYPE_VDLL;
-    sdio->size    = sdio->hostcmd.size + INTF_HEADER_LEN;
+    sdio->size    = (t_u16)(sdio->hostcmd.size + INTF_HEADER_LEN);
 
 #if CONFIG_WIFI_IO_DUMP
     (void)PRINTF("OUT_CMD");
@@ -2163,7 +2164,7 @@ int wlan_send_sdio_cmd(t_u8 *buf, t_u32 tx_blocks, t_u32 buflen)
 
     (void)memcpy((void *)outbuf, (const void *)buf, tx_blocks * buflen);
     sdio->pkttype = MLAN_TYPE_CMD;
-    sdio->size    = sdio->hostcmd.size + INTF_HEADER_LEN;
+    sdio->size    = (t_u16)(sdio->hostcmd.size + INTF_HEADER_LEN);
 
 #if CONFIG_WIFI_IO_DUMP
     (void)PRINTF("OUT_CMD");
@@ -2201,7 +2202,7 @@ int wifi_send_sleep_cfm_cmdbuffer(t_u32 tx_blocks, t_u32 len)
 #if CONFIG_WMM
 
 #if CONFIG_SDIO_MULTI_PORT_TX_AGGR
-static t_u8 start_port     = -1;
+static t_u8 start_port     = 0xFF;
 static t_u8 ports          = 0;
 #if !CONFIG_TX_RX_ZERO_COPY
 static t_u8 pkt_cnt        = 0;
@@ -2227,7 +2228,7 @@ mlan_status wlan_get_wr_port_data(t_u8 *pport)
 
     if ((1U << txportno) & mlan_adap->mp_wr_bitmap)
     {
-        mlan_adap->mp_wr_bitmap &= (t_u32)(~(1 << txportno));
+        mlan_adap->mp_wr_bitmap &= ~(1U << txportno);
         *pport = txportno;
         txportno++;
 
@@ -2399,9 +2400,6 @@ static mlan_status wifi_tx_data(t_u8 start_port, t_u8 ports, t_u8 pkt_cnt, t_u32
     t_u32 tx_blocks = 0, buflen = 0;
     uint32_t resp;
     bool ret;
-#if CONFIG_WIFI_FW_DEBUG
-    int ret_cb;
-#endif
 #if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || defined(IW610)
     t_u32 port_count = 0;
 #endif
@@ -2453,7 +2451,7 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
 
     if (buf_block_len == 0)
     {
-        start_port = -1;
+        start_port = 0xFF;
         ports      = 0;
         pkt_cnt    = 0;
     }
@@ -2830,13 +2828,13 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
     t_u32 rx_len;
     t_u32 rx_blocks;
     t_u16 ports      = 0;
-    t_u32 start_port = -1;
+    t_u32 start_port = 0xFFFFFFFFU;
     t_u32 cmd53_port = 0;
 #if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || defined(IW610)
     t_u32 port_count = 0;
 #endif
 
-    *pport    = -1;
+    *pport    = 0xFFFFFFFFU;
     *rxlen    = 0;
     *rxblocks = 0;
 
@@ -2929,16 +2927,16 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
             *pport = pmadapter->curr_rd_port;
             pmadapter->mp_rd_bitmap &=
 #if defined(SD8801)
-                (t_u16)(~(1 << pmadapter->curr_rd_port));
+                (t_u16)(~(1U << pmadapter->curr_rd_port));
 #elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || defined(IW610)
-            (t_u32)(~(1 << pmadapter->curr_rd_port));
+            (t_u32)(~(1U << pmadapter->curr_rd_port));
 #endif
 
 #if defined(SD8801)
             if (!pkt_cnt)
                 start_port = *pport;
 #elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || defined(IW610)
-            if (start_port == -1)
+            if (start_port == 0xFFFFFFFFU)
             {
                 start_port = *pport;
             }
@@ -3222,7 +3220,7 @@ static mlan_status _handle_sdio_packet_read(mlan_adapter *pmadapter, t_u8 **pack
         return ret;
 
     *datalen = rx_len;
-    rx_len = (t_u16)(rx_blocks * MLAN_SDIO_BLOCK_SIZE);
+    rx_len = rx_blocks * MLAN_SDIO_BLOCK_SIZE;
 
     port = mlan_adap->ioport + port;
 
@@ -3540,7 +3538,7 @@ int wifi_raw_packet_recv(t_u8 **data, t_u32 *pkt_type)
 {
     OSA_SR_ALLOC()
     osa_event_flags_t flagsToWait = WIFI_EVENT_SDIO;
-    osa_event_flags_t pSetFlags;
+    osa_event_flags_t pSetFlags = 0U;
 
     if (data == MNULL)
     {
@@ -3757,8 +3755,10 @@ mlan_status sd_wifi_init(enum wlan_type type, const uint8_t *fw_start_addr, cons
         {
             mlan_adap->fw_start_addr = fw_start_addr;
             wifi_wake_up_card(&resp);
-            ret = (mlan_status)firmware_download(fw_start_addr, size, intf, 0);
-
+            if (firmware_download(fw_start_addr, size, intf, 0) != FWDNLD_INTF_SUCCESS)
+            {
+                ret = MLAN_STATUS_FAILURE;
+            }
         } else {
             ret = MLAN_STATUS_FAILURE;
         }
@@ -3810,7 +3810,10 @@ mlan_status sd_wifi_reinit(enum wlan_type type, const uint8_t *fw_start_addr, co
         OSA_EXIT_CRITICAL();
     }
 
-    ret = (mlan_status)firmware_download(fw_start_addr, size, intf, fw_reload);
+    if (firmware_download(fw_start_addr, size, intf, fw_reload) != FWDNLD_INTF_SUCCESS)
+    {
+        ret = MLAN_STATUS_FAILURE;
+    }
 
     if (ret != MLAN_STATUS_FAILURE)
     {

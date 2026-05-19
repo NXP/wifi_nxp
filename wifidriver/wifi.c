@@ -956,7 +956,7 @@ static int make_filter_list(char *mlist, int maxlen)
         node_t = (struct mcast_filter *)node_t->next;
         mlist  = mlist + MLAN_MAC_ADDR_LENGTH;
         maddr_cnt++;
-        if (maddr_cnt > (maxlen / 6U))
+        if (maddr_cnt > (maxlen / 6))
         {
             break;
         }
@@ -980,13 +980,13 @@ void wifi_get_ipv4_multicast_mac(uint32_t ipaddr, uint8_t *mac_addr)
      */
     for (i = 2; i >= 0; i--)
     {
-        mac_addr[j] = (uint8_t)((char)(mac_addr_r >> 8 * i) & 0xFF);
+        mac_addr[j] = (uint8_t)((mac_addr_r >> 8 * i) & 0xFF);
         j++;
     }
 
     for (i = 2; i >= 0; i--)
     {
-        mac_addr[j] = (uint8_t)((char)(ipaddr >> 8 * i) & 0xFF);
+        mac_addr[j] = (uint8_t)((ipaddr >> 8 * i) & 0xFF);
         j++;
     }
 }
@@ -1004,13 +1004,13 @@ void wifi_get_ipv6_multicast_mac(uint32_t ipaddr, uint8_t *mac_addr)
      */
     for (i = 1; i >= 0; i--)
     {
-        mac_addr[j] = (char)(mac_addr_r >> 8 * i) & 0xFF;
+        mac_addr[j] = (uint8_t)((mac_addr_r >> 8 * i) & 0xFF);
         j++;
     }
 
     for (i = 3; i >= 0; i--)
     {
-        mac_addr[j] = (char)(ipaddr >> 8 * i) & 0xFF;
+        mac_addr[j] = (uint8_t)((ipaddr >> 8 * i) & 0xFF);
         j++;
     }
 }
@@ -2259,7 +2259,7 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
      * If event is needed to host, just eventify it */
     pieee_pkt_hdr = (wlan_802_11_header *)payload;
     sub_type      = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
-    if (((1 << sub_type) & priv->mgmt_frame_passthru_mask) == 0)
+    if (((1U << sub_type) & priv->mgmt_frame_passthru_mask) == 0U)
     {
         wifi_d("Dropping mgmt frame for subtype %d snr=%d.", sub_type, prx_pd->snr);
         LEAVE();
