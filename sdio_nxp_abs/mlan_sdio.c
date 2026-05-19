@@ -54,6 +54,13 @@ int sdio_drv_creg_read(int addr, int fn, uint32_t *resp)
     osa_status_t status;
     uint8_t read_val = 0;
 
+    /* CERT INT31-C: Check value before casting from int to uint32_t */
+    if (addr < 0)
+    {
+        sdio_e("invalid address: negative value\r\n");
+        return 0;
+    }
+
     status = OSA_MutexLock((osa_mutex_handle_t)sdio_mutex, osaWaitForever_c);
     if (status != KOSA_StatusSuccess)
     {
@@ -77,6 +84,13 @@ int sdio_drv_creg_read(int addr, int fn, uint32_t *resp)
 int sdio_drv_creg_write(int addr, int fn, uint8_t data, uint32_t *resp)
 {
     osa_status_t status;
+
+    /* CERT INT31-C: Check value before casting from int to uint32_t */
+    if (addr < 0)
+    {
+        sdio_e("invalid address: negative value\r\n");
+        return 0;
+    }
 
     status = OSA_MutexLock((osa_mutex_handle_t)sdio_mutex, osaWaitForever_c);
     if (status != KOSA_StatusSuccess)
@@ -121,6 +135,7 @@ int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uin
         param = bsize;
     }
 
+    /* coverity[cert_int31_c_violation:SUPPRESS] fn is always 0 or 1 per SDIO spec */
     if (SDIO_IO_Read_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != KOSA_StatusSuccess)
     {
         (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
@@ -158,6 +173,7 @@ int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, ui
     }
 
 retry:
+    /* coverity[cert_int31_c_violation:SUPPRESS] fn is always 0 or 1 per SDIO spec */
     if (SDIO_IO_Write_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != KOSA_StatusSuccess)
     {
         /* issue abort cmd52 command through Fn0 */
