@@ -21,7 +21,7 @@ static const uint8_t *conn_fw;
 /* remove this after mlan integration complete */
 enum
 {
-    FWDNLD_STATUS_FAILURE = 0xffffffff,
+    FWDNLD_STATUS_FAILURE = -1,
     FWDNLD_STATUS_SUCCESS = 0,
     FWDNLD_STATUS_SKIP,
     FWDNLD_CARD_NOT_DETECTED = 3,
