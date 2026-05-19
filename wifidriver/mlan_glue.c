@@ -1193,8 +1193,16 @@ void user_recv_monitor_data(void *p, RxPD *rxpd, t_u16 intf_pkt_len)
     t_u16 datalen          = 0;
     t_u8 *net_monitor_data = NULL;
 
+    if (rxpd->rx_pkt_length > (0xFFFF - sizeof(t_s8))) {
+        return;
+    }
     datalen = rxpd->rx_pkt_length + sizeof(t_s8);
-    rssi    = rxpd->snr - rxpd->nf;
+    if ((rxpd->snr - rxpd->nf) > 127)
+        rssi = 127;
+    else if ((rxpd->snr - rxpd->nf) < -128)
+        rssi = -128;
+    else
+        rssi = (t_s8)(rxpd->snr - rxpd->nf);
 
     if ((rxpd->rx_pkt_length + rxpd->rx_pkt_offset + INTF_HEADER_LEN) != intf_pkt_len)
     {
@@ -1431,7 +1439,7 @@ int wifi_set_txbfcap(unsigned int tx_bf_cap)
 
 int wifi_set_htcapinfo(unsigned int htcapinfo)
 {
-    mlan_ds_11n_cfg ds_11n_cfg;
+    static mlan_ds_11n_cfg ds_11n_cfg;
 
     (void)memset(&ds_11n_cfg, 0x00, sizeof(mlan_ds_11n_cfg));
 
@@ -1465,9 +1473,14 @@ int wifi_set_httxcfg(unsigned short httxcfg)
 
 int wifi_uap_set_httxcfg_int(unsigned int bss_type, unsigned short httxcfg)
 {
-    mlan_ds_11n_cfg ds_11n_cfg;
+    static mlan_ds_11n_cfg ds_11n_cfg;
 
     (void)memset(&ds_11n_cfg, 0x00, sizeof(mlan_ds_11n_cfg));
+
+    if (bss_type > UINT8_MAX)
+    {
+        return -WM_E_INVAL;
+    }
 
     ds_11n_cfg.sub_command          = MLAN_OID_11N_CFG_TX;
     ds_11n_cfg.param.tx_cfg.httxcap = httxcfg;
@@ -1517,7 +1530,7 @@ int wifi_set_tx_power(t_u32 power_level)
 
 int wifi_set_tx_power_ext(uint32_t len, uint32_t *power_data)
 {
-    mlan_ds_power_cfg ds_power_cfg;
+    static mlan_ds_power_cfg ds_power_cfg;
 
     (void)memset(&ds_power_cfg, 0x00, sizeof(mlan_ds_power_cfg));
 
@@ -1659,8 +1672,8 @@ int wifi_get_txratecfg(wifi_ds_rate *ds_rate, mlan_bss_type bss_type)
 {
     int ret;
 
-    mlan_ds_rate ds_rate_cfg;
-
+    static mlan_ds_rate ds_rate_cfg;
+    memset(&ds_rate_cfg, 0, sizeof(ds_rate_cfg));
     if (ds_rate->sub_command != WIFI_DS_RATE_CFG)
     {
         return -WM_FAIL;
@@ -2042,7 +2055,23 @@ static void wifi_assoc_clear_rsn_sae_suite(t_u8 *rsn_ie)
 #if !CONFIG_WPA_SUPP
 static void wifi_assoc_rsno_2_rsn(t_u8 *rsno_ie, size_t rsno_len, t_u8 *rsn_ie, t_u8 *rsn_len)
 {
-    t_u8 tag_len = (t_u8)(rsno_len - MLAN_RSNO_SUITE_OFFSET - sizeof(IEEEtypes_Header_t));
+    t_u8 tag_len = 0;
+
+    if (!rsno_ie || !rsn_ie || !rsn_len) {
+        return;
+    }
+
+    if (rsno_len <= (MLAN_RSNO_SUITE_OFFSET + sizeof(IEEEtypes_Header_t))) {
+        *rsn_len = 0;
+        return;
+    }
+
+    tag_len = (t_u8)(rsno_len - MLAN_RSNO_SUITE_OFFSET - sizeof(IEEEtypes_Header_t));
+
+    if ((unsigned int)tag_len + (unsigned int)sizeof(IEEEtypes_Header_t) > 0xFF) {
+        *rsn_len = 0;
+        return;
+    }
 
     /* 1 Byte tag, 1 Byte len */
     rsn_ie[0] = RSN_IE;
@@ -2064,12 +2093,16 @@ static void wifi_assoc_rsno_2_rsn(t_u8 *rsno_ie, size_t rsno_len, t_u8 *rsn_ie, 
 static int wifi_assoc_pick_security_ie(mlan_private *priv, BSSDescriptor_t *d,
     int wlan_security, int wlan_key_mgmt, bool is_wpa_tkip)
 {
-    t_u32 key_mgmt_network = (t_u32)wlan_key_mgmt;
+    t_u32 key_mgmt_network = 0;
 #if !CONFIG_WPA_SUPP
     t_u32 key_mgmt_ie_rsno2 = 0;
     t_u32 key_mgmt_ie_rsno = 0;
 #endif
     t_u32 key_mgmt_ie_rsn = 0;
+
+    if (wlan_key_mgmt >= 0) {
+        key_mgmt_network = (t_u32)wlan_key_mgmt;
+    }
 
     if (d->prsn_ie)
     {
@@ -2755,6 +2788,11 @@ static int wifi_assocreq_wps_ie_cfg(mlan_private *priv)
     u8 *wps_buf   = NULL;
     wpsie_len     = sizeof(IEEEtypes_Header_t) + priv->wps.wps_ie.vend_hdr.len;
     wps_buf       = (t_u8 *)OSA_MemoryAllocate(wpsie_len);
+
+    if (wps_buf == NULL) {
+        return -WM_FAIL;
+    }
+
     (void)memset(wps_buf, 0, wpsie_len);
     (void)__memcpy(priv->adapter, wps_buf, (t_u8 *)&priv->wps.wps_ie, wpsie_len);
     priv->wps.wps_mgmt_bitmap_index =
@@ -3282,9 +3320,6 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     {
 #if CONFIG_WPA_SUPP
                         nxp_wifi_acs_params acs_params;
-#ifndef SD8801
-                        t_u8 chan_offset;
-#endif
 
                         wm_wifi.cmd_resp_status = WM_SUCCESS;
 #ifndef SD8801
@@ -3306,6 +3341,8 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                         acs_params.ch_width = 20;
 #else
                         acs_params.pri_freq = channel_to_frequency(acs_scan->chan, acs_scan->bandcfg.chanBand);
+
+                        t_u8 chan_offset;
 
                         chan_offset = wifi_get_sec_channel_offset(acs_scan->chan);
                         if (chan_offset == SEC_CHAN_ABOVE)
@@ -3766,8 +3803,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 }
                 // coverity[overrun-buffer-arg:SUPPRESS]
                 memcpy(assoc_resp->frame.frame, passoc_rsp1, assoc_resp->frame.frame_len);
-
-                if (pmpriv->assoc_req_size && (pmpriv->assoc_req_size <= (int)sizeof(assoc_resp->req_ie)))
+                if (pmpriv->assoc_req_size > 0 && (pmpriv->assoc_req_size <= (int)sizeof(assoc_resp->req_ie)))
                 {
                     assoc_resp->req_ie_len = pmpriv->assoc_req_size;
                     // coverity[overrun-buffer-arg:SUPPRESS]
@@ -6533,6 +6569,9 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #else
             pcsi_status = OSA_MemoryPoolAllocate(buf_32_MemoryPool);
 #endif
+            if (!pcsi_status) {
+                break;
+            }
             wifi_csi_status_info *pstatus = (wifi_csi_status_info *)&evt->reason_code;
 
             pcsi_status->status  = pstatus->status;
@@ -7783,19 +7822,29 @@ int wifi_wmm_qos_cfg(t_u8 *qos_cfg, t_u8 action)
 int wifi_sleep_period(unsigned int *sleep_period, int action)
 {
     int ret = WM_SUCCESS;
+
+    if (!sleep_period)
+        return -WM_E_INVAL;
+
+    if (action != HostCmd_ACT_GEN_SET &&
+        action != HostCmd_ACT_GEN_GET)
+    {
+        return -WM_E_INVAL;
+    }
+
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]);
     cmd->result  = 0x0;
-    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_SLEEP_PERIOD, action, 0, NULL,
-                             sleep_period, cmd);
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_SLEEP_PERIOD, (t_u16)action, 0, NULL,
+                             (void *)sleep_period, cmd);
     if (action == HostCmd_ACT_GEN_SET)
         ret = wifi_wait_for_cmdresp(NULL);
     else if (action == HostCmd_ACT_GEN_GET)
     {
         mlan_ds_pm_cfg pm_cfg;
-        mlan_ioctl_req pioctl_buf;
+        static mlan_ioctl_req pioctl_buf;
         pioctl_buf.pbuf = (t_u8 *)&pm_cfg;
         memset((t_u8 *)&pioctl_buf, 0, sizeof(pioctl_buf));
         memset((t_u8 *)&pm_cfg, 0, sizeof(pm_cfg));
@@ -7875,7 +7924,8 @@ int wifi_set_tx_pert(void *cfg, mlan_bss_type bss_type)
 int wifi_set_txrx_histogram(int bss_type, void *cfg, t_u8 *data)
 {
     txrx_histogram_info *txrx_histogram    = (txrx_histogram_info *)cfg;
-    txrx_histogram_info txrx_histogram_cmd = {0};
+    static txrx_histogram_info txrx_histogram_cmd = {0};
+    memset(&txrx_histogram_cmd, 0, sizeof(txrx_histogram_cmd));
 
     txrx_histogram_cmd.enable = txrx_histogram->enable;
     txrx_histogram_cmd.action = txrx_histogram->action;
@@ -8232,11 +8282,14 @@ int wifi_set_twt_setup_cfg(const wifi_twt_setup_config_t *twt_setup)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-    mlan_ds_twtcfg twt_cfg  = {0};
+
+    static mlan_ds_twtcfg twt_cfg;
+
     MrvlIEtypes_He_cap_t *hw_he_cap;
     MrvlIEtypes_He_cap_t *hw_2g_he_cap;
     int ret = 0;
 
+    (void)memset(&twt_cfg, 0, sizeof(twt_cfg));
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]);
     cmd->result  = 0x0;
@@ -8280,8 +8333,9 @@ int wifi_set_twt_teardown_cfg(const wifi_twt_teardown_config_t *teardown_config)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-    mlan_ds_twtcfg twt_cfg  = {0};
+    static mlan_ds_twtcfg twt_cfg  = {0};
 
+    (void)memset(&twt_cfg, 0, sizeof(twt_cfg));
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]);
     cmd->result  = 0x0;
@@ -8299,8 +8353,9 @@ int wifi_get_twt_report(wifi_twt_report_t *twt_report)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-    mlan_ds_twtcfg twt_cfg  = {0};
+    static mlan_ds_twtcfg twt_cfg  = {0};
 
+    (void)memset(&twt_cfg, 0, sizeof(twt_cfg));
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]);
     cmd->result  = 0x0;
@@ -8785,12 +8840,17 @@ int wifi_get_subscribe_event(mlan_private *pmpriv, mlan_ds_subscribe_evt *sub_ev
  */
 int wifi_clear_subscribe_event(mlan_private *pmpriv, int evt_bitmap)
 {
-    mlan_ds_subscribe_evt sub_evt;
+    static mlan_ds_subscribe_evt sub_evt;
     if (!pmpriv)
         pmpriv = mlan_adap->priv[0];
+
+    if (evt_bitmap < 0 || evt_bitmap > 0xFFFF) {
+        return WM_E_INVAL;
+    }
+
     memset((t_u8 *)&sub_evt, 0, sizeof(sub_evt));
     sub_evt.evt_action = SUBSCRIBE_EVT_ACT_BITWISE_CLR;
-    sub_evt.evt_bitmap = evt_bitmap;
+    sub_evt.evt_bitmap = (t_u16)evt_bitmap;
     return wifi_subscribe_event_submit(pmpriv, &sub_evt);
 }
 
@@ -8798,29 +8858,46 @@ int wifi_set_threshold_rssi_low(mlan_private *pmpriv, unsigned int rssi_low, uns
 {
     if (!pmpriv)
         return WM_E_INVAL;
-    mlan_ds_subscribe_evt sub_evt;
+
+    if (rssi_low > 0xFF || freq > 0xFFFF) {
+        return WM_E_INVAL;
+    }
+
+    static mlan_ds_subscribe_evt sub_evt;
     sub_evt.evt_action    = SUBSCRIBE_EVT_ACT_BITWISE_SET;
     sub_evt.evt_bitmap    = SUBSCRIBE_EVT_RSSI_LOW;
-    sub_evt.low_rssi      = rssi_low;
-    sub_evt.low_rssi_freq = freq;
+
+    sub_evt.low_rssi      = (t_u8)rssi_low;
+    sub_evt.low_rssi_freq = (t_u8)freq;
+
     return wifi_subscribe_event_submit(pmpriv, &sub_evt);
 }
 int wifi_set_threshold_rssi_high(mlan_private *pmpriv, unsigned int rssi_high, unsigned int freq)
 {
     if (!pmpriv)
         return WM_E_INVAL;
-    mlan_ds_subscribe_evt sub_evt;
+
+    if (rssi_high > 0xFF || freq > 0xFFFF) {
+        return WM_E_INVAL;
+    }
+
+    static mlan_ds_subscribe_evt sub_evt;
     sub_evt.evt_action     = SUBSCRIBE_EVT_ACT_BITWISE_SET;
     sub_evt.evt_bitmap     = SUBSCRIBE_EVT_RSSI_HIGH;
-    sub_evt.high_rssi      = rssi_high;
-    sub_evt.high_rssi_freq = freq;
+
+    sub_evt.high_rssi      = (t_u8)rssi_high;
+    sub_evt.high_rssi_freq = (t_u8)freq;
+
     return wifi_subscribe_event_submit(pmpriv, &sub_evt);
 }
 int wifi_set_threshold_snr_low(mlan_private *pmpriv, unsigned int snr_low, unsigned int freq)
 {
     if (!pmpriv)
         return WM_E_INVAL;
-    mlan_ds_subscribe_evt sub_evt;
+    if (snr_low > 0xFF || freq > 0xFF) {
+        return WM_E_INVAL;
+    }
+    static mlan_ds_subscribe_evt sub_evt;
     sub_evt.evt_action   = SUBSCRIBE_EVT_ACT_BITWISE_SET;
     sub_evt.evt_bitmap   = SUBSCRIBE_EVT_SNR_LOW;
     sub_evt.low_snr      = snr_low;
@@ -8832,22 +8909,34 @@ int wifi_set_threshold_snr_high(mlan_private *pmpriv, unsigned int snr_high, uns
 {
     if (!pmpriv)
         return WM_E_INVAL;
-    mlan_ds_subscribe_evt sub_evt;
+    if (snr_high > 0xFF || freq > 0xFFFF) {
+        return WM_E_INVAL;
+    }
+
+    static mlan_ds_subscribe_evt sub_evt;
     sub_evt.evt_action    = SUBSCRIBE_EVT_ACT_BITWISE_SET;
     sub_evt.evt_bitmap    = SUBSCRIBE_EVT_SNR_HIGH;
-    sub_evt.high_snr      = snr_high;
-    sub_evt.high_snr_freq = freq;
+
+    sub_evt.high_snr      = (t_u8)snr_high;
+    sub_evt.high_snr_freq = (t_u8)freq;
     return wifi_subscribe_event_submit(pmpriv, &sub_evt);
 }
 int wifi_set_threshold_max_fail(mlan_private *pmpriv, unsigned int max_fail, unsigned int freq)
 {
     if (!pmpriv)
         return WM_E_INVAL;
-    mlan_ds_subscribe_evt sub_evt;
+
+    if (max_fail > 0xFF || freq > 0xFF) {
+        return WM_E_INVAL;
+    }
+
+    static mlan_ds_subscribe_evt sub_evt;
     sub_evt.evt_action         = SUBSCRIBE_EVT_ACT_BITWISE_SET;
     sub_evt.evt_bitmap         = SUBSCRIBE_EVT_MAX_FAIL;
-    sub_evt.failure_count      = max_fail;
-    sub_evt.failure_count_freq = freq;
+
+    sub_evt.failure_count      = (t_u8)max_fail;
+    sub_evt.failure_count_freq = (t_u8)freq;
+
     return wifi_subscribe_event_submit(pmpriv, &sub_evt);
 }
 
@@ -8855,11 +8944,18 @@ int wifi_set_threshold_beacon_miss(mlan_private *pmpriv, unsigned int beacon_mis
 {
     if (!pmpriv)
         return WM_E_INVAL;
-    mlan_ds_subscribe_evt sub_evt;
+
+    if (beacon_miss > 0xFF || freq > 0xFF) {
+        return WM_E_INVAL;
+    }
+
+    static mlan_ds_subscribe_evt sub_evt;
     sub_evt.evt_action       = SUBSCRIBE_EVT_ACT_BITWISE_SET;
     sub_evt.evt_bitmap       = SUBSCRIBE_EVT_BEACON_MISSED;
-    sub_evt.beacon_miss      = beacon_miss;
-    sub_evt.beacon_miss_freq = freq;
+
+    sub_evt.beacon_miss      = (t_u8)beacon_miss;
+    sub_evt.beacon_miss_freq = (t_u8)freq;
+
     return wifi_subscribe_event_submit(pmpriv, &sub_evt);
 }
 
@@ -8867,11 +8963,16 @@ int wifi_set_threshold_data_rssi_low(mlan_private *pmpriv, unsigned int data_rss
 {
     if (!pmpriv)
         return WM_E_INVAL;
-    mlan_ds_subscribe_evt sub_evt;
+    static mlan_ds_subscribe_evt sub_evt;
+    if (data_rssi_low > 0xFF || freq > 0xFF) {
+        return WM_E_INVAL;
+    }
     sub_evt.evt_action         = SUBSCRIBE_EVT_ACT_BITWISE_SET;
     sub_evt.evt_bitmap         = SUBSCRIBE_EVT_DATA_RSSI_LOW;
-    sub_evt.data_low_rssi      = data_rssi_low;
-    sub_evt.data_low_rssi_freq = freq;
+
+    sub_evt.data_low_rssi      = (t_u8)data_rssi_low;
+    sub_evt.data_low_rssi_freq = (t_u8)freq;
+
     return wifi_subscribe_event_submit(pmpriv, &sub_evt);
 }
 
@@ -8879,11 +8980,18 @@ int wifi_set_threshold_data_rssi_high(mlan_private *pmpriv, unsigned int data_rs
 {
     if (!pmpriv)
         return WM_E_INVAL;
-    mlan_ds_subscribe_evt sub_evt;
+
+    if (data_rssi_high > 0xFF || freq > 0xFFFF) {
+        return WM_E_INVAL;
+    }
+
+    static mlan_ds_subscribe_evt sub_evt;
     sub_evt.evt_action          = SUBSCRIBE_EVT_ACT_BITWISE_SET;
     sub_evt.evt_bitmap          = SUBSCRIBE_EVT_DATA_RSSI_HIGH;
-    sub_evt.data_high_rssi      = data_rssi_high;
-    sub_evt.data_high_rssi_freq = freq;
+
+    sub_evt.data_high_rssi      = (t_u8)data_rssi_high;
+    sub_evt.data_high_rssi_freq = (t_u8)freq;
+
     return wifi_subscribe_event_submit(pmpriv, &sub_evt);
 }
 
@@ -8891,11 +8999,18 @@ int wifi_set_threshold_data_snr_low(mlan_private *pmpriv, unsigned int data_snr_
 {
     if (!pmpriv)
         return WM_E_INVAL;
-    mlan_ds_subscribe_evt sub_evt;
+
+    if (data_snr_low > 0xFF || freq > 0xFF) {
+        return WM_E_INVAL;
+    }
+
+    static mlan_ds_subscribe_evt sub_evt;
     sub_evt.evt_action        = SUBSCRIBE_EVT_ACT_BITWISE_SET;
     sub_evt.evt_bitmap        = SUBSCRIBE_EVT_DATA_SNR_LOW;
-    sub_evt.data_low_snr      = data_snr_low;
-    sub_evt.data_low_snr_freq = freq;
+
+    sub_evt.data_low_snr      = (t_u8)data_snr_low;
+    sub_evt.data_low_snr_freq = (t_u8)freq;
+
     return wifi_subscribe_event_submit(pmpriv, &sub_evt);
 }
 
@@ -8903,11 +9018,17 @@ int wifi_set_threshold_data_snr_high(mlan_private *pmpriv, unsigned int data_snr
 {
     if (!pmpriv)
         return WM_E_INVAL;
-    mlan_ds_subscribe_evt sub_evt;
+
+    if (data_snr_high > 0xFF || freq > 0xFFFF) {
+        return WM_E_INVAL;
+    }
+
+    static mlan_ds_subscribe_evt sub_evt;
     sub_evt.evt_action         = SUBSCRIBE_EVT_ACT_BITWISE_SET;
     sub_evt.evt_bitmap         = SUBSCRIBE_EVT_DATA_SNR_HIGH;
-    sub_evt.data_high_snr      = data_snr_high;
-    sub_evt.data_high_snr_freq = freq;
+
+    sub_evt.data_high_snr      = (t_u8)data_snr_high;
+    sub_evt.data_high_snr_freq = (t_u8)freq;
     return wifi_subscribe_event_submit(pmpriv, &sub_evt);
 }
 
@@ -8919,15 +9040,28 @@ int wifi_set_threshold_link_quality(mlan_private *pmpriv,
                                     unsigned int link_tx_latency,
                                     unsigned int link_tx_lantency_freq)
 {
-    mlan_ds_subscribe_evt sub_evt;
-    sub_evt.evt_action            = SUBSCRIBE_EVT_ACT_BITWISE_SET;
-    sub_evt.evt_bitmap            = SUBSCRIBE_EVT_LINK_QUALITY;
-    sub_evt.link_snr              = link_snr;
-    sub_evt.link_snr_freq         = link_snr_freq;
-    sub_evt.link_rate             = link_rate;
-    sub_evt.link_rate_freq        = link_rate_freq;
-    sub_evt.link_tx_latency       = link_tx_latency;
-    sub_evt.link_tx_lantency_freq = link_tx_lantency_freq;
+    if (link_snr > 0xFFFF ||
+        link_rate > 0xFFFF ||
+        link_tx_latency > 0xFFFFFFFF ||
+        link_snr_freq > 0xFFFF ||
+        link_rate_freq > 0xFFFF ||
+        link_tx_lantency_freq > 0xFFFFFFFF)
+    {
+        return WM_E_INVAL;
+    }
+
+    static mlan_ds_subscribe_evt sub_evt;
+    memset(&sub_evt, 0, sizeof(sub_evt));
+    sub_evt.evt_action = SUBSCRIBE_EVT_ACT_BITWISE_SET;
+    sub_evt.evt_bitmap = SUBSCRIBE_EVT_LINK_QUALITY;
+
+    sub_evt.link_snr              = (t_u16)link_snr;
+    sub_evt.link_snr_freq         = (t_u16)link_snr_freq;
+    sub_evt.link_rate             = (t_u16)link_rate;
+    sub_evt.link_rate_freq        = (t_u16)link_rate_freq;
+    sub_evt.link_tx_latency       = (t_u32)link_tx_latency;
+    sub_evt.link_tx_lantency_freq = (t_u32)link_tx_lantency_freq;
+
     return wifi_subscribe_event_submit(pmpriv, &sub_evt);
 }
 
@@ -8935,10 +9069,15 @@ int wifi_set_threshold_pre_beacon_lost(mlan_private *pmpriv, unsigned int pre_be
 {
     if (!pmpriv)
         return WM_E_INVAL;
-    mlan_ds_subscribe_evt sub_evt;
+
+    if (pre_beacon_lost > 0xFF) {
+        return WM_E_INVAL;
+    }
+
+    static mlan_ds_subscribe_evt sub_evt;
     sub_evt.evt_action      = SUBSCRIBE_EVT_ACT_BITWISE_SET;
     sub_evt.evt_bitmap      = SUBSCRIBE_EVT_PRE_BEACON_LOST;
-    sub_evt.pre_beacon_miss = pre_beacon_lost;
+    sub_evt.pre_beacon_miss = (t_u8)pre_beacon_lost;
     return wifi_subscribe_event_submit(pmpriv, &sub_evt);
 }
 #endif
