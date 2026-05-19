@@ -506,6 +506,7 @@ static int get_address(char *arg, struct wlan_ip_config *ip)
 static int get_security(int argc, char **argv, struct wlan_network_security *sec)
 {
     int ret = WM_SUCCESS;
+    size_t psk_len = 0;
 
     if (argc < 1)
     {
@@ -513,11 +514,14 @@ static int get_security(int argc, char **argv, struct wlan_network_security *sec
     }
 
     /* copy the PSK phrase */
-    sec->psk_len = (uint8_t)strlen(argv[0]);
-    if (sec->psk_len < WLAN_PSK_MIN_LENGTH)
+    psk_len = strlen(argv[0]);
+
+    if (psk_len < WLAN_PSK_MIN_LENGTH || psk_len > WLAN_PSK_MAX_LENGTH)
     {
         return -WM_FAIL;
     }
+
+    sec->psk_len = (uint8_t)psk_len;
 
     if (sec->psk_len < sizeof(sec->psk))
     {
@@ -848,6 +852,7 @@ static void test_wlan_add(int argc, char **argv)
     int ret    = 0;
     int arg    = 1;
     size_t len = 0U;
+    unsigned long val = 0;
     struct
     {
         unsigned ssid : 1;
@@ -1211,12 +1216,13 @@ static void test_wlan_add(int argc, char **argv)
                 if (string_equal(argv[arg], "pwe") != false)
                 {
                     errno                           = 0;
-                    network->security.pwe_derivation = strtol(argv[arg + 1], NULL, 10);
-                    if (errno != 0)
+                    val = strtoul(argv[arg + 1], NULL, 10);
+                    if (errno != 0 || val > UINT8_MAX)
                     {
                         (void)PRINTF("Error during strtol:pwe errno:%d\r\n", errno);
                         goto out;
                     }
+                    network->security.pwe_derivation = (t_u8)val;
                     if (arg + 1 >= argc ||
                         (network->security.pwe_derivation != 0 && network->security.pwe_derivation != 1 &&
                          network->security.pwe_derivation != 2))
@@ -1231,12 +1237,13 @@ static void test_wlan_add(int argc, char **argv)
                     if (string_equal(argv[arg], "tr") != false)
                     {
                         errno                               = 0;
-                        network->security.transition_disable = strtol(argv[arg + 1], NULL, 10);
-                        if (errno != 0)
+                        val = strtoul(argv[arg + 1], NULL, 10);
+                        if (errno != 0 || val > UINT8_MAX)
                         {
                             (void)PRINTF("Error during strtol:pwe errno:%d\r\n", errno);
                             goto out;
                         }
+                        network->security.transition_disable = (t_u8)val;
                         if (arg + 1 >= argc ||
                             (network->security.transition_disable != 0 && network->security.transition_disable != 1
 #if CONFIG_WPA_SUPP
@@ -1831,7 +1838,14 @@ static void test_wlan_add(int argc, char **argv)
                     " argument \r\n");
                 goto out;
             }
-            pkc = a2hex_or_atoi(argv[arg + 1]);
+
+            val = a2hex_or_atoi(argv[arg + 1]);
+            if (val > UINT16_MAX)
+            {
+                (void)PRINTF("Error: pkc value out of range \r\n");
+                goto out;
+            }
+            pkc = (unsigned short)val;
 
             network->security.pkc = pkc;
             arg += 2;
@@ -1847,7 +1861,14 @@ static void test_wlan_add(int argc, char **argv)
                     " argument \r\n");
                 goto out;
             }
-            gcipher = a2hex_or_atoi(argv[arg + 1]);
+
+            val = a2hex_or_atoi(argv[arg + 1]);
+            if (val > UINT16_MAX)
+            {
+                (void)PRINTF("Error: gcipher value out of range \r\n");
+                goto out;
+            }
+            gcipher = (unsigned short)val;
 
             network->security.group_cipher = gcipher;
             arg += 2;
@@ -1863,7 +1884,14 @@ static void test_wlan_add(int argc, char **argv)
                     " argument \r\n");
                 goto out;
             }
-            pcipher = a2hex_or_atoi(argv[arg + 1]);
+
+            val = a2hex_or_atoi(argv[arg + 1]);
+            if (val > UINT16_MAX)
+            {
+                (void)PRINTF("Error: pcipher value out of range \r\n");
+                goto out;
+            }
+            pcipher = (unsigned short)val;
 
             network->security.pairwise_cipher = pcipher;
             arg += 2;
@@ -1879,7 +1907,14 @@ static void test_wlan_add(int argc, char **argv)
                     " argument \r\n");
                 goto out;
             }
-            gmcipher = a2hex_or_atoi(argv[arg + 1]);
+
+            val = a2hex_or_atoi(argv[arg + 1]);
+            if (val > UINT16_MAX)
+            {
+                (void)PRINTF("Error: gmcipher value out of range \r\n");
+                goto out;
+            }
+            gmcipher = (unsigned short)val;
 
             network->security.group_mgmt_cipher = gmcipher;
             arg += 2;
@@ -1990,6 +2025,7 @@ static void test_wlan_add(int argc, char **argv)
 
     network->ip.ipv4.addr_type         = (enum address_types)(info.address);
     network->ssid[IEEEtypes_SSID_SIZE] = '\0';
+    network->name[WLAN_NETWORK_NAME_MAX_LENGTH] = '\0';
     ret                                = wlan_add_network(network);
     switch (ret)
     {
@@ -2316,6 +2352,10 @@ static void test_wlan_scan_opt(int argc, char **argv)
 #endif
     } info;
 
+#if CONFIG_SCAN_WITH_RSSIFILTER
+    long val = 0;
+#endif
+
     (void)memset(&info, 0, sizeof(info));
     (void)memset(&wlan_scan_param, 0, sizeof(wlan_scan_params_v2_t));
 
@@ -2412,7 +2452,19 @@ static void test_wlan_scan_opt(int argc, char **argv)
                     " argument\n");
                 return;
             }
-            wlan_scan_param.rssi_threshold = atoi(argv[arg + 1]);
+            errno = 0;
+            val = strtol(argv[arg + 1], NULL, 10);
+            if (errno != 0)
+            {
+                (void)PRINTF("Error: invalid rssi_threshold: %s\r\n", argv[arg + 1]);
+                return;
+            }
+            if (val < -32768 || val > 32767)
+            {
+                (void)PRINTF("Error: rssi_threshold out of range \r\n");
+                return;
+            }
+            wlan_scan_param.rssi_threshold = (short)val;
             if (wlan_scan_param.rssi_threshold < -101)
             {
                 (void)PRINTF(
@@ -2651,8 +2703,11 @@ static void test_wlan_disconnect(int argc, char **argv)
 static void test_wlan_uap_disconnect_sta(int argc, char **argv)
 {
     int ret, i;
-    uint8_t raw_mac[MLAN_MAC_ADDR_LENGTH];
-    wifi_sta_list_t *sl = NULL;
+    static uint8_t raw_mac[MLAN_MAC_ADDR_LENGTH];
+    static wifi_sta_list_t *sl = NULL;
+
+    (void)memset(raw_mac, 0, sizeof(raw_mac));
+    sl = NULL;
 
     if (argc != 2)
     {
@@ -2930,7 +2985,8 @@ static void test_wlan_address(int argc, char **argv)
 #if UAP_SUPPORT
 static void test_wlan_get_uap_channel(int argc, char **argv)
 {
-    int channel;
+    static int channel = 0;
+    channel = 0;
     int rv = wlan_get_uap_channel(&channel);
     if (rv != WM_SUCCESS)
     {
@@ -2946,7 +3002,8 @@ static void test_wlan_get_uap_sta_list(int argc, char **argv)
 {
     // #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
     int i;
-    wifi_sta_list_t *sl = NULL;
+    static wifi_sta_list_t *sl = NULL;
+    sl = NULL;
 
     (void)wifi_uap_bss_sta_list(&sl);
 
@@ -3036,7 +3093,7 @@ static void test_wlan_set_ps_cfg(int argc, char **argv)
     }
 
     (void)memset(&pscfg, 0, sizeof(pscfg));
-    pscfg.ps_null_interval = atoi(argv[1]);
+    pscfg.ps_null_interval = (t_u32)strtoul(argv[1], NULL , 10);
 
     ret = wlan_set_ieeeps_cfg(&pscfg);
     if (ret == WM_SUCCESS)
@@ -3053,6 +3110,7 @@ static void test_wlan_wnm_ps(int argc, char **argv)
     int ret                   = -WM_FAIL;
     unsigned int condition    = 0;
     unsigned int wnm_interval = 0;
+    unsigned long val = 0;
 
     if (argc < 2)
     {
@@ -3064,7 +3122,15 @@ static void test_wlan_wnm_ps(int argc, char **argv)
         return;
     }
 
-    choice = atoi(argv[1]);
+    errno = 0;
+    val = strtoul(argv[1], NULL, 10);
+    if (errno != 0 || val > 1U)
+    {
+        (void)PRINTF("Usage: %s <0/1>\r\n", argv[0]);
+        (void)PRINTF("Error: Specify 0 to Disable or 1 to Enable\r\n");
+        return;
+    }
+    choice = (int)val;
 
     if (choice == 0)
     {
@@ -3078,6 +3144,11 @@ static void test_wlan_wnm_ps(int argc, char **argv)
     {
         if (get_uint(argv[2], &wnm_interval, strlen(argv[2])) == 0)
         {
+            if (wnm_interval > UINT16_MAX)
+            {
+                (void)PRINTF("Error: wnm_interval out of range \r\n");
+                return;
+            }
             ret = wlan_wnmps_on(condition, (t_u16)wnm_interval);
         }
         else
@@ -3090,10 +3161,6 @@ static void test_wlan_wnm_ps(int argc, char **argv)
             (void)PRINTF("Turned on WNM Power Save mode\r\n");
         else
             (void)PRINTF("Failed to turn on WNM Power Save mode or IEEE Power Save mode is enabled\r\n");
-    }
-    else
-    {
-        (void)PRINTF("Error: Specify 0 to Disable or 1 to Enable\r\n");
     }
 }
 #endif
@@ -3508,6 +3575,7 @@ static void test_wlan_roaming(int argc, char **argv)
 {
     int enable                 = 0;
     uint8_t rssi_low_threshold = 0;
+    unsigned long val = 0;
 
     if ((argc != 2) && (argc != 3))
     {
@@ -3527,12 +3595,13 @@ static void test_wlan_roaming(int argc, char **argv)
     if (argc == 3)
     {
         errno              = 0;
-        rssi_low_threshold = (uint8_t)strtol(argv[2], NULL, 10);
-        if (errno != 0)
+        val   = strtoul(argv[2], NULL, 10);
+        if (errno != 0 || val > UINT8_MAX)
         {
             (void)PRINTF("Error during strtol:rssi_threshold errno:%d\r\n", errno);
             return;
         }
+        rssi_low_threshold = (uint8_t)val;
     }
 
     wlan_set_roaming(enable, rssi_low_threshold);
@@ -3543,8 +3612,9 @@ static void test_wlan_roaming(int argc, char **argv)
 #if CONFIG_WIFI_MAX_CLIENTS_CNT
 static void test_wlan_set_max_clients_count(int argc, char **argv)
 {
-    int max_clients_count;
+    unsigned int max_clients_count;
     int ret;
+    unsigned long val = 0;
 
     if (argc != 2)
     {
@@ -3552,7 +3622,8 @@ static void test_wlan_set_max_clients_count(int argc, char **argv)
         return;
     }
 
-    max_clients_count = atoi(argv[1]);
+    val = strtoul(argv[1], NULL, 10);
+    max_clients_count = (unsigned int)val;
 
     ret = wlan_set_uap_max_clients(max_clients_count);
 
@@ -3693,6 +3764,7 @@ static void test_wlan_host_11k_neighbor_request(int argc, char **argv)
     int ret;
     int len                            = 0;
     char ssid[IEEEtypes_SSID_SIZE + 1] = {0};
+    size_t ssid_len = 0;
 
     if ((argc != 1 && argc != 3) || (argc == 3 && !string_equal("ssid", argv[1])))
     {
@@ -3703,15 +3775,16 @@ static void test_wlan_host_11k_neighbor_request(int argc, char **argv)
 
     if (argc == 3)
     {
-        if (strlen(argv[2]) > IEEEtypes_SSID_SIZE)
+        ssid_len = strlen(argv[2]);
+        if (ssid_len > IEEEtypes_SSID_SIZE)
         {
             (void)PRINTF("Error: ssid too long\r\n");
             return;
         }
         else
         {
-            (void)memcpy((void *)ssid, (const void *)argv[2], (size_t)strlen(argv[2]));
-            len       = (int)strlen(argv[2]);
+            (void)memcpy((void *)ssid, (const void *)argv[2], ssid_len);
+            len       = (int)ssid_len;
             ssid[len] = '\0';
         }
     }
@@ -3801,6 +3874,7 @@ static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
 {
     int ret;
     uint8_t ch0, ch1, preference0, preference1;
+    unsigned long val = 0;
 
     if (argc != 5)
     {
@@ -3812,36 +3886,40 @@ static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
     }
 
     errno = 0;
-    ch0   = (uint8_t)strtol(argv[1], NULL, 10);
-    if (errno != 0)
+    val   = strtoul(argv[1], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
     {
         (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
         return;
     }
+    ch0 = (uint8_t)val;
 
     errno       = 0;
-    preference0 = (uint8_t)strtol(argv[2], NULL, 10);
-    if (errno != 0)
+    val   = strtoul(argv[2], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
     {
         (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
         return;
     }
+    preference0 = (uint8_t)val;
 
     errno = 0;
-    ch1   = (uint8_t)strtol(argv[3], NULL, 10);
-    if (errno != 0)
+    val   = strtoul(argv[3], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
     {
         (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
         return;
     }
+    ch1 = (uint8_t)val;
 
     errno       = 0;
-    preference1 = (uint8_t)strtol(argv[4], NULL, 10);
-    if (errno != 0)
+    val   = strtoul(argv[4], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
     {
         (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
         return;
     }
+    preference1 = (uint8_t)val;
 
     ret = wlan_mbo_peferch_cfg(ch0, preference0, ch1, preference1);
 
@@ -4522,6 +4600,7 @@ static void test_wlan_mbo_set_cell_capa(int argc, char **argv)
 {
     int ret;
     uint8_t cell_capa;
+    unsigned long val = 0;
 
     if (argc != 2)
     {
@@ -4535,12 +4614,13 @@ static void test_wlan_mbo_set_cell_capa(int argc, char **argv)
     }
 
     errno     = 0;
-    cell_capa = (uint8_t)strtol(argv[1], NULL, 10);
-    if (errno != 0)
+    val = strtoul(argv[1], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
     {
         (void)PRINTF("Error during strtol:wlan mbo cell_capa:%d\r\n", errno);
         return;
     }
+    cell_capa = (uint8_t)val;
 
     ret = wlan_mbo_set_cell_capa(cell_capa);
 
@@ -4562,6 +4642,7 @@ static void test_wlan_mbo_set_oce(int argc, char **argv)
 {
     int ret;
     uint8_t oce;
+    unsigned long val = 0;
 
     if (argc != 2)
     {
@@ -4576,7 +4657,14 @@ static void test_wlan_mbo_set_oce(int argc, char **argv)
     }
 
     errno = 0;
-    oce   = (uint8_t)strtol(argv[1], NULL, 10);
+    val = strtoul(argv[1], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
+    {
+        (void)PRINTF("Error during strtol:oce errno:%d\r\n", errno);
+        return;
+    }
+    oce = (uint8_t)val;
+
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:wlan mbo oce:%d\r\n", errno);
@@ -4604,6 +4692,7 @@ static void test_wlan_set_okc(int argc, char **argv)
 {
     int ret;
     uint8_t okc;
+    unsigned long val = 0;
 
     if (argc != 2)
     {
@@ -4621,12 +4710,13 @@ static void test_wlan_set_okc(int argc, char **argv)
     }
 
     errno = 0;
-    okc   = (uint8_t)strtol(argv[1], NULL, 10);
-    if (errno != 0)
+    val = strtoul(argv[1], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
     {
         (void)PRINTF("Error during strtol:wlan okc:%d\r\n", errno);
         return;
     }
+    okc = (uint8_t)val;
 
     ret = wlan_set_okc(okc);
 
@@ -4702,6 +4792,7 @@ static void test_wlan_pmksa_flush(int argc, char **argv)
 static void test_wlan_set_scan_interval(int argc, char **argv)
 {
     int ret, scan_int;
+    long val = 0;
 
     if (argc != 2)
     {
@@ -4710,12 +4801,13 @@ static void test_wlan_set_scan_interval(int argc, char **argv)
     }
 
     errno    = 0;
-    scan_int = (uint8_t)strtol(argv[1], NULL, 10);
-    if (errno != 0)
+    val = strtol(argv[1], NULL, 10);
+    if (errno != 0 || val < 0)
     {
         (void)PRINTF("Error during strtol:wlan scan int:%d\r\n", errno);
         return;
     }
+    scan_int = (int)val;
 
     ret = wlan_set_scan_interval(scan_int);
 
@@ -4804,9 +4896,10 @@ static void test_wlan_set_sta_filter(int argc, char **argv)
 #if CONFIG_WIFI_GET_LOG
 static void test_wlan_get_log(int argc, char **argv)
 {
-    wlan_pkt_stats_t stats;
+    static wlan_pkt_stats_t stats;
     int ret, i;
 
+    (void)memset(&stats, 0, sizeof(wlan_pkt_stats_t));
     if (argc < 2)
     {
         (void)PRINTF("Usage: %s <sta/uap> <ext>\r\n", argv[0]);
@@ -5009,6 +5102,8 @@ static void test_wlan_set_multiple_mef_config(int argc, char **argv)
 {
     int type        = MEF_TYPE_END;
     t_u8 mef_action = 0;
+    unsigned long val = 0;
+
     if (argc < 2)
     {
         dump_multiple_mef_config_usage();
@@ -5033,22 +5128,58 @@ static void test_wlan_set_multiple_mef_config(int argc, char **argv)
         if (string_equal("ping", argv[1]))
         {
             type       = MEF_TYPE_PING;
-            mef_action = (t_u8)atoi(argv[2]);
+
+            errno = 0;
+            val = strtoul(argv[2], NULL, 10);
+            if (errno != 0 || val > UINT8_MAX)
+            {
+                (void)PRINTF("Error: value out of range \r\n");
+                dump_multiple_mef_config_usage();
+                return;
+            }
+            mef_action = (t_u8)val;
         }
         else if (string_equal("arp", argv[1]))
         {
             type       = MEF_TYPE_ARP;
-            mef_action = (t_u8)atoi(argv[2]);
+
+            errno = 0;
+            val = strtoul(argv[2], NULL, 10);
+            if (errno != 0 || val > UINT8_MAX)
+            {
+                (void)PRINTF("Error: value out of range \r\n");
+                dump_multiple_mef_config_usage();
+                return;
+            }
+            mef_action = (t_u8)val;
         }
         else if (string_equal("multicast", argv[1]))
         {
             type       = MEF_TYPE_MULTICAST;
-            mef_action = (t_u8)atoi(argv[2]);
+
+            errno = 0;
+            val = strtoul(argv[2], NULL, 10);
+            if (errno != 0 || val > UINT8_MAX)
+            {
+                (void)PRINTF("Error: value out of range \r\n");
+                dump_multiple_mef_config_usage();
+                return;
+            }
+            mef_action = (t_u8)val;
         }
         else if (string_equal("ns", argv[1]))
         {
             type       = MEF_TYPE_IPV6_NS;
-            mef_action = (t_u8)atoi(argv[2]);
+
+            errno = 0;
+            val = strtoul(argv[2], NULL, 10);
+            if (errno != 0 || val > UINT8_MAX)
+            {
+                (void)PRINTF("Error: value out of range \r\n");
+                dump_multiple_mef_config_usage();
+                return;
+            }
+            mef_action = (t_u8)val;
         }
         else
         {
@@ -5410,9 +5541,10 @@ static uint8_t host_cmd_buf[] = {0xe0, 0, 0x12, 0, 0x3c, 0, 0, 0, 0x01, 0, 0, 0,
 static void test_wlan_send_hostcmd(int argc, char **argv)
 {
     int ret           = -WM_FAIL;
-    uint32_t reqd_len = 0;
+    static uint32_t reqd_len = 0;
     uint32_t len;
 
+    reqd_len = 0;
     ret = wlan_send_hostcmd(host_cmd_buf, sizeof(host_cmd_buf) / sizeof(uint8_t), host_cmd_resp_buf,
                             HOSTCMD_RESP_BUFF_SIZE, &reqd_len);
 
@@ -5445,11 +5577,14 @@ static void test_wlan_ext_coex_uwb_usage(void)
 static void test_wlan_ext_coex_uwb(int argc, char **argv)
 {
     int ret           = -WM_FAIL;
-    uint32_t reqd_len = 0;
+    static uint32_t reqd_len = 0;
 
     t_u8 cmd_buf[]    = {0xe0, 0x00, 0x11, 0x00, 0x4a, 0x00, 0x00, 0x00, 0x01 /* Get/Set */,
                          0x00, 0x00, 0x00, 0x38, 0x02, 0x01, 0x00, 0x03};
-    t_u8 resp_buf[64] = {0};
+    static t_u8 resp_buf[64] = {0};
+
+    reqd_len = 0;
+    (void)memset(resp_buf, 0, sizeof(resp_buf));
 
     /**
      * Command taken from robust_btc.conf
@@ -5541,6 +5676,7 @@ static void test_wlan_set_uap_bandwidth(int argc, char **argv)
 {
     uint8_t bandwidth;
     int ret = -WM_FAIL;
+    unsigned long val = 0;
 
     if (argc < 2)
     {
@@ -5555,12 +5691,13 @@ static void test_wlan_set_uap_bandwidth(int argc, char **argv)
     }
 
     errno     = 0;
-    bandwidth = (uint8_t)strtol(argv[1], NULL, 10);
-    if (errno != 0)
+    val = strtoul(argv[1], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
     {
         (void)PRINTF("Error during strtol:uap_bandwidth errno:%d\r\n", errno);
         return;
     }
+    bandwidth = (uint8_t)val;
 
     ret = wlan_uap_set_bandwidth(bandwidth);
 
@@ -5594,6 +5731,7 @@ static void test_wlan_set_uap_hidden_ssid(int argc, char **argv)
 {
     uint8_t hidden_ssid;
     int ret = -WM_FAIL;
+    unsigned long val = 0;
 
     if (argc < 2)
     {
@@ -5602,12 +5740,13 @@ static void test_wlan_set_uap_hidden_ssid(int argc, char **argv)
     }
 
     errno       = 0;
-    hidden_ssid = (uint8_t)strtol(argv[1], NULL, 10);
-    if (errno != 0)
+    val = strtoul(argv[1], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
     {
         (void)PRINTF("Error during strtol:uap_bandwidth errno:%d\r\n", errno);
         return;
     }
+    hidden_ssid = (uint8_t)val;
 
     ret = wlan_uap_set_hidden_ssid(hidden_ssid);
 
@@ -5747,6 +5886,8 @@ static void test_wlan_ft_roam(int argc, char **argv)
     int ret;
     t_u8 bssid[IEEEtypes_ADDRESS_SIZE] = {0};
     t_u8 channel                       = 0;
+    unsigned long val = 0;
+
     if (argc != 3)
     {
         dump_wlan_ft_roam_usage();
@@ -5764,13 +5905,14 @@ static void test_wlan_ft_roam(int argc, char **argv)
     }
 
     errno   = 0;
-    channel = (t_u8)strtol(argv[2], NULL, 10);
-    if (errno != 0)
+    val = strtoul(argv[2], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
     {
         (void)PRINTF("Error during strtol:channel errno:%d\r\n", errno);
         dump_wlan_ft_roam_usage();
         return;
     }
+    channel = (t_u8)val;
 
     ret = wlan_ft_roam(bssid, channel);
     if (ret != WM_SUCCESS)
@@ -5798,13 +5940,17 @@ static void dump_wlan_eu_crypto_rc4(void)
 static void test_wlan_eu_crypto_rc4(int argc, char **argv)
 {
     unsigned int EncDec = 0U;
-    t_u8 DATA[80]       = {0};
-    t_u16 Length;
+    static t_u8 DATA[80]       = {0};
+    static t_u16 Length;
     int ret;
     t_u16 Dec_DataLength;
     t_u16 Enc_DataLength;
     t_u16 KeyLength;
     t_u16 KeyIVLength;
+
+    (void)memset(DATA, 0, sizeof(DATA));
+    Length = 0;
+
     if (argc != 2)
     {
         dump_wlan_eu_crypto_rc4();
@@ -5872,13 +6018,17 @@ static void dump_wlan_eu_crypto_aes_ecb(void)
 static void test_wlan_eu_crypto_aes_ecb(int argc, char **argv)
 {
     unsigned int EncDec = 0U;
-    t_u8 DATA[80]       = {0};
-    t_u16 Length;
+    static t_u8 DATA[80]       = {0};
+    static t_u16 Length;
     int ret;
     t_u16 Dec_DataLength;
     t_u16 Enc_DataLength;
     t_u16 KeyLength;
     t_u16 KeyIVLength;
+
+    (void)memset(DATA, 0, sizeof(DATA));
+    Length = 0;
+
     if (argc != 2)
     {
         dump_wlan_eu_crypto_aes_ecb();
@@ -5946,13 +6096,17 @@ static void dump_wlan_eu_crypto_aes_wrap(void)
 static void test_wlan_eu_crypto_aes_wrap(int argc, char **argv)
 {
     unsigned int EncDec = 0U;
-    t_u8 DATA[80]       = {0};
-    t_u16 Length;
+    static t_u8 DATA[80]       = {0};
+    static t_u16 Length;
     int ret;
     t_u16 Dec_DataLength;
     t_u16 Enc_DataLength;
     t_u16 KeyLength;
     t_u16 KeyIVLength;
+
+    (void)memset(DATA, 0, sizeof(DATA));
+    Length = 0;
+
     if (argc != 2)
     {
         dump_wlan_eu_crypto_aes_wrap();
@@ -6021,14 +6175,18 @@ static void dump_wlan_eu_crypto_ccmp_128(void)
 static void test_wlan_eu_crypto_ccmp_128(int argc, char **argv)
 {
     unsigned int EncDec = 0U;
-    t_u8 DATA[80]       = {0};
-    t_u16 Length;
+    static t_u8 DATA[80]       = {0};
+    static t_u16 Length;
     int ret;
     t_u16 Dec_DataLength;
     t_u16 Enc_DataLength;
     t_u16 KeyLength;
     t_u16 NonceLength;
     t_u16 AADLength;
+
+    (void)memset(DATA, 0, sizeof(DATA));
+    Length = 0;
+
     if (argc != 2)
     {
         dump_wlan_eu_crypto_ccmp_128();
@@ -6101,14 +6259,18 @@ static void dump_wlan_eu_crypto_ccmp_256(void)
 static void test_wlan_eu_crypto_ccmp_256(int argc, char **argv)
 {
     unsigned int EncDec = 0U;
-    t_u8 DATA[80]       = {0};
-    t_u16 Length;
+    static t_u8 DATA[80]       = {0};
+    static t_u16 Length;
     int ret;
     t_u16 Dec_DataLength;
     t_u16 Enc_DataLength;
     t_u16 KeyLength;
     t_u16 NonceLength;
     t_u16 AADLength;
+
+    (void)memset(DATA, 0, sizeof(DATA));
+    Length = 0;
+
     if (argc != 2)
     {
         dump_wlan_eu_crypto_ccmp_256();
@@ -6182,8 +6344,8 @@ static void dump_wlan_eu_crypto_gcmp_128(void)
 static void test_wlan_eu_crypto_gcmp_128(int argc, char **argv)
 {
     unsigned int EncDec = 0U;
-    t_u8 DATA[80]       = {0};
-    t_u16 Length;
+    static t_u8 DATA[80]       = {0};
+    static t_u16 Length;
     int ret;
     t_u16 Dec_DataLength;
     t_u16 Dec_DataOnlyLength;
@@ -6192,6 +6354,10 @@ static void test_wlan_eu_crypto_gcmp_128(int argc, char **argv)
     t_u16 KeyLength;
     t_u16 NonceLength;
     t_u16 AADLength;
+
+    (void)memset(DATA, 0, sizeof(DATA));
+    Length = 0;
+
     if (argc != 2)
     {
         dump_wlan_eu_crypto_gcmp_128();
@@ -6232,12 +6398,22 @@ static void test_wlan_eu_crypto_gcmp_128(int argc, char **argv)
 
     if (EncDec == 0U)
     {
+        if (Dec_DataLength > sizeof(DATA) || Dec_DataLength > sizeof(DecData))
+        {
+            (void)PRINTF("Error: Dec_DataLength %d exceeds buffer size\r\n", Dec_DataLength);
+            return;
+        }
         (void)memcpy(DATA, DecData, Dec_DataLength);
         Length = Dec_DataLength;
         ret    = wlan_set_crypto_AES_GCMP_decrypt(Key, KeyLength, AAD, AADLength, Nonce, NonceLength, DATA, &Length);
     }
     else
     {
+        if (Enc_DataLength > sizeof(DATA) || Enc_DataLength > sizeof(EncData))
+        {
+            (void)PRINTF("Error: Enc_DataLength %d exceeds buffer size\r\n", Enc_DataLength);
+            return;
+        }
         (void)memcpy(DATA, EncData, Enc_DataLength);
         Length = Enc_DataLength;
         ret    = wlan_set_crypto_AES_GCMP_encrypt(Key, KeyLength, AAD, AADLength, Nonce, NonceLength, DATA, &Length);
@@ -6273,8 +6449,8 @@ static void dump_wlan_eu_crypto_gcmp_256(void)
 static void test_wlan_eu_crypto_gcmp_256(int argc, char **argv)
 {
     unsigned int EncDec = 0U;
-    t_u8 DATA[80]       = {0};
-    t_u16 Length;
+    static t_u8 DATA[80]       = {0};
+    static t_u16 Length;
     int ret;
     t_u16 Dec_DataLength;
     t_u16 Dec_DataOnlyLength;
@@ -6283,6 +6459,10 @@ static void test_wlan_eu_crypto_gcmp_256(int argc, char **argv)
     t_u16 KeyLength;
     t_u16 NonceLength;
     t_u16 AADLength;
+
+    (void)memset(DATA, 0, sizeof(DATA));
+    Length = 0;
+
     if (argc != 2)
     {
         dump_wlan_eu_crypto_gcmp_256();
@@ -6326,12 +6506,22 @@ static void test_wlan_eu_crypto_gcmp_256(int argc, char **argv)
 
     if (EncDec == 0U)
     {
+        if (Dec_DataLength > sizeof(DATA) || Dec_DataLength > sizeof(DecData))
+        {
+            (void)PRINTF("Error: Dec_DataLength %d exceeds buffer size\r\n", Dec_DataLength);
+            return;
+        }
         (void)memcpy(DATA, DecData, Dec_DataLength);
         Length = Dec_DataLength;
         ret    = wlan_set_crypto_AES_GCMP_decrypt(Key, KeyLength, AAD, AADLength, Nonce, NonceLength, DATA, &Length);
     }
     else
     {
+        if (Enc_DataLength > sizeof(DATA) || Enc_DataLength > sizeof(EncData))
+        {
+            (void)PRINTF("Error: Enc_DataLength %d exceeds buffer size\r\n", Enc_DataLength);
+            return;
+        }
         (void)memcpy(DATA, EncData, Enc_DataLength);
         Length = Enc_DataLength;
         ret    = wlan_set_crypto_AES_GCMP_encrypt(Key, KeyLength, AAD, AADLength, Nonce, NonceLength, DATA, &Length);
@@ -6392,7 +6582,8 @@ static void dump_wlan_rx_abort_cfg_usage()
 
 static void test_wlan_rx_abort_cfg(int argc, char **argv)
 {
-    struct wlan_rx_abort_cfg cfg;
+    static struct wlan_rx_abort_cfg cfg;
+    unsigned long val = 0;
 
     if (argc > 3)
     {
@@ -6415,7 +6606,15 @@ static void test_wlan_rx_abort_cfg(int argc, char **argv)
     /* SET */
     else
     {
-        cfg.enable = (t_u8)atoi(argv[1]);
+        errno = 0;
+        val = strtoul(argv[1], NULL, 10);
+        if (errno != 0 || val > 1U)
+        {
+            (void)PRINTF("Error: enable must be 0 or 1\r\n");
+            dump_wlan_rx_abort_cfg_usage();
+            return;
+        }
+        cfg.enable = (t_u8)val;
         if (cfg.enable)
         {
             if (argc == 2)
@@ -6541,7 +6740,7 @@ static void test_wlan_set_rx_abort_cfg_ext(int argc, char **argv)
 {
     int arg = 0;
     unsigned int value;
-    struct wlan_rx_abort_cfg_ext cfg;
+    static struct wlan_rx_abort_cfg_ext cfg;
 
     struct
     {
@@ -6732,9 +6931,10 @@ static void dump_wlan_cck_desense_cfg_usage()
 
 static void test_wlan_cck_desense_cfg(int argc, char **argv)
 {
-    struct wlan_cck_desense_cfg cfg;
+    static struct wlan_cck_desense_cfg cfg;
     int num_on_intervals  = 0;
     int num_off_intervals = 0;
+    unsigned long val = 0;
 
     if (argc > 6)
     {
@@ -6764,7 +6964,15 @@ static void test_wlan_cck_desense_cfg(int argc, char **argv)
     /* SET */
     else
     {
-        cfg.mode = (t_u16)atoi(argv[1]);
+        errno = 0;
+        val = strtoul(argv[1], NULL, 10);
+        if (errno != 0 || val > UINT16_MAX)
+        {
+            (void)PRINTF("Error: invalid input\r\n");
+            dump_wlan_cck_desense_cfg_usage();
+            return;
+        }
+        cfg.mode = (t_u16)val;
         if (cfg.mode > CCK_DESENSE_MODE_DYN_ENH)
         {
             (void)PRINTF("Invalid cck desense mode\r\n");
@@ -7055,6 +7263,7 @@ static void wlan_antcfg_set(int argc, char *argv[])
     uint32_t ant_mode;
     uint16_t evaluate_time = 0;
     uint8_t evaluate_mode  = 0xFF;
+    unsigned long val = 0;
 
     if (argc < 2 || argc > 4)
     {
@@ -7064,10 +7273,10 @@ static void wlan_antcfg_set(int argc, char *argv[])
     }
 
     errno    = 0;
-    ant_mode = (uint32_t)strtol(argv[1], NULL, 16);
+    ant_mode = (uint32_t)strtoul(argv[1], NULL, 16);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtol errno:%d", errno);
+        (void)PRINTF("Error during strtoul errno:%d", errno);
         return;
     }
 
@@ -7081,25 +7290,29 @@ static void wlan_antcfg_set(int argc, char *argv[])
     errno = 0;
     if (argc == 3 || argc == 4)
     {
-        evaluate_time = (uint16_t)strtol(argv[2], NULL, 10);
+        val = strtoul(argv[2], NULL, 10);
 
-        if (errno != 0)
+        if (errno != 0 || val > UINT16_MAX)
         {
-            (void)PRINTF("Error during strtol errno:%d", errno);
+            (void)PRINTF("Error during strtoul errno:%d", errno);
             return;
         }
+
+        evaluate_time = (uint16_t)val;
     }
 
     errno = 0;
     if (argc == 4)
     {
-        evaluate_mode = (uint8_t)strtol(argv[3], NULL, 10);
+        val = strtoul(argv[3], NULL, 10);
 
-        if (errno != 0)
+        if (errno != 0 || val > UINT8_MAX)
         {
-            (void)PRINTF("Error during strtol errno:%d", errno);
+            (void)PRINTF("Error during strtoul errno:%d", errno);
             return;
         }
+
+        evaluate_mode = (uint8_t)val;
 
         if ((evaluate_mode != 0) && (evaluate_mode != 1) && (evaluate_mode != 2) && (evaluate_mode != 255))
         {
@@ -7131,12 +7344,19 @@ static void dump_wlan_get_antcfg_usage(void)
 static void wlan_antcfg_get(int argc, char *argv[])
 {
     int ret                = -WM_FAIL;
-    uint32_t ant_mode      = 0;
-    uint16_t evaluate_time = 0;
+    static uint32_t ant_mode      = 0;
+    static uint16_t evaluate_time = 0;
 #ifdef RW610
-    uint8_t evaluate_mode = 0;
+    static uint8_t evaluate_mode = 0;
 #endif
-    uint16_t current_antenna = 0;
+    static uint16_t current_antenna = 0;
+
+    ant_mode         = 0;
+    evaluate_time    = 0;
+#ifdef RW610
+    evaluate_mode    = 0;
+#endif
+    current_antenna  = 0;
 
     if (argc != 1)
     {
@@ -7244,7 +7464,7 @@ static void test_wlan_set_regioncode(int argc, char **argv)
     }
 
     errno             = 0;
-    t_u32 region_code = (t_u32)strtol(argv[1], NULL, 0);
+    t_u32 region_code = (t_u32)strtoul(argv[1], NULL, 0);
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol errno:%d", errno);
@@ -7281,7 +7501,9 @@ static void test_wlan_get_regioncode(int argc, char **argv)
 static void test_wlan_set_mac_address(int argc, char **argv)
 {
     int ret;
-    uint8_t raw_mac[MLAN_MAC_ADDR_LENGTH];
+    static uint8_t raw_mac[MLAN_MAC_ADDR_LENGTH];
+
+    (void)memset(raw_mac, 0, sizeof(raw_mac));
 
     if (argc != 2)
     {
@@ -7372,17 +7594,56 @@ static void test_wlan_uap_set_ecsa_cfg(int argc, char **argv)
     t_u8 new_channel  = 0;
     t_u8 switch_count = 0;
     t_u8 band_width   = 0;
+    unsigned long val = 0;
 
     if ((5 == argc) || (6 == argc))
     {
-        block_tx     = (t_u8)atoi(argv[1]);
-        oper_class   = (t_u8)atoi(argv[2]);
-        new_channel  = (t_u8)atoi(argv[3]);
-        switch_count = (t_u8)atoi(argv[4]);
+        errno = 0;
+        val = strtoul(argv[1], NULL, 10);
+        if (errno != 0 || val > 1U)
+        {
+            (void)PRINTF("Error: invalid block_tx: %s\r\n", argv[1]);
+            return;
+        }
+        block_tx = (t_u8)val;
+
+        errno = 0;
+        val = strtoul(argv[2], NULL, 10);
+        if (errno != 0 || val > UINT8_MAX)
+        {
+            (void)PRINTF("Error: invalid oper_class: %s\r\n", argv[2]);
+            return;
+        }
+        oper_class = (t_u8)val;
+
+        errno = 0;
+        val = strtoul(argv[3], NULL, 10);
+        if (errno != 0 || val > UINT8_MAX)
+        {
+            (void)PRINTF("Error: invalid new_channel: %s\r\n", argv[3]);
+            return;
+        }
+        new_channel = (t_u8)val;
+
+        errno = 0;
+        val = strtoul(argv[4], NULL, 10);
+        if (errno != 0 || val > UINT8_MAX)
+        {
+            (void)PRINTF("Error: invalid switch_count: %s\r\n", argv[4]);
+            return;
+        }
+        switch_count = (t_u8)val;
 
         if (6 == argc)
         {
-            band_width = (t_u8)atoi(argv[5]);
+            errno = 0;
+            val = strtoul(argv[5], NULL, 10);
+            if (errno != 0 || val > UINT8_MAX)
+            {
+                (void)PRINTF("Error: invalid band_width: %s\r\n", argv[5]);
+                return;
+            }
+            band_width = (t_u8)val;
         }
     }
     else
@@ -7876,10 +8137,11 @@ static void dump_wlan_reg_access_usage()
 static void test_wlan_reg_access(int argc, char **argv)
 {
     t_u32 type, offset;
-    t_u32 value  = 0;
+    static t_u32 value  = 0;
     t_u16 action = ACTION_GET;
     int ret;
 
+    value = 0;
     if (argc < 3 || argc > 4)
     {
         dump_wlan_reg_access_usage();
@@ -7900,6 +8162,13 @@ static void test_wlan_reg_access(int argc, char **argv)
     {
         action = ACTION_SET;
         value  = a2hex_or_atoi(argv[3]);
+    }
+
+    if (type < 1U || type > 4U)
+    {
+        dump_wlan_reg_access_usage();
+        (void)PRINTF("Error: Illegal register type %s.\r\n", argv[1]);
+        return;
     }
 
     ret = wlan_reg_access((wifi_reg_t)type, action, offset, (uint32_t *)&value);
@@ -7955,8 +8224,17 @@ static void test_wlan_set_wmm_uapsd(int argc, char **argv)
 {
     t_u8 enable;
     int ret = -WM_FAIL;
+    unsigned long val = 0;
+    errno = 0;
 
-    enable = atoi(argv[1]);
+    val = strtoul(argv[1], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
+    {
+        (void)PRINTF("Error: invalid input\r\n");
+        return;
+    }
+    enable = (t_u8)val;
+
     if (argc != 2 || (enable != 0 && enable != 1))
     {
         (void)PRINTF("Usage: %s <enable>\r\n", argv[0]);
@@ -7974,8 +8252,9 @@ static void test_wlan_set_wmm_uapsd(int argc, char **argv)
 
 static void test_wlan_sleep_period(int argc, char **argv)
 {
-    unsigned int period = 0;
+    static unsigned int period = 0;
     int ret = -WM_FAIL;
+    period = 0;
 
     if (argc == 1)
     {
@@ -8019,7 +8298,8 @@ static void dump_wlan_tx_ampdu_prot_mode_usage()
 
 static void test_wlan_tx_ampdu_prot_mode(int argc, char **argv)
 {
-    tx_ampdu_prot_mode_para data;
+    static tx_ampdu_prot_mode_para data;
+    (void)memset(&data, 0, sizeof(data));
 
     if (argc > 2)
     {
@@ -8216,6 +8496,7 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
     t_u8 csi_monitor_enable = 0;
     t_u8 ra4us              = 0;
     int ret                 = -1;
+    unsigned long val = 0;
 
     if (argc != 10)
     {
@@ -8267,14 +8548,78 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
         PRINTF("Please put sta or uap\r\n");
         return;
     }
-    csi_enable         = (t_u16)atoi(argv[2]);
-    head_id            = (t_u32)atoi(argv[3]);
-    tail_id            = (t_u32)atoi(argv[4]);
-    chip_id            = (t_u8)atoi(argv[5]);
-    band_config        = (t_u8)atoi(argv[6]);
-    channel            = (t_u8)atoi(argv[7]);
-    csi_monitor_enable = (t_u8)atoi(argv[8]);
-    ra4us              = (t_u8)atoi(argv[9]);
+
+    errno = 0;
+    val = strtoul(argv[2], NULL, 10);
+    if (errno != 0 || val < 1U || val > 2U)
+    {
+        (void)PRINTF("Error: csi_enable must be 1 or 2\r\n");
+        return;
+    }
+    csi_enable = (t_u16)val;
+
+    errno = 0;
+    val = strtoul(argv[3], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error: invalid head_id: %s\r\n", argv[3]);
+        return;
+    }
+    head_id = (t_u32)val;
+
+    errno = 0;
+    val = strtoul(argv[4], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error: invalid tail_id: %s\r\n", argv[4]);
+        return;
+    }
+    tail_id = (t_u32)val;
+
+    errno = 0;
+    val = strtoul(argv[5], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
+    {
+        (void)PRINTF("Error: invalid chip_id: %s\r\n", argv[5]);
+        return;
+    }
+    chip_id = (t_u8)val;
+
+    errno = 0;
+    val = strtoul(argv[6], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
+    {
+        (void)PRINTF("Error: invalid band_config: %s\r\n", argv[6]);
+        return;
+    }
+    band_config = (t_u8)val;
+
+    errno = 0;
+    val = strtoul(argv[7], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
+    {
+        (void)PRINTF("Error: invalid channel: %s\r\n", argv[7]);
+        return;
+    }
+    channel = (t_u8)val;
+
+    errno = 0;
+    val = strtoul(argv[8], NULL, 10);
+    if (errno != 0 || val > 1U)
+    {
+        (void)PRINTF("Error: csi_monitor_enable must be 0 or 1\r\n");
+        return;
+    }
+    csi_monitor_enable = (t_u8)val;
+
+    errno = 0;
+    val = strtoul(argv[9], NULL, 10);
+    if (errno != 0 || val > 1U)
+    {
+        (void)PRINTF("Error: ra4us must be 0 or 1\r\n");
+        return;
+    }
+    ra4us = (t_u8)val;
 
     if (csi_enable == 1)
     {
@@ -8323,6 +8668,7 @@ static void test_wlan_set_csi_filter(int argc, char **argv)
     t_u8 subtype  = 0;
     t_u8 flags    = 0;
     int op_index  = 0;
+    unsigned long val = 0;
 
     if (argc < 2)
     {
@@ -8353,9 +8699,35 @@ static void test_wlan_set_csi_filter(int argc, char **argv)
              * bit1 set to 1: wait for trigger
              * bit2 set to 1: send csi error event when timeout
              */
-            pkt_type = (t_u8)atoi(argv[3]);
-            subtype  = (t_u8)atoi(argv[4]);
-            flags    = (t_u8)atoi(argv[5]);
+            errno = 0;
+            val = strtoul(argv[3], NULL, 10);
+            if (errno != 0 || val > UINT8_MAX)
+            {
+                (void)PRINTF("Error: invalid pkt_type: %s\r\n", argv[3]);
+                dump_wlan_csi_filter_usage();
+                return;
+            }
+            pkt_type = (t_u8)val;
+
+            errno = 0;
+            val = strtoul(argv[4], NULL, 10);
+            if (errno != 0 || val > UINT8_MAX)
+            {
+                (void)PRINTF("Error: invalid subtype: %s\r\n", argv[4]);
+                dump_wlan_csi_filter_usage();
+                return;
+            }
+            subtype = (t_u8)val;
+
+            errno = 0;
+            val = strtoul(argv[5], NULL, 10);
+            if (errno != 0 || val > UINT8_MAX)
+            {
+                (void)PRINTF("Error: invalid flags: %s\r\n", argv[5]);
+                dump_wlan_csi_filter_usage();
+                return;
+            }
+            flags = (t_u8)val;
 
             op_index = CSI_FILTER_OPT_ADD;
         }
@@ -8681,6 +9053,8 @@ static void dump_monitor_param()
 
 static void test_wlan_set_monitor_param(int argc, char **argv)
 {
+    unsigned long val = 0;
+
     if (argc != 6)
     {
         (void)PRINTF("Error             : invalid number of arguments\r\n");
@@ -8698,8 +9072,23 @@ static void test_wlan_set_monitor_param(int argc, char **argv)
         return;
     }
 
-    g_net_monitor_param.action           = (t_u16)atoi(argv[1]);
-    g_net_monitor_param.monitor_activity = (t_u16)atoi(argv[2]);
+    errno = 0;
+    val = strtoul(argv[1], NULL, 10);
+    if (errno != 0 || val > 1U)
+    {
+        (void)PRINTF("Error: action must be 0 or 1\r\n");
+        return;
+    }
+    g_net_monitor_param.action = (t_u16)val;
+
+    errno = 0;
+    val = strtoul(argv[2], NULL, 10);
+    if (errno != 0 || val > 1U)
+    {
+        (void)PRINTF("Error: monitor_activity must be 0 or 1\r\n");
+        return;
+    }
+    g_net_monitor_param.monitor_activity = (t_u16)val;
 
     /*
      * filter_flags:
@@ -8707,7 +9096,14 @@ static void test_wlan_set_monitor_param(int argc, char **argv)
      * bit 1: (1/0) enable/disable control frame
      * bit 2: (1/0) enable/disable data frame
      */
-    g_net_monitor_param.filter_flags = (t_u16)atoi(argv[3]);
+    errno = 0;
+    val = strtoul(argv[3], NULL, 10);
+    if (errno != 0 || val > 0x07U)
+    {
+        (void)PRINTF("Error: filter_flags must be in [0, 7]\r\n");
+        return;
+    }
+    g_net_monitor_param.filter_flags = (t_u16)val;
 
     /*
      * radio_type:
@@ -8720,8 +9116,23 @@ static void test_wlan_set_monitor_param(int argc, char **argv)
      * Channel Selection Mode - (00)=manual, (01)=ACS, (02)=Adoption mode
      * t_u8  scanMode    : 2;
      */
-    g_net_monitor_param.radio_type  = (t_u8)atoi(argv[4]);
-    g_net_monitor_param.chan_number = (t_u8)atoi(argv[5]);
+    errno = 0;
+    val = strtoul(argv[4], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
+    {
+        (void)PRINTF("Error: invalid radio_type: %s\r\n", argv[4]);
+        return;
+    }
+    g_net_monitor_param.radio_type = (t_u8)val;
+
+    errno = 0;
+    val = strtoul(argv[5], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
+    {
+        (void)PRINTF("Error: invalid chan_number: %s\r\n", argv[5]);
+        return;
+    }
+    g_net_monitor_param.chan_number = (t_u8)val;
 
     dump_monitor_param();
 }
@@ -8766,7 +9177,7 @@ void set_monitor_filter(int op_index, t_u8 *mac)
             break;
 
         case MONITOR_FILTER_OPT_CLEAR_MAC:
-            memset(&g_net_monitor_param.mac_addr[0], 0, MAX_MONIT_MAC_FILTER_NUM * MLAN_MAC_ADDR_LENGTH);
+            memset(g_net_monitor_param.mac_addr, 0, sizeof(g_net_monitor_param.mac_addr));
             g_net_monitor_param.filter_num = 0;
             break;
 
@@ -9369,18 +9780,29 @@ static void test_wlan_set_tsp_cfg(int argc, char **argv)
 
 static void test_wlan_get_tsp_cfg(int argc, char **argv)
 {
-    t_u16 enable        = 0;
-    t_u32 back_off      = 0;
-    t_u32 highThreshold = 0;
-    t_u32 lowThreshold  = 0;
-    t_u32 dutycycstep   = 0;
-    t_u32 dutycycmin    = 0;
-    int highthrtemp     = 0;
-    int lowthrtemp      = 0;
-    int currCAUTemp     = 0;
-    int currRFUTemp     = 0;
+    static t_u16 enable        = 0;
+    static t_u32 back_off      = 0;
+    static t_u32 highThreshold = 0;
+    static t_u32 lowThreshold  = 0;
+    static t_u32 dutycycstep   = 0;
+    static t_u32 dutycycmin    = 0;
+    static int highthrtemp     = 0;
+    static int lowthrtemp      = 0;
+    static int currCAUTemp     = 0;
+    static int currRFUTemp     = 0;
 
     int ret = WM_SUCCESS;
+
+    enable = 0;
+    back_off = 0;
+    highThreshold = 0;
+    lowThreshold = 0;
+    dutycycstep = 0;
+    dutycycmin = 0;
+    highthrtemp = 0;
+    lowthrtemp = 0;
+    currCAUTemp = 0;
+    currRFUTemp = 0;
 
     if (argc != 1)
     {
@@ -9577,6 +9999,7 @@ static void test_wlan_cloud_keep_alive(int argc, char **argv)
     int dst_mac_set  = 0;
     int dst_ip_set   = 0;
     int dst_port_set = 0;
+    unsigned long val = 0;
 
     wlan_cloud_keep_alive_t cloud_keep_alive;
 
@@ -9613,13 +10036,13 @@ static void test_wlan_cloud_keep_alive(int argc, char **argv)
             if (string_equal("id", argv[arg]))
             {
                 errno                           = 0;
-                cloud_keep_alive.mkeep_alive_id = strtol(argv[arg + 1], NULL, 10);
-                if (errno != 0)
+                val = strtoul(argv[arg + 1], NULL, 10);
+                if (errno != 0 || val > UINT8_MAX)
                 {
                     (void)PRINTF("Error during strtol:id errno:%d\r\n", errno);
                     return;
                 }
-
+                cloud_keep_alive.mkeep_alive_id = (t_u8)val;
                 id_set = 1;
                 arg += 2;
             }
@@ -9699,7 +10122,7 @@ static void test_wlan_cloud_keep_alive(int argc, char **argv)
 #if STA_SUPPORT
 static void test_wlan_get_signal(int argc, char **argv)
 {
-    wlan_rssi_info_t signal;
+    static wlan_rssi_info_t signal;
     int ret = WM_SUCCESS;
 
     if (!is_sta_connected())
@@ -9827,6 +10250,7 @@ static void dump_wlan_set_multiple_dtim_usage(void)
 static void test_wlan_set_multiple_dtim(int argc, char **argv)
 {
     uint8_t multiple_dtim = 0;
+    unsigned long val = 0;
 
     if (argc != 2)
     {
@@ -9835,7 +10259,15 @@ static void test_wlan_set_multiple_dtim(int argc, char **argv)
         return;
     }
 
-    multiple_dtim = (t_u8)atoi(argv[1]);
+    errno = 0;
+    val = strtoul(argv[1], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
+    {
+        (void)PRINTF("Error: value out of range\r\n");
+        dump_wlan_set_multiple_dtim_usage();
+        return;
+    }
+    multiple_dtim = (t_u8)val;
 
     if (multiple_dtim < 1 || multiple_dtim > 20)
     {
@@ -9865,10 +10297,12 @@ static void dump_wlan_set_su_usage(void)
 static void test_wlan_set_su(int argc, char **argv)
 {
     int ret           = -WM_FAIL;
-    uint32_t reqd_len = 0;
+    static uint32_t reqd_len = 0;
     uint8_t state;
-    uint8_t debug_resp_buf[64] = {0};
+    static uint8_t debug_resp_buf[64] = {0};
+    unsigned long val = 0;
 
+    reqd_len = 0;
     (void)memset(debug_resp_buf, 0, sizeof(debug_resp_buf));
     /**
      * Command taken from debug.conf
@@ -9891,7 +10325,16 @@ static void test_wlan_set_su(int argc, char **argv)
     /* SET */
     if (argc == 2)
     {
-        state             = atoi(argv[1]);
+        errno = 0;
+        val = strtoul(argv[1], NULL, 10);
+        if (errno != 0 || val > UINT8_MAX)
+        {
+            (void)PRINTF("Error: invalid input\r\n");
+            dump_wlan_set_su_usage();
+            return;
+        }
+        state = (uint8_t)val;
+
         debug_cmd_buf[12] = state;
     }
     else /* GET */
@@ -9936,8 +10379,9 @@ static void dump_wlan_set_forceRTS_usage(void)
 static void test_wlan_set_forceRTS(int argc, char **argv)
 {
     int ret           = -WM_FAIL;
-    uint32_t reqd_len = 0;
+    static uint32_t reqd_len = 0;
     uint8_t state;
+    unsigned long val = 0;
     /**
      * Command taken from debug.conf
      * start_forceRTS={
@@ -9948,6 +10392,7 @@ static void test_wlan_set_forceRTS(int argc, char **argv)
      *                          # 0 -- stop forceRTS;
      */
     uint8_t debug_cmd_buf[] = {0x8b, 0, 0x0d, 0, 0, 0, 0, 0, 0x01, 0, 0x04, 0x01, 0x01};
+    reqd_len = 0;
 
     if (argc > 2)
     {
@@ -9959,7 +10404,15 @@ static void test_wlan_set_forceRTS(int argc, char **argv)
     /* SET */
     if (argc == 2)
     {
-        state             = atoi(argv[1]);
+        errno = 0;
+        val = strtoul(argv[1], NULL, 10);
+        if (errno != 0 || val > UINT8_MAX)
+        {
+            (void)PRINTF("Error: value out of range \r\n");
+            return;
+        }
+        state = (uint8_t)val;
+
         debug_cmd_buf[12] = state;
     }
     else /* GET */
@@ -10175,8 +10628,10 @@ static void test_wlan_wps_ap_cancel(int argc, char **argv)
 static void test_wlan_get_turbo_mode(int argc, char **argv)
 {
     int ret = -WM_FAIL;
-    uint8_t mode;
+    static uint8_t mode;
     int bss_type = MLAN_BSS_TYPE_ANY;
+
+    mode = 0;
     if (argc != 2)
     {
         (void)PRINTF("Error: invalid number of arguments\r\n");
@@ -10223,7 +10678,7 @@ static void dump_wlan_set_turbo_mode_usage()
 static void test_wlan_set_turbo_mode(int argc, char **argv)
 {
     int ret = -WM_FAIL;
-    unsigned int value;
+    unsigned int value = 0;
     uint8_t mode;
     int bss_type;
     if (argc != 3)
@@ -10354,7 +10809,7 @@ static void dump_wlan_enable_disable_htc_usage()
 static void test_wlan_enable_disable_htc(int argc, char **argv)
 {
     int ret = -WM_FAIL;
-    unsigned int option;
+    unsigned int option = 0U;
 
     if (argc != 2)
     {
@@ -10362,7 +10817,14 @@ static void test_wlan_enable_disable_htc(int argc, char **argv)
         dump_wlan_enable_disable_htc_usage();
         return;
     }
-    if (get_uint(argv[1], &option, strlen(argv[1])) && option > 1)
+    if (get_uint(argv[1], &option, strlen(argv[1])))
+    {
+        (void)PRINTF("Invalid option argument\r\n");
+        dump_wlan_enable_disable_htc_usage();
+        return;
+    }
+
+    if (option > 1U)
     {
         (void)PRINTF("Invalid option argument\r\n");
         dump_wlan_enable_disable_htc_usage();
@@ -10509,6 +10971,7 @@ static void test_wlan_set_country_ie_ignore(int argc, char **argv)
 {
     int ret        = -WM_FAIL;
     uint8_t ignore = 0;
+    unsigned long val = 0;
 
     if (argc > 2)
     {
@@ -10520,7 +10983,15 @@ static void test_wlan_set_country_ie_ignore(int argc, char **argv)
     /* SET */
     if (argc == 2)
     {
-        ignore = atoi(argv[1]);
+        errno = 0;
+        val = strtoul(argv[1], NULL, 10);
+        if (errno != 0 || val > UINT8_MAX)
+        {
+            (void)PRINTF("Error: invalid input\r\n");
+            dump_wlan_set_country_ie_ignore_usage();
+            return;
+        }
+        ignore = (uint8_t)val;
     }
 
     ret = wlan_set_country_ie_ignore(&ignore);
@@ -12912,7 +13383,8 @@ static void test_wlan_sta_inactivityto(int argc, char **argv)
 {
     int ret      = 0;
     t_u16 action = 0;
-    wlan_inactivity_to_t inac_to;
+    static wlan_inactivity_to_t inac_to;
+    unsigned long val = 0;
 
     (void)memset(&inac_to, 0, sizeof(wlan_inactivity_to_t));
 
@@ -12932,13 +13404,61 @@ static void test_wlan_sta_inactivityto(int argc, char **argv)
     else /* SET operation */
     {
         action                  = ACTION_SET;
-        inac_to.timeout_unit    = strtol(argv[1], NULL, 0);
-        inac_to.unicast_timeout = strtol(argv[2], NULL, 0);
-        inac_to.mcast_timeout   = strtol(argv[3], NULL, 0);
+
+        errno = 0;
+        val = strtoul(argv[1], NULL, 0);
+        if (errno != 0)
+        {
+            (void)PRINTF("Error: invalid timeout_unit: %s\r\n", argv[1]);
+            dump_wlan_sta_inactivityto_usage();
+            return;
+        }
+        inac_to.timeout_unit = (t_u32)val;
+
+        errno = 0;
+        val = strtoul(argv[2], NULL, 0);
+        if (errno != 0)
+        {
+            (void)PRINTF("Error: invalid unicast_timeout: %s\r\n", argv[2]);
+            dump_wlan_sta_inactivityto_usage();
+            return;
+        }
+        inac_to.unicast_timeout = (t_u32)val;
+
+        errno = 0;
+        val = strtoul(argv[3], NULL, 10);
+        if (errno != 0)
+        {
+            (void)PRINTF("Error: invalid mcast_timeout: %s\r\n", argv[3]);
+            dump_wlan_sta_inactivityto_usage();
+            return;
+        }
+        inac_to.mcast_timeout = (t_u32)val;
+
         if (argc >= 5)
-            inac_to.ps_entry_timeout = strtol(argv[4], NULL, 0);
+        {
+            errno = 0;
+            val = strtoul(argv[4], NULL, 0);
+            if (errno != 0)
+            {
+                (void)PRINTF("Error: invalid ps_entry_timeout: %s\r\n", argv[4]);
+                dump_wlan_sta_inactivityto_usage();
+                return;
+            }
+            inac_to.ps_entry_timeout = (t_u32)val;
+        }
         if (argc == 6)
-            inac_to.ps_cmd_timeout = strtol(argv[5], NULL, 0);
+        {
+            errno = 0;
+            val = strtoul(argv[5], NULL, 0);
+            if (errno != 0)
+            {
+                (void)PRINTF("Error: invalid ps_cmd_timeout: %s\r\n", argv[5]);
+                dump_wlan_sta_inactivityto_usage();
+                return;
+            }
+            inac_to.ps_cmd_timeout = (t_u32)val;
+        }
     }
 
     ret = wlan_sta_inactivityto(&inac_to, action);
@@ -12995,6 +13515,7 @@ static void test_wlan_auto_null_tx(int argc, char **argv)
     int ret                = -WM_FAIL;
     int arg                = 2;
     mlan_bss_type bss_type = (mlan_bss_type)0;
+    unsigned int val = 0;
 
     wlan_auto_null_tx_t auto_null_tx;
 
@@ -13025,6 +13546,13 @@ static void test_wlan_auto_null_tx(int argc, char **argv)
         {
             if (argv[arg + 1][0] == '0' && (argv[arg + 1][1] == 'x' || argv[arg + 1][1] == 'X'))
             {
+                val = a2hex_or_atoi(argv[arg + 1]);
+                if (val > UINT16_MAX)
+                {
+                    (void)PRINTF("Error: interval out of range r\n");
+                    return;
+                }
+                auto_null_tx.interval = (t_u16)val;
                 auto_null_tx.interval = a2hex_or_atoi(argv[arg + 1]);
             }
             else
@@ -13062,7 +13590,8 @@ static void test_wlan_auto_null_tx(int argc, char **argv)
 #if UAP_SUPPORT
         if (bss_type == MLAN_BSS_TYPE_UAP)
         {
-            wifi_sta_list_t *sl = NULL;
+            static wifi_sta_list_t *sl = NULL;
+            sl = NULL;
             (void)wifi_uap_bss_sta_list(&sl);
             if (!sl)
             {
@@ -13144,6 +13673,12 @@ static void swap_scan_entry(scan_result_entry_t *pEntry1, scan_result_entry_t *p
 
 static void copy_scan_result(scan_result_entry_t *pDst, struct wifi_scan_result2 *pSrc)
 {
+    if (pSrc->ssid_len < 0 || (size_t)pSrc->ssid_len >= sizeof(pDst->ssid))
+    {
+        (void)PRINTF("Error: invalid ssid_len: %d\r\n", pSrc->ssid_len);
+        return;
+    }
+
     (void)memcpy((void *)&pDst->bssid[0], (const void *)&pSrc->bssid[0], sizeof(pSrc->bssid));
     (void)memcpy((void *)&pDst->ssid[0], (const void *)((char *)&pSrc->ssid[0]), (size_t)pSrc->ssid_len);
     pDst->ssid[pSrc->ssid_len] = (char)0;
@@ -13181,8 +13716,9 @@ static unsigned char wlan_calculate_avg_rssi(scan_result_entry_t *pScan_entry)
 {
     unsigned int i;
     unsigned char avg_rssi = 0;
-    uint16_t sum_rssi      = 0;
+    uint32_t sum_rssi      = 0;
     uint8_t valid_entry    = 0;
+    uint32_t result = 0;
 
     for (i = 0; i < ANT_DETECT_MAX_SCAN_ENTRY; i++)
     {
@@ -13214,7 +13750,12 @@ static unsigned char wlan_calculate_avg_rssi(scan_result_entry_t *pScan_entry)
         {
             sum_rssi += pScan_entry[i].rssi;
         }
-        avg_rssi = sum_rssi / valid_entry;
+        result = sum_rssi / valid_entry;
+        if (result > UINT8_MAX)
+        {
+            result = UINT8_MAX;
+        }
+        avg_rssi = (unsigned char)result;
     }
 
     return avg_rssi;
@@ -13362,8 +13903,8 @@ static void wlan_get_best_two_ants(wlan_ant_detect_data_t *pData)
         }
     }
 
-    pData->best_ant      = minIdx1 + 1;
-    pData->next_best_ant = minIdx2 + 1;
+    pData->best_ant      = (uint16_t)(minIdx1 + 1U); ;
+    pData->next_best_ant = (uint16_t)(minIdx2 + 1U);;
     pData->detect_done   = 1;
 }
 
@@ -13381,7 +13922,10 @@ static void wlan_evaluate_ant_by_avg_rssi(wlan_ant_detect_data_t *pData)
         (void)PRINTF("\t-%d dBm\r\n", pScan_info[i].avg_rssi);
         if (pScan_info[i].avg_rssi == 0xff)
         {
-            valid_res--;
+            if (valid_res > 0U)
+            {
+                valid_res--;
+            }
         }
     }
 
@@ -13440,7 +13984,7 @@ static int wlan_evaluate_ant_by_common_device(wlan_ant_detect_data_t *pData)
     memset((void *)&com_idx_per_ant[0], 0xff, pData->ant_port_count);
     for (i = 0; i < ANT_DETECT_MAX_SCAN_ENTRY; i++)
     {
-        uint8_t temp = 0;
+        uint16_t temp = 0;
         if (memcmp(pRef_info->scan_entry[i].bssid, zero_bssid, 6) == 0)
         {
             break;
@@ -13528,8 +14072,9 @@ static void wlan_evaluate_ant_by_specific_device(wlan_ant_detect_data_t *pData)
 {
     unsigned int i;
     unsigned int j;
-    uint16_t sum_rssi                = 0;
+    uint32_t sum_rssi                = 0;
     wlan_ant_scan_info_t *pScan_info = &pData->scan_info[0];
+    uint32_t result = 0;
 
     (void)PRINTF("\nEvaluate result:\r\n");
     (void)PRINTF("\t       avg_rssi\r\n");
@@ -13541,7 +14086,12 @@ static void wlan_evaluate_ant_by_specific_device(wlan_ant_detect_data_t *pData)
         {
             sum_rssi += pScan_info[i].scan_entry[j].rssi;
         }
-        pScan_info[i].avg_rssi = sum_rssi / device_count_to_check;
+        result = sum_rssi / device_count_to_check;
+        if (result > UINT8_MAX)
+        {
+            result = UINT8_MAX;
+        }
+        pScan_info[i].avg_rssi = (unsigned char)result;
         PRINTF("\t-%d dBm\r\n", pScan_info[i].avg_rssi);
     }
 
@@ -13663,6 +14213,13 @@ static void wlan_detect_ant_set_mode(uint16_t best_ant, uint16_t next_best_ant)
         {2, 1, 0xff}, /* Ant3 */
     };
 
+    if (best_ant == 0U || best_ant > 3U ||
+        next_best_ant == 0U || next_best_ant > 3U)
+    {
+        (void)PRINTF("Error: invalid antenna index best_ant=%u next_best_ant=%u\r\n",
+                     best_ant, next_best_ant);
+        return;
+    }
     evaluate_mode = evaluate_mode_lookup_table[best_ant - 1][next_best_ant - 1];
     ant_mode      = 0xffff;
     ret           = wlan_set_antcfg(ant_mode, evaluate_time, evaluate_mode);
@@ -13714,7 +14271,12 @@ static void wlan_start_detect_ant(void)
 
         for (current_antenna = 1; current_antenna <= pDetect_data->ant_port_count; current_antenna++)
         {
-            ant_mode = (1 << (current_antenna - 1));
+            if (current_antenna == 0U || (current_antenna - 1U) >= 32U)
+            {
+                (void)PRINTF("Error: current_antenna out of range\r\n");
+                break;
+            }
+            ant_mode = (1U << (current_antenna - 1U));
 
             ret = wlan_set_antcfg(ant_mode, evaluate_time, evaluate_mode);
             if (ret == WM_SUCCESS)
@@ -13730,7 +14292,12 @@ static void wlan_start_detect_ant(void)
                         (void)memcpy((void *)&wlan_scan_param.bssid[0], (const void *)&pSpecInfo->bssid[0],
                                      sizeof(wlan_scan_param.bssid));
                         wlan_scan_param.num_channels             = 1;
-                        wlan_scan_param.chan_list[0].chan_number = pSpecInfo->channel;
+                        if (pSpecInfo->channel > UINT8_MAX)
+                        {
+                            (void)PRINTF("Error: channel out of range: %u\r\n", pSpecInfo->channel);
+                            break;
+                        }
+                        wlan_scan_param.chan_list[0].chan_number = (uint8_t)pSpecInfo->channel;
 
                         pDetect_data->scan_info[current_antenna - 1].scan_done = MFALSE;
                         pDetect_data->scan_info[current_antenna - 1].entry_idx = i;
@@ -13856,6 +14423,7 @@ static void test_wlan_detect_ant(int argc, char **argv)
     uint8_t antenna_port_count                = 0;
     wlan_ant_detect_data_t *pDetect_data      = NULL;
     cfg_scan_channel_list_t *cfg_channel_list = NULL;
+    unsigned long val = 0;
 
     if (argc < 3 || argc == 4)
     {
@@ -13864,7 +14432,15 @@ static void test_wlan_detect_ant(int argc, char **argv)
         return;
     }
 
-    detect_mode = (uint8_t)atoi(argv[arg]);
+    errno = 0;
+    val = strtoul(argv[arg], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
+    {
+        (void)PRINTF("Error: invalid detect_mode\r\n");
+        dump_wlan_detect_ant_usage();
+        return;
+    }
+    detect_mode = (uint8_t)val;
     if (detect_mode != NORMAL_DETECT_MODE && detect_mode != QUICK_DETECT_MODE && detect_mode != PCB_DETECT_MODE)
     {
         dump_wlan_detect_ant_usage();
@@ -13873,7 +14449,15 @@ static void test_wlan_detect_ant(int argc, char **argv)
     }
 
     arg                = 2;
-    antenna_port_count = (uint8_t)atoi(argv[arg]);
+    errno = 0;
+    val = strtoul(argv[arg], NULL, 10);
+    if (errno != 0 || val > UINT8_MAX)
+    {
+        (void)PRINTF("Error: invalid antenna_port_count\r\n");
+        dump_wlan_detect_ant_usage();
+        return;
+    }
+    antenna_port_count = (uint8_t)val;
     if (antenna_port_count > MAX_ANTENNA_PORT_NUM || antenna_port_count < 3)
     {
         dump_wlan_detect_ant_usage();

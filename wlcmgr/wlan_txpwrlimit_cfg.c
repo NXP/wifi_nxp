@@ -256,7 +256,7 @@ int wlan_set_wwsm_txpwrlimit()
 #if defined(RW610) || defined(IW610)
     wlan_get_region_code(&region_code);
 #if CONFIG_COMPRESS_TX_PWTBL
-    rv = wlan_set_rg_power_cfg(region_code);
+    rv = wlan_set_rg_power_cfg((t_u16)region_code);
     if (rv != WM_SUCCESS)
     {
         (void)PRINTF("Unable to set compressed TX power table configuration\r\n");
@@ -265,7 +265,7 @@ int wlan_set_wwsm_txpwrlimit()
 #endif
 
 #if (CONFIG_COMPRESS_RU_TX_PWTBL) && (CONFIG_11AX)
-    rv = wlan_set_ru_power_cfg(region_code);
+    rv = wlan_set_ru_power_cfg((t_u16)region_code);
     if (rv != WM_SUCCESS)
     {
         return -WM_FAIL;
