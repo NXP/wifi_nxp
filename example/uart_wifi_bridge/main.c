@@ -2,7 +2,7 @@
  *
  *  @brief main file
  *
- *  Copyright 2020-2021,2023 NXP
+ *  Copyright 2020-2021,2023, 2026 NXP
  *  All rights reserved.
  *
  *  SPDX-License-Identifier: BSD-3-Clause
@@ -75,7 +75,7 @@
 #define UART_BUF_SIZE           2048
 #define LABTOOL_PATTERN_HDR_LEN 4
 #define CHECKSUM_LEN            4
-#define CRC32_POLY              0x04c11db7
+#define CRC32_POLY              0x04c11db7U
 
 #define LABTOOL_HCI_RESP_HDR_LEN 3
 
@@ -421,7 +421,8 @@ int set_spi_frame_hdr(spi_frame_hdr *pspihdr,
 #endif
 static void uart_init_crc32(uart_cb *uartcb)
 {
-    int i, j;
+    unsigned int i;
+    int j;
     unsigned int c;
     for (i = 0; i < 256; ++i)
     {
@@ -433,15 +434,15 @@ static void uart_init_crc32(uart_cb *uartcb)
     }
 }
 
-static uint32_t uart_get_crc32(uart_cb *uart, int len, unsigned char *buf)
+static uint32_t uart_get_crc32(uart_cb *uart, uint32_t len, unsigned char *buf)
 {
     unsigned int *crc32_table = uart->crc32_table;
     unsigned char *p;
     unsigned int crc;
     crc = 0xffffffffU;
-    for (p = buf; len > 0; ++p, --len)
+    for (p = buf; len > 0U; ++p, --len)
     {
-        crc = (crc << 8U) ^ (crc32_table[(crc >> 24U) ^ *p]);
+        crc = ((crc & 0xffffffffU) << 8U) ^ (crc32_table[(crc >> 24U) ^ *p]);
     }
     return ~crc;
 }
@@ -457,7 +458,7 @@ static int send_response_to_uart(uart_cb *uart, uint8_t *resp, int type, uint32_
 {
     uint32_t bridge_chksum = 0;
     uint32_t msglen;
-    int index;
+    uint32_t index;
     uint32_t payloadlen;
     uart_header *uart_hdr;
     int iface_len = 0;
@@ -472,22 +473,33 @@ static int send_response_to_uart(uart_cb *uart, uint8_t *resp, int type, uint32_
         iface_len = INTF_HEADER_LEN - 1;
     else
         iface_len = INTF_HEADER_LEN;
-    payloadlen = imupkt->size - iface_len;
+    if (imupkt->size < (uint16_t)iface_len)
+    {
+        return -1;
+    }
+    payloadlen = (uint32_t)imupkt->size - (uint32_t)iface_len;
 #else
     payloadlen = reqd_resp_len;
 #endif
+
+    /* Validate payloadlen fits in rx_buf and in the short length fields */
+    if (payloadlen > BUF_LEN - sizeof(cmd_header) - sizeof(uart_header) - 4U)
+    {
+        return -1;
+    }
+
     memset(rx_buf, 0, BUF_LEN);
     memcpy(rx_buf + sizeof(uart_header) + sizeof(cmd_header), resp + iface_len, payloadlen);
 
     /* Added to send correct cmd header len */
     cmd_header *cmd_hdr;
     cmd_hdr         = &last_cmd_hdr;
-    cmd_hdr->length = payloadlen + sizeof(cmd_header);
+    cmd_hdr->length = (short)(payloadlen + sizeof(cmd_header));
 
     memcpy(rx_buf + sizeof(uart_header), (uint8_t *)&last_cmd_hdr, sizeof(cmd_header));
 
     uart_hdr          = (uart_header *)rx_buf;
-    uart_hdr->length  = payloadlen + sizeof(cmd_header);
+    uart_hdr->length  = (short)(payloadlen + sizeof(cmd_header));
     uart_hdr->pattern = 0x5555;
 
     /* calculate CRC. The uart_header is excluded */
@@ -523,7 +535,7 @@ int check_command_complete(uint8_t *buf)
     uart_header *uarthdr;
     uint32_t msglen, endofmsgoffset;
     uart_cb *uart = &uartcb;
-    int checksum = 0, bridge_checksum = 0;
+    uint32_t checksum = 0, bridge_checksum = 0;
 
     uarthdr = (uart_header *)buf;
 
@@ -533,25 +545,42 @@ int check_command_complete(uint8_t *buf)
         (void)PRINTF("Pattern mismatch\r\n");
         return -WM_FAIL;
     }
-    /* check crc */
-    msglen = uarthdr->length;
 
-    /* add 4 for checksum */
+    /* Validate length is non-negative before unsigned assignment */
+    if (uarthdr->length < 0)
+    {
+        (void)PRINTF("Invalid length\r\n");
+        return -WM_FAIL;
+    }
+
+    /* check crc */
+    msglen = (uint32_t)uarthdr->length;
+
+    /* add 4 for checksum — validate msglen first to prevent uint32 wrap */
+    if (msglen > BUF_LEN - sizeof(uart_header) - 4U)
+    {
+        (void)PRINTF("Message too large\r\n");
+        return -WM_FAIL;
+    }
     endofmsgoffset = sizeof(uart_header) + msglen + 4;
 
-    memset((uint8_t *)local_outbuf, 0, sizeof(local_outbuf));
-    if (endofmsgoffset < UART_BUF_SIZE)
+    /*
+     * Both buf uart_buf and local_outbuf are BUF_LEN (2048) bytes.
+     * If endofmsgoffset exceeds that, the message cannot fit in either
+     * buffer. The original else branch attempted to write at
+     * local_outbuf + UART_BUF_SIZE which was always out of bounds.
+     * Caller (main_task) reads data linearly, so wrapping never occurs.
+     */
+    if (endofmsgoffset > BUF_LEN)
     {
-        memcpy((uint8_t *)local_outbuf, buf, endofmsgoffset);
-    }
-    else
-    {
-        memcpy((uint8_t *)local_outbuf, buf, UART_BUF_SIZE);
-        /* To do : check if copying method is correct */
-        memcpy((uint8_t *)local_outbuf + UART_BUF_SIZE, buf, endofmsgoffset);
+        (void)PRINTF("Message too large\r\n");
+        return -WM_FAIL;
     }
 
-    checksum = *(int *)((uint8_t *)local_outbuf + sizeof(uart_header) + msglen);
+    memset((uint8_t *)local_outbuf, 0, sizeof(local_outbuf));
+    memcpy((uint8_t *)local_outbuf, buf, endofmsgoffset);
+
+    checksum = *(uint32_t *)((uint8_t *)local_outbuf + sizeof(uart_header) + msglen);
 
     bridge_checksum = uart_get_crc32(uart, msglen, (uint8_t *)local_outbuf + sizeof(uart_header));
     if (checksum == bridge_checksum)
@@ -583,10 +612,21 @@ hal_imumc_status_t wifi_send_imu_raw_data(uint8_t *data, uint32_t length)
 int imumc_raw_packet_send(uint8_t *buf, int m_len, uint8_t t_type)
 {
     uint32_t payloadlen;
+    const uint32_t overhead = (uint32_t)sizeof(uart_header) + (uint32_t)sizeof(cmd_header) + 4U;
+
+    if ((m_len < 0) || ((uint32_t)m_len < overhead))
+    {
+        return -(int)WM_FAIL;
+    }
 
     cmd_header *cmd_hd = (cmd_header *)(buf + sizeof(uart_header));
 
-    payloadlen = m_len - sizeof(uart_header) - sizeof(cmd_header) - 4;
+    payloadlen = (uint32_t)m_len - overhead;
+
+    if (payloadlen > BUF_LEN - (sizeof(uart_header) + sizeof(cmd_header)))
+    {
+        return -(int)WM_FAIL;
+    }
 
     memset(local_outbuf, 0, BUF_LEN);
     memcpy(local_outbuf, buf + sizeof(uart_header) + sizeof(cmd_header), payloadlen);
@@ -607,10 +647,21 @@ int imumc_raw_packet_send(uint8_t *buf, int m_len, uint8_t t_type)
 int bt_raw_packet_send(uint8_t *buf, int m_len)
 {
     uint32_t payloadlen;
+    const uint32_t overhead = (uint32_t)sizeof(uart_header) + (uint32_t)sizeof(cmd_header) + 4U;
+
+    if ((m_len < 0) || ((uint32_t)m_len < overhead))
+    {
+        return -(int)WM_FAIL;
+    }
 
     cmd_header *cmd_hd = (cmd_header *)(buf + sizeof(uart_header));
 
-    payloadlen = m_len - sizeof(uart_header) - sizeof(cmd_header) - 4;
+    payloadlen = (uint32_t)m_len - overhead;
+
+    if (payloadlen > BUF_LEN - (sizeof(uart_header) + sizeof(cmd_header)))
+    {
+        return -(int)WM_FAIL;
+    }
 
     memset(local_outbuf, 0, BUF_LEN);
     memcpy(local_outbuf, buf + sizeof(uart_header) + sizeof(cmd_header), payloadlen);
@@ -706,12 +757,20 @@ int process_input_cmd(uint8_t *buf, int m_len)
         memset(local_outbuf, 0, BUF_LEN);
 
         uarthdr = (uart_header *)buf;
+
+        if (uarthdr->length < (short)sizeof(cmd_header))
+        {
+            return -(int)WM_FAIL;
+        }
+
+        uint32_t data_len = (uint32_t)uarthdr->length - (uint32_t)sizeof(cmd_header);
+
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
         IMUPkt *imupkt = (IMUPkt *)local_outbuf;
         /* imupkt = local_outbuf */
         imupkt->pkttype = SDIOPKTTYPE_CMD;
 
-        imupkt->size = m_len - sizeof(cmd_header) + INTF_HEADER_LEN;
+        imupkt->size = (uint16_t)((uint32_t)m_len - (uint32_t)sizeof(cmd_header) + INTF_HEADER_LEN);
         d            = (uint8_t *)local_outbuf + INTF_HEADER_LEN;
         s            = (uint8_t *)buf + sizeof(uart_header) + sizeof(cmd_header);
 #else
@@ -719,7 +778,7 @@ int process_input_cmd(uint8_t *buf, int m_len)
         s   = (uint8_t *)buf + sizeof(uart_header) + sizeof(cmd_header);
 #endif
 
-        for (i = 0; i < uarthdr->length - sizeof(cmd_header); i++)
+        for (i = 0; i < data_len; i++)
         {
             if (s < buf + UART_BUF_SIZE)
             {
@@ -780,11 +839,24 @@ void send_imumc_response_to_uart(uint8_t *resp, int msg_len)
 {
     uint32_t bridge_chksum = 0;
     uint32_t msglen;
-    int index;
+    uint32_t index;
     uint32_t payloadlen;
     uart_header *uart_hdr;
     uart_cb *uart = &uartcb;
-    payloadlen    = msg_len;
+
+    if (msg_len < 0)
+    {
+        return;
+    }
+    payloadlen = (uint32_t)msg_len;
+
+    /* Validate payloadlen so all subsequent additions cannot wrap
+     * and the total (payloadlen + cmd_header + uart_header + checksum)
+     * fits within rx_buf[BUF_LEN]. */
+    if (payloadlen > BUF_LEN - sizeof(cmd_header) - sizeof(uart_header) - 4U)
+    {
+        return;
+    }
 
     memset(rx_buf, 0, BUF_LEN);
     memcpy(rx_buf + sizeof(uart_header) + sizeof(cmd_header), resp, payloadlen);
@@ -792,12 +864,12 @@ void send_imumc_response_to_uart(uint8_t *resp, int msg_len)
     /* Added to send correct cmd header len */
     cmd_header *cmd_hdr;
     cmd_hdr         = &last_cmd_hdr;
-    cmd_hdr->length = payloadlen + sizeof(cmd_header);
+    cmd_hdr->length = (short)(payloadlen + sizeof(cmd_header));
 
     memcpy(rx_buf + sizeof(uart_header), (uint8_t *)&last_cmd_hdr, sizeof(cmd_header));
 
     uart_hdr          = (uart_header *)rx_buf;
-    uart_hdr->length  = payloadlen + sizeof(cmd_header);
+    uart_hdr->length  = (short)(payloadlen + sizeof(cmd_header));
     uart_hdr->pattern = 0x5555;
 
     /* calculate CRC. The uart_header is excluded */
@@ -815,16 +887,24 @@ void send_imumc_response_to_uart(uint8_t *resp, int msg_len)
     memset(rx_buf, 0, BUF_LEN);
 }
 #else
-void send_bt_response_to_uart(uart_cb *uart_bt, int msg_len)
+void send_bt_response_to_uart(uart_cb *uart_bt, uint32_t msg_len)
 {
     uint32_t bridge_chksum = 0;
     uint32_t msglen;
-    int index;
+    uint32_t index;
     uint32_t payloadlen;
     uart_header *uart_hdr;
     uart_cb *uart = &uartcb;
 
     payloadlen = msg_len;
+
+    /* Validate payloadlen so all subsequent additions cannot wrap
+     * and the total (payloadlen + cmd_header + uart_header + checksum)
+     * fits within rx_buf[BUF_LEN]. */
+    if (payloadlen > BUF_LEN - sizeof(cmd_header) - sizeof(uart_header) - 4U)
+    {
+        return;
+    }
 
     memset(rx_buf, 0, BUF_LEN);
     memcpy(rx_buf + sizeof(uart_header) + sizeof(cmd_header), uart_bt->uart_buf, payloadlen);
@@ -832,12 +912,12 @@ void send_bt_response_to_uart(uart_cb *uart_bt, int msg_len)
     /* Added to send correct cmd header len */
     cmd_header *cmd_hdr;
     cmd_hdr         = &last_cmd_hdr;
-    cmd_hdr->length = payloadlen + sizeof(cmd_header);
+    cmd_hdr->length = (short)(payloadlen + sizeof(cmd_header));
 
     memcpy(rx_buf + sizeof(uart_header), (uint8_t *)&last_cmd_hdr, sizeof(cmd_header));
 
     uart_hdr          = (uart_header *)rx_buf;
-    uart_hdr->length  = payloadlen + sizeof(cmd_header);
+    uart_hdr->length  = (short)(payloadlen + sizeof(cmd_header));
     uart_hdr->pattern = 0x5555;
 
     /* calculate CRC. The uart_header is excluded */
@@ -985,7 +1065,7 @@ void read_bt_resp()
     uint32_t payloadlen = 0;
     uint32_t currentlen = 0;
     size_t uart_rx_len  = 0;
-    int len;
+    uint32_t len        = 0;
 
     memset(uart_bt->uart_buf, 0, sizeof(uart_bt->uart_buf));
 
@@ -995,11 +1075,22 @@ void read_bt_resp()
         uart_rx_len = 0;
         currentlen  = payloadlen;
 
-        while (len != LABTOOL_HCI_RESP_HDR_LEN)
+        /* Ensure header read won't exceed buffer */
+        if (payloadlen > sizeof(uart_bt->uart_buf) - LABTOOL_HCI_RESP_HDR_LEN)
         {
-            LPUART_RTOS_Receive(&handle_bt, uart_bt->uart_buf + len + payloadlen, LABTOOL_HCI_RESP_HDR_LEN,
+            break;
+        }
+
+        while (len < LABTOOL_HCI_RESP_HDR_LEN)
+        {
+            uint32_t remaining = (uint32_t)LABTOOL_HCI_RESP_HDR_LEN - len;
+            LPUART_RTOS_Receive(&handle_bt, uart_bt->uart_buf + len + payloadlen, remaining,
                                 &uart_rx_len);
-            len += uart_rx_len;
+            if ((uint32_t)uart_rx_len > remaining)
+            {
+                uart_rx_len = (size_t)remaining;
+            }
+            len += (uint32_t)uart_rx_len;
         }
 
         msglen = uart_bt->uart_buf[currentlen + 2];
@@ -1007,10 +1098,21 @@ void read_bt_resp()
         uart_rx_len = 0;
         len         = 0;
 
-        while (len != msglen)
+        /* Ensure payload read won't exceed buffer — rearranged to avoid overflow */
+        if (msglen > sizeof(uart_bt->uart_buf) - payloadlen)
         {
-            LPUART_RTOS_Receive(&handle_bt, uart_bt->uart_buf + len + payloadlen, msglen - len, &uart_rx_len);
-            len += uart_rx_len;
+            break;
+        }
+
+        while (len < msglen)
+        {
+            uint32_t remaining = msglen - len;
+            LPUART_RTOS_Receive(&handle_bt, uart_bt->uart_buf + len + payloadlen, remaining, &uart_rx_len);
+            if ((uint32_t)uart_rx_len > remaining)
+            {
+                uart_rx_len = (size_t)remaining;
+            }
+            len += (uint32_t)uart_rx_len;
         }
 
         payloadlen += len;
@@ -1367,6 +1469,7 @@ static void main_task(osa_task_param_t arg)
     if (kStatus_Success != USART_RTOS_Init(&handle, &t_handle, &usart_config))
     {
         (void)vTaskSuspend(NULL);
+        return;
     }
 #else
 #if defined(MCXN947_cm33_core0_SERIES)
@@ -1389,6 +1492,7 @@ static void main_task(osa_task_param_t arg)
     if (kStatus_Success != LPUART_RTOS_Init(&handle, &t_handle, &lpuart_config))
     {
         (void)vTaskSuspend(NULL);
+        return;
     }
 
     lpuart_config_bt.srcclk = BOARD_BT_UART_CLK_FREQ;
@@ -1401,11 +1505,12 @@ static void main_task(osa_task_param_t arg)
     if (kStatus_Success != LPUART_RTOS_Init(&handle_bt, &t_handle_bt, &lpuart_config_bt))
     {
         (void)vTaskSuspend(NULL);
+        return;
     }
 #endif
     size_t uart_rx_len = 0;
-    int len            = 0;
-    int msg_len        = 0;
+    size_t len         = 0;
+    size_t msg_len     = 0;
     while (1)
     {
         len         = 0;
@@ -1415,29 +1520,69 @@ static void main_task(osa_task_param_t arg)
         while (len != LABTOOL_PATTERN_HDR_LEN)
         {
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
-            USART_RTOS_Receive(&handle, uart->uart_buf + len, LABTOOL_PATTERN_HDR_LEN, &uart_rx_len);
+            USART_RTOS_Receive(&handle, uart->uart_buf + len, LABTOOL_PATTERN_HDR_LEN - len, &uart_rx_len);
 #else
-            (void)LPUART_RTOS_Receive(&handle, uart->uart_buf + len, LABTOOL_PATTERN_HDR_LEN, &uart_rx_len);
+            (void)LPUART_RTOS_Receive(&handle, uart->uart_buf + len, LABTOOL_PATTERN_HDR_LEN - len, &uart_rx_len);
 #endif
-            len += (int)uart_rx_len;
+            /* Validate uart_rx_len doesn't cause overflow — check BEFORE updating len */
+            if (uart_rx_len > LABTOOL_PATTERN_HDR_LEN - len)
+            {
+                (void)PRINTF("ERROR: Received more bytes than requested\r\n");
+                break;
+            }
+            len += uart_rx_len;
         }
 
-        /* Length of the packet is indicated by byte[2] & byte[3] of
-        the packet excluding header[4 bytes] + checksum [4 bytes]
-        */
-        msg_len     = (uart->uart_buf[3] << 8) + uart->uart_buf[2];
+        /* Ensure we received complete header before proceeding */
+        if (len != LABTOOL_PATTERN_HDR_LEN)
+        {
+            (void)PRINTF("ERROR: Incomplete header received, discarding\r\n");
+            memset(uart->uart_buf, 0, sizeof(uart->uart_buf));
+            continue;
+        }
+
+        /* Length of the packet is indicated by byte[2] & byte[3] of the packet
+         * excluding header[4 bytes] + checksum [4 bytes] */
+        msg_len = ((uint16_t)uart->uart_buf[3] << 8) + (uint16_t)uart->uart_buf[2];
+
+        /* Validate msg_len fits within uart_buf together with the
+         * header (LABTOOL_PATTERN_HDR_LEN) and trailing checksum
+         * (CHECKSUM_LEN) that are also stored in the same buffer. */
+        if (msg_len == 0 || msg_len > sizeof(uart->uart_buf) - LABTOOL_PATTERN_HDR_LEN - CHECKSUM_LEN)
+        {
+            (void)PRINTF("Invalid msg_len %zu, discarding\r\n", msg_len);
+            memset(uart->uart_buf, 0, sizeof(uart->uart_buf));
+            continue;
+        }
+
         len         = 0;
         uart_rx_len = 0;
         while (len != msg_len + CHECKSUM_LEN)
         {
+            size_t remaining = msg_len + CHECKSUM_LEN - len;
+
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
-            USART_RTOS_Receive(&handle, uart->uart_buf + LABTOOL_PATTERN_HDR_LEN + len, msg_len + CHECKSUM_LEN - len,
+            USART_RTOS_Receive(&handle, uart->uart_buf + LABTOOL_PATTERN_HDR_LEN + len, remaining,
                                &uart_rx_len);
 #else
-            (void)LPUART_RTOS_Receive(&handle, uart->uart_buf + LABTOOL_PATTERN_HDR_LEN + len, msg_len + CHECKSUM_LEN - len,
+            (void)LPUART_RTOS_Receive(&handle, uart->uart_buf + LABTOOL_PATTERN_HDR_LEN + len, remaining,
                                 &uart_rx_len);
 #endif
+            /* Validate uart_rx_len doesn't cause overflow — check BEFORE updating len */
+            if (uart_rx_len > remaining)
+            {
+                (void)PRINTF("ERROR: Received more bytes than requested\r\n");
+                break;
+            }
             len += uart_rx_len;
+        }
+
+        /* Ensure we received complete message before proceeding */
+        if (len != msg_len + CHECKSUM_LEN)
+        {
+            (void)PRINTF("ERROR: Incomplete message received, discarding\r\n");
+            memset(uart->uart_buf, 0, sizeof(uart->uart_buf));
+            continue;
         }
 
         /* validate the command including checksum */
@@ -1445,7 +1590,7 @@ static void main_task(osa_task_param_t arg)
         {
             /* send fw cmd over SDIO after
                stripping off uart header */
-            int ret = process_input_cmd(uart->uart_buf, msg_len + 8);
+            int ret = process_input_cmd(uart->uart_buf, (int)(msg_len + LABTOOL_PATTERN_HDR_LEN + CHECKSUM_LEN));
             memset(uart->uart_buf, 0, sizeof(uart->uart_buf));
             memset(host_resp_buf, 0x00, BUF_LEN);
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
@@ -1474,7 +1619,7 @@ static void main_task(osa_task_param_t arg)
                 (void)vTaskDelay(pdMS_TO_TICKS(60));
                 read_zigbee_resp();
             }
-#endif       
+#endif
             else
             {
                 ;
