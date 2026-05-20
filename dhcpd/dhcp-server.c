@@ -40,13 +40,13 @@ struct dhcp_server_data dhcps[MAX_DHCP_INSTANCES];
 static void get_broadcast_addr(struct sockaddr_in *addr);
 static int get_ip_addr_from_interface(uint32_t *ip, void *interface_handle);
 static int get_netmask_from_interface(uint32_t *nm, void *interface_handle);
-static int send_gratuitous_arp(uint32_t ip, int instance_id);
-static int ac_add(uint8_t *chaddr, uint32_t client_ip, int instance_id);
-static uint32_t ac_lookup_mac(uint8_t *chaddr, int instance_id);
-static uint8_t *ac_lookup_ip(uint32_t client_ip, int instance_i);
-static bool ac_not_full(int instance_id);
+static int send_gratuitous_arp(uint32_t ip, enum dhcp_instance_id instance_id);
+static int ac_add(uint8_t *chaddr, uint32_t client_ip, enum dhcp_instance_id instance_id);
+static uint32_t ac_lookup_mac(uint8_t *chaddr, enum dhcp_instance_id instance_id);
+static uint8_t *ac_lookup_ip(uint32_t client_ip, enum dhcp_instance_id instance_id);
+static bool ac_not_full(enum dhcp_instance_id instance_id);
 
-static int ac_add(uint8_t *chaddr, uint32_t client_ip, int instance_id)
+static int ac_add(uint8_t *chaddr, uint32_t client_ip, enum dhcp_instance_id instance_id)
 {
     /* adds ip-mac mapping in cache */
     if (ac_not_full(instance_id))
@@ -64,7 +64,7 @@ static int ac_add(uint8_t *chaddr, uint32_t client_ip, int instance_id)
     return -WM_FAIL;
 }
 
-static uint32_t ac_lookup_mac(uint8_t *chaddr, int instance_id)
+static uint32_t ac_lookup_mac(uint8_t *chaddr, enum dhcp_instance_id instance_id)
 {
     /* returns ip address, if mac address is present in cache */
     int i;
@@ -83,7 +83,7 @@ static uint32_t ac_lookup_mac(uint8_t *chaddr, int instance_id)
     return CLIENT_IP_NOT_FOUND;
 }
 
-static uint8_t *ac_lookup_ip(uint32_t client_ip, int instance_id)
+static uint8_t *ac_lookup_ip(uint32_t client_ip, enum dhcp_instance_id instance_id)
 {
     /* returns mac address, if ip address is present in cache */
     int i;
@@ -97,13 +97,13 @@ static uint8_t *ac_lookup_ip(uint32_t client_ip, int instance_id)
     return NULL;
 }
 
-static bool ac_not_full(int instance_id)
+static bool ac_not_full(enum dhcp_instance_id instance_id)
 {
     /* returns true if cache is not full */
     return (dhcps[instance_id].count_clients < MAC_IP_CACHE_SIZE);
 }
 
-static bool ac_valid_ip(uint32_t requested_ip, int instance_id)
+static bool ac_valid_ip(uint32_t requested_ip, enum dhcp_instance_id instance_id)
 {
     /* skip over our own address, the network address or the
      * broadcast address
@@ -147,7 +147,7 @@ int dhcp_server_lease_timeout(uint32_t val)
  *
  * DHCP clients will be assigned addresses in sequence in the subnet's address space.
  */
-static unsigned int next_yiaddr(int instance_id)
+static unsigned int next_yiaddr(enum dhcp_instance_id instance_id)
 {
 #if CONFIG_DHCP_SERVER_DEBUG
     struct in_addr ip;
@@ -187,7 +187,7 @@ static unsigned int next_yiaddr(int instance_id)
     return new_ip;
 }
 
-static unsigned int make_response(char *msg, enum dhcp_message_type type, int instance_id)
+static unsigned int make_response(char *msg, enum dhcp_message_type type, enum dhcp_instance_id instance_id)
 {
     struct bootp_header *hdr;
     struct bootp_option *opt;
@@ -253,7 +253,7 @@ static unsigned int make_response(char *msg, enum dhcp_message_type type, int in
     return (unsigned int)(offset - msg);
 }
 
-int dhcp_get_ip_from_mac(uint8_t *client_mac, uint32_t *client_ip, int instance_id)
+int dhcp_get_ip_from_mac(uint8_t *client_mac, uint32_t *client_ip, enum dhcp_instance_id instance_id)
 {
     *client_ip = ac_lookup_mac(client_mac, instance_id);
     if (*client_ip == CLIENT_IP_NOT_FOUND)
@@ -296,7 +296,7 @@ int dhcp_send_response(int sock, struct sockaddr *addr, char *msg, int len)
     return WM_SUCCESS;
 }
 
-static int process_dhcp_message(char *msg, int len, int instance_id)
+static int process_dhcp_message(char *msg, int len, enum dhcp_instance_id instance_id)
 {
     struct bootp_header *hdr;
     struct bootp_option *opt;
@@ -458,7 +458,7 @@ static int process_dhcp_message(char *msg, int len, int instance_id)
     return WM_SUCCESS;
 }
 
-static void dhcp_clean_sockets(int instance_id)
+static void dhcp_clean_sockets(enum dhcp_instance_id instance_id)
 {
     int ret;
 
@@ -506,7 +506,7 @@ static int register_ctrl_sock(void)
 void dhcpd_task(void *arg)
 {
     struct dhcp_task_args *task_args = (struct dhcp_task_args *)arg;
-    int instance_id                  = task_args->instance_id;
+    enum dhcp_instance_id instance_id = task_args->instance_id;
     int ret;
     struct sockaddr_in caddr;
 #ifndef __ZEPHYR__
@@ -705,7 +705,7 @@ int dhcp_create_and_bind_udp_socket(struct sockaddr_in *address, void *intrfc_ha
     return sock;
 }
 
-int dhcp_server_init(void *intrfc_handle, int instance_id)
+int dhcp_server_init(void *intrfc_handle, enum dhcp_instance_id instance_id)
 {
     int ret = WM_SUCCESS;
     osa_status_t status;
@@ -783,7 +783,7 @@ out:
     return ret;
 }
 
-static int send_ctrl_msg(const char *msg, int instance_id)
+static int send_ctrl_msg(const char *msg, enum dhcp_instance_id instance_id)
 {
     int ret;
     int ctrl_port = CTRL_PORT + instance_id;
@@ -866,7 +866,7 @@ retry_send:
     return ret;
 }
 
-int dhcp_send_halt(int instance_id)
+int dhcp_send_halt(enum dhcp_instance_id instance_id)
 {
     int ret = WM_SUCCESS;
 
@@ -881,7 +881,7 @@ int dhcp_send_halt(int instance_id)
     return ret;
 }
 
-int dhcp_free_allocations(int instance_id)
+int dhcp_free_allocations(enum dhcp_instance_id instance_id)
 {
     osa_status_t status;
 
@@ -904,7 +904,7 @@ int dhcp_free_allocations(int instance_id)
     return OSA_MutexDestroy((osa_mutex_handle_t)dhcpd_mutex_Handle[instance_id]);
 }
 
-static int send_gratuitous_arp(uint32_t ip, int instance_id)
+static int send_gratuitous_arp(uint32_t ip, enum dhcp_instance_id instance_id)
 {
     int sock;
     struct arp_packet pkt;
@@ -981,7 +981,7 @@ void dhcp_stat(void)
 {
     int i = 0;
     struct ip4_addr saddr;
-    int instance_id;
+    enum dhcp_instance_id instance_id;
     (void)PRINTF("DHCP Server Lease Duration : %d seconds\r\n", (int)dhcp_address_timeout);
     if (dhcps[0].count_clients == 0 && dhcps[1].count_clients == 0)
     {

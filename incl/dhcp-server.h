@@ -73,6 +73,17 @@ enum wm_dhcpd_errno
  */
 #define MAX_QNAME_SIZE 32
 
+/** DHCP server instance identifiers */
+enum dhcp_instance_id
+{
+    /** DHCP instance for micro-AP interface */
+    DHCP_INSTANCE_UAP    = 0,
+    /** DHCP instance for Wi-Fi Direct Group Owner interface */
+    DHCP_INSTANCE_WFD_GO = 1,
+    /** Total number of DHCP instances */
+    MAX_DHCP_INSTANCES   = 2,
+};
+
 /** Register DHCP server commands
  *
  * This function registers the CLI dhcp-stat for the DHCP server.
@@ -116,7 +127,7 @@ int dhcp_server_start(void *intrfc_handle);
  *
  * \return WM_SUCCESS on success or error code
  */
-int dhcp_server_start_ex(void *intrfc_handle, int instance_id);
+int dhcp_server_start_ex(void *intrfc_handle, enum dhcp_instance_id instance_id);
 
 /** Start DNS server
  *
@@ -147,7 +158,7 @@ int dhcp_server_start_ex(void *intrfc_handle, int instance_id);
  * \param[in] instance_id Instance identifier (DHCP_INSTANCE_UAP or DHCP_INSTANCE_WFD_GO)
  *
  */
-void dhcp_enable_dns_server(char **domain_names, int instance_id);
+void dhcp_enable_dns_server(char **domain_names, enum dhcp_instance_id instance_id);
 
 /** Stop DHCP server
  */
@@ -160,7 +171,7 @@ void dhcp_server_stop(void);
  *
  * \param[in] instance_id Instance identifier (DHCP_INSTANCE_UAP or DHCP_INSTANCE_WFD_GO)
  */
-void dhcp_server_stop_ex(int instance_id);
+void dhcp_server_stop_ex(enum dhcp_instance_id instance_id);
 
 /** Configure the DHCP dynamic IP lease time
  *
@@ -187,7 +198,7 @@ int dhcp_server_lease_timeout(uint32_t val);
  *
  * \return WM_SUCCESS on success or -WM_FAIL.
  */
-int dhcp_get_ip_from_mac(uint8_t *client_mac, uint32_t *client_ip, int instance_id);
+int dhcp_get_ip_from_mac(uint8_t *client_mac, uint32_t *client_ip, enum dhcp_instance_id instance_id);
 
 /** Print DHCP stats on the console
  *
@@ -207,12 +218,8 @@ const char *dhcp_server_err_str(int ret);
 
 /* Wrapper to pass instance ID to task */
 struct dhcp_task_args {
-    int instance_id;
+    enum dhcp_instance_id instance_id;
 };
-
-#define DHCP_INSTANCE_UAP    0
-#define DHCP_INSTANCE_WFD_GO 1
-#define MAX_DHCP_INSTANCES   2
 
 #ifdef __cplusplus
 }

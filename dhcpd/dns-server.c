@@ -22,7 +22,7 @@
 #include "dhcp-priv.h"
 
 static struct dns_server_data dnss[MAX_DHCP_INSTANCES];
-static int (*dhcp_dns_server_handler)(char *msg, int len, struct sockaddr_in *fromaddr, int instance_id);
+static int (*dhcp_dns_server_handler)(char *msg, int len, struct sockaddr_in *fromaddr, enum dhcp_instance_id instance_id);
 extern struct dhcp_server_data dhcps[MAX_DHCP_INSTANCES];
 
 /* take a domain name and convert it into a DNS QNAME format, i.e.
@@ -58,7 +58,7 @@ static void format_qname(char *domain_name, char *dns_qname)
     dns_qname[0] = (char)i;
 }
 
-static unsigned int make_answer_rr(char *base, char *query, char *dst, int instance_id)
+static unsigned int make_answer_rr(char *base, char *query, char *dst, enum dhcp_instance_id instance_id)
 {
     struct dns_question *q;
     struct dns_rr *rr = (struct dns_rr *)(void *)dst;
@@ -88,7 +88,7 @@ static unsigned int make_answer_rr(char *base, char *query, char *dst, int insta
     return (unsigned int)(query - query_start);
 }
 
-static char *parse_questions(unsigned int num_questions, uint8_t *pos, int *found, int instance_id)
+static char *parse_questions(unsigned int num_questions, uint8_t *pos, int *found, enum dhcp_instance_id instance_id)
 {
     uint8_t *base = pos;
     int i;
@@ -126,7 +126,7 @@ static char *parse_questions(unsigned int num_questions, uint8_t *pos, int *foun
 }
 
 #define ERROR_REFUSED 5
-static int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr, int instance_id)
+static int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr, enum dhcp_instance_id instance_id)
 {
     struct dns_header *hdr;
     char *pos;
@@ -206,7 +206,7 @@ static int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr,
     return -WM_E_DHCPD_DNS_IGNORE;
 }
 
-void dhcp_enable_dns_server(char **domain_names, int instance_id)
+void dhcp_enable_dns_server(char **domain_names, enum dhcp_instance_id instance_id)
 {
     if (dhcp_dns_server_handler != NULL || dnss[instance_id].list_qnames != NULL)
     {
@@ -239,7 +239,7 @@ void dhcp_enable_dns_server(char **domain_names, int instance_id)
     }
 }
 
-int dns_server_init(void *intrfc_handle, int instance_id)
+int dns_server_init(void *intrfc_handle, enum dhcp_instance_id instance_id)
 {
     if (dhcp_dns_server_handler == NULL)
     {
@@ -258,7 +258,7 @@ int dns_server_init(void *intrfc_handle, int instance_id)
     return WM_SUCCESS;
 }
 
-void dns_process_packet(int instance_id)
+void dns_process_packet(enum dhcp_instance_id instance_id)
 {
     if (dhcp_dns_server_handler == NULL)
     {
@@ -277,7 +277,7 @@ void dns_process_packet(int instance_id)
     }
 }
 
-uint32_t dns_get_nameserver(int instance_id)
+uint32_t dns_get_nameserver(enum dhcp_instance_id instance_id)
 {
     if (dhcp_dns_server_handler != NULL)
     {
@@ -286,7 +286,7 @@ uint32_t dns_get_nameserver(int instance_id)
     return 0;
 }
 
-int dns_get_maxsock(fd_set *rfds, int instance_id)
+int dns_get_maxsock(fd_set *rfds, enum dhcp_instance_id instance_id)
 {
     if (dhcp_dns_server_handler == NULL)
     {
@@ -300,7 +300,7 @@ int dns_get_maxsock(fd_set *rfds, int instance_id)
     return max_sock;
 }
 
-void dns_free_allocations(int instance_id)
+void dns_free_allocations(enum dhcp_instance_id instance_id)
 {
     if (dhcp_dns_server_handler == NULL)
     {
