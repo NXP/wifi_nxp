@@ -843,7 +843,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
  * Channel BW 20/40/80/160 MHz */
 #define RESET_11ACBW160(Dot11acDevCap) ((Dot11acDevCap) &= ~MBIT(2))
 /** HW_SPEC Dot11acDevCap : ReSet Max MPDU length */
-#define RESET_11ACMAXMPDULEN(Dot11acDevCap) ((Dot11acDevCap) &= ~(0x03))
+#define RESET_11ACMAXMPDULEN(Dot11acDevCap) ((Dot11acDevCap) &= ~(0x03U))
 
 /** Default 11ac capability mask for 2.4GHz */
 #define DEFAULT_11AC_CAP_MASK_BG (HWSPEC_11ACSGI80_SUPP | HWSPEC_11ACRXSTBC_SUPP)

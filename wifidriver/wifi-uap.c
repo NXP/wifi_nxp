@@ -697,8 +697,9 @@ static int wifi_cmd_uap_config(char *ssid,
 				bss.param.bss_config.auth_mode = MLAN_AUTH_MODE_SAE;
 			}
             bss.param.bss_config.transition_disable      = transition_disable;
-            bss.param.bss_config.wpa_cfg.password_length = (t_u32)password_len;
-            __memcpy(NULL, (void *)bss.param.bss_config.wpa_cfg.password, (const void *)password, (size_t)password_len);
+            bss.param.bss_config.wpa_cfg.password_length = (t_u32)MIN((int)MLAN_MAX_PASSWORD_LENGTH, password_len);
+            __memcpy(NULL, (void *)bss.param.bss_config.wpa_cfg.password, (const void *)password,
+                     (size_t)MIN((int)MLAN_MAX_PASSWORD_LENGTH, password_len));
         }
     }
 #endif
@@ -1284,7 +1285,7 @@ int wifi_uap_do_acs(enum wlan_bss_type bss_type, const t_u16 acs_band)
             if (i == 13)
                 continue;
             __memset(NULL, pscan_chan, 0x00, sizeof(ChanScanParamSet_t));
-            pscan_chan->chan_number = freq_to_chan(freq_list[i]);
+            pscan_chan->chan_number = (t_u8)freq_to_chan(freq_list[i]);
             pscan_chan->radio_type  = freq_list[i] >= 5180 ? BAND_5GHZ : BAND_2GHZ;
             pscan_chan++;
         }
@@ -1319,8 +1320,8 @@ int wifi_uap_do_acs(enum wlan_bss_type bss_type, const t_u16 acs_band)
         }
     }
 
-    tlv_chan_list->header.len = wlan_cpu_to_le16(scan_chan_num * sizeof(ChanScanParamSet_t));
-    cmd_size += sizeof(tlv_chan_list->header) + (scan_chan_num * sizeof(ChanScanParamSet_t));
+    tlv_chan_list->header.len = wlan_cpu_to_le16((t_u16)(scan_chan_num * sizeof(ChanScanParamSet_t)));
+    cmd_size += (t_u16)(sizeof(tlv_chan_list->header) + (scan_chan_num * sizeof(ChanScanParamSet_t)));
     tlv += sizeof(tlv_chan_list->header) + (scan_chan_num * sizeof(ChanScanParamSet_t));
 
     cmd->size = (t_u16)wlan_cpu_to_le16(cmd_size);
@@ -2092,7 +2093,7 @@ void wifi_uap_client_assoc(t_u8 bss_type, t_u8 *sta_addr, unsigned char is_11n_e
 void wifi_uap_client_deauth(t_u8 bss_type, t_u8 *sta_addr)
 {
 #if (CONFIG_UAP_AMPDU_TX) || (CONFIG_UAP_AMPDU_RX)
-    if ((mlan_private *)mlan_adap->priv[bss_type]->is_11n_enabled)
+    if (mlan_adap->priv[bss_type]->is_11n_enabled)
     {
         wlan_cleanup_reorder_tbl((mlan_private *)mlan_adap->priv[bss_type], sta_addr);
         wlan_request_ralist_lock((mlan_private *)mlan_adap->priv[bss_type]);
@@ -2142,6 +2143,10 @@ static t_u8 wifi_check_rsn_ie(IEEEtypes_Rsn_t *rsn_ie, mlan_uap_bss_param *sys_c
             break;
     }
     count = wlan_le16_to_cpu(rsn_ie->pairwise_cipher.count);
+    if (count == 0)
+    {
+        return MFALSE;
+    }
     for (i = 0; i < count; i++)
     {
         switch (rsn_ie->pairwise_cipher.list[i].type)
@@ -2164,6 +2169,10 @@ static t_u8 wifi_check_rsn_ie(IEEEtypes_Rsn_t *rsn_ie, mlan_uap_bss_param *sys_c
         return MFALSE;
     key_mgmt = (wpa_suite_auth_key_mgmt_t *)((u8 *)rsn_ie + sizeof(IEEEtypes_Rsn_t) + (count - 1) * sizeof(wpa_suite));
     count    = wlan_le16_to_cpu(key_mgmt->count);
+    if (count == 0)
+    {
+        return MFALSE;
+    }
     if (left < (int)(sizeof(wpa_suite_auth_key_mgmt_t) + (count - 1) * sizeof(wpa_suite)))
         return MFALSE;
     for (i = 0; i < count; i++)
@@ -2237,6 +2246,10 @@ static t_u8 wifi_check_wpa_ie(IEEEtypes_Wpa_t *wpa_ie, mlan_uap_bss_param *sys_c
             break;
     }
     count = wlan_le16_to_cpu(wpa_ie->pairwise_cipher.count);
+    if (count == 0)
+    {
+        return MFALSE;
+    }
     for (i = 0; i < count; i++)
     {
         switch (wpa_ie->pairwise_cipher.list[i].type)
@@ -2256,6 +2269,10 @@ static t_u8 wifi_check_wpa_ie(IEEEtypes_Wpa_t *wpa_ie, mlan_uap_bss_param *sys_c
         return MFALSE;
     key_mgmt = (wpa_suite_auth_key_mgmt_t *)((u8 *)wpa_ie + sizeof(IEEEtypes_Wpa_t) + (count - 1) * sizeof(wpa_suite));
     count    = wlan_le16_to_cpu(key_mgmt->count);
+    if (count == 0)
+    {
+        return MFALSE;
+    }
     if (left < (int)(sizeof(wpa_suite_auth_key_mgmt_t) + (count - 1) * sizeof(wpa_suite)))
         return MFALSE;
     for (i = 0; i < count; i++)
@@ -2508,7 +2525,7 @@ static t_u16 wifi_get_specific_ie(const t_u8 *ie, int len, t_u8 *ie_out, t_u32 i
                 {
                     /** only get first p2p ie here */
                     __memcpy(NULL, ie_out + out_len, pos, length + 2);
-                    out_len += length + 2;
+                    out_len += (t_u16)(length + 2);
                     break;
                 }
             }
@@ -2520,7 +2537,7 @@ static t_u16 wifi_get_specific_ie(const t_u8 *ie, int len, t_u8 *ie_out, t_u32 i
                     if ((out_len + length + 2) < (int)ie_out_len)
                     {
                         __memcpy(NULL, ie_out + out_len, pos, length + 2);
-                        out_len += length + 2;
+                        out_len += (t_u16)(length + 2);
                     }
                     else
                     {
@@ -2662,7 +2679,7 @@ static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
                 if ((out_len + length + 2) < (int)ie_out_len)
                 {
                     __memcpy(NULL, ie_out + out_len, pos, length + 2);
-                    out_len += length + 2;
+                    out_len += (t_u16)(length + 2);
                 }
                 else
                 {
@@ -3026,7 +3043,7 @@ static int wifi_nxp_set_mgmt_ies(mlan_private *priv,
     }
 
     proberesp_ies_data->ie_index = priv->proberesp_index;
-    if (ie_length)
+    if ((ie != NULL) && (ie_len != 0U))
     {
         proberesp_ies_data->mgmt_subtype_mask = MGMT_MASK_PROBE_RESP;
         proberesp_ies_data->ie_length         = ie_length;
@@ -3213,10 +3230,13 @@ const t_u8 *wifi_parse_ext_ie_tlv(const t_u8 *ie, int len, t_u8 ext_id)
     while (left_len >= 2)
     {
         length = *(pos + 1);
-        if ((*pos == EXTENSION) && (length + 2) <= left_len)
+        if ((length + 2) > left_len)
         {
-            if (*(pos + 2) == ext_id)
-                return pos;
+            break;
+        }
+        if ((*pos == EXTENSION) && (*(pos + 2) == ext_id))
+        {
+            return pos;
         }
         pos += (length + 2);
         left_len -= (length + 2);
@@ -3440,7 +3460,7 @@ int wifi_uap_set_11ax_status2(mlan_private *pmpriv, t_u8 action, t_u8 band, IEEE
         __memcpy(NULL, &he_cfg.he_cap.ext_id, &hecap_ie->ext_id, he_cfg.he_cap.len);
         if ((band == BAND_2GHZ) && (bandwidth == BANDWIDTH_20MHZ))
         {
-            he_cfg.he_cap.he_phy_cap[0] &= ~(MBIT(1));
+            he_cfg.he_cap.he_phy_cap[0] &= (t_u8)(~(MBIT(1)));
         }
     }
 
@@ -3471,7 +3491,9 @@ static void wifi_set_uap_dfs_cac(mlan_private *priv, Band_Config_t *bandcfg, t_u
         if ((priv_sta->media_connected == MTRUE) && wlan_11h_radar_detect_required(priv, priv->uap_channel))
         {
             nxp_wifi_dfs_cac_info cacinfo;
+#if CONFIG_11AC
             t_u8 center_chan = 0;
+#endif
 
             __memset(NULL, &cacinfo, 0, sizeof(nxp_wifi_dfs_cac_info));
             cacinfo.center_freq  = channel_to_frequency(priv->uap_channel, bandcfg->chanBand);
@@ -3653,7 +3675,7 @@ int wifi_nxp_beacon_config(unsigned int bss_type, nxp_wifi_ap_info_t *params)
         sys_config->frag_threshold = MLAN_FRAG_MAX_VALUE;
         sys_config->rts_threshold  = MLAN_RTS_MAX_VALUE;
 
-        sys_config->pwe_derivation = params->sae_pwe;
+        sys_config->pwe_derivation =  (t_u8)params->sae_pwe;
 
         if (params->beacon_int)
             sys_config->beacon_period = params->beacon_int;
@@ -3862,10 +3884,10 @@ int wifi_nxp_beacon_config(unsigned int bss_type, nxp_wifi_ap_info_t *params)
             wifi_uap_set_11ax_status2(priv, MLAN_ACT_DISABLE, bandcfg.chanBand, NULL, bandwidth);
 #endif
 
-        if (params->ap_max_inactivity)
+        if (params->ap_max_inactivity > 0)
         {
-            sys_config->sta_ageout_timer    = params->ap_max_inactivity * 10;
-            sys_config->ps_sta_ageout_timer = params->ap_max_inactivity * 10;
+            sys_config->sta_ageout_timer    = (t_u32)params->ap_max_inactivity * 10U;
+            sys_config->ps_sta_ageout_timer = (t_u32)params->ap_max_inactivity * 10U;
         }
         PRINTM(MIOCTL, "inactivity_timeout=%d\n", params->ap_max_inactivity);
         PRINTM(MIOCTL, "sta_ageout_timer=%d ps_sta_ageout_timer=%d\n", sys_config->sta_ageout_timer,
@@ -3972,7 +3994,7 @@ int wifi_setup_ht_cap(t_u16 *ht_capab, t_u8 *pmcs_set, t_u8 *a_mpdu_params, t_u8
     }
     else
     {
-        *ht_capab &= ~(HT_CAP_INFO_DSSS_CCK40MHZ);
+        *ht_capab &= (t_u16)(~(HT_CAP_INFO_DSSS_CCK40MHZ));
     }
     if ((usr_dot_11n_dev_cap >> 20) & 0x03) /* Delayed ACK supported */
     {
@@ -4395,13 +4417,14 @@ int wifi_setup_he_cap(nxp_wifi_he_capabilities *he_cap, t_u8 band)
 #define HE_CAP_FIX_SIZE 22
     // Support PPE threshold
     ppe_threshold_len = phe_cap->len - HE_CAP_FIX_SIZE - extra_mcs_size;
-    if (phe_cap->he_phy_cap[6] & MBIT(7) && ppe_threshold_len)
+    if (phe_cap->he_phy_cap[6] & MBIT(7) && ppe_threshold_len > 0)
     {
+        ppe_threshold_len = MIN(ppe_threshold_len, (int)WIFI_HE_MAX_PPET_CAPAB_SIZE);
         __memcpy(NULL, he_cap->ppet, &phe_cap->val[extra_mcs_size], ppe_threshold_len);
     }
     else
     {
-        he_cap->phy_cap[6] &= ~MBIT(7);
+        he_cap->phy_cap[6] &= (t_u8)(~MBIT(7));
         wifi_d("Clear PPE threshold 0x%x\r\n", he_cap->phy_cap[7]);
     }
 #ifdef ENABLE_802_116E
@@ -4573,31 +4596,31 @@ int wifi_nxp_sta_add(unsigned int bss_type, nxp_wifi_sta_info_t *params)
     req_len = sizeof(mlan_ds_sta_info);
     if (params->ext_capab_len != 0)
     {
-        req_len += sizeof(MrvlIEtypesHeader_t) + params->ext_capab_len;
+        req_len += (t_u32)(sizeof(MrvlIEtypesHeader_t) + params->ext_capab_len);
     }
     if (params->supp_rates_len != 0)
     {
-        req_len += sizeof(MrvlIEtypesHeader_t) + params->supp_rates_len;
+        req_len += (t_u32)(sizeof(MrvlIEtypesHeader_t) + params->supp_rates_len);
     }
     if (params->qosinfo != 0)
     {
-        req_len += sizeof(MrvlIEtypesHeader_t) + sizeof(qosinfo);
+        req_len += (t_u32)(sizeof(MrvlIEtypesHeader_t) + sizeof(qosinfo));
     }
     if (params->ht_capab_len != 0)
     {
-        req_len += sizeof(MrvlIEtypesHeader_t) + sizeof(ieee80211_ht_capab_t);
+        req_len += (t_u32)(sizeof(MrvlIEtypesHeader_t) + sizeof(ieee80211_ht_capab_t));
     }
 #if CONFIG_11AC
     if (params->vht_capab_len != 0)
     {
-        req_len += sizeof(MrvlIEtypesHeader_t) + sizeof(ieee80211_vht_capab_t);
+        req_len += (t_u32)(sizeof(MrvlIEtypesHeader_t) + sizeof(ieee80211_vht_capab_t));
     }
 #endif
 
 #if CONFIG_11AX
     if (params->he_capab_len != 0)
     {
-        req_len += sizeof(MrvlExtIEtypesHeader_t) + params->he_capab_len;
+        req_len += (t_u32)(sizeof(MrvlExtIEtypesHeader_t) + params->he_capab_len);
     }
 #endif
 
@@ -4632,7 +4655,7 @@ int wifi_nxp_sta_add(unsigned int bss_type, nxp_wifi_sta_info_t *params)
         tlv->header.len  = params->ext_capab_len;
         __memcpy(NULL, tlv->data, params->ext_capab, tlv->header.len);
         pos += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
-        sta_info->tlv_len += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
+        sta_info->tlv_len += (t_u16)(sizeof(MrvlIEtypesHeader_t) + tlv->header.len);
         tlv = (MrvlIEtypes_Data_t *)pos;
     }
     if (params->supp_rates_len != 0)
@@ -4642,7 +4665,7 @@ int wifi_nxp_sta_add(unsigned int bss_type, nxp_wifi_sta_info_t *params)
         tlv->header.len  = params->supp_rates_len;
         __memcpy(NULL, tlv->data, params->supp_rates, tlv->header.len);
         pos += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
-        sta_info->tlv_len += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
+        sta_info->tlv_len += (t_u16)(sizeof(MrvlIEtypesHeader_t) + tlv->header.len);
         tlv = (MrvlIEtypes_Data_t *)pos;
     }
     if (params->qosinfo != 0U)
@@ -4653,7 +4676,7 @@ int wifi_nxp_sta_add(unsigned int bss_type, nxp_wifi_sta_info_t *params)
         qosinfo          = params->qosinfo;
         __memcpy(NULL, tlv->data, &qosinfo, tlv->header.len);
         pos += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
-        sta_info->tlv_len += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
+        sta_info->tlv_len += (t_u16)(sizeof(MrvlIEtypesHeader_t) + tlv->header.len);
         tlv = (MrvlIEtypes_Data_t *)pos;
     }
     if (params->ht_capab_len != 0)
@@ -4663,7 +4686,7 @@ int wifi_nxp_sta_add(unsigned int bss_type, nxp_wifi_sta_info_t *params)
         tlv->header.len  = sizeof(ieee80211_ht_capab_t);
         __memcpy(NULL, tlv->data, &params->ht_capab, tlv->header.len);
         pos += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
-        sta_info->tlv_len += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
+        sta_info->tlv_len += (t_u16)(sizeof(MrvlIEtypesHeader_t) + tlv->header.len);
         tlv = (MrvlIEtypes_Data_t *)pos;
     }
 #if CONFIG_11AC
@@ -4683,11 +4706,11 @@ int wifi_nxp_sta_add(unsigned int bss_type, nxp_wifi_sta_info_t *params)
     {
         ext_tlv                = (MrvlExtIEtypes_Data_t *)pos;
         ext_tlv->header.type   = EXTENSION;
-        ext_tlv->header.len    = params->he_capab_len + sizeof(u8);
+        ext_tlv->header.len    = (t_u16)(params->he_capab_len + sizeof(u8));
         ext_tlv->header.ext_id = HE_CAPABILITY;
         __memcpy(NULL, ext_tlv->data, (u8 *)&params->he_capab, params->he_capab_len);
         pos += sizeof(MrvlExtIEtypesHeader_t) + params->he_capab_len;
-        sta_info->tlv_len += sizeof(MrvlExtIEtypesHeader_t) + params->he_capab_len;
+        sta_info->tlv_len += (t_u16)(sizeof(MrvlExtIEtypesHeader_t) + params->he_capab_len);
         tlv = (MrvlIEtypes_Data_t *)pos;
     }
 #endif
@@ -4713,7 +4736,6 @@ int wifi_nxp_sta_remove(unsigned int bss_type, const uint8_t *addr)
 {
     mlan_private *priv         = (mlan_private *)mlan_adap->priv[bss_type];
     int ret                    = 0;
-    mlan_ds_sta_info *sta_info = NULL;
 
     ENTER();
 
@@ -4768,6 +4790,10 @@ int wifi_set_uap_rts(unsigned int bss_type, int rts_threshold)
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[bss_type];
     MrvlIEtypes_rts_threshold_t rts_threshold_tlv;
 
+    if (rts_threshold < 0 || rts_threshold > (int)MLAN_RTS_MAX_VALUE)
+    {
+        return -WM_FAIL;
+    }
     __memset(NULL, &rts_threshold_tlv, 0, sizeof(MrvlIEtypes_rts_threshold_t));
     rts_threshold_tlv.header.type   = TLV_TYPE_UAP_RTS_THRESHOLD;
     rts_threshold_tlv.header.len    = (t_u16)sizeof(MrvlIEtypes_rts_threshold_t);
@@ -4973,6 +4999,11 @@ int wifi_nxp_set_acl(unsigned int bss_type, nxp_wifi_acl_info_t *params)
     int ret                        = -WM_FAIL;
     mlan_uap_bss_param *sys_config = NULL;
     bool bss_started               = MFALSE;
+
+    if (priv == NULL)
+    {
+        goto done;
+    }
 
     if (params == NULL)
     {
