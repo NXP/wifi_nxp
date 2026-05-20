@@ -8164,13 +8164,6 @@ static void test_wlan_reg_access(int argc, char **argv)
         value  = a2hex_or_atoi(argv[3]);
     }
 
-    if (type < 1U || type > 4U)
-    {
-        dump_wlan_reg_access_usage();
-        (void)PRINTF("Error: Illegal register type %s.\r\n", argv[1]);
-        return;
-    }
-
     ret = wlan_reg_access((wifi_reg_t)type, action, offset, (uint32_t *)&value);
 
     if (ret == WM_SUCCESS)
@@ -10817,14 +10810,7 @@ static void test_wlan_enable_disable_htc(int argc, char **argv)
         dump_wlan_enable_disable_htc_usage();
         return;
     }
-    if (get_uint(argv[1], &option, strlen(argv[1])))
-    {
-        (void)PRINTF("Invalid option argument\r\n");
-        dump_wlan_enable_disable_htc_usage();
-        return;
-    }
-
-    if (option > 1U)
+    if (get_uint(argv[1], &option, strlen(argv[1])) || option > 1)
     {
         (void)PRINTF("Invalid option argument\r\n");
         dump_wlan_enable_disable_htc_usage();
