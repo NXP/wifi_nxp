@@ -2569,11 +2569,10 @@ static int do_start(struct wlan_network *network)
             (void)memcpy(&network->bssid[0], &wlan.uap_mac[0], MLAN_MAC_ADDR_LENGTH);
         }
 
-        t_u8 bandwidth = wifi_uap_get_bandwidth();
-
 #if defined(SD8801) || defined(RW610) || defined(IW610)
         wpa_supp_set_ap_bw(netif, 1);
 #else
+        t_u8 bandwidth = wifi_uap_get_bandwidth();
         wpa_supp_set_ap_bw(netif, bandwidth);
 #endif
         ret = wpa_supp_start_ap(netif, network, 0);
@@ -4437,7 +4436,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
             wlan_subscribe_rssi_low_event();
 #endif
 
-            if ((wlan.same_ess == true) && (wlan.sta_ipv4_state == CM_STA_CONNECTED))
+            if ((wlan.same_ess == true) && (wlan.sta_ipv4_state == CM_STA_CONNECTED) && if_handle)
             {
 #if CONFIG_11R
                 wlan.ft_bss = false;
@@ -5726,7 +5725,6 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
     const char *s;
     unsigned char is_11n_enabled;
     int ret;
-    struct wpa_supplicant *wpa_s = ctx;
     enum wlan_bss_type bss_type  = WLAN_BSS_TYPE_ANY;
 #if CONFIG_HOSTAPD
     struct netif *netif = net_get_uap_interface();
@@ -5740,6 +5738,7 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
 #if CONFIG_HOSTAPD
     const char *ifname = hostapd_msg_ifname_cb(ctx);
 #else
+    struct wpa_supplicant *wpa_s = ctx;
     const char *ifname = wpa_s->ifname;
 #endif
 
@@ -5845,7 +5844,10 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
             if (wlan.scan_count > WLAN_RESCAN_LIMIT)
             {
                 wlan.cur_network_idx = -1;
-                (void)wpa_supp_disable(sta_netif, network);
+                if (network)
+                {
+                    (void)wpa_supp_disable(sta_netif, network);
+                }
             }
         }
     }
@@ -7685,6 +7687,9 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 
             if(wlan.uap_start_in_hang == 1)
             {
+                if (wlan.cur_uap_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
+                    break;
+
                 PRINTF("Restarting previous uAP network\r\n");
                 wlan_start_network(wlan.networks[wlan.cur_uap_network_idx].name);
                 /* Following delay is added for safe starting of uAP */
@@ -7694,6 +7699,9 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 
             if(wlan.sta_connect_in_hang == 1)
             {
+                if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
+                    break;
+
                 PRINTF("Reconnecting to previous network\r\n");
                 wlan_connect(wlan.networks[wlan.cur_network_idx].name);
                 wlan_set_sta_reconnect_in_hang(false);
@@ -15925,7 +15933,7 @@ out:
 
 int wlan_mef_set_multicast(t_u8 mef_action)
 {
-    t_u32 index = -1, found = 0;
+    t_u32 index = 0, found = 0;
 
     if(!is_sta_connected() && !is_uap_started())
     {
@@ -16492,7 +16500,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
 
 t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
 {
-    int len = 0;
+    t_u32 len = 0;
     if (cert_type == FILE_TYPE_ENTP_CA_CERT)
     {
         *data = wlan.ca_cert_data;

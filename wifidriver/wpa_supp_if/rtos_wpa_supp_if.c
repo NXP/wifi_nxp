@@ -721,7 +721,7 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
     int i                                      = 0;
     unsigned char num_chans                    = 0;
     t_u8 bss_mode                              = BSS_INFRASTRUCTURE;
-    const char *ssid = NULL, *ssid2 = NULL;
+    const char *ssid = NULL;
     char ssid_v[(MLAN_MAX_SSID_LENGTH + 1) * MRVDRV_MAX_SSID_LIST_LENGTH] = {0};
     const t_u8 *bssid                                                     = NULL;
     wifi_scan_channel_list_t *chan_list                                   = NULL;
@@ -1598,7 +1598,7 @@ int wifi_nxp_wpa_supp_set_key(void *if_priv,
     {
         supp_d("DEL_KEY");
 
-        status = wifi_remove_key(wifi_if_ctx_rtos->bss_type, is_pairwise, key_idx, addr);
+        status = wifi_remove_key(wifi_if_ctx_rtos->bss_type, is_pairwise, (uint8_t)key_idx, addr);
 
         if (status != WM_SUCCESS)
         {
@@ -1655,7 +1655,7 @@ int wifi_nxp_wpa_supp_set_key(void *if_priv,
         }
 
         status =
-            wifi_set_key(wifi_if_ctx_rtos->bss_type, is_pairwise, key_idx, key, key_len, seq, seq_len, addr, flags);
+            wifi_set_key(wifi_if_ctx_rtos->bss_type, is_pairwise, (uint8_t)key_idx, key, key_len, seq, seq_len, addr, flags);
 
         if (status != WM_SUCCESS)
         {
@@ -1688,7 +1688,7 @@ int wifi_nxp_wpa_supp_del_key(void *if_priv, const unsigned char *addr, int key_
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
-    status = wifi_remove_key(wifi_if_ctx_rtos->bss_type, 0, key_idx, addr);
+    status = wifi_remove_key(wifi_if_ctx_rtos->bss_type, 0, (uint8_t)key_idx, addr);
 
     if (status != WM_SUCCESS)
     {
@@ -2145,7 +2145,7 @@ int wifi_nxp_wpa_supp_remain_on_channel(void *if_priv, unsigned int freq, unsign
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     int status  = -WM_FAIL;
     int ret     = 0;
-    int channel = 0;
+    uint8_t channel = 0;
 
     if (!if_priv || !cookie || !freq)
     {
@@ -2171,7 +2171,7 @@ int wifi_nxp_wpa_supp_remain_on_channel(void *if_priv, unsigned int freq, unsign
         wifi_if_ctx_rtos->remain_on_channel = false;
     }
 
-    channel = freq_to_chan(freq);
+    channel = (uint8_t)freq_to_chan(freq);
     *cookie = (u64)OSA_Rand() | 1;
     wifi_if_ctx_rtos->remain_on_channel_cookie   = *cookie;
     wifi_if_ctx_rtos->remain_on_channel_freq     = freq;
@@ -2539,8 +2539,9 @@ void wifi_nxp_hostapd_dev_deinit(void *if_priv)
 int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
 {
     int status     = -WM_FAIL;
+#if CONFIG_11AX
     t_u8 bandwidth = wifi_uap_get_bandwidth();
-
+#endif
     if ((!if_priv) || (!modes))
     {
         supp_e("%s: Invalid params", __func__);
