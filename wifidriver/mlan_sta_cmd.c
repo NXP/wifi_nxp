@@ -1474,6 +1474,38 @@ done:
             cmd_eeprom->value      = 0;
             break;
         }
+        case HostCmd_CMD_TARGET_ACCESS:
+        {
+            HostCmd_DS_TARGET_ACCESS *target;
+            cmd->size          = wlan_cpu_to_le16(sizeof(HostCmd_DS_TARGET_ACCESS) + S_DS_GEN);
+            target             = (HostCmd_DS_TARGET_ACCESS *)&cmd->params.target;
+            target->action     = wlan_cpu_to_le16(cmd_action);
+            target->csu_target = wlan_cpu_to_le16(MLAN_CSU_TARGET_PSU);
+            target->address    = wlan_cpu_to_le16((t_u16)reg_rw->offset);
+            target->data       = (t_u8)reg_rw->value;
+            break;
+        }
+        case HostCmd_CMD_BCA_REG_ACCESS:
+        {
+            HostCmd_DS_BCA_REG_ACCESS *bca_reg;
+            cmd->size       = wlan_cpu_to_le16(sizeof(HostCmd_DS_BCA_REG_ACCESS) + S_DS_GEN);
+            bca_reg         = (HostCmd_DS_BCA_REG_ACCESS *)&cmd->params.bca_reg;
+            bca_reg->action = wlan_cpu_to_le16(cmd_action);
+            bca_reg->offset = wlan_cpu_to_le16((t_u16)reg_rw->offset);
+            bca_reg->value  = wlan_cpu_to_le32(reg_rw->value);
+            break;
+        }
+        case HostCmd_CMD_REG_ACCESS:
+        {
+            HostCmd_DS_REG_ACCESS *reg;
+            cmd->size     = wlan_cpu_to_le16(sizeof(HostCmd_DS_REG_ACCESS) + S_DS_GEN);
+            reg           = (HostCmd_DS_REG_ACCESS *)&cmd->params.reg;
+            reg->action   = wlan_cpu_to_le16(cmd_action);
+            reg->reg_type = wlan_cpu_to_le16((t_u16)reg_rw->type);
+            reg->offset   = wlan_cpu_to_le16((t_u16)reg_rw->offset);
+            reg->value    = wlan_cpu_to_le32(reg_rw->value);
+            break;
+        }
         default:
             invalid_hostcmd = MTRUE;
             break;

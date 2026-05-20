@@ -247,6 +247,7 @@ int wifi_reg_access(wifi_reg_t reg_type, uint16_t action, uint32_t offset, uint3
     mlan_ds_reg_rw reg_rw;
     reg_rw.offset = offset;
     reg_rw.value  = *value;
+    reg_rw.type = (t_u32)reg_type;
     uint16_t hostcmd;
     int ret = WM_SUCCESS;
     switch (reg_type)
@@ -262,6 +263,15 @@ int wifi_reg_access(wifi_reg_t reg_type, uint16_t action, uint32_t offset, uint3
             break;
         case REG_CAU:
             hostcmd = HostCmd_CMD_CAU_REG_ACCESS;
+            break;
+        case REG_PSU:
+            hostcmd = HostCmd_CMD_TARGET_ACCESS;
+            break;
+        case REG_BCA:
+            hostcmd = HostCmd_CMD_BCA_REG_ACCESS;
+            break;
+        case REG_CIU:
+            hostcmd = HostCmd_CMD_REG_ACCESS;
             break;
         default:
             wifi_e("Incorrect register type");

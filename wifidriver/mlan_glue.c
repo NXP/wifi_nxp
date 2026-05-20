@@ -3979,6 +3979,48 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 wm_wifi.cmd_resp_status = WM_SUCCESS;
             }
             break;
+            case HostCmd_CMD_TARGET_ACCESS:
+            {
+                HostCmd_DS_TARGET_ACCESS *target;
+                target = (HostCmd_DS_TARGET_ACCESS *)&resp->params.target;
+                if (target->action == HostCmd_ACT_GEN_GET)
+                {
+                    if (wm_wifi.cmd_resp_priv != NULL)
+                    {
+                        uint32_t *target_value = (uint32_t *)wm_wifi.cmd_resp_priv;
+                        *target_value          = target->data;
+                    }
+                }
+            }
+            break;
+            case HostCmd_CMD_BCA_REG_ACCESS:
+            {
+                HostCmd_DS_BCA_REG_ACCESS *bca_reg;
+                bca_reg = (HostCmd_DS_BCA_REG_ACCESS *)&resp->params.bca_reg;
+                if (bca_reg->action == HostCmd_ACT_GEN_GET)
+                {
+                    if (wm_wifi.cmd_resp_priv != NULL)
+                    {
+                        uint32_t *bca_value = (uint32_t *)wm_wifi.cmd_resp_priv;
+                        *bca_value          = bca_reg->value;
+                    }
+                }
+            }
+            break;
+            case HostCmd_CMD_REG_ACCESS:
+            {
+                HostCmd_DS_REG_ACCESS *reg;
+                reg = (HostCmd_DS_REG_ACCESS *)&resp->params.reg;
+                if (reg->action == HostCmd_ACT_GEN_GET)
+                {
+                    if (wm_wifi.cmd_resp_priv != NULL)
+                    {
+                        uint32_t *reg_value = (uint32_t *)wm_wifi.cmd_resp_priv;
+                        *reg_value          = reg->value;
+                    }
+                }
+            }
+            break;
             case HostCmd_CMD_MGMT_IE_LIST:
             {
                 HostCmd_DS_MGMT_IE_LIST_CFG *ie_list_cfg;

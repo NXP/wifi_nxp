@@ -8127,7 +8127,7 @@ static void dump_wlan_reg_access_usage()
     (void)PRINTF("Write the register:\r\n");
     (void)PRINTF("    wlan-reg-access <type> <offset> <value>\r\n");
     (void)PRINTF("Options: \r\n");
-    (void)PRINTF("    <type>  : 1:MAC, 2:BBP, 3:RF, 4:CAU\r\n");
+    (void)PRINTF("    <type>  : 1:MAC, 2:BBP, 3:RF, 4:CAU, 5:PSU, 6:BCA, 8:CIU\r\n");
     (void)PRINTF("    <offset>: offset of register\r\n");
     (void)PRINTF("For example:\r\n");
     (void)PRINTF("    wlan-reg-access 1 0x9b8             : Read the MAC register\r\n");
@@ -8149,11 +8149,11 @@ static void test_wlan_reg_access(int argc, char **argv)
         return;
     }
 
-    if ((a2hex_or_atoi(argv[1]) != 1 && a2hex_or_atoi(argv[1]) != 2 && a2hex_or_atoi(argv[1]) != 3 &&
-         a2hex_or_atoi(argv[1]) != 4))
+    if (a2hex_or_atoi(argv[1]) < 1 || a2hex_or_atoi(argv[1]) > 8
+        || a2hex_or_atoi(argv[1]) == 7)
     {
         dump_wlan_reg_access_usage();
-        (void)PRINTF("Error: Illegal register type %s. Must be either '1','2','3' or '4'.\r\n", argv[1]);
+        (void)PRINTF("Error: Illegal register type %s.\r\n", argv[1]);
         return;
     }
     type   = a2hex_or_atoi(argv[1]);

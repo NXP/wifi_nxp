@@ -756,12 +756,20 @@ int wifi_get_antenna(t_u32 *ant_mode, t_u16 *evaluate_time, t_u8 *evaluate_mode,
 void wifi_process_hs_cfg_resp(t_u8 *cmd_res_buffer);
 enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 *ps_event, t_u16 *action);
 
+enum wifi_csu_target_type {
+    MLAN_CSU_TARGET_CAU = 1,
+    MLAN_CSU_TARGET_PSU,
+};
+
 typedef enum
 {
     REG_MAC = 1,
     REG_BBP,
     REG_RF,
-    REG_CAU
+    REG_CAU,
+    REG_PSU,
+    REG_BCA,
+    REG_CIU = 8
 } wifi_reg_t;
 
 int wifi_mem_access(uint16_t action, uint32_t addr, uint32_t *value);
