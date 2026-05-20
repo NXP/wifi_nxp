@@ -121,8 +121,10 @@ typedef struct
      * 1 = in power save status
      */
     t_u8 power_mgmt_status;
-    /** RSSI: dBm */
-    t_s8 rssi;
+    /** RSSI: dBm
+     * Explicitly signed to match mxmdriver (typedef signed char t_s8) behavior.
+     * wifi_nxp uses typedef char t_s8 which defaults to unsigned on ARM. */
+    signed char rssi;
 } wifi_sta_info_t;
 
 /** Channel list structure */

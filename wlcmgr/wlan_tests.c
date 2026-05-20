@@ -3023,7 +3023,7 @@ static void test_wlan_get_uap_sta_list(int argc, char **argv)
         (void)PRINTF("MAC Address: %02X:%02X:%02X:%02X:%02X:%02X\r\n", si[i].mac[0], si[i].mac[1], si[i].mac[2],
                      si[i].mac[3], si[i].mac[4], si[i].mac[5]);
         (void)PRINTF("Power mfg status: %s\r\n", (si[i].power_mgmt_status == 0U) ? "active" : "power save");
-        (void)PRINTF("Rssi : %d dBm\r\n\r\n", (signed char)si[i].rssi);
+        (void)PRINTF("Rssi : %d dBm\r\n\r\n", si[i].rssi);
     }
 #if !CONFIG_MEM_POOLS
     OSA_MemoryFree(sl);

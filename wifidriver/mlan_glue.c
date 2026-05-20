@@ -2991,15 +2991,15 @@ static void load_bss_list(const HostCmd_DS_STA_LIST *sta_list)
     MrvlIEtypes_sta_info_t *si = (MrvlIEtypes_sta_info_t *)(((t_u8 *)&sta_list->sta_count) + sizeof(t_u16));
     for (i = 0; i < c && i < MAX_NUM_CLIENTS; i++)
     {
-        if ((si->rssi & 0x80) != 0)
-        {
-            // coverity[overrun-local:SUPPRESS]
-            sta[i].rssi = -(256 - si->rssi);
-        }
-        else
-        {
-            sta[i].rssi = si->rssi;
-        }
+        /* Unlike mxmdriver (typedef signed char t_s8), wifi_nxp defines t_s8
+         * as plain char which defaults to unsigned on ARM. To align with mxmdriver
+         * wlan_uap_ret_sta_list() where rssi is assigned directly (info[i].rssi =
+         * tlv->rssi), wifi_sta_info_t.rssi is explicitly declared as signed char,
+         * making the implicit conversion from t_s8 safe.
+         * The previous -(256 - si->rssi) was legacy dead code introduced because
+         * of this type difference; it relied on int-to-char truncation to recover
+         * the original value. */
+        sta[i].rssi = si->rssi;
 
         (void)memcpy(sta[i].mac, si->mac_addr, MLAN_MAC_ADDR_LENGTH);
         sta[i].power_mgmt_status = si->power_mfg_status;
@@ -3637,12 +3637,15 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     result                      = WIFI_EVENT_REASON_FAILURE;
                     goto assoc_resp_ret;
                 }
-                // coverity[overrun-buffer-arg:SUPPRESS]
+                /* coverity[cert_arr30_c_violation] coverity[cert_arr38_c_violation] coverity[cert_str31_c_violation] - False positive: frame_len is explicitly
+                 * checked against sizeof(frame) (WIFI_MAX_FRAME_LEN=1500) above; oversized frames exit via goto. */
                 memcpy(assoc_resp->frame.frame, passoc_rsp1, assoc_resp->frame.frame_len);
-                if (pmpriv->assoc_req_size > 0 && (pmpriv->assoc_req_size <= (int)sizeof(assoc_resp->req_ie)))
+
+                if ((pmpriv->assoc_req_size > 0) &&
+                    (pmpriv->assoc_req_size <= (int)sizeof(assoc_resp->req_ie)) &&
+                    (pmpriv->assoc_req_size <= (int)sizeof(pmpriv->assoc_req_buf)))
                 {
                     assoc_resp->req_ie_len = pmpriv->assoc_req_size;
-                    // coverity[overrun-buffer-arg:SUPPRESS]
                     memcpy(assoc_resp->req_ie, pmpriv->assoc_req_buf, assoc_resp->req_ie_len);
                 }
                 if (wm_wifi.supp_if_callbk_fns->assoc_resp_callbk_fn)
@@ -5359,6 +5362,8 @@ void wifi_handle_event_data_pause(void *data)
     /* Event_Ext_t shares the same header but from reason_code, payload differs with tx_pause cmd */
     Event_Ext_t *evt = (Event_Ext_t *)data;
     t_u16 tlv_type, tlv_len;
+    /* coverity[cert_int30_c_violation] coverity[cert_int31_c_violation] - False positive: evt->length is
+     * firmware-populated, always >= sizeof(Event_Ext_t)(16) > offset(8); wrap cannot occur. */
     int tlv_buf_left         = evt->length - MLAN_FIELD_OFFSET(Event_Ext_t, reason_code);
     MrvlIEtypesHeader_t *tlv = (MrvlIEtypesHeader_t *)&evt->reason_code;
 
@@ -7446,6 +7451,9 @@ int wifi_set_region_power_cfg(const t_u8 *data, t_u16 len)
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[BSS_TYPE_STA]);
     cmd->result  = 0x0;
+    /* len is t_u16 and S_DS_GEN is size_t; all callers pass table sizes
+     * well within t_u16 range (max ~200 bytes), so the conversion is safe. */
+    /* coverity[cert_int31_c_violation] */
     cmd->size    = len + S_DS_GEN;
 
     wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_REGION_POWER_CFG, HostCmd_ACT_GEN_SET, 0,
@@ -8053,6 +8061,9 @@ int wifi_set_11ax_rutxpowerlimit_legacy(const wifi_rutxpwrlimit_t *ru_pwr_cfg)
         chrupc_tlv->rupwrlimit_config.chan_num   = ru_pwr_cfg->rupwrlimit_config[i].chan_num;
         for (j = 0; j < MAX_RU_COUNT; j++)
         {
+            /* All ruPower values in tx power limit tables (AzureWave/Murata/u-blox) are
+             * in range [-8, 8], well within t_s8 bounds [-128, 127]. Cast is safe. */
+            /* coverity[cert_int31_c_violation] */
             chrupc_tlv->rupwrlimit_config.ruPower[j] = (t_s8)ru_pwr_cfg->rupwrlimit_config[i].ruPower[j];
         }
         pByte += chrupc_tlv->len + sizeof(MrvlIEtypesHeader_t);
