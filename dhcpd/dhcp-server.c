@@ -990,7 +990,7 @@ void dhcp_stat(void)
     else
     {
         (void)PRINTF("Client IP\tClient MAC\r\n");
-        for (instance_id = 0; instance_id < MAX_DHCP_INSTANCES; instance_id++)
+        for (instance_id = DHCP_INSTANCE_UAP; instance_id < MAX_DHCP_INSTANCES; instance_id++)
         {
             for (i = 0; i < dhcps[instance_id].count_clients && i < MAC_IP_CACHE_SIZE; i++)
             {
