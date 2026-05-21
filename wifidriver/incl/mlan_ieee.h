@@ -638,7 +638,7 @@ typedef t_u8 WLAN_802_11_RATES[WLAN_SUPPORTED_RATES];
 /** MFPR bit in RSN capability */
 #define MFPR_BIT 6
 /** PMF ORing mask */
-#define PMF_MASK 0x00c0
+#define PMF_MASK ((t_u16)0xC0)
 #endif
 
 /** RSN Override IE to RSN IE offset of suite position

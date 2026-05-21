@@ -373,7 +373,7 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
     akm_preference[13] = 12;
 #endif
 
-    pmf_mask = (((pmpriv->pmfcfg.mfpc << MFPC_BIT) | (pmpriv->pmfcfg.mfpr << MFPR_BIT)) | (~PMF_MASK));
+    pmf_mask = (t_u16)(((pmpriv->pmfcfg.mfpc << MFPC_BIT) | (pmpriv->pmfcfg.mfpr << MFPR_BIT)) | (~PMF_MASK));
     /* prsn_cap = prsn_ie->rsn_ie + 2 bytes version + 4 bytes
      * group_cipher_suite + 2 bytes pairwise_cipher_count +
      * pairwise_cipher_count * PAIRWISE_CIPHER_SUITE_LEN + 2 bytes

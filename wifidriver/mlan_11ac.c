@@ -958,7 +958,7 @@ int wlan_cmd_append_11ac_tlv(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc, t
         {
             if (!(IS_OPER_MODE_20M(pmrvl_oper_mode->oper_mode)))
             {
-                if ((pbss_desc->pht_cap->ht_cap.ht_cap_info & MBIT(1)) != 0U)
+                if (pbss_desc->pht_cap != MNULL && (pbss_desc->pht_cap->ht_cap.ht_cap_info & MBIT(1)) != 0U)
                 {
                     SET_OPER_MODE_40M(pmrvl_oper_mode->oper_mode);
                 }

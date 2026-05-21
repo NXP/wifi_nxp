@@ -250,7 +250,7 @@ mlan_status wlan_process_802dot11_mgmt_pkt(IN mlan_private *priv, IN t_u8 *paylo
        is needed to host, just eventify it */
     pieee_pkt_hdr = (wlan_802_11_header *)payload;
     sub_type      = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
-    if ((((1 << sub_type) & priv->mgmt_frame_passthru_mask) == 0) && (sub_type != SUBTYPE_ACTION))
+    if ((((1U << sub_type) & priv->mgmt_frame_passthru_mask) == 0) && (sub_type != SUBTYPE_ACTION))
     {
         PRINTM(MINFO, "Dropping mgmt frame for subtype %d.\n", sub_type);
         LEAVE();
@@ -298,7 +298,7 @@ mlan_status wlan_bypass_802dot11_mgmt_pkt(void *data)
 
     if ((pmgmt_pkt_hdr->wlan_header.frm_ctl & IEEE80211_FC_MGMT_FRAME_TYPE_MASK) == 0)
     {
-        if ((((1 << sub_type) & priv->mgmt_frame_passthru_mask) == 0) && (sub_type != SUBTYPE_ACTION))
+        if ((((1U << sub_type) & priv->mgmt_frame_passthru_mask) == 0) && (sub_type != SUBTYPE_ACTION))
         {
             PRINTM(MINFO, "Dropping mgmt frame for subtype %d.\n", sub_type);
             LEAVE();
@@ -339,11 +339,11 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss
     (void)__memset(pmpriv->adapter, pext_cap, 0, sizeof(MrvlIETypes_ExtCap_t));
     pext_cap->header.type = wlan_cpu_to_le16(EXT_CAPABILITY);
     pext_cap->header.len  = wlan_cpu_to_le16(sizeof(ExtCap_t));
-    if ((((t_u8)(pmpriv->hotspot_cfg >> 8)) & HOTSPOT_ENABLE_INTERWORKING_IND) != 0U)
+    if ((((pmpriv->hotspot_cfg >> 8) & 0xFFU) & HOTSPOT_ENABLE_INTERWORKING_IND) != 0U)
     {
         pext_cap->ext_cap.Interworking = 1;
     }
-    if ((((t_u8)(pmpriv->hotspot_cfg >> 8)) & HOTSPOT_ENABLE_TDLS_IND) != 0U)
+    if ((((pmpriv->hotspot_cfg >> 8) & 0xFFU) & HOTSPOT_ENABLE_TDLS_IND) != 0U)
     {
         pext_cap->ext_cap.TDLSSupport = 1;
     }
@@ -418,7 +418,7 @@ static mlan_status wlan_rate_ioctl_get_rate_index(IN pmlan_adapter pmadapter, IN
  */
 static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req)
 {
-    t_s32 rate_index;
+    t_u16 rate_index;
     mlan_rate_format rate_format;
 #if (CONFIG_11AC) || (CONFIG_11AX)
     t_u32 nss;
@@ -438,7 +438,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
 #if (CONFIG_11AC) || (CONFIG_11AX)
     nss = ds_rate->param.rate_cfg.nss;
 #endif
-    rate_index = (t_s32)ds_rate->param.rate_cfg.rate;
+    rate_index = (t_u16)(ds_rate->param.rate_cfg.rate);
 
     if (ds_rate->param.rate_cfg.is_rate_auto == MTRUE)
     {
@@ -548,7 +548,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
             {
                 if ((rate_index <= MLAN_RATE_INDEX_MCS11) && (MLAN_RATE_NSS1 <= nss) && (nss <= MLAN_RATE_NSS2))
                 {
-                    bitmap_rates[18 + nss - MLAN_RATE_NSS1] = (1 << rate_index);
+                    bitmap_rates[18 + nss - MLAN_RATE_NSS1] = (shift_index << rate_index);
                     ret                                     = MLAN_STATUS_SUCCESS;
                 }
             }

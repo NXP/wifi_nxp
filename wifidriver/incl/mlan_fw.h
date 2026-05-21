@@ -1550,7 +1550,7 @@ typedef enum _ENH_PS_MODES
 /** MFPR bit in RSN capability */
 #define MFPR_BIT 6
 /** PMF ORing mask */
-#define PMF_MASK 0x00c0
+#define PMF_MASK ((t_u16)0xC0)
 
 /** Bit mask for TxPD flags field for Tx status report */
 #define MRVDRV_TxPD_FLAGS_TX_PACKET_STATUS MBIT(5)
