@@ -77,7 +77,13 @@ unsigned int a2hex(const char *s)
 
     while ((*s != '\0') && (isxdigit((unsigned char)(*s)) != 0))
     {
-        val = (val << 4) + hexc2bin(*s++);
+        /* Check for overflow before shifting: uint32_t max is 0xFFFFFFFF
+         * If val > 0x0FFFFFFF, shifting left by 4 would overflow */
+        if (val > (UINT32_MAX >> 4))
+        {
+            break;
+        }
+        val = (val << 4) + (uint32_t)hexc2bin(*s++);
     }
     return val;
 }
@@ -98,11 +104,16 @@ unsigned int a2hex_or_atoi(char *value)
     }
     else if (isdigit((unsigned char)*value) != 0)
     {
+        unsigned long tmp = 0UL;
         errno = 0;
-        ret   = (uint32_t)strtol(value, NULL, 10);
+        tmp   = strtoul(value, NULL, 10);
         if (errno != 0)
         {
             (void)PRINTF("Error during strtoul errno:%d", errno);
+        }
+        else
+        {
+            ret = (uint32_t)tmp;
         }
     }
     else
@@ -123,8 +134,21 @@ bool get_uint(const char *arg, unsigned int *dest, unsigned int len)
         {
             return true;
         }
+
+        /* Check for multiplication overflow: val * 10 must not exceed UINT_MAX */
+        if (val > (UINT_MAX / 10U))
+        {
+            return true;
+        }
         val *= 10U;
-        val += (unsigned int)arg[i] - (unsigned int)'0';
+
+        /* Check for addition overflow: val + digit must not exceed UINT_MAX */
+        unsigned int digit = (unsigned int)arg[i] - (unsigned int)'0';
+        if (val > (UINT_MAX - digit))
+        {
+            return true;
+        }
+        val += digit;
     }
 
     *dest = val;
@@ -188,7 +212,7 @@ bool get_channel_list(const char *arg, uint8_t *num_channels, uint8_t *chan_numb
     unsigned int len = 0;
     unsigned int i;
     uint8_t count = 0;
-    uint8_t val   = 0;
+    unsigned int val = 0U;
 
     len = strlen(arg);
 
@@ -202,9 +226,19 @@ bool get_channel_list(const char *arg, uint8_t *num_channels, uint8_t *chan_numb
     {
         if (arg[i] == sep)
         {
-            chan_number[count] = val;
+            if (val > (unsigned int)UINT8_MAX)
+            {
+                (void)PRINTF("Error: channel value out of range\r\n");
+                return true;
+            }
+            chan_number[count] = (uint8_t)val;
+            if (count >= (uint8_t)(UINT8_MAX - 1U))
+            {
+                (void)PRINTF("Error: channel count overflow\r\n");
+                return true;
+            }
             count++;
-            val = 0;
+            val = 0U;
             continue;
         }
 
@@ -212,16 +246,32 @@ bool get_channel_list(const char *arg, uint8_t *num_channels, uint8_t *chan_numb
         {
             return true;
         }
-        val *= 10U;
-        val += (uint8_t)arg[i] - (uint8_t)'0';
 
-        if (i == len - 1)
+        if (val > (UINT32_MAX / 10U))
         {
-            chan_number[count] = val;
+            (void)PRINTF("Error: channel value overflow\r\n");
+            return true;
+        }
+        val *= 10U;
+        val += (unsigned int)arg[i] - (unsigned int)'0';
+
+        if (i == len - 1U)
+        {
+            if (val > (unsigned int)UINT8_MAX)
+            {
+                (void)PRINTF("Error: channel value out of range\r\n");
+                return true;
+            }
+            chan_number[count] = (uint8_t)val;
         }
     }
 
-    *num_channels = count + 1;
+    if (count >= (uint8_t)(UINT8_MAX - 1U))
+    {
+        (void)PRINTF("Error: channel count overflow\r\n");
+        return true;
+    }
+    *num_channels = (uint8_t)(count + 1U);
     return false;
 }
 
@@ -231,6 +281,7 @@ char *cli_optarg = NULL;
 int cli_getopt(int argc, char **argv, const char *fmt)
 {
     char *opt, *c;
+    unsigned char opt_char;
 
     if (cli_optind == argc)
     {
@@ -247,10 +298,11 @@ int cli_getopt(int argc, char **argv, const char *fmt)
         return (int)'?';
     }
     cli_optind++;
-    c = strchr(fmt, (int)opt[1]);
+    opt_char = (unsigned char)opt[1];
+    c = strchr(fmt, (int)opt_char);
     if (c == NULL)
     {
-        return (int)opt[1];
+        return (int)opt_char;
     }
     if (c[1] == ':')
     {
@@ -265,8 +317,19 @@ int cli_getopt(int argc, char **argv, const char *fmt)
 /* allocate a copy of a string */
 char *string_dup(const char *s)
 {
-    char *snew = (char *)OSA_MemoryAllocate(strlen(s) + 1);
-    if (snew)
+    char *snew = NULL;
+    size_t len = strlen(s);
+
+    /* Check for overflow: len + 1 must not wrap around SIZE_MAX */
+    if (len == SIZE_MAX)
+    {
+        return NULL;
+    }
+
+    snew = (char *)OSA_MemoryAllocate(len + 1U);
+    if (snew != NULL)
+    {
         (void)strcpy(snew, s);
+    }
     return snew;
 }

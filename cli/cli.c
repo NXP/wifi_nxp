@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
 
 #include <cli.h>
 #include <cli_utils.h>
@@ -132,14 +133,27 @@ static bool hist_inited;
 
 static char *cli_strdup(const char *s, int len)
 {
-    char *result = OSA_MemoryAllocate(len + 1);
+    char *result = NULL;
     int i;
 
+    if (len < 0 || len >= INBUF_SIZE)
+    {
+        return NULL;
+    }
+
+    result = OSA_MemoryAllocate((size_t)len + 1U);
     if (result)
     {
         for (i = 0; i < len; i++)
         {
-            result[i] = s[i] == '\0' ? ' ' : s[i];
+            if (s[i] == '\0')
+            {
+                result[i] = (char)(' ');
+            }
+            else
+            {
+                result[i] = (char)(s[i]);
+            }
         }
 
         result[len] = '\0';
@@ -157,7 +171,12 @@ static int get_cmd_from_hist(int cmd_no, char *buf, int max_len)
 
     if (cmd_hist_arr[cmd_no])
     {
-        if (strlen(cmd_hist_arr[cmd_no]) >= max_len)
+        if (max_len < 0)
+        {
+            return -WM_FAIL;
+        }
+
+        if (strlen(cmd_hist_arr[cmd_no]) >= (size_t)max_len)
             return -WM_FAIL;
 
         if (cmd_hist_arr[cmd_no][0] == (char)(0x20))
@@ -167,7 +186,7 @@ static int get_cmd_from_hist(int cmd_no, char *buf, int max_len)
         }
         else
         {
-            strncpy(buf, cmd_hist_arr[cmd_no], max_len);
+            strncpy(buf, cmd_hist_arr[cmd_no], (size_t)max_len);
         }
         return WM_SUCCESS;
     }
@@ -182,7 +201,7 @@ static int store_cmd_to_hist(int cmd_no, const char *buf, int len)
 
     if (cmd_hist_arr[cmd_no])
     {
-        if (strcmp(cmd_hist_arr[cmd_no], buf) == 0U)
+        if (strcmp(cmd_hist_arr[cmd_no], buf) == 0)
             return WM_SUCCESS; /* avoid rewrite. */
         else if (cmd_hist_arr[cmd_no][0] == (char)(0x20))
         {
@@ -227,6 +246,11 @@ static int get_next_cmd_num_console()
     if (console_loop_num < 0)
         return -1;
 
+    if (console_loop_num >= INT_MAX)
+    {
+        return -1;
+    }
+
     return console_loop_num = ((console_loop_num + 1) % total_hist_cmds);
 }
 
@@ -239,9 +263,18 @@ static int get_prev_cmd_num_console()
         return -1;
 
     if ((console_loop_num - 1) < 0)
+    {
+        if (total_hist_cmds < 1)
+        {
+            return -1;
+        }
+
         return console_loop_num = total_hist_cmds - 1;
+    }
     else
+    {
         return --console_loop_num;
+    }
 }
 
 static int cmd_hist_is_duplicate(const char *cmd)
@@ -264,7 +297,7 @@ static int cmd_hist_is_duplicate(const char *cmd)
         return false;
     }
 
-    if (strcmp(tmpbuf, cmd) == 0U)
+    if (strcmp(tmpbuf, cmd) == 0)
     {
         return true; /* Duplicate */
     }
@@ -291,6 +324,9 @@ int cmd_hist_init()
 
 static void cmd_hist_add(const char *cmd, int len)
 {
+    int new_cmd_num;
+    int rv;
+
     if (!hist_inited)
         return;
 
@@ -300,8 +336,13 @@ static void cmd_hist_add(const char *cmd, int len)
     if (cmd_hist_is_duplicate(cmd))
         return;
 
-    int new_cmd_num = (last_cmd_num + 1) % MAX_CMDS_IN_HISTORY;
-    int rv          = store_cmd_to_hist(new_cmd_num, cmd, len);
+    if (last_cmd_num >= INT_MAX)
+    {
+        return;
+    }
+
+    new_cmd_num = (last_cmd_num + 1) % MAX_CMDS_IN_HISTORY;
+    rv          = store_cmd_to_hist(new_cmd_num, cmd, len);
     if (rv != WM_SUCCESS)
         return;
 
@@ -433,10 +474,17 @@ int handle_input(char *handle_inbuf)
 
                 if ((stat.inQuote == 0U) && (stat.inArg == 0U))
                 {
+                    if (argc >= (int)(sizeof(argv) / sizeof(argv[0])) || argc >= INBUF_SIZE)
+                    {
+                        return 2;
+                    }
                     stat.inArg   = 1;
                     stat.inQuote = 1;
                     argc++;
-                    argv[argc - 1] = &handle_inbuf[i + 1];
+                    if (argc >= 1)
+                    {
+                        argv[argc - 1] = &handle_inbuf[i + 1];
+                    }
                 }
                 else if ((stat.inQuote != 0U) && (stat.inArg != 0U))
                 {
@@ -466,9 +514,16 @@ int handle_input(char *handle_inbuf)
             default:
                 if (stat.inArg == 0U)
                 {
+                    if (argc >= (int)(sizeof(argv) / sizeof(argv[0])) || argc >= INBUF_SIZE)
+                    {
+                        return 2;
+                    }
                     stat.inArg = 1;
                     argc++;
-                    argv[argc - 1] = &handle_inbuf[i];
+                    if (argc >= 1)
+                    {
+                        argv[argc - 1] = &handle_inbuf[i];
+                    }
                 }
                 break;
         }
@@ -577,8 +632,11 @@ enum
 #if CONFIG_APP_FRM_CLI_HISTORY
 static void clear_line(unsigned int cnt)
 {
-    while (cnt--)
+    while (cnt > 0U)
+    {
+        cnt--;
         (void)PRINTF("\b \b");
+    }
 }
 #endif /* CONFIG_APP_FRM_CLI_HISTORY */
 
