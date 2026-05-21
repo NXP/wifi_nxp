@@ -4752,35 +4752,7 @@ int wifi_nxp_sta_remove(unsigned int bss_type, const uint8_t *addr)
         goto done;
     }
 
-#if 0
-    sta_info = OSA_MemoryAllocate(sizeof(mlan_ds_sta_info));
-    if (!sta_info)
-    {
-        wuap_e("Fail to alloc memory for mlan_ds_sta_info");
-        ret = -WM_FAIL;
-        goto done;
-    }
-
-    __memset(NULL, sta_info, 0x00, sizeof(mlan_ds_sta_info));
-
-    __memcpy(NULL, sta_info->peer_mac, addr, MLAN_MAC_ADDR_LENGTH);
-
-    wuap_d("wlan: UAP/GO remove peer station, address =" MACSTR "", MAC2STR(addr));
-
-    if (MLAN_STATUS_SUCCESS != wifi_uap_sta_info(priv, HostCmd_ACT_REMOVE_STA, sta_info))
-    {
-        wuap_e("uAP remove station failed");
-        ret = -WM_FAIL;
-        goto done;
-    }
-#endif
-
 done:
-#if 0
-    if (sta_info)
-        OSA_MemoryFree(sta_info);
-#endif
-
     LEAVE();
     return ret;
 }

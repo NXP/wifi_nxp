@@ -763,6 +763,18 @@ typedef struct _wmm_parameter_t
 /** Maximum channel number in bg mode */
 #define MAX_CHANNELS_BG 14U
 
+/** Maximum passphrase length */
+/** FIXME: This macro is used for both passphrase and PSK length
+ * As per standards maximum passphrase length is 63 and
+ * maximum PSK length is 64.
+ *
+ * For now setting it to 64 to avoid 4 way Handshake timeout issue
+ * if connection attempt is with PSK.
+ */
+#define MLAN_MAX_PASSPHRASE_LENGTH 64U
+/** Maximum passphrase length */
+#define MLAN_MAX_PASSWORD_LENGTH 255U
+
 #if UAP_SUPPORT
 /** Maximum packet forward control value */
 #define MAX_PKT_FWD_CTRL 15
@@ -915,11 +927,11 @@ typedef struct _wpa_param
     /** passphrase length */
     t_u32 length;
     /** passphrase */
-    t_u8 passphrase[64];
+    t_u8 passphrase[MLAN_MAX_PASSPHRASE_LENGTH];
     /** password length */
     t_u32 password_length;
     /** wpa3 sae password */
-    t_u8 password[255];
+    t_u8 password[MLAN_MAX_PASSWORD_LENGTH];
     /**group key rekey time in seconds */
     t_u32 gk_rekey_time;
 } wpa_param;
@@ -1922,22 +1934,11 @@ typedef enum
 // #define MLAN_MAX_KEY_LENGTH        32
 /** Minimum passphrase length */
 #define MLAN_MIN_PASSPHRASE_LENGTH 8U
-/** Maximum passphrase length */
-/** FIXME: This macro is used for both passphrase and PSK length
- * As per standards maximum passphrase length is 63 and
- * maximum PSK length is 64.
- *
- * For now setting it to 64 to avoid 4 way Handshake timeout issue
- * if connection attempt is with PSK.
- */
-#define MLAN_MAX_PASSPHRASE_LENGTH 64U
 /** PMK length */
 #define MLAN_PMK_HEXSTR_LENGTH 64
 /* A few details needed for WEP (Wireless Equivalent Privacy) */
 /** Minimum password length */
 #define MLAN_MIN_PASSWORD_LENGTH 1U
-/** Maximum passphrase length */
-#define MLAN_MAX_PASSWORD_LENGTH 255U
 /** 104 bits */
 #define MAX_WEP_KEY_SIZE 13U
 /** 40 bits RC4 - WEP */
