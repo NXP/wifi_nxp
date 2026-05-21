@@ -2307,7 +2307,10 @@ static void do_connect_failed(enum wlan_event_reason reason);
  * enter the CM_STA_SCANNING state now. */
 static int do_connect(int netindex)
 {
-
+    if ((netindex < 0) || (netindex >= WLAN_MAX_KNOWN_NETWORKS))
+    {
+        return -WM_E_INVAL;
+    }
 
     /* try the specified network */
     if (wlan.networks[netindex].role != WLAN_BSS_ROLE_STA)
@@ -2815,7 +2818,7 @@ static void update_network_params(struct wlan_network *network, const struct wif
     }
 
     network->beacon_period = res->beacon_period;
-    network->dtim_period   = res->dtim_period;
+    network->dtim_period   = (res->dtim_period > UINT8_MAX) ? UINT8_MAX : (uint8_t)res->dtim_period;
 #if CONFIG_DRIVER_OWE
     network->owe_trans_mode = res->trans_mode;
 
@@ -3500,7 +3503,10 @@ static void wlcm_process_sta_addr_config_event(struct wifi_message *msg,
             else if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
                 if_handle = net_get_wfd_handle();
 #endif
-            (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
+            if (if_handle)
+            {
+                (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
+            }
             wlan.sta_state = CM_STA_CONNECTED;
             if (wlan.connect_wakelock_taken)
             {
@@ -5377,7 +5383,10 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
         }
 #endif
         net_configure_dns((struct net_ip_config *)&network->ip, network->role);
-        (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
+        if (if_handle)
+        {
+            (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
+        }
         CONNECTION_EVENT(WLAN_REASON_ADDRESS_SUCCESS, NULL);
         wlan.sta_state      = CM_STA_CONNECTED;
         *next               = CM_STA_CONNECTED;
@@ -5594,8 +5603,8 @@ static int wlcm_process_add_unspecified_network(const char *name)
     }
 
     (void)memset(network, 0, sizeof(struct wlan_network));
-    (void)memcpy(network->name, name, strlen(name));
-    len = strlen(name);
+    len = MIN(strlen(name), sizeof(network->name) - 1);
+    (void)memcpy(network->name, name, len);
     network->name[len] = '\0';
     (void)memcpy(network->ssid, ssid, strlen(ssid));
     network->ssid[IEEEtypes_SSID_SIZE] = '\0';
@@ -6764,7 +6773,10 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
                 }
 #endif
 
-                (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
+                if (if_handle)
+                {
+                    (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
+                }
                 /* UAP case set dns same as gateway */
                 network->ip.ipv4.dns1 = network->ip.ipv4.gw;
                 network->ip.ipv4.dns2 = 0;
@@ -10492,7 +10504,8 @@ INVAL:
 
 int wlan_remove_network(const char *name)
 {
-    unsigned int len, i;
+    unsigned int len;
+    int i = 0;
 #if CONFIG_WPA_SUPP
     int ret = -WM_E_INVAL;
     struct netif *netif = net_get_sta_interface();
@@ -11129,6 +11142,12 @@ int wlan_reassociate(void)
 #endif
 #endif
 
+    if (wlan.cur_network_idx < 0)
+    {
+        wlcm_d("Invalid wlan.cur_network_idx=%d", wlan.cur_network_idx);
+        return WLAN_ERROR_STATE;
+    }
+
     wlcm_d("taking the scan lock (reassociate scan)");
     dbg_lock_info();
     ret = OSA_SemaphoreWait((osa_semaphore_handle_t)wlan.scan_lock, osaWaitForever_c);
@@ -11142,7 +11161,7 @@ int wlan_reassociate(void)
 
     wlan.roam_reassoc = true;
 
-    ret = send_user_request(WLAN_BSS_TYPE_STA, CM_STA_USER_REQUEST_CONNECT, wlan.cur_network_idx);
+    ret = send_user_request(WLAN_BSS_TYPE_STA, CM_STA_USER_REQUEST_CONNECT, (unsigned int)wlan.cur_network_idx);
     if (ret != WM_SUCCESS)
     {
         wlcm_d("Error: Reassociate failed");
@@ -11641,7 +11660,7 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
     {
         res->role = WLAN_BSS_ROLE_STA;
     }
-    res->dot11n = (uint8_t)desc->phtcap_ie_present;
+    res->dot11n = (desc->phtcap_ie_present) ? 1U: 0U;
 #if CONFIG_11AC
     res->dot11ac = (uint8_t)desc->pvhtcap_ie_present;
 #endif
@@ -11649,7 +11668,7 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
     res->dot11ax = (uint8_t)desc->phecap_ie_present;
 #endif
 
-    res->wmm = (uint8_t)desc->wmm_ie_present;
+    res->wmm = (desc->wmm_ie_present) ? 1U: 0U;
 #if (CONFIG_WPA_SUPP_WPS)
     if (desc->wps_IE_exist == true)
     {
@@ -12381,7 +12400,7 @@ bool wlan_is_power_save_enabled(void)
     return false;
 }
 
-void wlan_configure_null_pkt_interval(int time_in_secs)
+void wlan_configure_null_pkt_interval(unsigned int time_in_secs)
 {
     wifi_configure_null_pkt_interval((unsigned int)time_in_secs);
 }

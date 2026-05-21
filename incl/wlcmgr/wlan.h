@@ -3725,7 +3725,7 @@ bool wlan_is_power_save_enabled(void);
  *                             0  Null packet interval is unchanged,
  *                             n  Null packet interval in seconds.
  */
-void wlan_configure_null_pkt_interval(int time_in_secs);
+void wlan_configure_null_pkt_interval(unsigned int time_in_secs);
 
 #ifndef RW610
 /** This API can be used to set the mode of TX/RX antenna.
