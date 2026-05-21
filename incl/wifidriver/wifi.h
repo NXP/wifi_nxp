@@ -96,10 +96,10 @@ extern t_u8 wifi_tx_block_cnt;
 extern t_u8 wifi_rx_status;
 extern t_u8 wifi_rx_block_cnt;
 
-extern int16_t g_bcn_nf_last;
-extern uint8_t g_rssi;
-extern uint16_t g_data_nf_last;
-extern uint16_t g_data_snr_last;
+extern t_s16 g_bcn_nf_last;
+extern t_s16 g_rssi;
+extern t_s8 g_data_nf_last;
+extern t_s8 g_data_snr_last;
 
 #if CONFIG_WIFI_RECOVERY
 extern bool wifi_recovery_enable;
@@ -927,7 +927,7 @@ int wrapper_wlan_cmd_11n_delba_rspgen(void *saved_event_buff);
 
 int wrapper_wlan_ecsa_enable(void);
 
-int wrapper_wlan_sta_ampdu_enable(const t_u8 interface
+mlan_status wrapper_wlan_sta_ampdu_enable(const t_u8 interface
 #if CONFIG_WMM
     ,t_u8 tid
 #endif

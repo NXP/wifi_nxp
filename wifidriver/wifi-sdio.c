@@ -1692,8 +1692,8 @@ static void wlan_get_mac_addr_wfd(void)
 }
 #endif
 
-void wifi_prepare_get_fw_ver_ext_cmd(HostCmd_DS_COMMAND *cmd, int seq_number, int version_str_sel);
-static void wlan_get_fw_ver_ext(int version_str_sel)
+void wifi_prepare_get_fw_ver_ext_cmd(HostCmd_DS_COMMAND *cmd, int seq_number, t_u8 version_str_sel);
+static void wlan_get_fw_ver_ext(t_u8 version_str_sel)
 {
     t_u32 tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
     uint32_t resp;

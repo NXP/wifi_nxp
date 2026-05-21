@@ -368,7 +368,7 @@ static void wlan_update_chan_statistics(mlan_private *pmpriv, MrvlIEtypes_Channe
     mlan_adapter *pmadapter = pmpriv->adapter;
     t_u8 i;
     chan_statistics_t *pchan_stats = (chan_statistics_t *)((t_u8 *)pchanstats_tlv + sizeof(MrvlIEtypesHeader_t));
-    t_u8 num_chan                  = wlan_le16_to_cpu(pchanstats_tlv->header.len) / sizeof(chan_statistics_t);
+    t_u16 num_chan                 = wlan_le16_to_cpu(pchanstats_tlv->header.len) / sizeof(chan_statistics_t);
 
     ENTER();
 
@@ -2142,7 +2142,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                             pbss_entry->mbo_assoc_disallowed = true;
                         }
 
-                        mbo_cur_len += (t_u8)MBO_ATTR_HEADER_LEN + mbo_attr_len;
+                        mbo_cur_len += MBO_ATTR_HEADER_LEN + mbo_attr_len;
                         pcurrent_attr = pcurrent_attr + MBO_ATTR_HEADER_LEN + mbo_attr_len;
                     }
                 }
@@ -2386,8 +2386,8 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
 static t_u16 wlan_get_chan_load(mlan_adapter *pmadapter, t_u8 channel)
 {
     t_u16 chan_load = 0;
-    int i;
-    for (i = 0; i < (int)pmadapter->num_in_chan_stats; i++)
+    t_u32 i;
+    for (i = 0; i < pmadapter->num_in_chan_stats; i++)
     {
         if ((pmadapter->pchan_stats[i].chan_num == channel) && pmadapter->pchan_stats[i].cca_scan_duration)
         {
@@ -2402,8 +2402,8 @@ static t_u16 wlan_get_chan_load(mlan_adapter *pmadapter, t_u8 channel)
 static t_u16 wlan_get_chan_noise(mlan_adapter *pmadapter, t_u8 channel)
 {
     t_u16 chan_noise = 0;
-    int i;
-    for (i = 0; i < (int)pmadapter->num_in_chan_stats; i++)
+    t_u32 i;
+    for (i = 0; i < pmadapter->num_in_chan_stats; i++)
     {
         if ((pmadapter->pchan_stats[i].chan_num == channel) && pmadapter->pchan_stats[i].noise)
         {
@@ -2422,16 +2422,16 @@ static t_u16 wlan_get_chan_noise(mlan_adapter *pmadapter, t_u8 channel)
  *  @param min_flag     flag to get min rssi
  *  @return             rssi
  */
-static t_u8 wlan_get_chan_rssi(mlan_adapter *pmadapter, t_u8 channel, t_u8 min_flag)
+static t_s8 wlan_get_chan_rssi(mlan_adapter *pmadapter, t_u8 channel, t_u8 min_flag)
 {
-    t_u8 rssi = 0;
-    int i;
-    for (i = 0; i < (int)pmadapter->num_in_scan_table; i++)
+    t_s8 rssi = 0;
+    t_u32 i;
+    for (i = 0; i < pmadapter->num_in_scan_table; i++)
     {
         if (pmadapter->pscan_table[i].channel == channel)
         {
             if (rssi == 0)
-                rssi = (t_s32)pmadapter->pscan_table[i].rssi;
+                rssi = (t_s8)pmadapter->pscan_table[i].rssi;
             else
             {
                 if (min_flag)
@@ -2460,8 +2460,8 @@ static t_void wlan_update_chan_rssi(mlan_adapter *pmadapter)
     {
         if (pmadapter->pchan_stats[i].chan_num && pmadapter->pchan_stats[i].cca_scan_duration)
         {
-            min_rssi = -wlan_get_chan_rssi(pmadapter, pmadapter->pchan_stats[i].chan_num, MFALSE);
-            max_rssi = -wlan_get_chan_rssi(pmadapter, pmadapter->pchan_stats[i].chan_num, MTRUE);
+            min_rssi = wlan_get_chan_rssi(pmadapter, pmadapter->pchan_stats[i].chan_num, MFALSE);
+            max_rssi = wlan_get_chan_rssi(pmadapter, pmadapter->pchan_stats[i].chan_num, MTRUE);
             rss      = min_rssi - pmadapter->pchan_stats[i].noise;
             // rss should always > 0, FW need fix the wrong
             // rssi/noise in scantable
@@ -3719,7 +3719,7 @@ static mlan_status wlan_update_ssid_in_beacon_buf(mlan_adapter *pmadapter,
     t_u8 *pbeacon_buf   = MNULL;
 #endif
     t_u32 beacon_buf_size = 0;
-    t_s8 offset           = pnew_entry->ssid.ssid_len - pbss_entry->ssid.ssid_len;
+    t_s16 offset          = pnew_entry->ssid.ssid_len - pbss_entry->ssid.ssid_len;
     mlan_status ret       = MLAN_STATUS_FAILURE;
 
     if (pnew_entry->ssid.ssid_len >= pbss_entry->ssid.ssid_len)
@@ -3898,7 +3898,7 @@ static void wlan_gen_multi_bssid_by_bssid_index(pmlan_adapter pmadapter,
     (void)__memcpy(pmadapter, (t_u8 *)new_bssid, (t_u8 *)&pbss_entry->mac_address,
                    MIN(sizeof(mlan_802_11_mac_addr), sizeof(new_bssid)));
 
-    mask         = (mask >> (8 - max_bssid_indicator));
+    mask         = (t_u8)(mask >> (8 - max_bssid_indicator));
     bssid_a      = src_bssid[5] & (~mask);
     src_bssid[5] = (src_bssid[5] + bssid_index) & mask;
     new_bssid[5] = bssid_a | src_bssid[5];
@@ -3928,6 +3928,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
                                                  t_u32 *num_in_table,
                                                  t_u8 max_bssid_indicator)
 {
+    mlan_status status                        = MLAN_STATUS_SUCCESS;
     mlan_adapter *pmadapter                   = pmpriv->adapter;
     IEEEtypes_Header_t *pheader               = (IEEEtypes_Header_t *)pbss_profile->profile_data;
     IEEEtypes_MultiBSSIDIndex_t *pbssid_index = MNULL;
@@ -3935,7 +3936,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
     IEEEtypes_Generic_t *prsn                 = MNULL;
     IEEEtypes_NotxBssCap_t *pcap              = (IEEEtypes_NotxBssCap_t *)pbss_profile->profile_data;
     t_u8 *pos                                 = pbss_profile->profile_data;
-    t_s8 left_len                             = pbss_profile->ieee_hdr.len;
+    t_u8 left_len                             = pbss_profile->ieee_hdr.len;
     t_u8 ret                                  = MFALSE;
     t_u32 bss_idx;
     t_u32 lowest_rssi_index        = 0;
@@ -3973,7 +3974,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
     while (left_len >= 2)
     {
         pheader = (IEEEtypes_Header_t *)pos;
-        if ((t_s8)(pheader->len + sizeof(IEEEtypes_Header_t)) > left_len)
+        if ((pheader->len + sizeof(IEEEtypes_Header_t)) > left_len)
         {
             PRINTM(MMSG, "invalid IE length = %d left len %d\n", pheader->len, left_len);
             break;
@@ -4035,8 +4036,8 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
     if (ret == MTRUE)
     {
 #if !CONFIG_MEM_POOLS
-        ret = pcb->moal_malloc(pmadapter->pmoal_handle, sizeof(BSSDescriptor_t), MLAN_MEM_DEF, (t_u8 **)&bss_new_entry);
-        if (ret != MLAN_STATUS_SUCCESS || !bss_new_entry)
+        status = pcb->moal_malloc(pmadapter->pmoal_handle, sizeof(BSSDescriptor_t), MLAN_MEM_DEF, (t_u8 **)&bss_new_entry);
+        if (status != MLAN_STATUS_SUCCESS || !bss_new_entry)
         {
             PRINTM(MERROR, "Memory allocation for bss_new_entry failed!\n");
             goto done;
@@ -4200,6 +4201,13 @@ static t_void wlan_parse_multi_bssid_ie(mlan_private *pmpriv,
 
     if (!pmulti_bssid)
         return;
+
+    if (pmulti_bssid->ieee_hdr.len < 4)
+    {
+        PRINTM(MINFO, "MBSSID IE length error!\n");
+        return;
+    }
+
     bytes_left   = pmulti_bssid->ieee_hdr.len - 1;
     pcurrent_ptr = pmulti_bssid->sub_elem_data;
     while (bytes_left >= 2)

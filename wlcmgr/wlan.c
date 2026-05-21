@@ -10884,7 +10884,7 @@ int wlan_get_network(unsigned int index, struct wlan_network *network)
 
 int wlan_get_current_nf(void)
 {
-    return -g_data_nf_last;
+    return g_data_nf_last;
 }
 
 int wlan_get_current_signal_strength(short *rssi, int *snr)
@@ -10909,8 +10909,8 @@ int wlan_get_average_signal_strength(short *rssi, int *snr)
 
 int wlan_get_current_rssi(short *rssi)
 {
-    g_rssi = (uint8_t)(g_data_snr_last - g_data_nf_last);
-    *rssi  = (short)(g_rssi - 256U);
+    g_rssi = g_data_snr_last + g_data_nf_last;
+    *rssi  = (short)g_rssi;
     return WM_SUCCESS;
 }
 

@@ -1061,8 +1061,8 @@ void nxp_wifi_internal_register_rx_cb(int (*rx_cb_fn)(struct net_if *iface, stru
     net_internal_rx_callback = rx_cb_fn;
 }
 
-uint16_t g_data_nf_last;
-uint16_t g_data_snr_last;
+t_s8 g_data_nf_last;
+t_s8 g_data_snr_last;
 
 static t_u8 rfc1042_eth_hdr[MLAN_MAC_ADDR_LENGTH] = {0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00};
 

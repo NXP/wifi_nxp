@@ -761,8 +761,8 @@ static int wlan_get_mac_addr_wfd()
 }
 #endif
 
-void wifi_prepare_get_fw_ver_ext_cmd(void *cmd, int seq_number, int version_str_sel);
-static int wlan_get_fw_ver_ext(int version_str_sel)
+void wifi_prepare_get_fw_ver_ext_cmd(void *cmd, int seq_number, t_u8 version_str_sel);
+static int wlan_get_fw_ver_ext(t_u8 version_str_sel)
 {
     (void)memset(outbuf, 0, IMU_INIT_FW_CMD_SIZE);
 

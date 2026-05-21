@@ -2082,7 +2082,7 @@ typedef struct _mlan_init_para
 typedef struct
 {
     /** Number of blacklisted BSSIDs */
-    int num_bssid;
+    t_u8 num_bssid;
     /** Blacklisted BSSIDs */
     mlan_802_11_mac_addr bssids[MLAN_MAX_BLACKLIST_BSSID];
 } mlan_blacklisted_bssid_params;

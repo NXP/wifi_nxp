@@ -968,7 +968,7 @@ int wifi_get_scan_result(unsigned int index, struct wifi_scan_result2 **desc)
 {
     (void)memset(&common_desc, 0x00, sizeof(struct wifi_scan_result2));
     int rv =
-        wrapper_bssdesc_first_set((int)index, common_desc.bssid, &common_desc.is_ibss_bit_set, &common_desc.ssid_len,
+        wrapper_bssdesc_first_set(index, common_desc.bssid, &common_desc.is_ibss_bit_set, &common_desc.ssid_len,
                                   common_desc.ssid, &common_desc.Channel, &common_desc.RSSI, &common_desc.beacon_period,
                                   &common_desc.dtim_period, &common_desc.WPA_WPA2_WEP, &common_desc.wpa_mcstCipher,
                                   &common_desc.wpa_ucstCipher, &common_desc.rsn_mcstCipher, &common_desc.rsn_ucstCipher,
@@ -980,7 +980,7 @@ int wifi_get_scan_result(unsigned int index, struct wifi_scan_result2 **desc)
     }
 
     /* Country info not populated */
-    rv = wrapper_bssdesc_second_set((int)index, &common_desc.phtcap_ie_present, &common_desc.phtinfo_ie_present,
+    rv = wrapper_bssdesc_second_set(index, &common_desc.phtcap_ie_present, &common_desc.phtinfo_ie_present,
 #if CONFIG_11AC
                                     &common_desc.pvhtcap_ie_present,
 #endif

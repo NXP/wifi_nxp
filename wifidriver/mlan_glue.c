@@ -123,8 +123,8 @@ mlan_adapter *mlan_adap;
 
 static mlan_device mlan_dev;
 
-uint8_t g_rssi;
-int16_t g_bcn_nf_last;
+t_s16 g_rssi;
+t_s16 g_bcn_nf_last;
 
 /* fixme: This global variable is needed
  *  to save the correct event since SLP_CFRM command
@@ -153,7 +153,7 @@ void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint
 int wifi_set_tx_power_ext(uint32_t len, uint32_t *power_data);
 int wifi_send_bss_ioctl(mlan_ds_bss *bss);
 
-void wifi_prepare_get_fw_ver_ext_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number, int version_str_sel);
+void wifi_prepare_get_fw_ver_ext_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number, t_u8 version_str_sel);
 void wifi_prepare_get_value1(HostCmd_DS_COMMAND *cmd, t_u16 seq_number);
 void wifi_prepare_enable_amsdu_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number);
 void wifi_prepare_get_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number);
@@ -823,7 +823,7 @@ static mlan_status do_wlan_ret_11n_delba(mlan_private *priv, HostCmd_DS_COMMAND 
 }
 
 // Only Enable AMPDU for station interface
-int wrapper_wlan_sta_ampdu_enable(const t_u8 interface
+mlan_status wrapper_wlan_sta_ampdu_enable(const t_u8 interface
 #if CONFIG_WMM
     ,t_u8 tid
 #endif
@@ -843,7 +843,13 @@ int wrapper_wlan_sta_ampdu_enable(const t_u8 interface
         {
             wlan_11n_create_txbastream_tbl(pmpriv, cur_mac, BA_STREAM_NOT_SETUP);
 
-            ptx_tbl              = wlan_11n_get_txbastream_tbl(pmpriv, cur_mac);
+            ptx_tbl = wlan_11n_get_txbastream_tbl(pmpriv, cur_mac);
+            if (!ptx_tbl)
+            {
+                wlan_release_ralist_lock(pmpriv);
+                return MLAN_STATUS_FAILURE;
+            }
+
             ptx_tbl->txba_thresh = 1;
 
             if (pmpriv->curr_bss_params.bss_descriptor.pht_cap)
@@ -3023,6 +3029,10 @@ static void load_ver_ext(HostCmd_DS_COMMAND *resp)
         return;
     }
 
+    if (!resp || resp->size < 10U) {
+        return;
+    }
+
     HostCmd_DS_VERSION_EXT *ver_ext     = &resp->params.verext;
     wifi_fw_version_ext_t *user_ver_ext = (wifi_fw_version_ext_t *)wm_wifi.cmd_resp_priv;
 
@@ -4178,8 +4188,11 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                                         else
                                         {
 #endif /* CONFIG_11AC */
-                                            mod_num =
-                                                ((t_u8)pTlvHdr->header.len - 4U) / ((t_u8)sizeof(mod_group_setting));
+                                            if (pTlvHdr->header.len >= 4U) {
+                                                mod_num = (pTlvHdr->header.len - 4U) / sizeof(mod_group_setting);
+                                            } else {
+                                                mod_num = 0;
+                                            }
 #if !CONFIG_11AC
                                         }
 #endif /* CONFIG_11AC */
@@ -4207,7 +4220,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                                         break;
                                 }
                                 left_len -= (pTlvHdr->header.len + (t_u16)sizeof(pTlvHdr->header));
-                                pByte += (t_u8)pTlvHdr->header.len + (t_u8)sizeof(pTlvHdr->header);
+                                pByte += pTlvHdr->header.len + sizeof(pTlvHdr->header);
                             }
                         }
                     }
@@ -5589,7 +5602,7 @@ static void wifi_handle_blocked_sta_report(Event_Ext_t *evt)
 {
     mlan_adapter *pmadapter = mlan_adap;
     t_u16 reason_code       = 0;
-    int idx                 = 0;
+    t_u8 idx                = 0;
 
     reason_code = evt->reason_code;
     if (reason_code == REASON_CODE_BSS_BLOCKED)
@@ -6930,7 +6943,7 @@ done:
     LEAVE();
 }
 
-int wrapper_bssdesc_first_set(int bss_index,
+int wrapper_bssdesc_first_set(unsigned int bss_index,
                               uint8_t *BssId,
                               bool *is_ibss_bit_set,
                               int *ssid_len,
@@ -6953,7 +6966,7 @@ int wrapper_bssdesc_first_set(int bss_index,
     t_u8 pwe_rsnxo = 0;
     t_u8 pwe_superset = 0;
 
-    if (bss_index >= (int)mlan_adap->num_in_scan_table)
+    if (bss_index >= mlan_adap->num_in_scan_table)
     {
         wifi_w("Unable to find given entry %d in BSS table", bss_index);
         return -WM_FAIL;
@@ -7083,7 +7096,7 @@ int wrapper_bssdesc_first_set(int bss_index,
     return WM_SUCCESS;
 }
 
-int wrapper_bssdesc_second_set(int bss_index,
+int wrapper_bssdesc_second_set(unsigned int bss_index,
                                bool *phtcap_ie_present,
                                bool *phtinfo_ie_present,
 #if CONFIG_11AC
@@ -7494,7 +7507,7 @@ void wifi_prepare_get_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
     cmd->params.mac_addr.action = HostCmd_ACT_GEN_GET;
 }
 
-void wifi_prepare_get_fw_ver_ext_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number, int version_str_sel)
+void wifi_prepare_get_fw_ver_ext_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number, t_u8 version_str_sel)
 {
     cmd->command                       = HostCmd_CMD_VERSION_EXT;
     cmd->size                          = sizeof(HostCmd_DS_VERSION_EXT) + S_DS_GEN;

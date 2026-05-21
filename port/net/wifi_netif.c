@@ -45,8 +45,8 @@
 
 /*------------------------------------------------------*/
 
-uint16_t g_data_nf_last;
-uint16_t g_data_snr_last;
+t_s8 g_data_nf_last;
+t_s8 g_data_snr_last;
 
 #if defined(SDK_OS_FREE_RTOS)
 

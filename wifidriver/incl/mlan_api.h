@@ -541,7 +541,7 @@ int _wlan_rrm_scan_cb(unsigned int count);
 void wlan_rrm_request_scan(wlan_scan_params_v2_t *wlan_scan_param, wlan_rrm_scan_cb_param *scan_cb_param);
 #endif
 
-int wrapper_bssdesc_first_set(int bss_index,
+int wrapper_bssdesc_first_set(unsigned int bss_index,
                               uint8_t *BssId,
                               bool *is_ibss_bit_set,
                               int *ssid_len,
@@ -559,7 +559,7 @@ int wrapper_bssdesc_first_set(int bss_index,
                               t_u8 *ap_mfpr,
                               t_u8 *ap_pwe);
 
-int wrapper_bssdesc_second_set(int bss_index,
+int wrapper_bssdesc_second_set(unsigned int bss_index,
                                bool *phtcap_ie_present,
                                bool *phtinfo_ie_present,
 #if CONFIG_11AC
