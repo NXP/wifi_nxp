@@ -51,14 +51,28 @@ static int ac_add(uint8_t *chaddr, uint32_t client_ip, enum dhcp_instance_id ins
     /* adds ip-mac mapping in cache */
     if (ac_not_full(instance_id))
     {
-        dhcps[instance_id].ip_mac_mapping[dhcps[instance_id].count_clients].client_mac[0] = chaddr[0];
-        dhcps[instance_id].ip_mac_mapping[dhcps[instance_id].count_clients].client_mac[1] = chaddr[1];
-        dhcps[instance_id].ip_mac_mapping[dhcps[instance_id].count_clients].client_mac[2] = chaddr[2];
-        dhcps[instance_id].ip_mac_mapping[dhcps[instance_id].count_clients].client_mac[3] = chaddr[3];
-        dhcps[instance_id].ip_mac_mapping[dhcps[instance_id].count_clients].client_mac[4] = chaddr[4];
-        dhcps[instance_id].ip_mac_mapping[dhcps[instance_id].count_clients].client_mac[5] = chaddr[5];
-        dhcps[instance_id].ip_mac_mapping[dhcps[instance_id].count_clients].client_ip     = client_ip;
-        dhcps[instance_id].count_clients++;
+        int idx = dhcps[instance_id].count_clients;
+
+        /* Ensure index is valid and non-negative before use */
+        if (idx < 0 || idx >= MAC_IP_CACHE_SIZE)
+        {
+            return -WM_FAIL;
+        }
+
+        dhcps[instance_id].ip_mac_mapping[idx].client_mac[0] = chaddr[0];
+        dhcps[instance_id].ip_mac_mapping[idx].client_mac[1] = chaddr[1];
+        dhcps[instance_id].ip_mac_mapping[idx].client_mac[2] = chaddr[2];
+        dhcps[instance_id].ip_mac_mapping[idx].client_mac[3] = chaddr[3];
+        dhcps[instance_id].ip_mac_mapping[idx].client_mac[4] = chaddr[4];
+        dhcps[instance_id].ip_mac_mapping[idx].client_mac[5] = chaddr[5];
+        dhcps[instance_id].ip_mac_mapping[idx].client_ip     = client_ip;
+
+        /* Guard against signed integer overflow before incrementing */
+        if (dhcps[instance_id].count_clients < INT_MAX)
+        {
+            dhcps[instance_id].count_clients++;
+        }
+
         return WM_SUCCESS;
     }
     return -WM_FAIL;
@@ -123,10 +137,11 @@ static bool ac_valid_ip(uint32_t requested_ip, enum dhcp_instance_id instance_id
 
 static void write_u32(char *dest, uint32_t be_value)
 {
-    *dest++ = be_value & 0xFFU;
-    *dest++ = (be_value >> 8) & 0xFFU;
-    *dest++ = (be_value >> 16) & 0xFFU;
-    *dest   = be_value >> 24;
+    uint8_t *p = (uint8_t *)dest;
+    p[0] = (uint8_t)(be_value & 0xFFU);
+    p[1] = (uint8_t)((be_value >> 8U) & 0xFFU);
+    p[2] = (uint8_t)((be_value >> 16U) & 0xFFU);
+    p[3] = (uint8_t)((be_value >> 24U) & 0xFFU);
 }
 
 /* Configure the DHCP dynamic IP lease time*/
@@ -161,13 +176,24 @@ static unsigned int next_yiaddr(enum dhcp_instance_id instance_id)
     new_ip = ac_lookup_mac(hdr->chaddr, instance_id);
     if (new_ip == (CLIENT_IP_NOT_FOUND))
     {
+        if (dhcps[instance_id].current_ip == UINT32_MAX)
+        {
+            dhcp_e("next_yiaddr: current_ip would wrap around");
+            return (unsigned int)CLIENT_IP_NOT_FOUND;
+        }
+
         /* next IP address in the subnet */
         dhcps[instance_id].current_ip = ntohl(dhcps[instance_id].my_ip & dhcps[instance_id].netmask) |
                                         ((dhcps[instance_id].current_ip + 1U) & ntohl(~dhcps[instance_id].netmask));
         while (!ac_valid_ip(dhcps[instance_id].current_ip, instance_id))
         {
+            if (dhcps[instance_id].current_ip == UINT32_MAX)
+            {
+                dhcp_e("next_yiaddr: current_ip would wrap around in while loop");
+                return (unsigned int)CLIENT_IP_NOT_FOUND;
+            }
             dhcps[instance_id].current_ip = ntohl(dhcps[instance_id].my_ip & dhcps[instance_id].netmask) |
-                                            ((dhcps[instance_id].current_ip + 1) & ntohl(~dhcps[instance_id].netmask));
+                                            ((dhcps[instance_id].current_ip + 1U) & ntohl(~dhcps[instance_id].netmask));
         }
 
         new_ip = htonl(dhcps[instance_id].current_ip);
@@ -213,7 +239,13 @@ static unsigned int make_response(char *msg, enum dhcp_message_type type, enum d
 
     if (type == DHCP_MESSAGE_NAK)
     {
-        return (unsigned int)(offset - msg);
+        ptrdiff_t diff = offset - msg;
+        if (diff < 0)
+        {
+            dhcp_e("make_response: invalid offset for NAK response");
+            return 0U;
+        }
+        return (unsigned int)diff;
     }
 
     opt       = (struct bootp_option *)(void *)offset;
@@ -250,7 +282,13 @@ static unsigned int make_response(char *msg, enum dhcp_message_type type, enum d
     opt->type = BOOTP_END_OPTION;
     offset++;
 
-    return (unsigned int)(offset - msg);
+    ptrdiff_t diff = offset - msg;
+    if (diff < 0)
+    {
+        dhcp_e("make_response: invalid offset for response");
+        return 0U;
+    }
+    return (unsigned int)diff;
 }
 
 int dhcp_get_ip_from_mac(uint8_t *client_mac, uint32_t *client_ip, enum dhcp_instance_id instance_id)
@@ -267,6 +305,7 @@ int dhcp_send_response(int sock, struct sockaddr *addr, char *msg, int len)
 {
     int nb;
     unsigned int sent       = 0;
+    unsigned int total_len;
 
 #if CONFIG_DHCP_SERVER_DEBUG
     struct sockaddr_in *sin = (struct sockaddr_in *)addr;
@@ -281,15 +320,24 @@ int dhcp_send_response(int sock, struct sockaddr *addr, char *msg, int len)
     dhcp_d("  sin_addr: %s (0x%08x)", inet_ntoa(tmp_addr), ntohl(sin->sin_addr.s_addr));
 #endif
 
-    while (sent < len)
+    /* Validate len is non-negative before casting to unsigned int */
+    if (len <= 0)
     {
-        nb = sendto(sock, msg + sent, len - sent, 0, addr, sizeof(struct sockaddr_in));
+        dhcp_e("invalid response length: %d", len);
+        return -WM_E_DHCPD_RESP_SEND;
+    }
+
+    total_len = (unsigned int)len;
+
+    while (sent < total_len)
+    {
+        nb = sendto(sock, msg + sent, (int)(total_len - sent), 0, addr, sizeof(struct sockaddr_in));
         if (nb < 0)
         {
             dhcp_e("failed to send response");
             return -WM_E_DHCPD_RESP_SEND;
         }
-        sent += nb;
+        sent += (unsigned int)nb;
     }
 
     dhcp_d("sent response, %d bytes %s", sent, inet_ntoa(((struct sockaddr_in *)addr)->sin_addr));
@@ -304,11 +352,12 @@ static int process_dhcp_message(char *msg, int len, enum dhcp_instance_id instan
     unsigned int consumed = 0;
     bool got_ip           = 0;
     bool need_ip          = 0;
-    int ret               = WM_SUCCESS;
     bool got_client_ip    = 0;
     uint32_t new_ip;
+    unsigned int resp_len;
 
-    if ((msg == NULL) || len < sizeof(struct bootp_header) + sizeof(struct bootp_option) + 1U)
+    if ((msg == NULL) || (len < 0) ||
+        ((unsigned int)len < sizeof(struct bootp_header) + sizeof(struct bootp_option) + 1U))
     {
         return -WM_E_DHCPD_INVALID_INPUT;
     }
@@ -445,8 +494,14 @@ static int process_dhcp_message(char *msg, int len, enum dhcp_instance_id instan
 
     if (response_type != DHCP_NO_RESPONSE)
     {
-        ret = make_response(msg, (enum dhcp_message_type)response_type, instance_id);
-        ret = SEND_RESPONSE(dhcps[instance_id].sock, (struct sockaddr *)(void *)&dhcps[instance_id].baddr, msg, ret);
+        resp_len = make_response(msg, (enum dhcp_message_type)response_type, instance_id);
+        if (resp_len > (unsigned int)INT_MAX)
+        {
+            dhcp_e("make_response returned invalid length: %u", resp_len);
+            return -WM_E_DHCPD_RESP_SEND;
+        }
+        (void)SEND_RESPONSE(dhcps[instance_id].sock, (struct sockaddr *)(void *)&dhcps[instance_id].baddr, msg,
+                            (int)resp_len);
         if (response_type == DHCP_MESSAGE_ACK)
         {
             (void)send_gratuitous_arp(dhcps[instance_id].my_ip, instance_id);
@@ -518,10 +573,17 @@ void dhcpd_task(void *arg)
     int len;
     socklen_t flen = sizeof(caddr);
     fd_set rfds;
+    uint32_t ctrl_port_u;
+    uint16_t ctrl_port;
 
     /* Different control port for each instance */
-    int ctrl_port = CTRL_PORT + instance_id; /* 12679 for UAP, 12680 for WFD_GO */
-
+    ctrl_port_u = (uint32_t)CTRL_PORT + (uint32_t)instance_id;
+    if (ctrl_port_u > (uint32_t)UINT16_MAX)
+    {
+        dhcp_e("ctrl_port value overflow, instance_id=%d", (int)instance_id);
+        goto done;
+    }
+    ctrl_port = (uint16_t)ctrl_port_u; /* 12679 for UAP, 12680 for WFD_GO */
 #ifndef __ZEPHYR__
 
     (void)memset(&ctrl_listen, 0, sizeof(struct sockaddr_in));
@@ -568,9 +630,16 @@ void dhcpd_task(void *arg)
     while (true)
     {
         FD_ZERO(&rfds);
-        FD_SET(dhcps[instance_id].sock, &rfds);
+
+        if (dhcps[instance_id].sock >= 0)
+        {
+            FD_SET(dhcps[instance_id].sock, &rfds);
+        }
 #ifndef __ZEPHYR__
-        FD_SET(ctrl[instance_id], &rfds);
+        if (ctrl[instance_id] >= 0)
+        {
+            FD_SET(ctrl[instance_id], &rfds);
+        }
 #else
         FD_SET(ctrl_sockpair[0], &rfds);
 #endif
@@ -982,7 +1051,7 @@ void dhcp_stat(void)
     int i = 0;
     struct ip4_addr saddr;
     enum dhcp_instance_id instance_id;
-    (void)PRINTF("DHCP Server Lease Duration : %d seconds\r\n", (int)dhcp_address_timeout);
+    (void)PRINTF("DHCP Server Lease Duration : %u seconds\r\n", dhcp_address_timeout);
     if (dhcps[0].count_clients == 0 && dhcps[1].count_clients == 0)
     {
         (void)PRINTF("No IP-MAC mapping stored\r\n");

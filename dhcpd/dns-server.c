@@ -25,6 +25,10 @@ static struct dns_server_data dnss[MAX_DHCP_INSTANCES];
 static int (*dhcp_dns_server_handler)(char *msg, int len, struct sockaddr_in *fromaddr, enum dhcp_instance_id instance_id);
 extern struct dhcp_server_data dhcps[MAX_DHCP_INSTANCES];
 
+/* DNS label max length per RFC 1035 */
+#define DNS_LABEL_MAX_LEN   63U
+#define DNS_NAME_MAX_LEN    253U
+
 /* take a domain name and convert it into a DNS QNAME format, i.e.
  * foo.rats.com. -> 03 66 6f 6f 04 72 61 74 73 03 63 6f 6d 00
  *
@@ -32,25 +36,35 @@ extern struct dhcp_server_data dhcps[MAX_DHCP_INSTANCES];
  */
 static void format_qname(char *domain_name, char *dns_qname)
 {
-    int i   = 0, len;
+    uint8_t i  = 0U;
+    size_t len;
     char *s = domain_name;
     char *d = dns_qname + 1;
 
-    len = (int)strlen(s);
-    s += len - 1;
-    d += len - 1;
+    len = strlen(s);
+    if (len == 0U || len > DNS_NAME_MAX_LEN)
+    {
+        dns_qname[0] = 0;
+        return;
+    }
+
+    s += len - 1U;
+    d += len - 1U;
 
     while (s >= domain_name)
     {
         if (*s != '.')
         {
             *d = *s;
-            i++;
+            if (i < DNS_LABEL_MAX_LEN)
+            {
+                i++;
+            }
         }
         else
         {
             *d = (char)i;
-            i  = 0;
+            i  = 0U;
         }
         s--;
         d--;
@@ -63,18 +77,57 @@ static unsigned int make_answer_rr(char *base, char *query, char *dst, enum dhcp
     struct dns_question *q;
     struct dns_rr *rr = (struct dns_rr *)(void *)dst;
     char *query_start = query;
+    char *end         = base + SERVER_BUFFER_SIZE;
+    ptrdiff_t offset;
+    size_t idx;
+    size_t remaining;
 
-    rr->name_ptr = htons(((uint16_t)(query - base) | 0xC000U));
-
-    /* skip past the qname (label) field */
-    do
+    offset = query - base;
+    if (offset < 0 || offset > (ptrdiff_t)UINT16_MAX)
     {
-        if (*query > 0U)
+        return 0U;
+    }
+    rr->name_ptr = htons(((uint16_t)offset | 0xC000U));
+
+    if (query >= end)
+    {
+        return 0U;
+    }
+    remaining = (size_t)(end - query);
+
+    for (idx = 0U; idx < remaining; )
+    {
+        uint8_t label_len = (uint8_t)query[idx];
+
+        if (label_len == 0U)
         {
-            query += *query + 1;
+            /* Null terminator: skip it and stop */
+            idx++;
+            break;
         }
-    } while (*query > 0U);
-    query++;
+
+        /* RFC 1035: max label length is 63 bytes */
+        if (label_len > DNS_LABEL_MAX_LEN)
+        {
+            return 0U;
+        }
+
+        /* Validate label fits within buffer before advancing */
+        if (label_len + 1U > remaining - idx)
+        {
+            return 0U;
+        }
+
+        idx += (size_t)label_len + 1U;
+    }
+
+    query += idx;
+
+    /* Validate dns_question struct fits within buffer */
+    if (query + sizeof(struct dns_question) > end)
+    {
+        return 0U;
+    }
 
     q = (struct dns_question *)(void *)query;
     query += sizeof(struct dns_question);
@@ -85,42 +138,95 @@ static unsigned int make_answer_rr(char *base, char *query, char *dst, enum dhcp
     rr->rdlength = htons(4);
     rr->rd       = dhcps[instance_id].my_ip;
 
-    return (unsigned int)(query - query_start);
+    offset = query - query_start;
+    if (offset < 0)
+    {
+        return 0U;
+    }
+    return (unsigned int)offset;
 }
 
+#define MAX_DNS_QUESTIONS 10
 static char *parse_questions(unsigned int num_questions, uint8_t *pos, int *found, enum dhcp_instance_id instance_id)
 {
     uint8_t *base = pos;
+    uint8_t *end  = base + SERVER_BUFFER_SIZE;
     int i;
+
+    /* Re-validate num_questions at sink to sanitize tainted loop boundary */
+    if (num_questions == 0U || num_questions > (unsigned int)MAX_DNS_QUESTIONS)
+    {
+        return NULL;
+    }
 
     pos += sizeof(struct dns_header);
 
     for (; num_questions > 0U; num_questions--)
     {
+        size_t offset;
+        size_t qname_len;
+        bool   null_found = false;
+
+        if (pos >= end)
+        {
+            return NULL;
+        }
+
+        size_t remaining = (size_t)(end - pos);
+
+        for (offset = 0U; offset < remaining; )
+        {
+            uint8_t label_len = pos[offset];
+
+            if (label_len == 0U)
+            {
+                /* Null terminator found: QNAME is valid */
+                null_found = true;
+                break;
+            }
+
+            /* RFC 1035: max label length is 63 bytes */
+            if (label_len > DNS_LABEL_MAX_LEN)
+            {
+                return NULL;
+            }
+
+            /* Validate label fits within buffer before advancing */
+            if (label_len + 1U > remaining - offset)
+            {
+                return NULL;
+            }
+
+            offset += (size_t)label_len + 1U;
+        }
+
+        if (!null_found)
+        {
+            return NULL;
+        }
+
+        qname_len = offset + 1U;   /* include null terminator */
+
+        /* Compare against known qnames using validated, bounded qname_len */
         if (!*found)
         {
             for (i = 0; i < dnss[instance_id].count_qnames; i++)
             {
-                *found = (int)(!strncmp(dnss[instance_id].list_qnames[i].qname, (char *)pos,
-                                        (size_t)(base + SERVER_BUFFER_SIZE - pos)));
+                *found = (int)(!strncmp(dnss[instance_id].list_qnames[i].qname,
+                                        (char *)pos, qname_len));
                 if (*found != 0)
                 {
                     break;
                 }
             }
         }
-        do
+
+        /* Advance past QNAME null terminator and dns_question struct */
+        if (pos + qname_len + sizeof(struct dns_question) > end)
         {
-            if (*pos > 0U)
-            {
-                pos += *pos + 1U;
-            }
-            if (pos >= base + SERVER_BUFFER_SIZE)
-            {
-                return NULL;
-            }
-        } while (*pos > 0U);
-        pos += 1U + sizeof(struct dns_question);
+            return NULL;
+        }
+        pos += qname_len + sizeof(struct dns_question);
     }
     return (char *)pos;
 }
@@ -133,7 +239,7 @@ static int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr,
     char *outp = msg + len;
     int found  = 0, nq, i;
 
-    if (len < sizeof(struct dns_header))
+    if (len < (int)sizeof(struct dns_header))
     {
         dhcp_e("DNS request is not complete, hence ignoring it");
         return -WM_E_DHCPD_DNS_IGNORE;
@@ -152,9 +258,10 @@ static int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr,
     nq = (int)ntohs(hdr->num_questions);
     dhcp_d("we were asked %d questions", nq);
 
-    if (nq <= 0)
+    /* Sanitize tainted nq: reject non-positive or unreasonably large values */
+    if (nq <= 0 || nq > MAX_DNS_QUESTIONS)
     {
-        dhcp_e("ignoring this dns msg (not a query or 0 questions)");
+        dhcp_e("ignoring this dns msg (invalid number of questions: %d)", nq);
         return -WM_E_DHCPD_DNS_IGNORE;
     }
 
@@ -294,9 +401,15 @@ int dns_get_maxsock(fd_set *rfds, enum dhcp_instance_id instance_id)
     }
 
     int max_sock;
-    FD_SET(dnss[instance_id].dnssock, rfds);
-    max_sock =
-        (dhcps[instance_id].sock > dnss[instance_id].dnssock ? dhcps[instance_id].sock : dnss[instance_id].dnssock);
+    int dnssock = dnss[instance_id].dnssock;
+
+    if ((dnssock < 0) || (dnssock >= FD_SETSIZE))
+    {
+        return dhcps[instance_id].sock;
+    }
+
+    FD_SET(dnssock, rfds);
+    max_sock = (dhcps[instance_id].sock > dnssock ? dhcps[instance_id].sock : dnssock);
     return max_sock;
 }
 
