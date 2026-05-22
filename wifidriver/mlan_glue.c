@@ -1191,16 +1191,8 @@ void user_recv_monitor_data(void *p, RxPD *rxpd, t_u16 intf_pkt_len)
     t_u16 datalen          = 0;
     t_u8 *net_monitor_data = NULL;
 
-    if (rxpd->rx_pkt_length > (0xFFFF - sizeof(t_s8))) {
-        return;
-    }
     datalen = rxpd->rx_pkt_length + sizeof(t_s8);
-    if ((rxpd->snr - rxpd->nf) > 127)
-        rssi = 127;
-    else if ((rxpd->snr - rxpd->nf) < -128)
-        rssi = -128;
-    else
-        rssi = (t_s8)(rxpd->snr - rxpd->nf);
+    rssi    = rxpd->snr - rxpd->nf;
 
     if ((rxpd->rx_pkt_length + rxpd->rx_pkt_offset + INTF_HEADER_LEN) != intf_pkt_len)
     {
@@ -9082,10 +9074,8 @@ int wifi_set_threshold_link_quality(mlan_private *pmpriv,
 {
     if (link_snr > 0xFFFF ||
         link_rate > 0xFFFF ||
-        link_tx_latency > 0xFFFFFFFF ||
         link_snr_freq > 0xFFFF ||
-        link_rate_freq > 0xFFFF ||
-        link_tx_lantency_freq > 0xFFFFFFFF)
+        link_rate_freq > 0xFFFF)
     {
         return WM_E_INVAL;
     }
