@@ -1884,7 +1884,8 @@ static int network_matches_scan_result(const struct wlan_network *network,
         }
     }
 #if CONFIG_WPA_SUPP
-	if ((network->unspecified_network & UNSPEC_WPS_NETWORK) != res->wps_IE_exist)
+	if (network->unspecified_network && 
+          ((network->unspecified_network & UNSPEC_WPS_NETWORK) != res->wps_IE_exist))
 	{
         wlcm_d("%s: WPS flag mismatch.\n", network->ssid);
         return -WM_FAIL;
