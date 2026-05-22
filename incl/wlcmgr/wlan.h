@@ -1884,6 +1884,8 @@ struct wlan_network
     enum wlan_select_policy select_policy;
     /** Priority group */
     int priority;
+    /* SSID protection */
+    bool ssid_protection;
     /** HT capabilities info field within HT capabilities information element */
     unsigned short ht_capab;
 #if CONFIG_11AC
@@ -1980,6 +1982,12 @@ struct wlan_network
      * specified (not set to 0), otherwise it is set to 0.
      */
     unsigned priority_specific : 1;
+    /** If set to 1, the SSID protection of 4-way handshake will be enabled.
+     *
+     * This field is set to 1 if the network is added with the ssid protection
+     * specified (not set to 0), otherwise it is set to 0.
+     */
+    unsigned ssid_protect_specific : 1;
 #endif
 
     /** The network supports 802.11N. */

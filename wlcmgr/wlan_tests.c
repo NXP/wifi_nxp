@@ -745,6 +745,7 @@ static void dump_wlan_add_usage(void)
         " [mfpc <0/1> mfpr <0/1>]"
 #if CONFIG_WPA_SUPP
         " [prio <priority>]"
+        " [ssid-protection <0/1>]"
 #endif
         "\r\n");
 
@@ -826,6 +827,9 @@ static void dump_wlan_add_usage(void)
 #endif
         "]\r\n");
 #endif
+#if CONFIG_WPA_SUPP
+    (void)PRINTF("    [ssid-protection <0/1>]\r\n");
+#endif
     (void)PRINTF("    [mfpc <0/1>] [mfpr <0/1>]\r\n");
 #if (CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
 #if (CONFIG_EAP_SIM) || (CONFIG_EAP_AKA) || (CONFIG_EAP_AKA_PRIME)
@@ -871,6 +875,7 @@ static void test_wlan_add(int argc, char **argv)
         unsigned pcipher : 1;
         unsigned gmcipher : 1;
         unsigned priority : 1;
+        unsigned ssid_protection : 1;
 #endif
 #if CONFIG_WIFI_DTIM_PERIOD
         unsigned dtim : 1;
@@ -1933,6 +1938,24 @@ static void test_wlan_add(int argc, char **argv)
             network->priority_specific = 1;
             arg += 2;
             info.priority = 1;
+        }
+        else if (!info.ssid_protection&& string_equal("ssid-protection", argv[arg]))
+        {
+            errno = 0;
+            network->ssid_protection = (bool)strtol(argv[arg + 1], NULL, 10);
+            if (errno != 0)
+            {
+                (void)PRINTF("Error during strtol:ssid-protection errno:%d\r\n", errno);
+                goto out;
+            }
+            if (arg + 1 >= argc || (network->ssid_protection != false && network->ssid_protection != true))
+            {
+                (void)PRINTF("Error: invalid ssid-protection\r\n");
+                goto out;
+            }
+            network->ssid_protect_specific = 1;
+            arg += 2;
+            info.ssid_protection++;
         }
 #endif
 #if CONFIG_WIFI_DTIM_PERIOD
