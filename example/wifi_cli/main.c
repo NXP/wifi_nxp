@@ -154,6 +154,17 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             }
 #endif
 
+#if CONFIG_RF_TEST_MODE
+            ret = wlan_test_mode_cli_init();
+            if (ret != WM_SUCCESS)
+            {
+                PRINTF("Failed to initialize WLAN Test Mode CLIs\r\n");
+                return 0;
+            }
+            PRINTF("WLAN Test Mode CLIs are initialized\r\n");
+            printSeparator();
+#endif
+
             (void)PRINTF("CLIs Available:\r\n");
             printSeparator();
             help_command(0, NULL);

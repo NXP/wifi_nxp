@@ -1,7 +1,7 @@
 Overview
 ========
 This is the Wi-Fi CLI example to demonstrate the CLI support usage. The CLI module allows user to add CLIs in application.
-Currently only WLAN connection Manager CLIs are available.
+WLAN connection Manager CLIs, enhanced WLAN CLIs, host sleep CLIs, and WLAN RF test mode CLIs are available.
 
 Before building the example application select Wi-Fi module macro in the app_config.h. (see #define WIFI_<SoC Name>_BOARD_<Module Name>).
 
@@ -33,299 +33,620 @@ Running the demo
 3. When the demo starts, a welcome message would appear on the terminal, press enter for command prompt:
    Press tab or type help to list out all available CLI commands.
 
-    ========================================
-      wifi cli demo
-    =========================================
-    Initialize WLAN Driver
-    ========================================
-    MAC Address: C0:E4:34:5A:98:E9
-    host init done
-    [net] Initialized TCP/IP networking stack
-    mass storage device attached:pid=0x5567vid=0x781 address=1
-    ========================================
-    app_cb: WLAN: received event 10
-    ========================================
-    app_cb: WLAN initialized
-    ========================================
-    WLAN CLIs are initialized
-    ========================================
-    CLIs Available:
-    ========================================
+========================================
+wifi cli demo
+========================================
+Initialize CLI
+========================================
+CLI Build: May 21 2026 [02:13:48]
+Copyright  2024  NXP
+MCU Board: RD-RW612-BGA
+========================================
 
-    help
-    wlan-version
-    wlan-mac
-    wlan-scan
-    wlan-scan-opt ssid <ssid> bssid ...
-    wlan-add <profile_name> ssid <ssid> bssid...
-    wlan-remove <profile_name>
-    wlan-list
-    wlan-connect <profile_name>
-    wlan-start-network <profile_name>
-    wlan-stop-network
-    wlan-disconnect
-    wlan-stat
-    wlan-info
-    wlan-address
-    wlan-get-uap-channel
-    wlan-get-uap-sta-list
-    ping [-s <packet_size>] [-c <packet_count>] [-W <timeout in sec>] <ip_address>
-    iperf [-s|-c <host>|-a|-h] [options]
-    dhcp-stat
-    ========================================
+MCU wakeup source 0x0...
+Initialize WLAN Driver
+========================================
+[FW Download] Start to download 1 firmware: 24
+[FW Download] 1 FW is active: 2990
+STA MAC Address: 00:50:43:02:FE:01
+board_type: 0, board_type mapping:
+0----QFN
+1----CSP
+2----BGA
+board_type: 0, board_type mapping:
+0----QFN
+1----CSP
+2----BGA
+app_cb: WLAN initialized
+========================================
+WLAN CLIs are initialized
+========================================
+ENHANCED WLAN CLIs are initialized
+========================================
+HOST SLEEP CLIs are initialized
+========================================
+WLAN Test Mode CLIs are initialized
+========================================
+CLIs Available:
+========================================
 
-    #help wlan-version wlan-mac wlan-scan wlan-scan-opt wlan-add wlan-remove wlan-list
+help
+clear
+wlan-version
+wlan-mac
+wlan-thread-info
+wlan-net-stats
+wlan-set-mac <MAC_Address>
+wlan-scan
+wlan-scan-opt ssid <ssid> bssid ...
+wlan-add <profile_name> ssid <ssid> bssid...
+wlan-remove <profile_name>
+wlan-list
+wlan-connect <profile_name>
+wlan-connect-opt <profile_name> ...
+wlan-reassociate
+wlan-start-network <profile_name>
+wlan-stop-network
+wlan-disconnect
+wlan-stat
+wlan-info
+wlan-address
+wlan-uap-disconnect-sta <mac address>
+wlan-get-uap-channel
+wlan-get-uap-sta-list
+wlan-uap-set-beacon-interval
+wlan-uap-get-beacon-interval
+wlan-ieee-ps <0/1>
+wlan-set-ps-cfg <null_pkt_interval>
+wlan-deep-sleep-ps <0/1>
+wlan-get-beacon-interval
+wlan-get-ps-cfg
+wlan-set-max-clients-count <max clients count>
+wlan-get-max-clients-count
+wlan-rts <sta/uap> <rts threshold>
+wlan-frag <sta/uap> <fragment threshold>
+wlan-host-11k-enable <0/1>
+wlan-host-11k-neighbor-req [ssid <ssid>]
+wlan-host-11v-bss-trans-query <0..16>
+wlan-mbo-enable <0/1>
+wlan-mbo-nonprefer-ch <ch0> <Preference0: 0/1/255> <ch1> <Preference1: 0/1/255>
+wlan-get-log <sta/uap> <ext>
+wlan-roaming <0/1> <rssi_threshold>
+wlan-multi-mef <ping/arp/multicast/del> [<action>]
+wlan-wakeup-condition <mef/wowlan wake_up_conds>
+wlan-add-packet-filter  sta/uap 0/1 <patterns number> <ptn_len> <pkt_offset> <ptn> ...........
+wlan-auto-host-sleep <enable> <mode> <rtc_timer> <periodic>
+wlan-send-hostcmd
+wlan-ext-coex-uwb
+wlan-set-uap-hidden-ssid <0/1/2>
+wlan-eu-crypto-rc4 <EncDec>
+wlan-eu-crypto-aes-wrap <EncDec>
+wlan-eu-crypto-aes-ecb <EncDec>
+wlan-eu-crypto-ccmp-128 <EncDec>
+wlan-eu-crypto-ccmp-256 <EncDec>
+wlan-eu-crypto-gcmp-128 <EncDec>
+wlan-eu-crypto-gcmp-256 <EncDec>
+wlan-set-antcfg <ant_mode> <evaluate_time> <evaluate_mode>
+wlan-get-antcfg
+wlan-scan-channel-gap <channel_gap_value>
+wlan-wmm-stat <bss_type>
+wlan-reset
+wlan-set-regioncode <region-code>
+wlan-get-regioncode
+wlan-11d-enable <sta/uap> <0/1>
+wlan-uap-set-ecsa-cfg <block_tx> <oper_class> <new_channel> <switch_count> <bandwidth>
+wlan-csi-cfg
+wlan-set-csi-param-header  <sta/uap> <csi_enable> <head_id> <tail_id> <chip_id> <band_config> <channel> <csi_monitor_enable> <ra4us>
+wlan-set-csi-filter <opt> <macaddr> <pkt_type> <type> <flag>
+wlan-txrx-histogram <action> <enable>
+wlan-subscribe-event <action> <type> <value> <freq>
+wlan-uapsd-enable <uapsd_enable>
+wlan-uapsd-qosinfo <qos_info>
+wlan-uapsd-sleep-period <sleep_period>
+wlan-tx-ampdu-prot-mode <mode>
+wlan-rx-abort-cfg
+wlan-set-rx-abort-cfg-ext enable <enable> margin <margin> ceil <ceil_thresh> floor <floor_thresh>
+wlan-get-rx-abort-cfg-ext
+wlan-cck-desense-cfg
+wlan-net-monitor-cfg
+wlan-set-monitor-filter <opt> <macaddr>
+wlan-set-monitor-param <action> <monitor_activity> <filter_flags> <radio_type> <chan_number>
+wlan-set-mgmtframetx-cfg
+wlan-set-mgmtframetx-header <PktType> <PktSubType> <FromDS> <ToDS> <SeqNum> <FragNum> <Addr1> <Addr2> <Addr3> <Addr4>
+wlan-set-mgmtframetx-payload <Data0 Data1 ... Datan>
+wlan-set-tsp-cfg <enable> <backoff> <highThreshold> <lowThreshold> <dutycycstep> <dutycycmin> <highthrtemp> <lowthrtemp>
+wlan-get-tsp-cfg
+wlan-get-signal
+wlan-set-bandcfg
+wlan-get-bandcfg
+wlan-set-ips <option>
+wlan-enable-disable-htc <option>
+wlan-set-su <0/1>
+wlan-set-forceRTS <0/1>
+wlan-set-mmsf <enable> <Density> <MMSF>
+wlan-get-mmsf
+wlan-get-turbo-mode <STA/UAP>
+wlan-set-turbo-mode <STA/UAP> <mode>
+wlan-set-multiple-dtim <value>
+wlan-set-country <country_code_str>
+wlan-set-country-ie-ignore <0/1>
+wlan-single-ant-duty-cycle <enable/disable> [<Ieee154Duration> <TotalDuration>]
+wlan-dual-ant-duty-cycle <enable/disable> [<Ieee154Duration> <TotalDuration> <Ieee154FarRangeDuration>]
+wlan-external-coex-pta enable <PTA/WCI-2/WCI-2 GPIO> ExtWifiBtArb <enable/disable> PolGrantPin <high/low> PriPtaInt <enable/disable> StateFromPta <state pin/ priority pin/ state input disable> SampTiming <Sample timing> InfoSampTiming <Sample timing> TrafficPrio <enable/disable> CoexHwIntWic <enable/disable>
+wlan-sta-inactivityto <n> <m> <l> [k] [j]
+wlan-get-temperature
+wlan-auto-null-tx <sta/uap> <start/stop>
+wlan-detect-ant <detect_mode> <ant_port_count> channel <channel> ...
+wlan-get-channel-load <set/get> <duration>
+wlan-set-network-chanlist <profile_name> [freq_band <band>] [channel <chan_list>]
+wlan-get-txpwrlimit <subband>
+wlan-set-chanlist
+wlan-get-chanlist
+wlan-set-txratecfg <sta/uap> <format> <index> <nss> <rate_setting> <autoTx_set>
+wlan-get-txratecfg <sta/uap>
+wlan-get-data-rate <sta/uap>
+wlan-get-pmfcfg
+wlan-uap-get-pmfcfg
+wlan-set-ed-mac-mode <interface> <ed_ctrl_2g> <ed_offset_2g> <ed_ctrl_5g> <ed_offset_5g>
+wlan-get-ed-mac-mode <interface>
+wlan-set-tx-omi <interface> <tx-omi> <tx-option> <num_data_pkts>
+wlan-set-toltime <value>
+wlan-set-rutxpwrlimit
+wlan-11ax-cfg <11ax_cfg>
+wlan-11ax-bcast-twt <set/get>
+wlan-11ax-twt-setup <dump/set/done> [<param_id> <param_data>]
+wlan-11ax-twt-teardown <dump/set/done> [<param_id> <param_data>]
+wlan-11ax-twt-report
+wlan-11ax-twt-information <flow_identifier> <suspend_duration>
+wlan-get-tsfinfo <format-type>
+wlan-set-clocksync <mode> <role> <gpio_pin> <gpio_level> <pulse width>
+wlan-suspend <power mode>
+ping [-s <packet_size>] [-c <packet_count>] [-W <timeout in sec>] <ipv4/ipv6 address>
+iperf [-s|-c <host>|-a|-h] [options]
+dhcp-stat
+wlan-set-rf-test-mode
+wlan-set-rf-disable-11ax
+wlan-unset-rf-test-mode
+wlan-set-rf-tx-antenna <antenna>
+wlan-get-rf-tx-antenna
+wlan-set-rf-rx-antenna <antenna>
+wlan-get-rf-rx-antenna
+wlan-set-rf-xtal <xtal_cal>
+wlan-get-rf-xtal
+wlan-set-rf-bandwidth <bandwidth>
+wlan-get-rf-bandwidth
+wlan-set-rf-channel <channel>
+wlan-get-rf-channel
+wlan-set-rf-radio-mode <radio_mode>
+wlan-get-rf-radio-mode
+wlan-set-rf-tx-power <tx_power> <modulation> <path_id>
+wlan-set-rf-tx-cont-mode <enable_tx> <cw_mode> <payload_pattern> <cs_mode> <act_sub_ch> <tx_rate>
+wlan-set-rf-tx-frame <start> <data_rate> <frame_pattern> <frame_len> <adjust_burst_sifs> <burst_sifs_in_us> <short_preamble> <act_sub_ch> <short_gi> <adv_coding> <tx_bf> <gf_mode> <stbc> <bssid> <signal_bw> <NumPkt> <MaxPE> <BeamChange> <Dcm> <Doppler> <MidP> <QNum>
+wlan-set-rf-trigger-frame-cfg <Enable_tx> <Standalone_hetb> <FRAME_CTRL_TYPE> <FRAME_CTRL_SUBTYPE> <FRAME_DURATION><TriggerType> <UlLen> <MoreTF> <CSRequired> <UlBw> <LTFType> <LTFMode><LTFSymbol> <UlSTBC> <LdpcESS> <ApTxPwr> <PreFecPadFct> <PeDisambig> <SpatialReuse><Doppler> <HeSig2> <AID12> <RUAllocReg> <RUAlloc> <UlCodingType> <UlMCS> <UlDCM><SSAlloc> <UlTargetRSSI> <MPDU_MU_SF> <TID_AL> <AC_PL> <Pref_AC>
+wlan-set-rf-he-tb-tx <enable> <qnum> <aid> <axq_mu_timer> <tx_power>
+wlan-get-and-reset-rf-per
+wlan-set-rf-otp-mac-addr <mac_addr>
+wlan-get-rf-otp-mac-addr
+wlan-set-rf-otp-cal-data
+wlan-get-rf-otp-cal-data
+wlan-set-rf-rx-mac-filter
+========================================
+# wlan-version
+WLAN Driver Version   : v1.3.r49.p5
+WLAN Firmware Version : rw610w-V2, IMU, FP99, 18.99.8.p32, PVE_FIX 1
 
-    #help
+# wlan-mac
+MAC address
+STA MAC Address: 00:50:43:02:FE:01
+uAP MAC Address: 02:50:43:02:FF:01
 
-    help
-    wlan-version
-    wlan-mac
-    wlan-scan
-    wlan-scan-opt ssid <ssid> bssid ...
-    wlan-add <profile_name> ssid <ssid> bssid...
-    wlan-remove <profile_name>
-    wlan-list
-    wlan-connect <profile_name>
-    wlan-start-network <profile_name>
-    wlan-stop-network
-    wlan-disconnect
-    wlan-stat
-    wlan-info
-    wlan-address
-    wlan-get-uap-channel
-    wlan-get-uap-sta-list
-    ping [-s <packet_size>] [-c <packet_count>] [-W <timeout in sec>] <ip_address>
-    iperf [-s|-c <host>|-a|-h] [options]
-    dhcp-stat
+# wlan-scan
+Scan scheduled...
 
-    #wlan - version
-      WLAN Driver Version   : v1.3.r21.p1
-      WLAN Firmware Version : w8977o-V2, RF87XX, FP91, 16.91.10.p89, WPA2_CVE_FIX 1, PVE_FIX 1
+# 30 networks found:
+30:5F:77:7B:BC:ED  "Test_5G" Infra
+        mode: 802.11AC
+        channel: 161
+        rssi: -64 dBm
+        security: WPA2
+        WMM: YES
+        802.11V: YES
+        802.11W: NA
+...
 
-    #wlan - mac
-      MAC address
-      C0:E4:34:5A:99:45
+# wlan-scan-opt
+Usage:
+    wlan-scan-opt ssid <ssid> bssid <bssid> channel <channel> probes <probes> rssi_threshold <rssi_threshold>
+Error: invalid number of arguments
 
-    #wlan - scan
-      Scan scheduled...
+# wlan-scan-opt ssid Test_5G
+Scan for ssid "Test_5G" scheduled...
 
-    # 3 networks found:
-      94:10:3E:02:60:F0  "nxp_mrvl" Infra
-              channel: 1
-              rssi: -25 dBm
-              security: OPEN
-              WMM: YES
-      94:10:3E:02:60:F1  "nxp_mrvl_5ghz" Infra
-              channel: 36
-              rssi: -39 dBm
-              security: OPEN
-              WMM: YES
-      90:72:40:21:B3:1A  "apple_g" Infra
-              channel: 11
-              rssi: -51 dBm
-              security: WPA2
-              WMM: YES
+# 1 network found:
+30:5F:77:7B:BC:ED  "Test_5G" Infra
+        mode: 802.11AC
+        channel: 161
+        rssi: -64 dBm
+        security: WPA2
+        WMM: YES
+        802.11V: YES
+        802.11W: NA
 
-    #wlan - scan - opt
-      Usage:
-          wlan-scan-opt ssid <ssid> bssid <bssid> channel <channel> probes <probes>
-      Error: invalid number of arguments
+# wlan-add
+Usage:
+For Station interface
+  For DHCP IP Address assignment:
+    wlan-add <profile_name> ssid <ssid> [wpa2 <psk/psk-sha256> <secret>] [mfpc <1> mfpr <0>]
+      If using WPA2 security, set the PMF configuration as mentioned above.
+    wlan-add <profile_name> ssid <ssid> <owe_only> mfpc 1 mfpr 1
+      If using OWE only security, always set the PMF configuration.
+      NOTE: [og <"19 20 21">] is only supported in Micro-AP mode .
+    wlan-add <profile_name> ssid <ssid> [wpa3 sae <secret> [pwe <0/1/2>] mfpc <1> mfpr <0/1>]
+      If using WPA3 SAE security, always set the PMF configuration.
+    wlan-add <profile_name> ssid <ssid> [wpa2 psk psk-sha256 <secret> wpa3 sae <secret>] [mfpc <1> mfpr <0>]
+      If using WPA2/WPA3 Mixed security, set the PMF configuration as mentioned above.
+  For static IP address assignment:
+    wlan-add <profile_name> ssid <ssid>
+    ip:<ip_addr>,<gateway_ip>,<netmask>
+    [bssid <bssid>] [channel <channel number>]
+    [wpa2 <psk/psk-sha256> <secret>] [owe_only] [wpa3 sae <secret>] [mfpc <0/1> mfpr <0/1>]
+For Micro-AP interface
+    wlan-add <profile_name> ssid <ssid>
+    ip:<ip_addr>,<gateway_ip>,<netmask>
+    role uap [bssid <bssid>]
+    [channel <channelnumber>]
+    [wpa2 <psk/psk-sha256> <secret>] [wpa3 sae <secret> [pwe <0/1/2>] [tr <0/1>]]
+    [owe_only ]
+    [mfpc <0/1>] [mfpr <0/1>]
+If setting dtim
+The value of dtim is an integer. The default value is 10.
+Note: Setting the channel value greater than or equal to 36 is mandatory,
+      if UAP bandwidth is set to 80MHz.
+If Set channel to 0, set acs_band to 0 1.
+0: 2.4GHz channel   1: 5GHz channel  Not support to select dual band automatically.
+Error: invalid number of arguments
 
-    #wlan - scan - opt ssid apple_g
-      Scan for ssid "apple_g" scheduled...
+# wlan-add abc ssid Test_5G wpa2 psk 1234567890
+Added "abc"
 
-    # 2 networks found:
-      90:72:40:21:B3:1A  "apple_g" Infra
-              channel: 11
-              rssi: -52 dBm
-              security: WPA2
-              WMM: YES
-      90:72:40:21:B3:1B  "apple_g" Infra
-              channel: 149
-              rssi: -60 dBm
-              security: WPA2
-              WMM: YES
+# wlan-connect abc
+Connecting to network...
+Use 'wlan-stat' for current connection status.
 
-    #wlan - add
-      Usage:
-      For Station interface
-        For DHCP IP Address assignment:
-          wlan-add <profile_name> ssid <ssid> [wpa2 <secret>]
-          wlan-add <profile_name> ssid <ssid> [owe_only]
-          wlan-add <profile_name> ssid <ssid> [wpa3 sae] <secret>
-        For static IP address assignment:
-          wlan-add <profile_name> ssid <ssid>
-          ip:<ip_addr>,<gateway_ip>,<netmask>
-          [bssid <bssid>] [channel <channel number>]
-          [wpa2 <secret>]
-      For Micro-AP interface
-          wlan-add <profile_name> ssid <ssid>
-          ip:<ip_addr>,<gateway_ip>,<netmask>
-          role uap [bssid <bssid>]
-          [channel <channelnumber>]
-          [wpa2 <secret>]
-      Error: invalid number of arguments
+# board_type: 0, board_type mapping:
+0----QFN
+1----CSP
+2----BGA
+app_cb: WLAN: authenticated to network
+app_cb: WLAN: connected to network
+Connected to following BSS:
+SSID = [Test_5G]
+IPv4 Address: [192.168.124.3]
 
-    #wlan - add abc ssid nxp_mrvl
-      Added "abc"
+# wlan-stat
+Station connected (IEEE ps)
+uAP stopped
 
-    #wlan - connect abc
-      Connecting to network...
-      Use 'wlan-stat' for current connection status.
+# wlan-info
+Station connected to:
+"abc"
+        SSID: Test_5G
+        BSSID: 30:5F:77:7B:BC:ED
+        mode: 802.11AC
+        channel: 161
+        role: Infra
 
-    #Connected to following BSS : SSID = [nxp_mrvl], IP = [192.168.10.152]
+        RSSI: -37dBm
+        security: WPA2
 
-    #wlan - stat
-      Station connected (Active)
-      uAP stopped
+        IPv4 Address
+        address: DHCP
+                IP:             192.168.124.3
+                gateway:        192.168.124.1
+                netmask:        255.255.255.0
+                dns1:           192.168.124.1
+                dns2:           0.0.0.0
 
-    #wlan - info
-      Station connected to:
-      "abc"
-              SSID: nxp_mrvl
-              BSSID: 94:10:3E:02:60:F0
-              channel: 1
-              role: Infra
-              security: none
+        IPv6 Addresses
+        Link-Local   :  FE80::250:43FF:FE02:FE01 (Preferred)
 
-              IPv4 Address
-              address: DHCP
-                      IP:             192.168.10.152
-                      gateway:        192.168.10.1
-                      netmask:        255.255.255.0
-                      dns1:           192.168.10.1
-                      dns2:           0.0.0.0
-      uAP not started
 
-    #
-    #wlan - add abd ssid NXP_Soft_AP ip : 192.168.10.1, 192.168.10.1, 255.255.255.0 role uap wpa2 12345678
-      Added "abd"
+        rssi threshold: 0
+uAP not started
 
-    #wlan - start - network abd
+# wlan-add abd ssid NXP_Soft_AP ip:192.168.10.1,192.168.10.1,255.255.255.0 role uap wpa2 psk 12345678
+Added "abd"
 
-      Soft AP "NXP_Soft_AP" Started successfully
-      DHCP Server started successfully
+# wlan-start-network abd
 
-    #wlan - info
-      Station connected to:
-      "abc"
-              SSID: nxp_mrvl
-              BSSID: 94:10:3E:02:60:F0
-              channel: 1
-              role: Infra
-              security: none
+# app_cb: WLAN: UAP Started
+========================================
+Soft AP "NXP_Soft_AP" started successfully
+========================================
+DHCP Server started successfully
+========================================
 
-              IPv4 Address
-              address: DHCP
-                      IP:             192.168.10.152
-                      gateway:        192.168.10.1
-                      netmask:        255.255.255.0
-                      dns1:           192.168.10.1
-                      dns2:           0.0.0.0
-      uAP started as:
-      "abd"
-              SSID: NXP_Soft_AP
-              BSSID: C0:E4:34:5A:99:45
-              channel: 1
-              role: uAP
-              security: WPA2
+# wlan-info
+Station connected to:
+"abc"
+        SSID: Test_5G
+        BSSID: 30:5F:77:7B:BC:ED
+        mode: 802.11AC
+        channel: 161
+        role: Infra
 
-              IPv4 Address
-              address: STATIC
-                      IP:             192.168.10.1
-                      gateway:        192.168.10.1
-                      netmask:        255.255.255.0
-                      dns1:           192.168.10.1
-                      dns2:           0.0.0.0
+        RSSI: -36dBm
+        security: WPA2
 
-    #
-    #wlan - disconnect
+        IPv4 Address
+        address: DHCP
+                IP:             192.168.124.3
+                gateway:        192.168.124.1
+                netmask:        255.255.255.0
+                dns1:           192.168.124.1
+                dns2:           0.0.0.0
 
-    #Dis - connected from : nxp_mrvl
-      [wlcm] Warn: got event: deauthentication
+        IPv6 Addresses
+        Link-Local   :  FE80::250:43FF:FE02:FE01 (Preferred)
 
-    #wlan - info
-      Station not connected
-      uAP started as:
-      "abd"
-              SSID: NXP_Soft_AP
-              BSSID: C0:E4:34:5A:99:45
-              channel: (Auto)
-              role: uAP
-              security: WPA2
 
-              IPv4 Address
-              address: STATIC
-                      IP:             192.168.10.1
-                      gateway:        192.168.10.1
-                      netmask:        255.255.255.0
-                      dns1:           192.168.10.1
-                      dns2:           0.0.0.0
+        rssi threshold: 0
+uAP started as:
+"abd"
+        SSID: NXP_Soft_AP
+        BSSID: 02:50:43:02:FF:01
+        mode: 802.11AC
+        channel: 161
+        role: uAP
+        security: WPA2
 
-    #
+        IPv4 Address
+        address: STATIC
+                IP:             192.168.10.1
+                gateway:        192.168.10.1
+                netmask:        255.255.255.0
+                dns1:           192.168.10.1
+                dns2:           0.0.0.0
 
-    #wlan - list
-      2 networks:
-      "abc"
-              SSID: nxp_mrvl
-              BSSID: 00:00:00:00:00:00
-              channel: (Auto)
-              role: Infra
-              security: none
-      "abd"
-              SSID: NXP_Soft_AP
-              BSSID: 00:00:00:00:00:00
-              channel: (Auto)
-              role: uAP
-              security: WPA2
+        IPv6 Addresses
+        Link-Local   :  FE80::50:43FF:FE02:FF01 (Tentative)
 
-              IPv4 Address
-              address: STATIC
-                      IP:             192.168.10.1
-                      gateway:        192.168.10.1
-                      netmask:        255.255.255.0
-                      dns1:           192.168.10.1
-                      dns2:           0.0.0.0
 
-    #
+        rssi threshold: 0
 
-    #wlan - remove abc
-      Removed "abc"
+# wlan-disconnect
+app_cb: disconnected
 
-    #wlan - list
-      1 network:
-      "abd"
-              SSID: NXP_Soft_AP
-              BSSID: 00:00:00:00:00:00
-              channel: (Auto)
-              role: uAP
-              security: WPA2
+# wlan-info
+Station not connected
+uAP started as:
+"abd"
+        SSID: NXP_Soft_AP
+        BSSID: 02:50:43:02:FF:01
+        mode: 802.11AC
+        channel: 161
+        role: uAP
+        security: WPA2
 
-              IPv4 Address
-              address: STATIC
-                      IP:             192.168.10.1
-                      gateway:        192.168.10.1
-                      netmask:        255.255.255.0
-                      dns1:           192.168.10.1
-                      dns2:           0.0.0.0
+        IPv4 Address
+        address: STATIC
+                IP:             192.168.10.1
+                gateway:        192.168.10.1
+                netmask:        255.255.255.0
+                dns1:           192.168.10.1
+                dns2:           0.0.0.0
 
-    #
-    #
+        IPv6 Addresses
+        Link-Local   :  FE80::50:43FF:FE02:FF01 (Tentative)
 
-    #wlan - address
-      not connected
 
-    #wlan - get
+        rssi threshold: 0
 
-    #wlan - get - uap - channel
-      uAP channel: 0
+# wlan-list
+2 networks:
+"abc"
+        SSID: Test_5G
+        BSSID: 00:00:00:00:00:00
+        mode: 802.11AC
+        channel: (Auto)
+        role: Infra
 
-    #
+        RSSI: 0dBm
+        security: WPA2
 
-    #dhcp - stat
-    DHCP Server Lease Duration : 86400 seconds
-    No IP-MAC mapping stored
+        IPv6 Addresses
+        Link-Local   :  FE80::250:43FF:FE02:FE01 (Preferred)
+
+
+        rssi threshold: 0
+"abd"
+        SSID: NXP_Soft_AP
+        BSSID: 00:00:00:00:00:00
+        mode: 802.11AC
+        channel: (Auto)
+        role: uAP
+        security: WPA2
+
+        IPv4 Address
+        address: STATIC
+                IP:             192.168.10.1
+                gateway:        192.168.10.1
+                netmask:        255.255.255.0
+                dns1:           192.168.10.1
+                dns2:           0.0.0.0
+
+        IPv6 Addresses
+        Link-Local   :  FE80::50:43FF:FE02:FF01 (Tentative)
+
+
+        rssi threshold: 0
+
+# wlan-remove abc
+Removed "abc"
+
+# wlan-list
+1 network:
+"abd"
+        SSID: NXP_Soft_AP
+        BSSID: 00:00:00:00:00:00
+        mode: 802.11AC
+        channel: (Auto)
+        role: uAP
+        security: WPA2
+
+        IPv4 Address
+        address: STATIC
+                IP:             192.168.10.1
+                gateway:        192.168.10.1
+                netmask:        255.255.255.0
+                dns1:           192.168.10.1
+                dns2:           0.0.0.0
+
+        IPv6 Addresses
+        Link-Local   :  FE80::50:43FF:FE02:FF01 (Tentative)
+
+
+        rssi threshold: 0
+
+# wlan-address
+not connected
+
+# wlan-get
+command 'wlan-get' not found
+
+# wlan-get-uap-channel
+uAP channel: 161
+
+# dhcp-stat
+DHCP Server Lease Duration : 86400 seconds
+No IP-MAC mapping stored
+
+4. To use RF test mode CLIs, first enter test mode, then configure channel/bandwidth/antenna/power and start TX/RX:
+
+Note: Once RF test mode is entered via wlan-set-rf-test-mode, the WLAN stack switches to a dedicated test mode and normal WLAN CLI commands (e.g. scan, connect) are no longer functional. wlan-unset-rf-test-mode only clears the RF test configuration but does NOT restore normal operation. A board reset is required to return to normal CLI mode.
+
+# wlan-set-rf-test-mode
+RF Test Mode Set configuration successful
+
+# wlan-set-rf-channel 36
+Channel configuration successful
+
+# wlan-set-rf-band 0
+command 'wlan-set-rf-band' not found
+
+# wlan-set-rf-radio-mode
+Usage:
+wlan-set-rf-radio-mode <radio_mode>
+0: set the radio in power down mode
+3: sets the radio in 5GHz band, 1X1 mode(path A)
+11: sets the radio in 2.4GHz band, 1X1 mode(path A)
+
+# wlan-set-rf-radio-mode 3
+Set radio mode successful
+
+# wlan-get-rf-radio-mode
+Configured radio mode is: 3
+
+# wlan-set-rf-bandwidth
+Usage:
+wlan-set-bandwidth <bandwidth>
+
+        <bandwidth>:
+                0: 20MHz
+                1: 40MHz
+                4: 80MHz
+
+# wlan-set-rf-bandwidth 0
+Bandwidth configuration successful
+
+# wlan-get-rf-bandwidth
+Configured bandwidth is: 20MHz
+
+# wlan-get-and-reset-rf-per
+PER is as below:
+  Total Rx Packet Count                    : 23314
+  Total Rx Multicast/Broadcast Packet Count: 17034
+  Total Rx Packets with FCS error          : 1671
+
+# wlan-set-rf-tx-antenna 1
+Tx Antenna configuration successful
+
+# wlan-get-rf-tx-antenna
+Configured Tx Antenna is: Main
+
+# wlan-set-rf-rx-antenna 2
+Rx Antenna configuration successful
+
+# wlan-get-rf-rx-antenna
+Configured Rx Antenna is: Aux
+
+# wlan-set-rf-tx-power 8 1 1
+Tx Power configuration successful
+  Power         : 8 dBm
+  Modulation    : OFDM
+  Path ID       : PathB
+
+# wlan-set-rf-tx-frame 1 0x2107 2730 256 0 0 0 0 0 0 0 0 0 ad:ad:23:12:45:57 -1 1 -1 -1 -1 -1 -1 -1
+[wifi] Error: wifi set rf tx frame fail, error code: 0xffffffee
+
+Tx Frame configuration failed
+Usage:
+wlan-set-rf-tx-frame <start> <data_rate> <frame_pattern> <frame_len> <adjust_burst_sifs> <burst_sifs_in_us> <short_preamble> <act_sub_ch> <short_gi> <adv_coding> <tx_bf> <gf_mode> <stbc> <bssid> <signal_bw> <NumPkt> <MaxPE> <BeamChange> <Dcm> <Doppler> <MidP> <QNum>
+Enable                 (0:disable, 1:enable)
+Tx Data Rate           (Rate Index corresponding to legacy/HT/VHT rates)(Enter hexadecimal value)
+Payload Pattern        (0 to 0xFFFFFFFF) (Enter hexadecimal value)
+Payload Length         (1 to 0x400) (Enter hexadecimal value)
+Adjust Burst SIFS3 Gap (0:disable, 1:enable)
+Burst SIFS in us       (0 to 255us)
+Short Preamble         (0:disable, 1:enable)
+Active SubChannel      (0:low, 1:upper, 3:both)
+Short GI               (0:disable, 1:enable)
+Adv Coding             (0:disable, 1:enable)
+Beamforming            (0:disable, 1:enable)
+GreenField Mode        (0:disable, 1:enable)
+STBC                   (0:disable, 1:enable)
+BSSID                  (xx:xx:xx:xx:xx:xx)
+Signal BW              (0: 20Mhz, 1: 40Mhz, 4:80Mhz, -1: Set to default)
+Note: NumPkt, MaxPE, BeamChange, DCM, Doppler, MidP and QNum are 11ax parameters,
+11ax parameters must be provided in order if any is used
+NumPkt                 (-1:Set to default value, 1 to 0xfffffffe to specify number of packets to send)
+MaxPE                  (0|8|16us, -1:Set to default Value 2)
+BeamChange             (0|1, -1:Set to default Value 1)
+Dcm                    (0|1, -1:Set to default Value 0)
+Doppler                (0|1, -1:Set to default Value 0)
+MidP                   (10|20, -1:Set to default Value 0)
+QNum                   (0-12|17-20, -1:Set to default Value if 11ax QNum:17 else QNum:0)
+
+To Disable:
+wlan-set-rf-tx-frame 0
+
+# wlan-set-rf-tx-frame 0
+Tx Frame configuration successful
+  Enable                    : disable
+  Tx Data Rate              : 0xFFFFFFFF
+  Payload Pattern           : 0x00000000
+  Payload Length            : 0x1
+  Adjust Burst SIFS3 Gap    : disable
+  Burst SIFS in us          : 0 us
+  Short Preamble            : disable
+  Active SubChannel         : low
+  Short GI                  : disable
+  Adv Coding                : disable
+  Beamforming               : disable
+  GreenField Mode           : disable
+  STBC                      : disable
+  BSSID                     : 00:00:00:00:00:00
+  Signal BW                 : -1
+  NumPkt                    : -1
+  MaxPE                     : -1 us
+  BeamChange                : -1
+  Dcm                       : -1
+  Doppler                   : -1
+  MidP                      : -1
+  QNum                      : -1
+
+# wlan-unset-rf-test-mode
+RF Test Mode Unset configuration successful
 
 Customization options
 =====================
