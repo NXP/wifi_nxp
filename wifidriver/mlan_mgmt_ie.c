@@ -298,8 +298,6 @@ static void *util_buf_pool_renew(pmlan_buf_handle handle,
 
 mlan_status wifi_mgmt_ie_init(void)
 {
-    mlan_status status = MLAN_STATUS_FAILURE;
-
     if (s_mgmt_ie_initialized == MTRUE)
     {
         return MLAN_STATUS_SUCCESS;
@@ -309,9 +307,8 @@ mlan_status wifi_mgmt_ie_init(void)
     s_mgmt_buf_cfgs[1].buf_cnt = MLAN_MGMT_BUF_MD_CNT; // mlan_adap->mgmt_ie_cnt_md;
     s_mgmt_buf_cfgs[2].buf_cnt = MLAN_MGMT_BUF_LG_CNT; // mlan_adap->mgmt_ie_cnt_lg;
 
-    status = util_buf_pool_init(&s_mgmt_buf_handle, s_mlan_buf_class, s_mgmt_buf_cfgs,
-                            MGMT_BUFPOOL_NUM, wrapper_mgmt_buf_malloc, wrapper_mgmt_buf_free);
-    if (status != MLAN_STATUS_SUCCESS)
+    if (util_buf_pool_init(&s_mgmt_buf_handle, s_mlan_buf_class, s_mgmt_buf_cfgs,
+                        MGMT_BUFPOOL_NUM, wrapper_mgmt_buf_malloc, wrapper_mgmt_buf_free) != 0)
     {
         wifi_e("Failed to init mgmt buffer pool");
         return MLAN_STATUS_FAILURE;
@@ -542,7 +539,7 @@ static mlan_status append_custom_ie(custom_ie **pos, t_u32 *remain_len, t_u16 *t
     return MLAN_STATUS_SUCCESS;
 }
 
-static int wifi_mgmt_ie_list_set(mlan_private *priv, custom_ie_hdr *ies_list, t_u8 ies_cnt)
+static mlan_status wifi_mgmt_ie_list_set(mlan_private *priv, custom_ie_hdr *ies_list, t_u8 ies_cnt)
 {
     mlan_status status                 = MLAN_STATUS_SUCCESS;
     mlan_ds_misc_custom_ie *pcustom_ie = MNULL;
