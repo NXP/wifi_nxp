@@ -233,6 +233,10 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->uap_host_based  = MFALSE;
 #endif
 
+#if CONFIG_DRIVER_MBO
+    priv->mbo_index = MLAN_MGMT_IE_INVALID_IDX;
+#endif
+
 #if CONFIG_WPA_SUPP
     priv->default_scan_ies_len = 0;
     priv->probe_req_index      = MLAN_MGMT_IE_INVALID_IDX;
