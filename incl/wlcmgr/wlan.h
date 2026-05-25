@@ -32,7 +32,7 @@ extern "C" {
 #endif
 #endif
 
-#define WLAN_DRV_VERSION "v1.3.r49.p5"
+#define WLAN_DRV_VERSION "v1.3.r49.p6"
 
 #if CONFIG_WPA2_ENTP
 #include <wm_mbedtls_helper_api.h>
