@@ -526,8 +526,6 @@ void sdio_oob_reset(void)
     OSA_TimeDelay(10);
     GPIO_PinWrite(IR_OUTBAND_TRIGGER_GPIO, IR_OUTBAND_TRIGGER_GPIO_PIN, 1);
     OSA_TimeDelay(10);
-#else
-    sdio_io_w("Independent reset out-of-band GPIO not configured");
 #endif
 }
 
@@ -544,8 +542,6 @@ void sdio_oob_init(void)
     IOMUXC_SetPinMux(IOMUXC_GPIO_IR_OUTBAND_TRIGGER, 0U);
 #endif
     GPIO_PinInit(IR_OUTBAND_TRIGGER_GPIO, IR_OUTBAND_TRIGGER_GPIO_PIN, &out_config);
-#else
-    sdio_io_w("Independent reset out-of-band GPIO not configured");
 #endif
 }
 #endif /* CONFIG_WIFI_IND_RESET */
