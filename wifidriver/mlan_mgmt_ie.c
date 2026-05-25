@@ -69,15 +69,18 @@ static void wrapper_mgmt_buf_free(void *ptr)
 #if !CONFIG_MEM_POOLS
     OSA_MemoryFree(ptr);
 #else
-    if (ptr >= buf_256_MemoryPool && ptr < (buf_256_MemoryPool + POOL_ID4_POOL_SZ))
+#define POOL_256_SZ     (256 * 8 + 8 * sizeof(uint32_t))
+#define POOL_512_SZ     (512 * 4 + 4 * sizeof(uint32_t))
+#define POOL_2048_SZ    (2048 * 4 + 4 * sizeof(uint32_t))
+    if (ptr >= buf_256_MemoryPool && ptr < (buf_256_MemoryPool + POOL_256_SZ))
     {
         OSA_MemoryPoolFree(buf_256_MemoryPool, ptr);
     }
-    else if (ptr >= buf_512_MemoryPool && ptr < (buf_512_MemoryPool + POOL_ID5_POOL_SZ))
+    else if (ptr >= buf_512_MemoryPool && ptr < (buf_512_MemoryPool + POOL_512_SZ))
     {
         OSA_MemoryPoolFree(buf_512_MemoryPool, ptr);
     }
-    else if (ptr >= buf_2048_MemoryPool && ptr < (buf_2048_MemoryPool + POOL_ID11_POOL_SZ))
+    else if (ptr >= buf_2048_MemoryPool && ptr < (buf_2048_MemoryPool + POOL_2048_SZ))
     {
         OSA_MemoryPoolFree(buf_2048_MemoryPool, ptr);
     }
