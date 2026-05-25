@@ -29,6 +29,12 @@ static mlan_buf_cfg s_mgmt_buf_cfgs[] = {
 
 #define MGMT_BUFPOOL_NUM (sizeof(s_mgmt_buf_cfgs)/sizeof(s_mgmt_buf_cfgs[0]))
 
+#define IE_MASK_WPS    0x0001
+#define IE_MASK_P2P    0x0002
+#define IE_MASK_WFD    0x0004
+#define IE_MASK_VENDOR 0x0008
+#define IE_MASK_EXTCAP 0x0010
+
 static OSA_MUTEX_HANDLE_DEFINE(s_ie_mutex);
 
 static mlan_buf_handle s_mgmt_buf_handle = {0};
@@ -629,6 +635,78 @@ out:
     return status;
 }
 
+static mlan_status wifi_mgmt_ie_get(mlan_private *priv, void *buf, t_u16 index)
+{
+    mlan_status status                 = MLAN_STATUS_SUCCESS;
+    mlan_ds_misc_custom_ie *pcustom_ie = MNULL;
+    custom_ie *pos                     = MNULL;
+    HostCmd_DS_COMMAND *cmd            = MNULL;
+
+    ENTER();
+
+    pcustom_ie = wrapper_mgmt_buf_malloc(sizeof(mlan_ds_misc_custom_ie));
+    if (!pcustom_ie)
+    {
+        wifi_e("Fail to allocate custome_ie\n");
+        LEAVE();
+        return MLAN_STATUS_FAILURE;
+    }
+
+    pcustom_ie->type = TLV_TYPE_MGMT_IE;
+
+    pos = pcustom_ie->ie_data_list;
+    pos->ie_index = index;
+    pos->mgmt_subtype_mask = 0;
+    pos->ie_length = 0;
+    pcustom_ie->len = sizeof(custom_ie) - MAX_IE_SIZE;
+
+    (void)wifi_get_command_lock();
+
+    cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+
+    cmd->seq_num = wifi_get_cmd_seq_num(priv);
+    cmd->result  = 0x0;
+
+#if UAP_SUPPORT
+    if (priv->bss_type == MLAN_BSS_TYPE_UAP
+#if CONFIG_WPA_SUPP_P2P
+        || ((priv->bss_type == MLAN_BSS_TYPE_WIFIDIRECT) && (priv->bss_role == MLAN_BSS_ROLE_UAP))
+#endif
+        )
+    {
+        wifi_d("Sending System Config command for UAP");
+        status = wlan_ops_uap_prepare_cmd(priv, HOST_CMD_APCMD_SYS_CONFIGURE, HostCmd_ACT_GEN_GET, 0,
+                                          MNULL, (void *)pcustom_ie, cmd);
+    }
+    else
+#endif
+    {
+        wifi_d("Sending MGMT IE list set command for STA");
+        status = wlan_ops_sta_prepare_cmd(priv, HostCmd_CMD_MGMT_IE_LIST, HostCmd_ACT_GEN_GET, 0,
+                                          MNULL, (void *)pcustom_ie, cmd);
+    }
+    if (status != MLAN_STATUS_SUCCESS)
+    {
+        wifi_e("Failed to prepare cmd.");
+        wm_wifi.cmd_resp_priv = NULL;
+        (void)wifi_put_command_lock();
+        goto out;
+    }
+
+    (void)wifi_wait_for_cmdresp(buf);
+
+out:
+    if (pcustom_ie != MNULL)
+    {
+        wrapper_mgmt_buf_free(pcustom_ie);
+    }
+
+    LEAVE();
+
+    return status;
+}
+
 static mlan_status wifi_mgmt_ie_add(mlan_private *priv, t_u16 ie_mask, t_u8 *ie_buf, t_u16 ie_len, t_u16 *index, bool download)
 {
     mlan_status status          = MLAN_STATUS_SUCCESS;
@@ -853,6 +931,213 @@ out:
     return status;
 }
 
+static t_u16 wifi_mgmt_ie_filter_beacon_ies(mlan_private *priv,
+                                            const t_u8 *ie,
+                                            int len,
+                                            t_u8 *ie_out,
+                                            t_u32 ie_out_len,
+                                            t_u16 wps_flag)
+{
+    int left_len    = len;
+    const t_u8 *pos = ie;
+    int length;
+    t_u8 id                                = 0;
+    t_u16 out_len                          = 0;
+    IEEEtypes_VendorSpecific_t *pvendor_ie = NULL;
+    const t_u8 wps_oui[4]                  = {0x00, 0x50, 0xf2, 0x04};
+    const t_u8 p2p_oui[4]                  = {0x50, 0x6f, 0x9a, 0x09};
+    const t_u8 wfd_oui[4]                  = {0x50, 0x6f, 0x9a, 0x0a};
+    const t_u8 wmm_oui[4]                  = {0x00, 0x50, 0xf2, 0x02};
+    t_u8 find_p2p_ie                       = MFALSE;
+#define WLAN_EID_ERP_INFO 42
+
+    /* ERP_INFO/EXTENDED_SUPPORT_RATES/HT_CAPABILITY/HT_OPERATION/WMM
+     * and WPS/P2P/WFD IE will be fileter out
+     */
+    while (left_len >= 2)
+    {
+        length = *(pos + 1);
+        id     = *pos;
+        if ((length + 2) > left_len)
+            break;
+
+        switch (id)
+        {
+            case COUNTRY_INFO:
+                if ((out_len + length + 2) < (int)ie_out_len)
+                {
+                    (void)memcpy(ie_out + out_len, pos, length + 2);
+                    out_len += (t_u16)(length + 2);
+                }
+                else
+                {
+                    wifi_d("IE too big, fail copy COUNTRY INFO IE");
+                }
+                break;
+            case HT_CAPABILITY:
+            case HT_OPERATION:
+#if CONFIG_11AC
+            case VHT_CAPABILITY:
+            case VHT_OPERATION:
+#endif
+#if UAP_HOST_MLME
+                if ((out_len + length + 2) < (int)ie_out_len)
+                {
+                    (void)memcpy(ie_out + out_len, pos, length + 2);
+                    out_len += length + 2;
+                }
+                else
+                {
+                    wifi_d("IE too big, fail copy COUNTRY INFO IE");
+                }
+#endif
+                break;
+            case EXTENDED_SUPPORTED_RATES:
+            case WLAN_EID_ERP_INFO:
+                /* Fall Through */
+            case REGULATORY_CLASS:
+                /* Fall Through */
+            case OVERLAPBSSSCANPARAM:
+                break;
+#if CONFIG_11AX
+            case EXTENSION:
+#if UAP_SUPPORT
+#if CONFIG_11AX
+                if ((*(pos + 2) == HE_CAPABILITY || *(pos + 2) == HE_OPERATION) && !IS_FW_SUPPORT_11AX(mlan_adap))
+                {
+                    /* Ignore HE-cap and HE-op if FW doesn't support HE */
+                    break;
+                }
+
+                if (*(pos + 2) == HE_CAPABILITY)
+                {
+                    mlan_ds_11ax_he_cfg he_cfg;
+                    IEEEtypes_HECap_t *hecap_ie = NULL;
+                    (void)memset((void *)&he_cfg, 0, sizeof(mlan_ds_11ax_he_cfg));
+
+                    if (priv->uap_channel <= 14)
+                        he_cfg.band = MBIT(0);
+                    else
+                        he_cfg.band = MBIT(1);
+
+                    wifi_d("Retrieve 11ax cfg by channel=%d band=%d", priv->uap_channel, he_cfg.band);
+
+                    if (0 == wlan_cmd_11ax_cfg(priv, HostCmd_ACT_GEN_GET, &he_cfg))
+                    {
+                        t_u16 he_cap_len;
+                        hecap_ie                      = (IEEEtypes_HECap_t *)&he_cfg.he_cap.len;
+                        he_cap_len                    = he_cfg.he_cap.len;
+                        hecap_ie->ieee_hdr.len        = he_cap_len;
+                        hecap_ie->ieee_hdr.element_id = (IEEEtypes_ElementId_e)he_cfg.he_cap.id;
+
+                        (void)memcpy(ie_out + out_len, hecap_ie, hecap_ie->ieee_hdr.len + 2);
+
+                        out_len += hecap_ie->ieee_hdr.len + 2;
+                    }
+                    else
+                    {
+                        wifi_d("Fail to get 11ax he_cap parameters");
+                    }
+                }
+                else
+#endif
+#endif
+                {
+                    if ((out_len + length + 2) < (int)ie_out_len)
+                    {
+                        (void)memcpy(ie_out + out_len, pos, length + 2);
+                        out_len += length + 2;
+                    }
+                    else
+                    {
+                        wifi_d("IE too big, fail copy EXTENSION IE");
+                    }
+                }
+                break;
+#endif
+            case EXT_CAPABILITY:
+                /* filter out EXTCAP */
+                if (wps_flag & IE_MASK_EXTCAP)
+                {
+                    break;
+                }
+                if ((out_len + length + 2) < (int)ie_out_len)
+                {
+                    (void)memcpy(ie_out + out_len, pos, length + 2);
+                    out_len += length + 2;
+                }
+                else
+                {
+                    wifi_d("IE too big, fail copy EXTCAP IE");
+                }
+                break;
+            case VENDOR_SPECIFIC_221:
+                /* filter out wmm ie */
+                pvendor_ie = (IEEEtypes_VendorSpecific_t *)pos;
+                if (!memcmp(pvendor_ie->vend_hdr.oui, wmm_oui, sizeof(pvendor_ie->vend_hdr.oui)) &&
+                    pvendor_ie->vend_hdr.oui_type == wmm_oui[3])
+                {
+                    break;
+                }
+                /* filter out wps ie */
+                else if (!memcmp(pvendor_ie->vend_hdr.oui, wps_oui, sizeof(pvendor_ie->vend_hdr.oui)) &&
+                         pvendor_ie->vend_hdr.oui_type == wps_oui[3])
+                {
+                    if (wps_flag & IE_MASK_WPS)
+                        break;
+                }
+                /* filter out first p2p ie */
+                else if (!memcmp(pvendor_ie->vend_hdr.oui, p2p_oui, sizeof(pvendor_ie->vend_hdr.oui)) &&
+                         pvendor_ie->vend_hdr.oui_type == p2p_oui[3])
+                {
+                    if (!find_p2p_ie && (wps_flag & IE_MASK_P2P))
+                    {
+                        find_p2p_ie = MTRUE;
+                        break;
+                    }
+                }
+                /* filter out wfd ie */
+                else if (!memcmp(pvendor_ie->vend_hdr.oui, wfd_oui, sizeof(pvendor_ie->vend_hdr.oui)) &&
+                         pvendor_ie->vend_hdr.oui_type == wfd_oui[3])
+                {
+                    if (wps_flag & IE_MASK_WFD)
+                        break;
+                }
+                else if (wps_flag & IE_MASK_VENDOR)
+                {
+                    // filter out vendor IE
+                    break;
+                }
+                if ((out_len + length + 2) < (int)ie_out_len)
+                {
+                    (void)memcpy(ie_out + out_len, pos, length + 2);
+                    out_len += length + 2;
+                }
+                else
+                {
+                    wifi_d("IE too big, fail copy VENDOR_SPECIFIC_221 IE");
+                }
+                break;
+            default:
+                if ((out_len + length + 2) < (int)ie_out_len)
+                {
+                    (void)memcpy(ie_out + out_len, pos, length + 2);
+                    out_len += length + 2;
+                }
+                else
+                {
+                    wifi_d("IE too big, fail copy %d IE", id);
+                }
+                break;
+        }
+
+        pos += (length + 2);
+        left_len -= (length + 2);
+    }
+
+    return out_len;
+}
+
 mlan_status wifi_mgmt_ie_replace_IE(mlan_private *priv, t_u8 *ie_buf, t_u16 ie_len, IEEEtypes_ElementId_e ie_id, t_u8 *oui)
 {
     mlan_status status          = MLAN_STATUS_SUCCESS;
@@ -865,6 +1150,7 @@ mlan_status wifi_mgmt_ie_replace_IE(mlan_private *priv, t_u8 *ie_buf, t_u16 ie_l
     t_u8 *cur_mgmt_ie_buf = MNULL;
     t_u16 cur_mgmt_ie_len = 0;
     t_u8 *tmp_ie_buf    = MNULL;
+    t_u16 tmp_ie_len    = 0;
     t_u16 tmp_ie_offset = 0;
     IEEEtypes_Header_t *cur_ie              = MNULL;
     IEEEtypes_VendorHeader_t *cur_vendor_ie = MNULL;
@@ -877,7 +1163,7 @@ mlan_status wifi_mgmt_ie_replace_IE(mlan_private *priv, t_u8 *ie_buf, t_u16 ie_l
 
     wrapper_mgmt_ie_lock();
 
-    tmp_ie_buf = wrapper_mgmt_buf_malloc(MAX_IE_SIZE);
+    tmp_ie_buf = wrapper_mgmt_buf_malloc(sizeof(tlvbuf_custom_ie) + sizeof(custom_ie) + MAX_IE_SIZE);
     if (!tmp_ie_buf)
     {
         wifi_e("Failed to allocate memory for IE buffer");
@@ -937,11 +1223,68 @@ mlan_status wifi_mgmt_ie_replace_IE(mlan_private *priv, t_u8 *ie_buf, t_u16 ie_l
                         {
                             wifi_d("Update COUNTRY_INFO IE");
                             drv_idx = i;
-                            status = wifi_mgmt_ie_update(priv, pmgmt_buffer->mgmt_subtype_mask, ie_buf, ie_len, &drv_idx);
+
+                            status = wifi_mgmt_ie_get(priv, tmp_ie_buf, cur_fw_idx);
                             if (status != MLAN_STATUS_SUCCESS)
                             {
-                                wifi_e("Failed to update COUNTRY_INFO IE");
+                                wifi_e("Failed to get custom ie, index = %d", cur_fw_idx);
                                 goto out;
+                            }
+
+                            tmp_ie_len = ((tlvbuf_custom_ie *)tmp_ie_buf)->length + sizeof(tlvbuf_custom_ie);
+                            if ((tmp_ie_len < (sizeof(tlvbuf_custom_ie) + sizeof(custom_ie) - MAX_IE_SIZE)) ||
+                                tmp_ie_len > sizeof(tlvbuf_custom_ie) + sizeof(custom_ie) + MAX_IE_SIZE)
+                            {
+                                wifi_e("%s: get_mgmt_ie index=%d invalid len=%d", __FUNCTION__, cur_fw_idx, tmp_ie_len);
+                                goto out;
+                            }
+                            else
+                            {
+                                custom_ie *cu_ie = (custom_ie *)(tmp_ie_buf + sizeof(tlvbuf_custom_ie));
+                                t_u8 *cu_ie_buf = (t_u8 *)cu_ie + (sizeof(custom_ie) - MAX_IE_SIZE);
+
+                                t_u8 beacon_ie_buf[MAX_IE_SIZE] = {0};
+                                t_u16 beacon_ie_len             = 0;
+                                t_u8 new_ie_buf[MAX_IE_SIZE]    = {0};
+                                t_u16 new_ie_len                = 0;
+                                t_u8 *new_ie_ptr                = new_ie_buf;
+                                bool country_ie_in_beacon       = false;
+
+                                beacon_ie_len = wifi_mgmt_ie_filter_beacon_ies(priv, cu_ie_buf, cu_ie->ie_length, beacon_ie_buf, MAX_IE_SIZE,
+                                                                    IE_MASK_WPS | IE_MASK_WFD | IE_MASK_P2P | IE_MASK_VENDOR);
+                                t_u8 *ptr  = beacon_ie_buf;
+                                t_u16 left = beacon_ie_len;
+                                while (left >= sizeof(IEEEtypes_Header_t))
+                                {
+                                    IEEEtypes_Header_t *cu_ieee_hdr = (IEEEtypes_Header_t *)ptr;
+                                    if (cu_ieee_hdr->element_id != COUNTRY_INFO)
+                                    {
+                                        (void)memcpy(new_ie_ptr, (t_u8 *)cu_ieee_hdr, cu_ieee_hdr->len + 2U);
+                                        new_ie_ptr += (cu_ieee_hdr->len + 2U);
+                                        new_ie_len += (cu_ieee_hdr->len + 2U);
+                                    }
+                                    else
+                                    {
+                                        country_ie_in_beacon = true;
+                                        (void)memcpy(new_ie_ptr, ie_buf, ie_len);
+                                        new_ie_ptr += ie_len;
+                                        new_ie_len += ie_len;
+                                    }
+                                    left -= (cu_ieee_hdr->len + 2U);
+                                    ptr += cu_ieee_hdr->len + 2U;
+                                }
+                                if (!country_ie_in_beacon)
+                                {
+                                    (void)memcpy(new_ie_ptr, ie_buf, ie_len);
+                                    new_ie_ptr += ie_len;
+                                    new_ie_len += ie_len;
+                                }
+                                status = wifi_mgmt_ie_update(priv, pmgmt_buffer->mgmt_subtype_mask, new_ie_buf, new_ie_len, &drv_idx);
+                                if (status != MLAN_STATUS_SUCCESS)
+                                {
+                                    wifi_e("Failed to update COUNTRY_INFO IE");
+                                    goto out;
+                                }
                             }
                         }
                         else if (cur_ie_len == ie_len)
