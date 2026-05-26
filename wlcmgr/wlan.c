@@ -6213,8 +6213,14 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
             {
                 memset(psk, 0, sizeof(psk));
                 hexstr2bin(pos, (unsigned char *)psk, hex_len/2);
-                security->psk_len = strlen(psk);
-                (void)strcpy(security->psk, psk);
+                size_t len = strlen(psk);
+                if (len >= sizeof(security->psk))
+                {
+                    wlcm_e("The psk length is too long");
+                    return;
+                }
+                security->psk_len = len;
+                memcpy(security->psk, psk, len + 1);
                 security->password_len = strlen(psk);
                 (void)strcpy(security->password, psk);
             }

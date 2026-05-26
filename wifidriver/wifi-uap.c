@@ -4408,6 +4408,8 @@ int wifi_setup_he_cap(nxp_wifi_he_capabilities *he_cap, t_u8 band)
     ppe_threshold_len = phe_cap->len - HE_CAP_FIX_SIZE - extra_mcs_size;
     if (phe_cap->he_phy_cap[6] & MBIT(7) && ppe_threshold_len > 0)
     {
+        int remaining_len = sizeof(phe_cap->val) - extra_mcs_size;
+        ppe_threshold_len = MIN(ppe_threshold_len, remaining_len);
         ppe_threshold_len = MIN(ppe_threshold_len, (int)WIFI_HE_MAX_PPET_CAPAB_SIZE);
         __memcpy(NULL, he_cap->ppet, &phe_cap->val[extra_mcs_size], ppe_threshold_len);
     }
