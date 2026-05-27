@@ -1779,7 +1779,7 @@ int wlan_set_uap_coutry_regd_by_conn_bss(pmlan_private priv, BSSDescriptor_t *d)
         return WM_SUCCESS;
     }
 
-    ret = wifi_mgmt_ie_replace_IE(mlan_adap->priv[1], (t_u8 *)&(d->country_info), country_ie_len + 2U, COUNTRY_INFO, NULL);
+    ret = wifi_mgmt_ie_replace_elem(mlan_adap->priv[1], (t_u8 *)&(d->country_info), country_ie_len + 2U, COUNTRY_INFO, NULL);
     if (ret != WM_SUCCESS)
     {
         wifi_e("%s: failed to update country ie.", __FUNCTION__);

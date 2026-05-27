@@ -83,6 +83,37 @@ typedef struct _mlan_buf_cfg {
     t_u8  buf_cnt;
 } mlan_buf_cfg, *pmlan_buf_cfg;
 
+/** Operation type for a batch IE request entry */
+typedef enum {
+    MGMT_IE_BATCH_SET,    /**< Set (add or update) an IE */
+    MGMT_IE_BATCH_CLEAR,  /**< Clear an IE */
+} mgmt_ie_batch_op;
+
+/**
+ * @brief Describes a single IE operation within a batch request.
+ *
+ * For MGMT_IE_BATCH_SET:   ie_mask, ie_buf, ie_len must be valid.
+ * For MGMT_IE_BATCH_CLEAR: ie_mask/ie_buf/ie_len are ignored;
+ *                          *index must not be MLAN_MGMT_IE_INVALID_IDX.
+ */
+typedef struct _mgmt_ie_batch_req {
+    mgmt_ie_batch_op  op;   /**< Operation: SET or CLEAR */
+    t_u16 *index;           /**< IN/OUT */
+    t_u16  ie_mask;         /**< Management frame type mask */
+    t_u16  ie_len;          /**< IE data length */
+    t_u8  *ie_buf;          /**< IE data pointer */
+} mgmt_ie_batch_req, *pmgmt_ie_batch_req;
+
+/**
+ * @brief Initialize MGMT IE parameters in the mlan adapter.
+ *
+ * Sets up the internal MGMT IE state within the given mlan adapter
+ * instance. Must be called during adapter initialization.
+ *
+ * @param pmadapter    Pointer to the mlan adapter structure
+ */
+void wlan_init_mgmt_ie_param(pmlan_adapter pmadapter);
+
 /**
  * @brief Initialize the MGMT IE buffer pool and IE mutex.
  *
@@ -102,16 +133,6 @@ mlan_status wifi_mgmt_ie_init(void);
 void wifi_mgmt_ie_deinit(void);
 
 /**
- * @brief Initialize MGMT IE parameters in the mlan adapter.
- *
- * Sets up the internal MGMT IE state within the given mlan adapter
- * instance. Must be called during adapter initialization.
- *
- * @param pmadapter    Pointer to the mlan adapter structure
- */
-void wlan_init_mgmt_ie_param(pmlan_adapter pmadapter);
-
-/**
  * @brief Set a Management IE for a given private interface.
  *
  * Stores the provided IE buffer into the MGMT IE table of the given
@@ -127,6 +148,17 @@ void wlan_init_mgmt_ie_param(pmlan_adapter pmadapter);
  * @return             MLAN_STATUS_SUCCESS on success, error status otherwise
  */
 mlan_status wifi_mgmt_ie_set(mlan_private *priv, t_u16 ie_mask, t_u8 *ie_buf, t_u16 ie_len, t_u16 *index);
+
+/**
+ * @brief Set multiple Management IEs in a batch operation.
+ *
+ * @param priv         Pointer to the mlan private interface structure
+ * @param reqs         Pointer to the array of batch IE requests
+ * @param req_cnt      Number of requests in the array
+ *
+ * @return             MLAN_STATUS_SUCCESS on success, error status otherwise
+ */
+mlan_status wifi_mgmt_ie_set_batch(mlan_private *priv, mgmt_ie_batch_req *reqs, t_u8 req_cnt);
 
 /**
  * @brief Clear a Management IE entry by index.
@@ -158,7 +190,20 @@ mlan_status wifi_mgmt_ie_clear(mlan_private *priv, t_u16 *index);
  *
  * @return             MLAN_STATUS_SUCCESS on success, error status otherwise
  */
-mlan_status wifi_mgmt_ie_replace_IE(mlan_private *priv, t_u8 *ie_buf, t_u16 ie_len, IEEEtypes_ElementId_e ie_id, t_u8 *oui);
+mlan_status wifi_mgmt_ie_replace_elem(mlan_private *priv, t_u8 *ie_buf, t_u16 ie_len, IEEEtypes_ElementId_e ie_id, t_u8 *oui);
+
+/**
+ * @brief Fill a single mgmt_ie_batch_req entry.
+ *
+ * @param req      Pointer to the batch request entry to fill
+ * @param index    IN/OUT: pointer to the IE index stored in priv
+ * @param ie_mask  Management frame type mask
+ * @param ie_buf   IE data buffer
+ * @param ie_len   IE data length
+ *
+ * @return         MLAN_STATUS_SUCCESS if a request was filled, error status otherwise
+ */
+mlan_status wifi_mgmt_ie_req_fill(mgmt_ie_batch_req *req, t_u16 ie_mask, t_u8 *ie_buf, t_u16 ie_len, t_u16 *index);
 
 /**
  * @brief Dump all MGMT IE entries for debugging purposes.

@@ -742,6 +742,8 @@ typedef MLAN_PACK_START struct _custom_ie_hdr
     t_u16 mgmt_subtype_mask;
     /** IE Length */
     t_u16 ie_length;
+    /** dirty flag, 1: modified, not yet committed to FW */
+    t_u8 dirty;
     /** IE buffer */
     t_u8 *ie_buf;
 } MLAN_PACK_END custom_ie_hdr;
