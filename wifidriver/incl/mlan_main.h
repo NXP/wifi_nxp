@@ -2378,8 +2378,8 @@ struct _mlan_adapter
     /** 802.11ax 2.4G HE capability */
     t_u8 hw_2g_he_cap[54];
 #endif
-    /** max mgmt IE index in device */
-    t_u16 max_mgmt_ie_index;
+    /** max mgmt IE index in FW */
+    t_u16 max_mgmt_buf_count;
     /** Mgmt IE table maintained by driver */
     custom_ie_entry mgmt_ie[MAX_MGMT_IE_DRV_INDEX];
     /** Count of small size mgmt IE buffers available in FW */

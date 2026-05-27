@@ -2878,219 +2878,177 @@ static int wifi_nxp_set_mgmt_ies(mlan_private *priv,
                                  unsigned short assocresp_ies_len)
 {
     int ret = WM_SUCCESS;
-    custom_ie *ies_data = NULL;
+    /*
+     * Allocate a single contiguous buffer to hold the filtered IE data for
+     * beacon vendor, beacon, beacon-wps, proberesp-p2p and proberesp IEs.
+     * Each filtered result is written at ie_offset and the pointer is stored
+     * directly in reqs[].ie_buf.
+     *
+     * assocresp_ies is used directly from the caller's buffer (not copied
+     * here) because it is already a contiguous, unfiltered blob and the
+     * caller's buffer is guaranteed to be valid for the duration of this
+     * function call. It is therefore NOT included in total_size.
+     */
+#define MGMT_IE_BATCH_CNT 6
+    t_u8 *ie_bufs = NULL;
+    t_u16 ie_len, ie_offset;
+    t_u32 total_size;
+    mgmt_ie_batch_req reqs[MGMT_IE_BATCH_CNT] = {0};
+    t_u8 req_cnt;
 
-    ies_data = (custom_ie *)OSA_MemoryAllocate(sizeof(custom_ie));
-    if (!ies_data)
+    total_size = tail_ies_len + beacon_ies_len + proberesp_ies_len;
+    if (total_size > 0)
     {
-        return -WM_FAIL;
+        ie_bufs = (t_u8 *)OSA_MemoryAllocate(total_size);
+        if (!ie_bufs)
+        {
+            return -WM_FAIL;
+        }
     }
+
+#define IE_BUF(offset) (ie_bufs + (offset))
+
+    req_cnt   = 0;
+    ie_offset = 0;
 
     /** beacon vendor ies */
+    ie_len = 0;
     if ((tail_ies != NULL) && (tail_ies_len != 0U))
     {
-        ies_data->ie_length =
-            wifi_get_specific_ie((const t_u8 *)tail_ies, tail_ies_len, ies_data->ie_buffer, MAX_IE_SIZE, IE_MASK_VENDOR);
+        ie_len = wifi_get_specific_ie((const t_u8 *)tail_ies, tail_ies_len,
+                                    IE_BUF(ie_offset), MAX_IE_SIZE, IE_MASK_VENDOR);
 #if CONFIG_WIFI_IO_DUMP
         PRINTF("VENDOR IE\r\n");
-        dump_hex(ies_data->ie_buffer, ies_data->ie_length);
+        dump_hex(IE_BUF(ie_offset), ie_len);
 #endif
     }
 
-    if (priv->beacon_vendor_index != MLAN_MGMT_IE_INVALID_IDX && !ies_data->ie_length)
+    ret = wifi_mgmt_ie_req_fill(&reqs[req_cnt], MGMT_MASK_BEACON | MGMT_MASK_ASSOC_RESP | MGMT_MASK_PROBE_RESP,
+                                IE_BUF(ie_offset), ie_len, &priv->beacon_vendor_index);
+    if (ret == WM_SUCCESS)
     {
-        /* clear the beacon vendor ies */
-        ret = wifi_mgmt_ie_clear(priv, &priv->beacon_vendor_index);
-        if (ret != WM_SUCCESS)
-        {
-            wuap_e("Clear vendor IE failed");
-            ret = -WM_FAIL;
-            goto done;
-        }
+        ie_offset += ie_len;
+        req_cnt++;
     }
 
-    if (tail_ies && tail_ies_len && ies_data->ie_length)
-    {
-        ret = wifi_mgmt_ie_set(priv, MGMT_MASK_BEACON | MGMT_MASK_ASSOC_RESP | MGMT_MASK_PROBE_RESP,
-                               ies_data->ie_buffer, ies_data->ie_length, &priv->beacon_vendor_index);
-        if (ret != WM_SUCCESS)
-        {
-            wuap_e("Set vendor IE failed");
-            ret = -WM_FAIL;
-            goto done;
-        }
-    }
-
-    (void)memset(ies_data, 0, sizeof(custom_ie));
     /** beacon ies */
+    ie_len = 0;
     if ((tail_ies != NULL) && (tail_ies_len != 0U))
     {
-        ies_data->ie_length = wifi_filter_beacon_ies(priv, (const t_u8 *)tail_ies, tail_ies_len, ies_data->ie_buffer, MAX_IE_SIZE,
-                                                     IE_MASK_WPS | IE_MASK_WFD | IE_MASK_P2P | IE_MASK_VENDOR,
-                                                     (const t_u8 *)proberesp_ies, proberesp_ies_len);
+        ie_len = wifi_filter_beacon_ies(priv, (const t_u8 *)tail_ies, tail_ies_len,
+                                        IE_BUF(ie_offset), MAX_IE_SIZE, IE_MASK_WPS | IE_MASK_WFD | IE_MASK_P2P | IE_MASK_VENDOR,
+                                        (const t_u8 *)proberesp_ies, proberesp_ies_len);
 #if CONFIG_WIFI_IO_DUMP
         PRINTF("Beacon IE\r\n");
-        dump_hex(ies_data->ie_buffer, ies_data->ie_length);
+        dump_hex(IE_BUF(ie_offset), ie_len);
 #endif
     }
 
-    if (priv->beacon_index != MLAN_MGMT_IE_INVALID_IDX && !ies_data->ie_length)
+    ret = wifi_mgmt_ie_req_fill(&reqs[req_cnt], MGMT_MASK_BEACON | MGMT_MASK_ASSOC_RESP | MGMT_MASK_PROBE_RESP,
+                                IE_BUF(ie_offset), ie_len, &priv->beacon_index);
+    if (ret == WM_SUCCESS)
     {
-        /* clear the beacon ies */
-        ret = wifi_mgmt_ie_clear(priv, &priv->beacon_index);
-        if (ret != WM_SUCCESS)
-        {
-            wuap_e("Clear beacon IE failed");
-            ret = -WM_FAIL;
-            goto done;
-        }
+        ie_offset += ie_len;
+        req_cnt++;
     }
 
-    if (tail_ies && tail_ies_len && ies_data->ie_length)
-    {
-        ret = wifi_mgmt_ie_set(priv, MGMT_MASK_BEACON | MGMT_MASK_ASSOC_RESP | MGMT_MASK_PROBE_RESP,
-                               ies_data->ie_buffer, ies_data->ie_length, &priv->beacon_index);
-        if (ret != WM_SUCCESS)
-        {
-            wuap_e("Set beacon IE failed");
-            ret = -WM_FAIL;
-            goto done;
-        }
-    }
-
-    (void)memset(ies_data, 0, sizeof(custom_ie));
     /** beacon wps ies */
+    ie_len = 0;
     if ((beacon_ies != NULL) && (beacon_ies_len != 0U))
     {
-        ies_data->ie_length =
-            wifi_filter_beacon_ies(priv, (const t_u8 *)beacon_ies, beacon_ies_len, ies_data->ie_buffer, MAX_IE_SIZE, IE_MASK_VENDOR, NULL, 0);
+        ie_len = wifi_filter_beacon_ies(priv, (const t_u8 *)beacon_ies, beacon_ies_len,
+                                        IE_BUF(ie_offset), MAX_IE_SIZE, IE_MASK_VENDOR, NULL, 0);
 #if CONFIG_WIFI_IO_DUMP
         PRINTF("Beacon WPS IE\r\n");
-        dump_hex(ies_data->ie_buffer, ies_data->ie_length);
+        dump_hex(IE_BUF(ie_offset), ie_len);
 #endif
     }
 
-    if (priv->beacon_wps_index != MLAN_MGMT_IE_INVALID_IDX && !ies_data->ie_length)
+    ret = wifi_mgmt_ie_req_fill(&reqs[req_cnt], MGMT_MASK_BEACON,
+                                IE_BUF(ie_offset), ie_len, &priv->beacon_wps_index);
+    if (ret == WM_SUCCESS)
     {
-        /* clear the beacon ies */
-        ret = wifi_mgmt_ie_clear(priv, &priv->beacon_wps_index);
-        if (ret != WM_SUCCESS)
-        {
-            wuap_e("Clear beacon WPS IE failed");
-            ret = -WM_FAIL;
-            goto done;
-        }
+        ie_offset += ie_len;
+        req_cnt++;
     }
 
-    if (beacon_ies && beacon_ies_len && ies_data->ie_length)
-    {
-        ret = wifi_mgmt_ie_set(priv, MGMT_MASK_BEACON, ies_data->ie_buffer, ies_data->ie_length, &priv->beacon_wps_index);
-        if (ret != WM_SUCCESS)
-        {
-            wuap_e("Set beacon WPS IE failed");
-            ret = -WM_FAIL;
-            goto done;
-        }
-    }
-
-    (void)memset(ies_data, 0, sizeof(custom_ie));
     /** proberesp ies */
+    ie_len = 0;
     if ((proberesp_ies != NULL) && (proberesp_ies_len != 0U))
     {
-        ies_data->ie_length = wifi_get_specific_ie((const t_u8 *)proberesp_ies, proberesp_ies_len, ies_data->ie_buffer, MAX_IE_SIZE, IE_MASK_P2P);
+        ie_len = wifi_get_specific_ie((const t_u8 *)proberesp_ies, proberesp_ies_len,
+                                    IE_BUF(ie_offset), MAX_IE_SIZE, IE_MASK_P2P);
 #if CONFIG_WIFI_IO_DUMP
         PRINTF("P2P IE\r\n");
-        dump_hex(ies_data->ie_buffer, ies_data->ie_length);
+        dump_hex(IE_BUF(ie_offset), ie_len);
 #endif
     }
 
-    if (priv->proberesp_p2p_index != MLAN_MGMT_IE_INVALID_IDX && !ies_data->ie_length)
+    ret = wifi_mgmt_ie_req_fill(&reqs[req_cnt], MGMT_MASK_PROBE_RESP,
+                                IE_BUF(ie_offset), ie_len, &priv->proberesp_p2p_index);
+    if (ret == WM_SUCCESS)
     {
-        /* clear the proberesp p2p ies */
-        ret = wifi_mgmt_ie_clear(priv, &priv->proberesp_p2p_index);
-        if (ret != WM_SUCCESS)
-        {
-            wuap_e("Clear proberesp P2P IE failed");
-            ret = -WM_FAIL;
-            goto done;
-        }
+        ie_offset += ie_len;
+        req_cnt++;
     }
 
-    if (proberesp_ies && proberesp_ies_len && ies_data->ie_length)
-    {
-        ret = wifi_mgmt_ie_set(priv, MGMT_MASK_PROBE_RESP, ies_data->ie_buffer, ies_data->ie_length, &priv->proberesp_p2p_index);
-        if (ret != WM_SUCCESS)
-        {
-            wuap_e("Set proberesp P2P IE failed");
-            ret = -WM_FAIL;
-            goto done;
-        }
-    }
-
-    (void)memset(ies_data, 0, sizeof(custom_ie));
     /** proberesp IE */
+    ie_len = 0;
     if ((proberesp_ies != NULL) && (proberesp_ies_len != 0U))
     {
-        ies_data->ie_length =
-            wifi_filter_beacon_ies(priv, (const t_u8 *)proberesp_ies, proberesp_ies_len, ies_data->ie_buffer, MAX_IE_SIZE, IE_MASK_P2P | IE_MASK_VENDOR, NULL, 0);
+        ie_len = wifi_filter_beacon_ies(priv, (const t_u8 *)proberesp_ies, proberesp_ies_len,
+                                        IE_BUF(ie_offset), MAX_IE_SIZE, IE_MASK_P2P | IE_MASK_VENDOR, NULL, 0);
 #if CONFIG_WIFI_IO_DUMP
         PRINTF("ProbeResp IE\r\n");
-        dump_hex(ies_data->ie_buffer, ies_data->ie_length);
+        dump_hex(IE_BUF(ie_offset), ie_len);
 #endif
     }
 
-    if (priv->proberesp_index != MLAN_MGMT_IE_INVALID_IDX && !ies_data->ie_length)
+    ret = wifi_mgmt_ie_req_fill(&reqs[req_cnt], MGMT_MASK_PROBE_RESP,
+                                IE_BUF(ie_offset), ie_len, &priv->proberesp_index);
+    if (ret == WM_SUCCESS)
     {
-        /* clear the proberesp ies */
-        ret = wifi_mgmt_ie_clear(priv, &priv->proberesp_index);
-        if (ret != WM_SUCCESS)
-        {
-            wuap_e("Clear proberesp IE failed");
-            ret = -WM_FAIL;
-            goto done;
-        }
-    }
-
-    if (proberesp_ies && proberesp_ies_len && ies_data->ie_length)
-    {
-        ret = wifi_mgmt_ie_set(priv, MGMT_MASK_PROBE_RESP, ies_data->ie_buffer, ies_data->ie_length, &priv->proberesp_index);
-        if (ret != WM_SUCCESS)
-        {
-            wuap_e("Set proberesp IE failed");
-            ret = -WM_FAIL;
-            goto done;
-        }
+        ie_offset += ie_len;
+        req_cnt++;
     }
 
     /** assocresp ies */
-    if (priv->assocresp_index != MLAN_MGMT_IE_INVALID_IDX && !assocresp_ies_len)
-    {
-        /* clear the assocresp ies */
-        ret = wifi_mgmt_ie_clear(priv, &priv->assocresp_index);
-        if (ret != WM_SUCCESS)
-        {
-            wuap_e("Clear assocresp IE failed");
-            ret = -WM_FAIL;
-            goto done;
-        }
-    }
-
+    ie_len = assocresp_ies_len;
     if ((assocresp_ies != NULL) && (assocresp_ies_len != 0U))
     {
-        ret = wifi_mgmt_ie_set(priv, MGMT_MASK_ASSOC_RESP, (t_u8 *)assocresp_ies, assocresp_ies_len, &priv->assocresp_index);
-        if (ret != WM_SUCCESS)
-        {
-            wuap_e("Set assocresp IE failed");
-            ret = -WM_FAIL;
-            goto done;
-        }
+#if CONFIG_WIFI_IO_DUMP
+        PRINTF("AssocResp IE\r\n");
+        dump_hex(assocresp_ies, assocresp_ies_len);
+#endif
+    }
+
+    ret = wifi_mgmt_ie_req_fill(&reqs[req_cnt], MGMT_MASK_ASSOC_RESP,
+                                (t_u8 *)assocresp_ies, assocresp_ies_len, &priv->assocresp_index);
+    if (ret == WM_SUCCESS)
+    {
+        req_cnt++;
+    }
+
+    if (req_cnt == 0)
+    {
+        ret = WM_SUCCESS;
+        goto done;
+    }
+
+    ret = wifi_mgmt_ie_set_batch(priv, reqs, req_cnt);
+    if (ret != WM_SUCCESS)
+    {
+        wuap_e("Set mgmt IEs batch failed");
+        ret = -WM_FAIL;
     }
 
 done:
-    if (ies_data)
+    if (ie_bufs)
     {
-        OSA_MemoryFree(ies_data);
+        OSA_MemoryFree(ie_bufs);
     }
+
+#undef IE_BUF
 
     return ret;
 }
