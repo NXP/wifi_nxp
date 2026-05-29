@@ -1531,6 +1531,10 @@ extern "C" {
 
 #endif /* CONFIG_WIFI_SLIM_DISABLE_DBG */
 
+#if CONFIG_ROAMING && !defined(CONFIG_WIFI_ROAMING_RETRY_CNT)
+#define CONFIG_WIFI_ROAMING_RETRY_CNT 3
+#endif
+
 #else
 #error "Please define supported Wi-Fi module"
 #endif
