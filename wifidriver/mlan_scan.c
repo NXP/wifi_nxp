@@ -1311,31 +1311,28 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
 #if CONFIG_SCAN_WITH_RSSIFILTER
     /*
      * Append rssi threshold tlv
-     *
      * Note: According to the value of rssi_threshold, it is divided into three situations:
      *     rssi_threshold  |  rssi_threshold_enable  |  Whether to carry TLV
      *           <0        |          MTRUE          |          Yes
      *            0        |          MFALSE         |          No
      *           >0        |          MFALSE         |          Yes
      */
-    if (rssi_threshold)
-    {
-        prssi_threshold_tlv              = (MrvlIEtypes_RssiThresholdParamSet_t *)ptlv_pos;
-        prssi_threshold_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_RSSI_THRESHOLD);
-        prssi_threshold_tlv->header.len =
-            (t_u16)(sizeof(prssi_threshold_tlv->enable) + sizeof(prssi_threshold_tlv->rssi_threshold) +
-                    sizeof(prssi_threshold_tlv->reserved));
-        prssi_threshold_tlv->enable         = rssi_threshold_enable;
-        prssi_threshold_tlv->rssi_threshold = rssi_threshold;
+	prssi_threshold_tlv              = (MrvlIEtypes_RssiThresholdParamSet_t *)ptlv_pos;
+	prssi_threshold_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_RSSI_THRESHOLD);
+	prssi_threshold_tlv->header.len =
+		(t_u16)(sizeof(prssi_threshold_tlv->enable) + sizeof(prssi_threshold_tlv->rssi_threshold) +
+				sizeof(prssi_threshold_tlv->reserved));
+	prssi_threshold_tlv->enable         = rssi_threshold_enable;
+	prssi_threshold_tlv->rssi_threshold = rssi_threshold;
 
-        ptlv_pos += sizeof(prssi_threshold_tlv->header) + prssi_threshold_tlv->header.len;
+	ptlv_pos += sizeof(prssi_threshold_tlv->header) + prssi_threshold_tlv->header.len;
 
-        prssi_threshold_tlv->header.len = wlan_cpu_to_le16(prssi_threshold_tlv->header.len);
+	prssi_threshold_tlv->header.len = wlan_cpu_to_le16(prssi_threshold_tlv->header.len);
 
-        pmadapter->rssi_threshold = (rssi_threshold < 0 ? rssi_threshold : 0);
+	pmadapter->rssi_threshold = (rssi_threshold < 0 ? rssi_threshold : 0);
 
-        PRINTM(MINFO, "SCAN_CMD: Rssi threshold = %d\n", rssi_threshold);
-    }
+	PRINTM(MINFO, "SCAN_CMD: Rssi threshold = %d\n", rssi_threshold);
+
 #endif
 
     /* fixme: enable this later when req. */
