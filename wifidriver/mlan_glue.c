@@ -5883,7 +5883,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #if CONFIG_HOST_SLEEP
                 wakelock_get();
 #endif
-                if (split_scan_in_progress == false)
+                if (is_split_scan_complete())
                 {
                     wifi_event_completion((enum wlan_bss_type)evt->bss_type, WIFI_EVENT_SLEEP, WIFI_EVENT_REASON_SUCCESS, NULL);
                 }
