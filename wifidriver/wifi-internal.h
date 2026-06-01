@@ -229,7 +229,6 @@ typedef struct
 } wm_wifi_t;
 
 extern wm_wifi_t wm_wifi;
-extern bool split_scan_in_progress;
 
 /* fixme: This structure seems to have been removed from mlan. This was
    copied from userif_ext.h file temporarily. Change the handling of events to
