@@ -5103,6 +5103,25 @@ static void test_wlan_get_log(int argc, char **argv)
             stats.rx_octets_in_ampdu_cnt, stats.ampdu_delimiter_crc_error_cnt);
     }
 }
+
+static void test_wlan_get_diag(int argc, char **argv)
+{
+    struct wlan_diag diag;
+    int ret;
+
+    (void)memset(&diag, 0, sizeof(struct wlan_diag));
+    ret = wlan_get_diag(&diag);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to get Wi-Fi diagnostic stats\r\n");
+        return;
+    }
+
+    (void)PRINTF("Wi-Fi Diagnostic Stats:\r\n");
+    (void)PRINTF("  hwExceptionCount      : %u\r\n", diag.hw_exception_count);
+    (void)PRINTF("  disconnectionCount    : %u\r\n", diag.disconnection_count);
+    (void)PRINTF("  disconnectionDuration : %u sec\r\n", diag.disconnection_dur_sec);
+}
 #endif
 
 #if CONFIG_MEF_CFG
@@ -14751,6 +14770,7 @@ static struct cli_command tests[] = {
 #endif
 #if CONFIG_WIFI_GET_LOG
     {"wlan-get-log", "<sta/uap> <ext>", test_wlan_get_log},
+    {"wlan-get-diag", NULL, test_wlan_get_diag},
 #endif
 #if CONFIG_WIFI_TX_PER_TRACK
     {"wlan-tx-pert", "<0/1> <STA/UAP> <p> <r> <n>", test_wlan_tx_pert},
