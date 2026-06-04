@@ -710,6 +710,11 @@ static struct
     uint8_t uap_start_in_hang;
 #endif
     bool internal : 1;
+#if CONFIG_WIFI_GET_LOG
+    /* Wi-Fi diagnostic statistics */
+    uint32_t diag_disc_count;
+    uint32_t diag_disc_timestamp;
+#endif
 } wlan;
 
 OSA_TASK_HANDLE_DEFINE(wlcmgr_mon_task_Handle);
@@ -804,6 +809,15 @@ static void dbg_lock_info(void)
 #if CONFIG_WLS_CSI_PROC
 t_u8 g_csi_event_for_wls;
 #endif
+
+static void wlan_diag_on_disconnect(void)
+{
+#if CONFIG_WIFI_GET_LOG
+    uint32_t count           = wlan.diag_disc_count;
+    wlan.diag_disc_count     = (count >= UINT32_MAX) ? 0U : (uint32_t)(count + 1U);
+    wlan.diag_disc_timestamp = OSA_GetTimestamp();
+#endif
+}
 
 /*
  * Utility Functions
@@ -5038,6 +5052,8 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
      * this as a connection attempt failure via do_connect_fail() and
      * proceed accordingly.
      */
+    wlan_diag_on_disconnect();
+
     if (is_state(CM_STA_IDLE))
     {
         wlcm_d("ignoring link loss event in idle state");
@@ -5160,6 +5176,8 @@ static void wlcm_process_disassoc_event(struct wifi_message *msg, enum cm_sta_st
      * this as a connection attempt failure via do_connect_fail() and
      * proceed accordingly.
      */
+    wlan_diag_on_disconnect();
+
 #if CONFIG_WPA2_ENTP
     if (wlan_get_prov_session() == PROV_ENTP_SESSION_ATTEMPT)
     {
@@ -5194,6 +5212,8 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
                                                 enum cm_sta_state *next,
                                                 struct wlan_network *network)
 {
+    wlan_diag_on_disconnect();
+
 #if CONFIG_WPA2_ENTP
     if (wlan_get_prov_session() == PROV_ENTP_SESSION_ATTEMPT)
     {
@@ -12971,6 +12991,35 @@ int wlan_reset_stats(enum wlan_bss_type bss_type)
 {
     CHECK_BSS_TYPE(bss_type, -WM_FAIL);
     return wifi_reset_stats((mlan_bss_type)bss_type);
+}
+
+int wlan_get_diag(struct wlan_diag *diag)
+{
+    if (!diag)
+        return -WM_E_INVAL;
+
+    /* hw_exception_count: reserved, not yet supported by driver */
+    diag->hw_exception_count = 0U;
+
+    diag->disconnection_count = wlan.diag_disc_count;
+
+    /* Duration is only meaningful while disconnected and after at least
+     * one disconnect event has been recorded. */
+    if (is_sta_connected() || wlan.diag_disc_count == 0U)
+    {
+        diag->disconnection_dur_sec = 0U;
+    }
+    else
+    {
+        uint32_t now_us   = OSA_GetTimestamp();
+        /* Handle 32-bit wrap-around */
+        uint32_t delta_us = (now_us >= wlan.diag_disc_timestamp)
+                            ? (now_us - wlan.diag_disc_timestamp)
+                            : ((UINT32_MAX - wlan.diag_disc_timestamp) + now_us + 1U);
+        diag->disconnection_dur_sec = delta_us / 1000000U;
+    }
+
+    return WM_SUCCESS;
 }
 #endif
 

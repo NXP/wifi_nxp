@@ -1411,6 +1411,17 @@ typedef wifi_pkt_stats_t wlan_pkt_stats_t;
 /** Wi-Fi driver stat from \ref wifi_stats_t
  */
 typedef wifi_stats_t wlan_stats_t;
+
+/** Wi-Fi diagnostic statistics */
+struct wlan_diag
+{
+    /** Number of hardware exceptions detected by the Wi-Fi driver; reserved, always 0 */
+    uint32_t hw_exception_count;
+    /** Number of disconnection events since driver initialization */
+    uint32_t disconnection_count;
+    /** Duration in seconds that the Wi-Fi interface has been in disconnected state */
+    uint32_t disconnection_dur_sec;
+};
 #endif
 
 /** Configuration for Wi-Fi scan channel list from
@@ -4161,6 +4172,16 @@ int wlan_get_stats(wlan_stats_t *stats, enum wlan_bss_type bss_type);
  * \return -WM_FAIL if command fails.
  */
 int wlan_reset_stats(enum wlan_bss_type bss_type);
+
+/**
+ * Get Wi-Fi diagnostic statistics.
+ *
+ * \param[out] diag  Pointer to \ref wlan_diag to store the result.
+ *
+ * \return WM_SUCCESS if successful.
+ * \return -WM_E_INVAL if a NULL pointer is passed.
+ */
+int wlan_get_diag(struct wlan_diag *diag);
 #endif
 
 /** Get station interface power save mode.
