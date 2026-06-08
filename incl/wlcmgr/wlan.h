@@ -2343,6 +2343,11 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size);
  * \return Negative value if initialization failed.
  */
 int wlan_init_nb(const uint8_t *fw_start_addr, const size_t size, int (*cb)(enum wlan_event_reason reason, void *data));
+
+/** Wait for the task created by wlan_init_nb() to complete and destroy it.
+ * Call this from the application task after wlan_init_nb().
+ */
+void wlan_nb_task_cleanup(void);
 #endif
 
 /** Start the Wi-Fi connection manager service.

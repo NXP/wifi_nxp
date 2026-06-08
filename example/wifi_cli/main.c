@@ -344,7 +344,7 @@ int wlan_driver_init(void)
 {
     int result = 0;
 
-#if defined(CONFIG_FW_DNLD_ASYNC) && (CONFIG_FW_DNLD_ASYNC == 1)
+#if CONFIG_FW_DNLD_ASYNC
     result = wlan_init_nb(wlan_fw_bin, wlan_fw_bin_len, wlan_event_callback);
 #else
     /* Initialize WIFI Driver */
@@ -421,6 +421,10 @@ static void task_main(osa_task_param_t arg)
 
     assert(WM_SUCCESS == result);
 #endif
+#endif
+
+#if CONFIG_FW_DNLD_ASYNC
+    wlan_nb_task_cleanup();
 #endif
 
     while (true)
