@@ -6029,12 +6029,12 @@ int wifi_handle_fw_event(struct bus_message *msg)
         case EVENT_RSSI_LOW:
             (void)wifi_event_completion((enum wlan_bss_type)evt->bss_type, WIFI_EVENT_RSSI_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
+        case EVENT_SNR_LOW:
+            (void)wifi_event_completion((enum wlan_bss_type)evt->bss_type, WIFI_EVENT_SNR_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
+            break;
 #if CONFIG_SUBSCRIBE_EVENT_SUPPORT
         case EVENT_RSSI_HIGH:
             (void)wifi_event_completion((enum wlan_bss_type)evt->bss_type, WIFI_EVENT_RSSI_HIGH, WIFI_EVENT_REASON_SUCCESS, NULL);
-            break;
-        case EVENT_SNR_LOW:
-            (void)wifi_event_completion((enum wlan_bss_type)evt->bss_type, WIFI_EVENT_SNR_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
         case EVENT_SNR_HIGH:
             (void)wifi_event_completion((enum wlan_bss_type)evt->bss_type, WIFI_EVENT_SNR_HIGH, WIFI_EVENT_REASON_SUCCESS, NULL);
@@ -9028,6 +9028,64 @@ int wifi_set_threshold_pre_beacon_lost(mlan_private *pmpriv, unsigned int pre_be
     sub_evt.evt_bitmap      = SUBSCRIBE_EVT_PRE_BEACON_LOST;
     sub_evt.pre_beacon_miss = (t_u8)pre_beacon_lost;
     return wifi_subscribe_event_submit(pmpriv, &sub_evt);
+}
+#endif
+
+#if CONFIG_ROAMING
+int wifi_roaming_subscribe_event(uint8_t bitmap, uint8_t rssi_low, uint8_t snr_low)
+{
+    mlan_private *pmpriv = mlan_adap->priv[0];
+    mlan_ds_subscribe_evt subscribe_evt;
+
+    (void)memset(&subscribe_evt, 0, sizeof(mlan_ds_subscribe_evt));
+    subscribe_evt.evt_action = SUBSCRIBE_EVT_ACT_BITWISE_SET;
+
+    if (bitmap & 0x01)
+    {
+        subscribe_evt.evt_bitmap |= SUBSCRIBE_EVT_RSSI_LOW;
+        subscribe_evt.low_rssi = rssi_low;
+        subscribe_evt.low_rssi_freq = 0;
+    }
+    if (bitmap & 0x02)
+    {
+        subscribe_evt.evt_bitmap |= SUBSCRIBE_EVT_SNR_LOW;
+        subscribe_evt.low_snr = snr_low;
+        subscribe_evt.low_snr_freq = 0;
+    }
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = 0;
+    cmd->result = 0x0;
+
+    wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_SUBSCRIBE_EVENT,
+                             HostCmd_ACT_GEN_SET, 0, NULL, &subscribe_evt, cmd);
+    wifi_wait_for_cmdresp(NULL);
+
+    return wm_wifi.cmd_resp_status;
+}
+
+int wifi_roaming_clear_subscribe(void)
+{
+    mlan_private *pmpriv = mlan_adap->priv[0];
+    mlan_ds_subscribe_evt subscribe_evt;
+
+    (void)memset(&subscribe_evt, 0, sizeof(mlan_ds_subscribe_evt));
+    subscribe_evt.evt_action = SUBSCRIBE_EVT_ACT_BITWISE_CLR;
+    subscribe_evt.evt_bitmap = SUBSCRIBE_EVT_RSSI_LOW | SUBSCRIBE_EVT_SNR_LOW;
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = 0;
+    cmd->result = 0x0;
+
+    wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_SUBSCRIBE_EVENT,
+                             HostCmd_ACT_GEN_SET, 0, NULL, &subscribe_evt, cmd);
+    wifi_wait_for_cmdresp(NULL);
+
+    return wm_wifi.cmd_resp_status;
 }
 #endif
 

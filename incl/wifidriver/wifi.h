@@ -520,6 +520,8 @@ int wifi_set_txrx_histogram(int bss_type, void *cfg, t_u8 *data);
 
 #if CONFIG_ROAMING
 int wifi_config_roaming(const int enable, uint8_t rssi_low);
+int wifi_roaming_subscribe_event(uint8_t bitmap, uint8_t rssi_low, uint8_t snr_low);
+int wifi_roaming_clear_subscribe(void);
 #endif
 #if CONFIG_BG_SCAN
 int wifi_config_bgscan_and_rssi(const char *ssid);

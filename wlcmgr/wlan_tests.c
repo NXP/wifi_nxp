@@ -3587,48 +3587,67 @@ static void test_wlan_txrx_histogram(int argc, char **argv)
 static void dump_wlan_roaming_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF(
-        "    wlan-roaming <0/1> <rssi_threshold>"
-        "\r\n");
-    (void)PRINTF("Example:\r\n");
-    (void)PRINTF("    wlan-roaming 1 40\r\n");
+    (void)PRINTF("  nxp_wifi roaming 0\r\n");
+    (void)PRINTF("  nxp_wifi roaming 1 <rssi_threshold>\r\n");
+    (void)PRINTF("  nxp_wifi roaming 2 <snr_threshold>\r\n");
+    (void)PRINTF("  nxp_wifi roaming 3 <rssi_threshold> <snr_threshold>\r\n");
+    (void)PRINTF("\r\n");
+    (void)PRINTF("bitmap: 0=disable, 1=RSSI_LOW, 2=SNR_LOW, 3=both\r\n");
 }
 
 static void test_wlan_roaming(int argc, char **argv)
 {
-    int enable                 = 0;
+    uint8_t bitmap;
     uint8_t rssi_low_threshold = 0;
-    unsigned long val = 0;
+    uint8_t snr_low_threshold = 0;
 
-    if ((argc != 2) && (argc != 3))
+    if (argc < 2)
     {
         dump_wlan_roaming_usage();
-        (void)PRINTF("Error: invalid number of arguments\r\n");
         return;
     }
 
-    errno  = 0;
-    enable = (int)strtol(argv[1], NULL, 10);
-    if (errno != 0)
-    {
-        (void)PRINTF("Error during strtol:wlan roaming errno:%d\r\n", errno);
-        return;
-    }
+    bitmap = (uint8_t)atoi(argv[1]);
 
-    if (argc == 3)
+    if (bitmap == 0)
     {
-        errno              = 0;
-        val   = strtoul(argv[2], NULL, 10);
-        if (errno != 0 || val > UINT8_MAX)
+        /* Disable - no extra args needed */
+    }
+    else if (bitmap == 1)
+    {
+        if (argc < 3)
         {
-            (void)PRINTF("Error during strtol:rssi_threshold errno:%d\r\n", errno);
+            dump_wlan_roaming_usage();
             return;
         }
-        rssi_low_threshold = (uint8_t)val;
+        rssi_low_threshold = (uint8_t)atoi(argv[2]);
+    }
+    else if (bitmap == 2)
+    {
+        if (argc < 3)
+        {
+            dump_wlan_roaming_usage();
+            return;
+        }
+        snr_low_threshold = (uint8_t)atoi(argv[2]);
+    }
+    else if (bitmap == 3)
+    {
+        if (argc < 4)
+        {
+            dump_wlan_roaming_usage();
+            return;
+        }
+        rssi_low_threshold = (uint8_t)atoi(argv[2]);
+        snr_low_threshold = (uint8_t)atoi(argv[3]);
+    }
+    else
+    {
+        dump_wlan_roaming_usage();
+        return;
     }
 
-    wlan_set_roaming(enable, rssi_low_threshold);
-    return;
+    wlan_set_roaming(bitmap, rssi_low_threshold, snr_low_threshold);
 }
 #endif
 
@@ -14776,7 +14795,7 @@ static struct cli_command tests[] = {
     {"wlan-tx-pert", "<0/1> <STA/UAP> <p> <r> <n>", test_wlan_tx_pert},
 #endif
 #if CONFIG_ROAMING
-    {"wlan-roaming", "<0/1> <rssi_threshold>", test_wlan_roaming},
+    {"wlan-roaming", "<bitmap> [<rssi_threshold>] [<snr_threshold>]", test_wlan_roaming},
 #endif
 #if CONFIG_MEF_CFG
     {"wlan-multi-mef", "<ping/arp/multicast/del> [<action>]", test_wlan_set_multiple_mef_config},
