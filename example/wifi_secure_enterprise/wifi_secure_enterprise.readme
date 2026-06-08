@@ -1,0 +1,250 @@
+Overview
+========
+This is the Wi-Fi Secure Enterprise example to demonstrate the CLI support usage using wpa supplicant for opaque key. The CLI module allows user to add CLIs in application.
+Currently only WLAN connection Manager CLIs are available.
+
+Before building the example application select Wi-Fi module macro in the app_config.h. (see #define WIFI_<SoC Name>_BOARD_<Module Name>).
+
+This application is only applicable for hostless SoC, currently only applicable for rw61x A2 by default.
+
+For more information about Wi-Fi module connection see:
+    readme_modules.txt
+    Getting started guide on supported modules configuration:
+    https://www.nxp.com/document/guide/getting-started-with-nxp-wi-fi-modules-using-i-mx-rt-platform:GS-WIFI-MODULES-IMXRT-PLATFORM
+
+Prepare the Demo
+================
+1.  Connect a micro USB cable between the PC host and the CMSIS DAP USB port on the board
+2.  Open a serial terminal with the following settings:
+    - 115200 baud rate
+    - 8 data bits
+    - No parity
+    - One stop bit
+    - No flow control
+3.  Connect the Wi-Fi module.
+4.  Download the program to the target board.
+5.  Either press the reset button on your board or launch the debugger in your IDE to begin running the demo.
+
+
+Running the demo
+================
+1. Add CLI init API in applications main function.
+2. Add WLAN CLI init API once WLAN Connection Manager gets initialized correctly.
+3. When the demo starts, a welcome message would appear on the terminal, press enter for command prompt:
+   Press tab or type help to list out all available CLI commands.
+
+   ========================================
+   wifi secure enterprise demo
+   ========================================
+   secure_storage_its_initialize is successful!
+   1 blob(s) imported from flash (0x0BFEE000) successfully
+   Found Wi-Fi enterprise client key: 0x00003010
+   Initialize CLI
+   ========================================
+   CLI Build: Jun  5 2026 [18:10:34]
+   Copyright  2024  NXP
+   MCU Board: FRDM-RW612
+   ========================================
+   Initialize WLAN Driver
+   ========================================
+   [FW Download] Start to download 1 firmware: 193
+   [FW Download] 1 FW is active: 3211
+   STA MAC Address: C0:95:DA:01:53:59
+   supplicant_main_task: 636 Starting wpa_supplicant thread with debug level: 3
+
+   Successfully initialized wpa_supplicant
+   iface_cb: iface ml1 ifindex 2 c0:95:da:01:53:59
+   Using interface ml1
+
+   Initializing interface 0: ml1
+
+   ECC key validation passed (key_id=0x3010)
+   Set client key (0x3010) successfully
+   Client certificate generated and set successfully, len=751
+   board_type: 2, board_type mapping:
+   0----QFN
+   1----CSP
+   2----BGA
+   ml1: CTRL-EVENT-REGDOM-CHANGE init=USER type=COUNTRY alpha2=WW
+   board_type: 2, board_type mapping:
+   0----QFN
+   1----CSP
+   2----BGA
+   app_cb: WLAN initialized
+   ========================================
+   WLAN CLIs are initialized
+   ========================================
+   ENHANCED WLAN CLIs are initialized
+   ========================================
+   CLIs Available:
+   ========================================
+
+   help
+   clear
+   wlan-version
+   wlan-mac
+   wlan-thread-info
+   wlan-net-stats
+   wlan-set-mac <MAC_Address>
+   wlan-scan
+   wlan-scan-opt ssid <ssid> bssid ...
+   wlan-add <profile_name> ssid <ssid> bssid...
+   wlan-remove <profile_name>
+   wlan-list
+   wlan-connect <profile_name>
+   wlan-connect-opt <profile_name> ...
+   wlan-reassociate
+   wlan-start-network <profile_name>
+   wlan-stop-network
+   wlan-disconnect
+   wlan-stat
+   wlan-info
+   wlan-address
+   wlan-ieee-ps <0/1>
+   wlan-set-ps-cfg <null_pkt_interval>
+   wlan-deep-sleep-ps <0/1>
+   wlan-get-beacon-interval
+   wlan-get-ps-cfg
+   wlan-rts <sta/uap> <rts threshold>
+   wlan-frag <sta/uap> <fragment threshold>
+   wlan-host-11k-enable <0/1>
+   wlan-host-11k-neighbor-req [ssid <ssid>]
+   wlan-host-11v-bss-trans-query <0..16>
+   wlan-mbo-nonprefer-ch "<oper_class>:<chan>:<preference>:<reason> <oper_class>:<chan>:<preference>:<reason>"
+   wlan-mbo-set-cell-capa <cell capa: 1/2/3(default)>
+   wlan-mbo-set-oce <oce: 1(default)/2>
+   wlan-set-okc <okc: 0(default)/1>
+   wlan-pmksa-list
+   wlan-pmksa-flush
+   wlan-set-scan-interval <scan_int: in seconds>
+   wlan-get-log <sta/uap> <ext>
+   wlan-roaming <0/1> <rssi_threshold>
+   wlan-send-hostcmd
+   wlan-ext-coex-uwb
+   wlan-eu-crypto-rc4 <EncDec>
+   wlan-eu-crypto-aes-wrap <EncDec>
+   wlan-eu-crypto-aes-ecb <EncDec>
+   wlan-eu-crypto-ccmp-128 <EncDec>
+   wlan-eu-crypto-ccmp-256 <EncDec>
+   wlan-eu-crypto-gcmp-128 <EncDec>
+   wlan-eu-crypto-gcmp-256 <EncDec>
+   wlan-ft-roam <bssid> <channel>
+   wlan-set-antcfg <ant_mode> <evaluate_time> <evaluate_mode>
+   wlan-get-antcfg
+   wlan-scan-channel-gap <channel_gap_value>
+   wlan-wmm-stat <bss_type>
+   wlan-reset
+   wlan-set-regioncode <region-code>
+   wlan-get-regioncode
+   wlan-11d-enable <sta/uap> <0/1>
+   wlan-csi-cfg
+   wlan-set-csi-param-header  <sta/uap> <csi_enable> <head_id> <tail_id> <chip_id> <band_config> <channel> <csi_monitor_enable> <ra4us>
+   wlan-set-csi-filter <opt> <macaddr> <pkt_type> <type> <flag>
+   wlan-txrx-histogram <action> <enable>
+   wlan-subscribe-event <action> <type> <value> <freq>
+   wlan-uapsd-enable <uapsd_enable>
+   wlan-uapsd-qosinfo <qos_info>
+   wlan-uapsd-sleep-period <sleep_period>
+   wlan-tx-ampdu-prot-mode <mode>
+   wlan-rx-abort-cfg
+   wlan-set-rx-abort-cfg-ext enable <enable> margin <margin> ceil <ceil_thresh> floor <floor_thresh>
+   wlan-get-rx-abort-cfg-ext
+   wlan-cck-desense-cfg
+   wlan-net-monitor-cfg
+   wlan-set-monitor-filter <opt> <macaddr>
+   wlan-set-monitor-param <action> <monitor_activity> <filter_flags> <radio_type> <chan_number>
+   wlan-set-mgmtframetx-cfg
+   wlan-set-mgmtframetx-header <PktType> <PktSubType> <FromDS> <ToDS> <SeqNum> <FragNum> <Addr1> <Addr2> <Addr3> <Addr4>
+   wlan-set-mgmtframetx-payload <Data0 Data1 ... Datan>
+   wlan-set-tsp-cfg <enable> <backoff> <highThreshold> <lowThreshold> <dutycycstep> <dutycycmin> <highthrtemp> <lowthrtemp>
+   wlan-get-tsp-cfg
+   wlan-get-signal
+   wlan-set-bandcfg
+   wlan-get-bandcfg
+   wlan-set-ips <option>
+   wlan-enable-disable-htc <option>
+   wlan-set-su <0/1>
+   wlan-set-forceRTS <0/1>
+   wlan-set-mmsf <enable> <Density> <MMSF>
+   wlan-get-mmsf
+   wlan-get-turbo-mode <STA/UAP>
+   wlan-set-turbo-mode <STA/UAP> <mode>
+   wlan-set-multiple-dtim <value>
+   wlan-set-country <country_code_str>
+   wlan-set-country-ie-ignore <0/1>
+   wlan-single-ant-duty-cycle <enable/disable> [<Ieee154Duration> <TotalDuration>]
+   wlan-dual-ant-duty-cycle <enable/disable> [<Ieee154Duration> <TotalDuration> <Ieee154FarRangeDuration>]
+   wlan-external-coex-pta enable <PTA/WCI-2/WCI-2 GPIO> ExtWifiBtArb <enable/disable> PolGrantPin <high/low> PriPtaInt <enable/disable> StateFromPta <state pin/ priority pin/ state input disable> SampTiming <Sample timing> InfoSampTiming <Sample timing> TrafficPrio <enable/disable> CoexHwIntWic <enable/disable>
+   wlan-sta-inactivityto <n> <m> <l> [k] [j]
+   wlan-get-temperature
+   wlan-auto-null-tx <sta/uap> <start/stop>
+   wlan-detect-ant <detect_mode> <ant_port_count> channel <channel> ...
+   wlan-get-channel-load <set/get> <duration>
+   wlan-set-network-chanlist <profile_name> [freq_band <band>] [channel <chan_list>]
+   wlan-get-txpwrlimit <subband>
+   wlan-set-chanlist
+   wlan-get-chanlist
+   wlan-set-txratecfg <sta/uap> <format> <index> <nss> <rate_setting> <autoTx_set>
+   wlan-get-txratecfg <sta/uap>
+   wlan-get-data-rate <sta/uap>
+   wlan-get-pmfcfg
+   wlan-set-ed-mac-mode <interface> <ed_ctrl_2g> <ed_offset_2g> <ed_ctrl_5g> <ed_offset_5g>
+   wlan-get-ed-mac-mode <interface>
+   wlan-set-tx-omi <interface> <tx-omi> <tx-option> <num_data_pkts>
+   wlan-set-toltime <value>
+   wlan-set-rutxpwrlimit
+   wlan-11ax-cfg <11ax_cfg>
+   wlan-11ax-twt-setup <dump/set/done> [<param_id> <param_data>]
+   wlan-11ax-twt-teardown <dump/set/done> [<param_id> <param_data>]
+   wlan-11ax-twt-report
+   wlan-11ax-twt-information <flow_identifier> <suspend_duration>
+   wlan-get-tsfinfo <format-type>
+   wlan-set-clocksync <mode> <role> <gpio_pin> <gpio_level> <pulse width>
+   ping [-s <packet_size>] [-c <packet_count>] [-W <timeout in sec>] <ipv4/ipv6 address>
+   iperf [-s|-c <host>|-a|-h] [options]
+   wlan-set-rtc-time <year> <month> <day> <hour> <minute> <second>
+   wlan-get-rtc-time
+   ========================================
+
+   #
+   # wlan-set-mac 00:50:43:02:09:14
+
+   # wlan-set-rtc-time 2023 10 25 13 55 0
+   Current datetime: 2023-10-25 13:55:00
+
+   # wlan-add 1 ssid !!!NXP eap-tls id Client key_passwd whatever mfpc 1 mfpr 0 channel 165
+   Added "1"
+
+   # wlan-connect 1
+   Connecting to network...
+   Use 'wlan-stat' for current connection status.
+
+   # ml1: SME: Trying to authenticate with 02:50:43:02:08:28 (SSID='!!!NXP' freq=5825 MHz)
+   ml1: Trying to associate with 02:50:43:02:08:28 (SSID='!!!NXP' freq=5825 MHz)
+   board_type: 2, board_type mapping:
+   0----QFN
+   1----CSP
+   2----BGA
+   ml1: CTRL-EVENT-REGDOM-CHANGE init=USER type=COUNTRY alpha2=WW
+   ml1: Associated with 02:50:43:02:08:28
+   ml1: CTRL-EVENT-SUBNET-STATUS-UPDATE status=0
+   ml1: CTRL-EVENT-EAP-STARTED EAP authentication started
+   ml1: CTRL-EVENT-EAP-PROPOSED-METHOD vendor=0 method=13
+   MTLS: invalid tls_disable_tlsv* params; ignoring
+   Opaque key id: 0x3010
+   ml1: CTRL-EVENT-EAP-METHOD EAP vendor 0 method 13 (TLS) selected
+   ml1: CTRL-EVENT-EAP-PEER-CERT depth=1 subject='C=CN, ST=Somewhere, L=Somewhere, O=Example Inc, CN=Example CA, emailAddress=admin@example.org' hash=b103821ef398a3388746a1514b305f6f9f4d033b4703e7031a7260f14604a400
+   ml1: CTRL-EVENT-EAP-PEER-CERT depth=0 subject='C=CN, ST=Somewhere, O=Example Inc, CN=Example Server, emailAddress=server@example.org' hash=f64d1c6ee1526eb2fdec27659e6eef2c8c10ea8019c4dc9c6388bf1c122957c5
+   ml1: CTRL-EVENT-EAP-SUCCESS EAP authentication completed successfully
+   ml1: PMKSA-CACHE-ADDED 02:50:43:02:08:28 0
+   ml1: WPA: Key negotiation completed with 02:50:43:02:08:28 [PTK=CCMP GTK=CCMP]
+   ml1: CTRL-EVENT-CONNECTED - Connection to 02:50:43:02:08:28 completed [id=0 id_str=]
+   app_cb: WLAN: authenticated to network
+   app_cb: WLAN: connected to network
+   Connected to following BSS:
+   SSID = [!!!NXP]
+   IPv4 Address: [192.168.10.2]
+
+#
+Customization options
+=====================

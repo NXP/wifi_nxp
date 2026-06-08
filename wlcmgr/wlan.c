@@ -110,6 +110,9 @@
 #include "ncp_pm.h"
 #endif
 
+#if CONFIG_WIFI_ENTERPRISE_SECURE_BLOB
+#include "wlan_secure.h"
+#endif
 #define DELAYED_SLP_CFM_DUR 10U
 #define BAD_MIC_TIMEOUT     (60 * 1000)
 
@@ -142,6 +145,10 @@
 
 #if CONFIG_WPA_SUPP_P2P
 static bool p2p_stop_find_active;
+#endif
+
+#if CONFIG_WIFI_ENTERPRISE_SECURE_BLOB
+extern psa_key_id_t wifi_client_key_id;
 #endif
 
 #if UAP_SUPPORT
@@ -398,9 +405,11 @@ static struct wifi_scan_params_t g_wifi_scan_params = {NULL,
                                                        BSS_ANY,
                                                        60,
                                                        250};
-
+#if CONFIG_WIFI_ENTERPRISE_SECURE_BLOB
+#define CONFIG_WLCMGR_STACK_SIZE (10240)
+#else
 #define CONFIG_WLCMGR_STACK_SIZE (5120)
-
+#endif
 static void wlcmgr_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
@@ -6538,6 +6547,13 @@ static void wlcm_process_init(enum cm_sta_state *next)
     wlan_set_11d_state(WLAN_BSS_TYPE_STA, 1);
 #if CONFIG_WPA_SUPP_P2P
     wlan_set_11d_state(WLAN_BSS_TYPE_WIFIDIRECT, 1);
+#endif
+
+#if CONFIG_WIFI_ENTERPRISE_SECURE_BLOB
+    if (wifi_client_key_id != PSA_KEY_ID_NULL)
+    {
+        wlan_set_client_key_and_generate_cert(wifi_client_key_id);
+    }
 #endif
 }
 

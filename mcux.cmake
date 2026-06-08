@@ -382,6 +382,8 @@ if (CONFIG_MCUX_COMPONENT_middleware.wifi.wifidriver)
                 # TODO please change to relative dir
                 certs/ca-cert2.h
                 # TODO please change to relative dir
+                certs/ca-key.h
+                # TODO please change to relative dir
                 certs/client-cert.h
                 # TODO please change to relative dir
                 certs/client-cert2.h
@@ -461,6 +463,8 @@ if (CONFIG_MCUX_COMPONENT_middleware.wifi)
                 CMakeLists.txt
                 wlcmgr/wlan_test_csi.c
                 incl/wlcmgr/wlan_test_csi.h
+                wlcmgr/wlan_secure.c
+                incl/wlcmgr/wlan_secure.h
     )
     mcux_add_include(
         INCLUDES incl
