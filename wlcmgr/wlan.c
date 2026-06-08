@@ -550,9 +550,6 @@ static struct
     /* CM thread */
     OSA_TASK_HANDLE_DEFINE(wlcmgr_task_Handle);
 
-#if CONFIG_FW_DNLD_ASYNC
-    OSA_TASK_HANDLE_DEFINE(wlcmgr_nb_task_Handle);
-#endif
 
     unsigned running : 1;
     unsigned stop_request : 1;
@@ -8493,6 +8490,7 @@ typedef struct
 } wlan_nb_t;
 
 OSA_TASK_HANDLE_DEFINE(wlcmgr_nb_task_Handle);
+OSA_SEMAPHORE_HANDLE_DEFINE(wlcmgr_nb_task_sem);
 
 static void wlcmgr_nb_task(void *data)
 {
@@ -8511,7 +8509,12 @@ static void wlcmgr_nb_task(void *data)
 
 exit:
 
-    OSA_TaskDestroy((osa_task_handle_t)wlan.wlcmgr_nb_task_Handle);
+    /* Notify wlan_nb_task_cleanup() and block until destroyed externally. */
+    (void)OSA_SemaphorePost((osa_semaphore_handle_t)wlcmgr_nb_task_sem);
+    while (true)
+    {
+        OSA_TimeDelay(1000);
+    }
 }
 
 int wlan_init_nb(const uint8_t *fw_start_addr, const size_t size, int (*cb)(enum wlan_event_reason reason, void *data))
@@ -8523,13 +8526,28 @@ int wlan_init_nb(const uint8_t *fw_start_addr, const size_t size, int (*cb)(enum
     wlan_nb.size = size;
     wlan_nb.wlan_cb = cb;
 
-    status = OSA_TaskCreate((osa_task_handle_t)wlan.wlcmgr_nb_task_Handle, OSA_TASK(wlcmgr_nb_task), &wlan_nb);
+    status = OSA_SemaphoreCreateBinary((osa_semaphore_handle_t)wlcmgr_nb_task_sem);
     if (status != KOSA_StatusSuccess)
     {
         return -WM_FAIL;
     }
 
+    status = OSA_TaskCreate((osa_task_handle_t)wlcmgr_nb_task_Handle, OSA_TASK(wlcmgr_nb_task), &wlan_nb);
+    if (status != KOSA_StatusSuccess)
+    {
+        (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)wlcmgr_nb_task_sem);
+        return -WM_FAIL;
+    }
+
     return WM_SUCCESS;
+}
+
+void wlan_nb_task_cleanup(void)
+{
+    (void)OSA_SemaphoreWait((osa_semaphore_handle_t)wlcmgr_nb_task_sem, osaWaitForever_c);
+    (void)OSA_SemaphoreDestroy((osa_semaphore_handle_t)wlcmgr_nb_task_sem);
+
+    OSA_TaskDestroy((osa_task_handle_t)wlcmgr_nb_task_Handle);
 }
 #endif
 
