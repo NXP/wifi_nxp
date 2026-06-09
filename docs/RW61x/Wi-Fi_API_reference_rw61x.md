@@ -37,12 +37,12 @@ information.
 <td>association ID</td>
 </tr>
 <tr class="even">
-<td>AMPDU</td>
-<td>aggregate medium access control protocol data unit</td>
-</tr>
-<tr class="odd">
 <td>AMI</td>
 <td>Ambient Motion Index</td>
+</tr>
+<tr class="odd">
+<td>AMPDU</td>
+<td>aggregate medium access control protocol data unit</td>
 </tr>
 <tr class="even">
 <td>AP</td>
@@ -293,17 +293,17 @@ Here is a list of all documented files with brief descriptions:
 
 ### Data Fields
 
-  - > enum address\_types addr\_type
+  - enum address\_types addr\_type
 
-  - > unsigned address
+  - unsigned address
 
-  - > unsigned gw
+  - unsigned gw
 
-  - > unsigned netmask
+  - unsigned netmask
 
-  - > unsigned dns1
+  - unsigned dns1
 
-  - > unsigned dns2
+  - unsigned dns2
 
 ### Detailed Description
 
@@ -341,7 +341,7 @@ This data structure represents an IPv4 address
 
 #### The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 #### 
 
@@ -349,11 +349,11 @@ This data structure represents an IPv4 address
 
 ### Data Fields
 
-  - > unsigned address \[4\]
+  - unsigned address \[4\]
 
-  - > unsigned char addr\_type
+  - unsigned char addr\_type
 
-  - > uint8\_t addr\_state
+  - uint8\_t addr\_state
 
 ### Detailed Description
 
@@ -375,7 +375,7 @@ This data structure represents an IPv6 address
 
 #### The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 #### 
 
@@ -383,9 +383,9 @@ This data structure represents an IPv6 address
 
 ### Data Fields
 
-  - > t\_u32 hemcs\_rxcnt \[12\]
+  - t\_u32 hemcs\_rxcnt \[12\]
 
-  - > t\_u32 hestbcrate\_rxcnt \[12\]
+  - t\_u32 hestbcrate\_rxcnt \[12\]
 
 ### Detailed Description
 
@@ -404,7 +404,7 @@ Sum of RX packets for HE (802.11ax high efficiency) rate.
 
 #### The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 #### 
 
@@ -412,11 +412,11 @@ Sum of RX packets for HE (802.11ax high efficiency) rate.
 
 ### Data Fields
 
-  - > t\_u32 htmcs\_rxcnt \[16\]
+  - t\_u32 htmcs\_rxcnt \[16\]
 
-  - > t\_u32 htsgi\_rxcnt \[16\]
+  - t\_u32 htsgi\_rxcnt \[16\]
 
-  - > t\_u32 htstbcrate\_rxcnt \[16\]
+  - t\_u32 htstbcrate\_rxcnt \[16\]
 
 ### Detailed Description
 
@@ -439,7 +439,7 @@ Sum of RX packets for HT (802.11n high throughput) rate.
 
 #### The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 #### 
 
@@ -447,21 +447,21 @@ Sum of RX packets for HT (802.11n high throughput) rate.
 
 ### Data Fields
 
-  - > t\_u32 nss\_rxcnt \[2\]
+  - t\_u32 nss\_rxcnt \[2\]
 
-  - > t\_u32 nsts\_rxcnt
+  - t\_u32 nsts\_rxcnt
 
-  - > t\_u32 bandwidth\_rxcnt \[3\]
+  - t\_u32 bandwidth\_rxcnt \[3\]
 
-  - > t\_u32 preamble\_rxcnt \[6\]
+  - t\_u32 preamble\_rxcnt \[6\]
 
-  - > t\_u32 ldpc\_txbfcnt \[2\]
+  - t\_u32 ldpc\_txbfcnt \[2\]
 
-  - > t\_s32 rssi\_value \[2\]
+  - t\_s32 rssi\_value \[2\]
 
-  - > t\_s32 rssi\_chain0 \[4\]
+  - t\_s32 rssi\_chain0 \[4\]
 
-  - > t\_s32 rssi\_chain1 \[4\]
+  - t\_s32 rssi\_chain1 \[4\]
 
 ### Detailed Description
 
@@ -510,7 +510,7 @@ Sum of RX packets.
 
 #### The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 #### 
 
@@ -518,11 +518,11 @@ Sum of RX packets.
 
 ### Data Fields
 
-  - > t\_u32 vhtmcs\_rxcnt \[10\]
+  - t\_u32 vhtmcs\_rxcnt \[10\]
 
-  - > t\_u32 vhtsgi\_rxcnt \[10\]
+  - t\_u32 vhtsgi\_rxcnt \[10\]
 
-  - > t\_u32 vhtstbcrate\_rxcnt \[10\]
+  - t\_u32 vhtstbcrate\_rxcnt \[10\]
 
 ### Detailed Description
 
@@ -545,7 +545,7 @@ Sum of RX packets for VHT (802.11ac very high throughput) rate.
 
 #### The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 #### 
 
@@ -553,7 +553,7 @@ Sum of RX packets for VHT (802.11ac very high throughput) rate.
 
 ### Data Fields
 
-  - > int mode
+  - int mode
 
 ### Detailed Description
 
@@ -568,7 +568,7 @@ Set protection mode for the transmit AMPDU packet
 
 #### The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 #### 
 
@@ -576,9 +576,9 @@ Set protection mode for the transmit AMPDU packet
 
 ### Data Fields
 
-  - > t\_u32 hemcs\_txcnt \[12\]
+  - t\_u32 hemcs\_txcnt \[12\]
 
-  - > t\_u32 hestbcrate\_txcnt \[12\]
+  - t\_u32 hestbcrate\_txcnt \[12\]
 
 ### Detailed Description
 
@@ -597,7 +597,7 @@ Sum of TX packets for HE (802.11ax high efficiency) rate.
 
 #### The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 #### 
 
@@ -605,11 +605,11 @@ Sum of TX packets for HE (802.11ax high efficiency) rate.
 
 ### Data Fields
 
-  - > t\_u32 htmcs\_txcnt \[16\]
+  - t\_u32 htmcs\_txcnt \[16\]
 
-  - > t\_u32 htsgi\_txcnt \[16\]
+  - t\_u32 htsgi\_txcnt \[16\]
 
-  - > t\_u32 htstbcrate\_txcnt \[16\]
+  - t\_u32 htstbcrate\_txcnt \[16\]
 
 ### Detailed Description
 
@@ -632,7 +632,7 @@ Sum of TX packets for HT (802.11n high throughput) rate.
 
 #### The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 #### 
 
@@ -640,17 +640,17 @@ Sum of TX packets for HT (802.11n high throughput) rate.
 
 ### Data Fields
 
-  - > t\_u32 nss\_txcnt \[2\]
+  - t\_u32 nss\_txcnt \[2\]
 
-  - > t\_u32 bandwidth\_txcnt \[3\]
+  - t\_u32 bandwidth\_txcnt \[3\]
 
-  - > t\_u32 preamble\_txcnt \[4\]
+  - t\_u32 preamble\_txcnt \[4\]
 
-  - > t\_u32 ldpc\_txcnt
+  - t\_u32 ldpc\_txcnt
 
-  - > t\_u32 rts\_txcnt
+  - t\_u32 rts\_txcnt
 
-  - > t\_s32 ack\_RSSI
+  - t\_s32 ack\_RSSI
 
 ### Detailed Description
 
@@ -690,7 +690,7 @@ Sum of TX packets.
 
 #### The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 #### 
 
@@ -698,11 +698,11 @@ Sum of TX packets.
 
 ### Data Fields
 
-  - > t\_u32 vhtmcs\_txcnt \[10\]
+  - t\_u32 vhtmcs\_txcnt \[10\]
 
-  - > t\_u32 vhtsgi\_txcnt \[10\]
+  - t\_u32 vhtsgi\_txcnt \[10\]
 
-  - > t\_u32 vhtstbcrate\_txcnt \[10\]
+  - t\_u32 vhtstbcrate\_txcnt \[10\]
 
 ### Detailed Description
 
@@ -725,7 +725,7 @@ Sum of TX packets for VHT (802.11ac very high throughput) rate.
 
 #### The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 #### 
 
@@ -733,17 +733,17 @@ Sum of TX packets for VHT (802.11ac very high throughput) rate.
 
 ### Data Fields
 
-  - > uint8\_t \* bssid
+  - uint8\_t \* bssid
 
-  - > char \* ssid
+  - char \* ssid
 
-  - > int channel \[MAX\_CHANNEL\_LIST\]
+  - int channel \[MAX\_CHANNEL\_LIST\]
 
-  - > IEEEtypes\_Bss\_t bss\_type
+  - IEEEtypes\_Bss\_t bss\_type
 
-  - > int scan\_duration
+  - int scan\_duration
 
-  - > int split\_scan\_delay
+  - int split\_scan\_delay
 
 ### Detailed Description
 
@@ -777,7 +777,7 @@ This structure is used to configure Wi-Fi scan parameters
 
 #### The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 #### 
 
@@ -785,37 +785,37 @@ This structure is used to configure Wi-Fi scan parameters
 
 ### Data Fields
 
-  - > uint16\_t none: 1
+  - uint16\_t none: 1
 
-  - > uint16\_t wep40: 1
+  - uint16\_t wep40: 1
 
-  - > uint16\_t wep104: 1
+  - uint16\_t wep104: 1
 
-  - > uint16\_t tkip: 1
+  - uint16\_t tkip: 1
 
-  - > uint16\_t ccmp: 1
+  - uint16\_t ccmp: 1
 
-  - > uint16\_t aes\_128\_cmac: 1
+  - uint16\_t aes\_128\_cmac: 1
 
-  - > uint16\_t gcmp: 1
+  - uint16\_t gcmp: 1
 
-  - > uint16\_t sms4: 1
+  - uint16\_t sms4: 1
 
-  - > uint16\_t gcmp\_256: 1
+  - uint16\_t gcmp\_256: 1
 
-  - > uint16\_t ccmp\_256: 1
+  - uint16\_t ccmp\_256: 1
 
-  - > uint16\_t rsvd: 1
+  - uint16\_t rsvd: 1
 
-  - > uint16\_t bip\_gmac\_128: 1
+  - uint16\_t bip\_gmac\_128: 1
 
-  - > uint16\_t bip\_gmac\_256: 1
+  - uint16\_t bip\_gmac\_256: 1
 
-  - > uint16\_t bip\_cmac\_256: 1
+  - uint16\_t bip\_cmac\_256: 1
 
-  - > uint16\_t gtk\_not\_used: 1
+  - uint16\_t gtk\_not\_used: 1
 
-  - > uint16\_t rsvd2: 2
+  - uint16\_t rsvd2: 2
 
 ### Detailed Description
 
@@ -889,7 +889,7 @@ Wi-Fi cipher structure
 
 #### The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 #### 
 
@@ -897,19 +897,19 @@ Wi-Fi cipher structure
 
 ### Data Fields
 
-  - > t\_u32 ps\_null\_interval
+  - t\_u32 ps\_null\_interval
 
-  - > t\_u32 multiple\_dtim\_interval
+  - t\_u32 multiple\_dtim\_interval
 
-  - > t\_u32 listen\_interval
+  - t\_u32 listen\_interval
 
-  - > t\_u32 adhoc\_awake\_period
+  - t\_u32 adhoc\_awake\_period
 
-  - > t\_u32 bcn\_miss\_timeout
+  - t\_u32 bcn\_miss\_timeout
 
-  - > t\_s32 delay\_to\_ps
+  - t\_s32 delay\_to\_ps
 
-  - > t\_u32 ps\_mode
+  - t\_u32 ps\_mode
 
 ### Detailed Description
 
@@ -947,7 +947,7 @@ This structure is for IEEE PS (power save) configuration
 
 #### The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 #### 
 
@@ -955,11 +955,11 @@ This structure is for IEEE PS (power save) configuration
 
 ### Data Fields
 
-  - > struct ipv6\_config ipv6 \[CONFIG\_MAX\_IPV6\_ADDRESSES\]
+  - struct ipv6\_config ipv6 \[CONFIG\_MAX\_IPV6\_ADDRESSES\]
 
-  - > size\_t ipv6\_count
+  - size\_t ipv6\_count
 
-  - > struct ipv4\_config ipv4
+  - struct ipv4\_config ipv4
 
 ### Detailed Description
 
@@ -986,7 +986,7 @@ well as IPv6 addresses
 
 #### The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 #### 
 
@@ -994,17 +994,17 @@ well as IPv6 addresses
 
 ### Data Fields
 
-  - > char \* **service\_name**
+  - char \* **service\_name**
 
-  - > unsigned int **ttl**
+  - unsigned int **ttl**
 
-  - > unsigned int **freq**
+  - unsigned int **freq**
 
-  - > char \* **freq\_list**
+  - char \* **freq\_list**
 
-  - > nan\_service\_protocol\_type\_t **srv\_proto\_type**
+  - nan\_service\_protocol\_type\_t **srv\_proto\_type**
 
-  - > char \* **ssi**
+  - char \* **ssi**
 
 ### Detailed Description
 
@@ -1012,23 +1012,23 @@ This structure is used to configure wlan nan publish parameters
 
 The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 ## wlan\_nan\_subscribe\_params\_t Struct Reference
 
 ### Data Fields
 
-  - > char \* **service\_name**
+  - char \* **service\_name**
 
-  - > bool **active**
+  - bool **active**
 
-  - > unsigned int **ttl**
+  - unsigned int **ttl**
 
-  - > unsigned int **freq**
+  - unsigned int **freq**
 
-  - > nan\_service\_protocol\_type\_t **srv\_proto\_type**
+  - nan\_service\_protocol\_type\_t **srv\_proto\_type**
 
-  - > char \* **ssi**
+  - char \* **ssi**
 
 ### Detailed Description
 
@@ -1036,91 +1036,109 @@ This structure is used to configure wlan nan subscribe parameters
 
 The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 ## wlan\_network Struct Reference
 
 ### Data Fields
 
-  - > int id
+  - int id
 
-  - > int wps\_network
+  - int wps\_network
 
-  - > char name \[WLAN\_NETWORK\_NAME\_MAX\_LENGTH+1\]
+  - int unspecified\_network
 
-  - > char ssid \[IEEEtypes\_SSID\_SIZE+1\]
+  - char name \[WLAN\_NETWORK\_NAME\_MAX\_LENGTH+1\]
 
-  - > char bssid \[IEEEtypes\_ADDRESS\_SIZE\]
+  - char ssid \[IEEEtypes\_SSID\_SIZE+1\]
 
-  - > unsigned int channel
+  - char bssid \[IEEEtypes\_ADDRESS\_SIZE\]
 
-  - > uint8\_t sec\_channel\_offset
+  - unsigned int channel
 
-  - > uint16\_t acs\_band
+  - uint8\_t sec\_channel\_offset
 
-  - > int rssi
+  - uint16\_t acs\_band
 
-  - > short rssi\_threshold
+  - uint8\_t chan\_list \[WLAN\_NETWORK\_CHAN\_LIST\_MAX\]
 
-  - > unsigned short ht\_capab
+  - uint8\_t chan\_list\_len
 
-  - > unsigned int vht\_capab
+  - int rssi
 
-  - > unsigned char vht\_oper\_chwidth
+  - short rssi\_threshold
 
-  - > unsigned char he\_oper\_chwidth
+  - enum wlan\_select\_policy select\_policy
 
-  - > enum wlan\_bss\_type type
+  - int priority
 
-  - > enum wlan\_bss\_role role
+  - bool **ssid\_protection**
 
-  - > struct wlan\_network\_security security
+  - unsigned short ht\_capab
 
-  - > struct wlan\_ip\_config ip
+  - unsigned int vht\_capab
 
-  - > unsigned ssid\_specific: 1
+  - unsigned char vht\_oper\_chwidth
 
-  - > unsigned trans\_ssid\_specific: 1
+  - unsigned char he\_oper\_chwidth
 
-  - > unsigned bssid\_specific: 1
+  - enum wlan\_bss\_type type
 
-  - > unsigned channel\_specific: 1
+  - enum wlan\_bss\_role role
 
-  - > unsigned security\_specific: 1
+  - struct wlan\_network\_security security
 
-  - > unsigned dot11n: 1
+  - struct wlan\_ip\_config ip
 
-  - > unsigned dot11ac: 1
+  - unsigned ssid\_specific: 1
 
-  - > unsigned dot11ax: 1
+  - unsigned trans\_ssid\_specific: 1
 
-  - > uint16\_t mdid
+  - unsigned bssid\_specific: 1
 
-  - > unsigned ft\_1x: 1
+  - unsigned channel\_specific: 1
 
-  - > unsigned ft\_psk: 1
+  - unsigned security\_specific: 1
 
-  - > unsigned ft\_sae: 1
+  - unsigned priority\_specific: 1
 
-  - > unsigned int owe\_trans\_mode
+  - unsigned ssid\_protect\_specific: 1
 
-  - > char trans\_ssid \[IEEEtypes\_SSID\_SIZE+1\]
+  - unsigned dot11n: 1
 
-  - > unsigned int trans\_ssid\_len
+  - unsigned dot11ac: 1
 
-  - > uint16\_t beacon\_period
+  - unsigned dot11ax: 1
 
-  - > uint8\_t dtim\_period
+  - unsigned **\_\_pad0\_\_**: 0
 
-  - > uint8\_t wlan\_capa
+  - unsigned ft\_1x: 1
 
-  - > uint8\_t btm\_mode
+  - unsigned ft\_psk: 1
 
-  - > bool bss\_transition\_supported
+  - unsigned ft\_sae: 1
 
-  - > bool neighbor\_report\_supported
+  - unsigned reserved5: 5
 
-  - > bool **twt\_capab**
+  - uint16\_t mdid
+
+  - unsigned int owe\_trans\_mode
+
+  - char trans\_ssid \[IEEEtypes\_SSID\_SIZE+1\]
+
+  - unsigned int trans\_ssid\_len
+
+  - uint16\_t beacon\_period
+
+  - uint8\_t dtim\_period
+
+  - uint8\_t btm\_mode
+
+  - bool bss\_transition\_supported
+
+  - bool neighbor\_report\_supported
+
+  - bool **twt\_capab**
 
 ### Detailed Description
 
@@ -1154,6 +1172,10 @@ of address assignment to be used for this interface.
 #### int wlan\_network::wps\_network
 
 > WPS network flag.
+
+#### int wlan\_network::unspecified\_network
+
+> Unspecified network flag.
 
 #### char wlan\_network::name\[WLAN\_NETWORK\_NAME\_MAX\_LENGTH+1\]
 
@@ -1197,6 +1219,18 @@ of address assignment to be used for this interface.
 
 > The ACS (auto channel selection) band if set channel to 0.
 
+#### uint8\_t wlan\_network::chan\_list\[WLAN\_NETWORK\_CHAN\_LIST\_MAX\]
+
+> Array of channel list to scan or NULL for all
+> 
+> This is a array of channels to include in scan requests when searching
+> for this network. This can be used to speed up scanning when the
+> network is known to not use all possible channels.
+
+#### uint8\_t wlan\_network::chan\_list\_len
+
+> Number of channels in the channel list
+
 #### int wlan\_network::rssi
 
 > RSSI (received signal strength indicator) value.
@@ -1204,6 +1238,14 @@ of address assignment to be used for this interface.
 #### short wlan\_network::rssi\_threshold
 
 > Specify RSSI threshold (dBm) for scan
+
+#### enum wlan\_select\_policy wlan\_network::select\_policy
+
+> Network selection policy
+
+#### int wlan\_network::priority
+
+> Priority group
 
 #### unsigned short wlan\_network::ht\_capab
 
@@ -1287,6 +1329,23 @@ of address assignment to be used for this interface.
 > internally set when the security type parameter above is set to
 > WLAN\_SECURITY\_WILDCARD.
 
+#### unsigned wlan\_network::priority\_specific
+
+> If set to 1, the priority field contains the specific priority for
+> this network. This field can be used to change the order in which
+> wpa\_supplicant goes through the networks when selecting a BSS. If set
+> to 0, all networks will get same priority group (0).
+> 
+> This field is set to 1 if the network is added with the priority
+> specified (not set to 0), otherwise it is set to 0.
+
+#### unsigned wlan\_network::ssid\_protect\_specific
+
+> If set to 1, the SSID protection of 4-way handshake will be enabled.
+> 
+> This field is set to 1 if the network is added with the ssid
+> protection specified (not set to 0), otherwise it is set to 0.
+
 #### unsigned wlan\_network::dot11n
 
 > The network supports 802.11N.
@@ -1299,10 +1358,6 @@ of address assignment to be used for this interface.
 
 > The network supports 802.11AX.
 
-#### uint16\_t wlan\_network::mdid
-
-> Mobility Domain ID
-
 #### unsigned wlan\_network::ft\_1x
 
 > The network uses FT 802.1x security
@@ -1314,6 +1369,14 @@ of address assignment to be used for this interface.
 #### unsigned wlan\_network::ft\_sae
 
 > The network uses FT SAE security
+
+#### unsigned wlan\_network::reserved5
+
+> Reserved
+
+#### uint16\_t wlan\_network::mdid
+
+> Mobility Domain ID
 
 #### unsigned int wlan\_network::owe\_trans\_mode
 
@@ -1336,11 +1399,6 @@ of address assignment to be used for this interface.
 
 > DTIM period of associated BSS
 
-#### uint8\_t wlan\_network::wlan\_capa
-
-> Wi-Fi capabilities of the uAP network 802.11n, 802.11ac or/and
-> 802.11ax
-
 #### uint8\_t wlan\_network::btm\_mode
 
 > BTM mode
@@ -1355,7 +1413,7 @@ of address assignment to be used for this interface.
 
 #### The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 #### 
 
@@ -1363,138 +1421,137 @@ of address assignment to be used for this interface.
 
 ### Data Fields
 
-  - > enum wlan\_security\_type type
+  - enum wlan\_security\_type type
 
-  - > int key\_mgmt
+  - int key\_mgmt
 
-  - > struct wlan\_cipher mcstCipher
+  - struct wlan\_cipher mcstCipher
 
-  - > struct wlan\_cipher ucstCipher
+  - struct wlan\_cipher ucstCipher
 
-  - > unsigned pkc: 1
+  - unsigned pkc: 1
 
-  - > int group\_cipher
+  - int group\_cipher
 
-  - > int pairwise\_cipher
+  - int pairwise\_cipher
 
-  - > int group\_mgmt\_cipher
+  - int group\_mgmt\_cipher
 
-  - > bool is\_pmf\_required
+  - bool is\_pmf\_required
 
-  - > char psk \[WLAN\_PSK\_MAX\_LENGTH\]
+  - char psk \[WLAN\_PSK\_MAX\_LENGTH\]
 
-  - > uint8\_t psk\_len
+  - uint8\_t psk\_len
 
-  - > char password \[WLAN\_PASSWORD\_MAX\_LENGTH+1\]
+  - char password \[WLAN\_PASSWORD\_MAX\_LENGTH+1\]
 
-  - > size\_t password\_len
+  - size\_t password\_len
 
-  - > char \* sae\_groups
+  - char \* sae\_groups
 
-  - > uint8\_t pwe\_derivation
+  - uint8\_t pwe\_derivation
 
-  - > uint8\_t transition\_disable
+  - uint8\_t transition\_disable
 
-  - > char \* owe\_groups
+  - char \* owe\_groups
 
-  - > char pmk \[WLAN\_PMK\_LENGTH\]
+  - char pmk \[WLAN\_PMK\_LENGTH\]
 
-  - > bool pmk\_valid
+  - bool pmk\_valid
 
-  - > int8\_t mfpc
+  - int8\_t mfpc
 
-  - > int8\_t mfpr
+  - int8\_t mfpr
 
-  - > unsigned wpa3\_ent: 1
+  - unsigned wpa3\_ent: 1
 
-  - > unsigned wpa3\_sb: 1
+  - unsigned wpa3\_sb: 1
 
-  - > unsigned wpa3\_sb\_192: 1
+  - unsigned wpa3\_sb\_192: 1
 
-  - > unsigned eap\_ver: 1
+  - unsigned eap\_ver: 1
 
-  - > unsigned peap\_label: 1
+  - unsigned peap\_label: 1
 
-  - > uint8\_t eap\_crypto\_binding
+  - uint8\_t eap\_crypto\_binding
 
-  - > unsigned eap\_result\_ind: 1
+  - unsigned eap\_result\_ind: 1
 
-  - > unsigned char tls\_cipher
+  - unsigned char tls\_cipher
 
-  - > char identity \[IDENTITY\_MAX\_LENGTH\]
+  - char identity \[IDENTITY\_MAX\_LENGTH\]
 
-  - > char anonymous\_identity \[IDENTITY\_MAX\_LENGTH\]
+  - char anonymous\_identity \[IDENTITY\_MAX\_LENGTH\]
 
-  - > char eap\_password \[PASSWORD\_MAX\_LENGTH\]
+  - char eap\_password \[PASSWORD\_MAX\_LENGTH\]
 
-  - > bool verify\_peer\_cert
+  - bool verify\_peer\_cert
 
-  - > unsigned char \* ca\_cert\_data
+  - unsigned char \* ca\_cert\_data
 
-  - > size\_t ca\_cert\_len
+  - size\_t ca\_cert\_len
 
-  - > unsigned char \* client\_cert\_data
+  - unsigned char \* client\_cert\_data
 
-  - > size\_t client\_cert\_len
+  - size\_t client\_cert\_len
 
-  - > unsigned char \* client\_key\_data
+  - unsigned char \* client\_key\_data
 
-  - > size\_t client\_key\_len
+  - size\_t client\_key\_len
 
-  - > char client\_key\_passwd \[PASSWORD\_MAX\_LENGTH\]
+  - char client\_key\_passwd \[PASSWORD\_MAX\_LENGTH\]
 
-  - > char ca\_cert\_hash \[HASH\_MAX\_LENGTH\]
+  - char ca\_cert\_hash \[HASH\_MAX\_LENGTH\]
 
-  - > char domain\_match \[DOMAIN\_MATCH\_MAX\_LENGTH\]
+  - char domain\_match \[DOMAIN\_MATCH\_MAX\_LENGTH\]
 
-  - > char domain\_suffix\_match \[DOMAIN\_MATCH\_MAX\_LENGTH\]
+  - char domain\_suffix\_match \[DOMAIN\_MATCH\_MAX\_LENGTH\]
 
-  - > unsigned char \* ca\_cert2\_data
+  - unsigned char \* ca\_cert2\_data
 
-  - > size\_t ca\_cert2\_len
+  - size\_t ca\_cert2\_len
 
-  - > unsigned char \* client\_cert2\_data
+  - unsigned char \* client\_cert2\_data
 
-  - > size\_t client\_cert2\_len
+  - size\_t client\_cert2\_len
 
-  - > unsigned char \* client\_key2\_data
+  - unsigned char \* client\_key2\_data
 
-  - > size\_t client\_key2\_len
+  - size\_t client\_key2\_len
 
-  - > char client\_key2\_passwd \[PASSWORD\_MAX\_LENGTH\]
+  - char client\_key2\_passwd \[PASSWORD\_MAX\_LENGTH\]
 
-  - > unsigned char \* dh\_data
+  - unsigned char \* dh\_data
 
-  - > size\_t dh\_len
+  - size\_t dh\_len
 
-  - > unsigned char \* server\_cert\_data
+  - unsigned char \* server\_cert\_data
 
-  - > size\_t server\_cert\_len
+  - size\_t server\_cert\_len
 
-  - > unsigned char \* server\_key\_data
+  - unsigned char \* server\_key\_data
 
-  - > size\_t server\_key\_len
+  - size\_t server\_key\_len
 
-  - > char server\_key\_passwd \[PASSWORD\_MAX\_LENGTH\]
+  - char server\_key\_passwd \[PASSWORD\_MAX\_LENGTH\]
 
-  - > size\_t nusers
+  - size\_t nusers
 
-  - > char identities \[MAX\_USERS\]\[IDENTITY\_MAX\_LENGTH\]
+  - char identities \[MAX\_USERS\]\[IDENTITY\_MAX\_LENGTH\]
 
-  - > char passwords \[MAX\_USERS\]\[PASSWORD\_MAX\_LENGTH\]
+  - char passwords \[MAX\_USERS\]\[PASSWORD\_MAX\_LENGTH\]
 
-  - > char pac\_opaque\_encr\_key
-    > \[PAC\_OPAQUE\_ENCR\_KEY\_MAX\_LENGTH\]
+  - char pac\_opaque\_encr\_key \[PAC\_OPAQUE\_ENCR\_KEY\_MAX\_LENGTH\]
 
-  - > char a\_id \[A\_ID\_MAX\_LENGTH\]
+  - char a\_id \[A\_ID\_MAX\_LENGTH\]
 
-  - > uint8\_t fast\_prov
+  - uint8\_t fast\_prov
 
-  - > unsigned char \* **dpp\_connector**
+  - unsigned char \* **dpp\_connector**
 
-  - > unsigned char \* **dpp\_c\_sign\_key**
+  - unsigned char \* **dpp\_c\_sign\_key**
 
-  - > unsigned char \* **dpp\_net\_access\_key**
+  - unsigned char \* **dpp\_net\_access\_key**
 
 ### Detailed Description
 
@@ -1793,7 +1850,7 @@ Network security configuration
 
 #### The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 #### 
 
@@ -1801,79 +1858,83 @@ Network security configuration
 
 ### Data Fields
 
-  - > char ssid \[WLAN\_NETWORK\_NAME\_MAX\_LENGTH+1\]
+  - char ssid \[WLAN\_NETWORK\_NAME\_MAX\_LENGTH+1\]
 
-  - > unsigned int ssid\_len
+  - unsigned int ssid\_len
 
-  - > char bssid \[IEEEtypes\_ADDRESS\_SIZE\]
+  - char bssid \[IEEEtypes\_ADDRESS\_SIZE\]
 
-  - > unsigned int channel
+  - unsigned int channel
 
-  - > enum wlan\_bss\_type type
+  - enum wlan\_bss\_type type
 
-  - > enum wlan\_bss\_role role
+  - enum wlan\_bss\_role role
 
-  - > unsigned dot11n: 1
+  - unsigned **\_\_pad0\_\_**: 0
 
-  - > unsigned dot11ac: 1
+  - unsigned dot11n: 1
 
-  - > unsigned dot11ax: 1
+  - unsigned dot11ac: 1
 
-  - > unsigned wmm: 1
+  - unsigned dot11ax: 1
 
-  - > unsigned wps: 1
+  - unsigned wmm: 1
 
-  - > unsigned int wps\_session
+  - unsigned wps: 1
 
-  - > unsigned wep: 1
+  - unsigned wep: 1
 
-  - > unsigned wpa: 1
+  - unsigned wpa: 1
 
-  - > unsigned wpa2: 1
+  - unsigned wpa2: 1
 
-  - > unsigned wpa2\_sha256: 1
+  - unsigned wpa2\_sha256: 1
 
-  - > unsigned owe: 1
+  - unsigned owe: 1
 
-  - > unsigned wpa3\_sae: 1
+  - unsigned wpa3\_sae: 1
 
-  - > unsigned wpa2\_entp: 1
+  - unsigned wpa2\_entp: 1
 
-  - > unsigned wpa3\_entp: 1
+  - unsigned wpa3\_entp: 1
 
-  - > unsigned wpa3\_1x\_sha256: 1
+  - unsigned wpa3\_1x\_sha256: 1
 
-  - > unsigned wpa3\_1x\_sha384: 1
+  - unsigned wpa3\_1x\_sha384: 1
 
-  - > unsigned ft\_1x: 1
+  - unsigned ft\_1x: 1
 
-  - > unsigned ft\_1x\_sha384: 1
+  - unsigned ft\_1x\_sha384: 1
 
-  - > unsigned ft\_psk: 1
+  - unsigned ft\_psk: 1
 
-  - > unsigned ft\_sae: 1
+  - unsigned ft\_sae: 1
 
-  - > unsigned char rssi
+  - unsigned **\_\_pad1\_\_**: 0
 
-  - > char trans\_ssid \[WLAN\_NETWORK\_NAME\_MAX\_LENGTH+1\]
+  - unsigned int wps\_session
 
-  - > unsigned int trans\_ssid\_len
+  - unsigned char rssi
 
-  - > char trans\_bssid \[IEEEtypes\_ADDRESS\_SIZE\]
+  - char trans\_ssid \[WLAN\_NETWORK\_NAME\_MAX\_LENGTH+1\]
 
-  - > uint16\_t beacon\_period
+  - unsigned int trans\_ssid\_len
 
-  - > uint8\_t dtim\_period
+  - char trans\_bssid \[IEEEtypes\_ADDRESS\_SIZE\]
 
-  - > t\_u8 ap\_mfpc
+  - uint16\_t beacon\_period
 
-  - > t\_u8 ap\_mfpr
+  - uint8\_t dtim\_period
 
-  - > t\_u8 ap\_pwe
+  - t\_u8 ap\_mfpc
 
-  - > bool neighbor\_report\_supported
+  - t\_u8 ap\_mfpr
 
-  - > bool bss\_transition\_supported
+  - t\_u8 ap\_pwe
+
+  - bool neighbor\_report\_supported
+
+  - bool bss\_transition\_supported
 
 ### Detailed Description
 
@@ -1935,10 +1996,6 @@ Scan result
 > The network supports WPS. This is set to 0 if the network does not
 > support WPS or if the system does not have WPS support enabled.
 
-#### unsigned int wlan\_scan\_result::wps\_session
-
-> WPS Type WPS\_SESSION\_PBC/ WPS\_SESSION\_PIN
-
 #### unsigned wlan\_scan\_result::wep
 
 > The network uses WEP security.
@@ -1995,6 +2052,10 @@ Scan result
 
 > The network uses FT SAE security
 
+#### unsigned int wlan\_scan\_result::wps\_session
+
+> WPS Type WPS\_SESSION\_PBC/ WPS\_SESSION\_PIN
+
 #### unsigned char wlan\_scan\_result::rssi
 
 > The signal strength of the beacon
@@ -2043,7 +2104,7 @@ Scan result
 
 #### The documentation for this struct was generated from the following file:
 
-  - > wlan.h
+  - wlan.h
 
 # File Documentation
 
@@ -2324,6 +2385,18 @@ This file provides Wi-Fi APIs for the application.
 > TRUE if Wi-Fi network is started.
 > 
 > FALSE if not started.
+
+#### void wlan\_register\_uap\_prov\_deinit\_cb (int(\*)(void) *cb*)
+
+> uAP provisioning deinit callback function
+
+#### int wlan\_stop\_all\_networks (void )
+
+> Stop all Wi-Fi network.
+
+##### Returns
+
+> WM\_SUCCESS if successful.
 
 #### int wlan\_set\_get\_rx\_abort\_cfg (struct wlan\_rx\_abort\_cfg \* *cfg*, t\_u16 *action*)
 
@@ -3098,12 +3171,68 @@ This file provides Wi-Fi APIs for the application.
 > WLAN\_ERROR\_STATE if the Wi-Fi connection manager was not running or
 > not in the WLAN\_UAP\_STARTED state.
 
+#### int wlan\_get\_current\_wfd\_network (struct wlan\_network \* *network*)
+
+> Retrieve the current network configuration of the WFD interface.
+> 
+> This function retrieves the current network configuration of the WFD
+> interface when the WFD interface is in the WLAN\_UAP\_STARTED state.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>out</td>
+<td><em>network</em></td>
+<td>A pointer to the wlan_network.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful.
+> 
+> \-WM\_E\_INVAL if *network* is NULL.
+> 
+> WLAN\_ERROR\_STATE if the Wi-Fi connection manager was not running or
+> not in the WLAN\_UAP\_STARTED state.
+
 #### int wlan\_get\_current\_uap\_network\_ssid (char \* *ssid*)
 
 > Retrieve the current network ssid of the uAP interface.
 > 
 > This function retrieves the current network ssid of the uAP interface
 > when the uAP interface is in the WLAN\_UAP\_STARTED state.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>out</td>
+<td><em>ssid</em></td>
+<td>A pointer to the ssid char string with NULL termination. Maximum length is 32 (not include NULL termination).</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful.
+> 
+> \-WM\_E\_INVAL if *ssid* is NULL.
+> 
+> WLAN\_ERROR\_STATE if the Wi-Fi connection manager was not running or
+> not in the WLAN\_UAP\_STARTED state.
+
+#### int wlan\_get\_current\_wfd\_network\_ssid (char \* *ssid*)
+
+> Retrieve the current network ssid of the WFD interface.
+> 
+> This function retrieves the current network ssid of the WFD interface
+> when the WFD interface is in the WLAN\_UAP\_STARTED state.
 
 ##### Parameters
 
@@ -3810,7 +3939,7 @@ offset value range: 0x80 to 0x7F
 > 
 > false if UAPSD is disabled.
 
-#### void wlan\_set\_txrx\_histogram (int *bss\_type*, struct wlan\_txrx\_histogram\_info \* *txrx\_histogram*, t\_u8 \* *data*)
+#### int wlan\_set\_txrx\_histogram (int *bss\_type*, struct wlan\_txrx\_histogram\_info \* *txrx\_histogram*, t\_u8 \* *data*)
 
 > Set TX RX histogram config. This function can be called to set TX RX
 > histogram config.
@@ -3836,6 +3965,12 @@ offset value range: 0x80 to 0x7F
 </tr>
 </tbody>
 </table>
+
+##### Returns
+
+> WM\_SUCCESS if the call was successful.
+> 
+> \-WM\_FAIL if failed.
 
 #### int wlan\_set\_roaming (const int *enable*, const uint8\_t *rssi\_low\_threshold*)
 
@@ -4200,7 +4335,7 @@ offset value range: 0x80 to 0x7F
 
 > TRUE if Wi-Fi power save is enabled, else return FALSE.
 
-#### void wlan\_configure\_null\_pkt\_interval (int *time\_in\_secs*)
+#### void wlan\_configure\_null\_pkt\_interval (unsigned int *time\_in\_secs*)
 
 > Configure NULL packet interval of IEEE power save mode.
 
@@ -5009,7 +5144,7 @@ rekey) 7: Magic pattern matched Others: reserved. (set to 0)
 > 
 > \-WM\_E\_INVAL if *ps\_mode\_cfg* was NULL.
 
-#### int wlan\_wlcmgr\_send\_msg (enum wifi\_event *event*, enum wifi\_event\_reason *reason*, void \* *data*)
+#### int wlan\_wlcmgr\_send\_msg (enum wlan\_bss\_type *bss\_type*, enum wifi\_event *event*, enum wifi\_event\_reason *reason*, void \* *data*)
 
 > Send message to Wi-Fi connection manager thread.
 
@@ -5204,6 +5339,43 @@ rekey) 7: Magic pattern matched Others: reserved. (set to 0)
 > WM\_SUCCESS if the CLI commands were unregistered or
 > 
 > \-WM\_FAIL if they were not unregistered.
+
+#### int wlan\_test\_mode\_cli\_init (void )
+
+> Register Wi-Fi test mode CLI commands.
+> 
+> Register the Wi-Fi test mode CLI commands like set or get channel,
+> band, bandwidth, per and more with the CLI subsystem.
+
+##### Note
+
+> This function can only be called by the application after wlan\_init()
+> called.
+
+##### Returns
+
+> WM\_SUCCESS if the CLI commands were registered or
+> 
+> \-WM\_FAIL if they were not (for example if this function was called
+> while the CLI commands were already registered).
+
+#### int wlan\_test\_mode\_cli\_deinit (void )
+
+> Unregister Wi-Fi test mode CLI commands.
+> 
+> Unregister the Wi-Fi test mode CLI commands like set or get channel,
+> band, bandwidth, PER and more with the CLI subsystem.
+
+##### Note
+
+> This function can only be called by the application after wlan\_init()
+> called.
+
+##### Returns
+
+> WM\_SUCCESS if the CLI commands were unregistered or
+> 
+> \-WM\_FAIL if they were not unregistered
 
 #### unsigned int wlan\_get\_uap\_supported\_max\_clients (void )
 
@@ -5509,112 +5681,6 @@ rekey) 7: Magic pattern matched Others: reserved. (set to 0)
 > Set worldwide safe mode TX power limits. Set TX power limit and ru TX
 > power limit according to the region code. TX power limit:
 > rg\_power\_cfg\_info ru TX power limit: ru\_power\_cfg\_info
-
-##### Returns
-
-> WM\_SUCCESS if successful.
-> 
-> \-WM\_FAIL if unsuccessful.
-
-#### int wlan\_get\_mgmt\_ie (enum wlan\_bss\_type *bss\_type*, IEEEtypes\_ElementId\_t *index*, void \* *buf*, unsigned int \* *buf\_len*)
-
-> Get Management IE for given BSS type (interface) and index.
-
-##### Parameters
-
-<table>
-<tbody>
-<tr class="odd">
-<td>in</td>
-<td><em>bss_type</em></td>
-<td>0: STA, 1: uAP</td>
-</tr>
-<tr class="even">
-<td>in</td>
-<td><em>index</em></td>
-<td>IE index.</td>
-</tr>
-<tr class="odd">
-<td>out</td>
-<td><em>buf</em></td>
-<td>Buffer to store requested IE data.</td>
-</tr>
-<tr class="even">
-<td>out</td>
-<td><em>buf_len</em></td>
-<td>Length of IE data.</td>
-</tr>
-</tbody>
-</table>
-
-##### Returns
-
-> WM\_SUCCESS if successful.
-> 
-> \-WM\_FAIL if unsuccessful.
-
-#### int wlan\_set\_mgmt\_ie (enum wlan\_bss\_type *bss\_type*, IEEEtypes\_ElementId\_t *id*, void \* *buf*, unsigned int *buf\_len*)
-
-> Set management IE for given BSS type (interface) and index.
-
-##### Parameters
-
-<table>
-<tbody>
-<tr class="odd">
-<td>in</td>
-<td><em>bss_type</em></td>
-<td>0: STA, 1: uAP</td>
-</tr>
-<tr class="even">
-<td>in</td>
-<td><em>id</em></td>
-<td>Type/ID of Management IE.</td>
-</tr>
-<tr class="odd">
-<td>in</td>
-<td><em>buf</em></td>
-<td>Buffer containing IE data.</td>
-</tr>
-<tr class="even">
-<td>in</td>
-<td><em>buf_len</em></td>
-<td>Length of IE data.</td>
-</tr>
-</tbody>
-</table>
-
-##### Returns
-
-> Management IE index if successful.
-> 
-> \-WM\_FAIL if unsuccessful.
-
-#### int wlan\_clear\_mgmt\_ie (enum wlan\_bss\_type *bss\_type*, IEEEtypes\_ElementId\_t *index*, int *mgmt\_bitmap\_index*)
-
-> Clear management IE for given BSS type (interface) and index.
-
-##### Parameters
-
-<table>
-<tbody>
-<tr class="odd">
-<td>in</td>
-<td><em>bss_type</em></td>
-<td>0: STA, 1: uAP</td>
-</tr>
-<tr class="even">
-<td>in</td>
-<td><em>index</em></td>
-<td>IE index.</td>
-</tr>
-<tr class="odd">
-<td>in</td>
-<td><em>mgmt_bitmap_index</em></td>
-<td>management bitmap index.</td>
-</tr>
-</tbody>
-</table>
 
 ##### Returns
 
@@ -5985,6 +6051,14 @@ rekey) 7: Magic pattern matched Others: reserved. (set to 0)
 ##### Note
 
 > Call this API before calling uAP start API.
+
+#### int wlan\_uap\_get\_beacon\_period ()
+
+> API to get the beacon period of the uAP
+
+##### Returns
+
+> beacon\_period: Beacon period in TU (1 TU = 1024 microseconds)
 
 #### int wlan\_uap\_set\_bandwidth (const uint8\_t *bandwidth*)
 
@@ -6389,6 +6463,973 @@ rekey) 7: Magic pattern matched Others: reserved. (set to 0)
 <td>in</td>
 <td><em>mac_addr</em></td>
 <td>The pointer to MAC address list</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_set\_rf\_test\_mode (void )
+
+> Set the RF test mode in Wi-Fi firmware.
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_rf\_disable\_11ax (void )
+
+> Disable the RF 11AX in Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_unset\_rf\_test\_mode (void )
+
+> Unset the RF test mode in Wi-Fi firmware.
+
+##### Returns
+
+> WM\_SUCCESS if successful.
+
+#### int wlan\_set\_rf\_channel (const uint8\_t *channel*)
+
+> Set the RF channel in Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>channel</em></td>
+<td>The channel number to be set in Wi-Fi firmware.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_set\_rf\_radio\_mode (const uint8\_t *mode*)
+
+> Set the RF radio mode in Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>mode</em></td>
+<td>The radio mode number to be set in Wi-Fi firmware.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_get\_rf\_channel (uint8\_t \* *channel*)
+
+> Get the RF channel from Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>out</td>
+<td><em>channel</em></td>
+<td>A pointer to a variable where channel number to get.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_get\_rf\_radio\_mode (uint8\_t \* *mode*)
+
+> Get the RF radio mode from Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>out</td>
+<td><em>mode</em></td>
+<td>A pointer to a variable where radio mode number to get.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_set\_rf\_band (const uint8\_t *band*)
+
+> Set the RF band in Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>band</em></td>
+<td>The bandwidth to be set in Wi-Fi firmware.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_get\_rf\_band (uint8\_t \* *band*)
+
+> Get the RF band from Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>out</td>
+<td><em>band</em></td>
+<td>A Pointer to a variable where RF band is to be stored.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_set\_rf\_xtal (const uint8\_t *xtal\_cal*)
+
+> Set the RF crystal calibration in Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>xtal_cal</em></td>
+<td>The crystal calibration offset to be set in Wi-Fi firmware.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_get\_rf\_xtal (uint8\_t \* *extension*, uint8\_t \* *xtal\_cal*)
+
+> Get the RF crystal calibration from Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>out</td>
+<td><em>extension</em></td>
+<td>A Pointer to a variable indicate RF xtal from internal or external crystal.</td>
+</tr>
+<tr class="even">
+<td>out</td>
+<td><em>xtal_cal</em></td>
+<td>A Pointer to a variable where RF crystal calibration is to be stored.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_set\_rf\_bandwidth (const uint8\_t *bandwidth*)
+
+> Set the RF bandwidth in Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>bandwidth</em></td>
+<td>The bandwidth to be set in Wi-Fi firmware.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_get\_rf\_bandwidth (uint8\_t \* *bandwidth*)
+
+> Get the RF bandwidth from Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>out</td>
+<td><em>bandwidth</em></td>
+<td>A Pointer to a variable where bandwidth to get.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_get\_rf\_per (uint32\_t \* *rx\_tot\_pkt\_count*, uint32\_t \* *rx\_mcast\_bcast\_count*, uint32\_t \* *rx\_pkt\_fcs\_error*)
+
+> Get the RF RX total packet and multicast/broadcast packet count.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>out</td>
+<td><em>rx_tot_pkt_count</em></td>
+<td>A Pointer to a variable where RX total packet count to get.</td>
+</tr>
+<tr class="even">
+<td>out</td>
+<td><em>rx_mcast_bcast_count</em></td>
+<td>A Pointer to a variable where RX total multicast/broadcast packet count to get.</td>
+</tr>
+<tr class="odd">
+<td>out</td>
+<td><em>rx_pkt_fcs_error</em></td>
+<td>A Pointer to a variable where RX total packet count with FCS (frame check sequence) error to get.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_set\_rf\_tx\_cont\_mode (const uint32\_t *enable\_tx*, const uint32\_t *cw\_mode*, const uint32\_t *payload\_pattern*, const uint32\_t *cs\_mode*, const uint32\_t *act\_sub\_ch*, const uint32\_t *tx\_rate*)
+
+> Set the RF TX continuous mode in Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>enable_tx</em></td>
+<td>Enable TX.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>cw_mode</em></td>
+<td>Set CW (continuous wave) mode.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>payload_pattern</em></td>
+<td>Set payload pattern.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>cs_mode</em></td>
+<td>Set CS mode.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>act_sub_ch</em></td>
+<td>Active subchannel.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>tx_rate</em></td>
+<td>Set TX rate.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL..
+
+#### int wlan\_cfg\_rf\_he\_tb\_tx (uint16\_t *enable*, uint16\_t *qnum*, uint16\_t *aid*, uint16\_t *axq\_mu\_timer*, int16\_t *tx\_power*)
+
+> Set the RF HE TB TX in Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>enable</em></td>
+<td>Enable/Disable trigger response mode</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>qnum</em></td>
+<td>AXQ to be used for the trigger response frame</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>aid</em></td>
+<td>AID of the peer to which response is to be generated</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>axq_mu_timer</em></td>
+<td>MU timer for the AXQ on which response is sent</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>tx_power</em></td>
+<td>TxPwr to be configured for the response</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_rf\_trigger\_frame\_cfg (uint32\_t *Enable\_tx*, uint32\_t *Standalone\_hetb*, uint8\_t *FRAME\_CTRL\_TYPE*, uint8\_t *FRAME\_CTRL\_SUBTYPE*, uint16\_t *FRAME\_DURATION*, uint64\_t *TriggerType*, uint64\_t *UlLen*, uint64\_t *MoreTF*, uint64\_t *CSRequired*, uint64\_t *UlBw*, uint64\_t *LTFType*, uint64\_t *LTFMode*, uint64\_t *LTFSymbol*, uint64\_t *UlSTBC*, uint64\_t *LdpcESS*, uint64\_t *ApTxPwr*, uint64\_t *PreFecPadFct*, uint64\_t *PeDisambig*, uint64\_t *SpatialReuse*, uint64\_t *Doppler*, uint64\_t *HeSig2*, uint32\_t *AID12*, uint32\_t *RUAllocReg*, uint32\_t *RUAlloc*, uint32\_t *UlCodingType*, uint32\_t *UlMCS*, uint32\_t *UlDCM*, uint32\_t *SSAlloc*, uint8\_t *UlTargetRSSI*, uint8\_t *MPDU\_MU\_SF*, uint8\_t *TID\_AL*, uint8\_t *AC\_PL*, uint8\_t *Pref\_AC*)
+
+> Set the RF Trigger Frame Config in Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>Enable_tx</em></td>
+<td>Enable or Disable trigger frame transmission.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>Standalone_hetb</em></td>
+<td>Enable or Disable Standalone HE TB support.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>FRAME_CTRL_TYPE</em></td>
+<td>Frame control type.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>FRAME_CTRL_SUBTYPE</em></td>
+<td>Frame control subtype.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>FRAME_DURATION</em></td>
+<td>Max Duration time.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>TriggerType</em></td>
+<td>Identifies the Trigger frame variant and its encoding.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>UlLen</em></td>
+<td>Indicates the value of the L-SIG LENGTH field of the solicited HE TB PPDU.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>MoreTF</em></td>
+<td>Indicates whether a subsequent Trigger frame is scheduled for transmission or not.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>CSRequired</em></td>
+<td>Required to use ED to sense the medium and to consider the medium state and the NAV in determining whether to respond or not.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>UlBw</em></td>
+<td>Indicates the bandwidth in the HE-SIG-A field of the HE TB PPDU.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>LTFType</em></td>
+<td>Indicates the LTF type of the HE TB PPDU response.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>LTFMode</em></td>
+<td>Indicates the LTF mode for an HE TB PPDU.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>LTFSymbol</em></td>
+<td>Indicates the number of LTF symbols present in the HE TB PPDU.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>UlSTBC</em></td>
+<td>Indicates the status of STBC encoding for the solicited HE TB PPDUs.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>LdpcESS</em></td>
+<td>Indicates the status of the LDPC extra symbol segment.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>ApTxPwr</em></td>
+<td>Indicates the AP's combined transmit power at the transmit antenna connector of all the antennas used to transmit the triggering PPDU.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>PreFecPadFct</em></td>
+<td>Indicates the pre-FEC padding factor.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>PeDisambig</em></td>
+<td>Indicates PE disambiguity.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>SpatialReuse</em></td>
+<td>Carries the values to be included in the Spatial Reuse fields in the HE-SIG-A field of the solicited HE TB PPDUs.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>Doppler</em></td>
+<td>Indicate that a midamble is present in the HE TB PPDU.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>HeSig2</em></td>
+<td>Carries the value to be included in the Reserved field in the HE-SIG-A2 subfield of the solicited HE TB PPDUs.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>AID12</em></td>
+<td>If set to 0 allocates one or more contiguous RA-RUs for associated STAs.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>RUAllocReg</em></td>
+<td>RUAllocReg.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>RUAlloc</em></td>
+<td>Identifies the size and the location of the RU.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>UlCodingType</em></td>
+<td>Indicates the code type of the solicited HE TB PPDU.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>UlMCS</em></td>
+<td>Indicates the HE-MCS of the solicited HE TB PPDU.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>UlDCM</em></td>
+<td>Indicates DCM of the solicited HE TB PPDU.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>SSAlloc</em></td>
+<td>Indicates the spatial streams of the solicited HE TB PPDU.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>UlTargetRSSI</em></td>
+<td>Indicates the expected receive signal power.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>MPDU_MU_SF</em></td>
+<td>Used for calculating the value by which the minimum MPDU start spacing is multiplied.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>TID_AL</em></td>
+<td>Indicates the MPDUs allowed in an A-MPDU carried in the HE TB PPDU and the maximum number of TIDs that can be aggregated by the STA in the A-MPDU.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>AC_PL</em></td>
+<td>Reserved.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>Pref_AC</em></td>
+<td>Indicates the lowest AC that is recommended for aggregation of MPDUs in the A-MPDU contained in the HE TB PPDU sent as a response to the trigger frame.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_set\_rf\_tx\_antenna (const uint8\_t *antenna*)
+
+> Set the RF TX antenna in Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>antenna</em></td>
+<td>The TX antenna to be set in Wi-Fi firmware.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_get\_rf\_tx\_antenna (uint8\_t \* *antenna*)
+
+> Get the RF TX antenna from Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>out</td>
+<td><em>antenna</em></td>
+<td>A Pointer to a variable where TX antenna is to be stored.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_set\_rf\_rx\_antenna (const uint8\_t *antenna*)
+
+> Set RF RX antenna in Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>antenna</em></td>
+<td>The RX antenna to be set in Wi-Fi firmware.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_get\_rf\_rx\_antenna (uint8\_t \* *antenna*)
+
+> Get RF RX antenna from Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>out</td>
+<td><em>antenna</em></td>
+<td>A Pointer to a variable where RX antenna is to be stored.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_set\_rf\_tx\_power (const uint32\_t *power*, const uint8\_t *mod*, const uint8\_t *path\_id*)
+
+> Set RF RX power in Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>power</em></td>
+<td>The RF RX power to be set in Wi-Fi firmware. For RW610, transmit output power level control range is -10 to 22dBm as per the datasheet.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>mod</em></td>
+<td>The modulation to be set in Wi-Fi firmware.</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>path_id</em></td>
+<td>The Path ID to be set in Wi-Fi firmware.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_set\_rf\_tx\_frame (const uint32\_t *enable*, const uint32\_t *data\_rate*, const uint32\_t *frame\_pattern*, const uint32\_t *frame\_length*, const uint16\_t *adjust\_burst\_sifs*, const uint32\_t *burst\_sifs\_in\_us*, const uint32\_t *short\_preamble*, const uint32\_t *act\_sub\_ch*, const uint32\_t *short\_gi*, const uint32\_t *adv\_coding*, const uint32\_t *tx\_bf*, const uint32\_t *gf\_mode*, const uint32\_t *stbc*, const uint8\_t \* *bssid*, const uint32\_t *signal\_bw*, const uint32\_t *NumPkt*, const uint32\_t *MaxPE*, const uint32\_t *BeamChange*, const uint32\_t *Dcm*, const uint32\_t *Doppler*, const uint32\_t *MidP*, const uint32\_t *QNum*)
+
+> Set the RF TX Frame in Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>enable</em></td>
+<td>Enable/Disable RF TX Frame</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>data_rate</em></td>
+<td>Rate index corresponding to legacy/HT/VHT rates</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>frame_pattern</em></td>
+<td>Payload pattern</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>frame_length</em></td>
+<td>Payload length</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>adjust_burst_sifs</em></td>
+<td>Enabl/Disable adjust burst SIFS3 Gap</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>burst_sifs_in_us</em></td>
+<td>Burst SIFS in us</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>short_preamble</em></td>
+<td>Enable/Disable short preamble</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>act_sub_ch</em></td>
+<td>Enable/Disable active sub channel</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>short_gi</em></td>
+<td>Short guard interval</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>adv_coding</em></td>
+<td>Enable/Disable adv coding</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>tx_bf</em></td>
+<td>Enable/Disable beamforming</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>gf_mode</em></td>
+<td>Enable/Disable green field mode</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>stbc</em></td>
+<td>Enable/Disable STBC</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>bssid</em></td>
+<td>BSSID</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>signal_bw</em></td>
+<td>Signal BW</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>NumPkt</em></td>
+<td>Number of packets</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>MaxPE</em></td>
+<td>Max pkt extension</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>BeamChange</em></td>
+<td>Beam change</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>Dcm</em></td>
+<td>DCM enable</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>Doppler</em></td>
+<td>Doppler enable</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>MidP</em></td>
+<td>Midamble periodicity</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>QNum</em></td>
+<td>Tx queue num that holds the trigger-based response pkts</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_set\_rf\_otp\_mac\_addr (uint8\_t \* *mac*)
+
+> Set the RF OTP (one-time password) MAC address in Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>MAC</em></td>
+<td>A pointer to a variable where OTP MAC address is to be stored.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_get\_rf\_otp\_mac\_addr (uint8\_t \* *mac*)
+
+> Get the RF OTP MAC address from Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>out</td>
+<td><em>MAC</em></td>
+<td>A Pointer to a variable where OTP MAC address is to be stored.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_set\_rf\_otp\_cal\_data (const uint8\_t \* *cal\_data*, uint32\_t *cal\_data\_len*)
+
+> Set the RF OTP calculate data in Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>cal_data</em></td>
+<td>A Pointer to a variable where OTP calculate data is to be stored.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>cal_data_len</em></td>
+<td>The length of OTP calculate data.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_get\_rf\_otp\_cal\_data (uint8\_t \* *cal\_data*)
+
+> Get the RF OTP calculate data from Wi-Fi firmware.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>out</td>
+<td><em>cal_data</em></td>
+<td>A pointer to a variable where OTP calculate data is to be stored.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_set\_rf\_rx\_mac\_filter (uint8\_t \* *addr*)
+
+> Add RX peer mac filter.
+
+##### Note
+
+> call wlan\_set\_rf\_test\_mode API before using this API.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td><em>[int]</em></td>
+<td>addr: only receive packets from this mac address.</td>
 </tr>
 </tbody>
 </table>
@@ -8619,66 +9660,6 @@ CSI data
 
 > WM\_SUCCESS if successful otherwise return -WM\_FAIL.
 
-#### uint8\_t wlan\_check\_11n\_capa (unsigned int *channel*)
-
-> Check if Wi-Fi hardware support 802.11n for on 2.4G or 5G bands.
-
-##### Parameters
-
-<table>
-<tbody>
-<tr class="odd">
-<td>in</td>
-<td><em>channel</em></td>
-<td>Channel number.</td>
-</tr>
-</tbody>
-</table>
-
-##### Returns
-
-> true if 802.11n is supported or false if not.
-
-#### uint8\_t wlan\_check\_11ac\_capa (unsigned int *channel*)
-
-> Check if Wi-Fi hardware support 802.11ac for on 2.4G or 5G bands.
-
-##### Parameters
-
-<table>
-<tbody>
-<tr class="odd">
-<td>in</td>
-<td><em>channel</em></td>
-<td>Channel number.</td>
-</tr>
-</tbody>
-</table>
-
-##### Returns
-
-> true if 802.11ac is supported or false if not.
-
-#### uint8\_t wlan\_check\_11ax\_capa (unsigned int *channel*)
-
-> Check if Wi-Fi hardware support 802.11ax for on 2.4G or 5G bands.
-
-##### Parameters
-
-<table>
-<tbody>
-<tr class="odd">
-<td>in</td>
-<td><em>channel</em></td>
-<td>Channel number.</td>
-</tr>
-</tbody>
-</table>
-
-##### Returns
-
-> true if 802.11ax is supported or false if not.
-
 #### int wlan\_set\_ips (int *option*)
 
 > Config IEEE power save mode (IPS). If the option is 1, the IPS
@@ -8737,6 +9718,22 @@ CSI data
 </tr>
 </tbody>
 </table>
+
+##### Note
+
+> 11AC or 11AX only mode is not supported. Supported modes are:
+> 
+> legacy (B + G + A)
+> 
+> 11N only
+> 
+> 11N + 11AC
+> 
+> 11N + 11AX
+> 
+> 11N + 11AC + 11AX
+> 
+> B,G and A modes are enabled by default and are not configurable.
 
 ##### Returns
 
@@ -8801,6 +9798,86 @@ CSI data
 ##### Returns
 
 > WM\_SUCCESS if successful otherwise failure.
+
+#### int wlan\_get\_turbo\_mode (t\_u8 \* *mode*)
+
+> Get turbo mode.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>out</td>
+<td><em>mode</em></td>
+<td>turbo mode 0: disable turbo mode 1: turbo mode 1 2: turbo mode 2 3: turbo mode 3</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_get\_uap\_turbo\_mode (t\_u8 \* *mode*)
+
+> Get uAP turbo mode.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>out</td>
+<td><em>mode</em></td>
+<td>turbo mode 0: disable turbo mode 1: turbo mode 1 2: turbo mode 2 3: turbo mode 3</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_set\_turbo\_mode (t\_u8 *mode*)
+
+> Set turbo mode.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>mode</em></td>
+<td>turbo mode 0: disable turbo mode 1: turbo mode 1 2: turbo mode 2 3: turbo mode 3</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_set\_uap\_turbo\_mode (t\_u8 *mode*)
+
+> Set uAP turbo mode.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>mode</em></td>
+<td>turbo mode 0: disable turbo mode 1: turbo mode 1 2: turbo mode 2 3: turbo mode 3</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
 
 #### void wlan\_set\_ps\_cfg (t\_u16 *multiple\_dtims*, t\_u16 *bcn\_miss\_timeout*, t\_u16 *local\_listen\_interval*, t\_u16 *adhoc\_wake\_period*, t\_u16 *mode*, t\_u16 *delay\_to\_ps*)
 
@@ -10246,6 +11323,69 @@ CSI data
 
 > WM\_SUCCESS if successful otherwise return -WM\_FAIL.
 
+#### int wlan\_select\_cur\_network\_by\_scan\_res (unsigned int *scan\_index*)
+
+> Select (synchronize) current network index according to a scan table
+> entry.
+> 
+> This API searches configured wlan.networks\[\] for an entry that
+> matches the given scan table index, and sets wlan.cur\_network\_idx
+> accordingly.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>scan_index</em></td>
+<td>Index into the driver's scan table.</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
+#### int wlan\_set\_network\_chanlist (char \* *name*, const uint8\_t \* *chan\_list*, uint8\_t *num\_chans*, enum wlan\_frequency\_bands *freq\_band*)
+
+> Set channel list for a network.
+> 
+> Note: when both chan\_list and freq\_band are provided, the channel
+> list takes precedence. The frequency band parameter will be ignored.
+
+##### Parameters
+
+<table>
+<tbody>
+<tr class="odd">
+<td>in</td>
+<td><em>name</em></td>
+<td>A pointer to a string representing the name of the network.</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>chan_list</em></td>
+<td>A pointer to the channel list</td>
+</tr>
+<tr class="odd">
+<td>in</td>
+<td><em>num_chans</em></td>
+<td>Number of channels in the channel list</td>
+</tr>
+<tr class="even">
+<td>in</td>
+<td><em>freq_band</em></td>
+<td>Frequency band for the channels (e.g., 2.4GHz, 5GHz)</td>
+</tr>
+</tbody>
+</table>
+
+##### Returns
+
+> WM\_SUCCESS if successful otherwise return -WM\_FAIL.
+
 ### Macro Documentation
 
 #### \#define WLAN\_STATS\_INC( priv, x)  (++(priv-\>x))
@@ -10273,7 +11413,7 @@ CSI data
 > The number of times that the Wi-Fi connection manager look for a
 > network before giving up.
 
-#### \#define WLAN\_RECONNECT\_LIMIT  5U
+#### \#define WLAN\_RECONNECT\_LIMIT  CONFIG\_MAX\_RECONNECT\_LIMIT
 
 > The number of times that the Wi-Fi connection manager attempts a
 > reconnection with the network before giving up.
@@ -10286,14 +11426,17 @@ CSI data
 
 > Maximum length for network names, see wlan\_network
 
+#### \#define WLAN\_NETWORK\_CHAN\_LIST\_MAX  50U
+
+> Maximum number of channels storable in a network's scan channel list
+
 #### \#define WLAN\_PSK\_MIN\_LENGTH  8U
 
 > Minimum WPA2 passphrase can be up to 8 ASCII chars
 
-#### \#define WLAN\_PSK\_MAX\_LENGTH  65U
+#### \#define WLAN\_PSK\_MAX\_LENGTH  64U
 
-> Maximum WPA2 passphrase can be up to 63 ASCII chars or 64 hexadecimal
-> digits + 1 '\\0' char
+> Maximum WPA2 passphrase can be up to 63 ASCII chars + 1 '\\0' char
 
 #### \#define WLAN\_PASSWORD\_MIN\_LENGTH  8U
 
@@ -10387,6 +11530,10 @@ WLAN\_KEY\_MGMT\_FT\_FILS\_SHA256 | WLAN\_KEY\_MGMT\_FT\_FILS\_SHA384)
 
 > Configuration for Wi-Fi scan
 
+#### \#define UNSPEC\_WPS\_NETWORK  MBIT(0)
+
+> When the temporary network is of type WPS, bit 0 is 1.
+
 ### Typedef Documentation
 
 #### typedef wifi\_pkt\_stats\_t wlan\_pkt\_stats\_t
@@ -10435,9 +11582,9 @@ WLAN\_KEY\_MGMT\_FT\_FILS\_SHA256 | WLAN\_KEY\_MGMT\_FT\_FILS\_SHA384)
 > Configuration for ED MAC Control parameters from
 > wifi\_ed\_mac\_ctrl\_t
 
-#### typedef wifi\_bandcfg\_t wlan\_bandcfg\_t
+#### typedef wifi\_set\_band\_config\_t wlan\_bandcfg\_t
 
-> Configuration for band from wifi\_bandcfg\_t
+> Configuration for band from wifi\_set\_band\_config\_t
 
 #### typedef wifi\_cw\_mode\_ctrl\_t wlan\_cw\_mode\_ctrl\_t
 
@@ -10704,6 +11851,14 @@ WLAN\_KEY\_MGMT\_FT\_FILS\_SHA256 | WLAN\_KEY\_MGMT\_FT\_FILS\_SHA384)
 <tr class="odd">
 <td>WLAN_REASON_PRE_BEACON_LOST</td>
 <td>The Wi-Fi connection manager has received subscribed pre beacon lost event on station interface as per configured threshold and frequency.</td>
+</tr>
+<tr class="even">
+<td>WLAN_REASON_SCAN_DONE</td>
+<td>Scan is done</td>
+</tr>
+<tr class="odd">
+<td>WLAN_REASON_WPS_SESSION_DONE</td>
+<td>WPS session is done</td>
 </tr>
 </tbody>
 </table>
@@ -10983,6 +12138,35 @@ WLAN\_KEY\_MGMT\_FT\_FILS\_SHA256 | WLAN\_KEY\_MGMT\_FT\_FILS\_SHA384)
 <tr class="even">
 <td>ADDR_TYPE_BRIDGE_MODE</td>
 <td>For Bridge Mode, no IP address</td>
+</tr>
+</tbody>
+</table>
+
+#### enum wlan\_select\_policy
+
+> WLAN selection policy configuration
+
+#### enum wlan\_frequency\_bands
+
+##### Enumerator:
+
+<table>
+<tbody>
+<tr class="odd">
+<td>WLAN_FREQ_BAND_2_4_GHZ</td>
+<td>2.4 GHz band</td>
+</tr>
+<tr class="even">
+<td>WLAN_FREQ_BAND_5_GHZ</td>
+<td>5 GHz band</td>
+</tr>
+<tr class="odd">
+<td>WLAN_FREQ_BAND_BOTH</td>
+<td>All bands</td>
+</tr>
+<tr class="even">
+<td>WLAN_FREQ_BAND_UNKNOWN</td>
+<td>Invalid frequency band</td>
 </tr>
 </tbody>
 </table>
