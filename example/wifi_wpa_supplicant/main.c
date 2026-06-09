@@ -400,7 +400,8 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
                 PRINTF("app_cb: WLAN: P2P GO a Client Dissociated:");
                 PRINTF(" Client MAC => ");
                 print_mac((const char *)(disassoc_resp->sta_addr));
-                PRINTF("\r\n");
+                PRINTF(" Reason code => ");
+                PRINTF("%d\r\n", disassoc_resp->reason_code);
                 printSeparator();
             }
 
@@ -411,7 +412,8 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
                 PRINTF("app_cb: WLAN: UAP a Client Dissociated:");
                 PRINTF(" Client MAC => ");
                 print_mac((const char *)(disassoc_resp->sta_addr));
-                PRINTF("\r\n");
+                PRINTF(" Reason code => ");
+                PRINTF("%d\r\n", disassoc_resp->reason_code);
                 printSeparator();
 #if CONFIG_WPA_SUPP_P2P
             }

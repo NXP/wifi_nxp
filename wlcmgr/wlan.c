@@ -5920,20 +5920,16 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
     {
         wlcm_d("AP: Station dis-connected");
 
-        wifi_uap_client_disassoc_t disassoc_resp;
+        t_u8 sta_addr[MLAN_MAC_ADDR_LENGTH] = {0};
 
         s = strchr(buf, ' ');
         if (s == NULL)
             return;
 
-        if (hwaddr_aton(s + 1, disassoc_resp.sta_addr))
+        if (hwaddr_aton(s + 1, sta_addr))
             return;
 
-        wifi_uap_client_deauth(bss_type, disassoc_resp.sta_addr);
-
-        disassoc_resp.bss_type = bss_type;
-
-        CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_DISSOC, (void *)&disassoc_resp);
+        wifi_uap_client_deauth(bss_type, sta_addr);
     }
 #endif /* CONFIG_HOSTAPD */
 #if CONFIG_WPA_SUPP_WPS
@@ -6793,9 +6789,8 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
                     wifi_nxp_sta_remove(msg->bss_type, disassoc_resp->sta_addr);
                 }
             }
-#else
-            CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_DISSOC, msg->data);
 #endif
+            CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_DISSOC, msg->data);
             /* This was allocated by the sender */
 #if !CONFIG_MEM_POOLS
             OSA_MemoryFree(msg->data);
