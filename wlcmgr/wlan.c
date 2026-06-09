@@ -5783,6 +5783,44 @@ static void wpa_supplicant_msg_cb(void *ctx, const char *buf, size_t len)
         wlan_subscribe_rssi_low_event();
         return;
     }
+    if (strstr(buf, "WNM: Transition to BSS ") != NULL)
+    {
+        t_u8 new_bssid[MLAN_MAC_ADDR_LENGTH];
+        t_u8 old_bssid[MLAN_MAC_ADDR_LENGTH];
+        char *pos;
+        char *old_pos;
+
+        pos = strstr(buf, "WNM: Transition to BSS ");
+        if (pos != NULL)
+        {
+            pos += strlen("WNM: Transition to BSS ");
+            if (hwaddr_aton(pos, new_bssid) == 0)
+            {
+                old_pos = strstr(buf, "(old BSSID ");
+                if (old_pos != NULL)
+                {
+                    old_pos += strlen("(old BSSID ");
+                    if (hwaddr_aton(old_pos, old_bssid) == 0)
+                    {
+                        if (memcmp(new_bssid, old_bssid, MLAN_MAC_ADDR_LENGTH) == 0)
+                        {
+                            wlcm_d("11V transition candidate is current BSS, fallback");
+                            wlan.roam_reassoc = false;
+                            wlan_subscribe_rssi_low_event();
+                        }
+                    }
+                }
+            }
+        }
+        return;
+    }
+    if (strstr(buf, "BSS Transition Management Request did not include candidates") != NULL)
+    {
+        wlcm_d("11V BTM request has no candidates, fallback");
+        wlan.roam_reassoc = false;
+        wlan_subscribe_rssi_low_event();
+        return;
+    }
 #endif
 
     if (strstr(buf, WPA_EVENT_SCAN_FAILED))
