@@ -14590,6 +14590,7 @@ int wlan_send_hostcmd(
 int wlan_enable_disable_htc(uint8_t option)
 {
     int ret                 = -WM_FAIL;
+    /* Path 1: Enable/Disable HTC+ CAP bit via debug cmd 0x008B / SUBID 0x0124 */
     uint8_t send_htc_set[]  = {0x8b, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x24, 0x01, 0x01, 0x00, 0x00, 0x00};
     uint8_t debug_resp_buf[32] = {0};
     uint32_t reqd_len       = 0;
@@ -14598,6 +14599,17 @@ int wlan_enable_disable_htc(uint8_t option)
 
     ret = wlan_send_hostcmd(send_htc_set, sizeof(send_htc_set) / sizeof(uint8_t), debug_resp_buf, sizeof(debug_resp_buf),
                             &reqd_len);
+
+    if (ret != WM_SUCCESS)
+    {
+        return ret;
+    }
+
+    /* Path 2: Enable/Disable HTC in TX packets via proper IOCTL path
+     * HostCmd_CMD_11AX_CMD (0x026D) / MLAN_11AXCMD_HTC_SUBID (0x0104)
+     * Equivalent to "mlanutl mlan0 11axcmd enable_htc <option>" in mxmdriver.
+     */
+    ret = wifi_set_11ax_htc(MLAN_BSS_TYPE_STA, option);
 
     return ret;
 }

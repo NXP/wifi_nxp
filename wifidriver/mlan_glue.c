@@ -7964,6 +7964,55 @@ int wifi_set_11ax_tx_omi(const mlan_bss_type bss_type,
     return WM_SUCCESS;
 }
 
+/**
+ * @brief Enable/disable HTC in TX packets via HostCmd_CMD_11AX_CMD (0x026D)
+ *        with sub_id MLAN_11AXCMD_HTC_SUBID (0x0104).
+ *
+ * @param[in] bss_type  BSS type (MLAN_BSS_TYPE_STA or MLAN_BSS_TYPE_UAP)
+ * @param[in] enable    1 = enable HTC in TX packets, 0 = disable
+ *
+ * @return WM_SUCCESS or -WM_FAIL
+ */
+int wifi_set_11ax_htc(const mlan_bss_type bss_type, const t_u8 enable)
+{
+    mlan_ioctl_req req;
+    mlan_ds_11ax_cmd_cfg cfg;
+
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+    (void)memset(&cfg, 0x00, sizeof(mlan_ds_11ax_cmd_cfg));
+
+    req.req_id  = MLAN_IOCTL_11AX_CFG;
+    req.action  = MLAN_ACT_SET;
+    req.pbuf    = (t_u8 *)&cfg;
+    req.buf_len = sizeof(mlan_ds_11ax_cmd_cfg);
+
+    cfg.sub_command         = MLAN_OID_11AX_CMD_CFG;
+    cfg.sub_id              = MLAN_11AXCMD_HTC_SUBID;
+    cfg.param.htc_cfg.value = enable;
+
+    mlan_status rv;
+
+    if (bss_type == MLAN_BSS_TYPE_UAP)
+    {
+        req.bss_index = (t_u32)MLAN_BSS_TYPE_UAP;
+        rv            = wlan_ops_uap_ioctl(mlan_adap, &req);
+    }
+    else
+    {
+        req.bss_index = (t_u32)MLAN_BSS_TYPE_STA;
+        rv            = wlan_ops_sta_ioctl(mlan_adap, &req);
+    }
+
+    wm_wifi.cmd_resp_ioctl = NULL;
+
+    if (rv != MLAN_STATUS_SUCCESS && rv != MLAN_STATUS_PENDING)
+    {
+        return -WM_FAIL;
+    }
+
+    return WM_SUCCESS;
+}
+
 int wifi_set_11ax_tol_time(const t_u32 tol_time)
 {
     mlan_ioctl_req req;
