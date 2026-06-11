@@ -669,6 +669,7 @@ mlan_status wlan_cmd_11ax_cmd(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u
 {
     HostCmd_DS_11AX_CMD_CFG *axcmd        = &cmd->params.axcmd;
     mlan_ds_11ax_cmd_cfg *ds_11ax_cmd     = (mlan_ds_11ax_cmd_cfg *)pdata_buf;
+    mlan_ds_11ax_htc_cmd *htc_cmd         = (mlan_ds_11ax_htc_cmd *)&ds_11ax_cmd->param.htc_cfg;
     mlan_ds_11ax_txomi_cmd *txomi_cmd     = (mlan_ds_11ax_txomi_cmd *)&ds_11ax_cmd->param.txomi_cfg;
     mlan_ds_11ax_toltime_cmd *toltime_cmd = (mlan_ds_11ax_toltime_cmd *)&ds_11ax_cmd->param.toltime_cfg;
 
@@ -682,6 +683,10 @@ mlan_status wlan_cmd_11ax_cmd(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u
     axcmd->sub_id = wlan_cpu_to_le16((t_u16)(ds_11ax_cmd->sub_id & 0xFFFFU));
     switch (ds_11ax_cmd->sub_id)
     {
+        case MLAN_11AXCMD_HTC_SUBID:
+            axcmd->val[0] = htc_cmd->value;
+            cmd->size += (t_u16)sizeof(t_u8);
+            break;
         case MLAN_11AXCMD_TXOMI_SUBID:
             (void)__memcpy(pmpriv->adapter, axcmd->val, txomi_cmd, sizeof(mlan_ds_11ax_txomi_cmd));
             cmd->size += (t_u16)sizeof(mlan_ds_11ax_txomi_cmd);
