@@ -8,7 +8,7 @@ Wi-Fi Connection Manager. Refer to the source code for additional information.
 
 .. toctree::
    :maxdepth: 1
-   :caption: Wi-Fi API Guide for RW61x
+   :caption: Wi-Fi API Guide for FreeRTOS platform
 
-   RW61x/umindex.md
+   freertos/umindex.md
 
