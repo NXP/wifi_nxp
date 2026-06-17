@@ -302,6 +302,7 @@ int is_hs_handshake_done = 0;
 
 extern OSA_SEMAPHORE_HANDLE_DEFINE(wakelock);
 extern OSA_SEMAPHORE_HANDLE_DEFINE(hs_config_sem);
+static bool wakelock_init = 0;
 
 extern int wakeup_by;
 
@@ -8393,6 +8394,19 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
     }
 #endif
 
+#if CONFIG_HOST_SLEEP
+    if (!wakelock_init)
+    {
+        status = OSA_SemaphoreCreate((osa_semaphore_handle_t)wakelock, 0);
+        if (status != KOSA_StatusSuccess)
+        {
+            wifi_e("Failed to create wake-lock semaphore");
+            return ret;
+        }
+        wakelock_init = 1;
+    }
+#endif
+
 #if CONFIG_WIFI_IND_RESET
     if (wifi_reset_in_progress() == true)
     {
@@ -11627,11 +11641,6 @@ static void wlcmgr_mon_task(void * data)
         wlcm_e("Unable to create wake timer");
     }
 #endif
-    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)wakelock, 0);
-    if (status != KOSA_StatusSuccess)
-    {
-        wifi_e("Failed to create wake-lock semaphore");
-    }
 #endif
     while (1)
     {
