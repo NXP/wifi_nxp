@@ -3541,14 +3541,6 @@ int wlan_set_roaming(const uint8_t bitmap,
  * \return 0 if roaming is disbled.
  */
 int wlan_get_roaming_status(void);
-
-/** Subscribe RSSI low event in firmware if roaming is enabled.
- *
- * \param[in] void
- *
- * \return void
- */
-void wlan_subscribe_rssi_low_event(void);
 #endif
 
 #if CONFIG_HOST_SLEEP

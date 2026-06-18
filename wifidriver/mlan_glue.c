@@ -5651,27 +5651,6 @@ int wifi_request_bgscan(mlan_private *pmpriv)
 }
 #endif
 
-int wifi_set_rssi_low_threshold(uint8_t low_rssi)
-{
-    mlan_private *pmpriv = mlan_adap->priv[0];
-    mlan_ds_subscribe_evt subscribe_evt;
-
-    wifi_get_command_lock();
-    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
-    cmd->seq_num                = wifi_get_cmd_seq_num(pmpriv);
-    cmd->result                 = 0x0;
-    subscribe_evt.evt_action    = SUBSCRIBE_EVT_ACT_BITWISE_SET;
-    subscribe_evt.evt_bitmap    = SUBSCRIBE_EVT_RSSI_LOW;
-    subscribe_evt.low_rssi      = low_rssi;
-    subscribe_evt.low_rssi_freq = 0;
-    wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_SUBSCRIBE_EVENT, HostCmd_ACT_GEN_SET, 0, NULL, &subscribe_evt,
-                             cmd);
-    wifi_wait_for_cmdresp(NULL);
-
-    return wm_wifi.cmd_resp_status;
-}
-
 #if CONFIG_BG_SCAN
 int wifi_request_bgscan_query(mlan_private *pmpriv)
 {
@@ -7895,38 +7874,6 @@ int wifi_set_get_cck_desense_cfg(void *cfg, t_u16 action)
 void wifi_enable_low_pwr_mode()
 {
     low_power_mode = true;
-}
-#endif
-
-#if CONFIG_ROAMING
-int wifi_config_roaming(const int enable, uint8_t rssi_low)
-{
-    mlan_private *pmpriv = mlan_adap->priv[0];
-    int ret              = WM_SUCCESS;
-
-    if (enable)
-    {
-        pmpriv->roaming_enabled = MTRUE;
-        pmpriv->rssi_low        = rssi_low;
-        ret                     = wifi_set_rssi_low_threshold(rssi_low);
-        if (ret != WM_SUCCESS)
-        {
-            wifi_e("Failed to config rssi threshold for roaming");
-            pmpriv->roaming_enabled = MFALSE;
-            pmpriv->rssi_low        = 0;
-            return -WM_FAIL;
-        }
-    }
-    else
-    {
-        if (pmpriv->roaming_enabled)
-        {
-            pmpriv->roaming_enabled = MFALSE;
-            pmpriv->rssi_low        = 0;
-            wifi_stop_bgscan();
-        }
-    }
-    return ret;
 }
 #endif
 
