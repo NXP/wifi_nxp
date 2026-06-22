@@ -1680,7 +1680,8 @@ static int security_profile_matches(const struct wlan_network *network, const st
         }
 #endif
 
-        if (res->WPA_WPA2_WEP.wepStatic || res->WPA_WPA2_WEP.wpa2 || res->WPA_WPA2_WEP.wpa)
+        if (res->WPA_WPA2_WEP.wepStatic || res->WPA_WPA2_WEP.wpa2 ||
+            res->WPA_WPA2_WEP.wpa       || res->WPA_WPA2_WEP.wpa3_sae)
         {
             return WM_SUCCESS;
         }
