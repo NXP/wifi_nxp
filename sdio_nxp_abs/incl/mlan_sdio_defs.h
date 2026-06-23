@@ -90,6 +90,17 @@ extern "C" {
 /** Host Control Registers : Download host interrupt status */
 #define DN_LD_HOST_INT_STATUS (0x2U)
 
+/** For SDIO over SPI mode */
+/** SDIO register card control 3 */
+#define SD_CARD_CTRL3 0xF3
+/** Start token is 0xFE for CMD53 single block write operation */
+#define SD_ONE_BLK_WR_TOKEN_EN (0x1U << 1)
+
+/* bus interface controls */
+#define SDIO_CCCR_IF 0x07
+/* Enable continuous SPI interrupt */
+#define SDIO_BUS_ECSI	(0x1U << 5)
+
 #define WLAN_VALUE1 0x80002080U
 /** Port for registers */
 #define REG_PORT 0U
