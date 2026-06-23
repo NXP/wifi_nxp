@@ -368,6 +368,7 @@ static void dump_wlan_set_rf_xtal_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-set-rf-xtal <xtal_cal> \r\n");
+    (void)PRINTF("xtal_cal (0 to 255) \r\n");
     (void)PRINTF("\r\n");
 }
 

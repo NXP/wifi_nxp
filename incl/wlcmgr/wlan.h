@@ -5351,7 +5351,7 @@ int wlan_get_rf_band(uint8_t *band);
  *
  * \note  call \ref wlan_set_rf_test_mode API before using this API.
  *
- * \param[in] xtal_cal: The crystal calibration offset to be set in Wi-Fi firmware.
+ * \param[in] xtal_cal: The crystal calibration offset to be set in Wi-Fi firmware, range [0,255].
  *
  * \return WM_SUCCESS if successful otherwise return -WM_FAIL.
  *
