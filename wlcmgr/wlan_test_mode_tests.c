@@ -362,6 +362,8 @@ static void wlan_rf_band_get(int argc, char *argv[])
     }
 }
 #endif
+
+#ifdef RW610
 static void dump_wlan_set_rf_xtal_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -435,6 +437,7 @@ static void wlan_rf_xtal_get(int argc, char *argv[])
         dump_wlan_get_rf_xtal_usage();
     }
 }
+#endif
 
 static void dump_wlan_set_bandwidth_usage(void)
 {
@@ -1603,9 +1606,11 @@ static struct cli_command wlan_test_mode_commands[] = {
 #if defined(SD8978) || defined(SD8987)
     {"wlan-set-rf-band", "<band>", wlan_rf_band_set},
     {"wlan-get-rf-band", NULL, wlan_rf_band_get},
-#endif   
+#endif
+#ifdef RW610
     {"wlan-set-rf-xtal", "<xtal_cal>", wlan_rf_xtal_set},
     {"wlan-get-rf-xtal", NULL, wlan_rf_xtal_get},
+#endif
     {"wlan-set-rf-bandwidth", "<bandwidth>", wlan_rf_bandwidth_set},
     {"wlan-get-rf-bandwidth", NULL, wlan_rf_bandwidth_get},
     {"wlan-set-rf-channel", "<channel>", wlan_rf_channel_set},
