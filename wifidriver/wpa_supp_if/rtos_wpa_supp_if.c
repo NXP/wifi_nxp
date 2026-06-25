@@ -2986,7 +2986,7 @@ void wifi_nxp_wpa_supp_event_signal_change(void *if_priv, t_s16 *curr_rssi)
     }
     memset(&event, 0, sizeof(event));
     event.signal_change.above_threshold = 0;
-    event.signal_change.data.signal = abs(*curr_rssi);
+    event.signal_change.data.signal = (int)(*curr_rssi);
 
     wifi_if_ctx_rtos->supp_callbk_fns.signal_change(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
 }

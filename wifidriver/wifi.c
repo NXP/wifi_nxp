@@ -4361,7 +4361,7 @@ int wifi_nxp_scan_res_get2(t_u32 table_idx, nxp_wifi_event_new_scan_result_t *sc
         scan_res->ies.ie_len = (t_u16)0U;
     }
 
-    scan_res->rssi = (t_u8) - (bss_new_entry->rssi);
+    scan_res->rssi = -bss_new_entry->rssi;
 #if CONFIG_SCAN_CHANNEL_GAP
     scan_res->noise = bss_new_entry->chan_noise;
 #endif

@@ -2399,7 +2399,7 @@ typedef struct _BSSDescriptor_t
     /** channel load */
     t_u16 chan_load;
     /** channel load */
-    t_u16 chan_noise;
+    t_s16 chan_noise;
 #endif
 
     /** Channel */

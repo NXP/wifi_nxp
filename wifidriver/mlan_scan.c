@@ -2210,15 +2210,15 @@ static t_u16 wlan_get_chan_load(mlan_adapter *pmadapter, t_u8 channel)
     return chan_load;
 }
 
-static t_u16 wlan_get_chan_noise(mlan_adapter *pmadapter, t_u8 channel)
+static t_s16 wlan_get_chan_noise(mlan_adapter *pmadapter, t_u8 channel)
 {
-    t_u16 chan_noise = 0;
+    t_s16 chan_noise = 0;
     int i;
     for (i = 0; i < (int)pmadapter->num_in_chan_stats; i++)
     {
         if ((pmadapter->pchan_stats[i].chan_num == channel) && pmadapter->pchan_stats[i].noise)
         {
-            chan_noise = pmadapter->pchan_stats[i].noise;
+            chan_noise = (int8_t)pmadapter->pchan_stats[i].noise;
             break;
         }
     }

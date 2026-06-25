@@ -264,8 +264,8 @@ typedef MLAN_PACK_START struct _nxp_wifi_event_new_scan_result
     unsigned short beacon_interval;
     unsigned short capability;
     nxp_wifi_ie2_t ies;
-    unsigned char rssi;
-    unsigned short noise;
+    int rssi;
+    int noise;
     unsigned char mac_addr[WIFI_ETH_ADDR_LEN];
     bool more_res;
 } MLAN_PACK_END nxp_wifi_event_new_scan_result_t;
