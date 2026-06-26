@@ -3600,6 +3600,8 @@ static void test_wlan_roaming(int argc, char **argv)
     uint8_t bitmap;
     uint8_t rssi_low_threshold = 0;
     uint8_t snr_low_threshold = 0;
+    unsigned long val;
+    int ret;
 
     if (argc < 2)
     {
@@ -3607,7 +3609,14 @@ static void test_wlan_roaming(int argc, char **argv)
         return;
     }
 
-    bitmap = (uint8_t)atoi(argv[1]);
+    errno = 0;
+    val = strtoul(argv[1], NULL, 10);
+    if (errno != 0 || val > 3U)
+    {
+        dump_wlan_roaming_usage();
+        return;
+    }
+    bitmap = (uint8_t)val;
 
     if (bitmap == 0)
     {
@@ -3620,7 +3629,14 @@ static void test_wlan_roaming(int argc, char **argv)
             dump_wlan_roaming_usage();
             return;
         }
-        rssi_low_threshold = (uint8_t)atoi(argv[2]);
+        errno = 0;
+        val = strtoul(argv[2], NULL, 10);
+        if (errno != 0 || val == 0U || val > (unsigned long)UINT8_MAX)
+        {
+            (void)PRINTF("Error: invalid rssi_threshold\r\n");
+            return;
+        }
+        rssi_low_threshold = (uint8_t)val;
     }
     else if (bitmap == 2)
     {
@@ -3629,7 +3645,14 @@ static void test_wlan_roaming(int argc, char **argv)
             dump_wlan_roaming_usage();
             return;
         }
-        snr_low_threshold = (uint8_t)atoi(argv[2]);
+        errno = 0;
+        val = strtoul(argv[2], NULL, 10);
+        if (errno != 0 || val == 0U || val > (unsigned long)UINT8_MAX)
+        {
+            (void)PRINTF("Error: invalid snr_threshold\r\n");
+            return;
+        }
+        snr_low_threshold = (uint8_t)val;
     }
     else if (bitmap == 3)
     {
@@ -3638,8 +3661,23 @@ static void test_wlan_roaming(int argc, char **argv)
             dump_wlan_roaming_usage();
             return;
         }
-        rssi_low_threshold = (uint8_t)atoi(argv[2]);
-        snr_low_threshold = (uint8_t)atoi(argv[3]);
+        errno = 0;
+        val = strtoul(argv[2], NULL, 10);
+        if (errno != 0 || val == 0U || val > (unsigned long)UINT8_MAX)
+        {
+            (void)PRINTF("Error: invalid rssi_threshold\r\n");
+            return;
+        }
+        rssi_low_threshold = (uint8_t)val;
+
+        errno = 0;
+        val = strtoul(argv[3], NULL, 10);
+        if (errno != 0 || val == 0U || val > (unsigned long)UINT8_MAX)
+        {
+            (void)PRINTF("Error: invalid snr_threshold\r\n");
+            return;
+        }
+        snr_low_threshold = (uint8_t)val;
     }
     else
     {
@@ -3647,7 +3685,11 @@ static void test_wlan_roaming(int argc, char **argv)
         return;
     }
 
-    wlan_set_roaming(bitmap, rssi_low_threshold, snr_low_threshold);
+    ret = wlan_set_roaming(bitmap, rssi_low_threshold, snr_low_threshold);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Error: invalid roaming parameters\r\n");
+    }
 }
 #endif
 

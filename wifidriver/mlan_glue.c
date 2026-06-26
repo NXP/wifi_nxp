@@ -8983,6 +8983,8 @@ int wifi_roaming_subscribe_event(uint8_t bitmap, uint8_t rssi_low, uint8_t snr_l
 {
     mlan_private *pmpriv = mlan_adap->priv[0];
     mlan_ds_subscribe_evt subscribe_evt;
+    HostCmd_DS_COMMAND *cmd;
+    int ret;
 
     (void)memset(&subscribe_evt, 0, sizeof(mlan_ds_subscribe_evt));
     subscribe_evt.evt_action = SUBSCRIBE_EVT_ACT_BITWISE_SET;
@@ -9000,8 +9002,12 @@ int wifi_roaming_subscribe_event(uint8_t bitmap, uint8_t rssi_low, uint8_t snr_l
         subscribe_evt.low_snr_freq = 0;
     }
 
-    wifi_get_command_lock();
-    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    ret = wifi_get_command_lock();
+    if (ret != WM_SUCCESS)
+    {
+        return -WM_FAIL;
+    }
+    cmd = wifi_get_command_buffer();
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     cmd->seq_num = 0;
     cmd->result = 0x0;
@@ -9017,13 +9023,19 @@ int wifi_roaming_clear_subscribe(void)
 {
     mlan_private *pmpriv = mlan_adap->priv[0];
     mlan_ds_subscribe_evt subscribe_evt;
+    HostCmd_DS_COMMAND *cmd;
+    int ret;
 
     (void)memset(&subscribe_evt, 0, sizeof(mlan_ds_subscribe_evt));
     subscribe_evt.evt_action = SUBSCRIBE_EVT_ACT_BITWISE_CLR;
     subscribe_evt.evt_bitmap = SUBSCRIBE_EVT_RSSI_LOW | SUBSCRIBE_EVT_SNR_LOW;
 
-    wifi_get_command_lock();
-    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    ret = wifi_get_command_lock();
+    if (ret != WM_SUCCESS)
+    {
+        return -WM_FAIL;
+    }
+    cmd = wifi_get_command_buffer();
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     cmd->seq_num = 0;
     cmd->result = 0x0;

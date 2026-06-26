@@ -7487,6 +7487,8 @@ static void roaming_timer_cb(osa_timer_arg_t arg)
 
 static void roaming_subscribe_process(void)
 {
+    int ret;
+
     if (wlan.roaming_report.bitmap == 0)
     {
         return;
@@ -7509,7 +7511,7 @@ static void roaming_subscribe_process(void)
     }
 
     /* STA connected - subscribe to FW */
-    int ret = wifi_roaming_subscribe_event(wlan.roaming_report.bitmap,
+    ret = wifi_roaming_subscribe_event(wlan.roaming_report.bitmap,
                   wlan.roaming_report.rssi_low_threshold,
                   wlan.roaming_report.snr_low_threshold);
 
@@ -7530,6 +7532,8 @@ static void roaming_subscribe_process(void)
 
 static void roaming_report_process(void)
 {
+    int ret;
+
     if (!wlan.roaming_report.subscribed)
     {
         wlcm_d("roaming_report: stale event, drop");
@@ -7537,7 +7541,6 @@ static void roaming_report_process(void)
     }
 
     /* De-subscribe both from FW */
-    int ret;
     ret = wifi_roaming_clear_subscribe();
     if (ret != WM_SUCCESS)
     {
@@ -9301,7 +9304,7 @@ int wlan_stop(void)
     status = OSA_TimerDestroy((osa_timer_handle_t)wlan.roaming_report.roaming_timer);
     if (status != KOSA_StatusSuccess)
     {
-        wlcm_w("failed to delete roaming timer: %d.", ret);
+        wlcm_w("failed to delete roaming timer: %d.", status);
         return WLAN_ERROR_STATE;
     }
 #endif
@@ -14396,6 +14399,8 @@ int wlan_set_roaming(const uint8_t bitmap,
                     const uint8_t rssi_low_threshold,
                     const uint8_t snr_low_threshold)
 {
+    int ret;
+
     /* Validate */
     if ((bitmap & 0x01) && rssi_low_threshold == 0)
     {
@@ -14412,8 +14417,12 @@ int wlan_set_roaming(const uint8_t bitmap,
     wlan.roaming_report.snr_low_threshold = snr_low_threshold;
 
     /* Post WIFI_EVENT_ROAMING_TRIGGER to wlcmgr */
-    (void)wifi_event_completion(WLAN_BSS_TYPE_STA, WIFI_EVENT_ROAMING_TRIGGER,
+    ret = wifi_event_completion(WLAN_BSS_TYPE_STA, WIFI_EVENT_ROAMING_TRIGGER,
                                 WIFI_EVENT_REASON_SUCCESS, NULL);
+    if (ret != WM_SUCCESS)
+    {
+        return -WM_FAIL;
+    }
     return WM_SUCCESS;
 }
 
