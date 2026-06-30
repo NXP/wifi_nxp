@@ -104,8 +104,6 @@ config MCUX_COMPONENT_middleware.wifi.sdio
 config MCUX_COMPONENT_middleware.wifi.mlan_sdio
     bool "Component middleware.wifi.mlan_sdio"
     select MCUX_COMPONENT_middleware.wifi.template
-    select MCUX_COMPONENT_middleware.sdmmc.sdio
-    select MCUX_COMPONENT_middleware.sdmmc.host.usdhc
     select MCUX_COMPONENT_middleware.wifi.common_files
 
     if MCUX_COMPONENT_middleware.wifi.mlan_sdio

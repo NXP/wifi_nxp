@@ -21,8 +21,9 @@
 #include <fsl_clock.h>
 #include <fsl_sdio.h>
 #include <fsl_sdmmc_spec.h>
+#if defined(SDIO_ENABLED)
 #include <fsl_usdhc.h>
-
+#endif
 #include "fsl_sdmmc_host.h"
 #include "fsl_sdmmc_common.h"
 #if ((defined __DCACHE_PRESENT) && __DCACHE_PRESENT) || (defined FSL_FEATURE_HAS_L1CACHE && FSL_FEATURE_HAS_L1CACHE)
@@ -396,7 +397,9 @@ static int sdio_card_init(void)
 #endif
 
 #if !defined(COEX_APP_SUPPORT) || (defined(COEX_APP_SUPPORT) && !(CONFIG_WIFI_IND_DNLD))
+#if defined(SDIO_ENABLED)
     BOARD_WIFI_BT_Enable(true);
+#endif
 #endif
 
     ret = SDIO_CardInit(&wm_g_sd);
