@@ -4835,6 +4835,8 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                         *(tsp_get_cfg->dutycycmin)             = data->dutycycmin;
                         *(tsp_get_cfg->highthrtemp)            = data->highthrtemp;
                         *(tsp_get_cfg->lowthrtemp)             = data->lowthrtemp;
+                        *(tsp_get_cfg->throttledutycycle)      = data->throttledutycycle;
+                        *(tsp_get_cfg->rftemppollcnt)          = data->rftemppollcnt;
                         *(tsp_get_cfg->currCAUTemp)            = data->currCAUTemp;
                         *(tsp_get_cfg->currRFUTemp)            = data->currRFUTemp;
                     }

@@ -7623,6 +7623,10 @@ typedef MLAN_PACK_START struct _HostCmd_DS_TSP_CFG
     int highthrtemp;
     /** LOW_THRESHOLD_TEMP*/
     int lowthrtemp;
+    /** DTM duty cycle increment step*/
+    t_u32 throttledutycycle;
+    /** RFU temperature poll/averaging count (number of samples per average) */
+    t_u32 rftemppollcnt;
     /** CAU TSEN temperature */
     int currCAUTemp;
     /** RFU temperature */
@@ -7647,6 +7651,10 @@ typedef MLAN_PACK_START struct _TSP_CFG
     int *highthrtemp;
     /** LOW_THRESHOLD_TEMP*/
     int *lowthrtemp;
+    /** DTM duty cycle increment step*/
+    t_u32 *throttledutycycle;
+    /** RFU temperature poll/averaging count (number of samples per average) */
+    t_u32 *rftemppollcnt;
     /** CAU TSEN temperature */
     int *currCAUTemp;
     /** RFU temperature */

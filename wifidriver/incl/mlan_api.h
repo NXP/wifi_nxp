@@ -647,6 +647,8 @@ int wifi_tsp_cfg(const t_u16 action,
                  t_u32 *dutycycmin,
                  int *highthrtemp,
                  int *lowthrtemp,
+                 t_u32 *throttledutycycle,
+                 t_u32 *rftemppollcnt,
                  int *currCAUTemp,
                  int *currRFUTemp);
 #endif

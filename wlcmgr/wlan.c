@@ -16815,12 +16815,14 @@ int wlan_get_tsp_cfg(t_u16 *enable,
                      t_u32 *dutycycmin,
                      int *highthrtemp,
                      int *lowthrtemp,
+                     t_u32 *throttledutycycle,
+                     t_u32 *rftemppollcnt,
                      int *currCAUTemp,
                      int *currRFUTemp)
 {
     t_u16 action = 0;
 
-    return wifi_tsp_cfg(action, enable, back_off, highThreshold, lowThreshold, dutycycstep, dutycycmin, highthrtemp, lowthrtemp, currCAUTemp, currRFUTemp);
+    return wifi_tsp_cfg(action, enable, back_off, highThreshold, lowThreshold, dutycycstep, dutycycmin, highthrtemp, lowthrtemp, throttledutycycle, rftemppollcnt, currCAUTemp, currRFUTemp);
 }
 int wlan_set_tsp_cfg(t_u16 enable,
                      t_u32 back_off,
@@ -16829,11 +16831,12 @@ int wlan_set_tsp_cfg(t_u16 enable,
                      t_u32 dutycycstep,
                      t_u32 dutycycmin,
                      int highthrtemp,
-                     int lowthrtemp)
+                     int lowthrtemp,
+                     t_u32 rftemppollcnt)
 {
     t_u16 action = 1;
 
-    return wifi_tsp_cfg(action, &enable, &back_off, &highThreshold, &lowThreshold, &dutycycstep, &dutycycmin, &highthrtemp, &lowthrtemp, NULL, NULL);
+    return wifi_tsp_cfg(action, &enable, &back_off, &highThreshold, &lowThreshold, &dutycycstep, &dutycycmin, &highthrtemp, &lowthrtemp, NULL, &rftemppollcnt, NULL, NULL);
 }
 #endif
 

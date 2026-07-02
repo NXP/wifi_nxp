@@ -9682,7 +9682,7 @@ static void dump_wlan_tsp_cfg_usage()
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF(
         "    wlan-set-tsp-cfg en <0/1> bo <0-20> high <0-300> low <0-300> "
-        "dcstep <1-100> dcmin <0-100> hightemp <-100-150> lowtemp <-100-150>\r\n");
+        "dcstep <1-100> dcmin <0-100> hightemp <-100-150> lowtemp <-100-150> pollcnt <0-255>\r\n");
     (void)PRINTF("	  <en>: 0 -- disable   1 -- enable\r\n");
     (void)PRINTF("	  <bo>: power backoff [0...20]\r\n");
     (void)PRINTF("	  <high>: High power Threshold [0...300]\r\n");
@@ -9691,12 +9691,13 @@ static void dump_wlan_tsp_cfg_usage()
     (void)PRINTF("	  <dcmin>: Duty Cycle min [0...100]\r\n");
     (void)PRINTF("	  <hightemp>: High Throttle Threshold temperature [-100...150]\r\n");
     (void)PRINTF("	  <lowtemp>: Low Throttle Threshold temperature [-100...150]\r\n");
+    (void)PRINTF("	  <pollcnt>: RFU temperature poll/averaging count (number of samples per average)\r\n");
     (void)PRINTF("	  High Threshold must be greater than Low Threshold\r\n");
     (void)PRINTF("	  High Throttle Threshold temperature must be greater than Low Throttle Threshold temperature.\r\n");
     (void)PRINTF("	  If you want to get tsp cfg, you can just use wlan-get-tsp-cfg.\r\n");
     (void)PRINTF("\r\nUsage example : \r\n");
     (void)PRINTF(
-        "wlan-set-tsp-cfg wlan-set-tsp-cfg en 1 bo 0 high 93 low 83 dcstep 5 dcmin 10 hightemp 120 lowtemp 110 \r\n");
+        "wlan-set-tsp-cfg en 1 bo 0 high 93 low 83 dcstep 5 dcmin 10 hightemp 120 lowtemp 110 pollcnt 2\r\n");
     (void)PRINTF("wlan-set-tsp-cfg en 0 \r\n");
 }
 static void test_wlan_set_tsp_cfg(int argc, char **argv)
@@ -9710,6 +9711,7 @@ static void test_wlan_set_tsp_cfg(int argc, char **argv)
     t_u32 lowThreshold  = 0;
     t_u32 dutycycstep   = 0;
     t_u32 dutycycmin    = 0;
+    t_u32 rftemppollcnt = 0;
     int highthrtemp     = 0;
     int lowthrtemp      = 0;
     int ret             = WM_SUCCESS;
@@ -9724,11 +9726,13 @@ static void test_wlan_set_tsp_cfg(int argc, char **argv)
         unsigned dutycycmin : 1;
         unsigned highthrtemp : 1;
         unsigned lowthrtemp : 1;
+        unsigned pollcnt : 1;
+        unsigned rsv : 7;
     } info;
 
     (void)memset(&info, 0, sizeof(info));
 
-    if (argc < 3 || argc > 17)
+    if (argc < 3 || argc > 19)
     {
         (void)PRINTF("Error: invalid number of arguments\r\n");
         dump_wlan_tsp_cfg_usage();
@@ -9836,6 +9840,18 @@ static void test_wlan_set_tsp_cfg(int argc, char **argv)
             info.lowthrtemp = 1;
             lowthrtemp      = tempvalue;
         }
+        else if (!info.pollcnt && string_equal("pollcnt", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid RFU temperature poll/averaging count argument\r\n");
+                dump_wlan_tsp_cfg_usage();
+                return;
+            }
+            arg += 2;
+            info.pollcnt     = 1;
+            rftemppollcnt = value;
+        }
         else
         {
             (void)PRINTF("Error: invalid [%d] argument\r\n", arg + 1);
@@ -9852,7 +9868,7 @@ static void test_wlan_set_tsp_cfg(int argc, char **argv)
     }
 
     ret = wlan_set_tsp_cfg(enable, back_off, highThreshold, lowThreshold, dutycycstep, dutycycmin, highthrtemp,
-                           lowthrtemp);
+                           lowthrtemp, rftemppollcnt);
 
     if (ret != WM_SUCCESS)
     {
@@ -9871,6 +9887,8 @@ static void test_wlan_get_tsp_cfg(int argc, char **argv)
     static t_u32 dutycycmin    = 0;
     static int highthrtemp     = 0;
     static int lowthrtemp      = 0;
+    static t_u32 dutycycle     = 0;
+    static t_u32 rftemppollcnt = 0;
     static int currCAUTemp     = 0;
     static int currRFUTemp     = 0;
 
@@ -9884,6 +9902,8 @@ static void test_wlan_get_tsp_cfg(int argc, char **argv)
     dutycycmin = 0;
     highthrtemp = 0;
     lowthrtemp = 0;
+    dutycycle = 0;
+    rftemppollcnt = 0;
     currCAUTemp = 0;
     currRFUTemp = 0;
 
@@ -9894,7 +9914,7 @@ static void test_wlan_get_tsp_cfg(int argc, char **argv)
     }
 
     ret = wlan_get_tsp_cfg(&enable, &back_off, &highThreshold, &lowThreshold, &dutycycstep, &dutycycmin, &highthrtemp,
-                           &lowthrtemp, &currCAUTemp, &currRFUTemp);
+                           &lowthrtemp, &dutycycle, &rftemppollcnt, &currCAUTemp, &currRFUTemp);
 
     if (ret != WM_SUCCESS)
     {
@@ -9914,6 +9934,8 @@ static void test_wlan_get_tsp_cfg(int argc, char **argv)
     (void)PRINTF("	Low Throttle  Threshold temperature(celcius): %d\r\n", lowthrtemp);
     (void)PRINTF("	CAU TSEN Temperature(celcius): %d\r\n", currCAUTemp);
     (void)PRINTF("	RFU      Temperature(celcius): %d\r\n", currRFUTemp);
+    (void)PRINTF("	Duty Cycle is: %d\r\n", dutycycle);
+    (void)PRINTF("	RFU temperature poll/averaging count is (percentage): %d\r\n", rftemppollcnt);
 }
 #endif
 
@@ -15055,7 +15077,7 @@ static struct cli_command tests[] = {
 #endif
 #if CONFIG_TSP
     {"wlan-set-tsp-cfg",
-     "<enable> <backoff> <highThreshold> <lowThreshold> <dutycycstep> <dutycycmin> <highthrtemp> <lowthrtemp>",
+     "<enable> <backoff> <highThreshold> <lowThreshold> <dutycycstep> <dutycycmin> <highthrtemp> <lowthrtemp> <pollcnt>",
      test_wlan_set_tsp_cfg},
     {"wlan-get-tsp-cfg", NULL, test_wlan_get_tsp_cfg},
 #endif

@@ -6538,6 +6538,8 @@ int wifi_tsp_cfg(const t_u16 action,
                  t_u32 *dutycycmin,
                  int *highthrtemp,
                  int *lowthrtemp,
+                 t_u32 *throttledutycycle,
+                 t_u32 *rftemppollcnt,
                  int *currCAUTemp,
                  int *currRFUTemp)
 {
@@ -6557,6 +6559,7 @@ int wifi_tsp_cfg(const t_u16 action,
     (void)memcpy(&tsp_cfg->dutycycmin, dutycycmin, sizeof(t_u32));
     (void)memcpy(&tsp_cfg->highthrtemp, highthrtemp, sizeof(t_s32));
     (void)memcpy(&tsp_cfg->lowthrtemp, lowthrtemp, sizeof(t_s32));
+    (void)memcpy(&tsp_cfg->rftemppollcnt, rftemppollcnt, sizeof(t_u32));
 
     tsp_cfg->action                 = wlan_cpu_to_le16(action);
     tsp_cfg->thermalPowerMgmtenable = wlan_cpu_to_le16(tsp_cfg->thermalPowerMgmtenable);
@@ -6567,6 +6570,7 @@ int wifi_tsp_cfg(const t_u16 action,
     tsp_cfg->dutycycmin             = wlan_cpu_to_le16(tsp_cfg->dutycycmin);
     tsp_cfg->highthrtemp            = wlan_cpu_to_le16(tsp_cfg->highthrtemp);
     tsp_cfg->lowthrtemp             = wlan_cpu_to_le16(tsp_cfg->lowthrtemp);
+    tsp_cfg->rftemppollcnt          = wlan_cpu_to_le16(tsp_cfg->rftemppollcnt);
 
     cmd->size = wlan_cpu_to_le16(cmd->size);
 
@@ -6585,6 +6589,8 @@ int wifi_tsp_cfg(const t_u16 action,
         tsp_get_cfg.lowthrtemp             = lowthrtemp;
         tsp_get_cfg.currCAUTemp            = currCAUTemp;
         tsp_get_cfg.currRFUTemp            = currRFUTemp;
+        tsp_get_cfg.throttledutycycle      = throttledutycycle;
+        tsp_get_cfg.rftemppollcnt          = rftemppollcnt;
 
         return wifi_wait_for_cmdresp(&tsp_get_cfg);
     }
