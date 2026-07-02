@@ -321,9 +321,20 @@ retry:
 }
 #endif
 
+static void SDIO_interrupt_config(bool enable)
+{
+#if defined(SDIO_ENABLED)
+    SDMMCHOST_EnableCardInt(wm_g_sd.host, enable);
+#elif defined(SDIO_SPI_ENABLED)
+    if (wm_g_sd.usrParam.isSpi)
+    {
+        wm_g_sd.host->interruptEnable(enable);
+    }
+#endif
+}
 static void SDIO_CardInterruptCallBack(void *userData)
 {
-    SDMMCHOST_EnableCardInt(wm_g_sd.host, false);
+    SDIO_interrupt_config(false);
     handle_cdint(0);
 }
 
@@ -331,7 +342,7 @@ void sdio_enable_interrupt(void)
 {
     if (wm_g_sd.isHostReady)
     {
-        SDMMCHOST_EnableCardInt(wm_g_sd.host, true);
+        SDIO_interrupt_config(true);
     }
 }
 
@@ -339,7 +350,7 @@ void sdio_disable_interrupt(void)
 {
     if (wm_g_sd.isHostReady)
     {
-        SDMMCHOST_EnableCardInt(wm_g_sd.host, false);
+        SDIO_interrupt_config(false);
     }
 }
 
@@ -361,10 +372,8 @@ static int sdio_card_init(void)
 {
     int ret       = WM_SUCCESS;
     uint32_t resp = 0;
-#if defined(IW610)
     uint32_t data = 0;
     int reg_ret   = 0;
-#endif
 
     if (SDIO_HostInit(&wm_g_sd) != KOSA_StatusSuccess)
     {
@@ -417,23 +426,24 @@ static int sdio_card_init(void)
     /* Enable IO in card */
     (void)sdio_drv_creg_write(0x2, 0, 0x2, &resp);
 
-#if defined(IW610)
-    reg_ret = sdio_drv_creg_read(SD_CARD_CTRL3, 0, &data);
-    if (reg_ret)
+    if (wm_g_sd.usrParam.isSpi)
     {
-        data &= 0xFFU;
-        data |= SD_ONE_BLK_WR_TOKEN_EN;
-        (void)sdio_drv_creg_write(SD_CARD_CTRL3, 0, (uint8_t)data, &resp);
-    }
+        reg_ret = sdio_drv_creg_read(SD_CARD_CTRL3, 0, &data);
+        if (reg_ret)
+        {
+            data &= 0xFFU;
+            data |= SD_ONE_BLK_WR_TOKEN_EN;
+            (void)sdio_drv_creg_write(SD_CARD_CTRL3, 0, (uint8_t)data, &resp);
+        }
 
-    reg_ret = sdio_drv_creg_read(SDIO_CCCR_IF, 0, &data);
-    if (reg_ret)
-    {
-        data &= 0xFFU;
-        data |= SDIO_BUS_ECSI;
-        (void)sdio_drv_creg_write(SDIO_CCCR_IF, 0, (uint8_t)data, &resp);
+        reg_ret = sdio_drv_creg_read(SDIO_CCCR_IF, 0, &data);
+        if (reg_ret)
+        {
+            data &= 0xFFU;
+            data |= SDIO_BUS_ECSI;
+            (void)sdio_drv_creg_write(SDIO_CCCR_IF, 0, (uint8_t)data, &resp);
+        }
     }
-#endif
 
 #if defined(SD9177) || defined(SD8978) || defined(IW610)
     (void)SDIO_SetBlockSize(&wm_g_sd, (sdio_func_num_t)0, 1);
