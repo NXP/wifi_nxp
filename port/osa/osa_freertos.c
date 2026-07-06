@@ -230,7 +230,7 @@ bool OSA_TimerIsRunning(osa_timer_handle_t timerHandle)
 void *OSA_TimerGetContext(osa_timer_handle_t timerHandle)
 {
     assert(NULL != timerHandle);
-    TimerHandle_t tm = (TimerHandle_t)(void *)(uint32_t *)(*(uint32_t *)timerHandle);
+    TimerHandle_t tm = (TimerHandle_t)(void *)(uintptr_t *)(*(uintptr_t *)timerHandle);
 
     return pvTimerGetTimerID(tm);
 }

@@ -373,7 +373,7 @@ enum user_request_type
     CM_WLAN_USER_REQUEST_SHUTDOWN
 };
 
-static int send_user_request(enum wlan_bss_type bss_type, enum user_request_type request, unsigned int data);
+static int send_user_request(enum wlan_bss_type bss_type, enum user_request_type request, uintptr_t data);
 
 enum cm_sta_state
 {
@@ -5126,7 +5126,7 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
 #if CONFIG_IPV6
         wlan.sta_ipv6_state = CM_STA_IDLE;
 #endif
-        if ((int)msg->data == IEEEtypes_REASON_MIC_FAILURE)
+        if ((int)(uintptr_t)msg->data == IEEEtypes_REASON_MIC_FAILURE)
         {
             /* In case of a LINK loss because of bad MIC
              * failure, directly send a deauth.
@@ -5164,7 +5164,7 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
         /* we were attempting a connection and lost the link,
          * so treat this as a connection attempt failure
          */
-        switch ((int)msg->data)
+        switch ((int)(uintptr_t)msg->data)
         {
             case IEEEtypes_REASON_4WAY_HANDSHK_TIMEOUT:
                 do_connect_failed(WLAN_REASON_NETWORK_AUTH_FAILED);
@@ -6645,7 +6645,7 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
                 wlan.cur_wfd_network_idx = (int)msg->data;
             else
 #endif
-                wlan.cur_uap_network_idx = (int)msg->data;
+                wlan.cur_uap_network_idx = (int)(uintptr_t)msg->data;
             wlan.scan_count          = 0;
 
             (void)do_start(network);
@@ -7168,7 +7168,7 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
 static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *next, struct wlan_network *network)
 {
     int ret;
-    struct wlan_network *new_network = &wlan.networks[(unsigned int)msg->data];
+    struct wlan_network *new_network = &wlan.networks[(unsigned int)(uintptr_t)msg->data];
 #if CONFIG_WPA_SUPP
     struct netif *netif = net_get_sta_interface();
 #endif
@@ -7197,7 +7197,7 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
     wlcm_d("starting %s to network: %d", wlan.roam_reassoc == false ? "connection" : "reassociation", (int)msg->data);
 
 #if !CONFIG_WPA_SUPP
-    ret = do_connect((int)msg->data);
+    ret = do_connect((int)(uintptr_t)msg->data);
 #else
     wlan.scan_count      = 0;
     wlan.cur_network_idx = (int)msg->data;
@@ -7244,7 +7244,7 @@ static void wlcm_request_reconnect(enum cm_sta_state *next, struct wlan_network 
     struct wifi_message msg;
     msg.event  = 0;
     msg.reason = WIFI_EVENT_REASON_SUCCESS;
-    msg.data   = (void *)(wlan.cur_network_idx);
+    msg.data   = (void *)(uintptr_t)(wlan.cur_network_idx);
 
     wlcm_d("Reconnect in progress ...");
 
@@ -7644,7 +7644,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
                 wlcm_e("entering power save mode");
                 break;
             }
-            wlan_enable_power_save((int)msg->data);
+            wlan_enable_power_save((int)(uintptr_t)msg->data);
             break;
         case CM_STA_USER_REQUEST_PS_EXIT:
             if (msg->data == NULL)
@@ -7652,7 +7652,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
                 wlcm_w("ignoring ps exit request with NULL ps mode");
                 break;
             }
-            wlan_disable_power_save((int)msg->data);
+            wlan_disable_power_save((int)(uintptr_t)msg->data);
             break;
 #if CONFIG_CPU_LOADING
         case CM_STA_USER_REQUEST_CPU_LOADING:
@@ -8179,7 +8179,7 @@ static void wlcmgr_task(void *data)
             }
             else if (msg.event == (uint16_t)CM_WLAN_USER_REQUEST_DEINIT)
             {
-                wlcm_deinit((int)msg.data);
+                wlcm_deinit((int)(uintptr_t)msg.data);
             }
             else
             {
@@ -8297,7 +8297,7 @@ static void wps_task(void *data)
  * WLAN API
  */
 
-static int send_user_request(enum wlan_bss_type bss_type, enum user_request_type request, unsigned int data)
+static int send_user_request(enum wlan_bss_type bss_type, enum user_request_type request, uintptr_t data)
 {
     struct wifi_message msg;
 
@@ -8566,7 +8566,7 @@ void wlan_deinit(int action)
 {
     if (wlan.running != 0U)
     {
-        (void)send_user_request(WLAN_BSS_TYPE_STA, CM_WLAN_USER_REQUEST_DEINIT, (unsigned int)action);
+        (void)send_user_request(WLAN_BSS_TYPE_STA, CM_WLAN_USER_REQUEST_DEINIT, (uintptr_t)action);
     }
     else
     {
@@ -9497,7 +9497,7 @@ static bool wlan_is_key_valid(struct wlan_network *network)
             if (network->security.password_len < WLAN_PASSWORD_MIN_LENGTH ||
                 network->security.password_len > WLAN_PASSWORD_MAX_LENGTH)
             {
-                wlcm_e("Invalid password length %d (expected 8..255)", network->security.password_len);
+                wlcm_e("Invalid password length %zu (expected 8..255)", network->security.password_len);
                 return false;
             }
             break;
@@ -12235,7 +12235,7 @@ int wlan_scan_with_opt(wlan_scan_params_v2_t t_wlan_scan_param)
     wlcm_d("got the scan lock (user scan)");
     wlan.is_scan_lock = 1;
 
-    ret = send_user_request(WLAN_BSS_TYPE_STA, CM_STA_USER_REQUEST_SCAN, (unsigned int)wlan_scan_param);
+    ret = send_user_request(WLAN_BSS_TYPE_STA, CM_STA_USER_REQUEST_SCAN, (uintptr_t)wlan_scan_param);
 
     if (ret != WM_SUCCESS)
     {
@@ -14011,7 +14011,7 @@ int _wlan_rrm_scan_cb(unsigned int count)
     t_u8 *buf_pos = NULL;
     /* The sufficient size is the length including reporting frame body */
     t_u16 suffi_len           = 250U;
-    t_u32 pos_last_indication = 0U;
+    uintptr_t pos_last_indication = 0U;
     bool match_ap_found       = false;
     int meas_report_len       = 0;
 

@@ -83,7 +83,7 @@ extern "C" {
 #endif
 
 /** Return the byte offset of a field in the given structure */
-#define MLAN_FIELD_OFFSET(type, field) ((t_u32)(t_ptr) & (((type *)0)->field))
+#define MLAN_FIELD_OFFSET(type, field) ((t_u32)(uintptr_t) & (((type *)0)->field))
 /** Return aligned offset */
 #define OFFSET_ALIGN_ADDR(p, a) (t_u32)(ALIGN_ADDR(p, a) - (t_ptr)p)
 

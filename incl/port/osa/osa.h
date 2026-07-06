@@ -31,6 +31,7 @@ extern "C" {
 #error "Please define OS type"
 #endif
 
+#include <string.h>
 #include <wmerrno.h>
 #include <wm_utils.h>
 
@@ -388,6 +389,25 @@ void OSA_ThreadSelfComplete(osa_task_handle_t taskHandle);
  */
 uint32_t OSA_MsgQWaiting(osa_msgq_handle_t msgqHandle);
 
+
+/** Check if an OSA handle has been initialized.
+ *
+ * OSA handles (e.g. mutex, semaphore) are defined as uint32_t arrays via
+ * OSA_MUTEX_HANDLE_DEFINE / OSA_SEMAPHORE_HANDLE_DEFINE. On 64-bit platforms
+ * a direct pointer cast causes strict-aliasing violations. This helper uses
+ * memcpy to safely read the first pointer-sized value from the handle storage
+ * without triggering compiler warnings, and works with GCC, ARM GCC and IAR.
+ *
+ * @param[in] handle Pointer to the OSA handle storage.
+ *
+ * @return true if the handle has been initialized (non-zero), false otherwise.
+ */
+static inline bool OSA_HandleIsValid(const void *handle)
+{
+    uintptr_t val;
+    (void)memcpy(&val, handle, sizeof(uintptr_t));
+    return val != 0U;
+}
 
 #ifdef __cplusplus
 }

@@ -1398,7 +1398,7 @@ void wifi_uap_enable_sticky_bit(const uint8_t *mac_addr)
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->command                          = wlan_cpu_to_le16(HOST_CMD_APCMD_SYS_CONFIGURE);
-    HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uint32_t)cmd + S_DS_GEN);
+    HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uintptr_t)cmd + S_DS_GEN);
     sys_config_cmd->action                = HostCmd_ACT_GEN_SET;
     uint8_t *tlv                          = sys_config_cmd->tlv_buffer;
 
@@ -1616,7 +1616,7 @@ int wifi_uap_rates_getset(uint8_t action, char *rates, uint8_t num_rates)
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->command                          = wlan_cpu_to_le16(HOST_CMD_APCMD_SYS_CONFIGURE);
-    HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uint32_t)cmd + S_DS_GEN);
+    HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uintptr_t)cmd + S_DS_GEN);
     uint8_t *tlv                          = sys_config_cmd->tlv_buffer;
 
     MrvlIEtypes_RatesParamSet_t *tlv_rates = (MrvlIEtypes_RatesParamSet_t *)(void *)tlv;
@@ -1658,7 +1658,7 @@ int wifi_uap_mcbc_rate_getset(uint8_t action, uint16_t *mcbc_rate)
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->command                          = wlan_cpu_to_le16(HOST_CMD_APCMD_SYS_CONFIGURE);
-    HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uint32_t)cmd + S_DS_GEN);
+    HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uintptr_t)cmd + S_DS_GEN);
     uint8_t *tlv                          = sys_config_cmd->tlv_buffer;
 
     MrvlIEtypes_mcbc_rate_t *tlv_mcbc_rate = (MrvlIEtypes_mcbc_rate_t *)(void *)tlv;
@@ -1697,7 +1697,7 @@ int wifi_uap_tx_power_getset(uint8_t action, uint8_t *tx_power_dbm)
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->command                          = wlan_cpu_to_le16(HOST_CMD_APCMD_SYS_CONFIGURE);
-    HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uint32_t)cmd + S_DS_GEN);
+    HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uintptr_t)cmd + S_DS_GEN);
     uint8_t *tlv                          = sys_config_cmd->tlv_buffer;
 
     MrvlIEtypes_tx_power_t *tlv_tx_power = (MrvlIEtypes_tx_power_t *)(void *)tlv;
@@ -1735,7 +1735,7 @@ int wifi_uap_sta_ageout_timer_getset(uint8_t action, uint32_t *sta_ageout_timer)
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->command                          = wlan_cpu_to_le16(HOST_CMD_APCMD_SYS_CONFIGURE);
-    HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uint32_t)cmd + S_DS_GEN);
+    HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uintptr_t)cmd + S_DS_GEN);
     uint8_t *tlv                          = sys_config_cmd->tlv_buffer;
 
     MrvlIEtypes_sta_ageout_t *tlv_sta_ageout_timer = (MrvlIEtypes_sta_ageout_t *)(void *)tlv;
@@ -1773,7 +1773,7 @@ int wifi_uap_ps_sta_ageout_timer_getset(uint8_t action, uint32_t *ps_sta_ageout_
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->command                          = wlan_cpu_to_le16(HOST_CMD_APCMD_SYS_CONFIGURE);
-    HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uint32_t)cmd + S_DS_GEN);
+    HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uintptr_t)cmd + S_DS_GEN);
     uint8_t *tlv                          = sys_config_cmd->tlv_buffer;
 
     MrvlIEtypes_ps_sta_ageout_t *tlv_ps_sta_ageout_timer = (MrvlIEtypes_ps_sta_ageout_t *)(void *)tlv;
@@ -1811,7 +1811,7 @@ int wifi_uap_group_rekey_timer_getset(uint8_t action, uint32_t *group_rekey_time
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->command                          = wlan_cpu_to_le16(HOST_CMD_APCMD_SYS_CONFIGURE);
-    HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uint32_t)cmd + S_DS_GEN);
+    HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uintptr_t)cmd + S_DS_GEN);
     uint8_t *tlv                          = sys_config_cmd->tlv_buffer;
 
     MrvlIEtypes_group_rekey_time_t *tlv_group_rekey_timer = (MrvlIEtypes_group_rekey_time_t *)(void *)tlv;
@@ -1924,7 +1924,7 @@ int wifi_uap_pmf_getset(uint8_t action, uint8_t *mfpc, uint8_t *mfpr)
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->command                          = wlan_cpu_to_le16(HostCmd_CMD_PMF_PARAMS);
-    HostCmd_DS_PMF_PARAMS *sys_pmf_params = (HostCmd_DS_PMF_PARAMS *)((uint32_t)cmd + S_DS_GEN);
+    HostCmd_DS_PMF_PARAMS *sys_pmf_params = (HostCmd_DS_PMF_PARAMS *)((uintptr_t)cmd + S_DS_GEN);
 
     __memset(NULL, sys_pmf_params, 0x00, sizeof(HostCmd_DS_PMF_PARAMS));
 
