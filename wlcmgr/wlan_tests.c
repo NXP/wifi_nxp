@@ -909,7 +909,7 @@ static void test_wlan_add(int argc, char **argv)
     }
 
     len = strlen(argv[arg]);
-    if (len >= WLAN_NETWORK_NAME_MAX_LENGTH)
+    if (len > WLAN_NETWORK_NAME_MAX_LENGTH)
     {
         (void)PRINTF("Error: network name too long\r\n");
         goto out;

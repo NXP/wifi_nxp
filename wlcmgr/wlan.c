@@ -9846,7 +9846,7 @@ int wlan_add_network(struct wlan_network *network)
 
     /* make sure that the network name length is acceptable */
     len = strlen(network->name);
-    if (len < WLAN_NETWORK_NAME_MIN_LENGTH || len >= WLAN_NETWORK_NAME_MAX_LENGTH)
+    if (len < WLAN_NETWORK_NAME_MIN_LENGTH || len > WLAN_NETWORK_NAME_MAX_LENGTH)
     {
         wlcm_e("name length is out of bounds");
         return -WM_E_INVAL;
