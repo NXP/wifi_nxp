@@ -188,10 +188,11 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
     t_u8 tagnr_len                            = 0;
     wlan_nlist_report_param *pnlist_rep_param = MNULL;
     t_u8 entry_num                            = 0;
+    struct wnm_neighbor_report *preport = NULL;
 
     if (end - pos < 5)
     {
-        return;
+        goto out;
     }
 
 #if !CONFIG_MEM_POOLS
@@ -203,7 +204,7 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
     if (pnlist_rep_param == MNULL)
     {
         wifi_e("11v nlist report param buffer alloc failed %d", sizeof(wlan_nlist_report_param));
-        return;
+        goto out;
     }
 
     (void)memset(pnlist_rep_param, 0, sizeof(wlan_nlist_report_param));
@@ -220,20 +221,14 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
     if ((btm_mode & IEEE_WNM_BTM_REQUEST_PREFERENCE_CAND_LIST_INCLUDED) != 0U)
     {
 #if !CONFIG_MEM_POOLS
-        struct wnm_neighbor_report *preport =
-            OSA_MemoryAllocate((size_t)WLAN_WNM_MAX_NEIGHBOR_REPORT * sizeof(struct wnm_neighbor_report));
+        preport = OSA_MemoryAllocate((size_t)WLAN_WNM_MAX_NEIGHBOR_REPORT * sizeof(struct wnm_neighbor_report));
 #else
-        struct wnm_neighbor_report *preport = OSA_MemoryPoolAllocate(buf_128_MemoryPool);
+        preport = OSA_MemoryPoolAllocate(buf_128_MemoryPool);
 #endif
         if (preport == NULL)
         {
             wifi_e("No memory available for neighbor report.");
-#if !CONFIG_MEM_POOLS
-            OSA_MemoryFree((void *)pnlist_rep_param);
-#else
-            OSA_MemoryPoolFree(buf_128_MemoryPool, pnlist_rep_param);
-#endif
-            return;
+            goto out;
         }
 
         while (end - pos >= 2 && wnm_num_neighbor_report < (t_u8)WLAN_WNM_MAX_NEIGHBOR_REPORT)
@@ -244,14 +239,7 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
             if ((int)len > (end - pos))
             {
                 wifi_d("WNM: Truncated BTM request");
-#if !CONFIG_MEM_POOLS
-                OSA_MemoryFree((void *)preport);
-                OSA_MemoryFree((void *)pnlist_rep_param);
-#else
-                OSA_MemoryPoolFree(buf_128_MemoryPool, preport);
-                OSA_MemoryPoolFree(buf_128_MemoryPool, pnlist_rep_param);
-#endif
-                return;
+                goto out;
             }
 
             if (tag == (t_u8)NEIGHBOR_REPORT)
@@ -274,7 +262,7 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
                     else
                     {
                         wifi_e("WNM: Incorrect length");
-                        return;
+                        goto out;
                     }
                     prefer_old     = (t_u8)rep->prefer;
                     prefer_select  = 1;
@@ -289,15 +277,7 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
         {
             wlan_send_mgmt_wnm_btm_resp(dialog_token, WNM_BTM_REJECT_NO_SUITABLE_CANDIDATES, dest_addr, src_addr, NULL,
                                         ptagnr, tagnr_len, protect);
-#if !CONFIG_MEM_POOLS
-            OSA_MemoryFree((void *)preport);
-            OSA_MemoryFree((void *)pnlist_rep_param);
-#else
-            OSA_MemoryPoolFree(buf_128_MemoryPool, preport);
-            OSA_MemoryPoolFree(buf_128_MemoryPool, pnlist_rep_param);
-#endif
-
-            return;
+            goto out;
         }
 
         if (prefer_select == (t_u8)1U)
@@ -326,18 +306,14 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
         if (wifi_event_completion(WLAN_BSS_TYPE_STA, WIFI_EVENT_NLIST_REPORT, WIFI_EVENT_REASON_SUCCESS, (void *)pnlist_rep_param) !=
             WM_SUCCESS)
         {
-            /* If fail to send message on queue, free allocated memory ! */
-#if !CONFIG_MEM_POOLS
-            OSA_MemoryFree((void *)pnlist_rep_param);
-#else
-            OSA_MemoryPoolFree(buf_128_MemoryPool, pnlist_rep_param);
-#endif
+            goto out;
         }
 #if !CONFIG_MEM_POOLS
         OSA_MemoryFree(preport);
 #else
         OSA_MemoryPoolFree(buf_128_MemoryPool, preport);
 #endif
+        return;
     }
     else
     {
@@ -352,13 +328,21 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
         }
 
         wlan_send_mgmt_wnm_btm_resp(dialog_token, status, dest_addr, src_addr, NULL, ptagnr, tagnr_len, protect);
-        /* If don't use variable pnlist_rep_param, free allocated memory ! */
+    }
+
+out:
+    (void)wifi_event_completion(WLAN_BSS_TYPE_STA, WIFI_EVENT_NLIST_REPORT, WIFI_EVENT_REASON_FAILURE, NULL);
 #if !CONFIG_MEM_POOLS
+    if (preport)
+        OSA_MemoryFree((void *)preport);
+    if (pnlist_rep_param)
         OSA_MemoryFree((void *)pnlist_rep_param);
 #else
+    if (preport)
+        OSA_MemoryPoolFree(buf_128_MemoryPool, preport);
+    if (pnlist_rep_param)
         OSA_MemoryPoolFree(buf_128_MemoryPool, pnlist_rep_param);
 #endif
-    }
 }
 
 int wlan_send_mgmt_bss_trans_query(mlan_private *pmpriv, t_u8 query_reason)

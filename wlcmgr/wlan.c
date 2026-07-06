@@ -335,7 +335,7 @@ static struct udp_pcb *udp_raw_pcb;
 #endif
 
 #if (CONFIG_11K) || (CONFIG_11V)
-#define NEIGHBOR_REQ_TIMEOUT (60 * 1000)
+#define NEIGHBOR_REQ_TIMEOUT (10 * 1000)
 #endif
 
 #if CONFIG_11R
@@ -736,23 +736,6 @@ static char *dbg_sta_state_name(enum cm_sta_state state)
             return "obtaining address";
         case CM_STA_CONNECTED:
             return "connected";
-        default:
-            return "unknown";
-    }
-}
-
-static char *dbg_uap_state_name(enum cm_uap_state state)
-{
-    switch (state)
-    {
-        case CM_UAP_INITIALIZING:
-            return "initializing";
-        case CM_UAP_CONFIGURED:
-            return "configured";
-        case CM_UAP_STARTED:
-            return "started";
-        case CM_UAP_IP_UP:
-            return "IP configured";
         default:
             return "unknown";
     }
@@ -4730,6 +4713,20 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
     wlan_scan_channel_list_t chan_list[MAX_NUM_CHANS_IN_NBOR_RPT];
     t_u8 *bssid                               = NULL;
     wlan_nlist_report_param *pnlist_rep_param = (wlan_nlist_report_param *)msg->data;
+
+    if (msg->reason == WIFI_EVENT_REASON_FAILURE)
+    {
+        wlcm_d("11K/11V neighbor report failed, clearing roam state");
+#if CONFIG_ROAMING
+        if (wlan.roam_reassoc == true)
+        {
+            wlan.roam_reassoc = false;
+        }
+#endif
+        wlan.neighbor_req = false;
+        (void)OSA_TimerDeactivate((osa_timer_handle_t)wlan.neighbor_req_timer);
+        return;
+    }
 
     if (is_state(CM_STA_IDLE) || (pnlist_rep_param == NULL))
     {
@@ -8754,6 +8751,13 @@ static void neighbor_req_timer_cb(osa_timer_arg_t arg)
     {
         wlan.neighbor_req = false;
     }
+#if CONFIG_ROAMING
+    if (wlan.roam_reassoc == true)
+    {
+        wlan.roam_reassoc = false;
+        wlcm_d("neighbor req timeout, clearing roam state");
+    }
+#endif
 }
 #endif
 

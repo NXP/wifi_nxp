@@ -950,12 +950,7 @@ void wlan_process_neighbor_report_response(t_u8 *frame, t_u32 len, t_u8 *dest_ad
     if (len < 3U)
     {
         wifi_d("Ignoring too short radio measurement request");
-#if !CONFIG_MEM_POOLS
-        OSA_MemoryFree((void *)pnlist_rep_param);
-#else
-        OSA_MemoryPoolFree(buf_128_MemoryPool, pnlist_rep_param);
-#endif
-        return;
+        goto out;
     }
 
     memset(pnlist_rep_param, 0, sizeof(wlan_nlist_report_param));
@@ -1009,15 +1004,16 @@ void wlan_process_neighbor_report_response(t_u8 *frame, t_u32 len, t_u8 *dest_ad
     if (wifi_event_completion(WLAN_BSS_TYPE_STA, WIFI_EVENT_NLIST_REPORT, WIFI_EVENT_REASON_SUCCESS, pnlist_rep_param) != WM_SUCCESS)
     {
         /* If fail to send message on queue, free allocated memory ! */
-#if !CONFIG_MEM_POOLS
-        OSA_MemoryFree((void *)pnlist_rep_param);
-#else
-        OSA_MemoryPoolFree(buf_128_MemoryPool, pnlist_rep_param);
-#endif
+        goto out;
     }
     return;
 
 out:
+    /* Post failure event to notify upper layer */
+    if (wifi_event_completion(WLAN_BSS_TYPE_STA, WIFI_EVENT_NLIST_REPORT, WIFI_EVENT_REASON_FAILURE, NULL) != WM_SUCCESS)
+    {
+        wifi_e("Failed to post nlist report failure event");
+    }
 #if !CONFIG_MEM_POOLS
     OSA_MemoryFree((void *)pnlist_rep_param);
 #else
