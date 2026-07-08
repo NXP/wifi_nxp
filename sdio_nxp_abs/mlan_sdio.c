@@ -72,6 +72,10 @@
 #endif /* (defined(CPU_MIMXRT1062DVMAA) || (CPU_MIMXRT1062DVL6A)) */
 #endif
 
+#if defined(MIMXRT1152_SERIES)
+#include "fsl_pcal6524.h"
+#endif
+
 #if CONFIG_WIFI_SG_DEBUG
 #define wifi_sg_d(...) wmlog("wifi SG", ##__VA_ARGS__)
 #else
@@ -556,6 +560,27 @@ bool sdio_get_enume_status(void)
 #if CONFIG_WIFI_IND_RESET
 void sdio_oob_reset(void)
 {
+#if defined(MIMXRT1152_SERIES)
+    status_t status;
+
+    pcal6524_handle_t *handle = BOARD_GetPCAL6524Handle();
+
+    status = PCAL6524_ClearPins(handle, (1UL << BOARD_PCAL6524_WL_RST));
+    if (status != kStatus_Success)
+    {
+        sdio_e("PCAL6524_ClearPins failed for WL_RST");
+        return;
+    }
+    OSA_TimeDelay(10);
+
+    status = PCAL6524_SetPins(handle, (1UL << BOARD_PCAL6524_WL_RST));
+    if (status != kStatus_Success)
+    {
+        sdio_e("PCAL6524_SetPins failed for WL_RST");
+        return;
+    }
+    OSA_TimeDelay(10);
+#endif
 #ifdef IR_OUTBAND_TRIGGER_GPIO
     GPIO_PinWrite(IR_OUTBAND_TRIGGER_GPIO, IR_OUTBAND_TRIGGER_GPIO_PIN, 0);
     OSA_TimeDelay(10);
