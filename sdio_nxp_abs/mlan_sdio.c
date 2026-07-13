@@ -69,6 +69,11 @@
 #define IR_OUTBAND_TRIGGER_GPIO_PIN      (22U)
 #define IR_OUTBAND_TRIGGER_GPIO_NAME     "GPIO1"
 #endif
+#elif defined(MIMXRT798S_cm33_core0_SERIES) // For FRDM-IMXRT700
+/* IR-OOB TRIGGER: WL_RST routed to IND_RST_WLAN on FGS060N (Quectel IW612) */
+#define IR_OUTBAND_TRIGGER_GPIO          GPIO6
+#define IR_OUTBAND_TRIGGER_GPIO_PIN      (9U)
+#define IR_OUTBAND_TRIGGER_GPIO_NAME     "GPIO6"
 #endif /* (defined(CPU_MIMXRT1062DVMAA) || (CPU_MIMXRT1062DVL6A)) */
 #endif
 
@@ -592,7 +597,7 @@ void sdio_oob_reset(void)
 void sdio_oob_init(void)
 {
 #ifdef IR_OUTBAND_TRIGGER_GPIO
-#if defined(CPU_MCXN947VDF_cm33_core0) || defined(CPU_MCXN947VPB_cm33_core0)
+#if defined(CPU_MCXN947VDF_cm33_core0) || defined(CPU_MCXN947VPB_cm33_core0) || defined (MIMXRT798S_cm33_core0_SERIES)
     gpio_pin_config_t out_config = {kGPIO_DigitalOutput, 1};
 #else
     gpio_pin_config_t out_config = {kGPIO_DigitalOutput, 1, kGPIO_NoIntmode};
