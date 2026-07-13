@@ -490,7 +490,7 @@ extern "C" {
 
 #if !defined CONFIG_WIFI_REG_ACCESS
 #if defined(RW610) || defined(SD8978) || defined(SD8987) || defined(SD9177) || defined(IW610)
-#define CONFIG_WIFI_REG_ACCESS 0
+#define CONFIG_WIFI_REG_ACCESS 1
 #endif
 #endif
 
