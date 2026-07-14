@@ -1200,7 +1200,7 @@ static void wifi_core_task(void *argv)
     OSA_SR_ALLOC();
 #ifndef __ZEPHYR__
     osa_event_flags_t flagsToWait = WIFI_EVENT_SDIO;
-    osa_event_flags_t pSetFlags;
+    osa_event_flags_t pSetFlags = 0U;
 #endif
 
     for (;;)
@@ -1281,7 +1281,7 @@ static void wifi_scan_task(void *argv)
     mlan_status rv;
 #ifndef __ZEPHYR__
     osa_event_flags_t flagsToWait = WIFI_EVENT_SCAN;
-    osa_event_flags_t pSetFlags;
+    osa_event_flags_t pSetFlags = 0U;
 #endif
 
     for (;;)
@@ -3443,7 +3443,7 @@ static void wifi_drv_tx_task(osa_task_param_t arg)
 #else
     osa_event_flags_t flagsToWait =
         WIFI_EVENT_STA | WIFI_EVENT_UAP | WIFI_EVENT_TX_DATA | WIFI_EVENT_TX_NULL_DATA | WIFI_EVENT_TX_BYPASS_DATA | WIFI_EVENT_WIFIDIRECT;
-    osa_event_flags_t pSetFlags;
+    osa_event_flags_t pSetFlags = 0U;
 #endif
 
     for (;;)

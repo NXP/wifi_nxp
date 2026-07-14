@@ -10610,7 +10610,7 @@ static void test_wlan_start_wps_pbc(int argc, char **argv)
 
 static void test_wlan_start_wps_pin(int argc, char **argv)
 {
-    int ret = -WM_FAIL;
+    int ret;
     struct netif *netif;
 
     if (argc != 2)

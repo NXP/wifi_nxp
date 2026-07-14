@@ -5540,7 +5540,7 @@ static void wlan_parse_neighbor_report_response(const char *nbr_response, wlan_r
 // Sample Response Pattern
 //<3>RRM-NEIGHBOR-REP-RECEIVED bssid=ec:aa:a0:81:7f:20 info=0x1801 op_class=0 chan=153 phy_type=1 lci=0100080010000000000000000000000000000000000406000000000000060101 civic=02000b0000ed000000
 
-    if (sscanf(nbr_response,"%s bssid=%s info=%s op_class=%d chan=%d phy_type=%d", event, bssid, info, &op_class, &channel, &phy_type) == 6)
+    if (sscanf(nbr_response,"%31s bssid=%31s info=%31s op_class=%d chan=%d phy_type=%d", event, bssid, info, &op_class, &channel, &phy_type) == 6)
     {
         int i;
         int match  = 0;
@@ -11722,6 +11722,7 @@ static void wlcmgr_mon_task(void * data)
 #endif
     osa_status_t status;
     struct wlan_message msg;
+    (void)memset(&msg, 0, sizeof(struct wlan_message));
 
 #if CONFIG_HOST_SLEEP && CONFIG_POWER_MANAGER
 #if (!CONFIG_WIFI_BLE_COEX_APP) && (!CONFIG_NCP)

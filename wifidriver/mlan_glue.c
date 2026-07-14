@@ -722,6 +722,15 @@ static mlan_status do_wlan_ret_11n_addba_resp(HostCmd_DS_COMMAND *resp)
     }
 
     int bss_type = HostCmd_GET_BSS_TYPE(resp->seq_num);
+    /* Validate bss_type is within bounds of mlan_adap->priv[] (size MLAN_MAX_BSS_NUM).
+     * HostCmd_GET_BSS_TYPE extracts a 4-bit field (0-15) from seq_num,
+     * but only indices 0 to MLAN_MAX_BSS_NUM-1 are valid.
+     */
+    if (bss_type >= MLAN_MAX_BSS_NUM)
+    {
+        wifi_e("ADDBA RESP: invalid bss_type=%d, ignoring", bss_type);
+        return MLAN_STATUS_FAILURE;
+    }
 
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[bss_type];
     rv                   = wlan_ret_11n_addba_resp(pmpriv, resp);
@@ -742,6 +751,15 @@ static mlan_status do_wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMM
     padd_ba_rsp->status_code         = wlan_le16_to_cpu(padd_ba_rsp->status_code);
 
     tid = (padd_ba_rsp->block_ack_param_set & BLOCKACKPARAM_TID_MASK) >> BLOCKACKPARAM_TID_POS;
+    /* Validate tid is within bounds of ampdu_stat[] and ampdu_supported[] (size MAX_NUM_TID = 8).
+     * TID field is 4-bit (0-15) but only 0-7 are valid per IEEE 802.11 spec.
+     * Return early if tid is out of range to prevent out-of-bounds access.
+     */
+    if (tid >= MAX_NUM_TID)
+    {
+        PRINTM(MERROR, "ADDBA RSP: invalid tid=%d, ignoring\n", tid);
+        return MLAN_STATUS_SUCCESS;
+    }
 
     if (padd_ba_rsp->status_code == BA_RESULT_SUCCESS)
     {
