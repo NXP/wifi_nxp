@@ -482,6 +482,12 @@ extern "C" {
 #endif
 #endif
 
+#if !defined CONFIG_EXT_ANT_GAIN
+#if defined(RW610)
+#define CONFIG_EXT_ANT_GAIN 1
+#endif
+#endif
+
 #if !defined CONFIG_WIFI_MEM_ACCESS
 #if defined(SD8978) || defined(SD8987) || defined(SD9177) || defined(IW610) || defined(RW610)
 #define CONFIG_WIFI_MEM_ACCESS 0

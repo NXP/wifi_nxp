@@ -3931,6 +3931,29 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 }
             }
             break;
+#if CONFIG_EXT_ANT_GAIN
+            case HostCmd_CMD_EXT_ANT_GAIN_CONFIG:
+            {
+                HostCmd_DS_EXT_ANT_GAIN_CFG *ant_gain_cfg = &resp->params.ext_ant_gain_cfg;
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    if (ant_gain_cfg->action == HostCmd_ACT_GEN_GET)
+                    {
+                        if (wm_wifi.cmd_resp_priv != NULL)
+                        {
+                            t_s8 *net_gain = (t_s8 *)wm_wifi.cmd_resp_priv;
+                            *net_gain = ant_gain_cfg->net_ant_gain;
+                        }
+                    }
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                {
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                }
+            }
+            break;
+#endif
             case HostCmd_CMD_CW_MODE_CTRL:
             {
                 HostCmd_DS_CW_MODE_CTRL *cw_mode_ctrl;

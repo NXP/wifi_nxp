@@ -12800,6 +12800,18 @@ int wlan_get_antcfg(uint32_t *ant, uint16_t *evaluate_time, uint8_t *evaluate_mo
 #endif /*RW610*/
 
 
+#if CONFIG_EXT_ANT_GAIN
+int wlan_set_ext_ant_gain(const int8_t *ext_ant_gain, const uint8_t num_subbands)
+{
+    return wifi_set_ext_ant_gain(ext_ant_gain, num_subbands);
+}
+
+int wlan_get_ext_ant_gain(const uint8_t band, const uint8_t channel, int8_t *net_ant_gain)
+{
+    return wifi_get_ext_ant_gain(band, channel, net_ant_gain);
+}
+#endif
+
 int wlan_wlcmgr_send_msg(enum wlan_bss_type bss_type, enum wifi_event event, enum wifi_event_reason reason, void *data)
 {
     struct wifi_message msg;

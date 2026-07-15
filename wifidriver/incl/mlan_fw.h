@@ -1369,6 +1369,11 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID: Tx Frame */
 #define HostCmd_CMD_802_11_TX_FRAME 0x0283
 
+#if CONFIG_EXT_ANT_GAIN
+/** Host Command ID: External Antenna Gain Config */
+#define HostCmd_CMD_EXT_ANT_GAIN_CONFIG 0x0298
+#endif
+
 #if 0
 /** Enhanced PS modes */
 typedef enum _ENH_PS_MODES
@@ -5524,6 +5529,27 @@ typedef MLAN_PACK_START struct _HostCmd_DS_802_11_RF_ANTENNA
 #endif
 } MLAN_PACK_END HostCmd_DS_802_11_RF_ANTENNA;
 
+#if CONFIG_EXT_ANT_GAIN
+/** Maximum number of sub-bands for external antenna gain config.
+ * This must match FW MAX_SUBBAND (6 without 6G, up to 14 with 6G). */
+#define WIFI_EXT_ANT_GAIN_MAX_SUBBAND 6
+
+/** HostCmd_DS_EXT_ANT_GAIN_CFG */
+typedef MLAN_PACK_START struct _HostCmd_DS_EXT_ANT_GAIN_CFG
+{
+    /** Action */
+    t_u8 action;
+    /** Band index */
+    t_u8 band;
+    /** Channel number */
+    t_u8 channel;
+    /** Net antenna gain in dB */
+    t_s8 net_ant_gain;
+    /** Per-sub-band external antenna gains in dB */
+    t_s8 ext_ant_gain[WIFI_EXT_ANT_GAIN_MAX_SUBBAND];
+} MLAN_PACK_END HostCmd_DS_EXT_ANT_GAIN_CFG;
+#endif
+
 /** HostCmd_DS_802_11_IBSS_STATUS */
 typedef MLAN_PACK_START struct _HostCmd_DS_802_11_IBSS_STATUS
 {
@@ -7887,6 +7913,10 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_CW_MODE_CTRL cwmode;
         /** RF antenna */
         HostCmd_DS_802_11_RF_ANTENNA antenna;
+#if CONFIG_EXT_ANT_GAIN
+        /** External Antenna Gain Config */
+        HostCmd_DS_EXT_ANT_GAIN_CFG ext_ant_gain_cfg;
+#endif
 #if CONFIG_NET_MONITOR
         /** Net Monitor Mode command */
         HostCmd_DS_802_11_NET_MONITOR net_mon;
