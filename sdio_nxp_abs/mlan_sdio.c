@@ -415,9 +415,7 @@ static int sdio_card_init(void)
 #endif
 
 #if !defined(COEX_APP_SUPPORT) || (defined(COEX_APP_SUPPORT) && !(CONFIG_WIFI_IND_DNLD))
-#if defined(SDIO_ENABLED)
     BOARD_WIFI_BT_Enable(true);
-#endif
 #endif
 
     ret = SDIO_CardInit(&wm_g_sd);
