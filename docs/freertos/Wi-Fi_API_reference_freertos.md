@@ -5983,7 +5983,6 @@ Use this API to get host sleep wakeup reason from Wi-Fi firmware after waking up
 
   -----------------------------------------------------------------------
 
-  -----------------------------------------------------------------------
 
 
 **Returns**
@@ -9075,7 +9074,6 @@ This function registers callback which are used to deliver CSI (channel state in
 
   -----------------------------------------------------------------------
 
-  -----------------------------------------------------------------------
 
 
 **Returns**
@@ -10877,7 +10875,6 @@ Enable auto reconnect feature in Wi-Fi firmware.
 
   -----------------------------------------------------------------------
 
-  -----------------------------------------------------------------------
 
 
 **Returns**
@@ -12569,5 +12566,4 @@ board type. 0x02: RW61x_PACKAGE_TYPE_BGA 0xFF: others
 > **Supported SoCs:** RW61x
 
 
----
 
