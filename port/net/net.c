@@ -984,37 +984,37 @@ int net_get_if_ip_mask(uint32_t *nm, void *intrfc_handle)
 
 void net_configure_dns(struct net_ip_config *ip, unsigned int role)
 {
-    ip4_addr_t tmp;
+    ip_addr_t tmp;
 
     if (ip->ipv4.addr_type == (uint32_t)NET_ADDR_TYPE_STATIC)
     {
         if (role != WLAN_BSS_ROLE_UAP)
         {
-            if (ip->ipv4.dns1 == 0U)
+            if (0U == ip->ipv4.dns1)
             {
                 ip->ipv4.dns1 = ip->ipv4.gw;
             }
-            if (ip->ipv4.dns2 == 0U)
+            if (0U == ip->ipv4.dns2)
             {
                 ip->ipv4.dns2 = ip->ipv4.dns1;
             }
         }
-        tmp.addr = ip->ipv4.dns1;
-        dns_setserver(0, (ip_addr_t *)(void *)&tmp);
-        tmp.addr = ip->ipv4.dns2;
-        dns_setserver(1, (ip_addr_t *)(void *)&tmp);
+        ip_addr_set_ip4_u32_val(tmp, ip->ipv4.dns1);
+        dns_setserver(0, &tmp);
+        ip_addr_set_ip4_u32_val(tmp, ip->ipv4.dns2);
+        dns_setserver(1, &tmp);
     }
     else
     {
         if (0 != ip->ipv4.dns1)
         {
-            tmp.addr = ip->ipv4.dns1;
-            dns_setserver(0, (ip_addr_t *)&tmp);
+            ip_addr_set_ip4_u32_val(tmp, ip->ipv4.dns1);
+            dns_setserver(0, &tmp);
         }
         if (0 != ip->ipv4.dns2)
         {
-            tmp.addr = ip->ipv4.dns2;
-            dns_setserver(1, (ip_addr_t *)&tmp);
+            ip_addr_set_ip4_u32_val(tmp, ip->ipv4.dns2);
+            dns_setserver(1, &tmp);
         }
     }
 
