@@ -6022,31 +6022,6 @@ int wifi_request_bgscan(mlan_private *pmpriv)
 }
 #endif
 
-int wifi_set_rssi_low_threshold(uint8_t *low_rssi)
-{
-#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_ROAMING)
-    mlan_private *pmpriv = mlan_adap->priv[0];
-    mlan_ds_subscribe_evt subscribe_evt;
-
-    wifi_get_command_lock();
-    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
-    cmd->seq_num                = 0;
-    cmd->result                 = 0x0;
-    subscribe_evt.evt_action    = SUBSCRIBE_EVT_ACT_BITWISE_SET;
-    subscribe_evt.evt_bitmap    = SUBSCRIBE_EVT_RSSI_LOW;
-    subscribe_evt.low_rssi      = *low_rssi;
-    subscribe_evt.low_rssi_freq = 0;
-    wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_SUBSCRIBE_EVENT, HostCmd_ACT_GEN_SET, 0, NULL, &subscribe_evt,
-                             cmd);
-    wifi_wait_for_cmdresp(NULL);
-
-    return wm_wifi.cmd_resp_status;
-#else
-    return 0;
-#endif
-}
-
 #if CONFIG_BG_SCAN
 int wifi_request_bgscan_query(mlan_private *pmpriv)
 {
@@ -6168,9 +6143,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #if CONFIG_EXT_SCAN_SUPPORT
     mlan_event_scan_result *pext_scan_result;
 #endif
-#if CONFIG_WIFI_NM_WPA_SUPPLICANT
-    int16_t *curr_rssi;
-#endif
+    int16_t *rssi_snr;
 
     if (evt == NULL)
     {
@@ -6423,38 +6396,58 @@ int wifi_handle_fw_event(struct bus_message *msg)
             break;
 #endif
         case EVENT_RSSI_LOW:
-#if CONFIG_WIFI_NM_WPA_SUPPLICANT
+        {
 #if !CONFIG_MEM_POOLS
-            curr_rssi = (t_s16 *)OSA_MemoryAllocate(sizeof(t_s16));
+            rssi_snr = (t_s16 *)OSA_MemoryAllocate(sizeof(t_s16));
 #else
-            curr_rssi = (t_s16 *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+            rssi_snr = (t_s16 *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
 #endif
-            if (curr_rssi == MNULL)
+            if (rssi_snr == MNULL)
             {
-                wifi_w("No mem. Failed to alloc memory for EVENT_RSSI_LOW");
+                wifi_w("No mem. Failed to alloc for EVENT_RSSI_LOW");
                 break;
             }
-            *curr_rssi = (t_s16)evt->reason_code;
-            if(wifi_event_completion(WIFI_EVENT_RSSI_LOW,
+            *rssi_snr = (t_s16)evt->reason_code;
+            if (wifi_event_completion(WIFI_EVENT_RSSI_LOW,
                                      WIFI_EVENT_REASON_SUCCESS,
-                                     (void *)curr_rssi) != WM_SUCCESS)
+                                     (void *)rssi_snr) != WM_SUCCESS)
             {
 #if !CONFIG_MEM_POOLS
-                OSA_MemoryFree((void *)curr_rssi);
+                OSA_MemoryFree((void *)rssi_snr);
 #else
-                OSA_MemoryPoolFree(buf_32_MemoryPool, curr_rssi);
+                OSA_MemoryPoolFree(buf_32_MemoryPool, rssi_snr);
 #endif
             }
-#else
-            (void)wifi_event_completion(WIFI_EVENT_RSSI_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
-#endif
             break;
+        }
+        case EVENT_SNR_LOW:
+        {
+#if !CONFIG_MEM_POOLS
+            rssi_snr = (t_s16 *)OSA_MemoryAllocate(sizeof(t_s16));
+#else
+            rssi_snr = (t_s16 *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+#endif
+            if (rssi_snr == MNULL)
+            {
+                wifi_w("No mem. Failed to alloc for EVENT_SNR_LOW");
+                break;
+            }
+            *rssi_snr = (t_s16)evt->reason_code;
+            if (wifi_event_completion(WIFI_EVENT_SNR_LOW,
+                                     WIFI_EVENT_REASON_SUCCESS,
+                                     (void *)rssi_snr) != WM_SUCCESS)
+            {
+#if !CONFIG_MEM_POOLS
+                OSA_MemoryFree((void *)rssi_snr);
+#else
+                OSA_MemoryPoolFree(buf_32_MemoryPool, rssi_snr);
+#endif
+            }
+            break;
+        }
 #if CONFIG_SUBSCRIBE_EVENT_SUPPORT
         case EVENT_RSSI_HIGH:
             (void)wifi_event_completion(WIFI_EVENT_RSSI_HIGH, WIFI_EVENT_REASON_SUCCESS, NULL);
-            break;
-        case EVENT_SNR_LOW:
-            (void)wifi_event_completion(WIFI_EVENT_SNR_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
         case EVENT_SNR_HIGH:
             (void)wifi_event_completion(WIFI_EVENT_SNR_HIGH, WIFI_EVENT_REASON_SUCCESS, NULL);
@@ -8341,21 +8334,14 @@ void wifi_enable_low_pwr_mode()
 #endif
 
 #if CONFIG_ROAMING
-int wifi_config_roaming(const int enable, uint8_t *rssi_low)
+int wifi_config_roaming(const int enable, uint8_t rssi_low)
 {
     mlan_private *pmpriv = mlan_adap->priv[0];
-    int ret              = WM_SUCCESS;
 
     if (enable)
     {
         pmpriv->roaming_enabled = MTRUE;
-        pmpriv->rssi_low        = *rssi_low;
-        ret                     = wifi_set_rssi_low_threshold(rssi_low);
-        if (ret != WM_SUCCESS)
-        {
-            wifi_e("Failed to config rssi threshold for roaming");
-            return -WM_FAIL;
-        }
+        pmpriv->rssi_low        = rssi_low;
     }
     else
     {
@@ -8366,7 +8352,7 @@ int wifi_config_roaming(const int enable, uint8_t *rssi_low)
             wifi_stop_bgscan();
         }
     }
-    return ret;
+    return WM_SUCCESS;
 }
 #endif
 
@@ -9405,6 +9391,64 @@ int wifi_set_threshold_pre_beacon_lost(mlan_private *pmpriv, unsigned int pre_be
     sub_evt.evt_bitmap      = SUBSCRIBE_EVT_PRE_BEACON_LOST;
     sub_evt.pre_beacon_miss = pre_beacon_lost;
     return wifi_subscribe_event_submit(pmpriv, &sub_evt);
+}
+#endif
+
+#if CONFIG_ROAMING
+int wifi_roaming_subscribe_event(uint8_t bitmap, uint8_t rssi_low, uint8_t snr_low)
+{
+    mlan_private *pmpriv = mlan_adap->priv[0];
+    mlan_ds_subscribe_evt subscribe_evt;
+
+    (void)memset(&subscribe_evt, 0, sizeof(mlan_ds_subscribe_evt));
+    subscribe_evt.evt_action = SUBSCRIBE_EVT_ACT_BITWISE_SET;
+
+    if (bitmap & 0x01)
+    {
+        subscribe_evt.evt_bitmap |= SUBSCRIBE_EVT_RSSI_LOW;
+        subscribe_evt.low_rssi = rssi_low;
+        subscribe_evt.low_rssi_freq = 0;
+    }
+    if (bitmap & 0x02)
+    {
+        subscribe_evt.evt_bitmap |= SUBSCRIBE_EVT_SNR_LOW;
+        subscribe_evt.low_snr = snr_low;
+        subscribe_evt.low_snr_freq = 0;
+    }
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = 0;
+    cmd->result = 0x0;
+
+    wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_SUBSCRIBE_EVENT,
+                             HostCmd_ACT_GEN_SET, 0, NULL, &subscribe_evt, cmd);
+    wifi_wait_for_cmdresp(NULL);
+
+    return wm_wifi.cmd_resp_status;
+}
+
+int wifi_roaming_clear_subscribe(void)
+{
+    mlan_private *pmpriv = mlan_adap->priv[0];
+    mlan_ds_subscribe_evt subscribe_evt;
+
+    (void)memset(&subscribe_evt, 0, sizeof(mlan_ds_subscribe_evt));
+    subscribe_evt.evt_action = SUBSCRIBE_EVT_ACT_BITWISE_CLR;
+    subscribe_evt.evt_bitmap = SUBSCRIBE_EVT_RSSI_LOW | SUBSCRIBE_EVT_SNR_LOW;
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = 0;
+    cmd->result = 0x0;
+
+    wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_SUBSCRIBE_EVENT,
+                             HostCmd_ACT_GEN_SET, 0, NULL, &subscribe_evt, cmd);
+    wifi_wait_for_cmdresp(NULL);
+
+    return wm_wifi.cmd_resp_status;
 }
 #endif
 

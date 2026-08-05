@@ -3434,13 +3434,16 @@ void wlan_set_txrx_histogram(struct wlan_txrx_histogram_info *txrx_histogram, t_
  * \ref wlan_set_rssi_low_threshold API to set RSSI low
  * threshold again.
  *
- * \param[in] enable: Enable/Disable roaming.
+ * \param[in] bitmap: Roaming event bitmap (0=disable, bit0=RSSI_LOW, bit1=SNR_LOW)
  * \param[in] rssi_low_threshold: RSSI low threshold value
+ * \param[in] snr_low_threshold: SNR low threshold value
  *
  * \return WM_SUCCESS if the call was successful.
  * \return -WM_FAIL if failed.
  */
-int wlan_set_roaming(const int enable, const uint8_t rssi_low_threshold);
+int wlan_set_roaming(const uint8_t bitmap,
+                    const uint8_t rssi_low_threshold,
+                    const uint8_t snr_low_threshold);
 
 /** Get the roaming status.
  *
@@ -3448,10 +3451,6 @@ int wlan_set_roaming(const int enable, const uint8_t rssi_low_threshold);
  * \return 0 if roaming is disbled.
  */
 int wlan_get_roaming_status(void);
-
-/** Subscribe RSSI low event in firmware if roaming is enabled.
- */
-void wlan_subscribe_rssi_low_event(void);
 #endif
 
 #if CONFIG_HOST_SLEEP
@@ -6900,19 +6899,6 @@ void wlan_set_ami_cfg(wlan_csi_proc_cfg *cfg);
  */
 void wlan_start_stop_ami(uint8_t start);
 #endif
-#endif
-
-#if (CONFIG_11K) || (CONFIG_11V) || (CONFIG_11R) || (CONFIG_ROAMING)
-/**
- * Use this API to set the RSSI threshold value for low RSSI event subscription.
- * When RSSI falls below this threshold firmware can generate the low RSSI event to driver.
- * This low RSSI event is used when either of CONFIG_11R, CONFIG_11K, CONFIG_11V or CONFIG_ROAMING is enabled.
- * \note By default RSSI low threshold is set at -70 dbm.
- *
- * \param[in]     threshold:     Threshold RSSI value to be set
- *
- */
-void wlan_set_rssi_low_threshold(uint8_t threshold);
 #endif
 
 #if CONFIG_WPA_SUPP

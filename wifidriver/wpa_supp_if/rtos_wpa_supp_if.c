@@ -2015,9 +2015,6 @@ int wifi_nxp_wpa_supp_set_supp_port(void *if_priv, int authorized, char *bssid)
         wifi_user_scan_config_cleanup();
     }
 
-#if CONFIG_ROAMING
-    wlan_subscribe_rssi_low_event();
-#endif
     ret = 0;
 out:
     return ret;
@@ -2972,7 +2969,7 @@ void wifi_nxp_wpa_supp_event_proc_dfs_cac_finished(void *if_priv, nxp_wifi_dfs_c
     }
 }
 
-void wifi_nxp_wpa_supp_event_signal_change(void *if_priv, t_s16 *curr_rssi)
+void wifi_nxp_wpa_supp_event_signal_change(void *if_priv, t_s16 curr_rssi)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     union wpa_event_data event;
@@ -2986,7 +2983,7 @@ void wifi_nxp_wpa_supp_event_signal_change(void *if_priv, t_s16 *curr_rssi)
     }
     memset(&event, 0, sizeof(event));
     event.signal_change.above_threshold = 0;
-    event.signal_change.data.signal = (int)(*curr_rssi);
+    event.signal_change.data.signal = (int)(curr_rssi);
 
     wifi_if_ctx_rtos->supp_callbk_fns.signal_change(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
 }
