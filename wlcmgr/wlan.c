@@ -655,6 +655,12 @@ static struct
     unsigned int bgscan_attempt;
 #endif
     bool roam_reassoc : 1;
+#if CONFIG_11K
+    bool roaming_11k_in_progress : 1;
+#endif
+#if CONFIG_11V
+    bool roaming_11v_in_progress : 1;
+#endif
 #if CONFIG_WPA_SUPP
     bool okc : 1;
 #endif
@@ -4556,6 +4562,7 @@ static void wlcm_process_rssi_low_event(void)
         ret = wlan_host_11k_neighbor_req((const char *)network->ssid);
         if (ret == WM_SUCCESS)
         {
+            wlan.roaming_11k_in_progress = true;
             wlcm_d("Sent 11K neighbor request");
             return;
         }
@@ -4570,6 +4577,7 @@ static void wlcm_process_rssi_low_event(void)
         ret = wlan_host_11v_bss_trans_query(0x10);
         if (ret == WM_SUCCESS)
         {
+            wlan.roaming_11v_in_progress = true;
             wlcm_d("Sent 11V bss transition query");
             return;
         }
@@ -7502,23 +7510,59 @@ static void roaming_subscribe_process(void)
 {
     int ret;
 
+    /*
+     * Called on roaming_timer expiry or authentication success.
+     * Clear 11K/11V in-progress flags. If roam_reassoc is still true,
+     * it means 11K/11V did not complete successfully - reset it to
+     * allow the next roaming attempt.
+     */
+#if CONFIG_11K
+    if (wlan.roaming_11k_in_progress)
+    {
+        wlan.roaming_11k_in_progress = false;
+        if (wlan.roam_reassoc)
+        {
+            wlcm_d("roaming_subscribe: 11K timeout, reset roam state");
+            wlan.roam_reassoc = false;
+        }
+    }
+#endif
+#if CONFIG_11V
+    if (wlan.roaming_11v_in_progress)
+    {
+        wlan.roaming_11v_in_progress = false;
+        if (wlan.roam_reassoc)
+        {
+            wlcm_d("roaming_subscribe: 11V timeout, reset roam state");
+            wlan.roam_reassoc = false;
+        }
+    }
+#endif
+
     if (wlan.roaming_report.bitmap == 0)
     {
+        wlcm_d("roaming_subscribe: bitmap is 0, skip");
         return;
     }
     if (wlan.roaming_report.subscribed)
     {
+        wlcm_d("roaming_subscribe: already subscribed, skip");
         return;
     }
     if (!is_sta_connected())
     {
         if (is_sta_connecting())
         {
+            wlcm_d("roaming_subscribe: sta connecting, retry later");
             /* Re-trigger timer if not already running */
             if (!OSA_TimerIsRunning((osa_timer_handle_t)wlan.roaming_report.roaming_timer))
             {
                 (void)OSA_TimerActivate((osa_timer_handle_t)wlan.roaming_report.roaming_timer);
             }
+        }
+        else
+        {
+            wlcm_d("roaming_subscribe: sta not connected, skip");
         }
         return;
     }
