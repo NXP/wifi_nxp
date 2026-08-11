@@ -2,7 +2,7 @@
  *
  *  @brief This file provides mlan driver for SDIO
  *
- *  Copyright 2008-2024 NXP
+ *  Copyright 2008-2024, 2026 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -62,7 +62,8 @@
 #define IR_OUTBAND_TRIGGER_GPIO_PIN   	(12U)
 #define IR_OUTBAND_TRIGGER_GPIO_NAME  	"GPIO5"
 #endif
-#elif defined(CPU_MCXN947VDF_cm33_core0) || defined(CPU_MCXN947VPB_cm33_core0) // For FRDM-MCXN947
+#elif defined(CPU_MCXN947VDF_cm33_core0) || defined(CPU_MCXN947VPB_cm33_core0) || \
+    defined(CPU_MCXN947TVDF_cm33_core0) || defined(CPU_MCXN947TVPB_cm33_core0) // For FRDM-MCXN947 / FRDM-MCXN947T
 #if defined(IW610)
 /* IR OUT-BAND TRIGGER GPIO */
 #define IR_OUTBAND_TRIGGER_GPIO          GPIO1
@@ -595,7 +596,8 @@ void sdio_oob_reset(void)
 void sdio_oob_init(void)
 {
 #ifdef IR_OUTBAND_TRIGGER_GPIO
-#if defined(CPU_MCXN947VDF_cm33_core0) || defined(CPU_MCXN947VPB_cm33_core0) || defined (MIMXRT798S_cm33_core0_SERIES)
+#if defined(CPU_MCXN947VDF_cm33_core0) || defined(CPU_MCXN947VPB_cm33_core0) || \
+    defined(CPU_MCXN947TVDF_cm33_core0) || defined(CPU_MCXN947TVPB_cm33_core0) || defined (MIMXRT798S_cm33_core0_SERIES)
     gpio_pin_config_t out_config = {kGPIO_DigitalOutput, 1};
 #else
     gpio_pin_config_t out_config = {kGPIO_DigitalOutput, 1, kGPIO_NoIntmode};
