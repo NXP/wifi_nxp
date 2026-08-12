@@ -334,9 +334,6 @@ static struct udp_pcb *udp_raw_pcb;
 #endif
 #endif
 
-#if (CONFIG_11K) || (CONFIG_11V)
-#define NEIGHBOR_REQ_TIMEOUT (10 * 1000)
-#endif
 
 #if CONFIG_11R
 #if CONFIG_WPA_SUPP
@@ -680,10 +677,6 @@ static struct
 #if CONFIG_11K
     bool enable_11k : 1;
     wlan_rrm_scan_cb_param rrm_scan_cb_param;
-#endif
-#if (CONFIG_11K) || (CONFIG_11V)
-    OSA_TIMER_HANDLE_DEFINE(neighbor_req_timer);
-    bool neighbor_req : 1;
 #endif
 #if (CONFIG_11K) || (CONFIG_11V)
     wlan_nlist_report_param nlist_rep_param;
@@ -4731,8 +4724,6 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
             wlan.roam_reassoc = false;
         }
 #endif
-        wlan.neighbor_req = false;
-        (void)OSA_TimerDeactivate((osa_timer_handle_t)wlan.neighbor_req_timer);
         return;
     }
 
@@ -4742,21 +4733,6 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
         return;
     }
 
-#if CONFIG_11K
-    if (pnlist_rep_param->nlist_mode == WLAN_NLIST_11K)
-    {
-        wlan.neighbor_req = false;
-        (void)OSA_TimerDeactivate((osa_timer_handle_t)wlan.neighbor_req_timer);
-    }
-#endif
-
-#if CONFIG_11V
-    if ((pnlist_rep_param->nlist_mode == WLAN_NLIST_11V) || (pnlist_rep_param->nlist_mode == WLAN_NLIST_11V_PREFERRED))
-    {
-        wlan.neighbor_req = false;
-        (void)OSA_TimerDeactivate((osa_timer_handle_t)wlan.neighbor_req_timer);
-    }
-#endif
 
     wlan_sort_nlist_channels(pnlist_rep_param);
     memcpy(&wlan.nlist_rep_param, pnlist_rep_param, sizeof(wlan_nlist_report_param));
@@ -8788,22 +8764,6 @@ static void supp_status_timer_cb(osa_timer_arg_t arg)
 }
 #endif
 
-#if (CONFIG_11K) || (CONFIG_11V)
-static void neighbor_req_timer_cb(osa_timer_arg_t arg)
-{
-    if (wlan.neighbor_req == true)
-    {
-        wlan.neighbor_req = false;
-    }
-#if CONFIG_ROAMING
-    if (wlan.roam_reassoc == true)
-    {
-        wlan.roam_reassoc = false;
-        wlcm_d("neighbor req timeout, clearing roam state");
-    }
-#endif
-}
-#endif
 
 #if CONFIG_11R
 #if CONFIG_WPA_SUPP
@@ -9149,16 +9109,6 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     memset(&wlan.nbr_rpt, 0x00, sizeof(wlan_rrm_neighbor_report_t));
 #endif
 
-#if (CONFIG_11K) || (CONFIG_11V)
-    status = OSA_TimerCreate((osa_timer_handle_t)wlan.neighbor_req_timer, NEIGHBOR_REQ_TIMEOUT,
-                          &neighbor_req_timer_cb, NULL, KOSA_TimerOnce, OSA_TIMER_NO_ACTIVATE);
-    if (status != KOSA_StatusSuccess)
-    {
-        wlcm_e("Unable to create neighbor request timer");
-        return ret;
-    }
-#endif
-
 #if defined(SDK_OS_FREE_RTOS)
 #if defined(SD9177) || defined(IW610)
     status = OSA_TimerCreate((osa_timer_handle_t)wlan.poll_timer, POLL_TIMEOUT,
@@ -9332,14 +9282,6 @@ int wlan_stop(void)
     }
 #endif
 
-#if (CONFIG_11K) || (CONFIG_11V)
-    status = OSA_TimerDestroy((osa_timer_handle_t)wlan.neighbor_req_timer);
-    if (status != KOSA_StatusSuccess)
-    {
-        wlcm_w("failed to delete neighbor req timer: %d.", ret);
-        return WLAN_ERROR_STATE;
-    }
-#endif
 
 #if CONFIG_11R
 #if CONFIG_WPA_SUPP
@@ -14255,11 +14197,6 @@ int wlan_host_11k_neighbor_req(const char *ssid)
     ret = wpa_supp_send_neighbor_rep(netif, (char *)ssid, 0, 0);
 #else
     ret = wifi_host_11k_neighbor_req(ssid);
-    if (ret == WM_SUCCESS)
-    {
-        wlan.neighbor_req = true;
-        (void)OSA_TimerActivate((osa_timer_handle_t)wlan.neighbor_req_timer);
-    }
 #endif
     return ret;
 }
@@ -14284,11 +14221,6 @@ int wlan_host_11v_bss_trans_query(t_u8 query_reason)
     return wpa_supp_send_btm_query(netif, query_reason);
 #else
     ret = wifi_host_11v_bss_trans_query(query_reason);
-    if (ret == WM_SUCCESS)
-    {
-        wlan.neighbor_req = true;
-        (void)OSA_TimerActivate((osa_timer_handle_t)wlan.neighbor_req_timer);
-    }
     return ret;
 #endif
 }
