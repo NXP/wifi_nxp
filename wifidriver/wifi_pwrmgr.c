@@ -119,7 +119,11 @@ unsigned int wifi_get_idle_time(void)
 }
 
 #if CONFIG_HOST_SLEEP
-int wifi_send_hs_cfg_cmd(mlan_bss_type bss_type, t_u32 ipv4_addr, t_u16 action, t_u32 conditions)
+int wifi_send_hs_cfg_cmd(mlan_bss_type bss_type,
+                         t_u32 *ipv4_addr,
+                         t_u8 ipv4_addr_cnt,
+                         t_u16 action,
+                         t_u32 conditions)
 {
     pmlan_adapter pmadapter     = ((mlan_private *)mlan_adap->priv[0])->adapter;
     arpfilter_header *arpfilter = NULL;
@@ -174,7 +178,7 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type bss_type, t_u32 ipv4_addr, t_u16 action, 
         & ((t_u32)WIFI_WAKE_ON_MULTICAST | (t_u32)WIFI_WAKE_ON_ALL_BROADCAST | 
         (t_u32)WIFI_WAKE_ON_UNICAST | (t_u32)WIFI_WAKE_ON_ARP_BROADCAST)) == 0U ? MFALSE : MTRUE;
 
-    if ((ipv4_addr != 0U) && (action == (t_u16)HS_CONFIGURE) && bool_res)
+    if ((ipv4_addr != NULL) && (ipv4_addr_cnt > 0U) && (action == (t_u16)HS_CONFIGURE) && bool_res)
     {
         entry = (filter_entry *)((uint32_t)arpfilter + sizeof(arpfilter_header));
         if ((conditions & (t_u32)(WIFI_WAKE_ON_MULTICAST)) != 0U)
@@ -193,14 +197,20 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type bss_type, t_u32 ipv4_addr, t_u16 action, 
             {
                 entry->eth_type  = ETHER_TYPE_ANY;
                 entry->ipv4_addr = IPV4_ADDR_ANY;
+                entry++;
+                arpfilter->len += (t_u16)sizeof(filter_entry);
             }
             else
             {
-                entry->eth_type  = ETHER_TYPE_ARP;
-                entry->ipv4_addr = ipv4_addr;
+                for (t_u8 i = 0U; i < ipv4_addr_cnt; i++)
+                {
+                    entry->addr_type = ADDR_TYPE_BROADCAST;
+                    entry->eth_type  = ETHER_TYPE_ARP;
+                    entry->ipv4_addr = ipv4_addr[i];
+                    entry++;
+                    arpfilter->len += (t_u16)sizeof(filter_entry);
+                }
             }
-            entry++;
-            arpfilter->len += (t_u16)sizeof(filter_entry);
         }
 
         if ((conditions & (t_u32)(WIFI_WAKE_ON_UNICAST)) != 0U)

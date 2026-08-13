@@ -894,7 +894,11 @@ void wifi_set_ps_cfg(t_u16 multiple_dtims,
                      t_u16 adhoc_wake_period,
                      t_u16 mode,
                      t_u16 delay_to_ps);
-int wifi_send_hs_cfg_cmd(mlan_bss_type bss_type, t_u32 ipv4_addr, t_u16 action, t_u32 conditions);
+int wifi_send_hs_cfg_cmd(mlan_bss_type bss_type,
+                         t_u32 *ipv4_addr,
+                         t_u8 ipv4_addr_cnt,
+                         t_u16 action,
+                         t_u32 conditions);
 #if CONFIG_HOST_SLEEP
 int wifi_cancel_host_sleep(mlan_bss_type bss_type);
 #endif

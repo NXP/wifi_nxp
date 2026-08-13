@@ -1035,7 +1035,8 @@ static int wlan_set_pmfcfg(uint8_t mfpc, uint8_t mfpr);
 int wlan_send_host_sleep_int()
 {
     int ret = WM_SUCCESS;
-    unsigned int ipv4_addr = 0;
+    unsigned int ipv4_addr[2] = {0};
+    t_u8 ipv4_addr_cnt = 0;
     enum wlan_bss_type type = WLAN_BSS_TYPE_STA;
     uint32_t wake_up_conds = wlan.wakeup_conditions;
 
@@ -1054,11 +1055,7 @@ int wlan_send_host_sleep_int()
         goto exit;
     }
 
-    if (!is_sta_connected()
-#if UAP_SUPPORT
-        && !mlan_adap->priv[1]->media_connected
-#endif
-        )
+    if (!is_sta_ipv4_connected() && !is_uap_started())
     {
         if ((wake_up_conds & (WAKE_ON_ALL_BROADCAST | WAKE_ON_UNICAST | WAKE_ON_MULTICAST
                                    | WAKE_ON_ARP_BROADCAST | WAKE_ON_MGMT_FRAME)) != 0)
@@ -1075,37 +1072,45 @@ int wlan_send_host_sleep_int()
 
     wlan.hs_wakeup_condition = wlan_map_to_wifi_wakeup_condtions(wake_up_conds);
 
-    if (is_sta_ipv4_connected() != 0)
+    if (is_sta_ipv4_connected() != 0 &&
+        (ipv4_addr_cnt < (t_u8)(sizeof(ipv4_addr)/sizeof(ipv4_addr[0]))))
     {
-        ret = wlan_get_ipv4_addr(&ipv4_addr);
+        ret = wlan_get_ipv4_addr(&ipv4_addr[ipv4_addr_cnt]);
         if (ret != WM_SUCCESS)
         {
             wlcm_e("HS: cannot get STA IP, check if STA disconnected");
             ret = -WM_FAIL;
             goto exit;
         }
+        ipv4_addr_cnt++;
+        type = WLAN_BSS_TYPE_STA;
     }
-    else if (is_uap_started())
+    if (is_uap_started() && 
+        (ipv4_addr_cnt < (t_u8)(sizeof(ipv4_addr)/sizeof(ipv4_addr[0]))))
     {
-        ret = wlan_get_uap_ipv4_addr(&ipv4_addr);
+        ret = wlan_get_uap_ipv4_addr(&ipv4_addr[ipv4_addr_cnt]);
         if (ret != WM_SUCCESS)
         {
             wlcm_e("HS: cannot get UAP IP, check if uAP stopped");
             ret = -WM_FAIL;
             goto exit;
         }
-        type = WLAN_BSS_TYPE_UAP;
-    }
-    else
-    {
-        ipv4_addr = 0;
+        ipv4_addr_cnt++;
+        if (ipv4_addr_cnt == 1)
+        {
+            type = WLAN_BSS_TYPE_UAP;
+        }
     }
 
 #if CONFIG_IPV6
     wifi_set_ipv6_ra_offload(MTRUE);
 #endif
 
-    wifi_send_hs_cfg_cmd((mlan_bss_type)type, ipv4_addr, HS_CONFIGURE, wlan.hs_wakeup_condition);
+    wifi_send_hs_cfg_cmd((mlan_bss_type)type,
+                         ipv4_addr_cnt > 0 ? (t_u32 *)ipv4_addr : NULL,
+                         ipv4_addr_cnt,
+                         HS_CONFIGURE,
+                         wlan.hs_wakeup_condition);
 
 exit:
     if (ret != WM_SUCCESS)
@@ -4033,7 +4038,7 @@ static void wlcm_process_hs_config_event(void)
     else
         ipv4_addr = 0;
 
-    (void)wifi_send_hs_cfg_cmd((mlan_bss_type)type, ipv4_addr, (uint16_t)HS_ACTIVATE, 0);
+    (void)wifi_send_hs_cfg_cmd((mlan_bss_type)type, NULL, 0, (uint16_t)HS_ACTIVATE, 0);
 }
 #endif
 
