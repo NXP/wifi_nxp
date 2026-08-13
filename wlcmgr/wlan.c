@@ -15841,10 +15841,10 @@ int wlan_mef_set_auto_arp(t_u8 mef_action)
 
     if(is_uap_started() != 0)
     {
-        g_flt_cfg.mef_entry[index].filter_num++;
-        filter_num = g_flt_cfg.mef_entry[index].filter_num;
         if(ipv4_addr_num == 2)
             g_flt_cfg.mef_entry[index].rpn[filter_num] = RPN_TYPE_OR;
+        g_flt_cfg.mef_entry[index].filter_num++;
+        filter_num = g_flt_cfg.mef_entry[index].filter_num;
         g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].type         = TYPE_BYTE_EQ;
         g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].repeat       = 1;
         g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].offset       = 46;
