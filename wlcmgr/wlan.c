@@ -122,7 +122,8 @@
 #endif
 
 #if CONFIG_ROAMING
-#define WLAN_ROAMING_COOLDOWN 2000
+#define WLAN_ROAMING_COOLDOWN_MIN 2000
+#define WLAN_ROAMING_COOLDOWN_MAX 60000
 #define WLAN_ROAMING_RSSI_DEFAULT_THRESHOLD -70
 #endif
 
@@ -505,6 +506,8 @@ struct roaming_report_state {
     uint8_t rssi_low_threshold;
     uint8_t snr_low_threshold;
     bool subscribed;
+    uint32_t cooldown_ms;        /* current cooldown interval (exponential backoff) */
+    uint16_t trigger_count;       /* number of triggers since last successful roam */
     OSA_TIMER_HANDLE_DEFINE(roaming_timer);
 };
 #endif
@@ -7586,9 +7589,27 @@ static void roaming_report_process(void)
 
     wlcm_process_rssi_low_event();
 
-    /* Start cooldown timer */
+    /* Exponential backoff: increase cooldown for next cycle.
+     * Keep cooldown at minimum during 11K/11V fallback phase
+     * (2 * RETRY_CNT + 1 triggers), then start doubling. */
+    wlan.roaming_report.trigger_count++;
+    if (wlan.roaming_report.trigger_count > (2 * CONFIG_WIFI_ROAMING_RETRY_CNT + 1))
+    {
+        if (wlan.roaming_report.cooldown_ms < WLAN_ROAMING_COOLDOWN_MAX)
+        {
+            wlan.roaming_report.cooldown_ms = (wlan.roaming_report.cooldown_ms <= WLAN_ROAMING_COOLDOWN_MAX / 2U)
+                                                  ? wlan.roaming_report.cooldown_ms * 2U
+                                                  : WLAN_ROAMING_COOLDOWN_MAX;
+        }
+    }
+    wlcm_d("roaming_report: next cooldown %u ms (trigger_count=%d)",
+            wlan.roaming_report.cooldown_ms, wlan.roaming_report.trigger_count);
+
+    /* Start cooldown timer with current backoff interval */
     if (!OSA_TimerIsRunning((osa_timer_handle_t)wlan.roaming_report.roaming_timer))
     {
+        (void)OSA_TimerChange((osa_timer_handle_t)wlan.roaming_report.roaming_timer,
+                              wlan.roaming_report.cooldown_ms, 0);
         (void)OSA_TimerActivate((osa_timer_handle_t)wlan.roaming_report.roaming_timer);
     }
 }
@@ -7703,6 +7724,8 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #if CONFIG_ROAMING
             if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
             {
+                wlan.roaming_report.cooldown_ms = WLAN_ROAMING_COOLDOWN_MIN;
+                wlan.roaming_report.trigger_count = 0;
                 roaming_subscribe_process();
             }
 #endif
@@ -9135,8 +9158,10 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 
 #if CONFIG_ROAMING
     status = OSA_TimerCreate((osa_timer_handle_t)wlan.roaming_report.roaming_timer,
-                          WLAN_ROAMING_COOLDOWN,
+                          WLAN_ROAMING_COOLDOWN_MIN,
                           &roaming_timer_cb, NULL, KOSA_TimerOnce, OSA_TIMER_NO_ACTIVATE);
+    wlan.roaming_report.cooldown_ms = WLAN_ROAMING_COOLDOWN_MIN;
+    wlan.roaming_report.trigger_count = 0;
     if (status != KOSA_StatusSuccess)
     {
         wlcm_e("Failed to create roaming_timer");
