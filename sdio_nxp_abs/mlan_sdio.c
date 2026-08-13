@@ -163,48 +163,13 @@ int sdio_drv_creg_write(int addr, int fn, uint8_t data, uint32_t *resp)
     return 1;
 }
 
-int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp)
-{
-    osa_status_t status;
-    uint32_t flags = 0;
-    uint32_t param;
-
-    status = OSA_MutexLock((osa_mutex_handle_t)sdio_mutex, osaWaitForever_c);
-    if (status != KOSA_StatusSuccess)
-    {
-        sdio_e("failed to get mutex\r\n");
-        return 0;
-    }
-
-    if (bcnt > 1U)
-    {
-        flags |= SDIO_EXTEND_CMD_BLOCK_MODE_MASK;
-        param = bcnt;
-    }
-    else
-    {
-        param = bsize;
-    }
-
-    /* coverity[cert_int31_c_violation:SUPPRESS] fn is always 0 or 1 per SDIO spec */
-    if (SDIO_IO_Read_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != KOSA_StatusSuccess)
-    {
-        (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
-        return 0;
-    }
-
-    (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
-
-    return 1;
-}
-
-int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp)
+int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf)
 {
     osa_status_t status;
     uint32_t flags = 0;
     uint32_t param;
     uint32_t sd_retry = 0;
-    uint32_t sd_status = 0;
+    uint8_t sd_data;
 
     status = OSA_MutexLock((osa_mutex_handle_t)sdio_mutex, osaWaitForever_c);
     if (status != KOSA_StatusSuccess)
@@ -223,28 +188,70 @@ int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, ui
         param = bsize;
     }
 
-retry:
-    /* coverity[cert_int31_c_violation:SUPPRESS] fn is always 0 or 1 per SDIO spec */
-    if (SDIO_IO_Write_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != KOSA_StatusSuccess)
+    do
     {
-        /* issue abort cmd52 command through Fn0 */
-        (void)sdio_drv_creg_write(IO_ABORT, 0, 0x01, &sd_status);
-        /* issue terminate CMD53 */
-        (void)sdio_drv_creg_write(HOST_TO_CARD_EVENT_REG, 1, HOST_TERM_CMD53, &sd_status);
-
-        if (sd_retry < MAX_WRITE_IOMEM_RETRY)
+        /* coverity[cert_int31_c_violation:SUPPRESS] fn is always 0 or 1 per SDIO spec */
+        if (SDIO_IO_Read_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) == KOSA_StatusSuccess)
         {
-            sd_retry++;
-            goto retry;
+            (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
+            return 1;
         }
-
-        (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
-        return false;
-    }
+        sd_data = 0x01;
+        /* issue abort cmd52 command through Fn0 */
+        (void)SDIO_IO_Write_Direct(&wm_g_sd, (sdio_func_num_t)0, IO_ABORT, &sd_data, true);
+        sd_data = HOST_TERM_CMD53;
+        /* issue terminate CMD53 */
+        (void)SDIO_IO_Write_Direct(&wm_g_sd, (sdio_func_num_t)1, HOST_TO_CARD_EVENT_REG, &sd_data, true);
+    } while (sd_retry++ < MAX_WRITE_IOMEM_RETRY);
 
     (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
 
-    return 1;
+    return 0;
+}
+
+int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf)
+{
+    osa_status_t status;
+    uint32_t flags = 0;
+    uint32_t param;
+    uint32_t sd_retry = 0;
+    uint8_t sd_data;
+
+    status = OSA_MutexLock((osa_mutex_handle_t)sdio_mutex, osaWaitForever_c);
+    if (status != KOSA_StatusSuccess)
+    {
+        sdio_e("failed to get mutex\r\n");
+        return 0;
+    }
+
+    if (bcnt > 1U)
+    {
+        flags |= SDIO_EXTEND_CMD_BLOCK_MODE_MASK;
+        param = bcnt;
+    }
+    else
+    {
+        param = bsize;
+    }
+
+    do
+    {
+        /* coverity[cert_int31_c_violation:SUPPRESS] fn is always 0 or 1 per SDIO spec */
+        if (SDIO_IO_Write_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) == KOSA_StatusSuccess)
+        {
+            (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
+            return 1;
+        }
+        sd_data = 0x01;
+        /* issue abort cmd52 command through Fn0 */
+        (void)SDIO_IO_Write_Direct(&wm_g_sd, (sdio_func_num_t)0, IO_ABORT, &sd_data, true);
+        sd_data = HOST_TERM_CMD53;
+        /* issue terminate CMD53 */
+        (void)SDIO_IO_Write_Direct(&wm_g_sd, (sdio_func_num_t)1, HOST_TO_CARD_EVENT_REG, &sd_data, true);
+    } while (sd_retry++ < MAX_WRITE_IOMEM_RETRY);
+
+    (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
+    return 0;
 }
 
 #if CONFIG_TX_RX_ZERO_COPY
@@ -253,6 +260,8 @@ int sdio_drv_read_sg(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, 
     osa_status_t status;
     uint32_t flags = 0;
     uint32_t param;
+    uint32_t sd_retry = 0;
+    uint8_t sd_data;
 
     status = OSA_MutexLock((osa_mutex_handle_t)sdio_mutex, osaWaitForever_c);
     if (status != KOSA_StatusSuccess)
@@ -271,15 +280,24 @@ int sdio_drv_read_sg(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, 
         param = bsize;
     }
 
-    if (SDIO_IO_Read_Extended_Scatter_Gather(&wm_g_sd, (sdio_func_num_t)fn, addr, sg_list, param, flags) != KOSA_StatusSuccess)
+    do
     {
-        (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
-        return 0;
-    }
+        if (SDIO_IO_Read_Extended_Scatter_Gather(&wm_g_sd, (sdio_func_num_t)fn, addr, sg_list, param, flags) == KOSA_StatusSuccess)
+        {
+            (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
+            return 1;
+        }
+        sd_data = 0x01;
+        /* issue abort cmd52 command through Fn0 */
+        (void)SDIO_IO_Write_Direct(&wm_g_sd, (sdio_func_num_t)0, IO_ABORT, &sd_data, true);
+        sd_data = HOST_TERM_CMD53;
+        /* issue terminate CMD53 */
+        (void)SDIO_IO_Write_Direct(&wm_g_sd, (sdio_func_num_t)1, HOST_TO_CARD_EVENT_REG, &sd_data, true);
+    } while (sd_retry++ < MAX_WRITE_IOMEM_RETRY);
 
     (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
 
-    return 1;
+    return 0;
 }
 
 int sdio_drv_write_sg(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, void *sg_list)
@@ -288,7 +306,7 @@ int sdio_drv_write_sg(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize,
     uint32_t flags = 0;
     uint32_t param;
     uint32_t sd_retry = 0;
-    uint32_t sd_status = 0;
+    uint8_t sd_data;
 
     status = OSA_MutexLock((osa_mutex_handle_t)sdio_mutex, osaWaitForever_c);
     if (status != KOSA_StatusSuccess)
@@ -307,27 +325,24 @@ int sdio_drv_write_sg(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize,
         param = bsize;
     }
 
-retry:
-    if (SDIO_IO_Write_Extended_Scatter_Gather(&wm_g_sd, (sdio_func_num_t)fn, addr, sg_list, param, flags) != KOSA_StatusSuccess)
+    do
     {
-        /* issue abort cmd52 command through Fn0 */
-        (void)sdio_drv_creg_write(IO_ABORT, 0, 0x01, &sd_status);
-        /* issue terminate CMD53 */
-        (void)sdio_drv_creg_write(HOST_TO_CARD_EVENT_REG, 1, HOST_TERM_CMD53, &sd_status);
-
-        if (sd_retry < MAX_WRITE_IOMEM_RETRY)
+        if (SDIO_IO_Write_Extended_Scatter_Gather(&wm_g_sd, (sdio_func_num_t)fn, addr, sg_list, param, flags) == KOSA_StatusSuccess)
         {
-            sd_retry++;
-            goto retry;
+            (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
+            return 1;
         }
-
-        (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
-        return 0;
-    }
+        sd_data = 0x01;
+        /* issue abort cmd52 command through Fn0 */
+        (void)SDIO_IO_Write_Direct(&wm_g_sd, (sdio_func_num_t)0, IO_ABORT, &sd_data, true);
+        sd_data = HOST_TERM_CMD53;
+        /* issue terminate CMD53 */
+        (void)SDIO_IO_Write_Direct(&wm_g_sd, (sdio_func_num_t)1, HOST_TO_CARD_EVENT_REG, &sd_data, true);
+    } while (sd_retry++ < MAX_WRITE_IOMEM_RETRY);
 
     (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
 
-    return 1;
+    return 0;
 }
 #endif
 

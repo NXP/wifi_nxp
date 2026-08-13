@@ -9384,7 +9384,6 @@ void wifi_dump_driver_info()
     PRINTF("IMU TxFifoStatus: 0x%x, RxFifoStatus: 0x%x\r\n", ImuTxFifoStatus, ImuRxFifoStatus);
     PRINTF("IMU sleep grant flag: 0x%x\r\n", *sleep_flag);
 #else
-    uint32_t resp = 0;
     int ret;
     mlan_adapter *pmadapter = mlan_adap;
 #if !CONFIG_MEM_POOLS
@@ -9402,7 +9401,7 @@ void wifi_dump_driver_info()
             pmadapter->last_recv_rd_bitmap, pmadapter->curr_rd_port);
 
     (void)wifi_sdio_lock();
-    ret = sdio_drv_read(REG_PORT | MLAN_SDIO_BYTE_MODE_MASK, 1, 1, MAX_MP_REGS, mp_regs_buf, &resp);
+    ret = sdio_drv_read(REG_PORT | MLAN_SDIO_BYTE_MODE_MASK, 1, 1, MAX_MP_REGS, mp_regs_buf);
     if (ret)
     {
         PRINTF("SDIO multiple port group registers value:\r\n");
