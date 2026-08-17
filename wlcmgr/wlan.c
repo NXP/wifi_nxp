@@ -5142,7 +5142,7 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
         g_ftm_civic_cfg.civic_req = 0;
         g_ftm_location_cfg.lci_req = 0;
 #endif
-        if ((int)msg->data == IEEEtypes_REASON_DEAUTH_LEAVING)
+        if ((int)(uintptr_t)msg->data == IEEEtypes_REASON_DEAUTH_LEAVING)
         {
             CONNECTION_EVENT(WLAN_REASON_LINK_LOST, (void *)IEEEtypes_REASON_DEAUTH_LEAVING);
         }
@@ -6642,7 +6642,7 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
         case CM_UAP_USER_REQUEST_START:
 #if CONFIG_WPA_SUPP_P2P
             if (is_wfd_go)
-                wlan.cur_wfd_network_idx = (int)msg->data;
+                wlan.cur_wfd_network_idx = (int)(uintptr_t)msg->data;
             else
 #endif
                 wlan.cur_uap_network_idx = (int)(uintptr_t)msg->data;
@@ -7194,7 +7194,7 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
         }
     }
 
-    wlcm_d("starting %s to network: %d", wlan.roam_reassoc == false ? "connection" : "reassociation", (int)msg->data);
+    wlcm_d("starting %s to network: %d", wlan.roam_reassoc == false ? "connection" : "reassociation", (int)(uintptr_t)msg->data);
 
 #if !CONFIG_WPA_SUPP
     ret = do_connect((int)(uintptr_t)msg->data);
@@ -7737,7 +7737,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_process_authentication_event(msg, &next, network);
             break;
         case WIFI_EVENT_LINK_LOSS:
-            wlcm_d("got event: link loss, code=%d", (int)msg->data);
+            wlcm_d("got event: link loss, code=%d", (int)(uintptr_t)msg->data);
             wlcm_process_link_loss_event(msg, &next, network);
             break;
         case WIFI_EVENT_RSSI_LOW:
@@ -7834,7 +7834,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
 #endif
         case WIFI_EVENT_DISASSOCIATION:
-            wlcm_d("got event: disassociation, code=%d", (int)(msg->data));
+            wlcm_d("got event: disassociation, code=%d", (int)(uintptr_t)msg->data);
 #if CONFIG_ECSA
             wrapper_clear_media_connected_event();
             wlan_switch_to_nondfs_channel();

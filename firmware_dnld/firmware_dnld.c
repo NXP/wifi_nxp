@@ -91,7 +91,7 @@ int32_t firmware_download(const uint8_t *fw_start_addr, const size_t size, void 
 
     conn_fw = fw_start_addr;
 
-    PRINTF("[FW Download] Start to download firmware from 0x%x: %u\r\n", (t_u32)conn_fw, OSA_TimeGetMsec());
+    PRINTF("[FW Download] Start to download firmware from %p: %u\r\n", (const void *)conn_fw, OSA_TimeGetMsec());
 
     firmwarelen = size;
     /*Making this section as #if 00 for now, as the decopress and
