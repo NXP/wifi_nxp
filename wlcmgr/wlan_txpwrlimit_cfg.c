@@ -26,7 +26,7 @@
 #endif
 
 #if CONFIG_COMPRESS_TX_PWTBL || ((CONFIG_COMPRESS_RU_TX_PWTBL) && (CONFIG_11AX))
-#if defined(RW610) || defined(IW610)
+#if defined(RW610) || defined(IW610) || defined(SD9177)
 typedef struct _rg_power_info
 {
     t_u8 *rg_power_table;
@@ -36,7 +36,7 @@ typedef struct _rg_power_info
 #endif
 
 #if CONFIG_COMPRESS_RU_TX_PWTBL && CONFIG_11AX
-#if defined(RW610) || defined(IW610)
+#if defined(RW610) || defined(IW610) || defined(SD9177)
 typedef struct _ru_power_cfg
 {
     t_u16 region_code;
@@ -48,7 +48,11 @@ ru_power_cfg ru_power_cfg_info[] = {
     {0x00, .power_info = {(t_u8 *)rutxpowerlimit_cfg_set_WW, sizeof(rutxpowerlimit_cfg_set_WW)}},
     {0x10, .power_info = {(t_u8 *)rutxpowerlimit_cfg_set_US, sizeof(rutxpowerlimit_cfg_set_US)}},
     {0x30, .power_info = {(t_u8 *)rutxpowerlimit_cfg_set_EU, sizeof(rutxpowerlimit_cfg_set_EU)}},
+#if defined(SD9177)
+    {0x20, .power_info = {(t_u8 *)rutxpowerlimit_cfg_set_CA, sizeof(rutxpowerlimit_cfg_set_CA)}},
+#else
     {0x50, .power_info = {(t_u8 *)rutxpowerlimit_cfg_set_CN, sizeof(rutxpowerlimit_cfg_set_CN)}},
+#endif
     {0xFF, .power_info = {(t_u8 *)rutxpowerlimit_cfg_set_JP, sizeof(rutxpowerlimit_cfg_set_JP)}},
 };
 
@@ -181,11 +185,11 @@ typedef struct _rg_power_cfg
 } rg_power_cfg;
 
 rg_power_cfg rg_power_cfg_FC[] = {
-    {
-        0x00,
-        (t_u8 *)rg_table_fc,
-        sizeof(rg_table_fc),
-    },
+    { 0x00, (t_u8 *)rg_table_WW, sizeof(rg_table_WW)},
+    { 0xFF, (t_u8 *)rg_table_JP, sizeof(rg_table_JP)},
+    { 0x10, (t_u8 *)rg_table_US, sizeof(rg_table_US)},
+    { 0x30, (t_u8 *)rg_table_EU, sizeof(rg_table_EU)},
+    { 0x20, (t_u8 *)rg_table_CA, sizeof(rg_table_CA)}
 };
 
 int wlan_set_rg_power_cfg(t_u16 region_code)
@@ -213,7 +217,7 @@ int wlan_set_rg_power_cfg(t_u16 region_code)
 int wlan_set_wwsm_txpwrlimit()
 {
     int rv = WM_SUCCESS;
-#if defined(RW610) || defined(IW610)
+#if defined(RW610) || defined(IW610) || defined(SD9177)
     unsigned int region_code = 0;
 #endif
 #ifdef WLAN_REGION_CODE
@@ -224,7 +228,7 @@ int wlan_set_wwsm_txpwrlimit()
         return -WM_FAIL;
     }
 #endif
-#if defined(RW610) || defined(IW610)
+#if defined(RW610) || defined(IW610) || defined(SD9177)
 #if defined(RW610)
     ARG_UNUSED(tx_pwrlimit_2g_cfg);
 #endif
@@ -236,7 +240,7 @@ int wlan_set_wwsm_txpwrlimit()
     ARG_UNUSED(chanlist_5g_cfg);
 #endif
 #endif
-#if !defined RW610 && !defined IW610
+#if !defined RW610 && !defined IW610 && !defined SD9177
     rv = wlan_set_chanlist(&chanlist_2g_cfg);
     if (rv != WM_SUCCESS)
     {
@@ -253,7 +257,7 @@ int wlan_set_wwsm_txpwrlimit()
 #endif
 #endif
 
-#if defined(RW610) || defined(IW610)
+#if defined(RW610) || defined(IW610) || defined(SD9177)
     wlan_get_region_code(&region_code);
 #if CONFIG_COMPRESS_TX_PWTBL
     rv = wlan_set_rg_power_cfg((t_u16)region_code);
@@ -285,7 +289,7 @@ int wlan_set_wwsm_txpwrlimit()
     }
 #endif /* RW610 and IW610 */
 
-#if !defined RW610 && !defined IW610
+#if !defined RW610 && !defined IW610 && !defined SD9177
 #if CONFIG_11AX
 #if CONFIG_COMPRESS_RU_TX_PWTBL
     rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set, sizeof(rutxpowerlimit_cfg_set));
@@ -345,7 +349,7 @@ int wlan_set_wwsm_txpwrlimit(void)
     }
 #endif
 
-#if !defined RW610 && !defined IW610
+#if !defined RW610 && !defined IW610 && !defined SD9177
 #if CONFIG_11AX
 #if CONFIG_COMPRESS_RU_TX_PWTBL
     rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set, sizeof(rutxpowerlimit_cfg_set));
@@ -380,7 +384,7 @@ int wlan_set_wwsm_txpwrlimit(void)
 }
 #endif /* CONFIG_COMPRESS_TX_PWTBL */
 
-#if !defined RW610 && !defined IW610
+#if !defined RW610 && !defined IW610 && !defined SD9177
 const char *wlan_get_wlan_region_code(void)
 {
 #ifdef WLAN_REGION_CODE
