@@ -9323,6 +9323,7 @@ void wifi_dump_driver_info()
 #else
     uint32_t resp = 0;
     int ret;
+    mlan_adapter *pmadapter = mlan_adap;
 #if !CONFIG_MEM_POOLS
     t_u8 *mp_regs_buf = (t_u8 *)OSA_MemoryAllocate(MAX_MP_REGS + DMA_ALIGNMENT);
 #else
@@ -9332,6 +9333,10 @@ void wifi_dump_driver_info()
     {
         return;
     }
+
+    PRINTF("SDIO: last_recv_wr_bitmap=0x%x, curr_wr_port=0x%x, last_recv_rd_bitmap=0x%x, curr_rd_port=0x%x\r\n",
+            pmadapter->last_recv_wr_bitmap, pmadapter->curr_wr_port,
+            pmadapter->last_recv_rd_bitmap, pmadapter->curr_rd_port);
 
     (void)wifi_sdio_lock();
     ret = sdio_drv_read(REG_PORT | MLAN_SDIO_BYTE_MODE_MASK, 1, 1, MAX_MP_REGS, mp_regs_buf, &resp);

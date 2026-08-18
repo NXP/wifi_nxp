@@ -3221,6 +3221,7 @@ static void handle_sdio_packet_read(mlan_adapter *pmadapter)
     pmadapter->mp_rd_bitmap |= ((t_u32)pmadapter->mp_regs[RD_BITMAP_1L]) << 16;
     pmadapter->mp_rd_bitmap |= ((t_u32)pmadapter->mp_regs[RD_BITMAP_1U]) << 24;
 #endif
+    pmadapter->last_recv_rd_bitmap = pmadapter->mp_rd_bitmap;
 
     while (true)
     {
@@ -3400,6 +3401,8 @@ mlan_status wlan_process_int_status(mlan_adapter *pmadapter)
         pmadapter->mp_wr_bitmap |= ((t_u32)pmadapter->mp_regs[WR_BITMAP_1U]) << 24;
 #endif
     }
+
+    pmadapter->last_recv_wr_bitmap = pmadapter->mp_wr_bitmap;
 
     /*
      * As firmware will not generate download ready interrupt if the
