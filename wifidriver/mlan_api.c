@@ -511,7 +511,7 @@ int wifi_get_data_rate(wifi_ds_rate *ds_rate, mlan_bss_type bss_type)
     cmd->seq_num = wifi_get_cmd_seq_num((mlan_private *)mlan_adap->priv[bss_type]);
     cmd->result  = 0x0;
 
-    mlan_status rv = MLAN_STATUS_SUCCESS;
+    mlan_status rv = MLAN_STATUS_FAILURE;
     if (bss_type == MLAN_BSS_TYPE_UAP)
     {
         if (is_uap_started())
