@@ -4693,6 +4693,9 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
     if (is_state(CM_STA_IDLE) || (pnlist_rep_param == NULL))
     {
         wlcm_d("ignoring neighbor list report event in idle state");
+#if CONFIG_ROAMING
+        wlan.roam_reassoc = false;
+#endif
         return;
     }
 
@@ -4738,6 +4741,9 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
     if (is_state(CM_STA_IDLE) || (pnlist_rep_param == NULL))
     {
         wlcm_d("ignoring neighbor list report event in idle state");
+#if CONFIG_ROAMING
+        wlan.roam_reassoc = false;
+#endif
         return;
     }
 
