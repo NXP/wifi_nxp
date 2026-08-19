@@ -184,7 +184,7 @@ typedef struct _rg_power_cfg
     t_u16 rg_len;
 } rg_power_cfg;
 
-rg_power_cfg rg_power_cfg_FC[] = {
+rg_power_cfg rg_power_cfg_info[] = {
     { 0x00, (t_u8 *)rg_table_WW, sizeof(rg_table_WW)},
     { 0xFF, (t_u8 *)rg_table_JP, sizeof(rg_table_JP)},
     { 0x10, (t_u8 *)rg_table_US, sizeof(rg_table_US)},
@@ -197,18 +197,22 @@ int wlan_set_rg_power_cfg(t_u16 region_code)
     int i  = 0;
     int rv = WM_SUCCESS;
 
-    for (i = 0; i < sizeof(rg_power_cfg_FC) / sizeof(rg_power_cfg); i++)
+    for (i = 0; i < sizeof(rg_power_cfg_info) / sizeof(rg_power_cfg); i++)
     {
-        if (region_code == rg_power_cfg_FC[i].region_code)
+        if (region_code == rg_power_cfg_info[i].region_code)
         {
-            rv = wlan_set_region_power_cfg(rg_power_cfg_FC[i].rg_power_table, rg_power_cfg_FC[i].rg_len);
+            rv = wlan_set_region_power_cfg(rg_power_cfg_info[i].rg_power_table, rg_power_cfg_info[i].rg_len);
             if (rv != WM_SUCCESS)
                 (void)PRINTF("Unable to set compressed TX power table configuration\r\n");
             return rv;
         }
     }
+    /* Set default world wide power table if rg_power_cfg_info does not have a corresponding region_code temporarily */
+    wlcm_d("power_info of region_code %d not available, use default world wide power table by default.", region_code);
 
-    return -WM_FAIL;
+    rv = wlan_set_region_power_cfg(rg_power_cfg_info[0].rg_power_table, rg_power_cfg_info[0].rg_len);
+
+    return rv;
 }
 #endif /* RW610 and IW610 */
 #endif /* CONFIG_COMPRESS_TX_PWTBL */
@@ -217,7 +221,7 @@ int wlan_set_rg_power_cfg(t_u16 region_code)
 int wlan_set_wwsm_txpwrlimit()
 {
     int rv = WM_SUCCESS;
-#if defined(RW610) || defined(IW610) || defined(SD9177)
+#if defined(RW610) || defined(IW610) || defined(SD9177) || defined(SD8978)
     unsigned int region_code = 0;
 #endif
 #ifdef WLAN_REGION_CODE
@@ -228,7 +232,7 @@ int wlan_set_wwsm_txpwrlimit()
         return -WM_FAIL;
     }
 #endif
-#if defined(RW610) || defined(IW610) || defined(SD9177)
+#if defined(RW610) || defined(IW610) || defined(SD9177) || defined(SD8978)
 #if defined(RW610)
     ARG_UNUSED(tx_pwrlimit_2g_cfg);
 #endif
@@ -240,7 +244,7 @@ int wlan_set_wwsm_txpwrlimit()
     ARG_UNUSED(chanlist_5g_cfg);
 #endif
 #endif
-#if !defined RW610 && !defined IW610 && !defined SD9177
+#if !defined RW610 && !defined IW610 && !defined SD9177 && !defined SD8978
     rv = wlan_set_chanlist(&chanlist_2g_cfg);
     if (rv != WM_SUCCESS)
     {
@@ -257,7 +261,7 @@ int wlan_set_wwsm_txpwrlimit()
 #endif
 #endif
 
-#if defined(RW610) || defined(IW610) || defined(SD9177)
+#if defined(RW610) || defined(IW610) || defined(SD9177) || defined(SD8978)
     wlan_get_region_code(&region_code);
 #if CONFIG_COMPRESS_TX_PWTBL
     rv = wlan_set_rg_power_cfg((t_u16)region_code);
@@ -384,7 +388,7 @@ int wlan_set_wwsm_txpwrlimit(void)
 }
 #endif /* CONFIG_COMPRESS_TX_PWTBL */
 
-#if !defined RW610 && !defined IW610 && !defined SD9177
+#if !defined RW610 && !defined IW610 && !defined SD9177 && !defined SD8978
 const char *wlan_get_wlan_region_code(void)
 {
 #ifdef WLAN_REGION_CODE

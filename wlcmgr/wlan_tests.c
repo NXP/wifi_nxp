@@ -7626,7 +7626,7 @@ static void test_wlan_wmm_tx_stats(int argc, char **argv)
 }
 #endif
 
-#if defined(RW610) || defined(IW610) || defined(SD9177)
+#if defined(RW610) || defined(IW610) || defined(SD9177) || defined(SD8978)
 static void dump_wlan_set_regioncode_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -7644,7 +7644,7 @@ static void dump_wlan_set_regioncode_usage(void)
 
 static void test_wlan_set_regioncode(int argc, char **argv)
 {
-#if defined(RW610) || defined(IW610) || defined(SD9177)
+#if defined(RW610) || defined(IW610) || defined(SD9177) || defined(SD8978)
     if (argc != 2)
     {
         dump_wlan_set_regioncode_usage();

@@ -259,13 +259,13 @@ extern "C" {
 #endif
 
 #if !defined CONFIG_COMPRESS_TX_PWTBL
-#if defined(RW610) || defined(SD9177) || defined(IW610)
+#if defined(RW610) || defined(SD9177) || defined(IW610) || defined(SD8978)
 #define CONFIG_COMPRESS_TX_PWTBL 1
 #endif
 #endif
 
 #if CONFIG_COMPRESS_TX_PWTBL
-#if defined(SD8978) || defined(SD8987)
+#if defined(SD8987)
 #undef CONFIG_COMPRESS_TX_PWTBL
 #define CONFIG_COMPRESS_TX_PWTBL 0
 #endif

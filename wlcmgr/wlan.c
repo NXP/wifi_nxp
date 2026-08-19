@@ -17059,7 +17059,7 @@ int wlan_set_country_code(const char *alpha2)
     t_u8 rg_code_cfg;
     unsigned char country3 = 0x20;
     char country_code[COUNTRY_CODE_LEN] = {0};
-#if !defined RW610 && !defined IW610 && !defined(SD9177)
+#if !defined RW610 && !defined IW610 && !defined SD9177 && !defined SD8978
     char region_code[COUNTRY_CODE_LEN] = {0};
     const char *wlan_region_code       = NULL;
 
@@ -17107,7 +17107,7 @@ int wlan_set_country_code(const char *alpha2)
         return ret;
 
 #if CONFIG_COMPRESS_TX_PWTBL
-#if defined(RW610) || defined(IW610) || defined(SD9177)
+#if defined(RW610) || defined(IW610) || defined(SD9177) || defined(SD8978)
     ret = wlan_set_rg_power_cfg(rg_code_cfg);
     if (ret != WM_SUCCESS)
     {
