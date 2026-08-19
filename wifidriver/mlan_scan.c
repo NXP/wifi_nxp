@@ -2937,6 +2937,10 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
     {
         /* fixme: This functionality is not needed. Recheck later */
     }
+    else
+    {
+        split_scan_in_progress = false;
+    }
 #if !CONFIG_MEM_POOLS
     (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_cfg_out);
     (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_chan_list);
