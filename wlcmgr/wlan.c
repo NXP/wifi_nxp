@@ -9191,7 +9191,6 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         return 0;
     }
 #endif
-#if !(CONFIG_WIFI_RF_TEST_MODE) || (CONFIG_RW610)
     ret = wlan_basic_cli_init();
     if (ret != WM_SUCCESS)
     {
@@ -9233,7 +9232,6 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         PRINTF("Failed to initialize WLAN CLIs\r\n");
         return 0;
     }
-#endif
 #endif
 #endif
 
