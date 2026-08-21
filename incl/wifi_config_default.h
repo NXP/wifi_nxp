@@ -720,13 +720,13 @@ extern "C" {
 #endif
 
 #if !defined CONFIG_FW_VDLL
-#if defined(SD9177) || defined(IW610)
+#if defined(SD9177) || defined(IW610) || defined(SD8978)
 #define CONFIG_FW_VDLL 1
 #endif
 #endif
 
 #if !CONFIG_FW_VDLL
-#if defined(SD9177) || defined(IW610)
+#if defined(SD9177) || defined(IW610) || defined(SD8978)
 #undef CONFIG_FW_VDLL
 #define CONFIG_FW_VDLL 1
 #endif
