@@ -2142,7 +2142,8 @@ static bool is_running(void)
 
 static bool is_sta_connecting(void)
 {
-    return ((wlan.sta_state > CM_STA_ASSOCIATING) && (wlan.sta_state <= CM_STA_CONNECTED));
+    return ((wlan.sta_state == CM_STA_SCANNING)
+            || ((wlan.sta_state >= CM_STA_ASSOCIATING) && (wlan.sta_state <= CM_STA_CONNECTED)));
 }
 
 /* Check whether we are allowed to start a user-requested scan right now. */
@@ -11582,7 +11583,7 @@ void wlan_reset(cli_reset_option ResetOption)
             wlan_set_sta_mac_filter(0, 0, NULL);
 #endif
             /*Disconnect form AP if station is associated with an AP.*/
-            if (wlan.sta_state > CM_STA_ASSOCIATING)
+            if (is_sta_connecting())
             {
                 wlan_disconnect();
                 while (wlan.sta_state != CM_STA_IDLE)
