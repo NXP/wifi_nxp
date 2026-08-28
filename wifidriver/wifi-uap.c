@@ -58,7 +58,7 @@ static bool wifi_check_11ac_capability(mlan_private *pmpriv, t_u8 band)
 
     ENTER();
 
-    if ((band == BAND_CONFIG_5GHZ) &&
+    if ((band == BAND_5GHZ) &&
         (!(pmadapter->fw_bands & BAND_AAC) ||
          !(pmpriv->config_bands & BAND_AAC)))
     {
@@ -66,7 +66,7 @@ static bool wifi_check_11ac_capability(mlan_private *pmpriv, t_u8 band)
         LEAVE();
         return enable_11ac;
     }
-    if ((band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL) &&
+    if ((band == BAND_2GHZ) &&
         (!(pmadapter->fw_bands & BAND_GAC) ||
          !(pmpriv->config_bands & BAND_GAC)))
     {
@@ -171,7 +171,7 @@ static t_u8 wifi_check_11ax_capability(mlan_private *pmpriv, t_u8 band)
 
     ENTER();
 
-    if ((band == BAND_CONFIG_5GHZ) &&
+    if ((band == BAND_5GHZ) &&
         (!(pmadapter->fw_bands & BAND_AAX) ||
          !(pmpriv->config_bands & BAND_AAX)))
     {
@@ -179,7 +179,7 @@ static t_u8 wifi_check_11ax_capability(mlan_private *pmpriv, t_u8 band)
         LEAVE();
         return enable_11ax;
     }
-    if ((band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL) &&
+    if ((band == BAND_2GHZ) &&
         (!(pmadapter->fw_bands & BAND_GAX) ||
          !(pmpriv->config_bands & BAND_GAX)))
     {
@@ -209,15 +209,15 @@ int wifi_uap_set_11ax_status(mlan_private *pmpriv, t_u8 action, t_u8 band, t_u8 
     mlan_ds_11ax_he_cfg he_cfg;
 
     ENTER();
-    if ((band == BAND_CONFIG_5GHZ && !(pmadapter->fw_bands & BAND_AAX)) ||
-        ((band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL) && !(pmadapter->fw_bands & BAND_GAX)))
+    if ((band == BAND_5GHZ && !(pmadapter->fw_bands & BAND_AAX)) ||
+        (band == BAND_2GHZ && !(pmadapter->fw_bands & BAND_GAX)))
     {
         PRINTM(MERROR, "fw doesn't support 11ax\n");
         ret = -WM_FAIL;
         goto done;
     }
     __memset(NULL, &he_cfg, 0, sizeof(he_cfg));
-    if (band == BAND_CONFIG_5GHZ)
+    if (band == BAND_5GHZ)
     {
         he_cfg.band = MBIT(1);
         __memcpy(NULL, (void *) & he_cfg.he_cap, (const void *)pmadapter->hw_he_cap, pmadapter->hw_hecap_len);
@@ -226,7 +226,7 @@ int wifi_uap_set_11ax_status(mlan_private *pmpriv, t_u8 action, t_u8 band, t_u8 
             he_cfg.he_cap.he_phy_cap[0] &= ~(MBIT(2));
         }
     }
-    else if (band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL)
+    else if (band == BAND_2GHZ)
     {
         he_cfg.band = MBIT(0);
         __memcpy(NULL, (void *)&he_cfg.he_cap, (const void *)pmadapter->hw_2g_he_cap, pmadapter->hw_2g_hecap_len);
@@ -520,16 +520,19 @@ static int wifi_cmd_uap_config(char *ssid,
             /* TODO: Temporary work around until firmware fix is available */
             if (channel == 173)
             {
-                bss.param.bss_config.band_cfg = BAND_CONFIG_CH_173;
+                bss.param.bss_config.band_cfg.chanBand    = BAND_5GHZ;
+                bss.param.bss_config.band_cfg.chan2Offset  = SEC_CHAN_ABOVE;
             }
             else if((channel == 169) || (channel == 177))
             {
-                bss.param.bss_config.band_cfg = BAND_CONFIG_CH_169_177;
+                bss.param.bss_config.band_cfg.chanBand    = BAND_5GHZ;
+                bss.param.bss_config.band_cfg.chan2Offset  = SEC_CHAN_BELOW;
             }
             else
 #endif
             {
-                bss.param.bss_config.band_cfg = BAND_CONFIG_5GHZ;
+                bss.param.bss_config.band_cfg.chanBand    = BAND_5GHZ;
+                bss.param.bss_config.band_cfg.chan2Offset  = wifi_get_sec_channel_offset(channel);
             }
             __memcpy(NULL, (void *)bss.param.bss_config.rates, (const void *)rates_5ghz, sizeof(rates_5ghz));
         }
@@ -543,7 +546,8 @@ static int wifi_cmd_uap_config(char *ssid,
             {
                 __memcpy(NULL, (void *)bss.param.bss_config.rates, (const void *)rates_2ghz, sizeof(rates_2ghz));
             }
-            bss.param.bss_config.band_cfg = BAND_CONFIG_MANUAL;
+            bss.param.bss_config.band_cfg.chanBand    = BAND_2GHZ;
+            bss.param.bss_config.band_cfg.chan2Offset  = wifi_get_sec_channel_offset(channel);
         }
 #else
         if (channel == 14)
@@ -554,14 +558,15 @@ static int wifi_cmd_uap_config(char *ssid,
         {
             __memcpy(NULL, (void *)bss.param.bss_config.rates, (const void *)rates_2ghz, sizeof(rates_2ghz));
         }
-        bss.param.bss_config.band_cfg = BAND_CONFIG_MANUAL;
+        bss.param.bss_config.band_cfg.chanBand    = BAND_2GHZ;
+        bss.param.bss_config.band_cfg.chan2Offset  = wifi_get_sec_channel_offset(channel);
 #endif
         bss.param.bss_config.channel = channel;
     }
     else
     {
         /* Auto channel selection from all channels*/
-        bss.param.bss_config.band_cfg = BAND_CONFIG_ACS_MODE;
+        bss.param.bss_config.band_cfg.scanMode = SCAN_MODE_ACS;
         bss.param.bss_config.channel  = 0;
 
         if (scan_chan_list.num_of_chan != 0U)
@@ -588,10 +593,10 @@ static int wifi_cmd_uap_config(char *ssid,
     }
 
 #if CONFIG_11AC
-    enable_11ac = wifi_check_11ac_capability(pmpriv, bss.param.bss_config.band_cfg);
+    enable_11ac = wifi_check_11ac_capability(pmpriv, bss.param.bss_config.band_cfg.chanBand);
 #endif
 #if CONFIG_11AX
-    enable_11ax = wifi_check_11ax_capability(pmpriv, bss.param.bss_config.band_cfg);
+    enable_11ax = wifi_check_11ax_capability(pmpriv, bss.param.bss_config.band_cfg.chanBand);
 #endif
 #if !CONFIG_WPA_SUPP
     if (security == WLAN_SECURITY_NONE)
@@ -708,11 +713,13 @@ static int wifi_cmd_uap_config(char *ssid,
     wm_wifi.ht_tx_cfg = wm_wifi.ht_tx_cfg == 0 ? (t_u16)0x002c : wm_wifi.ht_tx_cfg;
     (void)memcpy((void *)bss.param.bss_config.supported_mcs_set, (const void *)supported_mcs_set,
                  sizeof(bss.param.bss_config.supported_mcs_set));
-    if (((bss.param.bss_config.band_cfg == BAND_5GHZ) &&
+    if (((bss.param.bss_config.band_cfg.chanBand == BAND_5GHZ) &&
         (!(pmpriv->config_bands & BAND_AN))) ||
-        ((bss.param.bss_config.band_cfg == BAND_2GHZ) &&
+        ((bss.param.bss_config.band_cfg.chanBand == BAND_2GHZ) &&
         (!(pmpriv->config_bands & BAND_GN))))
     {
+        bss.param.bss_config.band_cfg.chanWidth   = CHAN_BW_20MHZ;
+        bss.param.bss_config.band_cfg.chan2Offset  = SEC_CHAN_NONE;
         wm_wifi.ht_tx_cfg = 0;
         ret = wifi_uap_set_httxcfg_int(bss_type, wm_wifi.ht_tx_cfg);
         if (ret != WM_SUCCESS)
@@ -736,6 +743,16 @@ static int wifi_cmd_uap_config(char *ssid,
         {
             if (ISSUPP_CHANWIDTH40(mlan_adap->hw_dot_11n_dev_cap) != 0U)
             {
+#if CONFIG_11AC
+                if (bandwidth == BANDWIDTH_80MHZ)
+                {
+                    bss.param.bss_config.band_cfg.chanWidth = CHAN_BW_80MHZ;
+                }
+                else
+#endif
+                {
+                    bss.param.bss_config.band_cfg.chanWidth = CHAN_BW_40MHZ;
+                }
                 bss.param.bss_config.ht_cap_info |= MBIT(1);
                 wm_wifi.ht_tx_cfg |= MBIT(1);
                 if (ISSUPP_SHORTGI40(mlan_adap->hw_dot_11n_dev_cap) != 0U)
@@ -744,9 +761,16 @@ static int wifi_cmd_uap_config(char *ssid,
                     wm_wifi.ht_tx_cfg |= MBIT(6);
                 }
             }
+            else
+            {
+                bss.param.bss_config.band_cfg.chanWidth   = CHAN_BW_20MHZ;
+                bss.param.bss_config.band_cfg.chan2Offset  = SEC_CHAN_NONE;
+            }
         }
         else if (bandwidth == BANDWIDTH_20MHZ)
         {
+            bss.param.bss_config.band_cfg.chanWidth   = CHAN_BW_20MHZ;
+            bss.param.bss_config.band_cfg.chan2Offset  = SEC_CHAN_NONE;
             wm_wifi.ht_tx_cfg &= ~MBIT(1);
             wm_wifi.ht_tx_cfg &= ~MBIT(6);
             bss.param.bss_config.ht_cap_info &= ~MBIT(12);
@@ -794,11 +818,11 @@ static int wifi_cmd_uap_config(char *ssid,
 #if CONFIG_11AX
     if (enable_11ax)
     {
-        wifi_uap_set_11ax_status(pmpriv, MLAN_ACT_ENABLE, bss.param.bss_config.band_cfg, bandwidth);
+        wifi_uap_set_11ax_status(pmpriv, MLAN_ACT_ENABLE, bss.param.bss_config.band_cfg.chanBand, bandwidth);
     }
     else
     {
-        wifi_uap_set_11ax_status(pmpriv, MLAN_ACT_DISABLE, bss.param.bss_config.band_cfg, bandwidth);
+        wifi_uap_set_11ax_status(pmpriv, MLAN_ACT_DISABLE, bss.param.bss_config.band_cfg.chanBand, bandwidth);
     }
 #endif
 #ifdef RW610_SERIES
@@ -815,9 +839,9 @@ static int wifi_cmd_uap_config(char *ssid,
     __memset(NULL, &bss.param.bss_config.wmm_para, 0x00, sizeof(wmm_parameter_t));
 
     __memcpy(NULL, &bss.param.bss_config.wmm_para.ouitype, wmm_oui, sizeof(wmm_oui));
-    if (((bss.param.bss_config.band_cfg == BAND_5GHZ) &&
+    if (((bss.param.bss_config.band_cfg.chanBand == BAND_5GHZ) &&
           (pmpriv->config_bands & BAND_AN)) ||
-         ((bss.param.bss_config.band_cfg == BAND_2GHZ) &&
+         ((bss.param.bss_config.band_cfg.chanBand == BAND_2GHZ) &&
           (pmpriv->config_bands & BAND_GN)))
     {
         bss.param.bss_config.wmm_para.ouisubtype = 0x01;
@@ -915,7 +939,6 @@ void wifi_uap_set_httxcfg(const t_u16 ht_tx_cfg)
     wm_wifi.ht_tx_cfg = ht_tx_cfg;
 }
 
-#if CONFIG_WPA_SUPP
 /**
  * @brief Get second channel offset
  *
@@ -1019,7 +1042,6 @@ t_u8 wifi_get_sec_channel_offset(unsigned int chan)
 
     return chan_offset;
 }
-#endif
 
 int wifi_uap_start(mlan_bss_type type,
                    char *ssid,
