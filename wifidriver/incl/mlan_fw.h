@@ -2421,8 +2421,6 @@ enum
 {
     SCAN_MODE_MANUAL = 0,
     SCAN_MODE_ACS,
-    CHAN_BW_160MHZ,
-    CHAN_BW_320MHZ,
 };
 /** ChanScanParamSet_t */
 typedef MLAN_PACK_START struct _ChanScanParamSet_t
