@@ -3041,7 +3041,7 @@ static mlan_status _handle_sdio_packet_read(mlan_adapter *pmadapter, t_u8 **pack
 
     *datalen = rx_len;
 
-    *packet = wlan_read_rcv_packet(port, rx_len, rx_blocks, pkt_type, aggr);
+    *packet = wlan_read_rcv_packet(port, rx_len, rx_blocks, pkt_type, true);
 
     if ((*packet) == MNULL)
     {
