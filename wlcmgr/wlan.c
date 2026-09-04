@@ -2554,6 +2554,11 @@ static int do_start(struct wlan_network *network)
         wpa_supp_set_ap_bw(netif, 1);
 #else
         t_u8 bandwidth = wifi_uap_get_bandwidth();
+        if (network->sec_channel_offset == SEC_CHAN_NONE && bandwidth > BANDWIDTH_20MHZ)
+        {
+            bandwidth = BANDWIDTH_20MHZ;
+            (void)wifi_uap_set_bandwidth(BANDWIDTH_20MHZ);
+        }
         wpa_supp_set_ap_bw(netif, bandwidth);
 #endif
         ret = wpa_supp_start_ap(netif, network, 0);
