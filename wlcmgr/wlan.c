@@ -11695,7 +11695,7 @@ void wlan_reset(cli_reset_option ResetOption)
             wps_stop();
 #endif /* CONFIG_WPS2 */
 
-#if CONFIG_WPA2_ENTP
+#if (CONFIG_WPA2_ENTP) || (CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
             wlan_free_entp_cert_files();
 #endif
 
@@ -16415,51 +16415,6 @@ int wlan_wps_ap_cancel(void)
 #endif
 
 #if (CONFIG_WPA2_ENTP) || (CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
-static void wlan_entp_cert_cleanup()
-{
-    if (wlan.ca_cert_data != NULL)
-    {
-        OSA_MemoryFree(wlan.ca_cert_data);
-    }
-    if (wlan.client_cert_data != NULL)
-    {
-        OSA_MemoryFree(wlan.client_cert_data);
-    }
-    if (wlan.client_key_data != NULL)
-    {
-        OSA_MemoryFree(wlan.client_key_data);
-    }
-    if (wlan.ca_cert2_data != NULL)
-    {
-        OSA_MemoryFree(wlan.ca_cert2_data);
-    }
-    if (wlan.client_cert2_data != NULL)
-    {
-        OSA_MemoryFree(wlan.client_cert2_data);
-    }
-    if (wlan.client_key2_data != NULL)
-    {
-        OSA_MemoryFree(wlan.client_key2_data);
-    }
-
-#if CONFIG_HOSTAPD
-#if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
-    if (wlan.dh_data != NULL)
-    {
-        OSA_MemoryFree(wlan.dh_data);
-    }
-    if (wlan.server_cert_data != NULL)
-    {
-        OSA_MemoryFree(wlan.server_cert_data);
-    }
-    if (wlan.server_key_data != NULL)
-    {
-        OSA_MemoryFree(wlan.server_key_data);
-    }
-#endif
-#endif
-}
-
 int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
 {
     if (cert_type == FILE_TYPE_ENTP_CA_CERT)
@@ -16467,7 +16422,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
         wlan.ca_cert_data = OSA_MemoryAllocate(data_len);
         if (!wlan.ca_cert_data)
         {
-            wlan_entp_cert_cleanup();
+            wlan_free_entp_cert_files();
             wlcm_e("CA Cert malloc failed");
             return -WM_FAIL;
         }
@@ -16479,7 +16434,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
         wlan.client_cert_data = OSA_MemoryAllocate(data_len);
         if (!wlan.client_cert_data)
         {
-            wlan_entp_cert_cleanup();
+            wlan_free_entp_cert_files();
             wlcm_e("Client Cert malloc failed");
             return -WM_FAIL;
         }
@@ -16491,7 +16446,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
         wlan.client_key_data = OSA_MemoryAllocate(data_len);
         if (!wlan.client_key_data)
         {
-            wlan_entp_cert_cleanup();
+            wlan_free_entp_cert_files();
             wlcm_e("Client Key malloc failed");
             return -WM_FAIL;
         }
@@ -16503,7 +16458,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
         wlan.ca_cert2_data = OSA_MemoryAllocate(data_len);
         if (!wlan.ca_cert2_data)
         {
-            wlan_entp_cert_cleanup();
+            wlan_free_entp_cert_files();
             wlcm_e("CA Cert2 malloc failed");
             return -WM_FAIL;
         }
@@ -16515,7 +16470,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
         wlan.client_cert2_data = OSA_MemoryAllocate(data_len);
         if (!wlan.client_cert2_data)
         {
-            wlan_entp_cert_cleanup();
+            wlan_free_entp_cert_files();
             wlcm_e("Client Cert2 malloc failed");
             return -WM_FAIL;
         }
@@ -16527,7 +16482,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
         wlan.client_key2_data = OSA_MemoryAllocate(data_len);
         if (!wlan.client_key2_data)
         {
-            wlan_entp_cert_cleanup();
+            wlan_free_entp_cert_files();
             wlcm_e("Client Key2 malloc failed");
             return -WM_FAIL;
         }
@@ -16536,28 +16491,12 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
     }
 #if CONFIG_HOSTAPD
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
-    else if (cert_type == FILE_TYPE_ENTP_DH_PARAMS)
-    {
-        wlan.dh_data = OSA_MemoryAllocate(data_len);
-        if (!wlan.dh_data)
-        {
-            wlan_entp_cert_cleanup();
-            wlcm_e("DH params malloc failed");
-            return -WM_FAIL;
-        }
-        memcpy(wlan.dh_data, data, data_len);
-        wlan.dh_len = data_len;
-    }
-#endif
-#endif
-#if CONFIG_HOSTAPD
-#if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     else if (cert_type == FILE_TYPE_ENTP_SERVER_CERT)
     {
         wlan.server_cert_data = OSA_MemoryAllocate(data_len);
         if (!wlan.server_cert_data)
         {
-            wlan_entp_cert_cleanup();
+            wlan_free_entp_cert_files();
             wlcm_e("Server Cert malloc failed");
             return -WM_FAIL;
         }
@@ -16569,35 +16508,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
         wlan.server_key_data = OSA_MemoryAllocate(data_len);
         if (!wlan.server_key_data)
         {
-            wlan_entp_cert_cleanup();
-            wlcm_e("Server Key malloc failed");
-            return -WM_FAIL;
-        }
-        memcpy(wlan.server_key_data, data, data_len);
-        wlan.server_key_len = data_len;
-    }
-#endif
-#endif
-#if CONFIG_HOSTAPD
-#if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
-    else if (cert_type == FILE_TYPE_ENTP_SERVER_CERT)
-    {
-        wlan.server_cert_data = OSA_MemoryAllocate(data_len);
-        if (!wlan.server_cert_data)
-        {
-            wlan_entp_cert_cleanup();
-            wlcm_e("Server Cert malloc failed");
-            return -WM_FAIL;
-        }
-        memcpy(wlan.server_cert_data, data, data_len);
-        wlan.server_cert_len = data_len;
-    }
-    else if (cert_type == FILE_TYPE_ENTP_SERVER_KEY)
-    {
-        wlan.server_key_data = OSA_MemoryAllocate(data_len);
-        if (!wlan.server_key_data)
-        {
-            wlan_entp_cert_cleanup();
+            wlan_free_entp_cert_files();
             wlcm_e("Server Key malloc failed");
             return -WM_FAIL;
         }
@@ -16609,7 +16520,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
         wlan.dh_data = OSA_MemoryAllocate(data_len);
         if (!wlan.dh_data)
         {
-            wlan_entp_cert_cleanup();
+            wlan_free_entp_cert_files();
             wlcm_e("DH params malloc failed");
             return -WM_FAIL;
         }
@@ -16655,8 +16566,13 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
             len   = client_der_len;
         }
 #endif
+        /* In secure blob path, keep pointers for reuse across
+         * connect cycles; freed by wlan_free_entp_cert_files()
+         * during wlan-reset. */
+#if !CONFIG_WIFI_ENTERPRISE_SECURE_BLOB
         wlan.client_cert_data = NULL;
         wlan.client_cert_len = 0;
+#endif
     }
     else if (cert_type == FILE_TYPE_ENTP_CLIENT_KEY)
     {
@@ -16669,8 +16585,10 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
             len   = client_key_der_len;
         }
 #endif
+#if !CONFIG_WIFI_ENTERPRISE_SECURE_BLOB
         wlan.client_key_data = NULL;
         wlan.client_key_len = 0;
+#endif
     }
     if (cert_type == FILE_TYPE_ENTP_CA_CERT2)
     {
@@ -16697,8 +16615,10 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
             len   = client2_der_len;
         }
 #endif
+#if !CONFIG_WIFI_ENTERPRISE_SECURE_BLOB
         wlan.client_cert2_data = NULL;
         wlan.client_cert2_len = 0;
+#endif
     }
     else if (cert_type == FILE_TYPE_ENTP_CLIENT_KEY2)
     {
@@ -16711,8 +16631,10 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
             len   = client_key2_der_len;
         }
 #endif
+#if !CONFIG_WIFI_ENTERPRISE_SECURE_BLOB
         wlan.client_key2_data = NULL;
         wlan.client_key2_len = 0;
+#endif
     }
 #if CONFIG_HOSTAPD
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
@@ -16770,34 +16692,39 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
 
 void wlan_free_entp_cert_files(void)
 {
-#if CONFIG_WIFI_USB_FILE_ACCESS
     if (wlan.ca_cert_data != NULL)
     {
+        OSA_MemoryFree(wlan.ca_cert_data);
         wlan.ca_cert_data = NULL;
         wlan.ca_cert_len  = 0;
     }
     if (wlan.client_cert_data != NULL)
     {
+        OSA_MemoryFree(wlan.client_cert_data);
         wlan.client_cert_data = NULL;
         wlan.client_cert_len  = 0;
     }
     if (wlan.client_key_data != NULL)
     {
+        OSA_MemoryFree(wlan.client_key_data);
         wlan.client_key_data = NULL;
         wlan.client_key_len  = 0;
     }
     if (wlan.ca_cert2_data != NULL)
     {
+        OSA_MemoryFree(wlan.ca_cert2_data);
         wlan.ca_cert2_data = NULL;
         wlan.ca_cert2_len  = 0;
     }
     if (wlan.client_cert2_data != NULL)
     {
+        OSA_MemoryFree(wlan.client_cert2_data);
         wlan.client_cert2_data = NULL;
         wlan.client_cert2_len  = 0;
     }
     if (wlan.client_key2_data != NULL)
     {
+        OSA_MemoryFree(wlan.client_key2_data);
         wlan.client_key2_data = NULL;
         wlan.client_key2_len  = 0;
     }
@@ -16805,20 +16732,22 @@ void wlan_free_entp_cert_files(void)
 #if CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     if (wlan.dh_data != NULL)
     {
+        OSA_MemoryFree(wlan.dh_data);
         wlan.dh_data = NULL;
         wlan.dh_len  = 0;
     }
     if (wlan.server_cert_data != NULL)
     {
+        OSA_MemoryFree(wlan.server_cert_data);
         wlan.server_cert_data = NULL;
         wlan.server_cert_len  = 0;
     }
     if (wlan.server_key_data != NULL)
     {
+        OSA_MemoryFree(wlan.server_key_data);
         wlan.server_key_data = NULL;
         wlan.server_key_len  = 0;
     }
-#endif
 #endif
 #endif
 }
