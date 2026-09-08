@@ -2714,6 +2714,15 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_RsnParamSet_t
     t_u8 rsn_ie[1];
 } MLAN_PACK_END MrvlIEtypes_RsnParamSet_t;
 
+/** MrvlIEtypes_RsnxParamSet_t */
+typedef MLAN_PACK_START struct _MrvlIEtypes_RsnxParamSet_t
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** RSN IE */
+    t_u8 data[3];
+} MLAN_PACK_END MrvlIEtypes_RsnxParamSet_t;
+
 #if defined(WPA) || defined(WAPI_AP) || defined(HOST_AUTHENTICATOR)
 #ifdef KEY_PARAM_SET_V2
 /** Key Info flag for multicast key */
@@ -5385,6 +5394,9 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_SAE_PWE_Mode_t
 
 /** SAE H2E capability bit in RSNX */
 #define SAE_H2E_BIT 5
+
+/* Bit 5 of RSNX octet 2 (3rd octet, 0-indexed) — IEEE 802.11-2020 Table 9-780 */
+#define SSID_PROTECTION_OCTET3_BIT 5
 
 /* unicastCipher -
  *      Bit 0   : RFU

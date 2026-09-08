@@ -954,7 +954,6 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     MrvlIEtypes_AuthType_t *pauth_tlv      = MNULL;
     MrvlIEtypes_RsnParamSet_t *prsn_ie_tlv = MNULL;
     MrvlIEtypes_ChanListParamSet_t *pchan_tlv;
-    MrvlIEtypes_SAE_PWE_Mode_t *prsnx_ie_tlv = MNULL;
     WLAN_802_11_RATES rates = {0x00};
     t_u32 rates_size;
     t_u16 tmp_cap;
@@ -1214,6 +1213,49 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     }
 #endif
 
+#if !CONFIG_WPA_SUPP
+    /* insert RSNX IE TLV */
+    if (pbss_desc->prsnx_ie != MNULL && pbss_desc->prsnx_ie->ieee_hdr.len)
+    {
+        MrvlIEtypes_RsnxParamSet_t *rsnx_tlv;
+        t_u16 len = 0;
+
+        rsnx_tlv = (MrvlIEtypes_RsnxParamSet_t *)pos;
+        rsnx_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_RSNX);
+        rsnx_tlv->data[0] = rsnx_tlv->data[1] = rsnx_tlv->data[2] = 0;
+
+        /* Emit RSNX TLV only when both STA and AP advertise H2E.
+         * TLV payload carries the STA's own H2E bit, not the AP's RSNXE data.
+         * Embedded-supplicant only; wpa_supplicant uses gen_ie_buf passthrough.
+         */
+        if ((akm_type == AssocAgentAuth_Wpa3Sae) &&
+            (pmpriv->sec_info.pwe_derivation == 1U || pmpriv->sec_info.pwe_derivation == 2U) &&
+            (pbss_desc->prsnx_ie->data[0] & (0x1 << SAE_H2E_BIT)))
+        {
+            /* Set SAE H2E bit in the first octet */
+            rsnx_tlv->data[0] |= (0x1 << SAE_H2E_BIT);
+            len = 1;
+        }
+
+        if ((pmpriv->ssid_protection == MTRUE) &&
+            (pbss_desc->prsnx_ie->ieee_hdr.len > 2) &&
+            (pbss_desc->prsnx_ie->data[2] & (0x1 << SSID_PROTECTION_OCTET3_BIT)))
+        {
+            /* Set SSID Protection capability bit in the third octet,
+             * set bit 1 in the first octet and increment the len to 3
+             */
+            rsnx_tlv->data[0] |= 2;
+            rsnx_tlv->data[2] |= (0x1 << SSID_PROTECTION_OCTET3_BIT);
+            len = 3;
+        }
+        if (len)
+        {
+            rsnx_tlv->header.len = wlan_cpu_to_le16(len);
+            pos += sizeof(rsnx_tlv->header) + len;
+        }
+    }
+#endif
+
     if ((pauth_tlv != MNULL) && (pauth_tlv->auth_type == wlan_cpu_to_le16(AssocAgentAuth_Wpa3Sae)))
     {
         wlan_cmd_append_pwe_tlv(pmpriv, pbss_desc, &pos);
@@ -1264,36 +1306,6 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     else
     {
         /* Do nothing */
-    }
-#endif
-
-#if !CONFIG_WPA_SUPP
-    /* Emit RSNX TLV only when both STA and AP advertise H2E.
-     * TLV payload carries the STA's own H2E bit, not the AP's RSNXE data.
-     * Embedded-supplicant only; wpa_supplicant uses gen_ie_buf passthrough.
-     */
-    if ((pbss_desc->prsnx_ie) && (pbss_desc->prsnx_ie->ieee_hdr.len) &&
-        (akm_type == AssocAgentAuth_Wpa3Sae) &&
-        (pmpriv->sec_info.pwe_derivation == 1U || pmpriv->sec_info.pwe_derivation == 2U) &&
-        (pbss_desc->prsnx_ie->data[0] & (0x1 << SAE_H2E_BIT)))
-    {
-        t_u8 rsnx_len = 0;
-
-        prsnx_ie_tlv = (MrvlIEtypes_SAE_PWE_Mode_t *)pos;
-
-        prsnx_ie_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_RSNX);
-
-        /* STA's own H2E capability bit */
-        prsnx_ie_tlv->pwe[0] = (0x1 << SAE_H2E_BIT);
-        rsnx_len = 1U;
-
-        prsnx_ie_tlv->header.len = rsnx_len;
-
-        HEXDUMP("ASSOC_CMD: RSNX IE", (t_u8 *)prsnx_ie_tlv,
-                sizeof(prsnx_ie_tlv->header) + rsnx_len);
-
-        pos += sizeof(prsnx_ie_tlv->header) + rsnx_len;
-        prsnx_ie_tlv->header.len = wlan_cpu_to_le16(rsnx_len);
     }
 #endif
 

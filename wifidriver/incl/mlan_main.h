@@ -1626,6 +1626,7 @@ struct _mlan_private
     t_u16 beacon_vendor_index;
 #endif
 #endif
+    t_u16 rsnxe_index;
     /** uAP started or not */
     bool bss_started;
     /** host based uap flag */
@@ -1644,6 +1645,7 @@ struct _mlan_private
 #if CONFIG_WIFI_GET_LOG
     wlan_stats_t stats;
 #endif
+    bool ssid_protection;
 };
 
 /** BA stream status */

@@ -100,6 +100,7 @@ t_void wlan_reset_connect_state(pmlan_private priv, t_u8 drv_disconnect)
 #if CONFIG_GTK_REKEY_OFFLOAD
     (void)__memset(pmadapter, &priv->gtk_rekey, 0, sizeof(priv->gtk_rekey));
 #endif
+    priv->ssid_protection = MFALSE;
 
     if (drv_disconnect == (t_u8)MTRUE)
     {

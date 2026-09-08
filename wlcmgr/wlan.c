@@ -2357,6 +2357,11 @@ static int do_connect(int netindex)
 }
 #endif
 
+static void wlan_set_ssid_protection(bool enable, enum wlan_bss_type bss_type)
+{
+    wifi_set_ssid_protection(enable, bss_type);
+}
+
 #if UAP_SUPPORT
 static int do_start(struct wlan_network *network)
 {
@@ -2576,6 +2581,13 @@ static int do_start(struct wlan_network *network)
         {
             wifi_uap_set_bandwidth(BANDWIDTH_20MHZ);
         }
+
+#if !CONFIG_WPA_SUPP
+        if (wifi_set_uap_rsnx_ie(network->ssid_protection) != WM_SUCCESS)
+        {
+            wlcm_e("Failed to set UAP RSNX IE for SSID protection");
+        }
+#endif
 
         ret = wifi_uap_start((mlan_bss_type)network->type, network->ssid,
                              wlan.uap_mac,
@@ -7271,6 +7283,10 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
 
     (void)wlan_set_pmfcfg((t_u8)new_network->security.mfpc, (t_u8)new_network->security.mfpr);
     (void)wlan_set_sta_pwe_derivation((uint8_t)new_network->security.pwe_derivation);
+
+#if !CONFIG_WPA_SUPP
+    wlan_set_ssid_protection(new_network->ssid_protection, WLAN_BSS_TYPE_STA);
+#endif
 
     if ((wlan.roam_reassoc == false) && (wlan.sta_state >= CM_STA_ASSOCIATING))
     {

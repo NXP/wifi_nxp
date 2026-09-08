@@ -875,8 +875,8 @@ static void test_wlan_add(int argc, char **argv)
         unsigned pcipher : 1;
         unsigned gmcipher : 1;
         unsigned priority : 1;
-        unsigned ssid_protection : 1;
 #endif
+        unsigned ssid_protection : 1;
 #if CONFIG_WIFI_DTIM_PERIOD
         unsigned dtim : 1;
 #endif
@@ -1939,6 +1939,7 @@ static void test_wlan_add(int argc, char **argv)
             arg += 2;
             info.priority = 1;
         }
+#endif
         else if (!info.ssid_protection&& string_equal("ssid-protection", argv[arg]))
         {
             errno = 0;
@@ -1957,7 +1958,6 @@ static void test_wlan_add(int argc, char **argv)
             arg += 2;
             info.ssid_protection++;
         }
-#endif
 #if CONFIG_WIFI_DTIM_PERIOD
         else if (!info.dtim && string_equal("dtim", argv[arg]))
         {
