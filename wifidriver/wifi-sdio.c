@@ -3016,6 +3016,7 @@ static mlan_status _handle_sdio_packet_read(mlan_adapter *pmadapter, t_u8 **pack
     bool aggr = false;
 
     mlan_status ret = wlan_get_rd_port(pmadapter, &port, &rx_len, &rx_blocks, &aggr);
+    (void)aggr;
 
 #if CONFIG_TX_RX_ZERO_COPY
     if (ret == MLAN_STATUS_RESOURCE)
@@ -3041,7 +3042,7 @@ static mlan_status _handle_sdio_packet_read(mlan_adapter *pmadapter, t_u8 **pack
 
     *datalen = rx_len;
 
-    *packet = wlan_read_rcv_packet(port, rx_len, rx_blocks, pkt_type, aggr);
+    *packet = wlan_read_rcv_packet(port, rx_len, rx_blocks, pkt_type, true);
 
     if ((*packet) == MNULL)
     {
