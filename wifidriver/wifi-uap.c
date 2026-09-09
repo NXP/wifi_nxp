@@ -735,6 +735,13 @@ static int wifi_cmd_uap_config(char *ssid,
     }
     else
     {
+#if defined(SD8978)
+        /* IW416 (Murata 1XK): 2.4GHz HT40 not supported */
+        if (bss.param.bss_config.band_cfg.chanBand == BAND_2GHZ)
+        {
+            bandwidth = BANDWIDTH_20MHZ;
+        }
+#endif
         if (bandwidth == BANDWIDTH_40MHZ
 #if CONFIG_11AC
             || bandwidth == BANDWIDTH_80MHZ
