@@ -5488,6 +5488,21 @@ static void wlcm_process_net_ipv6_config(struct wifi_message *msg,
         wlan.sta_ipv6_state = CM_STA_OBTAINING_ADDRESS;
     }
 }
+
+#if UAP_SUPPORT
+static void wlcm_process_uap_net_ipv6_config(struct wifi_message *msg, struct wlan_network *network)
+{
+    void *if_handle;
+
+    if_handle = net_get_uap_handle();
+    if (if_handle == NULL || network->type != WLAN_BSS_TYPE_UAP)
+    {
+        return;
+    }
+
+    (void)net_get_if_ipv6_addr((struct net_ip_config *)&network->ip, if_handle);
+}
+#endif /* UAP_SUPPORT */
 #endif /* CONFIG_IPV6 */
 
 int wlan_rx_mgmt_indication(const enum wlan_bss_type bss_type,
@@ -6862,6 +6877,12 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
 #else
             OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
 #endif
+            break;
+#endif
+#if CONFIG_IPV6
+        case WIFI_EVENT_UAP_NET_IPV6_CONFIG:
+            wlcm_d("got uAP event: net ipv6 config");
+            wlcm_process_uap_net_ipv6_config(msg, network);
             break;
 #endif
         default:

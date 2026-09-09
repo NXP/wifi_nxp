@@ -36,6 +36,10 @@ enum wifi_event
     WIFI_EVENT_UAP_STOPPED,
     /** uAP TX Data Pause */
     WIFI_EVENT_UAP_TX_DATA_PAUSE,
+#if CONFIG_IPV6
+    /** IPv6 address state change */
+    WIFI_EVENT_UAP_NET_IPV6_CONFIG,
+#endif
     /** uAP Last */
     WIFI_EVENT_UAP_LAST,
     /* All the uAP related events need to be above and STA related events

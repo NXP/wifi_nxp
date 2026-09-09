@@ -251,8 +251,18 @@ static void wm_netif_ipv6_status_callback(struct netif *n)
     /*	TODO: Implement appropriate functionality here*/
     net_d("Received callback on IPv6 address state change");
 
-    (void)wlan_wlcmgr_send_msg(net_get_interface_bss_type(n), WIFI_EVENT_NET_IPV6_CONFIG, WIFI_EVENT_REASON_SUCCESS,
-                               (void *)n);
+#if UAP_SUPPORT
+    if (net_get_interface_bss_type(n) == WLAN_BSS_TYPE_UAP)
+    {
+        (void)wlan_wlcmgr_send_msg(WLAN_BSS_TYPE_UAP, WIFI_EVENT_UAP_NET_IPV6_CONFIG,
+                                   WIFI_EVENT_REASON_SUCCESS, (void *)n);
+    }
+    else
+#endif
+    {
+        (void)wlan_wlcmgr_send_msg(net_get_interface_bss_type(n), WIFI_EVENT_NET_IPV6_CONFIG,
+                                WIFI_EVENT_REASON_SUCCESS, (void *)n);
+    }
 }
 #endif /* CONFIG_IPV6 */
 
