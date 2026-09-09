@@ -2961,6 +2961,7 @@ static mlan_status _handle_sdio_packet_read(mlan_adapter *pmadapter, t_u8 **pack
     bool aggr = false;
 
     mlan_status ret = wlan_get_rd_port(pmadapter, &port, &rx_len, &rx_blocks, &aggr);
+    (void)aggr;
 
 #if CONFIG_TX_RX_ZERO_COPY
     if (ret == MLAN_STATUS_RESOURCE)
