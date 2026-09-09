@@ -2554,6 +2554,14 @@ static int do_start(struct wlan_network *network)
         wpa_supp_set_ap_bw(netif, 1);
 #else
         t_u8 bandwidth = wifi_uap_get_bandwidth();
+#if defined(SD8978)
+        /* IW416 (Murata 1XK): 2.4GHz HT40 not supported */
+        if (network->channel <= MAX_CHANNELS_BG)
+        {
+            bandwidth = BANDWIDTH_20MHZ;
+            (void)wifi_uap_set_bandwidth(BANDWIDTH_20MHZ);
+        }
+#endif
         if (network->sec_channel_offset == SEC_CHAN_NONE && bandwidth > BANDWIDTH_20MHZ)
         {
             bandwidth = BANDWIDTH_20MHZ;
