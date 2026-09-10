@@ -73,12 +73,14 @@ extern "C" {
 #endif /* __GNUC__ */
 
 /* Weak function. */
+#ifndef WEAK
 #if defined(__GNUC__)
 #define WEAK __attribute__((weak))
 #elif defined(__ICCARM__)
 #define WEAK __weak
 #elif defined(__CC_ARM) || defined(__ARMCC_VERSION)
 #define WEAK __attribute__((weak))
+#endif
 #endif
 
 /* alignment value should be a power of 2 */
