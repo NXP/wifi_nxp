@@ -3187,7 +3187,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 
                         wm_wifi.cmd_resp_status = WM_SUCCESS;
 #ifndef SD8801
-                        wifi_d("ACS scan done: bandcfg=%x, channel=%d\r\n", acs_scan->bandcfg, acs_scan->chan);
+                        wifi_d("ACS scan done: bandcfg=%x, channel=%d\r\n", *(t_u8 *)&acs_scan->bandcfg, acs_scan->chan);
 #else
                         wifi_d("ACS scan done: bandcfg=0, channel=%d\r\n", acs_scan->chan);
 #endif
