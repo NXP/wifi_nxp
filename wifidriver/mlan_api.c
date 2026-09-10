@@ -2549,6 +2549,15 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
         }
     }
 
+    /* Propagate scan type hint for full-band scans where neither
+     * BAND_SPECIFIED nor explicit channels carry it through. */
+    if (chan_list != MNULL &&
+        chan_list[0].scan_type != MLAN_SCAN_TYPE_UNCHANGED)
+    {
+        user_scan_cfg->chan_list[0].scan_type = chan_list[0].scan_type;
+        user_scan_cfg->chan_list[0].scan_time = chan_list[0].scan_time;
+    }
+
     if (active_scan_triggered)
     {
         mlan_adap->active_scan_triggered = MTRUE;
