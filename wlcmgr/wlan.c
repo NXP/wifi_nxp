@@ -1085,7 +1085,7 @@ int wlan_send_host_sleep_int()
         ipv4_addr_cnt++;
         type = WLAN_BSS_TYPE_STA;
     }
-    if (is_uap_started() && 
+    if (is_uap_started() &&
         (ipv4_addr_cnt < (t_u8)(sizeof(ipv4_addr)/sizeof(ipv4_addr[0]))))
     {
         ret = wlan_get_uap_ipv4_addr(&ipv4_addr[ipv4_addr_cnt]);
@@ -1909,7 +1909,7 @@ static int network_matches_scan_result(const struct wlan_network *network,
         }
     }
 #if CONFIG_WPA_SUPP
-	if (network->unspecified_network && 
+	if (network->unspecified_network &&
           ((network->unspecified_network & UNSPEC_WPS_NETWORK) != res->wps_IE_exist))
 	{
         wlcm_d("%s: WPS flag mismatch.\n", network->ssid);
@@ -4307,6 +4307,110 @@ static void wlcm_process_pmk_event(struct wifi_message *msg, enum cm_sta_state *
     }
 }
 
+typedef struct {
+    struct netif *nif;
+    ip4_addr_t    gw;
+    struct eth_addr old_gw_mac;
+    bool          had_old_mac;
+    uint16_t      elapsed_ms;
+    uint16_t      timeout_ms;
+    uint16_t      interval_ms;
+} gw_probe_ctx_t;
+
+static gw_probe_ctx_t s_gw_probe_ctx;
+
+static void wlan_gw_probe_done(bool reachable_same_gw)
+{
+    void *if_handle = NULL;
+    struct wlan_network *network = &wlan.networks[wlan.cur_network_idx];
+
+    if (network->type == WLAN_BSS_TYPE_STA)
+        if_handle = net_get_mlan_handle();
+
+    if (reachable_same_gw)
+    {
+        (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
+        wlan.sta_state      = CM_STA_CONNECTED;
+        wlan.sta_ipv4_state = CM_STA_CONNECTED;
+
+        if (wlan.reassoc_control && wlan.reassoc_request)
+        {
+            wlan.reassoc_count   = 0;
+            wlan.reassoc_request = false;
+        }
+        mlan_adap->skip_dfs = false;
+        CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
+
+        return;
+    }
+
+    wlan.same_ess = false;
+    wlan_wlcmgr_send_msg(WLAN_BSS_TYPE_STA, WIFI_EVENT_AUTHENTICATION,
+                         WIFI_EVENT_REASON_SUCCESS, NULL);
+}
+
+/*
+ * Gateway still keep old without update, there are below cases need deal:
+ * case#1: AC with AP's gateway mac are same ----> mac same, skip dhcp
+ * case#2: Different gateway----> no arp response, do dhcp again
+ * case#3: Same AP setting, but independent APs --->mac diff, do dhcp again
+*/
+static void wlan_gw_probe_poll(void *arg)
+{
+    gw_probe_ctx_t  *ctx     = (gw_probe_ctx_t *)arg;
+    struct eth_addr *cur_mac = NULL;
+    const ip4_addr_t *ipret  = NULL;
+    bool same_gw = false;
+    int8_t idx = 0;
+
+    idx = etharp_find_addr(ctx->nif, &ctx->gw, &cur_mac, &ipret);
+    if (idx >= 0 && cur_mac != NULL)
+    {
+        same_gw = ctx->had_old_mac && (memcmp(cur_mac->addr, ctx->old_gw_mac.addr, 6) == 0);
+        /* Process case#1 and case#3*/
+        wlan_gw_probe_done(same_gw);
+        return;
+    }
+
+    ctx->elapsed_ms += ctx->interval_ms;
+    if (ctx->elapsed_ms >= ctx->timeout_ms)
+    {
+        /* Process case#2*/
+        wlan_gw_probe_done(false);
+        return;
+    }
+
+    etharp_request(ctx->nif, &ctx->gw);
+    sys_timeout(ctx->interval_ms, wlan_gw_probe_poll, ctx);
+}
+
+static void wlan_gw_probe_start(void *arg)
+{
+    struct netif   *nif = (struct netif *)arg;
+    gw_probe_ctx_t *ctx = &s_gw_probe_ctx;
+    struct eth_addr  *old   = NULL;
+    const ip4_addr_t *ipret = NULL;
+
+    sys_untimeout(wlan_gw_probe_poll, ctx);
+
+    ctx->nif         = nif;
+    ctx->gw          = *netif_ip4_gw(nif);
+    ctx->timeout_ms  = 100;
+    ctx->interval_ms = 20;
+    ctx->elapsed_ms  = 0;
+    ctx->had_old_mac = false;
+
+    if (etharp_find_addr(nif, &ctx->gw, &old, &ipret) >= 0 && old)
+    {
+        memcpy(&ctx->old_gw_mac, old, sizeof(struct eth_addr));
+        ctx->had_old_mac = true;
+    }
+
+    etharp_cleanup_netif(ctx->nif);
+    etharp_request(nif, &ctx->gw);
+    sys_timeout(ctx->interval_ms, wlan_gw_probe_poll, ctx);
+}
+
 static void wlcm_process_authentication_event(struct wifi_message *msg,
                                               enum cm_sta_state *next,
                                               struct wlan_network *network)
@@ -4407,18 +4511,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 #if CONFIG_11R
                 wlan.ft_bss = false;
 #endif
-                (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
-                wlan.sta_state      = CM_STA_CONNECTED;
-                *next               = CM_STA_CONNECTED;
-                wlan.sta_ipv4_state = CM_STA_CONNECTED;
-
-                if (wlan.reassoc_control && wlan.reassoc_request)
-                {
-                    wlan.reassoc_count   = 0;
-                    wlan.reassoc_request = false;
-                }
-                mlan_adap->skip_dfs = false;
-                CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
+                tcpip_callback(wlan_gw_probe_start, if_handle);
                 return;
             }
 
