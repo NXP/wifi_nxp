@@ -5549,9 +5549,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_EXT_ANT_GAIN_CFG
     t_u8 band;
     /** Channel number */
     t_u8 channel;
-    /** Net antenna gain in dB */
+    /** Net antenna gain (antenna gain - path loss), in 0.25 dB step */
     t_s8 net_ant_gain;
-    /** Per-sub-band external antenna gains in dB */
+    /** Per-sub-band net antenna gains (antenna gain - path loss), in 0.25 dB step */
     t_s8 ext_ant_gain[WIFI_EXT_ANT_GAIN_MAX_SUBBAND];
 } MLAN_PACK_END HostCmd_DS_EXT_ANT_GAIN_CFG;
 #endif

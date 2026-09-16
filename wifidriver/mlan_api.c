@@ -2982,7 +2982,7 @@ int wifi_set_ext_ant_gain(const int8_t *ext_ant_gain, const uint8_t num_subbands
     HostCmd_DS_EXT_ANT_GAIN_CFG cfg;
 
     if (ext_ant_gain == NULL || num_subbands == 0U ||
-        num_subbands > WIFI_EXT_ANT_GAIN_MAX_SUBBAND)
+        num_subbands > (WIFI_EXT_ANT_GAIN_MAX_SUBBAND - 1))
     {
         return -WM_FAIL;
     }
@@ -2992,6 +2992,8 @@ int wifi_set_ext_ant_gain(const int8_t *ext_ant_gain, const uint8_t num_subbands
     cfg.action = HostCmd_ACT_GEN_SET;
     (void)memcpy(cfg.ext_ant_gain, ext_ant_gain,
                  (size_t)num_subbands * sizeof(t_s8));
+    /* The last sub-band is not user-configurable; set to -128 (invalid) */
+    cfg.ext_ant_gain[WIFI_EXT_ANT_GAIN_MAX_SUBBAND - 1] = (t_s8)0x80;
 
     (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
