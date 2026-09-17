@@ -257,6 +257,20 @@ struct net_ip_config
     struct net_ipv4_config ipv4;
 };
 
+typedef void (*gw_probe_cb_t)(bool reachable_same_gw);
+
+typedef struct {
+    void             *intf_handle;
+    const ip4_addr_t  gw;
+    struct eth_addr  old_gw_mac;
+    bool             had_old_mac;
+    uint16_t         elapsed_ms;
+    uint16_t         timeout_ms;
+    uint16_t         interval_ms;
+    OSA_TIMER_HANDLE_DEFINE(timer);
+    gw_probe_cb_t    gw_probe_cb;   /* callback, called when probe completes */
+} gw_probe_ctx_t;
+
 /** Set hostname for network interface
  *
  * \param[in] hostname Hostname to be set.
@@ -852,6 +866,7 @@ void net_interface_dhcp_stop(void *intrfc_handle);
  */
 void net_interface_dhcp_cleanup(void *intrfc_handle);
 
+
 /** Configure IP address for interface
  *
  * \param[in] addr Address that needs to be configured.
@@ -860,6 +875,19 @@ void net_interface_dhcp_cleanup(void *intrfc_handle);
  * \return WM_SUCCESS on success or an error code.
  */
 int net_configure_address(struct net_ip_config *addr, void *intrfc_handle);
+
+/** Start gateway probe
+ *
+ * \param[in] arg the parameter passed by caller.
+ *
+ */
+void net_gw_probe_start(void *arg);
+
+/** Get gateway probe ctx
+ * \return A pointer to gateway probe ctx structure
+ *
+ */
+gw_probe_ctx_t *net_get_gw_probe_ctx(void);
 
 /** Configure DNS server address
  *

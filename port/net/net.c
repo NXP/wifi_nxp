@@ -81,6 +81,9 @@ static interface_t g_uap;
 static interface_t g_wfd;
 #endif
 
+static gw_probe_ctx_t s_gw_probe_ctx;
+static void net_gw_probe_poll(osa_timer_arg_t arg); /* forward declaration */
+
 static int net_wlan_init_done;
 OSA_TIMER_HANDLE_DEFINE(dhcp_timer);
 static void dhcp_timer_cb(osa_timer_arg_t arg);
@@ -362,6 +365,14 @@ int net_wlan_init(void)
             return -WM_FAIL;
         }
 
+        status = OSA_TimerCreate((osa_timer_handle_t)s_gw_probe_ctx.timer, pdMS_TO_TICKS(20), &net_gw_probe_poll,
+                                 NULL, KOSA_TimerPeriodic, OSA_TIMER_NO_ACTIVATE);
+        if (status != KOSA_StatusSuccess)
+        {
+            wlcm_e("Unable to create gw probe timer");
+            return -WM_FAIL;
+        }
+
         LOCK_TCPIP_CORE();
         netif_add_ext_callback(&netif_ext_callback, netif_ext_status_callback);
         UNLOCK_TCPIP_CORE();
@@ -500,6 +511,13 @@ int net_wlan_deinit(void)
     {
         net_e("DHCP timer deletion failed");
         return -WM_FAIL;
+    }
+
+    status = OSA_TimerDestroy((osa_timer_handle_t)s_gw_probe_ctx.timer);
+    if (status != KOSA_StatusSuccess)
+    {
+        wlcm_w("failed to delete gw probe timer: %d.", ret);
+        return WLAN_ERROR_STATE;
     }
 
     LOCK_TCPIP_CORE();
@@ -737,6 +755,106 @@ void net_interface_dhcp_cleanup(void *intrfc_handle)
     LOCK_TCPIP_CORE();
     (void)dhcp_cleanup(&if_handle->netif);
     UNLOCK_TCPIP_CORE();
+}
+
+static bool net_etharp_find_addr(void *intrfc_handle,
+                          const ip4_addr_t *ipaddr,
+                          struct eth_addr **eth_ret)
+{
+    const ip4_addr_t *ipret  = NULL;
+    interface_t *if_handle = (interface_t *)intrfc_handle;
+
+    return (etharp_find_addr(&if_handle->netif, ipaddr, eth_ret, &ipret) >= 0);
+}
+
+static void net_etharp_cleanup_netif(void *intrfc_handle)
+{
+    interface_t *if_handle = (interface_t *)intrfc_handle;
+    etharp_cleanup_netif(&if_handle->netif);
+}
+
+static bool net_etharp_request(void *intrfc_handle, const ip4_addr_t *ipaddr)
+{
+    interface_t *if_handle = (interface_t *)intrfc_handle;
+
+    return etharp_request(&if_handle->netif, ipaddr) == ERR_OK;
+}
+
+static const ip4_addr_t* net_netif_ip4_gw(void *intrfc_handle)
+{
+    interface_t *if_handle = (interface_t *)intrfc_handle;
+    return netif_ip4_gw(&if_handle->netif);
+}
+
+gw_probe_ctx_t *net_get_gw_probe_ctx(void)
+{
+    return &s_gw_probe_ctx;
+}
+
+/*
+ * Gateway still keep old without update, there are below cases need deal:
+ * case#1: AC with AP's gateway mac are same ----> mac same, skip dhcp
+ * case#2: Different gateway----> no arp response, do dhcp again
+ * case#3: Same AP setting, but independent APs --->mac diff, do dhcp again
+*/
+static void net_gw_probe_poll(osa_timer_arg_t arg)
+{
+    gw_probe_ctx_t  *ctx     = net_get_gw_probe_ctx();
+    struct eth_addr *cur_mac = NULL;
+    bool same_gw = false;
+    bool find_result = false;
+
+    find_result = net_etharp_find_addr(ctx->intf_handle, &ctx->gw, &cur_mac);
+    if (find_result && cur_mac != NULL)
+    {
+        same_gw = ctx->had_old_mac && (memcmp(cur_mac->addr, ctx->old_gw_mac.addr, 6) == 0);
+        /* Process case#1 and case#3*/
+        (void)OSA_TimerDeactivate((osa_timer_handle_t)ctx->timer);
+        net_get_gw_probe_ctx()->gw_probe_cb(same_gw);
+        return;
+    }
+
+    ctx->elapsed_ms += ctx->interval_ms;
+    if (ctx->elapsed_ms >= ctx->timeout_ms)
+    {
+        /* Process case#2*/
+        (void)OSA_TimerDeactivate((osa_timer_handle_t)ctx->timer);
+        net_get_gw_probe_ctx()->gw_probe_cb(false);
+        return;
+    }
+
+    (void)net_etharp_request(ctx->intf_handle, &ctx->gw);
+    /* periodic timer will fire again automatically */
+}
+
+void net_gw_probe_start(void *arg)
+{
+    gw_probe_ctx_t *ctx = net_get_gw_probe_ctx();
+    struct eth_addr  *old   = NULL;
+
+    /* Stop any in-progress probe (replaces sys_untimeout) */
+    if (OSA_TimerIsRunning((osa_timer_handle_t)ctx->timer))
+        (void)OSA_TimerDeactivate((osa_timer_handle_t)ctx->timer);
+
+    ctx->intf_handle = arg;
+    memcpy((void *)&ctx->gw, net_netif_ip4_gw(ctx->intf_handle), sizeof(ip4_addr_t));
+    ctx->timeout_ms  = 100;
+    ctx->interval_ms = 20;
+    ctx->elapsed_ms  = 0;
+    ctx->had_old_mac = false;
+
+    if (net_etharp_find_addr(ctx->intf_handle, &ctx->gw, &old) && old)
+    {
+        memcpy(&ctx->old_gw_mac, old, sizeof(struct eth_addr));
+        ctx->had_old_mac = true;
+    }
+
+    net_etharp_cleanup_netif(ctx->intf_handle);
+    (void)net_etharp_request(ctx->intf_handle, &ctx->gw);
+
+    /* Start periodic probe timer (replaces sys_timeout) */
+    (void)OSA_TimerChange((osa_timer_handle_t)ctx->timer, pdMS_TO_TICKS(ctx->interval_ms), 0);
+    (void)OSA_TimerActivate((osa_timer_handle_t)ctx->timer);
 }
 
 int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
