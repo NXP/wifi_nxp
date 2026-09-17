@@ -3025,7 +3025,7 @@ int wifi_get_ext_ant_gain(const uint8_t band, const uint8_t channel, int8_t *net
 
     if (band == BAND_2GHZ)
     {
-        if (wlan_find_cfp_by_band_and_channel(mlan_adap, BAND_G, channel) == NULL)
+        if (channel < 1 || channel > 14)
         {
             wlcm_e("Channel %d is not valid for band 2.4GHz", channel);
             return -WM_E_INVAL;
@@ -3034,7 +3034,7 @@ int wifi_get_ext_ant_gain(const uint8_t band, const uint8_t channel, int8_t *net
 #if CONFIG_5GHz_SUPPORT
     else if (band == BAND_5GHZ)
     {
-        if (wlan_find_cfp_by_band_and_channel(mlan_adap, BAND_A, channel) == NULL)
+        if (channel < 36 || channel > 181)
         {
             wlcm_e("Channel %d is not valid for band 5GHz", channel);
             return -WM_E_INVAL;
