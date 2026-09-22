@@ -5182,7 +5182,8 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
                     PRINTM(MCMND, "STA supports 11ax\n");
                     sta_ptr->is_11ax_enabled = MTRUE;
                     (void)memcpy((void *)((t_u8 *)&sta_ptr->he_cap), (const void *)phe_cap,
-                                 phe_cap->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
+                                 MIN(phe_cap->ieee_hdr.len + sizeof(IEEEtypes_Header_t),
+                                     sizeof(IEEEtypes_HECap_t)));
                     sta_ptr->he_cap.ieee_hdr.len =
                         MIN(phe_cap->ieee_hdr.len, sizeof(IEEEtypes_HECap_t) - sizeof(IEEEtypes_Header_t));
                 }
