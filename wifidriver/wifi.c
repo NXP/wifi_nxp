@@ -4492,6 +4492,7 @@ int wifi_nxp_scan_res_get2(unsigned int bss_type, t_u32 table_idx, nxp_wifi_even
         scan_res->ies.ie     = bss_new_entry->ies;
         bss_new_entry->ies   = NULL;
         scan_res->ies.ie_len = (t_u16)bss_new_entry->ies_len;
+        bss_new_entry->ies_len = 0U;
     }
     else
     {
