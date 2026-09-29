@@ -51,7 +51,7 @@
 #if defined(MIMXRT1176_cm7_SERIES)
 #include "fsl_lpspi.h"
 #endif
-#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+#if ((defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES)) && defined(IW610))
 #include "fsl_clock.h"
 #include "fsl_lpspi.h"
 #include "fsl_lpi2c.h"
@@ -100,7 +100,7 @@
 #define TRANSFER_BAUDRATE 500000U /*! Transfer baudrate - 500k */
 #endif
 
-#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+#if ((defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES)) && defined(IW610))
 #ifndef max
 #define max(a, b)            (((a) > (b)) ? (a) : (b))
 #endif
@@ -268,7 +268,7 @@ lpuart_rtos_config_t lpuart_config_bt = {
 };
 #endif
 
-#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+#if ((defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES)) && defined(IW610))
 /* Spinel SPI frame header */
 typedef struct __attribute__((__packed__)) spi_frame_hdr {
     /* must be 0 */
@@ -406,7 +406,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
 }
 #endif
 
-#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+#if ((defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES)) && defined(IW610))
 int zigbee_reset_flag = 1;
 int set_spi_frame_hdr(spi_frame_hdr *pspihdr, 
                         unsigned char rst_flag, unsigned char crc_flag, unsigned char ccf_flag,
@@ -711,7 +711,7 @@ int zigbee_raw_packet_send(uint8_t *buf, int m_len)
 }
 #endif
 
-#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+#if ((defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES)) && defined(IW610))
 int zigbee_raw_packet_send(uint8_t *buf, int m_len)
 {
     uint32_t payloadlen;
@@ -830,7 +830,7 @@ int process_input_cmd(uint8_t *buf, int m_len)
     {
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
         ret = imumc_raw_packet_send(buf, m_len, RET_TYPE_ZIGBEE);
-#elif defined(MIMXRT1176_cm7_SERIES) || (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+#elif defined(MIMXRT1176_cm7_SERIES) || ((defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES)) && defined(IW610))
         ret = zigbee_raw_packet_send(buf, m_len);
 #endif
     }
@@ -981,7 +981,7 @@ void send_zigbee_response_to_uart(uint8_t *rxData, uint32_t payloadlen)
     memset(rx_buf, 0, BUF_LEN);
 }
 #endif
-#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+#if ((defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES)) && defined(IW610))
 void send_zigbee_response_to_uart(uint8_t *rxData, uint32_t payloadlen)
 {
     uint32_t bridge_chksum = 0;
@@ -1148,7 +1148,7 @@ void read_zigbee_resp(void)
 }
 #endif
 
-#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+#if ((defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES)) && defined(IW610))
 void read_zigbee_resp(void)
 {
     hal_spi_transfer_t spiTransfer;
@@ -1257,7 +1257,7 @@ static void wifi_cau_temperature_timer_cb(TimerHandle_t timer)
 }
 #endif
 
-#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+#if ((defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES)) && defined(IW610))
 static int PLATFORM_I2CSend(uint8_t address, uint8_t byte1, uint8_t byte2)
 {
     size_t   txCount = 0xFFU;
@@ -1390,7 +1390,7 @@ static void main_task(osa_task_param_t arg)
     assert(WM_SUCCESS == result);
 #endif /* CONFIG_BT_IND_DNLD */
 #endif
-#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+#if ((defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES)) && defined(IW610))
     /* Waiting for the RCP chip starts up */
     OSA_TimeDelay(PLATFORM_CONFIG_DEFAULT_RESET_DELAY_MS);
     /* Initialize the LPI2C peripheral */
@@ -1407,7 +1407,7 @@ static void main_task(osa_task_param_t arg)
     LPSPI_MasterInit(LPSPI_MASTER_BASEADDR, &spiConfig, srcClock_Hz);
 #endif
 
-#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+#if ((defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES)) && defined(IW610))
     hal_spi_master_config_t spiConfig = {
         .srcClock_Hz  = LPSPI_MASTER_CLK_FREQ,
         .baudRate_Bps = TRANSFER_BAUDRATE,
@@ -1631,7 +1631,7 @@ static void main_task(osa_task_param_t arg)
             {
                 read_bt_resp();
             }
-#if defined(MIMXRT1176_cm7_SERIES) || (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+#if defined(MIMXRT1176_cm7_SERIES) || ((defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES)) && defined(IW610))
             else if (ret == RET_TYPE_ZIGBEE)
             {
                 (void)vTaskDelay(pdMS_TO_TICKS(60));
@@ -1672,7 +1672,7 @@ int main(void)
 #else
     extern void BOARD_InitHardware(void);
     BOARD_InitHardware();
-#if (defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES))
+#if ((defined(MIMXRT1062_SERIES) || defined(MIMXRT1061_SERIES)) && defined(IW610))
     BOARD_InitUSDHCPins();
     BOARD_InitPinsM2();
     BOARD_InitM2SPIPins();
