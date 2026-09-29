@@ -7414,6 +7414,7 @@ int wlan_get_uap_turbo_mode(t_u8 *mode);
  *         - 1: Turbo mode 1.
  *         - 2: Turbo mode 2.
  *         - 3: Turbo mode 3.
+ *         - 4: Turbo mode 4.
  * \return WM_SUCCESS if successful.
  * \return -WM_FAIL if failed.
  */
@@ -7426,6 +7427,7 @@ int wlan_set_turbo_mode(t_u8 mode);
  *         - 1: Turbo mode 1.
  *         - 2: Turbo mode 2.
  *         - 3: Turbo mode 3.
+ *         - 4: Turbo mode 4.
  * \return WM_SUCCESS if successful.
  * \return -WM_FAIL if failed.
  */

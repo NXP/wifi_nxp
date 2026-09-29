@@ -10896,7 +10896,7 @@ static void test_wlan_set_turbo_mode(int argc, char **argv)
         return;
     }
 
-    if (get_uint(argv[2], &value, strlen(argv[2])) && value > 3)
+    if (!get_uint(argv[2], &value, strlen(argv[2])) && value > 4)
     {
         (void)PRINTF("Invalid mode argument\r\n");
         dump_wlan_set_turbo_mode_usage();
