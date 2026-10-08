@@ -976,7 +976,9 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     pmpriv->pattempted_bss_desc = pbss_desc;
 #if CONFIG_HOST_MLME
     (void)__memcpy(pmadapter, &pmpriv->curr_bss_params.attemp_bssid, pbss_desc->mac_address, MLAN_MAC_ADDR_LENGTH);
+#if CONFIG_WPA_SUPP
     pmpriv->assoc_req_size = 0;
+#endif
 #endif
 
     (void)__memcpy(pmadapter, passo->peer_sta_addr, pbss_desc->mac_address, sizeof(passo->peer_sta_addr));
