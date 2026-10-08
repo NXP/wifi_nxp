@@ -639,10 +639,10 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
     // RSNCAP
     *(t_u16 *)ptr = wlan_cpu_to_le16(*prsn_cap);
     ptr += sizeof(t_u16);
-    // PMKID list
+    /* PMKID list */
     if (pmkid_list_ptr || group_mgmt_cipher_suite_ptr)
     {
-        // Add PMKID
+        /* Add PMKID */
         *(t_u16 *)ptr = wlan_cpu_to_le16(pmkid_count);
         ptr += sizeof(t_u16);
         if (pmkid_count)
@@ -652,8 +652,29 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
         }
         if (group_mgmt_cipher_suite_ptr)
         {
-            // Add Group Mgmt Cipher Suite
+            /* Add Group Mgmt Cipher Suite */
             (void)memmove(ptr, (t_u8 *)group_mgmt_cipher_suite_ptr, (end_ptr - ptr));
+            ptr += GROUP_MGMT_CIPHER_SUITE_LEN;
+        }
+    }
+
+    /*
+     * If PMF is enabled but GMCS was not present in the source RSNE,
+     * append default Group Management Cipher Suite (BIP-CMAC-128).
+     * IEEE 802.11-2020 requires GMCS in Association Request when MFPC=1.
+     */
+    if ((pmf_mask & PMF_MASK) && !group_mgmt_cipher_suite_ptr)
+    {
+        if (!pmkid_list_ptr)
+        {
+            /* PMKID Count field was not written above, write it as 0 */
+            *(t_u16 *)ptr = 0;
+            ptr += sizeof(t_u16);
+        }
+        /* BIP-CMAC-128: 00-0F-AC:06 */
+        {
+            t_u8 default_gmcs[4] = {0x00, 0x0f, 0xac, 0x06};
+            (void)__memcpy(pmpriv->adapter, ptr, default_gmcs, GROUP_MGMT_CIPHER_SUITE_LEN);
             ptr += GROUP_MGMT_CIPHER_SUITE_LEN;
         }
     }
