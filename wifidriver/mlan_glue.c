@@ -2117,6 +2117,27 @@ rsn_ie_picked:
     return WM_SUCCESS;
 }
 
+/**
+ * wifi_set_sta_pwe_derivation - Store the STA's PWE derivation mode so that
+ *   the PWE TLV and RSNX TLV builders use the STA-local value instead of
+ *   reading it from the AP's RSNXE.
+ *
+ * @pwe_derivation: 0 = H&P only, 1 = H2E only, 2 = both H&P and H2E
+ */
+int wifi_set_sta_pwe_derivation(uint8_t pwe_derivation)
+{
+    mlan_private *priv = (mlan_private *)mlan_adap->priv[MLAN_BSS_TYPE_STA];
+
+    if (priv == MNULL)
+    {
+        wifi_e("STA priv not initialized");
+        return -WM_FAIL;
+    }
+
+    priv->sec_info.pwe_derivation = pwe_derivation;
+    return WM_SUCCESS;
+}
+
 /*
  * fixme: This function is temporarily present till the mlan transition is complete.
  */

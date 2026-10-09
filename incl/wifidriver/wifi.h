@@ -927,6 +927,7 @@ void wifi_configure_null_pkt_interval(unsigned int null_pkt_interval);
 int wrapper_wifi_assoc(
     const unsigned char *bssid, int wlan_security, bool is_wpa_tkip,
     unsigned int owe_trans_mode, bool is_ft, int key_mgmt);
+int wifi_set_sta_pwe_derivation(uint8_t pwe_derivation);
 bool wifi_get_xfer_pending(void);
 void wifi_set_xfer_pending(bool xfer_val);
 int wrapper_wlan_cmd_11n_ba_stream_timeout(void *saved_event_buff);

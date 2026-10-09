@@ -1030,6 +1030,7 @@ static int wlan_get_uap_ipv4_addr(unsigned int *ipv4_addr)
 #endif
 
 static int wlan_set_pmfcfg(uint8_t mfpc, uint8_t mfpr);
+static int wlan_set_sta_pwe_derivation(uint8_t pwe_derivation);
 
 #if CONFIG_HOST_SLEEP
 int wlan_send_host_sleep_int()
@@ -4150,6 +4151,8 @@ int wlan_select_cur_network_by_scan_res(unsigned int scan_index)
                 wlan.cur_network_idx = i;
                 (void)wlan_set_pmfcfg((t_u8)wlan.networks[wlan.cur_network_idx].security.mfpc,
                                       (t_u8)wlan.networks[wlan.cur_network_idx].security.mfpr);
+                (void)wlan_set_sta_pwe_derivation(
+                    (uint8_t)wlan.networks[wlan.cur_network_idx].security.pwe_derivation);
                 return WM_SUCCESS;
             }
         }
@@ -7231,6 +7234,7 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
 #endif
 
     (void)wlan_set_pmfcfg((t_u8)new_network->security.mfpc, (t_u8)new_network->security.mfpr);
+    (void)wlan_set_sta_pwe_derivation((uint8_t)new_network->security.pwe_derivation);
 
     if ((wlan.roam_reassoc == false) && (wlan.sta_state >= CM_STA_ASSOCIATING))
     {
@@ -13586,6 +13590,11 @@ static int wlan_set_pmfcfg(uint8_t mfpc, uint8_t mfpr)
     }
 
     return wifi_set_pmfcfg(mfpc, mfpr);
+}
+
+static int wlan_set_sta_pwe_derivation(uint8_t pwe_derivation)
+{
+    return wifi_set_sta_pwe_derivation(pwe_derivation);
 }
 
 int wlan_get_pmfcfg(uint8_t *mfpc, uint8_t *mfpr)

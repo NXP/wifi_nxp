@@ -374,6 +374,9 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** TLV type : SAE PWE Derivation Mode */
 #define TLV_TYPE_WPA3_SAE_PWE_DERIVATION_MODE (PROPRIETARY_TLV_BASE_ID + 339) /* 0x0100 + 0x153 */
 
+/** TLV type : RSNX IE */
+#define TLV_TYPE_RSNX 0x00F4U
+
 /** TLV type: fw cap info */
 #define TLV_TYPE_FW_CAP_INFO (PROPRIETARY_TLV_BASE_ID + 318)
 

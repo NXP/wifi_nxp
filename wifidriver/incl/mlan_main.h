@@ -966,6 +966,8 @@ typedef struct _wlan_802_11_security_t
     mlan_encryption_mode encryption_mode;
     /** RSN Selector */
     mlan_rsn_selector rsn_selector;
+    /** STA PWE derivation mode: 0=H&P only, 1=H2E only, 2=both */
+    t_u8 pwe_derivation;
 } wlan_802_11_security_t;
 
 /** Current Basic Service Set State Structure */

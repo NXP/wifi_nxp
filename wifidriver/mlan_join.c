@@ -817,36 +817,44 @@ static int wlan_cmd_append_pass_through_ie(mlan_private *priv, IEEEtypes_Generic
 static void wlan_cmd_append_pwe_tlv(mlan_private *priv, BSSDescriptor_t *pbss_desc, t_u8 **ppbuffer)
 {
     MrvlIEtypes_SAE_PWE_Mode_t *psae_pwe_mode_tlv = (MrvlIEtypes_SAE_PWE_Mode_t *)(void *)(*ppbuffer);
-    t_u8 pwe = 0;
+    t_u8 ap_h2e = 0;
 
+    /* AP must advertise RSNXE (or RSNXO for RSNO) with H2E bit set for H2E negotiation. */
 #if !CONFIG_WPA_SUPP
-    /* use RSNX or RSNXO */
     if (pbss_desc->prsnxo_ie &&
         (priv->sec_info.rsn_selector == MLAN_RSN_SELECTOR_RSNO ||
         priv->sec_info.rsn_selector == MLAN_RSN_SELECTOR_RSNO2))
     {
-        if (pbss_desc->prsnxo_ie->ieee_hdr.element_id == VENDOR_SPECIFIC_221 &&
-            pbss_desc->prsnxo_ie->vendor_type == MLAN_OUI_TYPE_RSNXO)
-        {
-            pwe = pbss_desc->prsnxo_ie->data[0];
-        }
+        /* RSNXO path: only proceed if vendor header is valid */
+        if (!(pbss_desc->prsnxo_ie->ieee_hdr.element_id == VENDOR_SPECIFIC_221 &&
+              pbss_desc->prsnxo_ie->vendor_type == MLAN_OUI_TYPE_RSNXO))
+            return;
+        /* Extract AP H2E capability from RSNXO data */
+        if (pbss_desc->prsnxo_ie->ieee_hdr.len == 0U)
+            return;
+        ap_h2e = pbss_desc->prsnxo_ie->data[0] & (0x1 << SAE_H2E_BIT);
     }
     else
 #endif
-    if (pbss_desc->prsnx_ie)
+    if (pbss_desc->prsnx_ie && pbss_desc->prsnx_ie->ieee_hdr.len)
     {
-        pwe = pbss_desc->prsnx_ie->data[0];
+        /* Extract AP H2E capability from RSNXE data */
+        ap_h2e = pbss_desc->prsnx_ie->data[0] & (0x1 << SAE_H2E_BIT);
     }
     else
     {
         return;
     }
 
-    if (pwe & (0x1 << SAE_H2E_BIT))
+    /* Send PWE TLV only when AP supports H2E and STA supports H2E.
+     * When AP H2E=0, do not send PWE TLV so that FW keeps sae_h2e=FALSE
+     * and uses H&P for SAE authentication (aligns with mxmdriver reference).
+     */
+    if (ap_h2e && (priv->sec_info.pwe_derivation == 1U || priv->sec_info.pwe_derivation == 2U))
     {
         psae_pwe_mode_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_WPA3_SAE_PWE_DERIVATION_MODE);
         psae_pwe_mode_tlv->header.len  = sizeof(psae_pwe_mode_tlv->pwe);
-        psae_pwe_mode_tlv->pwe[0]      = pwe;
+        psae_pwe_mode_tlv->pwe[0]      = (0x1 << SAE_H2E_BIT);
         (*ppbuffer) += sizeof(psae_pwe_mode_tlv->header) + sizeof(psae_pwe_mode_tlv->pwe);
     }
 }
@@ -1259,24 +1267,35 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     }
 #endif
 
-    if ((pbss_desc->prsnx_ie) && (akm_type == AssocAgentAuth_Wpa3Sae))
+#if !CONFIG_WPA_SUPP
+    /* Emit RSNX TLV only when both STA and AP advertise H2E.
+     * TLV payload carries the STA's own H2E bit, not the AP's RSNXE data.
+     * Embedded-supplicant only; wpa_supplicant uses gen_ie_buf passthrough.
+     */
+    if ((pbss_desc->prsnx_ie) && (pbss_desc->prsnx_ie->ieee_hdr.len) &&
+        (akm_type == AssocAgentAuth_Wpa3Sae) &&
+        (pmpriv->sec_info.pwe_derivation == 1U || pmpriv->sec_info.pwe_derivation == 2U) &&
+        (pbss_desc->prsnx_ie->data[0] & (0x1 << SAE_H2E_BIT)))
     {
+        t_u8 rsnx_len = 0;
+
         prsnx_ie_tlv = (MrvlIEtypes_SAE_PWE_Mode_t *)pos;
-        prsnx_ie_tlv->header.type = (t_u16)(*(pbss_desc->prsnx_ie)).ieee_hdr.element_id;
-        prsnx_ie_tlv->header.type = prsnx_ie_tlv->header.type & 0x00FF;
-        prsnx_ie_tlv->header.type = wlan_cpu_to_le16(prsnx_ie_tlv->header.type);
-        prsnx_ie_tlv->header.len = (t_u16)(*(pbss_desc->prsnx_ie)).ieee_hdr.len;
-        prsnx_ie_tlv->header.len = prsnx_ie_tlv->header.len & 0x00FF;
 
-        __memcpy(pmadapter,prsnx_ie_tlv->pwe,
-                   &((*(pbss_desc->prsnx_ie)).data[0]), prsnx_ie_tlv->header.len);
+        prsnx_ie_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_RSNX);
 
-        HEXDUMP("ASSOC_CMD: RSNX IE",(t_u8 *)prsnx_ie_tlv,
-                  sizeof(prsnx_ie_tlv->header) + prsnx_ie_tlv->header.len);
+        /* STA's own H2E capability bit */
+        prsnx_ie_tlv->pwe[0] = (0x1 << SAE_H2E_BIT);
+        rsnx_len = 1U;
 
-        pos += sizeof(prsnx_ie_tlv->header) + prsnx_ie_tlv->header.len;
-        prsnx_ie_tlv->header.len = wlan_cpu_to_le16(prsnx_ie_tlv->header.len);
+        prsnx_ie_tlv->header.len = rsnx_len;
+
+        HEXDUMP("ASSOC_CMD: RSNX IE", (t_u8 *)prsnx_ie_tlv,
+                sizeof(prsnx_ie_tlv->header) + rsnx_len);
+
+        pos += sizeof(prsnx_ie_tlv->header) + rsnx_len;
+        prsnx_ie_tlv->header.len = wlan_cpu_to_le16(rsnx_len);
     }
+#endif
 
 #if CONFIG_HOST_MLME
     if (pmpriv->curr_bss_params.host_mlme)
