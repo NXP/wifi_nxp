@@ -453,6 +453,8 @@ typedef enum _WLAN_802_11_WEP_STATUS
 
 #define TLV_TYPE_RSNO_IE (PROPRIETARY_TLV_BASE_ID + 0x167) /* 0x267 */
 
+#define TLV_TYPE_TRANSTION_DISABLE (PROPRIETARY_TLV_BASE_ID + 0x17f) /* 0x27f */
+
 /** ADDBA TID mask */
 #define ADDBA_TID_MASK (MBIT(2) | MBIT(3) | MBIT(4) | MBIT(5))
 /** DELBA TID mask */
@@ -7606,6 +7608,15 @@ typedef MLAN_PACK_START struct _HostCmd_DS_CSI_CFG
     MrvlIEtypes_channel_bandcfg_t channel_bandconfig;
 } MLAN_PACK_END HostCmd_DS_CSI_CFG;
 #endif
+
+/** MrvlIEtypes_transition_disable_t */
+typedef MLAN_PACK_START struct _MrvlIEtypes_transition_disable_t
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** transition disable bitmap */
+    t_u8 transition_disable;
+} MLAN_PACK_END MrvlIEtypes_transition_disable_t;
 
 /** HostCmd_DS_BOOT_SLEEP */
 typedef MLAN_PACK_START struct _HostCmd_DS_BOOT_SLEEP

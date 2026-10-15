@@ -5927,7 +5927,37 @@ int wifi_handle_fw_event(struct bus_message *msg)
             break;
         case EVENT_PORT_RELEASE:
 #if !CONFIG_WPA_SUPP
-            (void)wifi_event_completion((enum wlan_bss_type)evt->bss_type, WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
+            {
+                MrvlIEtypes_transition_disable_t *tlv =
+                    (MrvlIEtypes_transition_disable_t *)&evt->reason_code;
+                if (tlv->header.type == TLV_TYPE_TRANSTION_DISABLE)
+                {
+#if !CONFIG_MEM_POOLS
+                    t_u8 *transition_disable = (t_u8 *)OSA_MemoryAllocate(sizeof(t_u8));
+#else
+                    t_u8 *transition_disable = (t_u8 *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+#endif
+                    if (!transition_disable)
+                    {
+                        wifi_w("No mem. Cannot process port release event");
+                        break;
+                    }
+
+                    *transition_disable = tlv->transition_disable;
+                    if (wifi_event_completion((enum wlan_bss_type)evt->bss_type,
+                                              WIFI_EVENT_TRANSITION_DISABLE,
+                                              WIFI_EVENT_REASON_SUCCESS,
+                                              (void *)transition_disable) != WM_SUCCESS)
+                    {
+#if !CONFIG_MEM_POOLS
+                        OSA_MemoryFree((void *)transition_disable);
+#else
+                        OSA_MemoryPoolFree(buf_32_MemoryPool, transition_disable);
+#endif
+                    }
+                }
+                (void)wifi_event_completion((enum wlan_bss_type)evt->bss_type, WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
+            }
 #endif
             break;
         case EVENT_PS_SLEEP:

@@ -4542,6 +4542,42 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
     }
 }
 
+static void wlcm_process_transition_disable(t_u8 bitmap)
+{
+    struct wlan_network *network = NULL;
+
+    if (wlan.cur_network_idx < 0 ||
+        wlan.cur_network_idx >= (int)ARRAY_SIZE(wlan.networks))
+        return;
+
+    network = &wlan.networks[wlan.cur_network_idx];
+
+    wlcm_d("WPA3 Transition Disable bitmap=0x%02x for SSID: %s",
+           bitmap, network->ssid);
+
+    if ((bitmap & 0x01U) != 0U)
+    {
+        if (network->security.type == WLAN_SECURITY_WPA3_SAE ||
+            network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)
+        {
+            if (network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED ||
+                network->security.mfpr == false)
+            {
+                wlcm_d("TD: WPA3-Personal transition disabled for SSID '%s'",
+                       network->ssid);
+                network->security.type     = WLAN_SECURITY_WPA3_SAE;
+                network->security.key_mgmt = WLAN_KEY_MGMT_SAE;
+                network->security.mfpr     = true;
+                network->security.mfpc     = true;
+                (void)wlan_set_pmfcfg((t_u8)network->security.mfpc,
+                                      (t_u8)network->security.mfpr);
+
+                network->security.transition_disable = 1U;
+            }
+        }
+    }
+}
+
 #if CONFIG_ROAMING
 /** Try to roaming if enabled based on priority:
  * 1. 11R roaming (Prioritize using 11KV optimized scan, if 11KV is not supported,
@@ -7845,6 +7881,20 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #endif
             }
             wlcm_process_authentication_event(msg, &next, network);
+            break;
+        case WIFI_EVENT_TRANSITION_DISABLE:
+#if !CONFIG_WPA_SUPP
+            if (msg->data != NULL)
+            {
+                t_u8 transition_disable = *(t_u8 *)(msg->data);
+                wlcm_process_transition_disable(transition_disable);
+#if !CONFIG_MEM_POOLS
+                OSA_MemoryFree(msg->data);
+#else
+                OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
+            }
+#endif
             break;
         case WIFI_EVENT_LINK_LOSS:
             wlcm_d("got event: link loss, code=%d", (int)(uintptr_t)msg->data);
